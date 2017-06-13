@@ -49,6 +49,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define GAL_OPTIONS_MAX_VALUE_LEN 10
 
 
+/* Statically allocated space for printing option values. */
+#define GAL_OPTIONS_STATIC_MEM_FOR_VALUES 2000
+
 
 
 /* Standard groups of options. From the Argp manual (in GNU C Library): "In
