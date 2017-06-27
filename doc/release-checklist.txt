@@ -130,6 +130,12 @@ Steps necessary to Package Gnuastro for Debian.
 
      $ git clone git://anonscm.debian.org/debian-astro/packages/gnuastro.git
 
+ - Pull any possible changes that already exist:
+
+     $ cd gnuastro
+     $ git pull
+     $ cd ..
+
  - A `gnuastro' directory will be built, for the moment don't go in it,
    we'll keep all temporary files in this parent directory. Clean any
    existing ones (if this process was done earlier):
@@ -185,9 +191,17 @@ Steps necessary to Package Gnuastro for Debian.
 
      $ tar xf ../gnuastro_$ver.orig.tar.gz --strip-components=1
 
- - Update the ChangeLog (similar to previous entries):
+ - Update the ChangeLog (similar to previous entries).
+
+   IMPORTANT: if this is not a final release (just for making sure Gnuastro
+   builds on all systems), change `unstable' to `experimental'.
 
      $ emacs debian/changelog
+
+ - Check the current Debian policy version at
+   https://www.debian.org/doc/debian-policy/ and update debian/control:
+
+     $ emacs debian/control
 
  - Update your version of `pbuilder':
 
@@ -209,4 +223,8 @@ Steps necessary to Package Gnuastro for Debian.
      $ git status                         # Add anything that remains.
      $ git commit -m "Gnuastro $ver"
 
- - Push all the changes to the repository and announce on Debian Astro.
+ - Push all the changes to the repository:
+
+     $ git push --all origin
+
+ - Inform Debian Astro.
