@@ -141,7 +141,7 @@ struct argp_option program_options[] =
     {
       "width",
       UI_KEY_WIDTH,
-      "FLT[, ...]",
+      "FLT[,...]",
       0,
       "Width when crop is defined by its center.",
       ARGS_GROUP_CENTER_GENERAL,
@@ -155,9 +155,9 @@ struct argp_option program_options[] =
     {
       "center",
       UI_KEY_CENTER,
-      "FLT[, ...]",
+      "FLT[,...]",
       0,
-      "Center of a single crop.",
+      "Central coordinates of a single crop.",
       ARGS_GROUP_CENTER_GENERAL,
       &p->center,
       GAL_TYPE_STRING,
@@ -175,7 +175,7 @@ struct argp_option program_options[] =
 
     {
       0, 0, 0, 0,
-      "Crop by center (only for catalog)",
+      "Crop by center (when a catalog is given)",
       ARGS_GROUP_CENTER_CATALOG
     },
     {
@@ -222,7 +222,7 @@ struct argp_option program_options[] =
       UI_KEY_COORDCOL,
       "STR/INT",
       0,
-      "Columns no./info containing coordinates.",
+      "Column no./info containing coordinates.",
       ARGS_GROUP_CENTER_CATALOG,
       &p->coordcol,
       GAL_TYPE_STRLL,

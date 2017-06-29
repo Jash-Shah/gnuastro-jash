@@ -431,7 +431,8 @@ gal_wcs_angular_distance_deg(double r1, double d1, double r2, double d2)
 
 
 
-/* Return the pixel scale of the image (in the units of the input dataset). */
+
+/* Return the pixel scale of the dataset in units of the WCS. */
 double *
 gal_wcs_pixel_scale(struct wcsprm *wcs)
 {

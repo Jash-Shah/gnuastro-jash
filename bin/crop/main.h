@@ -43,7 +43,6 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define MAXDIM                  3
 
 
-
 /* Modes of operation. */
 enum crop_modes
 {

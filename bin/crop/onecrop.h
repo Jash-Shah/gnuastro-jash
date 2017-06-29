@@ -65,13 +65,13 @@ onecrop_parse_polygon(struct cropparams *p);
 void
 onecrop_name(struct onecropparams *crp);
 
+void
+onecrop(struct onecropparams *crp);
+
 int
 onecrop_center_filled(struct onecropparams *crp);
 
 void
 crop_print_log(struct onecropparams *p);
-
-void
-onecrop(struct onecropparams *crp);
 
 #endif

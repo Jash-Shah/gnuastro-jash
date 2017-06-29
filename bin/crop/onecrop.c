@@ -71,7 +71,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /*******************************************************************/
 /* Read the section string and set the starting and ending pixels
    based on that. */
-static void
+void
 onecrop_parse_section(struct cropparams *p, size_t *dsize,
                       long *fpixel, long *lpixel)
 {
@@ -647,7 +647,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
      update the header keywords. */
   if(img->wcs)
     {
-      /* Write the WCS title and the common WCS information. */
+      /* Write the WCS title and common WCS information. */
       if(fits_write_record(ofp, blankrec, &status))
         gal_fits_io_error(status, NULL);
       sprintf(titlerec, "%sWCS information", startblank);
@@ -656,6 +656,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
       fits_write_record(ofp, titlerec, &status);
       for(i=0;i<img->nwcskeys-1;++i)
         fits_write_record(ofp, &img->wcstxt[i*80], &status);
+      gal_fits_io_error(status, NULL);
 
       /* Correct the CRPIX keywords. */
       for(i=0;i<ndim;++i)
@@ -700,7 +701,6 @@ onecrop(struct onecropparams *crp)
   long fpixel_o[MAXDIM], lpixel_o[MAXDIM], inc[MAXDIM];
   long naxes[MAXDIM], fpixel_i[MAXDIM], lpixel_i[MAXDIM];
 
-
   /* Fill the `naxes' and `inc' arrays. */
   for(i=0;i<ndim;++i)
     {
@@ -726,8 +726,8 @@ onecrop(struct onecropparams *crp)
       ofp=crp->outfits;
 
 
-      /* Allocate an array to keep the desired crop region, then read the
-         desired pixels into it. */
+      /* Allocate an array to keep the desired crop region, then read
+         the desired pixels into it. */
       status=0;
       for(i=0;i<ndim;++i) cropsize *= ( lpixel_i[i] - fpixel_i[i] + 1 );
       array=gal_data_malloc_array(p->type, cropsize, __func__, "array");
@@ -777,6 +777,7 @@ onecrop(struct onecropparams *crp)
       for(i=0;i<ndim;++i)
         j += sprintf(&region[j], "%ld:%ld,", fpixel_i[i], lpixel_i[i]);
       region[j-1]='\0';
+
 
       /* A section has been added to the cropped image from this input
          image, so save the information of this image. */

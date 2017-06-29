@@ -129,6 +129,7 @@ gal_box_border_from_center(double *center, size_t ndim, long *width,
 
 
 
+
 /* Problem to solve: We have set the first and last pixels in an input
    image (fpixel_i[2] and lpixel_i[2]). But those first and last
    pixels don't necessarily have to lie within the image, they can be

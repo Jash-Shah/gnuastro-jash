@@ -50,7 +50,7 @@ AC_CONFIG_MACRO_DIRS([bootstrapped/m4])
 
 # Library version, see the GNU Libtool manual ("Library interface versions"
 # section for the exact definition of each) for
-GAL_CURRENT=1
+GAL_CURRENT=2
 GAL_REVISION=0
 GAL_AGE=0
 GAL_LT_VERSION="${GAL_CURRENT}:${GAL_REVISION}:${GAL_AGE}"
@@ -121,11 +121,15 @@ AC_FUNC_MALLOC
 
 
 
-# Check the size of `size_t'.
+# Check the size of necessary system specific types.
 AC_CHECK_SIZEOF([size_t])
 AC_SUBST(SIZEOF_SIZE_T, [$ac_cv_sizeof_size_t])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_SIZEOF_SIZE_T], [$ac_cv_sizeof_size_t],
                    [On 32bit will be 4, on 64 bit, will be 8])
+AC_CHECK_SIZEOF([long])
+AC_SUBST(SIZEOF_LONG, [$ac_cv_sizeof_long])
+AC_DEFINE_UNQUOTED([GAL_CONFIG_SIZEOF_LONG], [$ac_cv_sizeof_long],
+                   [Depends on bit length of system.])
 
 
 

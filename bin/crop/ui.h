@@ -60,6 +60,9 @@ enum option_keys_enum
 
 
 
+
+
+
 void
 ui_read_check_inputs_setup(int argc, char *argv[], struct cropparams *p);
 

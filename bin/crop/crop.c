@@ -298,7 +298,6 @@ crop_mode_wcs(void *inparam)
             /* If a name isn't set yet, set it. */
             if(crp->name==NULL) onecrop_name(crp);
 
-
             /* Increment the number of images used (necessary for the
                header keywords that are written in `onecrop'). Then do the
                crop. */

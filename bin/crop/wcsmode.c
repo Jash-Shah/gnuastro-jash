@@ -43,6 +43,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+
+
 /*******************************************************************/
 /****************        Check for ui.c        *********************/
 /*******************************************************************/
@@ -592,12 +594,10 @@ point_in_dataset(double *p, double *i, double *s, double *c, size_t ndim)
 {
   double n;
 
-
   /* If there is a third dimension, then first check that. Note that the
      third dimension is assumed to be indendent of the first two. */
   if(ndim==3 && ( p[2]<i[2] || p[2]>i[2]+s[2] ) )
     return 0;
-
 
   /* In the RA and Dec checks, first check the declination. If it is not in
      range, you can safely return 0. */
@@ -625,6 +625,7 @@ point_in_dataset(double *p, double *i, double *s, double *c, size_t ndim)
             }
         }
     }
+
   return 0;
 }
 

@@ -217,7 +217,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 
 
 
-
+/* Parse the mode to interpret the given coordinates. */
 void *
 ui_parse_coordinate_mode(struct argp_option *option, char *arg,
                          char *filename, size_t lineno, void *junk)
@@ -248,7 +248,6 @@ ui_parse_coordinate_mode(struct argp_option *option, char *arg,
       return NULL;
     }
 }
-
 
 
 
@@ -346,7 +345,6 @@ ui_read_check_only_options(struct cropparams *p)
 {
   int checksum;
 
-
   /* Make sure that only one of the crop definitions is given. */
   checksum = ( (p->center!=NULL)
                + (p->catname!=NULL)
@@ -375,8 +373,11 @@ ui_read_check_only_options(struct cropparams *p)
     }
 
 
-  /* Section is currently only defined in image mode. */
-  if(p->section) p->mode=IMGCROP_MODE_IMG;
+  /* Section is currentlyl only defined in Image mode. */
+  if(p->section && p->mode!=IMGCROP_MODE_IMG)
+    error(EXIT_FAILURE, 0, "The `--section' option is only available in "
+          "image coordinate mode, currently it doesn't work with WCS mode. "
+          "Please run with `--mode=img' and change the values accordingly");
 
 
   /* Sanity checks and mode setting based on the desired crop. */
@@ -604,7 +605,6 @@ ui_read_cols(struct cropparams *p)
   gal_data_t *cols, *tmp, *corrtype=NULL;
   size_t ncoordcols, counter=0, dcounter=0, ndim=p->imgs->ndim;
 
-
   /* See if the number of columns given for coordinates corresponds to the
      number of dimensions of the input dataset. */
   if(p->coordcol)
@@ -621,7 +621,7 @@ ui_read_cols(struct cropparams *p)
               (p->numin==1?" has":"s have"), ndim);
     }
   else
-    error(EXIT_FAILURE, 0, "no coordinate columns specified. When a "
+    error(EXIT_FAILURE, 0, "no coordinate columns specified. When a catalog"
           "is given, it is necessary to identify which columns identify "
           "the coordinate values in which dimension.\n\n"
           "You can do this by calling `--coordcol' multiple times, the "
@@ -770,7 +770,7 @@ ui_make_log(struct cropparams *p)
   /* Return if no long file was requested. */
   if(p->cp.log==0) return;
 
-  /* Column to specify if central pixels are filled. */
+  /* Column to specify if the central pixels are filled. */
   asprintf(&comment, "Are the central pixels filled? (1: yes, 0: no, "
            "%u: not checked)", GAL_BLANK_UINT8);
   gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT8, 1, &p->numout,
@@ -937,6 +937,7 @@ ui_preparations(struct cropparams *p)
 
 
 
+
 /**************************************************************/
 /************         Set the parameters          *************/
 /**************************************************************/
@@ -1043,7 +1044,7 @@ ui_free_report(struct cropparams *p, struct timeval *t1)
   size_t i;
 
   /* Free the simple arrays (if they were set). */
-  if(p->center) free(p->center);
+  gal_data_free(p->center);
   if(p->cp.hdu) free(p->cp.hdu);
   if(p->cathdu) free(p->cathdu);
   if(p->catname) free(p->catname);

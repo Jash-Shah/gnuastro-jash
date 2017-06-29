@@ -2565,8 +2565,8 @@ downloaded @url{ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2,
 @example
 $ tar xf wcslib.tar.bz2
 $ cd wcslib-X.X                    # Replace X.X with version number
-$ ./configure --without-pgplot LIBS="-pthread -lm"
-$ make -j8                         # Replace 8 with no. CPU threads.
+$ ./configure --without-pgplot LIBS="-pthread -lm" --disable-fortran
+$ make
 $ make check
 $ sudo make install
 @end example
@@ -8329,9 +8329,6 @@ defined by its center (see @ref{Crop modes}), or @option{--checkcenter} was
 given a value of 0 (see @ref{Invoking astcrop}), the center will not be
 checked and this column will be given a value of @code{-1}.
 @end enumerate
-
-
-
 
 
 
@@ -14189,15 +14186,14 @@ familiar with these concepts.
 @subsubsection Defining an ellipse
 
 @cindex Ellipse
-The PSF, see @ref{PSF}, and galaxy radial profiles are generally
-defined on an ellipse so in this section first defining an ellipse on
-a pixelated 2D surface is discussed. Labeling the major axis of an
-ellipse @mymath{a}, and its minor axis with @mymath{b}, the axis ratio
-is defined as: @mymath{q\equiv b/a}. The major axis of an ellipse can
-be aligned in any direction, therefore define the angle of the major
-axis to the horizontal axis of the image is defined to be the position
-angle of the ellipse and in this book, we show it with
-@mymath{\theta}.
+The PSF, see @ref{PSF}, and galaxy radial profiles are generally defined on
+an ellipse so in this section first defining an ellipse on a pixelated 2D
+surface is discussed. Labeling the major axis of an ellipse @mymath{a}, and
+its minor axis with @mymath{b}, the axis ratio is defined as:
+@mymath{q\equiv b/a}. The major axis of an ellipse can be aligned in any
+direction, therefore the angle of the major axis with respect to the
+horizontal axis of the image is defined to be the position angle of the
+ellipse and in this book, we show it with @mymath{\theta}.
 
 @cindex Radial profile on ellipse
 Our aim is to put a radial profile of any functional form
@@ -14695,7 +14691,7 @@ either individually or in one image. The executable name is
 @file{astmkprof} with the following general template
 
 @example
-$ astmkprof [OPTION ...] [BackgroundImage] Catalog
+$ astmkprof [OPTION ...] [Catalog]
 @end example
 
 @noindent
@@ -14708,6 +14704,9 @@ $ astmkprof catalog.txt
 ## Make the profiles in catalog.txt over image.fits:
 $ astmkprof --background=image.fits catalog.txt
 
+## Make a Moffat PSF with FWHM 3pix, beta=2.8, truncation=5
+$ astmkprof --kernel=moffat,2.8,5 --oversample=1
+
 ## Make profiles in catalog, using RA and Dec in the given column:
 $ astmkprof --racol=RA_CENTER --ycol=DEC_CENTER catalog.txt
 
@@ -14717,28 +14716,29 @@ $ astmkprof --individual --oversample 3 -x500 -y500 catalog.txt
 @end example
 
 @noindent
-If mock images are to be made, a catalog (which stores the parameters for
-each mock profile) is mandatory. The catalog can be in the FITS ASCII, FITS
-binary format, or plain text formats (see @ref{Tables}). The
-columns related to each parameter can be determined both by number, or by
-match/search criteria using the column names, units, or comments. with the
-options ending in @option{col}, see below. Without any file given to the
-@option{--background} option, MakeProfiles will make the fully zero-valued
-image and build the profiles on that (its size can be set with the
-@option{--naxis1} and @option{--naxis2} options, and its main WCS parameters
-can also be defined). Besides the main image containing all the profiles it
-is also possible to build on individual images (only enclosing one full
-profile to its truncation radius) with the @option{--individual}.
+The parameters of the mock profiles can either be given through a catalog
+(which stores the parameters of many mock profiles), or the
+@option{--kernel} option (see @ref{MakeProfiles options}). The catalog can
+be in the FITS ASCII, FITS binary format, or plain text formats (see
+@ref{Tables}). The columns related to each parameter can be determined both
+by number, or by match/search criteria using the column names, units, or
+comments. with the options ending in @option{col}, see below.
 
-If a data image file (see @ref{Arguments}) is given, the pixels of
-that image are used as the background value for every pixel. The flux
-value of each profile pixel will be added to the pixel in that
-background value. In this case the values to all options relating to
-the output size and WCS will be ignored if specified (for example
-@option{--naxis1}, @option{--naxis2} and @option{--prepforconv}) on
-the command-line or in the configuration files. Note that
-@option{--oversample} will remain active even if a background image is
-specified.
+Without any file given to the @option{--background} option, MakeProfiles
+will make a zero-valued image and build the profiles on that (its size and
+main WCS parameters can also be defined through the options). Besides the
+main/merged image containing all the profiles in the catalog, it is also
+possible to build individual images for each profile (only enclosing one
+full profile to its truncation radius) with the @option{--individual}
+option.
+
+If an image is given to the @option{--background} option, the pixels of
+that image are used as the background value for every pixel. The flux value
+of each profile pixel will be added to the pixel in that background
+value. In this case, the values to all options relating to the output size
+and WCS will be ignored if specified (for example @option{--oversample},
+@option{--naxis1}, @option{--naxis2} and @option{--prepforconv}) on the
+command-line or in the configuration files.
 
 Please see @ref{Sufi simulates a detection} for a very complete tutorial
 explaining how one could use MakeProfiles in conjunction with other
@@ -14803,6 +14803,41 @@ Profiles, Catalog and WCS. Below each one is reviewed.
 Output:
 
 @table @option
+
+@item -E STR/INT,FLT[,FLT,[...]]
+@itemx --kernel=STR/INT,FLT[,FLT,[...]]
+Only build one kernel profile with the parameters given as the values to
+this option. The different values must be separated by a comma
+(@key{,}). The first value identifies the radial function of the profile,
+either through a string or through a number (see description of
+@option{--fcol} below). Each radial profile needs a different total number
+of parameters: S@'ersic and Moffat functions need 3 parameters: radial,
+S@'ersic index or Moffat @mymath{\beta}, and truncation radius. The
+Gaussian function needs two parameters: radial and truncation radius. The
+point function doesn't need any parameters and flat and circumference
+profiles just need one parameter (truncation radius).
+
+The PSF or kernel is a unique (and highly constrained) type of profile: the
+sum of its pixels must be one, its center must be the center of the central
+pixel (in an image with an odd number of pixels on each side), and commonly
+it is circular, so its axis ratio and position angle are one and zero
+respectively. Kernels are commonly necessary for various data analysis and
+data manipulation steps (for example see @ref{Convolve}, and
+@ref{NoiseChisel}. Because of this it is inconvenient to define a catalog
+with one row and many zero valued columns (for all the non-necessary
+parameters). Hence, with this option, it is possible to create a kernel
+with MakeProfiles without the need to create a catalog. Here are some
+examples:
+
+@table @option
+@item --kernel=moffat,3,2.8,5
+A Moffat kernel with FWHM of 3 pixels, @mymath{\beta=2.8} which is
+truncated at 5 times the FWHM.
+
+@item --kernel=gaussian,2,3
+A Gaussian kernel with FWHM of 2 pixels and truncated at 3 times the FWHM.
+@end table
+
 
 @item -k STR
 @itemx --background=STR
@@ -16922,11 +16957,12 @@ relevant for you if you intend to use the binary operators of
 @cindex 64-bit
 @cindex bit-32
 @cindex bit-64
-@deffn Macro GAL_CONFIG_SIZEOF_SIZE_T
-The size of (number of bytes in) the system's @code{size_t} type. Its value
-is either 4 or 8 for 32-bit and 64-bit systems. You can also get this value
-with the expression `@code{sizeof size_t}' without having to include this
-header.
+@deffn Macro GAL_CONFIG_SIZEOF_LONG
+@deffnx Macro GAL_CONFIG_SIZEOF_SIZE_T
+The size of (number of bytes in) the system's @code{long} and @code{size_t}
+types. Their values are commonly either 4 or 8 for 32-bit and 64-bit
+systems. You can also get this value with the expression `@code{sizeof
+size_t}' for example without having to include this header.
 @end deffn
 
 @node Multithreaded programming, Library data types, Configuration information, Gnuastro library
@@ -17233,6 +17269,11 @@ Identifier for a signed, 64-bit integer type: @code{int64_t} (from
 Identifier for a @code{size_t} type. This is just an alias to
 @code{uint32}, or @code{uint64} types for 32-bit, or 64-bit systems
 respectively.
+@end deffn
+
+@deffn {Global integer}  GAL_TYPE_LONG
+Identifier for a @code{long} type. This is just an alias to @code{int32},
+or @code{int64} types for 32-bit, or 64-bit systems respectively.
 @end deffn
 
 @deffn {Global integer}  GAL_TYPE_FLOAT32
