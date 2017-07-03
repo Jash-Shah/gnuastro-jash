@@ -43,7 +43,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define MAXDIM                  3
 
 
-/* Modes of operation. */
+/* Modes to interpret coordinates. */
 enum crop_modes
 {
   IMGCROP_MODE_INVALID,         /* For sanity checks.     */
