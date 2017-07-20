@@ -165,6 +165,20 @@ struct argp_option program_options[] =
       ARGS_GROUP_PROFILES
     },
     {
+      "mode",
+      UI_KEY_MODE,
+      "STR",
+      0,
+      "Mode of `--ccol': `img' or `wcs'.",
+      ARGS_GROUP_PROFILES,
+      &p->mode,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_parse_coordinate_mode
+    },
+    {
       "numrandom",
       UI_KEY_NUMRANDOM,
       "INT",
@@ -222,7 +236,7 @@ struct argp_option program_options[] =
       0,
       0,
       "mcol is flat pixel value (when fcol is 5 or 6)",
-      ARGS_GROUP_CATALOG,
+      ARGS_GROUP_PROFILES,
       &p->mforflatpix,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
@@ -317,20 +331,6 @@ struct argp_option program_options[] =
       0, 0, 0, 0,
       "Columns, by info (see `--searchin'), or number (starting from 1):",
       ARGS_GROUP_CATALOG
-    },
-    {
-      "mode",
-      UI_KEY_MODE,
-      "STR",
-      0,
-      "Mode of `--ccol': `img' or `wcs'.",
-      GAL_OPTIONS_GROUP_INPUT,
-      &p->mode,
-      GAL_TYPE_STRING,
-      GAL_OPTIONS_RANGE_ANY,
-      GAL_OPTIONS_MANDATORY,
-      GAL_OPTIONS_NOT_SET,
-      ui_parse_coordinate_mode
     },
     {
       "ccol",

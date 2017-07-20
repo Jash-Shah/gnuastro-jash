@@ -14796,6 +14796,23 @@ MakeProfiles also supports all the common Gnuastro program options that are
 discussed in @ref{Common options}, so please flip through them is well for
 a more comfortable usage.
 
+When building 3D profiles, there are more degrees of freedom. Hence, more
+columns are necessary and all the values related to dimensions (for example
+size of dataset in each dimension and the WCS properties) must also have 3
+values. To allow having an independent set of default values for creating
+3D profiles, MakeProfiles also installs a @file{astmkprof-3d.conf}
+configuration file (see @ref{Configuration files}). You can use this for
+default 3D profile values. For example, if you installed Gnuastro with the
+prefix @file{/usr/local} (the default location, see @ref{Installation
+directory}), you can benefit from this configuration file by running
+MakeProfiles like the example below. As with all configuration files, if
+you want to customize a given option, call it before the configuration
+file.
+
+@example
+$ astmkprof --config=/usr/local/etc/astmkprof-3d.conf catalog.txt
+@end example
+
 Please see @ref{Sufi simulates a detection} for a very complete tutorial
 explaining how one could use MakeProfiles in conjunction with other
 Gnuastro's programs to make a complete simulated image of a mock galaxy.
@@ -14855,11 +14872,6 @@ The list of options directly related to the input catalog columns is shown
 below.
 
 @table @option
-
-@item --mode=STR
-Interpret the center position columns in image or WCS coordinates. This
-option thus accepts only two values: @option{img} and @option{wcs}. It is
-mandatory when a catalog is being used.
 
 @item --ccol=STR/INT
 Center coordinate column for each dimension. This option must be called two
@@ -14975,6 +14987,12 @@ profiles. The options described in this section are for configuring such
 properties.
 
 @table @option
+
+@item --mode=STR
+Interpret the center position columns (@option{--ccol} in @ref{MakeProfiles
+catalog}) in image or WCS coordinates. This option thus accepts only two
+values: @option{img} and @option{wcs}. It is mandatory when a catalog is
+being used as input.
 
 @item -r
 @itemx --numrandom
