@@ -122,9 +122,10 @@ if COND_MKCATALOG
                              mkprof/clearcanvas.sh.log
 endif
 if COND_MKNOISE
-  MAYBE_MKNOISE_TESTS = mknoise/addnoise.sh
+  MAYBE_MKNOISE_TESTS = mknoise/addnoise.sh mknoise/addnoise-3d.sh
 
   mknoise/addnoise.sh: warp/warp_scale.sh.log
+  mknoise/addnoise-3d.sh: mkprof/3dcat.sh.log
 endif
 if COND_MKPROF
   MAYBE_MKPROF_TESTS = mkprof/mosaic1.sh mkprof/mosaic2.sh         \
