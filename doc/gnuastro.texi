@@ -1933,8 +1933,7 @@ $ astmkprof -P
 
 # Output:
  type         float32     # Type of output: e.g., int16, float32, etc...
- naxis1       1000        # Number of pixels along first FITS axis.
- naxis2       1000        # Number of pixels along second FITS axis.
+ naxis        1000,1000   # Number of pixels along first FITS axis.
  oversample   5           # Scale of oversampling (>0 and odd).
 
 [[[ ... Truncated lines ... ]]]
@@ -10655,7 +10654,7 @@ transpose of the one discussed here.}.
 @cindex Operations, non-commutative
 In @ref{Warping basics} we saw how a basic warp/transformation can be
 represented with a matrix. To make more complex warpings (for example to
-define a translattion, rotation and scale as one warp) the individual
+define a translation, rotation and scale as one warp) the individual
 matrices have to be multiplied through matrix multiplication. However
 matrix multiplication is not commutative, so the order of the set of
 matrices you use for the multiplication is going to be very important.
@@ -14782,8 +14781,8 @@ that image are used as the background value for every pixel. The flux value
 of each profile pixel will be added to the pixel in that background
 value. In this case, the values to all options relating to the output size
 and WCS will be ignored if specified (for example @option{--oversample},
-@option{--naxis1}, @option{--naxis2} and @option{--prepforconv}) on the
-command-line or in the configuration files.
+@option{--naxis}, and @option{--prepforconv}) on the command-line or in the
+configuration files.
 
 The sections below discuss the options specific to MakeProfiles based on
 context: the input catalog settings which can have many rows for different
@@ -15157,10 +15156,9 @@ A background image FITS file to build the profiles on. The extension that
 contains the image should be specified with the @option{--backhdu} option,
 see below. When a background image is specified, it will be used to derive
 all the information about the output image. Hence, the following options
-will be ignored: @option{--naxis1}, @option{--naxis2}, @option{--crpix1},
-@option{--crpix2}, @option{--crval1}, @option{--crval2},
-@option{--resolution}, @option{--oversample}, and data type (see
-@option{--type} in @ref{Input output options}).
+will be ignored: @option{--naxis}, @option{--oversample}, @option{--crpix},
+@option{--crval} (generally, all other WCS related parameters) and the
+output's data type (see @option{--type} in @ref{Input output options}).
 
 The image will act like a canvas to build the profiles on: profile pixel
 values will be summed with the background image pixel values. With the

@@ -39,11 +39,10 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* Any ellipse can be enclosed into a rectangular box Find the width of
-   this box in each dimension. The purpose of this function is to give the
-   height and width of that box. The logic behind it is this: All the
-   points on the circumference of an ellipse that is aligned on the x axis
-   can be written as:
+/* Any ellipse can be enclosed into a rectangular box. The purpose of this
+   function is to give the height and width of that box. The logic behind
+   it is this: All the points on the circumference of an ellipse that is
+   aligned on the x axis can be written as:
 
    (acos(t),bsin(t)) where 0<t<2\pi.               (1)
 
