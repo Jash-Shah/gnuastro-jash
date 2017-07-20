@@ -109,7 +109,7 @@ enum program_args_groups
 /**************************************************************/
 /*********    Initialize & Parse command-line    **************/
 /**************************************************************/
-static int
+static uint8_t
 ui_profile_name_read(char *string, size_t row)
 {
   if( !strcmp("sersic", string) )
@@ -129,6 +129,9 @@ ui_profile_name_read(char *string, size_t row)
 
   else if ( !strcmp("circum", string) )
     return PROFILE_CIRCUMFERENCE;
+
+  else if ( !strcmp("distance", string) )
+    return PROFILE_DISTANCE;
 
   else if ( !strcmp(GAL_BLANK_STRING, string) )
     error(EXIT_FAILURE, 0, "atleast one profile function is blank");
@@ -453,14 +456,16 @@ ui_parse_coordinate_mode(struct argp_option *option, char *arg,
   /* We want to print the stored values. */
   if(lineno==-1)
     {
-      gal_checkset_allocate_copy( *(int *)(option->value)==MKPROF_MODE_IMG
+      gal_checkset_allocate_copy( *(uint8_t *)(option->value)==MKPROF_MODE_IMG
                                   ? "img" : "wcs", &outstr );
       return outstr;
     }
   else
     {
-      if      (!strcmp(arg, "img")) *(int *)(option->value)=MKPROF_MODE_IMG;
-      else if (!strcmp(arg, "wcs")) *(int *)(option->value)=MKPROF_MODE_WCS;
+      if(!strcmp(arg, "img"))
+        *(uint8_t *)(option->value)=MKPROF_MODE_IMG;
+      else if (!strcmp(arg, "wcs"))
+        *(uint8_t *)(option->value)=MKPROF_MODE_WCS;
       else
         error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' (value to "
                       "`--mode') not recognized as a coordinate standard "
@@ -623,7 +628,7 @@ ui_check_options_and_arguments(struct mkprofparams *p)
 /***************       Preparations         *******************/
 /**************************************************************/
 static void
-ui_read_cols(struct mkprofparams *p)
+ui_read_cols_2d(struct mkprofparams *p)
 {
   int checkblank;
   char *colname=NULL, **strarr;
@@ -631,16 +636,15 @@ ui_read_cols(struct mkprofparams *p)
   gal_data_t *cols, *tmp, *corrtype=NULL;
   size_t i, counter=0, coordcounter=0, ndim=p->out->ndim;
 
-  /* Make sure the number of coordinate columns and number of dimensions in
-     outputs are the same. There is no problem if it is more than
-     `ndim'. In that case, the last values (possibly in configuration
-     files) will be ignored.*/
-  if( gal_list_str_number(p->ccol) < ndim )
-    error(EXIT_FAILURE, 0, "%zu coordinate columns (calls to `--coordcol') "
-          "given but output has %zu dimensions",
-          gal_list_str_number(p->ccol), p->out->ndim);
+  /* The coordinate columns are a linked list of strings. */
+  ccol=p->ccol;
+  for(i=0;i<ndim;++i)
+    {
+      gal_list_str_add(&colstrs, ccol->v, 0);
+      ccol=ccol->next;
+    }
 
-  /* Put the columns a specific order to read. */
+  /* Add the rest of the columns in a specific order. */
   gal_list_str_add(&colstrs, p->fcol, 0);
   gal_list_str_add(&colstrs, p->rcol, 0);
   gal_list_str_add(&colstrs, p->ncol, 0);
@@ -648,15 +652,6 @@ ui_read_cols(struct mkprofparams *p)
   gal_list_str_add(&colstrs, p->qcol, 0);
   gal_list_str_add(&colstrs, p->mcol, 0);
   gal_list_str_add(&colstrs, p->tcol, 0);
-
-  /* The coordinate columns might be different, So we'll add them to the
-     end (top of the list). */
-  ccol=p->ccol;
-  for(i=0;i<ndim;++i)
-    {
-      gal_list_str_add(&colstrs, ccol->v, 0);
-      ccol=ccol->next;
-    }
 
   /* Reverse the order to make the column orders correspond to how we added
      them here and avoid possible bugs. */
@@ -669,8 +664,7 @@ ui_read_cols(struct mkprofparams *p)
   /* Set the number of objects. */
   p->num=cols->size;
 
-  /* For a sanity check, make sure that the total number of columns read is
-     the same as those that were wanted (it might be more). */
+  /* Put each column's data in the respective internal array. */
   while(cols!=NULL)
     {
       /* Pop out the top column. */
@@ -686,9 +680,23 @@ ui_read_cols(struct mkprofparams *p)
       switch(++counter)
         {
         case 1:
+        case 2:
+          ++coordcounter;
+          colname = ( counter==1
+                      ? "first coordinate column (`--coordcol')"
+                      : "second coordinate column (`--coordcol')" );
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT64);
+          switch(counter)
+            {
+            case 1: p->x=corrtype->array; break;
+            case 2: p->y=corrtype->array; break;
+            }
+          break;
+
+        case 3:
           if(tmp->type==GAL_TYPE_STRING)
             {
-              p->f=gal_data_malloc_array(GAL_TYPE_INT32, p->num,
+              p->f=gal_data_malloc_array(GAL_TYPE_UINT8, p->num,
                                          __func__, "p->f");
               strarr=tmp->array;
               for(i=0;i<p->num;++i)
@@ -700,14 +708,14 @@ ui_read_cols(struct mkprofparams *p)
             {
               /* Read the user's profile codes. */
               colname="profile function code (`fcol')";
-              corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_INT32);
+              corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_UINT8);
               p->f=corrtype->array;
 
               /* Check if they are in the correct range. */
               for(i=0;i<p->num;++i)
                 if(p->f[i]<=PROFILE_INVALID || p->f[i]>=PROFILE_MAXIMUM_CODE)
-                  error(EXIT_FAILURE, 0, "%s: table row %zu, the function "
-                        "code is %d. It should be >%d and <%d. Please run "
+                  error(EXIT_FAILURE, 0, "%s: row %zu, the function "
+                        "code is %u. It should be >%d and <%d. Please run "
                         "again with `--help' and check the acceptable "
                         "codes.\n\nAlternatively, you can use alphabetic "
                         "strings to specify the profile functions, see the "
@@ -719,55 +727,48 @@ ui_read_cols(struct mkprofparams *p)
             }
           break;
 
-        case 2:
+        case 4:
           colname="radius (`rcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->r=corrtype->array;
+
+          /* Check if there is no zero-radius profile. */
+          for(i=0;i<p->num;++i)
+            if(p->r[i]<=0.0f)
+              error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g is "
+                    "not acceptable. It has to be larger than 0", p->catname,
+                    i+1, p->r[i]);
           break;
 
-        case 3:
+        case 5:
           colname="index (`ncol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->n=corrtype->array;
           break;
 
-        case 4:
+        case 6:
           colname="position angle (`pcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
-          p->p=corrtype->array;
+          p->p1=corrtype->array;
           break;
 
-        case 5:
+        case 7:
           colname="axis ratio (`qcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
-          p->q=corrtype->array;
+          p->q1=corrtype->array;
           break;
 
-        case 6:
+        case 8:
           colname="magnitude (`mcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->m=corrtype->array;
           checkblank=0;          /* Magnitude can be NaN: to mask regions. */
           break;
 
-        case 7:
+        case 9:
           colname="truncation (`tcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->t=corrtype->array;
-          break;
-
-        case 8:
-        case 9:
-          ++coordcounter;
-          colname = ( counter==8
-                      ? "first coordinate column (`--coordcol')"
-                      : "second coordinate column (`--coordcol')" );
-          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT64);
-          switch(counter)
-            {
-            case 8: p->x=corrtype->array; break;
-            case 9: p->y=corrtype->array; break;
-            }
           break;
 
         /* If the index isn't recognized, then it is larger, showing that
@@ -804,13 +805,219 @@ ui_read_cols(struct mkprofparams *p)
 
 
 
+/* Read the columns for a 3D profile. */
+static void
+ui_read_cols_3d(struct mkprofparams *p)
+{
+  int checkblank;
+  char *colname=NULL, **strarr;
+  gal_list_str_t *colstrs=NULL, *ccol;
+  gal_data_t *cols, *tmp, *corrtype=NULL;
+  size_t i, counter=0, coordcounter=0, ndim=p->out->ndim;
+
+  /* The 3D-specific columns are not mandatory in `args.h', so we need to
+     check here if they are given or not before starting to read them. */
+  if(p->p2col==NULL || p->p3col==NULL || p->q2col==NULL)
+    error(EXIT_FAILURE, 0, "at least one of `--p2col', `--p3col', or "
+          "`--q2col' have not been identified. When building a 3D profile, "
+          "these three columns are also mandatory");
+
+  /* The coordinate columns are a linked list of strings. */
+  ccol=p->ccol;
+  for(i=0;i<ndim;++i)
+    {
+      gal_list_str_add(&colstrs, ccol->v, 0);
+      ccol=ccol->next;
+    }
+
+  /* Put the columns a specific order to read. */
+  gal_list_str_add(&colstrs, p->fcol,  0);
+  gal_list_str_add(&colstrs, p->rcol,  0);
+  gal_list_str_add(&colstrs, p->ncol,  0);
+  gal_list_str_add(&colstrs, p->pcol,  0);
+  gal_list_str_add(&colstrs, p->p2col, 0);
+  gal_list_str_add(&colstrs, p->p3col, 0);
+  gal_list_str_add(&colstrs, p->qcol,  0);
+  gal_list_str_add(&colstrs, p->q2col, 0);
+  gal_list_str_add(&colstrs, p->mcol,  0);
+  gal_list_str_add(&colstrs, p->tcol,  0);
+
+  /* Reverse the order to make the column orders correspond to how we added
+     them here and avoid possible bugs. */
+  gal_list_str_reverse(&colstrs);
+
+  /* Read the desired columns from the file. */
+  cols=gal_table_read(p->catname, p->cp.hdu, colstrs, p->cp.searchin,
+                      p->cp.ignorecase, p->cp.minmapsize);
+
+  /* Set the number of objects. */
+  p->num=cols->size;
+
+  /* Put each column's data in the respective internal array. */
+  while(cols!=NULL)
+    {
+      /* Pop out the top column. */
+      tmp=gal_list_data_pop(&cols);
+
+      /* By default check if the column has blank values, but it can be
+         turned off for some columns. */
+      checkblank=1;
+
+      /* Note that the input was a linked list, so the output order is the
+         inverse of the input order. For the position, we will store the
+         values into the `x' and `y' arrays even if they are RA/Dec. */
+      switch(++counter)
+        {
+        case 1:
+        case 2:
+        case 3:
+          ++coordcounter;
+          colname = ( counter==1
+                      ? "first coordinate column (`--coordcol')"
+                      : ( counter==2
+                          ? "second coordinate column (`--coordcol')"
+                          : "third coordinate column (`--coordcol')" ) );
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT64);
+          switch(counter)
+            {
+            case 1: p->x=corrtype->array; break;
+            case 2: p->y=corrtype->array; break;
+            case 3: p->z=corrtype->array; break;
+            }
+          break;
+
+        case 4:
+          if(tmp->type==GAL_TYPE_STRING)
+            {
+              p->f=gal_data_malloc_array(GAL_TYPE_UINT8, p->num,
+                                         __func__, "p->f");
+              strarr=tmp->array;
+              for(i=0;i<p->num;++i)
+                p->f[i]=ui_profile_name_read(strarr[i], i+1);
+              gal_data_free(tmp);
+              corrtype=NULL;
+            }
+          else
+            {
+              /* Read the user's profile codes. */
+              colname="profile function code (`fcol')";
+              corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_UINT8);
+              p->f=corrtype->array;
+
+              /* Check if they are in the correct range. */
+              for(i=0;i<p->num;++i)
+                if(p->f[i]<=PROFILE_INVALID || p->f[i]>=PROFILE_MAXIMUM_CODE)
+                  error(EXIT_FAILURE, 0, "%s: row %zu, the function "
+                        "code is %u. It should be >%d and <%d. Please run "
+                        "again with `--help' and check the acceptable "
+                        "codes.\n\nAlternatively, you can use alphabetic "
+                        "strings to specify the profile functions, see the "
+                        "explanations under `fcol' from the command "
+                        "below (press the `SPACE' key to go down, and the "
+                        "`q' to return back to the command-line):\n\n"
+                        "    $ info %s\n", p->catname, i+1, p->f[i],
+                        PROFILE_INVALID, PROFILE_MAXIMUM_CODE, PROGRAM_EXEC);
+            }
+          break;
+
+        case 5:
+          colname="radius (`rcol')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->r=corrtype->array;
+          break;
+
+        case 6:
+          colname="index (`ncol')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->n=corrtype->array;
+          break;
+
+        case 7:
+          colname="first euler angle (`pcol')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->p1=corrtype->array;
+          break;
+
+        case 8:
+          colname="second euler angle (`p2col')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->p2=corrtype->array;
+          break;
+
+        case 9:
+          colname="third euler angle (`p3col')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->p3=corrtype->array;
+          break;
+
+        case 10:
+          colname="axis ratio 1 (`qcol')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->q1=corrtype->array;
+          break;
+
+        case 11:
+          colname="axis ratio 2 (`q2col')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->q2=corrtype->array;
+          break;
+
+        case 12:
+          colname="magnitude (`mcol')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->m=corrtype->array;
+          checkblank=0;          /* Magnitude can be NaN: to mask regions. */
+          break;
+
+        case 13:
+          colname="truncation (`tcol')";
+          corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
+          p->t=corrtype->array;
+          break;
+
+        /* If the index isn't recognized, then it is larger, showing that
+           there was more than one match for the given criteria */
+        default:
+          gal_tableintern_error_col_selection(p->catname, p->cp.hdu, "too "
+                                              "many columns were selected "
+                                              "by the given values to the "
+                                              "options ending in `col'.");
+        }
+
+      /* Sanity check and clean up.  Note that it might happen that the
+         input structure is already freed. In that case, `corrtype' will be
+         NULL. */
+      if(corrtype)
+        {
+          /* Make sure there are no blank values in this column. */
+          if( checkblank && gal_blank_present(corrtype, 1) )
+            error(EXIT_FAILURE, 0, "%s column has blank values. "
+                  "Input columns cannot contain blank values", colname);
+
+          /* Free the unnecessary sturcture information. The correct-type
+             (`corrtype') data structure's array is necessary for later
+             steps, so its pointer has been copied in the main program's
+             structure. Hence, we should set the structure's pointer to
+             NULL so the important data isn't freed.*/
+          corrtype->array=NULL;
+          gal_data_free(corrtype);
+        }
+    }
+}
+
+
+
+
+
+
 /* It is possible to define the internal catalog through a catalog or the
    `--kernel' option. This function will do the job. */
 static void
 ui_prepare_columns(struct mkprofparams *p)
 {
-  float r, n, t;
   double *karr;
+  float r, n, t;
+  size_t ndim=p->out->ndim;
 
   /* If the kernel option was called, then we need to build a series of
      single element columns to create an internal catalog. */
@@ -820,15 +1027,15 @@ ui_prepare_columns(struct mkprofparams *p)
       p->num=1;
 
       /* Allocate the necessary columns. */
-      p->x=gal_data_malloc_array(GAL_TYPE_FLOAT64, 1, __func__, "p->x");
-      p->y=gal_data_malloc_array(GAL_TYPE_FLOAT64, 1, __func__, "p->y");
-      p->f=gal_data_malloc_array(GAL_TYPE_UINT8,   1, __func__, "p->f");
-      p->r=gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->r");
-      p->n=gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->n");
-      p->p=gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->p");
-      p->q=gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->q");
-      p->m=gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->m");
-      p->t=gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->t");
+      p->x  = gal_data_malloc_array(GAL_TYPE_FLOAT64, 1, __func__, "p->x");
+      p->y  = gal_data_malloc_array(GAL_TYPE_FLOAT64, 1, __func__, "p->y");
+      p->f  = gal_data_malloc_array(GAL_TYPE_UINT8,   1, __func__, "p->f");
+      p->r  = gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->r");
+      p->n  = gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->n");
+      p->p1 = gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->p");
+      p->q1 = gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->q");
+      p->m  = gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->m");
+      p->t  = gal_data_malloc_array(GAL_TYPE_FLOAT32, 1, __func__, "p->t");
 
       /* Set the values that need special consideration. */
       if(p->kernel->size)
@@ -841,18 +1048,38 @@ ui_prepare_columns(struct mkprofparams *p)
       else r=n=t=0.0f;
 
       /* Fill the allocated spaces. */
-      p->x[0] = 0.0f;
-      p->y[0] = 0.0f;
-      p->f[0] = p->kernel->status;
-      p->r[0] = r;
-      p->n[0] = n;
-      p->p[0] = 0.0f;
-      p->q[0] = 1.0f;
-      p->m[0] = 0.0f;
-      p->t[0] = t;
+      p->x[0]  = 0.0f;
+      p->y[0]  = 0.0f;
+      p->f[0]  = p->kernel->status;
+      p->r[0]  = r;
+      p->n[0]  = n;
+      p->p1[0] = 0.0f;
+      p->q1[0] = 1.0f;
+      p->m[0]  = 0.0f;
+      p->t[0]  = t;
     }
   else
-    ui_read_cols(p);
+    {
+      /* Make sure the number of coordinate columns and number of
+         dimensions in outputs are the same. There is no problem if it is
+         more than `ndim'. In that case, the last values (possibly in
+         configuration files) will be ignored.*/
+      if( gal_list_str_number(p->ccol) < ndim )
+        error(EXIT_FAILURE, 0, "%zu coordinate columns (calls to "
+              "`--coordcol') given but output has %zu dimensions",
+              gal_list_str_number(p->ccol), p->out->ndim);
+
+      /* Call the respective function. */
+      switch(ndim)
+        {
+        case 2: ui_read_cols_2d(p);   break;
+        case 3: ui_read_cols_3d(p);   break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "resolve the issue. %zu not recognized for `p->out->ndim'",
+                __func__, PACKAGE_BUGREPORT, ndim);
+        }
+    }
 }
 
 
@@ -985,7 +1212,6 @@ ui_prepare_wcs(struct mkprofparams *p)
     }
   for(i=0;i<ndim*ndim;++i) wcs->pc[i]=pc[i];
 
-
   /* Set up the wcs structure with the constants defined above. */
   status=wcsset(wcs);
   if(status)
@@ -1001,10 +1227,10 @@ static void
 ui_prepare_canvas(struct mkprofparams *p)
 {
   float *f, *ff;
-  double truncr;
   long width[2]={1,1};
   int status=0, setshift=0;
   size_t i, ndim, nshift=0, *dsize=NULL;
+  double truncr, semiaxes[3], euler_deg[3];
 
   /* If a background image is specified, then use that as the output
      image to build the profiles over. */
@@ -1035,10 +1261,6 @@ ui_prepare_canvas(struct mkprofparams *p)
                                            p->cp.minmapsize);
           ndim=p->out->ndim;
 
-          /* Currently this only works on 2D images. */
-          if(p->out->ndim!=2)
-            error(EXIT_FAILURE, 0, "currently only works on 2D images");
-
           /* If p->dsize was given as an option, free it. */
           if( p->dsize ) free(p->dsize);
 
@@ -1067,10 +1289,6 @@ ui_prepare_canvas(struct mkprofparams *p)
     {
       /* Get the number of dimensions. */
       ndim=0; for(i=0;p->dsize[i]!=GAL_BLANK_SIZE_T;++i) ++ndim;
-      if(ndim!=2)
-        error(EXIT_FAILURE, 0, "currently only 2D images are usable, you "
-              "have provided %zu values for `--naxis'", ndim);
-
 
       /* If any of the shift elements are zero, the others should be too!*/
       if(p->shift && p->shift[0] && p->shift[1])
@@ -1109,8 +1327,19 @@ ui_prepare_canvas(struct mkprofparams *p)
                        half of it for the shift. */
                     setshift=1;
                     truncr = p->tunitinp ? p->t[i] : p->t[i] * p->r[i]/2;
-                    gal_box_ellipse_in_box(truncr, p->q[i]*truncr,
-                                           p->p[i]*DEGREESTORADIANS, width);
+                    if(ndim==2)
+                      gal_box_bound_ellipse(truncr, p->q1[i]*truncr,
+                                            p->p1[i], width);
+                    else
+                      {
+                        euler_deg[0] = p->p1[i];
+                        euler_deg[1] = p->p2[i];
+                        euler_deg[2] = p->p3[i];
+                        semiaxes[0]  = truncr;
+                        semiaxes[1]  = truncr * p->q1[i];
+                        semiaxes[2]  = truncr * p->q2[i];
+                        gal_box_bound_ellipsoid( semiaxes, euler_deg, width);
+                      }
                   }
 
               /* Either set the shifts to zero or to the values set from

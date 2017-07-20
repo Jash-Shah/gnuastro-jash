@@ -137,9 +137,10 @@ threshold_apply_on_thread(void *in_prm)
 
 
         default:
-          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s so we can "
-                "address the problem. A value of %d had for `taprm->kind' "
-                "is not valid", __func__, PACKAGE_BUGREPORT, taprm->kind);
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s so we "
+                "can address the problem. A value of %d had for "
+                "`taprm->kind' is not valid", __func__, PACKAGE_BUGREPORT,
+                taprm->kind);
         }
     }
 

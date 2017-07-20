@@ -10,6 +10,14 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Arithmetic: now has a new `--globalhdu' (`-g') option which can be used
   once for all the input images.
 
+  MakeProfiles: can build 3D ellipsoids of any orientation and shape. The
+  following options are new to MakeProfiles for enabling 3D profiles:
+  `--p2col', `--p3col' (second two Euler angles), and `--q2col' (axis ratio
+  of third axis to major axis). To help in using the 3D features, a
+  `astmkprof-3d.conf' configuration file will also be installed with
+  Gnuastro. The `--config' option can be used to specify default values for
+  3D profiles.
+
   MakeProfiles: the new `--kernel' option can make a kernel image without
   the need to define a catalog. With this option, a catalog (or
   accompanying background image) must not be given.
@@ -17,6 +25,11 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   MakeProfiles: the new `--pc', `--cunit' and `--ctype' options can be used
   to specify the PC matrix, CUNIT and CTYPE world coordinate system
   keywords of the output FITS file.
+
+  MakeProfiles: can build a new raidal profile called `distance' (code
+  7). The value this profile gives to each pixel is equal to its distance
+  from the center. It can be used to build any other radial profile that is
+  not supported by MakeProfiles.
 
 ** Removed features
 
@@ -79,6 +92,14 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Pure rotation around pixel coordinate (0,0) (bug #51353).
 
   NoiseChisel segfault when no usable region for sky clumps (bug #51372).
+
+  Pixel scale measurement when dimension scale isn't equal or doesn't
+  decrease (bug #51385).
+
+  Improper types for function code in MakeProfiles (bug #51467).
+
+  Crashes on 32-bit and big-endian systems (bug #51476).
+
 
 
 

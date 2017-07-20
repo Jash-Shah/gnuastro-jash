@@ -65,6 +65,7 @@ enum profile_types
   PROFILE_POINT,                /* Point profile.              */
   PROFILE_FLAT,                 /* Flat profile.               */
   PROFILE_CIRCUMFERENCE,        /* Circumference profile.      */
+  PROFILE_DISTANCE,             /* Elliptical radius of pixel. */
 
   PROFILE_MAXIMUM_CODE,         /* Just for a sanity check.    */
 };
@@ -91,13 +92,10 @@ struct builtqueue
   size_t               id;    /* ID of this object.                  */
   int               ispsf;    /* This is a PSF profile.              */
   int            overlaps;    /* ==1: Overlaps with the image.       */
-  float              *img;    /* Array of this profile's image.      */
-  size_t         imgwidth;    /* Width of *img.                      */
-  long        fpixel_i[2];    /* First pixel in output image.        */
-  long        lpixel_i[2];    /* Last pixel in output image.         */
-  long        fpixel_o[2];    /* First pixel in this array.          */
+  gal_data_t       *image;    /* Array of this profile's image.      */
+  gal_data_t   *overlap_i;    /* Overlap tile over individual array. */
+  gal_data_t   *overlap_m;    /* Overlap tile over merged array.     */
   int                func;    /* Profile's radial function.          */
-
   int        indivcreated;    /* ==1: an individual file is created. */
   size_t          numaccu;    /* Number of accurate pixels.          */
   double         accufrac;    /* Difference of accurate values.      */
@@ -139,8 +137,11 @@ struct mkprofparams
   char                *fcol;  /* Column specifying profile function.      */
   char                *rcol;  /* Effective radius of profile.             */
   char                *ncol;  /* Sersic index column of profile.          */
-  char                *pcol;  /* Position angle column of profile.        */
-  char                *qcol;  /* Axis ratio column of profile.            */
+  char                *pcol;  /* First Euler angle (X-Z-X order).         */
+  char               *p2col;  /* Second Euler angle (X-Z-X order).        */
+  char               *p3col;  /* Third Euler angle (X-Z-X order).         */
+  char                *qcol;  /* Axis ratio1 (major/2nd dim. radius).     */
+  char               *q2col;  /* Axis ratio2 (major/3rd dim. radius).     */
   char                *mcol;  /* Magnitude column.                        */
   char                *tcol;  /* Truncation of the profiles.              */
   uint8_t       mforflatpix;  /* mcol is flat pixel value (f is 4 or 5).  */
@@ -162,11 +163,15 @@ struct mkprofparams
   size_t                num;  /* The number of profiles.                  */
   double                 *x;  /* X axis position of profile center.       */
   double                 *y;  /* Y axis position of profile center.       */
+  double                 *z;  /* Z axis position of profile center.       */
   uint8_t                *f;  /* Profile function code.                   */
   float                  *r;  /* Radius of profile.                       */
   float                  *n;  /* Index of profile.                        */
-  float                  *p;  /* Position angle of profile                */
-  float                  *q;  /* Axis ratio of profile.                   */
+  float                 *p1;  /* First Euler angle (X-Z-X order).         */
+  float                 *p2;  /* Second Euler angle (X-Z-X order).        */
+  float                 *p3;  /* Third Euler angle (X-Z-X order).         */
+  float                 *q1;  /* Ratio of radius to second axis.          */
+  float                 *q2;  /* Ratio of radius to third axis.           */
   float                  *m;  /* Magnitude of profile.                    */
   float                  *t;  /* Truncation distance.                     */
   gsl_rng              *rng;  /* Main instance of random number generator.*/

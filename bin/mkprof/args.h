@@ -178,6 +178,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "envseed",
+      UI_KEY_ENVSEED,
+      0,
+      0,
+      "Use GSL_RNG_SEED environment variable for seed.",
+      ARGS_GROUP_PROFILES,
+      &p->envseed,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "tolerance",
       UI_KEY_TOLERANCE,
       "FLT",
@@ -198,6 +211,19 @@ struct argp_option program_options[] =
       "Truncation is in units of pixels, not radius.",
       ARGS_GROUP_PROFILES,
       &p->tunitinp,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "mforflatpix",
+      UI_KEY_MFORFLATPIX,
+      0,
+      0,
+      "mcol is flat pixel value (when fcol is 5 or 6)",
+      ARGS_GROUP_CATALOG,
+      &p->mforflatpix,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -244,6 +270,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "magatpeak",
+      UI_KEY_MAGATPEAK,
+      0,
+      0,
+      "Magnitude is for peak pixel, not full profile.",
+      ARGS_GROUP_PROFILES,
+      &p->magatpeak,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "circumwidth",
       UI_KEY_CIRCUMWIDTH,
       "FLT",
@@ -269,32 +308,6 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
-    {
-      "magatpeak",
-      UI_KEY_MAGATPEAK,
-      0,
-      0,
-      "Magnitude is for peak pixel, not full profile.",
-      ARGS_GROUP_PROFILES,
-      &p->magatpeak,
-      GAL_OPTIONS_NO_ARG_TYPE,
-      GAL_OPTIONS_RANGE_0_OR_1,
-      GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET
-    },
-    {
-      "envseed",
-      UI_KEY_ENVSEED,
-      0,
-      0,
-      "Use GSL_RNG_SEED environment variable for seed.",
-      ARGS_GROUP_PROFILES,
-      &p->envseed,
-      GAL_OPTIONS_NO_ARG_TYPE,
-      GAL_OPTIONS_RANGE_0_OR_1,
-      GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET
-    },
 
 
 
@@ -304,6 +317,20 @@ struct argp_option program_options[] =
       0, 0, 0, 0,
       "Columns, by info (see `--searchin'), or number (starting from 1):",
       ARGS_GROUP_CATALOG
+    },
+    {
+      "mode",
+      UI_KEY_MODE,
+      "STR",
+      0,
+      "Mode of `--ccol': `img' or `wcs'.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->mode,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_parse_coordinate_mode
     },
     {
       "ccol",
@@ -319,26 +346,12 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
-      "mode",
-      UI_KEY_MODE,
-      "STR",
-      0,
-      "Coordinate mode `img' or `wcs'.",
-      GAL_OPTIONS_GROUP_INPUT,
-      &p->mode,
-      GAL_TYPE_STRING,
-      GAL_OPTIONS_RANGE_ANY,
-      GAL_OPTIONS_MANDATORY,
-      GAL_OPTIONS_NOT_SET,
-      ui_parse_coordinate_mode
-    },
-    {
       "fcol",
       UI_KEY_FCOL,
       "STR/INT",
       0,
       "sersic (1), moffat (2), gaussian (3), point (4), "
-      "flat (5), circumference (6).",
+      "flat (5), circumference (6), distance (7).",
       ARGS_GROUP_CATALOG,
       &p->fcol,
       GAL_TYPE_STRING,
@@ -377,7 +390,7 @@ struct argp_option program_options[] =
       UI_KEY_PCOL,
       "STR/INT",
       0,
-      "Position angle.",
+      "Position angle (First X-Z-X Euler angle in 3D).",
       ARGS_GROUP_CATALOG,
       &p->pcol,
       GAL_TYPE_STRING,
@@ -386,16 +399,55 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "p2col",
+      UI_KEY_P2COL,
+      "STR/INT",
+      0,
+      "Second Euler angle (X-Z-X order).",
+      ARGS_GROUP_CATALOG,
+      &p->p2col,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "p3col",
+      UI_KEY_P2COL,
+      "STR/INT",
+      0,
+      "Third Euler angle (X-Z-X order).",
+      ARGS_GROUP_CATALOG,
+      &p->p3col,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "qcol",
       UI_KEY_QCOL,
       "STR/INT",
       0,
-      "Axis ratio.",
+      "Axis ratio (major/dim2 radius).",
       ARGS_GROUP_CATALOG,
       &p->qcol,
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "q2col",
+      UI_KEY_Q2COL,
+      "STR/INT",
+      0,
+      "Axis ratio (major/dim3 radius).",
+      ARGS_GROUP_CATALOG,
+      &p->q2col,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
     {
@@ -422,19 +474,6 @@ struct argp_option program_options[] =
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_MANDATORY,
-      GAL_OPTIONS_NOT_SET
-    },
-    {
-      "mforflatpix",
-      UI_KEY_MFORFLATPIX,
-      0,
-      0,
-      "mcol is flat pixel value (when fcol is 5 or 6)",
-      ARGS_GROUP_CATALOG,
-      &p->mforflatpix,
-      GAL_OPTIONS_NO_ARG_TYPE,
-      GAL_OPTIONS_RANGE_0_OR_1,
-      GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
 

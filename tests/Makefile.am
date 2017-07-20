@@ -127,10 +127,11 @@ if COND_MKNOISE
   mknoise/addnoise.sh: warp/warp_scale.sh.log
 endif
 if COND_MKPROF
-  MAYBE_MKPROF_TESTS = mkprof/mosaic1.sh mkprof/mosaic2.sh	\
-  mkprof/mosaic3.sh mkprof/mosaic4.sh mkprof/radeccat.sh	\
-  mkprof/ellipticalmasks.sh mkprof/clearcanvas.sh
+  MAYBE_MKPROF_TESTS = mkprof/mosaic1.sh mkprof/mosaic2.sh         \
+  mkprof/mosaic3.sh mkprof/mosaic4.sh mkprof/radeccat.sh           \
+  mkprof/ellipticalmasks.sh mkprof/clearcanvas.sh mkprof/3dcat.sh
 
+  mkprof/3dcat.sh: prepconf.sh.log
   mkprof/mosaic1.sh: prepconf.sh.log
   mkprof/mosaic2.sh: prepconf.sh.log
   mkprof/mosaic3.sh: prepconf.sh.log
@@ -224,10 +225,10 @@ TESTS = prepconf.sh lib/versioncpp.sh lib/multithread.sh                   \
 
 
 # Files to distribute along with the tests.
-EXTRA_DIST = $(TESTS) during-dev.sh buildprog/simpleio.c crop/cat.txt     \
-  mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt mkprof/clearcanvas.txt \
-  mkprof/mkprofcat2.txt mkprof/mkprofcat3.txt mkprof/mkprofcat4.txt       \
-  mkprof/radeccat.txt table/table.txt
+EXTRA_DIST = $(TESTS) during-dev.sh buildprog/simpleio.c crop/cat.txt   \
+  mkprof/3dcat.txt mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt     \
+  mkprof/clearcanvas.txt mkprof/mkprofcat2.txt mkprof/mkprofcat3.txt    \
+  mkprof/mkprofcat4.txt mkprof/radeccat.txt table/table.txt
 
 
 

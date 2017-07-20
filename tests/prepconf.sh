@@ -68,10 +68,13 @@ rm addedoptions.txt
 # ---------------------------------
 #
 # Each utility's configuration file is copied in the `tests' directory for
-# easy readability.
+# easy readability. We are just using a wildcard to copy any configuration
+# file in each program's source. This is because some programs come with
+# some supplementary configuration files to help the users (like
+# MakeProfiles to operate in 3D).
 for prog in arithmetic convertt convolve cosmiccal crop fits      \
             mkcatalog mknoise mkprof noisechisel statistics       \
             table warp
 do
-    cp $topsrc/bin/$prog/ast$prog.conf .gnuastro/ast$prog.conf
+    cp $topsrc/bin/$prog/ast*.conf .gnuastro/
 done

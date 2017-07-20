@@ -31,26 +31,22 @@ struct mkonthread
 {
   /* General parameters: */
   double                r;   /* Elliptical radius at this point.      */
-  double                x;   /* x value of this point.                */
-  double               xl;   /* lower  x boundary                     */
-  double               xh;   /* higher x boundary.                    */
-  double                y;   /* y value when integrating over x.      */
-  double               yl;   /* lower  y boundary.                    */
-  double               yh;   /* higher y boundary.                    */
-  double                c;   /* Cosine of the position angle.         */
-  double                s;   /* Sine of the position angle.           */
-  double                q;   /* axis ratio of the position angle.     */
-  double               xc;   /* Center in C of created(oversampled).  */
-  double               yc;   /* Center in C of created(oversampled).  */
+  double         coord[3];   /* Pixel coordinate.                     */
+  double         lower[3];   /* Coordinates of lower pixel position.  */
+  double        higher[3];   /* Coordinates of higher pixel position. */
+  double             c[3];   /* Cosine of position angle(s).          */
+  double             s[3];   /* Sine of position angle(s).            */
+  double             q[2];   /* Axis ratio(s).                        */
+  double        center[3];   /* Center (in FITS) in oversampled image.*/
   double (*profile)(struct mkonthread *); /* Function to use.         */
   double           truncr;   /* Truncation radius in pixels.          */
   double         intruncr;   /* Inner truncation radius in pixels.    */
-  long           width[2];   /* Enclosing box in FITS axes, not C.    */
+  long           width[3];   /* Enclosing box in FITS axes, not C.    */
   float          peakflux;   /* Flux at profile peak.                 */
   float        brightness;   /* The brightness of the profile.        */
-  int                func;   /* Radial function of the profile.       */
+  uint8_t            func;   /* Radial function code of the profile.  */
   long            *onaxes;   /* Sides of the unover-sampled image.    */
-  long        fpixel_i[2];   /* fpixel_i before running overlap.      */
+  long        fpixel_i[3];   /* fpixel_i before running overlap.      */
   int          correction;   /* ==1: correct the pixels afterwards.   */
 
   /* Random number generator: */
