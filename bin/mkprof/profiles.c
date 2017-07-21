@@ -52,8 +52,8 @@ profiles_radial_distance(struct mkonthread *mkp)
 
 
 
-/* The integral of the Gaussian from -inf to +inf equals the square
- root of PI. So from zero to +inf it equals half of that.*/
+/* The integral of the Gaussian from -inf to +inf equals the square root of
+   PI. So from zero to +inf it equals half of that.*/
 double
 profiles_gaussian_total(double q)
 {

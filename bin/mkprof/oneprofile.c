@@ -103,13 +103,12 @@ oneprofile_set_coord(struct mkonthread *mkp, size_t index)
 
 
 /* Convert cartesian coordinates to the rotated elliptical radius. See the
-   "Defining an ellipse" section of the book for the full derivation. */
+   "Defining an ellipse and ellipsoid" section of the book for the full
+   derivation. */
 static void
 oneprofile_r_el(struct mkonthread *mkp)
 {
-  /* ct: cos(theta)         st: sin(theta)
-     cp: cos(phi)           sp: sin(phi)      */
-  double Xr, Yr, Zr;                               /* Rotated x, y, z. */
+  double Xr, Yr, Zr;                   /* Rotated x, y, z. */
   double q1=mkp->q[0],   q2=mkp->q[1];
   double c1=mkp->c[0],   s1=mkp->s[0];
   double c2=mkp->c[1],   s2=mkp->s[1];
@@ -514,7 +513,7 @@ oneprofile_ispsf(uint8_t fcode)
 
 
 
-/* About the shifts on the X column and y column:*/
+/* Prepare all the parameters for any type of profile. */
 void
 oneprof_set_prof_params(struct mkonthread *mkp)
 {

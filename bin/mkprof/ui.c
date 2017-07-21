@@ -164,6 +164,7 @@ ui_profile_name_write(int profile_code)
     case PROFILE_POINT:          return "point";
     case PROFILE_FLAT:           return "flat";
     case PROFILE_CIRCUMFERENCE:  return "circum";
+    case PROFILE_DISTANCE:       return "distance";
     default:
       error(EXIT_FAILURE, 0, "%s: %d not recognized as a profile code",
             __func__, profile_code);
@@ -426,7 +427,7 @@ ui_parse_kernel(struct argp_option *option, char *arg,
          are needed. */
       if( kernel->size != need )
         error_at_line(EXIT_FAILURE, 0, filename, lineno, "as a %uD kernel, "
-                      "a `%s' profile needs %zu parameters, but only %zu "
+                      "a `%s' profile needs %zu parameters, but %zu "
                       "parameter%s given to `--kernel'", kernel->flag,
                       ui_profile_name_write(kernel->status), need,
                       kernel->size, kernel->size>1?"s are":" is");
@@ -1344,7 +1345,7 @@ ui_prepare_canvas(struct mkprofparams *p)
 {
   float *f, *ff;
   gal_data_t *keysll;
-  long width[2]={1,1};
+  long width[3]={1,1,1};
   int status=0, setshift=0;
   double truncr, semiaxes[3], euler_deg[3];
   size_t i, nshift=0, *dsize=NULL, ndim_counter;
@@ -1478,6 +1479,7 @@ ui_prepare_canvas(struct mkprofparams *p)
                 {
                   p->shift[0]  = (width[0]/2)*p->oversample;
                   p->shift[1]  = (width[1]/2)*p->oversample;
+                  if(p->ndim==3) p->shift[2] = (width[2]/2)*p->oversample;
                 }
             }
         }
@@ -1557,6 +1559,12 @@ ui_finalize_coordinates(struct mkprofparams *p)
      need to change them into actual image coordinates. */
   if(p->mode==MKPROF_MODE_WCS)
     {
+      /* `gal_wcs_world_to_img' API needs to be changed to allow any number
+         of dimensions. */
+      if(ndim!=2)
+        error(EXIT_FAILURE, 0, "%s: conversion from WCS coordinates is not "
+              "yet implemented for %zu dimensions", __func__, ndim);
+
       /* Note that we read the RA and Dec columns into the `p->x' and `p->y'
          arrays temporarily before. Here, we will convert them, free the old
          ones and replace them with the proper X and Y values. */
