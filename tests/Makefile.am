@@ -229,7 +229,7 @@ TESTS = prepconf.sh lib/versioncpp.sh lib/multithread.sh                   \
 
 # Files to distribute along with the tests.
 EXTRA_DIST = $(TESTS) during-dev.sh buildprog/simpleio.c crop/cat.txt   \
-  mkprof/3dcat.txt mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt     \
+  mkprof/3d-cat.txt mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt    \
   mkprof/clearcanvas.txt mkprof/mkprofcat2.txt mkprof/mkprofcat3.txt    \
   mkprof/mkprofcat4.txt mkprof/radeccat.txt table/table.txt
 
