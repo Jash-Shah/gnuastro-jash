@@ -15194,12 +15194,13 @@ Only build one kernel profile with the parameters given as the values to
 this option. The different values must be separated by a comma
 (@key{,}). The first value identifies the radial function of the profile,
 either through a string or through a number (see description of
-@option{--fcol} below). Each radial profile needs a different total number
-of parameters: S@'ersic and Moffat functions need 3 parameters: radial,
-S@'ersic index or Moffat @mymath{\beta}, and truncation radius. The
-Gaussian function needs two parameters: radial and truncation radius. The
-point function doesn't need any parameters and flat and circumference
-profiles just need one parameter (truncation radius).
+@option{--fcol} in @ref{MakeProfiles catalog}). Each radial profile needs a
+different total number of parameters: S@'ersic and Moffat functions need 3
+parameters: radial, S@'ersic index or Moffat @mymath{\beta}, and truncation
+radius. The Gaussian function needs two parameters: radial and truncation
+radius. The point function doesn't need any parameters and flat,
+circumference and distance profiles just need one parameter (truncation
+radius).
 
 The PSF or kernel is a unique (and highly constrained) type of profile: the
 sum of its pixels must be one, its center must be the center of the central
@@ -15207,24 +15208,54 @@ pixel (in an image with an odd number of pixels on each side), and commonly
 it is circular, so its axis ratio and position angle are one and zero
 respectively. Kernels are commonly necessary for various data analysis and
 data manipulation steps (for example see @ref{Convolve}, and
-@ref{NoiseChisel}. Because of this it is inconvenient to define a catalog
+@ref{NoiseChisel}). Because of this it is inconvenient to define a catalog
 with one row and many zero valued columns (for all the non-necessary
-parameters). Hence, with this option, it is possible to create a kernel
-with MakeProfiles without the need to create a catalog. Here are some
-examples:
+parameters). With this option, it is possible to easily create a kernel
+with MakeProfiles without a catalog. Here are some examples:
 
 @table @option
 @item --kernel=moffat,3,2.8,5
-A Moffat kernel with FWHM of 3 pixels, @mymath{\beta=2.8} which is
+A circular Moffat kernel with FWHM of 3 pixels, @mymath{\beta=2.8} which is
 truncated at 5 times the FWHM.
 
 @item --kernel=gaussian,2,3
-A Gaussian kernel with FWHM of 2 pixels and truncated at 3 times the FWHM.
+A circular Gaussian kernel with FWHM of 2 pixels and truncated at 3 times
+the FWHM.
+@end table
+
+This option may also be used to create a 3D kernel. To do that, to small
+modifications are necessary: add a @code{-3d} (or @code{-3D}) to the
+profile name (for example @code{moffat-3d}) and add a fraction (value
+between 0 and 1) to the end of the parameters for all profiles except
+@code{point}. The fractional value is the axis ratio in the third
+dimension. The main reason behind the fractional value is that commonly in
+3D astronomical datasets the third dimension doesn't have the same nature
+as the first and second.
+
+For example in IFU datacubes, the first and second dimensions are angular
+positions (like RA and Dec) but the third is in units of Angstroms for
+wavelength. Because of this different nature (which also affects the
+processing), it may be necessary for the kernel to have a different extent
+in that direction@footnote{So far, only cases where the third dimension
+extent must be less than the first two have been useful for us. If you need
+it to be larger, then please contact us and we will implement it.}. For
+example, let's have a look at the two examples above but in 3D:
+
+@table @option
+@item --kernel=moffat-3d,3,2.8,5,0.5
+An ellipsoid Moffat kernel with FWHM of 3 pixels, @mymath{\beta=2.8} which
+is truncated at 5 times the FWHM. The ellipsoid is circular in the first
+two dimensions, but in the third dimension its extent is half the first
+two.
+
+@item --kernel=gaussian-3d,2,3,1
+A spherical Gaussian kernel with FWHM of 2 pixels and truncated at 3 times
+the FWHM.
 @end table
 
 @item -x INT,INT
 @itemx --naxis=INT,INT
-The number of pixels along each dimension axis of the output in FITS
+The number of pixels along each dimension axis of f the output in FITS
 order. This is before over-sampling. For example if you call MakeProfiles
 with @option{--naxis=100,150 --oversample=5} (assuming no shift due for
 later convolution), then the final image size along the first axis will be
@@ -19448,7 +19479,10 @@ gal_fits_key_read_from_ptr(fptr, keysll, 0, 0);
 
 /* Use the values as you like... */
 
-/* Free all the allocated spaces. */
+/* Free all the allocated spaces. Note that `name' wasn't allocated
+   in this example, so we should explicitly set it to NULL before
+   calling `gal_data_array_free'.                                   */
+for(i=0;i<N-2;++i) keysll[i].name=NULL;
 gal_data_array_free(keysll, N, 1);
 @end example
 

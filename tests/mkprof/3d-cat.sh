@@ -21,7 +21,7 @@
 # file exists (basicchecks.sh is in the source tree).
 prog=mkprof
 execname=../bin/$prog/ast$prog
-cat=$topsrc/tests/$prog/3dcat.txt
+cat=$topsrc/tests/$prog/3d-cat.txt
 
 
 

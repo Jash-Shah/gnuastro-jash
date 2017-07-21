@@ -125,19 +125,21 @@ if COND_MKNOISE
   MAYBE_MKNOISE_TESTS = mknoise/addnoise.sh mknoise/addnoise-3d.sh
 
   mknoise/addnoise.sh: warp/warp_scale.sh.log
-  mknoise/addnoise-3d.sh: mkprof/3dcat.sh.log
+  mknoise/addnoise-3d.sh: mkprof/3d-cat.sh.log
 endif
 if COND_MKPROF
   MAYBE_MKPROF_TESTS = mkprof/mosaic1.sh mkprof/mosaic2.sh         \
   mkprof/mosaic3.sh mkprof/mosaic4.sh mkprof/radeccat.sh           \
-  mkprof/ellipticalmasks.sh mkprof/clearcanvas.sh mkprof/3dcat.sh
+  mkprof/ellipticalmasks.sh mkprof/clearcanvas.sh mkprof/3d-cat.sh \
+  mkprof/3d-kernel.sh
 
-  mkprof/3dcat.sh: prepconf.sh.log
+  mkprof/3d-cat.sh: prepconf.sh.log
   mkprof/mosaic1.sh: prepconf.sh.log
   mkprof/mosaic2.sh: prepconf.sh.log
   mkprof/mosaic3.sh: prepconf.sh.log
   mkprof/mosaic4.sh: prepconf.sh.log
   mkprof/radeccat.sh: prepconf.sh.log
+  mkprof/3d-kernel.sh: prepconf.sh.log
   mkprof/ellipticalmasks.sh: mknoise/addnoise.sh.log
   mkprof/clearcanvas.sh: mknoise/addnoise.sh.log
 endif

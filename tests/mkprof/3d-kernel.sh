@@ -1,4 +1,4 @@
-# Add noise to an input cube.
+# Create a 3D kernel with MakeProfiles.
 #
 # See the Tests subsection of the manual for a complete explanation
 # (in the Installing gnuastro section).
@@ -13,22 +13,13 @@
 # without any warranty.
 
 
-
-
 # Preliminaries
 # =============
 #
 # Set the variables (The executable is in the build tree). Do the
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
-#
-# We will be adding noise to two images: the warped (smaller) and unwarped
-# (larger) mock images. The warped one will be used by programs that don't
-# care about the size of the image, but the larger one will be used by
-# those that do: for example SubtractSky and NoiseChisel will be better
-# tested on a larger image.
-prog=mknoise
-img=3d-cat.fits
+prog=mkprof
 execname=../bin/$prog/ast$prog
 
 
@@ -41,12 +32,10 @@ execname=../bin/$prog/ast$prog
 # If the dependencies of the test don't exist, then skip it. There are two
 # types of dependencies:
 #
-#   - The executable was not made (for example due to a configure option),
+#   - The executable was not made (for example due to a configure option).
 #
-#   - The input data was not made (for example the test that created the
-#     data file failed).
-if [ ! -f $execname ]; then echo "$execname doesn't exist."; exit 77; fi
-if [ ! -f $img      ]; then echo "$img does not exist.";     exit 77; fi
+#   - Catalog doesn't exist (problem in tarball release).
+if [ ! -f $execname ]; then echo "$execname not created."; exit 77; fi
 
 
 
@@ -54,6 +43,5 @@ if [ ! -f $img      ]; then echo "$img does not exist.";     exit 77; fi
 
 # Actual test script
 # ==================
-export GSL_RNG_SEED=1
-export GSL_RNG_TYPE=ranlxs2
-$execname --envseed $img
+$execname $cat --kernel=gaussian-3d,2,3,0.5 --oversample=1    \
+          --output=3d-kernel.fits

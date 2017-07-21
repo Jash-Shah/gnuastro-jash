@@ -79,11 +79,17 @@ builtqueue_addempty(struct builtqueue **bq)
     error(EXIT_FAILURE, 0, "%s: allocating %zu bytes for `tbq'",
           __func__, sizeof *tbq);
 
-  /* Initialize some of the values. */
-  tbq->image=NULL;
-  tbq->numaccu=0;
-  tbq->accufrac=0.0f;
-  tbq->indivcreated=0;
+  /* Initialize the values (same order as in structure definition). */
+  tbq->id           = GAL_BLANK_SIZE_T;
+  tbq->ispsf        = 0;
+  tbq->overlaps     = 0;
+  tbq->image        = NULL;
+  tbq->overlap_i    = NULL;
+  tbq->overlap_m    = NULL;
+  tbq->func         = PROFILE_MAXIMUM_CODE;
+  tbq->indivcreated = 0;
+  tbq->numaccu      = 0;
+  tbq->accufrac     = 0.0f;
 
   /* Set its next element to the input bq and re-set the input bq. */
   tbq->next=*bq;
@@ -120,7 +126,7 @@ saveindividual(struct mkonthread *mkp)
 
   double *crpix;
   long os=p->oversample;
-  size_t i, ndim=p->out->ndim;
+  size_t i, ndim=p->ndim;
   struct builtqueue *ibq=mkp->ibq;
   char *filename, *jobname, *outdir=p->outdir;
 
@@ -202,7 +208,7 @@ mkprof_build_single(struct mkonthread *mkp, long *fpixel_i, long *lpixel_i,
 
   void *ptr;
   int needs_crop=0;
-  size_t i, ind, fits_i, ndim=p->out->ndim;
+  size_t i, ind, fits_i, ndim=p->ndim;
   size_t start_indiv[3], start_mrg[3], dsize[3], os=p->oversample;
 
   /* Make a copy of the main random number generator to use for this
@@ -228,7 +234,7 @@ mkprof_build_single(struct mkonthread *mkp, long *fpixel_i, long *lpixel_i,
   /* If we want a merged image, then a tile needs to be defined over the
      individual profile array and the output merged array to define the
      overlapping region. */
-  if(p->out->array)
+  if(p->out)
     {
       /* Note that `fpixel_o' and `lpixel_o' were in the un-oversampled
          image, they are also in the FITS coordinates. */
@@ -367,7 +373,7 @@ mkprof_build(void *inparam)
   struct mkonthread *mkp=(struct mkonthread *)inparam;
   struct mkprofparams *p=mkp->p;
 
-  size_t i, id, ndim=p->out->ndim;
+  size_t i, id, ndim=p->ndim;
   struct builtqueue *ibq, *fbq=NULL;
   double center[3], semiaxes[3], euler_deg[3];
   long fpixel_i[3], lpixel_i[3], fpixel_o[3], lpixel_o[3];
@@ -396,33 +402,43 @@ mkprof_build(void *inparam)
       if( p->f[id] == PROFILE_POINT )
         mkp->width[0]=mkp->width[1]=1;
       else
-        {
-          if(p->out->ndim==2)
+        switch(ndim)
+          {
+          case 2:
             gal_box_bound_ellipse(mkp->truncr, mkp->q[0]*mkp->truncr,
                                   p->p1[id], mkp->width);
-          else
-            {
-              euler_deg[0] = p->p1[id];
-              euler_deg[1] = p->p2[id];
-              euler_deg[2] = p->p3[id];
-              semiaxes[0]  = mkp->truncr;
-              semiaxes[1]  = mkp->truncr * mkp->q[0];
-              semiaxes[2]  = mkp->truncr * mkp->q[1];
-              gal_box_bound_ellipsoid(semiaxes, euler_deg, mkp->width);
-            }
-        }
+            break;
+
+          case 3:
+            euler_deg[0] = p->p1[id];
+            euler_deg[1] = p->p2[id];
+            euler_deg[2] = p->p3[id];
+            semiaxes[0]  = mkp->truncr;
+            semiaxes[1]  = mkp->truncr * mkp->q[0];
+            semiaxes[2]  = mkp->truncr * mkp->q[1];
+            gal_box_bound_ellipsoid(semiaxes, euler_deg, mkp->width);
+            break;
+
+          default:
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to "
+                  "address the issue. %zu is not recognized for `ndim'",
+                  __func__, PACKAGE_BUGREPORT, ndim);
+          }
 
 
       /* Get the overlapping pixels using the starting points (NOT
          oversampled). */
-      center[0]=p->x[id];
-      center[1]=p->y[id];
-      if(ndim==3) center[2]=p->z[id];
-      gal_box_border_from_center(center, ndim, mkp->width, fpixel_i,
-                                 lpixel_i);
-      memcpy(mkp->fpixel_i, fpixel_i, ndim*sizeof *fpixel_i);
-      ibq->overlaps = gal_box_overlap(mkp->onaxes, fpixel_i, lpixel_i,
-                                      fpixel_o, lpixel_o, ndim);
+      if(p->out)
+        {
+          center[0]=p->x[id];
+          center[1]=p->y[id];
+          if(ndim==3) center[2]=p->z[id];
+          gal_box_border_from_center(center, ndim, mkp->width, fpixel_i,
+                                     lpixel_i);
+          memcpy(mkp->fpixel_i, fpixel_i, ndim*sizeof *fpixel_i);
+          ibq->overlaps = gal_box_overlap(mkp->onaxes, fpixel_i, lpixel_i,
+                                          fpixel_o, lpixel_o, ndim);
+        }
 
 
       /* Build the profile if necessary. */
@@ -504,7 +520,7 @@ mkprof_write(struct mkprofparams *p)
          both the individual array and the final merged array, here we will
          use those to put the required profile pixels into the final
          array. */
-      if(ibq->overlaps && out->array)
+      if(ibq->overlaps && out)
         GAL_TILE_PO_OISET(float,float,ibq->overlap_i,ibq->overlap_m,1,0, {
             *o  = p->replace ? ( *i==0.0f ? *o : *i ) :  (*i + *o);
             sum += *i;
@@ -562,14 +578,18 @@ mkprof_write(struct mkprofparams *p)
 
   /* Write the final array to the output FITS image if a merged image is to
      be created. */
-  if(out->array)
+  if(out)
     {
       /* Get the current time for verbose output. */
       if(!p->cp.quiet) gettimeofday(&t1, NULL);
 
-      /* Write the final image into a FITS file with the requested type. */
+      /* Write the final image into a FITS file with the requested
+         type. Until now, we were using `p->wcs' for the WCS, but from now
+         on, will put it in `out' to also free it while freeing `out'. */
+      out->wcs=p->wcs;
       gal_fits_img_write_to_type(out, p->mergedimgname, NULL,
                                  PROGRAM_STRING, p->cp.type);
+      p->wcs=NULL;
 
       /* Clean up */
       gal_data_free(out);
@@ -582,11 +602,6 @@ mkprof_write(struct mkprofparams *p)
           free(jobname);
         }
     }
-
-  /* Even with no merged image, there might still be pointers in `out' that
-     need to be freed. */
-  else
-    gal_data_free(p->out);
 }
 
 
@@ -621,9 +636,9 @@ mkprof(struct mkprofparams *p)
   pthread_barrier_t b;
   struct mkonthread *mkp;
   gal_list_str_t *comments=NULL;
-  long *onaxes, os=p->oversample;
   size_t i, fi, *indexs, thrdcols;
-  size_t nb, ndim=p->out->ndim, nt=p->cp.numthreads;
+  long *onaxes=NULL, os=p->oversample;
+  size_t nb, ndim=p->ndim, nt=p->cp.numthreads;
 
   /* Allocate the arrays to keep the thread and parameters for each
      thread. Note that we only want nt-1 threads to do the
@@ -641,13 +656,18 @@ mkprof(struct mkprofparams *p)
   gal_threads_dist_in_threads(p->num, nt, &indexs, &thrdcols);
 
 
-  /* onaxes are sides of the image without over-sampling in FITS order. */
-  onaxes=gal_data_malloc_array(GAL_TYPE_LONG, ndim, __func__, "onaxes");
-  for(fi=0; fi < ndim; ++fi)
+  /* `onaxes' are size of the merged output image without over-sampling or
+     shifting in FITS order. When no output merged image is needed, we can
+     ignore it. */
+  if(p->out)
     {
-      i=ndim-fi-1;
-      onaxes[fi] = ( ( p->dsize[i] - 2 * p->shift[i] ) / os
-                     + 2 * p->shift[i]/os );
+      onaxes=gal_data_malloc_array(GAL_TYPE_LONG, ndim, __func__, "onaxes");
+      for(fi=0; fi < ndim; ++fi)
+        {
+          i=ndim-fi-1;
+          onaxes[fi] = ( ( p->dsize[i] - 2 * p->shift[i] ) / os
+                         + 2 * p->shift[i]/os );
+        }
     }
 
 
@@ -724,5 +744,5 @@ mkprof(struct mkprofparams *p)
   /* Clean up. */
   free(mkp);
   free(indexs);
-  free(onaxes);
+  if(onaxes) free(onaxes);
 }

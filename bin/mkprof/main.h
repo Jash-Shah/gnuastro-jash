@@ -185,6 +185,11 @@ struct mkprofparams
   char           *wcsheader;  /* The WCS header information for main img. */
   int            wcsnkeyrec;  /* The number of keywords in the WCS header.*/
   char       *mergedimgname;  /* Name of merged image.                    */
+  int                  nwcs;  /* for WCSLIB: no. coord. representations.  */
+  struct wcsprm        *wcs;  /* WCS information for this dataset.        */
+  size_t               ndim;  /* Number of dimensions (for `nomerged').   */
+                              /* We can't put it in `out' because it is   */
+                              /* meaning ful there.                       */
 };
 
 #endif

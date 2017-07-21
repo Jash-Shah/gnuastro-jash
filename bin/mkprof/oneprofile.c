@@ -63,10 +63,10 @@ oneprofile_center_oversampled(struct mkonthread *mkp)
 
   double *dim;
   long os=p->oversample;
+  size_t i, id=mkp->ibq->id;
   double val, pixfrac, intpart;
-  size_t i, id=mkp->ibq->id, ndim=p->out->ndim;
 
-  for(i=0;i<ndim;++i)
+  for(i=0;i<p->ndim;++i)
     {
       dim = i==0 ? p->x : (i==1 ? p->y : p->z);
 
@@ -116,7 +116,7 @@ oneprofile_r_el(struct mkonthread *mkp)
   double c3=mkp->c[2],   s3=mkp->s[2];
   double x=mkp->coord[0], y=mkp->coord[1], z=mkp->coord[2];
 
-  switch(mkp->p->out->ndim)
+  switch(mkp->p->ndim)
     {
     case 2:
       /* The parenthesis aren't necessary, but help in readability and
@@ -136,8 +136,7 @@ oneprofile_r_el(struct mkonthread *mkp)
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
             "the problem. The value %zu is not recognized for "
-            "`mkp->p->out->ndim'", __func__, PACKAGE_BUGREPORT,
-            mkp->p->out->ndim);
+            "`mkp->p->ndim'", __func__, PACKAGE_BUGREPORT, mkp->p->ndim);
     }
 }
 
@@ -197,7 +196,7 @@ float
 oneprofile_randompoints(struct mkonthread *mkp)
 {
   double range[3], sum=0.0f;
-  size_t i, j, numrandom=mkp->p->numrandom, ndim=mkp->p->out->ndim;
+  size_t i, j, numrandom=mkp->p->numrandom, ndim=mkp->p->ndim;
 
   /* Set the range in each dimension. */
   for(i=0;i<ndim;++i)
@@ -322,7 +321,7 @@ oneprofile_center_pix_index(struct mkonthread *mkp)
 {
   double pixfrac, intpart;
   size_t *dsize=mkp->ibq->image->dsize;
-  size_t i, coord[3], ndim=mkp->ibq->image->ndim;
+  size_t i, coord[3], ndim=mkp->p->ndim;
 
   /* Find the coordinates of the center point. Note `mkp->center' is in
      FITS coordinates, while coord must be in C coordinates (to be used in
@@ -523,7 +522,7 @@ oneprof_set_prof_params(struct mkonthread *mkp)
 
   double sigma;
   int tp=p->tunitinp;
-  size_t id=mkp->ibq->id, ndim=p->out->ndim;
+  size_t id=mkp->ibq->id, ndim=p->ndim;
 
   /* Fill the most basic dimension and profile agnostic parameters. */
   mkp->brightness = pow( 10, (p->zeropoint - p->m[id]) / 2.5f );
@@ -563,7 +562,7 @@ oneprof_set_prof_params(struct mkonthread *mkp)
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
             "address the problem. The value `%zu' is not recognized for "
-            "`p->out->ndim'", __func__, PACKAGE_BUGREPORT, p->out->ndim);
+            "`ndim'", __func__, PACKAGE_BUGREPORT, ndim);
     }
 
 
@@ -705,7 +704,7 @@ oneprofile_make(struct mkonthread *mkp)
 
   double sum;
   float *f, *ff;
-  size_t i, dsize[3], ndim=p->out->ndim;
+  size_t i, dsize[3], ndim=p->ndim;
 
 
   /* Find the profile center in the over-sampled image in C

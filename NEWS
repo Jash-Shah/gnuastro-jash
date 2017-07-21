@@ -18,13 +18,12 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Gnuastro. The `--config' option can be used to specify default values for
   3D profiles.
 
-  MakeProfiles: the new `--kernel' option can make a kernel image without
-  the need to define a catalog. With this option, a catalog (or
-  accompanying background image) must not be given.
+  MakeProfiles: the new `--kernel' option can make a kernel image or cube
+  without the need to define a catalog.
 
   MakeProfiles: the new `--pc', `--cunit' and `--ctype' options can be used
-  to specify the PC matrix, CUNIT and CTYPE world coordinate system
-  keywords of the output FITS file.
+  along with `--crpix', `--crval' and `--cdelt' to fully specify the world
+  coordinate system (WCS) keywords of the output FITS file.
 
   MakeProfiles: can build a new raidal profile called `distance' (code
   7). The value this profile gives to each pixel is equal to its distance
