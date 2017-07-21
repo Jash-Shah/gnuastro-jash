@@ -698,9 +698,9 @@ static void
 ui_read_cols_2d(struct mkprofparams *p)
 {
   int checkblank;
+  size_t i, counter=0;
   char *colname=NULL, **strarr;
   gal_list_str_t *colstrs=NULL, *ccol;
-  size_t i, counter=0, coordcounter=0;
   gal_data_t *cols, *tmp, *corrtype=NULL;
 
   /* The coordinate columns are a linked list of strings. */
@@ -741,14 +741,11 @@ ui_read_cols_2d(struct mkprofparams *p)
          turned off for some columns. */
       checkblank=1;
 
-      /* Note that the input was a linked list, so the output order is the
-         inverse of the input order. For the position, we will store the
-         values into the `x' and `y' arrays even if they are RA/Dec. */
+      /* See which column we are currently reading. */
       switch(++counter)
         {
         case 1:
         case 2:
-          ++coordcounter;
           colname = ( counter==1
                       ? "first coordinate column (`--coordcol')"
                       : "second coordinate column (`--coordcol')" );
@@ -899,9 +896,9 @@ static void
 ui_read_cols_3d(struct mkprofparams *p)
 {
   int checkblank;
+  size_t i, counter=0;
   char *colname=NULL, **strarr;
   gal_list_str_t *colstrs=NULL, *ccol;
-  size_t i, counter=0, coordcounter=0;
   gal_data_t *cols, *tmp, *corrtype=NULL;
 
   /* The 3D-specific columns are not mandatory in `args.h', so we need to
@@ -952,15 +949,12 @@ ui_read_cols_3d(struct mkprofparams *p)
          turned off for some columns. */
       checkblank=1;
 
-      /* Note that the input was a linked list, so the output order is the
-         inverse of the input order. For the position, we will store the
-         values into the `x' and `y' arrays even if they are RA/Dec. */
+      /* See which column we are currently reading. */
       switch(++counter)
         {
         case 1:
         case 2:
         case 3:
-          ++coordcounter;
           colname = ( counter==1
                       ? "first coordinate column (`--coordcol')"
                       : ( counter==2
