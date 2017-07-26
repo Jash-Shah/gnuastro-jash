@@ -71,6 +71,12 @@ noisechisel_convolve(struct noisechiselparams *p)
       gal_fits_img_write(p->input, p->detectionname, NULL, PROGRAM_STRING);
       gal_fits_img_write(p->conv, p->detectionname, NULL, PROGRAM_STRING);
     }
+
+  if(p->conv->ndim==3)
+    {
+      printf("\n... end of %s ...\n", __func__);
+      exit(0);
+    }
 }
 
 

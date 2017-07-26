@@ -391,29 +391,78 @@ ui_set_output_names(struct noisechiselparams *p)
 
 
 
+/* Prepare the kernel, either from a file, or from the default arrays
+   (depending on the dimensionality). The default kernels were created as
+   follows:
+
+   2D: The following commands were put in a script and run. It will create
+   a plain text array along with a FITS image.
+
+       set -o errexit           # Stop if a program returns false.
+       echo "0 0.0 0.0 3 2 0 0 1 1 5" > tmp.txt
+       export GSL_RNG_TYPE=ranlxs2
+       export GSL_RNG_SEED=1
+       astmkprof tmp.txt --oversample=1 --envseed --numrandom=10000 \
+                 --tolerance=0.01 --nomerged
+       astcrop 0_tmp.fits --section=2:*-1,2:*-1 --zeroisnotblank    \
+               --output=fwhm2.fits
+       astconvertt fwhm2.fits --output=fwhm2.txt
+       rm 0_tmp.fits tmp.txt
+
+   3D: MakeProfiles was initially run with these commands:
+
+       $ export GSL_RNG_SEED=1
+       $ export GSL_RNG_TYPE=ranlxs2
+       $ astmkprof --kernel=gaussian-3d,2,5,0.5 --oversample=1 --envseed
+
+   The resulting fits file was converted to text with the this C program to
+   generate the `kernel-3d.h' header file (until ConvertType supports 3D
+   datasets) which is then "include"d into this function.
+
+       #include <stdio.h>
+       #include <stdlib.h>
+       #include <gnuastro/fits.h>
+
+       int
+       main(void)
+       {
+         size_t i;
+         float *arr;
+         gal_data_t *img=gal_fits_img_read_to_type("kernel.fits", "1",
+                                                   GAL_TYPE_FLOAT32, -1);
+
+         arr=img->array;
+
+         printf("size_t kernel_3d_dsize[3]={%zu, %zu, %zu};\n",
+                img->dsize[0], img->dsize[1], img->dsize[2]);
+         printf("float kernel_3d[%zu]={", img->size);
+         for(i=0;i<img->size;++i)
+           {
+             if(i>0)
+               {
+                 if(i % img->dsize[2]                 == 0 ) printf("\n");
+	         if(i % (img->dsize[2]*img->dsize[1]) == 0 ) printf("\n");
+	       }
+             printf(i==(img->size-1) ? "%.7g": "%.7g, ", arr[i]);
+           }
+         printf("};\n");
+
+         return EXIT_SUCCESS;
+       }
+
+   Assuming this C program is in a file named `kernel.c', it can be
+   compiled, run and saved into `kernel-3d.h' with the command below:
+
+       $ astbuildprog -q kernel.c > kernel-3d.h
+*/
 static void
 ui_prepare_kernel(struct noisechiselparams *p)
 {
-  /* The default kernel. It was created by saving the following commands in a
-     script and running it. It will create a plain text array along with a
-     FITS image. The crop is because the first and last rows and columns of
-     all PSFs made by MakeProfiles are blank (zero) when you run with
-     oversample=1. You can keep the spaces when copying and pasting ;-). Just
-     make it executable and run it.
-
-     set -o errexit           # Stop if a program returns false.
-     echo "0 0.0 0.0 3 2 0 0 1 1 5" > tmp.txt
-     export GSL_RNG_TYPE=ranlxs2
-     export GSL_RNG_SEED=1
-     astmkprof tmp.txt --oversample=1 --envseed --numrandom=10000 \
-     --tolerance=0.01 --nomerged
-     astcrop 0_tmp.fits --section=2:*-1,2:*-1 --zeroisnotblank    \
-     --output=fwhm2.fits
-     astconvertt fwhm2.fits --output=fwhm2.txt
-     rm 0_tmp.fits tmp.txt
-  */
+#include <kernel-3d.h>
+  float *f, *ff, *k;
+  size_t ndim=p->input->ndim;
   size_t kernel_2d_dsize[2]={11,11};
-  float *f, *ff, *k, kernel_2d[121]=
+  float  kernel_2d[121]=
     {
       0, 0, 0, 0, 0, 6.57699e-09, 0, 0, 0, 0, 0,
 
@@ -456,14 +505,14 @@ ui_prepare_kernel(struct noisechiselparams *p)
     {
       /* Allocate space for the kernel (we don't want to use the statically
          allocated array. */
-      p->kernel=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 2,
-                               kernel_2d_dsize, NULL, 0, p->cp.minmapsize,
-                               NULL, NULL, NULL);
+      p->kernel=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim,
+                               ndim==2 ? kernel_2d_dsize : kernel_3d_dsize,
+                               NULL, 0, p->cp.minmapsize, NULL, NULL, NULL);
 
-      /* Now copy the staticly allocated array into it. */
-      k=p->kernel->array;
-      ff=(f=kernel_2d)+gal_dimension_total_size(2, p->kernel->dsize);
-      do *k++=*f; while(++f<ff);
+      /* Copy the staticly allocated default array into `p->kernel'. */
+      k = ndim==2 ? kernel_2d : kernel_3d;
+      ff = (f=p->kernel->array) + p->kernel->size;
+      do *f=*k++; while(++f<ff);
     }
 }
 
@@ -564,13 +613,6 @@ ui_preparations(struct noisechiselparams *p)
   p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu, 0, 0, &p->input->nwcs);
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
-
-
-  /* NoiseChisel currently only works on 2D datasets (images). */
-  if(p->input->ndim!=2)
-    error(EXIT_FAILURE, 0, "%s (hdu: %s) has %zu dimensions but NoiseChisel "
-          "can only operate on 2D datasets (images)", p->inputname, p->cp.hdu,
-          p->input->ndim);
 
 
   /* Check for blank values to help later processing. AFTERWARDS, set the
@@ -681,7 +723,10 @@ ui_read_check_inputs_setup(int argc, char *argv[],
       if(p->kernelname)
         printf("  - Kernel: %s (hdu: %s)\n", p->kernelname, p->khdu);
       else
-        printf("  - Kernel: FWHM=2 pixel Gaussian.\n");
+        printf(p->kernel->ndim==2
+               ? "  - Kernel: FWHM=2 pixel Gaussian.\n"
+               : "  - Kernel: FWHM=2 pixel Gaussian (half extent in "
+               "3rd dimension).\n");
     }
 }
 
