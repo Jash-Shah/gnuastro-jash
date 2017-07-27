@@ -4749,10 +4749,10 @@ command-line or in the configuration files. In any case, it will be
 immediately read (before parsing the rest of the options on the
 command-line, or lines in a configuration file).
 
-Note that by definition, later options on the command-line still take
-precedence over those in these in any configuration file, including the
-file(s) given to this option. Also see @option{--lastconfig} and
-@option{--onlyversion} on how this option can be used for reproducible
+Note that by definition, later calls to a single-valued option on the
+command-line still take precedence over those of any configuration file,
+including the file(s) given to this option. Also see @option{--lastconfig}
+and @option{--onlyversion} for how this option can be used for reproducible
 results.
 
 @item -S
@@ -12266,6 +12266,51 @@ $ astnoisechisel --help | grep check
 @end example
 @end cartouche
 
+When working on 3D datacubes, the tessellation options need three values
+and updating them every time can be annoying/buggy. To simplify the job,
+NoiseChisel also installs a @file{astnoisechisel-3d.conf} configuration
+file (see @ref{Configuration files}). You can use this for default values
+on datacubes. For example, if you installed Gnuastro with the prefix
+@file{/usr/local} (the default location, see @ref{Installation directory}),
+you can benefit from this configuration file by running NoiseChisel like
+the example below.
+
+@example
+$ astnoisechisel cube.fits                                      \
+                 --config=/usr/local/etc/astnoisechisel-3d.conf
+@end example
+
+@cindex Shell alias
+@cindex Alias (shell)
+@cindex Shell startup
+@cindex Startup, shell
+To further simplify the process, you can define a shell alias in any
+startup file (for example @file{~/.bashrc}, see @ref{Installation
+directory}). Assuming that you installed Gnuastro in @file{/usr/local}, you
+can add this line to the startup file (you may put it all in one line, it
+is broken into two lines here for fitting within page limits).
+
+@example
+alias astnoisechisel-3d="astnoisechisel
+                    --config=/usr/local/etc/astnoisechisel-3d.conf"
+@end example
+
+@noindent
+Using this alias, you can call NoiseChisel with the name
+@command{astnoisechisel-3d} (instead of @command{astnoisechisel}). It will
+automatically load the 3D specific configuration file first, and then parse
+any other arguments, options or configuration files. You can change the
+default values in this 3D configuration file by calling them on the
+command-line as you do with @command{astnoisechisel}@footnote{Recall that
+for single-invocation options, the last command-line invocation takes
+precedence over all previous invocations (including those in the 3D
+configuration file). See the description of @option{--config} in
+@ref{Operating mode options}.}. For example:
+
+@example
+$ astnoisechisel-3d --numchannels=3,3,1 cube.fits
+@end example
+
 In the sections below, NoiseChisel's options are classified into three
 general classes to help in easy navigation. @ref{General NoiseChisel
 options} mainly discusses the options relating to input and those that are
@@ -14812,6 +14857,32 @@ file.
 $ astmkprof --config=/usr/local/etc/astmkprof-3d.conf catalog.txt
 @end example
 
+@cindex Shell alias
+@cindex Alias, shell
+@cindex Shell startup
+@cindex Startup, shell
+To further simplify the process, you can define a shell alias in any
+startup file (for example @file{~/.bashrc}, see @ref{Installation
+directory}). Assuming that you installed Gnuastro in @file{/usr/local}, you
+can add this line to the startup file (you may put it all in one line, it
+is broken into two lines here for fitting within page limits).
+
+@example
+alias astmkprof-3d="astmkprof --config=/usr/local/etc/astmkprof-3d.conf"
+@end example
+
+@noindent
+Using this alias, you can call MakeProfiles with the name
+@command{astmkprof-3d} (instead of @command{astmkprof}). It will
+automatically load the 3D specific configuration file first, and then parse
+any other arguments, options or configuration files. You can change the
+default values in this 3D configuration file by calling them on the
+command-line as you do with @command{astmkprof}@footnote{Recall that for
+single-invocation options, the last command-line invocation takes
+precedence over all previous invocations (including those in the 3D
+configuration file). See the description of @option{--config} in
+@ref{Operating mode options}.}.
+
 Please see @ref{Sufi simulates a detection} for a very complete tutorial
 explaining how one could use MakeProfiles in conjunction with other
 Gnuastro's programs to make a complete simulated image of a mock galaxy.
@@ -15057,6 +15128,19 @@ have to set `@option{--oversample=1}'. Otherwise all the profiles will be
 scaled up based on the oversampling scale in your configuration files (see
 @ref{Configuration files}) unless you have accounted for oversampling in
 your catalog.
+
+@item --mcolisbrightness
+The value given in the ``magnitude column'' (specified by @option{--mcol},
+see @ref{MakeProfiles catalog}) must be interpretted as brightness, not
+magnitude. The zeropoint magnitude (value to the @option{--zeropoint}
+option) is ignored and the given value must have the same units as the
+input dataset's pixels.
+
+Recall that the total profile magnitude or brightness that is specified
+with in the @option{--mcol} column of the input catalog is not an
+integration to infinity, but the actual sum of pixels in the profile (until
+the desired truncation radius). See @ref{Profile magnitude} for more on
+this point.
 
 @item --magatpeak
 The magnitude column in the catalog (see @ref{MakeProfiles catalog})

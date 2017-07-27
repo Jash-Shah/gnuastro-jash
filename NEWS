@@ -30,6 +30,10 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   from the center. It can be used to build any other radial profile that is
   not supported by MakeProfiles.
 
+  MakeProfiles: with the new `--mcolisbrightness' ("mcol-is-brightness")
+  option, the `--mcol' values of the catalog will be interpretted as total
+  brightness (sum of pixel values), not magnitude.
+
 ** Removed features
 
 ** Changed features
