@@ -372,7 +372,6 @@ mkprof_build(void *inparam)
 {
   struct mkonthread *mkp=(struct mkonthread *)inparam;
   struct mkprofparams *p=mkp->p;
-
   size_t i, id, ndim=p->ndim;
   struct builtqueue *ibq, *fbq=NULL;
   double center[3], semiaxes[3], euler_deg[3];
@@ -575,6 +574,7 @@ mkprof_write(struct mkprofparams *p)
       free(ibq);
       ibq=tbq;
     }
+
 
   /* Write the final array to the output FITS image if a merged image is to
      be created. */

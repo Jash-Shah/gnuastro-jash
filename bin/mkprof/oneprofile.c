@@ -150,6 +150,7 @@ oneprofile_r_el(struct mkonthread *mkp)
 static float
 oneprofile_r_circle(size_t index, struct mkonthread *mkp)
 {
+
   size_t i, c[3];
   double d, sum=0.0f;
   size_t ndim=mkp->ibq->image->ndim, *dsize=mkp->ibq->image->dsize;

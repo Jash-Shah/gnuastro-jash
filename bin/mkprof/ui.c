@@ -196,8 +196,8 @@ ui_initialize_options(struct mkprofparams *p,
   cp->coptions           = gal_commonopts_options;
 
   /* Default program parameters. */
-  p->cp.type=GAL_TYPE_FLOAT32;
-  p->zeropoint=NAN;
+  p->zeropoint           = NAN;
+  p->cp.type             = GAL_TYPE_FLOAT32;
 
   /* Modify the common options for this program. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -408,6 +408,7 @@ ui_parse_kernel(struct argp_option *option, char *arg,
       /* Make sure the number of parameters conforms with the profile. */
       switch(kernel->status)
         {
+
         case PROFILE_SERSIC:        need = kernel->flag==2 ? 3 : 4;  break;
         case PROFILE_MOFFAT:        need = kernel->flag==2 ? 3 : 4;  break;
         case PROFILE_GAUSSIAN:      need = kernel->flag==2 ? 2 : 3;  break;
@@ -1192,7 +1193,7 @@ ui_prepare_columns(struct mkprofparams *p)
       /* Make sure the number of coordinate columns and number of
          dimensions in outputs are the same. There is no problem if it is
          more than `ndim'. In that case, the last values (possibly in
-         configuration files) will be ignored.*/
+         configuration files) will be ignored. */
       if( gal_list_str_number(p->ccol) < p->ndim )
         error(EXIT_FAILURE, 0, "%zu coordinate columns (calls to "
               "`--coordcol') given but output has %zu dimensions",
@@ -1407,6 +1408,14 @@ ui_prepare_canvas(struct mkprofparams *p)
             {ff=(f=p->out->array)+p->out->size; do *f++=0.0f; while(f<ff);}
         }
 
+
+      /* Currently, things are only implemented for 2D. */
+      if(p->ndim!=2 && p->ndim!=3)
+        error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions. Currently "
+              "only a 2 or 3 dimensional background image is acceptable",
+              p->backname, p->backhdu, p->ndim);
+
+
       /* When a background image is specified, oversample must be 1 and
          there is no shifts. */
       p->oversample=1;
@@ -1423,6 +1432,11 @@ ui_prepare_canvas(struct mkprofparams *p)
       ndim_counter=0;
       for(i=0;p->dsize[i]!=GAL_BLANK_SIZE_T;++i) ++ndim_counter;
       p->ndim=ndim_counter;
+
+      /* Currently, things are only implemented for 2D or 3D. */
+      if(p->ndim!=2 && p->ndim!=3)
+        error(EXIT_FAILURE, 0, "%zu numbers given to `--naxis', only 2 "
+              "values may be given", p->ndim);
 
       /* If any of the shift elements are zero, the others should be too!*/
       if(p->shift && p->shift[0] && p->shift[1])

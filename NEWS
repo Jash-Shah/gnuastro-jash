@@ -10,6 +10,11 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Arithmetic: now has a new `--globalhdu' (`-g') option which can be used
   once for all the input images.
 
+  MakeNoise: with the new `--sigma' (`-s') option, it is now possible to
+  directly request the noise sigma or standard deviation. When this option
+  is called, the `--background', `--zeropoint' and other option values will
+  be ignored.
+
   MakeProfiles: can build 3D ellipsoids of any orientation and shape. The
   following options are new to MakeProfiles for enabling 3D profiles:
   `--p2col', `--p3col' (second two Euler angles), and `--q2col' (axis ratio
@@ -17,9 +22,6 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   `astmkprof-3d.conf' configuration file will also be installed with
   Gnuastro. The `--config' option can be used to specify default values for
   3D profiles.
-
-  MakeProfiles: the new `--kernel' option can make a kernel image or cube
-  without the need to define a catalog.
 
   MakeProfiles: the new `--pc', `--cunit' and `--ctype' options can be used
   along with `--crpix', `--crval' and `--cdelt' to fully specify the world
@@ -29,6 +31,14 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   7). The value this profile gives to each pixel is equal to its distance
   from the center. It can be used to build any other radial profile that is
   not supported by MakeProfiles.
+
+  MakeProfiles: with the new `--mcolisbrightness' ("mcol-is-brightness")
+  option, the `--mcol' values of the catalog will be interpretted as total
+  brightness (sum of pixel values), not magnitude.
+
+  MakeProfiles: the new `distance' profile will save the radial distance of
+  each pixel. This may be used to define your own profiles that are not
+  currently supported in MakeProfiles.
 
   MakeProfiles: with the new `--mcolisbrightness' ("mcol-is-brightness")
   option, the `--mcol' values of the catalog will be interpretted as total
@@ -59,6 +69,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   multiple times and the order of its calling will be used for the column
   containing the center in the respective dimension (in FITS format).
 
+  MakeNoise: the old `--stdadd' (`-s') option has been renamed to
+  `--instrumental' (`-i') to be more clear.
+
   MakeProfiles: The new `--naxis' and `--shift' options can take multiple
   values for each dimension (separated by a comma). This replaces the old
   `--naxis1', `--naxis2' and `--xshift' and `--yshift' options.
@@ -74,8 +87,15 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   `--crpix1', `--crpix2', `--crval1', `--crval2' and `--resolution'
   options.
 
-  `gal_fits_img_info' now also returns the name and units of the dataset
-  (if they aren't NULL). So it takes two extra arguments.
+  `gal_data_free_contents': when the input `gal_data_t' is a tile, its
+  `array' element will not be freed. This enables safe usage of this
+  function (and thus `gal_data_free') on tiles without worrying about the
+  memory block associated with the tile.
+
+  `gal_box_bound_ellipse' is the new name for the old
+  `gal_box_ellipse_in_box' (to be more clear and avoid repetition of the
+  term `box'). The input position angle is now also in degrees, not
+  radians.
 
   `gal_box_overlap' now works on data of any dimensionality and thus also
   needs the number of dimensions (elements in each input array).
@@ -84,9 +104,18 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   argument and the number of dimensions as another. This allows it to work
   on any dimensionality.
 
+  `gal_fits_img_info' now also returns the name and units of the dataset
+  (if they aren't NULL). So it takes two extra arguments.
+
   `gal_wcs_pixel_scale' now replaces the old `gal_wcs_pixel_scale_deg',
   since it doesn't only apply to degrees. The pixel scale units are defined
   by the units of the WCS.
+
+  `GAL_TILE_PARSE_OPERATE' (only when `OTHER' is given) can now parse and
+  operate on different datasets independent of the size of allocated block
+  of memory (the tile sizes of `IN' and `OTHER' have to be idential, but
+  not their allocated blocks of memory). Until now, it was necessary for
+  the two blocks to have the same size and this is no longer the case.
 
 ** Bug fixes
 
@@ -108,6 +137,7 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Reading BZERO for unsigned 64-bit integers (bug #51555).
 
   Arithmetic with one file and no operators (bug #51559).
+
 
 
 
