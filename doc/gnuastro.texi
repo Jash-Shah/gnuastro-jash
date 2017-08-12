@@ -5624,14 +5624,14 @@ also contain non-numerical columns.
 @node Gnuastro text table format, Selecting table columns, Recognized table formats, Tables
 @subsection Gnuastro text table format
 
-Plain text files are most generic, portable, and easiest way to (manually)
-create, (visually) inspect, or (manually) edit a table. In this format, the
-ending of a row is defined by the new-line character (a line on a text
-editor). So when you view it on a text editor, every row will occupy one
-line. The delimiters (or characters separating the columns) are white space
-characters (space, horizontal tab, vertical tab) and a comma (@key{,}). The
-only further requirement is that all rows/lines must have the same number
-of columns.
+Plain text files are the most generic, portable, and easiest way to
+(manually) create, (visually) inspect, or (manually) edit a table. In this
+format, the ending of a row is defined by the new-line character (a line on
+a text editor). So when you view it on a text editor, every row will occupy
+one line. The delimiters (or characters separating the columns) are white
+space characters (space, horizontal tab, vertical tab) and a comma
+(@key{,}). The only further requirement is that all rows/lines must have
+the same number of columns.
 
 The columns don't have to be exactly under each other and the rows can be
 arbitrarily long with different lengths. For example the following contents
@@ -5644,13 +5644,14 @@ types}).
 2 , 4.454        792     72.98348e7
 @end example
 
-However, the example above has no other information about the columns (its
-raw data, with no meta-data). To use this table, you have to remember what
-each column was. Also, when you want to select columns, you have to count
-their position within the table. This can become frustrating and prone to
-bad errors (getting the columns wrong) especially as the number of columns
-increase. It is also bad for sending to a colleague, because they will find
-it hard to remember/use the columns properly.
+However, the example above has no other information about the columns (it
+is just raw data, with no meta-data). To use this table, you have to
+remember what the numbers in each column represent. Also, when you want to
+select columns, you have to count their position within the table. This can
+become frustrating and prone to bad errors (getting the columns wrong)
+especially as the number of columns increase. It is also bad for sending to
+a colleague, because they will find it hard to remember/use the columns
+properly.
 
 To solve these problems in Gnuastro's programs/libraries you aren't limited
 to using the column's number, see @ref{Selecting table columns}. If the
@@ -5720,24 +5721,24 @@ space characters will be stripped from all of the elements. For example in
 this line:
 
 @example
-# Column 5:  column name   [km/s,    f,-99] Redshift as speed
+# Column 5:  column name   [km/s,    f32,-99] Redshift as speed
 @end example
 
-The @code{NAME} field will be `@code{column name}', or @code{TYPE} will be
-`@code{f}'. Note how all the white space characters before and after
-strings are not used, but those in the middle remained. Also, white space
-characters aren't mandatory, so in the example above @code{BLANK} will be
-`@code{-99}'.
+The @code{NAME} field will be `@code{column name}' and the @code{TYPE}
+field will be `@code{f32}'. Note how all the white space characters before
+and after strings are not used, but those in the middle remained. Also,
+white space characters aren't mandatory. Hence, in the example above, the
+@code{BLANK} field will be given the value of `@code{-99}'.
 
 Except for the column number (@code{N}), the rest of the fields are
-optional and the column information comments don't have to be in order. In
-other words, the information for column @mymath{N+m} (@mymath{m>0}) can be
-given before column @mymath{N}. Also, you don't have to specify information
-for all columns. Those columns that don't have this information will be
-interpreted with the default settings (like the case above: values are
-double precision floating point, and the column has no name, unit, or
-comment). So these lines are all acceptable for any table (the first one,
-with nothing but the column number is redundant):
+optional. Alao, the column information comments don't have to be in
+order. In other words, the information for column @mymath{N+m}
+(@mymath{m>0}) can be given in a line before column @mymath{N}. Also, you
+don't have to specify information for all columns. Those columns that don't
+have this information will be interpreted with the default settings (like
+the case above: values are double precision floating point, and the column
+has no name, unit, or comment). So these lines are all acceptable for any
+table (the first one, with nothing but the column number is redundant):
 
 @example
 # Column 5:
@@ -12535,26 +12536,31 @@ output will have the same pixel size as the input, but with the
 The number of erosions to apply to the binary thresholded image. Erosion is
 simply the process of flipping (from 1 to 0) any of the foreground pixels
 that neighbor a background pixel. In a 2D image, there are two kinds of
-neighbors, 4-connected and 8-connected neighbors. You can specify which
-type of neighbors should be used for erosion with the @option{--erodengb}
-option, see below.
+neighbors, 4-connected and 8-connected neighbors. In a 3D dataset, there
+are three: 6-connected, 18-connected, and 26-connected. You can specify
+which class of neighbors should be used for erosion with the
+@option{--erodengb} option, see below.
 
-Erosion has the effect of shrinking the foreground pixels. To put it
-another way, it expands the holes. This is a founding principle in
-NoiseChisel: it exploits the fact that with very low thresholds, the
-holes in the very low surface brightness regions of an image will be
-smaller than regions that have no signal. Therefore by expanding those
-holes, we are able to separate the regions harboring signal.
+Erosion has the effect of shrinking the foreground (above threshold)
+pixels. To put it another way, it expands the holes. This is a founding
+principle in NoiseChisel: it exploits the fact that with very low
+thresholds, the holes in the very low surface brightness regions of an
+image will be smaller than regions that have no signal. Therefore by
+expanding those holes, we are able to separate the regions harboring
+signal.
 
 @item --erodengb=INT
 The type of neighborhood (structuring element) used in erosion, see
-@option{--erode} for an explanation on erosion. Only two integer values are
-acceptable: 4 or 8. In 4-connectivity, the neighbors of a pixel are defined
-as the four pixels on the top, bottom, right and left of a pixel that share
-an edge with it. The 8-connected neighbors on the other hand include the
+@option{--erode} for an explanation on erosion. If the input is a 2D image,
+only two integer values are acceptable: 4 or 8. For a 3D input datacube,
+the acceptable values are: 6, 18 and 26.
+
+In 2D 4-connectivity, the neighbors of a pixel are defined as the four
+pixels on the top, bottom, right and left of a pixel that share an edge
+with it. The 8-connected neighbors on the other hand include the
 4-connected neighbors along with the other 4 pixels that share a corner
 with this pixel. See Figure 6 (a) and (b) in Akhlaghi and Ichikawa (2015)
-for a demonstration.
+for a demonstration. A similar argument applies to 3D datacubes.
 
 @item --noerodequant
 Pure erosion is going to carve off sharp and small objects completely out
@@ -12588,8 +12594,8 @@ separate foreground `islands' (detections) thereby completely isolating
 them. Once opening is complete, we have @emph{initial} detections.
 
 @item --openingngb=INT
-The structuring element used for opening, see @option{--erodengb} for more
-information about a structuring element.
+The class of neighbors used for opening, see @option{--erodengb} for more
+information on acceptable values.
 
 @item -s FLT,FLT
 @itemx --sigmaclip=FLT,FLT

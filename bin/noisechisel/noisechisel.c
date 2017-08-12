@@ -62,7 +62,7 @@ noisechisel_convolve(struct noisechiselparams *p)
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
   p->conv=gal_convolve_spatial(tl->tiles, p->kernel, p->cp.numthreads,
                                1, tl->workoverch);
-  gal_checkset_allocate_copy("INPUT_CONVOLVED", &p->conv->name);
+  gal_checkset_allocate_copy("INPUT-CONVOLVED", &p->conv->name);
 
 
   if(!p->cp.quiet) gal_timing_report(&t1, "Convolved with kernel.", 1);
@@ -70,12 +70,6 @@ noisechisel_convolve(struct noisechiselparams *p)
     {
       gal_fits_img_write(p->input, p->detectionname, NULL, PROGRAM_STRING);
       gal_fits_img_write(p->conv, p->detectionname, NULL, PROGRAM_STRING);
-    }
-
-  if(p->conv->ndim==3)
-    {
-      printf("\n... end of %s ...\n", __func__);
-      exit(0);
     }
 }
 
@@ -294,6 +288,14 @@ noisechisel(struct noisechiselparams *p)
   /* Find the Sky value and subtract it from the input and convolved
      images. */
   noisechisel_find_sky_subtract(p);
+
+  /***********************************************/
+  if(p->conv->ndim==3)
+    {
+      printf("\n... end of %s ...\n", __func__);
+      exit(0);
+    }
+  /***********************************************/
 
   /* If the user only wanted detection, ignore the segmentation steps. */
   if(p->onlydetection==0)

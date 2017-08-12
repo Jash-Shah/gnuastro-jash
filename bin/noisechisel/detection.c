@@ -54,6 +54,7 @@ detection_initial(struct noisechiselparams *p)
 {
   char *msg;
   uint8_t *b, *bf;
+  int connectivity=0;
   struct timeval t0, t1;
 
 
@@ -75,9 +76,25 @@ detection_initial(struct noisechiselparams *p)
     }
 
 
+  /* Set the connectivity of the erosion. */
+  switch(p->binary->ndim)
+    {
+    case 2:
+      connectivity = p->erodengb==4 ? 1 : 2;
+      break;
+    case 3:
+      connectivity = p->erodengb==6 ? 1 : (p->erodengb==18 ? 2 : 3);
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address "
+            "the problem. %zu not a valid value to p->binary->ndim",
+            __func__, PACKAGE_BUGREPORT, p->binary->ndim);
+    }
+
+
   /* Erode the image. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
-  gal_binary_erode(p->binary, p->erode, p->erodengb==4 ? 1 : 2, 1);
+  gal_binary_erode(p->binary, p->erode, connectivity, 1);
   if(!p->cp.quiet)
     {
       asprintf(&msg, "Eroded %zu time%s (%zu-connectivity).", p->erode,
@@ -114,7 +131,7 @@ detection_initial(struct noisechiselparams *p)
   p->numinitialdets=gal_binary_connected_components(p->binary, &p->olabel, 1);
   if(p->detectionname)
     {
-      p->olabel->name="OPENED_AND_LABELED";
+      p->olabel->name="OPENED-AND-LABELED";
       gal_fits_img_write(p->olabel, p->detectionname, NULL, PROGRAM_STRING);
       p->olabel->name=NULL;
     }
@@ -439,9 +456,9 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
   size_t tablen=num+1;
   gal_data_t *sn, *snind;
   int32_t *plabend, *indarr=NULL;
-  double ave, err, *xy, *brightness;
-  size_t ind, ndim=p->input->ndim, xyncols=1+ndim;
-  size_t i, *area, counter=0, *dsize=p->input->dsize;
+  double ave, err, *pos, *brightness;
+  size_t ind, ndim=p->input->ndim, pcols=1+ndim;
+  size_t i, j, *area, counter=0, *dsize=p->input->dsize;
   float *img=p->input->array, *f=p->input->array, *ff=f+p->input->size;
   int32_t *plab = worklab->array, *dlab = s0d1D2 ? NULL : p->olabel->array;
   size_t *coord=gal_data_malloc_array(GAL_TYPE_SIZE_T, ndim, __func__,
@@ -456,9 +473,9 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
     error(EXIT_FAILURE, 0, "%s: only a NaN value is recognized for blank "
           "floating point data types, the blank value is defined to be %f",
           __func__, GAL_BLANK_FLOAT32);
-  if(ndim!=2)
-    error(EXIT_FAILURE, 0, "%s: only 2D datasets are acceptable, your input "
-          "is %zu dimensions", __func__, ndim);
+  if(ndim!=2 && ndim!=3)
+    error(EXIT_FAILURE, 0, "%s: only 2D images or 3D datacubes are "
+          "acceptable, but input has %zu dimensions", __func__, ndim);
 
 
   /* Allocate all the necessary arrays, note that since we want to put each
@@ -468,8 +485,8 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
                                      "area");
   brightness = gal_data_calloc_array(GAL_TYPE_FLOAT64, tablen, __func__,
                                      "brightness");
-  xy         = gal_data_calloc_array(GAL_TYPE_FLOAT64, xyncols*tablen,
-                                     __func__, "xy");
+  pos        = gal_data_calloc_array(GAL_TYPE_FLOAT64, pcols*tablen,
+                                     __func__, "pos");
   flag       = ( s0d1D2==0
                  ? gal_data_calloc_array(GAL_TYPE_UINT8, tablen, __func__,
                                          "flag")
@@ -508,9 +525,19 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
           brightness[*plab] += *f;
           if( *f > 0.0f )  /* For calculatiing the approximate center, */
             {              /* necessary for calculating Sky and STD.   */
-              xy[*plab*xyncols  ] += *f;
-              xy[*plab*xyncols+1] += (double)((f-img)/dsize[1]) * *f;
-              xy[*plab*xyncols+2] += (double)((f-img)%dsize[1]) * *f;
+              pos[*plab*pcols  ] += *f;
+              switch(ndim)
+                {
+                case 2:
+                  pos[*plab*pcols+1] += ( (f-img)/dsize[1] ) * *f;
+                  pos[*plab*pcols+2] += ( (f-img)%dsize[1] ) * *f;
+                  break;
+                case 3:
+                  pos[*plab*pcols+1] += ( (f-img) % dsize[1]*dsize[2] ) * *f;
+                  pos[*plab*pcols+2] += ( (f-img)/dsize[2] ) * *f;
+                  pos[*plab*pcols+3] += ( (f-img)%dsize[2] ) * *f;
+                  break;
+                }
             }
         }
 
@@ -526,8 +553,8 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
     size_t i;
     for(i=1;i<num+1;++i)
       printf("%zu (%u): %-5zu %-13.3f %-13.3f %-13.3f %-13.3f\n", i, flag[i],
-             area[i], brightness[i], xy[i*xyncols], xy[i*xyncols+1],
-             xy[i*xyncols+2]);
+             area[i], brightness[i], pos[i*pcols], pos[i*pcols+1],
+             pos[i*pcols+2]);
   }
   */
 
@@ -559,11 +586,11 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
   for(i=1;i<tablen;++i)
     {
       ave=brightness[i]/area[i];
-      if( area[i]>p->detsnminarea && ave>0.0f && xy[i*xyncols]>0.0f )
+      if( area[i]>p->detsnminarea && ave>0.0f && pos[i*pcols]>0.0f )
         {
           /* Get the flux weighted center coordinates. */
-          coord[0]=GAL_DIMENSION_FLT_TO_INT( xy[i*xyncols+1]/xy[i*xyncols] );
-          coord[1]=GAL_DIMENSION_FLT_TO_INT( xy[i*xyncols+2]/xy[i*xyncols] );
+          for(j=0;j<ndim;++j)
+            coord[j]=GAL_DIMENSION_FLT_TO_INT(pos[i*pcols+j+1]/pos[i*pcols]);
 
           /* Calculate the Sky and Sky standard deviation on this tile. */
           ave -= ((float *)(p->sky->array))[
@@ -611,7 +638,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
 
 
   /* Clean up and return. */
-  free(xy);
+  free(pos);
   free(area);
   free(coord);
   free(brightness);

@@ -221,13 +221,17 @@ parse_opt(int key, char *arg, struct argp_state *state)
 static void
 ui_read_check_only_options(struct noisechiselparams *p)
 {
-  /* Make sure the connectivity is defined. */
-  if(p->erodengb!=4 && p->erodengb!=8)
-    error(EXIT_FAILURE, 0, "%zu not acceptable for `--erodengb'. It must "
-          "be 4 or 8 (specifying the type of connectivity)", p->erodengb);
-  if(p->openingngb!=4 && p->openingngb!=8)
-    error(EXIT_FAILURE, 0, "%zu not acceptable for `--openingngb'. It must "
-          "be 4 or 8 (specifying the type of connectivity)", p->openingngb);
+  /* A general check on the neighbor connectivity values. */
+  if(p->erodengb!=4 && p->erodengb!=8 && p->erodengb!=6 && p->erodengb!=18
+     && p->erodengb!=26)
+    error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
+          "`--erodengb'. Acceptable values are 4 or 8 (for 2D inputs) and "
+          "6, 18, or 26 (for 3D inputs)", p->erodengb);
+  if(p->openingngb!=4 && p->openingngb!=8 && p->openingngb!=6
+     && p->openingngb!=18 && p->openingngb!=26)
+    error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
+          "`--openingngb'. Acceptable values are 4 or 8 (for 2D inputs) and "
+          "6, 18, or 26 (for 3D inputs)", p->openingngb);
 
   /* Make sure that the no-erode-quantile is not smaller or equal to
      qthresh. */
@@ -599,12 +603,12 @@ ui_prepare_tiles(struct noisechiselparams *p)
 
 
 
+/* Read the input image and check the dimensions and neighbors. */
 static void
-ui_preparations(struct noisechiselparams *p)
+ui_preparations_read_input(struct noisechiselparams *p)
 {
-  /* Prepare the names of the outputs. */
-  ui_set_output_names(p);
-
+  size_t value;
+  char *option_name=NULL, *good_values=NULL;
 
   /* Read the input as a single precision floating point dataset. */
   p->input = gal_fits_img_read_to_type(p->inputname, p->cp.hdu,
@@ -613,6 +617,69 @@ ui_preparations(struct noisechiselparams *p)
   p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu, 0, 0, &p->input->nwcs);
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
+
+
+  /* Check dimensionality and neighbors. */
+  switch(p->input->ndim)
+    {
+    case 2:
+      if(p->erodengb!=4 && p->erodengb!=8)
+        {
+          value=p->erodengb;
+          good_values="4 or 8";
+          option_name="erodengb";
+        }
+      else if(p->openingngb!=4 && p->openingngb!=8)
+        {
+          value=p->openingngb;
+          good_values="4 or 8";
+          option_name="openingngb";
+        }
+      break;
+
+    case 3:
+      if(p->erodengb!=6 && p->erodengb!=18 && p->erodengb!=26)
+        {
+          value=p->erodengb;
+          good_values="6, 18, or 26";
+          option_name="erodengb";
+        }
+      else if(p->openingngb!=6 && p->openingngb!=18 && p->openingngb!=26)
+        {
+          value=p->openingngb;
+          good_values="6, 18, or 26";
+          option_name="openingngb";
+        }
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s (hdu %s) is a %zu-dimensional dataset "
+            "which is currently not supported", p->inputname, p->cp.hdu,
+            p->input->ndim);
+    }
+
+
+  /* Abort with an error message if necessary. */
+  if(option_name)
+    error(EXIT_FAILURE, 0, "%zu not acceptable for `--%s' for the "
+          "input %zu-dimensional dataset in `%s' (hdu %s). It must be %s "
+          "(specifying the type of connectivity)", value, option_name,
+          p->input->ndim, p->inputname, p->cp.hdu, good_values);
+}
+
+
+
+
+
+static void
+ui_preparations(struct noisechiselparams *p)
+{
+  /* Prepare the names of the outputs. */
+  ui_set_output_names(p);
+
+
+  /* Read the input dataset and check the dimensions. */
+  ui_preparations_read_input(p);
 
 
   /* Check for blank values to help later processing. AFTERWARDS, set the
