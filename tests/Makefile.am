@@ -144,9 +144,11 @@ if COND_MKPROF
   mkprof/clearcanvas.sh: mknoise/addnoise.sh.log
 endif
 if COND_NOISECHISEL
-  MAYBE_NOISECHISEL_TESTS = noisechisel/noisechisel.sh
+  MAYBE_NOISECHISEL_TESTS = noisechisel/noisechisel.sh          \
+  noisechisel/noisechisel-3d.sh
 
   noisechisel/noisechisel.sh: mknoise/addnoise.sh.log
+  noisechisel/noisechisel-3d.sh: mknoise/addnoise-3d.sh.log
 endif
 if COND_STATISTICS
   MAYBE_STATISTICS_TESTS = statistics/basicstats.sh statistics/estimate_sky.sh

@@ -289,14 +289,6 @@ noisechisel(struct noisechiselparams *p)
      images. */
   noisechisel_find_sky_subtract(p);
 
-  /***********************************************/
-  if(p->conv->ndim==3)
-    {
-      printf("\n... end of %s ...\n", __func__);
-      exit(0);
-    }
-  /***********************************************/
-
   /* If the user only wanted detection, ignore the segmentation steps. */
   if(p->onlydetection==0)
     {

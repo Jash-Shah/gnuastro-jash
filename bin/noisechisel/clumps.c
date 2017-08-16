@@ -987,10 +987,11 @@ clumps_find_make_sn_table(void *in_prm)
 
   void *tarray;
   double numdet;
+  int pixonedge;
   gal_data_t *tile, *tblock, *tmp;
   uint8_t *binary=p->binary->array;
   struct clumps_thread_params cltprm;
-  size_t i, c, ind, tind, num, numsky, *indarr;
+  size_t i, j, c, ind, tind, num, numsky, *indarr;
   size_t *scoord=gal_data_malloc_array(GAL_TYPE_SIZE_T, ndim, __func__,
                                        "scoord");
   size_t *icoord=gal_data_malloc_array(GAL_TYPE_SIZE_T, ndim, __func__,
@@ -1080,12 +1081,19 @@ clumps_find_make_sn_table(void *in_prm)
               ind = (int32_t *)i - (int32_t *)(p->clabel->array);
               gal_dimension_index_to_coord(ind, ndim, dsize, icoord);
 
-              /* If the pixel is on the tile edge, set it as river and
-                 don't include it in the indexs. */
-              if( icoord[0]==scoord[0]
-                  || icoord[0]==scoord[0]+tile->dsize[0]-1
-                  || icoord[1]==scoord[1]
-                  || icoord[1]==scoord[1]+tile->dsize[1]-1 )
+              /* Check if the pixel is on the tile edge. */
+              pixonedge=0;
+              for(j=0;j<ndim;++j)
+                if( icoord[j]==scoord[j]
+                    || icoord[j]==scoord[j]+tile->dsize[j]-1 )
+                  {
+                    pixonedge=1;
+                    break;
+                  }
+
+              /* If this pixel is on the edge, then it should be a
+                 river. */
+              if(pixonedge)
                 *(int32_t *)i=CLUMPS_RIVER;
 
               /* This pixel is not on the edge, check if it had a value of
