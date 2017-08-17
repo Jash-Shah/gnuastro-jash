@@ -417,7 +417,7 @@ ui_set_output_names(struct noisechiselparams *p)
 
        $ export GSL_RNG_SEED=1
        $ export GSL_RNG_TYPE=ranlxs2
-       $ astmkprof --kernel=gaussian-3d,2,5,0.5 --oversample=1 --envseed
+       $ astmkprof --kernel=gaussian-3d,1.5,5,0.5 --oversample=1 --envseed
 
    The resulting fits file was converted to text with the this C program to
    generate the `kernel-3d.h' header file (until ConvertType supports 3D
@@ -447,7 +447,18 @@ ui_set_output_names(struct noisechiselparams *p)
                  if(i % img->dsize[2]                 == 0 ) printf("\n");
 	         if(i % (img->dsize[2]*img->dsize[1]) == 0 ) printf("\n");
 	       }
-             printf(i==(img->size-1) ? "%.7g": "%.7g, ", arr[i]);
+
+	     // We cannot use `\b' here, since we are writing directly
+	     // to the command-line, so we'll first write the number,
+	     // then decide if any subsequent character (a comma)
+	     // should be written.
+	     printf("%.7g", arr[i]);
+
+	     // The last element doesn't need a comma. In each line,
+	     // the last character must not be a space, but for easy
+	     // readability, the elements in between need a space.
+	     if( i!=(img->size-1) )
+	       printf("%s", ((i+1)%img->dsize[2]) ? ", " : ",");
            }
          printf("};\n");
 
@@ -792,7 +803,7 @@ ui_read_check_inputs_setup(int argc, char *argv[],
       else
         printf(p->kernel->ndim==2
                ? "  - Kernel: FWHM=2 pixel Gaussian.\n"
-               : "  - Kernel: FWHM=2 pixel Gaussian (half extent in "
+               : "  - Kernel: FWHM=1.5 pixel Gaussian (half extent in "
                "3rd dimension).\n");
     }
 }

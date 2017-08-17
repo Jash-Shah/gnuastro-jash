@@ -12234,11 +12234,12 @@ A convolution kernel can also be optionally given. If a value (file name)
 is given to @option{--kernel} on the command-line or in a configuration
 file (see @ref{Configuration files}), then that file will be used to
 convolve the image prior to thresholding. Otherwise a default kernel will
-be used. The default kernel is a 2D Gaussian with a FWHM of 2 pixels
-truncated at 5 times the FWHM. This choice of the default kernel is
-discussed in Section 3.1.1 of @url{https://arxiv.org/abs/1505.01664,
-Akhlaghi and Ichikawa [2015]}. See @ref{Convolution kernel} for kernel
-related options.
+be used. For a 2D image, the default kernel is a 2D Gaussian with a FWHM of
+2 pixels truncated at 5 times the FWHM. This choice of the default kernel
+is discussed in Section 3.1.1 of @url{https://arxiv.org/abs/1505.01664,
+Akhlaghi and Ichikawa [2015]}. For a 3D cube, it is a Gaussian with FWHM of
+1.5 pixels in the first two dimensions and 0.75 pixels in the third
+dimension. See @ref{Convolution kernel} for kernel related options.
 
 NoiseChisel defines two tessellations over the input (see
 @ref{Tessellation}). This enables it to deal with possible gradients in the
@@ -12350,10 +12351,24 @@ quantile threshold (see @option{--qthresh}). The convolved image is also
 used to define the clumps (see Section 3.2.1 and Figure 8 of
 @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}).
 
-The @option{--kernel} option is not mandatory. If no kernel is provided, a
-2D Gaussian profile with a FWHM of 2 pixels truncated at 5 times the FWHM
-is used. This choice of the default kernel is discussed in Section 3.1.1 of
-Akhlaghi and Ichikawa [2015].
+To build any kernel in one command (for input into this option), you can
+use MakeProfile's @option{--kernel} option, see @ref{MakeProfiles output
+dataset}.
+
+The @option{--kernel} option is not mandatory. If no kernel is provided and
+the input is a 2D image, a 2D Gaussian profile with a FWHM of 2 pixels
+truncated at 5 times the FWHM is used. This choice of the default kernel is
+discussed in Section 3.1.1 of Akhlaghi and Ichikawa [2015].
+
+For a 3D cube, when no file name is given to @option{--kernel}, a Gaussian
+with FWHM of 1.5 pixels in the first two dimensions and 0.75 pixels in the
+third dimension will be used. The reason for this particular configuration
+is that commonly in astronomical applications, 3D datasets don't have the
+same nature in all three dimensions, commonly the first two dimensions are
+spatial (RA and Dec) while the third is spectral (for example
+wavelength). The samplings are also different, in the default case, the
+spatial sampling is assumed to be larger than the spectral sampling, hence
+a wider FWHM in the spatial directions, see @ref{Sampling theorem}.
 
 @item --khdu=STR
 HDU containing the kernel in the file given to the @option{--kernel}
