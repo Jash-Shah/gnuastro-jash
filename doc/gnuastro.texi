@@ -634,7 +634,7 @@ Other useful software
 
 SAO ds9
 
-* Viewing multiextension FITS::  Configure SAO ds9 for multiextension images.
+* Viewing multiextension FITS images::  Configure SAO ds9 for multiextension images.
 
 @end detailmenu
 @end menu
@@ -5731,7 +5731,7 @@ white space characters aren't mandatory. Hence, in the example above, the
 @code{BLANK} field will be given the value of `@code{-99}'.
 
 Except for the column number (@code{N}), the rest of the fields are
-optional. Alao, the column information comments don't have to be in
+optional. Also, the column information comments don't have to be in
 order. In other words, the information for column @mymath{N+m}
 (@mymath{m>0}) can be given in a line before column @mymath{N}. Also, you
 don't have to specify information for all columns. Those columns that don't
@@ -12901,14 +12901,79 @@ pixel.
 
 @end enumerate
 
+For a 2D image, you can configure SAO DS9 in your Graphic User Interface
+(GUI) to open NoiseChisel's output as a multi-extension data cube and flip
+through the different extension to visually inspect the results. We have
+described this process for the GNOME GUI (most common GUI in GNU/Linux
+operating systems) in @ref{Viewing multiextension FITS images}.
 
+For a 3D datacube, things become a little more complicated because
+projecting a 3D dataset to a 2D surface (your monitor) is always bound to
+loose some of the information. Hence the most complete way to check the
+different extensions is to view each 2D slice independently. To do that you
+can copy the following shell function in your @file{.bashrc} file (see
+@ref{Installation directory}). Just change the @command{geometry} value to
+a size that you are most comfortable with on your monitor.
 
+@example
+# Open NoiseChisel's final output in 3D with SAO DS9.
+function ds9-nc3d-out @{
+    if [ "x$1" = x ]; then
+        echo "No input file (NoiseChisel's final output on a 3D cube)."
+    else
+        tdir=$(mktemp -d)
+        oname=$tdir/OBJECTS.fits
+        astfits $1 --copy=OBJECTS -o$oname
+        ds9 -zscale -geometry 1600x3000 -tile -wcs degrees             \
+            -3d $1 -3d method aip -3d $oname -3d method mip            \
+            -frame delete 1 -frame 4 -frame 5 -multiframe $1           \
+            -frame 5 -zoom to fit -match frame image -lock slice image \
+            -frame 2 -zoom out -3d view -45 45                         \
+            -frame 3 -zoom out -3d view -45 45
+        rm -rf $tdir
+    fi
+@}
+@end example
 
+@noindent
+Once you restart your terminal (and in all future terminals), you will be
+able to load all the extensions in NoiseChisel's output with a command like
+below.
 
+@example
+$ ds9-nc3d-out cube_labeled.fits
+@end example
 
+@noindent
+The two 3D frames of the top row are the input image and the detected
+objects. You can view (project) them from different angles by first
+selecting the proper frame then changing azimuth and elevation values in
+the ``3D'' window (which also opens with DS9). The rest of the frames are
+2D slices of the 3D dataset in each extension as described above. In short,
+you can see the first and second extension in two views, once in 3D and
+once as 2D slices. You can flip through them with the slider (or buttons)
+on the ``Cube'' window (which also opens with DS9). In the @command{ds9}
+call above, all the frames are locked to the slice, so as you go deep into
+the 3D cube, all frames will change simultaneously.
 
+To easily view/inspect NoiseChisel's check images, you can add this
+function to your @file{.bashrc}. In many cases, it is similar to the
+@code{ds9-nc3d-out} function above, but it only shows the input cube in 3D,
+then shows all the extensions in the check image as 2D slices.
 
-
+@example
+# Open NoiseChisel's check images in 3D with SAO DS9.
+function ds9-nc3d-check @{
+    if [ "x$1" = x ]; then
+        echo "No input file (NoiseChisel's checks on a 3D cube)."
+    else
+        ds9 -zscale -geometry 1600x3000 -tile -wcs degrees             \
+            -3d $1 -3d method aip -frame delete 1 -multiframe $1       \
+            -frame 2 -zoom to fit -match frame image -lock slice image \
+            -frame 2 -zoom out -3d view -45 45
+    fi
+@}
+@end example
 
 @node MakeCatalog,  , NoiseChisel, Data analysis
 @section MakeCatalog
@@ -24153,10 +24218,10 @@ export XPA_METHOD=local
 
 
 @menu
-* Viewing multiextension FITS::  Configure SAO ds9 for multiextension images.
+* Viewing multiextension FITS images::  Configure SAO ds9 for multiextension images.
 @end menu
 
-@node Viewing multiextension FITS,  , SAO ds9, SAO ds9
+@node Viewing multiextension FITS images,  , SAO ds9, SAO ds9
 @subsection Viewing multiextension FITS images
 
 @cindex Multiextension FITS
