@@ -12901,11 +12901,12 @@ pixel.
 
 @end enumerate
 
-For a 2D image, you can configure SAO DS9 in your Graphic User Interface
-(GUI) to open NoiseChisel's output as a multi-extension data cube and flip
-through the different extension to visually inspect the results. We have
-described this process for the GNOME GUI (most common GUI in GNU/Linux
-operating systems) in @ref{Viewing multiextension FITS images}.
+To inspect NoiseChisel's 2D output (when input is 2D), you can configure
+SAO DS9 in your Graphic User Interface (GUI) to open NoiseChisel's output
+as a multi-extension data cube. This will allow you to flip through the
+different extensions and visually inspect the results. This process has
+been described for the GNOME GUI (most common GUI in GNU/Linux operating
+systems) in @ref{Viewing multiextension FITS images}.
 
 For a 3D datacube, things become a little more complicated because
 projecting a 3D dataset to a 2D surface (your monitor) is always bound to
