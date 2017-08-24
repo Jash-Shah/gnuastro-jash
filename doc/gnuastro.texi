@@ -12928,9 +12928,7 @@ function ds9-nc3d-out @{
         ds9 -zscale -geometry 1600x3000 -tile -wcs degrees             \
             -3d $1 -3d method aip -3d $oname -3d method mip            \
             -frame delete 1 -frame 4 -frame 5 -multiframe $1           \
-            -frame 5 -zoom to fit -match frame image -lock slice image \
-            -frame 2 -zoom out -3d view -45 45                         \
-            -frame 3 -zoom out -3d view -45 45
+            -frame 5 -zoom to fit -match frame image -lock slice image
         rm -rf $tdir
     fi
 @}
@@ -12946,19 +12944,22 @@ $ ds9-nc3d-out cube_labeled.fits
 @end example
 
 @noindent
-The two 3D frames of the top row are the input image and the detected
-objects. You can view (project) them from different angles by first
-selecting the proper frame then changing azimuth and elevation values in
-the ``3D'' window (which also opens with DS9). The rest of the frames are
-2D slices of the 3D dataset in each extension as described above. In short,
-you can see the first and second extension in two views, once in 3D and
-once as 2D slices. You can flip through them with the slider (or buttons)
-on the ``Cube'' window (which also opens with DS9). In the @command{ds9}
-call above, all the frames are locked to the slice, so as you go deep into
-the 3D cube, all frames will change simultaneously.
+The two frames of the top row are the input image and the detected objects
+in 3D. You can view (project) them from different angles by first selecting
+the proper frame then changing the azimuth and elevation values in the
+``3D'' window (which also opens with DS9)@footnote{If you want to change
+the viewing/projection angle it is better to first zoom out and make the
+projection smaller so the rotated frame can fit in the frame and it is
+processed faster.}. The rest of the frames are 2D slices of the 3D dataset
+in each extension as described above. Therefore, you can see the first and
+second extension in two frames, once in 3D and once as 2D slices. You can
+flip through them with the slider (or buttons) on the ``Cube'' window
+(which also opens with DS9). In the @command{ds9} call above, all the
+frames are locked to the slice, so as you go deep into the 3D cube, all
+frames will change simultaneously.
 
 To easily view/inspect NoiseChisel's check images, you can add this
-function to your @file{.bashrc}. In many cases, it is similar to the
+function to your @file{.bashrc}. In many ways, it is similar to the
 @code{ds9-nc3d-out} function above, but it only shows the input cube in 3D,
 then shows all the extensions in the check image as 2D slices.
 
@@ -12970,8 +12971,7 @@ function ds9-nc3d-check @{
     else
         ds9 -zscale -geometry 1600x3000 -tile -wcs degrees             \
             -3d $1 -3d method aip -frame delete 1 -multiframe $1       \
-            -frame 2 -zoom to fit -match frame image -lock slice image \
-            -frame 2 -zoom out -3d view -45 45
+            -frame 2 -zoom to fit -match frame image -lock slice image
     fi
 @}
 @end example
