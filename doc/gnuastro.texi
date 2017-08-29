@@ -1543,17 +1543,19 @@ management of its version controlled source server there.
 
 @c To the developers: please keep this in the same order as the THANKS file
 @c (alphabetical, except for the names in the paragraph above).
-We would also like to gratefully thank (in alphabetical order) Roland
-Bacon, Nicolas Bouché, Adrian Bunk, Rosa Calvi, Antonio Diaz Diaz, Raúl
-Infante Sainz, Lee Kelvin, Mohammad-Reza Khellat, Alan Lefor, Guillaume
-Mahler, Francesco Montanari, William Pence, Yahya Sefidbakht, Ole
-Streicher, Ignacio Trujillo, David Valls-Gabaud and Christopher Willmer for
-their useful and constructive comments and suggestions. Finally we should
-thank all the (sometimes anonymous) people in various online forums which
-patiently answered all our small (but important) technical questions. All
-work on Gnuastro has been voluntary, but we are most grateful to the
-following institutions (in chronological order) for hosting us in our
-research:
+We would also like to gratefully thank (in alphabetical order by family
+name) Marjan Akbari, Roland Bacon, Nicolas Bouch@'e, Adrian Bunk, Rosa
+Calvi, Antonio Diaz Diaz, Raúl Infante Sainz, Lee Kelvin, Mohammad-Reza
+Khellat, Alan Lefor, Guillaume Mahler, Francesco Montanari, William Pence,
+Yahya Sefidbakht, Ole Streicher, Ignacio Trujillo, David Valls-Gabaud and
+Christopher Willmer for their useful and constructive comments and
+suggestions. Finally we should thank all the (sometimes anonymous) people
+in various online forums which patiently answered all our small (but
+important) technical questions.
+
+All work on Gnuastro has been voluntary, but the authors are most grateful
+to the following institutions (in chronological order) for hosting us in
+our research:
 
 @quotation
 Ministry of education, culture, sports, science and technology (MEXT), Japan.@*
@@ -2851,21 +2853,17 @@ activities, please clone the version controlled source as described in
 
 @cindex Gzip
 @cindex Lzip
-Gnuastro's official tarball is released with two formats: Gzip (with suffix
-@file{.tar.gz}) and Lzip (with suffix @file{.tar.lz}). The former is a very
-well-known and widely used compression program created by GNU and available
-in most systems. The latter provides a better compression ratio and more
-robust archival capacity. For example Gnuastro 0.2's tarball was 2.8MB and
-4.2MB with Lzip and Gzip respectively. From the
-@url{http://www.nongnu.org/lzip/lzip.html, Lzip webpage}: ``Lzip is a
-lossless data compressor with a user interface similar to the one of gzip
-or bzip2. Lzip can compress about as fast as gzip (@command{lzip -0}), or
-compress most files more than bzip2 (@command{lzip -9}). Decompression
-speed is intermediate between gzip and bzip2. Lzip is better than gzip and
-bzip2 from a data recovery perspective.'' However, Lzip is currently not
-too common, so it might not be pre-installed in your operating
-system. Installing it from your operating system's package manager or from
-source is very easy.
+Gnuastro's official/stable tarball is released with two formats: Gzip (with
+suffix @file{.tar.gz}) and Lzip (with suffix @file{.tar.lz}). The
+pre-release tarballs (after version 0.3) are released only as an Lzip
+tarball. Gzip is a very well-known and widely used compression program
+created by GNU and available in most systems. However, Lzip provides a
+better compression ratio and more robust archival capacity. For example
+Gnuastro 0.3's tarball was 2.9MB and 4.3MB with Lzip and Gzip respectively,
+see the @url{http://www.nongnu.org/lzip/lzip.html, Lzip webpage} for
+more. Lzip might not be pre-installed in your operating system, if so,
+installing it from your operating system's package manager or from source
+is very easy and fast (it is a very small program).
 
 The GNU FTP server is mirrored (has backups) in various locations on the
 globe (@url{http://www.gnu.org/order/ftp.html}). You can use the closest
@@ -12160,6 +12158,11 @@ give this option a value of 1 (only the largest valued pixel in the input
 will not be eroded).
 
 @item
+@option{--dilatengb}: to specify the final dilation connectivity. Prior to
+Gnuastro 0.4, it was assumed to be 8 (maximum connectivity in a 2D image
+where each pixel has 8 neighbors).
+
+@item
 @option{--cleandilated}: After dilation, if the signal-to-noise ratio of a
 detection is less than the derived pseudo-detection S/N limit, that
 detection will be discarded. In an ideal/clean noise, a true detection's
@@ -12694,6 +12697,10 @@ neighborhood. This is because astronomical objects, except cosmic rays,
 never have a clear cutoff, so all the 8-pixels connected to the border
 pixels of a detection might harbor data.
 
+@item --dilatengb=INT
+The connectivity used for the final dilation, see @option{--erodengb} for
+more information about connectivity or a structuring element.
+
 @item --checkdetection
 Every step of the detection process will be added as an extension to a file
 with the suffix @file{_det.fits}. Going through each would just be a repeat
@@ -12901,12 +12908,13 @@ pixel.
 
 @end enumerate
 
-To inspect NoiseChisel's 2D output (when input is 2D), you can configure
-SAO DS9 in your Graphic User Interface (GUI) to open NoiseChisel's output
-as a multi-extension data cube. This will allow you to flip through the
-different extensions and visually inspect the results. This process has
-been described for the GNOME GUI (most common GUI in GNU/Linux operating
-systems) in @ref{Viewing multiextension FITS images}.
+When the input is a 2D image, to inspect NoiseChisel's output you can
+configure SAO DS9 in your Graphic User Interface (GUI) to open
+NoiseChisel's output as a multi-extension data cube. This will allow you to
+flip through the different extensions and visually inspect the
+results. This process has been described for the GNOME GUI (most common GUI
+in GNU/Linux operating systems) in @ref{Viewing multiextension FITS
+images}.
 
 For a 3D datacube, things become a little more complicated because
 projecting a 3D dataset to a 2D surface (your monitor) is always bound to

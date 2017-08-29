@@ -49,12 +49,38 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /****************************************************************
  ************           Initial detection            ************
  ****************************************************************/
+/* The user gives connectivity values in terms of the number of neighbors
+   to use, so with this function, we convert that number to the
+   connectivity that is defined in `gnuastro/dimension.h'. */
+static int
+detection_ngb_to_connectivity(size_t ndim, size_t ngb)
+{
+  int connectivity=0;
+  switch(ndim)
+    {
+    case 2:
+      connectivity = ngb==4 ? 1 : 2;
+      break;
+    case 3:
+      connectivity = ngb==6 ? 1 : (ngb==18 ? 2 : 3);
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address "
+            "the problem. %zu not a valid value to `ndim'",
+            __func__, PACKAGE_BUGREPORT, ndim);
+    }
+  return connectivity;
+}
+
+
+
+
+
 void
 detection_initial(struct noisechiselparams *p)
 {
   char *msg;
   uint8_t *b, *bf;
-  int connectivity=0;
   struct timeval t0, t1;
 
 
@@ -71,30 +97,16 @@ detection_initial(struct noisechiselparams *p)
   if(p->detectionname)
     {
       p->binary->name="THRESHOLDED";
-      gal_fits_img_write(p->binary, p->detectionname, NULL, PROGRAM_STRING);
+      gal_fits_img_write(p->binary, p->detectionname, NULL, PROGRAM_NAME);
       p->binary->name=NULL;
-    }
-
-
-  /* Set the connectivity of the erosion. */
-  switch(p->binary->ndim)
-    {
-    case 2:
-      connectivity = p->erodengb==4 ? 1 : 2;
-      break;
-    case 3:
-      connectivity = p->erodengb==6 ? 1 : (p->erodengb==18 ? 2 : 3);
-      break;
-    default:
-      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address "
-            "the problem. %zu not a valid value to p->binary->ndim",
-            __func__, PACKAGE_BUGREPORT, p->binary->ndim);
     }
 
 
   /* Erode the image. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
-  gal_binary_erode(p->binary, p->erode, connectivity, 1);
+  gal_binary_erode(p->binary, p->erode,
+                   detection_ngb_to_connectivity(p->input->ndim, p->erodengb),
+                   1);
   if(!p->cp.quiet)
     {
       asprintf(&msg, "Eroded %zu time%s (%zu-connectivity).", p->erode,
@@ -105,7 +117,7 @@ detection_initial(struct noisechiselparams *p)
   if(p->detectionname)
     {
       p->binary->name="ERODED";
-      gal_fits_img_write(p->binary, p->detectionname, NULL, PROGRAM_STRING);
+      gal_fits_img_write(p->binary, p->detectionname, NULL, PROGRAM_NAME);
       p->binary->name=NULL;
     }
 
@@ -117,7 +129,9 @@ detection_initial(struct noisechiselparams *p)
 
   /* Do the opening. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
-  gal_binary_open(p->binary, p->opening, p->openingngb==4 ? 1 : 2, 1);
+  gal_binary_open(p->binary, p->opening,
+                  detection_ngb_to_connectivity(p->input->ndim, p->openingngb),
+                  1);
   if(!p->cp.quiet)
     {
       asprintf(&msg, "Opened (depth: %zu, %s connectivity).",
@@ -132,7 +146,7 @@ detection_initial(struct noisechiselparams *p)
   if(p->detectionname)
     {
       p->olabel->name="OPENED-AND-LABELED";
-      gal_fits_img_write(p->olabel, p->detectionname, NULL, PROGRAM_STRING);
+      gal_fits_img_write(p->olabel, p->detectionname, NULL, PROGRAM_NAME);
       p->olabel->name=NULL;
     }
 
@@ -308,7 +322,7 @@ detection_pseudo_find(struct noisechiselparams *p, gal_data_t *workbin,
   if(p->detectionname)
     {
       workbin->name = s0d1 ? "DTHRESH-ON-DET" : "DTHRESH-ON-SKY";
-      gal_fits_img_write(workbin, p->detectionname, NULL, PROGRAM_STRING);
+      gal_fits_img_write(workbin, p->detectionname, NULL, PROGRAM_NAME);
       workbin->name=NULL;
     }
 
@@ -363,7 +377,7 @@ detection_pseudo_find(struct noisechiselparams *p, gal_data_t *workbin,
             }
 
           /* Write the temporary array into the check image. */
-          gal_fits_img_write(bin, p->detectionname, NULL, PROGRAM_STRING);
+          gal_fits_img_write(bin, p->detectionname, NULL, PROGRAM_NAME);
 
           /* Increment the step counter. */
           ++fho_prm.step;
@@ -574,7 +588,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
           while(++plab<plabend);
         }
       worklab->name=extname;
-      gal_fits_img_write(worklab, p->detectionname, NULL, PROGRAM_STRING);
+      gal_fits_img_write(worklab, p->detectionname, NULL, PROGRAM_NAME);
       worklab->name=NULL;
     }
 
@@ -688,7 +702,7 @@ detection_pseudo_remove_low_sn(struct noisechiselparams *p,
     {
       workbin->name="TRUE-PSEUDOS";
       gal_fits_img_write(workbin, p->detectionname, NULL,
-                         PROGRAM_STRING);
+                         PROGRAM_NAME);
       workbin->name=NULL;
     }
 
@@ -725,12 +739,14 @@ detection_pseudo_real(struct noisechiselparams *p)
 
 
   /* A small sanity check */
-  if(sn->size==0)
-    error(EXIT_FAILURE, 0, "no pseudo-detections could be found over the "
-          "sky region to estimate an S/N. Please adjust parameters like "
+  if( sn->size < p->minnumfalse)
+    error(EXIT_FAILURE, 0, "only %zu pseudo-detections could be found over "
+          "the sky region to estimate an S/N. This is less than %zu (value "
+          "to `--minnumfalse' option). Please adjust parameters like "
           "`--dthresh', `--detsnminarea', or make sure that there actually "
           "is sufficient sky area after initial detection. You can use "
-          "`--checkdetection' to see every step until this point");
+          "`--checkdetection' to see every step until this point", sn->size,
+          p->minnumfalse);
 
 
   /* Get the S/N quantile and report it if we are in non-quiet mode. */
@@ -839,7 +855,7 @@ detection_final_remove_small_sn(struct noisechiselparams *p, size_t num)
     {
       p->olabel->name="DETECTION-FINAL";
       gal_fits_img_write(p->olabel, p->detectionname, NULL,
-                         PROGRAM_STRING);
+                         PROGRAM_NAME);
       p->olabel->name=NULL;
     }
 
@@ -1001,14 +1017,18 @@ detection(struct noisechiselparams *p)
   /* If the user asked for dilation, then apply it. */
   if(p->dilate)
     {
-      gal_binary_dilate(workbin, p->dilate, p->input->ndim, 1);
+      gal_binary_dilate(workbin, p->dilate,
+                        detection_ngb_to_connectivity(p->input->ndim,
+                                                      p->dilatengb),
+                        1);
       num_true_initial = gal_binary_connected_components(workbin, &p->olabel,
                                                          8);
     }
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "%zu detections after %zu dilation%s",
-              num_true_initial, p->dilate, p->dilate>1 ? "s." : ".");
+      asprintf(&msg, "%zu detections after %zu dilation%s (%zu-connected)",
+               num_true_initial, p->dilate, p->dilate>1 ? "s." : ".",
+               p->dilatengb);
       gal_timing_report(&t0, msg, 2);
       free(msg);
     }
@@ -1029,7 +1049,7 @@ detection(struct noisechiselparams *p)
         {
           p->olabel->name="DETECTION-FINAL";
           gal_fits_img_write(p->olabel, p->detectionname, NULL,
-                             PROGRAM_STRING);
+                             PROGRAM_NAME);
           p->olabel->name=NULL;
         }
     }

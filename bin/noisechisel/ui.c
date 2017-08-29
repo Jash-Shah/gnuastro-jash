@@ -216,22 +216,28 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
+static void
+ui_ngb_check(size_t value, char *optionname)
+{
+  if(value!=4 && value!=8 && value!=6 && value!=18 && value!=26)
+    error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
+          "`--%s'. Acceptable values are 4 or 8 (for 2D inputs) and "
+          "6, 18, or 26 (for 3D inputs)", value, optionname);
+}
+
+
+
+
+
 /* Read and check ONLY the options. When arguments are involved, do the
    check in `ui_check_options_and_arguments'. */
 static void
 ui_read_check_only_options(struct noisechiselparams *p)
 {
   /* A general check on the neighbor connectivity values. */
-  if(p->erodengb!=4 && p->erodengb!=8 && p->erodengb!=6 && p->erodengb!=18
-     && p->erodengb!=26)
-    error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
-          "`--erodengb'. Acceptable values are 4 or 8 (for 2D inputs) and "
-          "6, 18, or 26 (for 3D inputs)", p->erodengb);
-  if(p->openingngb!=4 && p->openingngb!=8 && p->openingngb!=6
-     && p->openingngb!=18 && p->openingngb!=26)
-    error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
-          "`--openingngb'. Acceptable values are 4 or 8 (for 2D inputs) and "
-          "6, 18, or 26 (for 3D inputs)", p->openingngb);
+  ui_ngb_check(p->erodengb,   "erodengb");
+  ui_ngb_check(p->dilatengb,  "dilatengb");
+  ui_ngb_check(p->openingngb, "openingngb");
 
   /* Make sure that the no-erode-quantile is not smaller or equal to
      qthresh. */
@@ -241,7 +247,7 @@ ui_read_check_only_options(struct noisechiselparams *p)
           "or `-t'). You have provided %.4f and %.4f for the former and "
           "latter, respectively", p->noerodequant, p->qthresh);
 
-  /* For the options that make tables, the table formation option is
+  /* For the options that make tables, the table format option is
      mandatory. */
   if( (p->checkdetsn || p->checkclumpsn) && p->cp.tableformat==0 )
     error(EXIT_FAILURE, 0, "`--tableformat' is necessary with the "
