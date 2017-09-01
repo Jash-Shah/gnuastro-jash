@@ -460,7 +460,7 @@ onecrop_name(struct onecropparams *crp)
                  p->suffix);
 
       /* Make sure the file doesn't exist. */
-      gal_checkset_check_remove_file(crp->name, 0, cp->dontdelete);
+      gal_checkset_writable_remove(crp->name, 0, cp->dontdelete);
     }
   else
     {
@@ -468,7 +468,7 @@ onecrop_name(struct onecropparams *crp)
       if(p->outnameisfile)            /* An output file was specified. */
         {
           crp->name=cp->output;
-          gal_checkset_check_remove_file(crp->name, 0, cp->dontdelete);
+          gal_checkset_writable_remove(crp->name, 0, cp->dontdelete);
         }
       else          /* The output was a directory, use automatic output. */
         crp->name=gal_checkset_automatic_output(cp,
