@@ -72,6 +72,7 @@ clumps_oversegment(struct clumps_thread_params *cltprm)
 
   float *arr=p->conv->array;
   gal_data_t *indexs=cltprm->indexs;
+  int connectivity=ndim==2?ndim:ndim-1;
   gal_list_sizet_t *Q=NULL, *cleanup=NULL;
   size_t *a, *af, ind, *dsize=p->input->dsize;
   size_t *dinc=gal_dimension_increment(ndim, dsize);
@@ -169,7 +170,8 @@ clumps_oversegment(struct clumps_thread_params *cltprm)
 
                 /* Look at the neighbors and see if we already have a
                    label. */
-                GAL_DIMENSION_NEIGHBOR_OP(ind, ndim, dsize, ndim, dinc,
+                GAL_DIMENSION_NEIGHBOR_OP(ind, ndim, dsize, connectivity,
+                                          dinc,
                    {
                      /* If it is already decided to be a river, then stop
                         looking at the neighbors. */
@@ -271,7 +273,7 @@ clumps_oversegment(struct clumps_thread_params *cltprm)
                neighboured by more than one label, set it as a river
                pixel. Also if it is touching a zero valued pixel (which
                does not belong to this object), set it as a river pixel.*/
-            GAL_DIMENSION_NEIGHBOR_OP(*a, ndim, dsize, ndim, dinc,
+            GAL_DIMENSION_NEIGHBOR_OP(*a, ndim, dsize, connectivity, dinc,
                {
                  /* When `n1' has already been set as a river, there is no
                     point in looking at the other neighbors. */
@@ -674,6 +676,7 @@ enum infocols
   {
     INFO_X,              /* Flux weighted X center col, 0 by C std. */
     INFO_Y,              /* Flux weighted Y center col.             */
+    INFO_Z,              /* Flux weighted Z center col.             */
     INFO_NFF,            /* Number of non-negative pixels (for X,Y).*/
     INFO_INFLUX,         /* Tatal flux within clump.                */
     INFO_INAREA,         /* Tatal area within clump.                */
@@ -689,8 +692,8 @@ clumps_get_raw_info(struct clumps_thread_params *cltprm)
   struct noisechiselparams *p=cltprm->clprm->p;
   size_t ndim=p->input->ndim, *dsize=p->input->dsize;
 
-  size_t i, *a, *af, ii, coord[2];
   double *row, *info=cltprm->info->array;
+  size_t i, *a, *af, ii, fullid, coord[3];
   size_t nngb=gal_dimension_num_neighbors(ndim);
   float *arr=p->input->array, *std=p->std->array;
   size_t *dinc=gal_dimension_increment(ndim, dsize);
@@ -712,9 +715,12 @@ clumps_get_raw_info(struct clumps_thread_params *cltprm)
             info[   lab * INFO_NCOLS + INFO_INFLUX ] += arr[*a];
             if( arr[*a]>0.0f )
               {
+                gal_dimension_index_to_coord(*a, ndim, dsize, coord);
                 info[ lab * INFO_NCOLS + INFO_NFF ] += arr[*a];
-                info[ lab * INFO_NCOLS + INFO_X ] += arr[*a] * (*a/dsize[1]);
-                info[ lab * INFO_NCOLS + INFO_Y ] += arr[*a] * (*a%dsize[1]);
+                info[ lab * INFO_NCOLS + INFO_X   ] += arr[*a] * coord[0];
+                info[ lab * INFO_NCOLS + INFO_Y   ] += arr[*a] * coord[1];
+                if(ndim==3)
+                  info[ lab * INFO_NCOLS + INFO_Z ] += arr[*a] * coord[2];
               }
           }
 
@@ -775,10 +781,16 @@ clumps_get_raw_info(struct clumps_thread_params *cltprm)
           if( row[INFO_NFF]==0.0f ) row[INFO_INAREA]=0;
           else
             {
+              /* Find the coordinates of the clump's weighted center. */
               coord[0]=GAL_DIMENSION_FLT_TO_INT(row[INFO_X]/row[INFO_NFF]);
               coord[1]=GAL_DIMENSION_FLT_TO_INT(row[INFO_Y]/row[INFO_NFF]);
-              row[INFO_INSTD] = std[ gal_tile_full_id_from_coord(&p->cp.tl,
-                                                                 coord) ];
+              if(ndim==3)
+                coord[2]=GAL_DIMENSION_FLT_TO_INT(row[INFO_Z]/row[INFO_NFF]);
+
+              /* Find the corresponding standard deviation. */
+              fullid=gal_tile_full_id_from_coord(&p->cp.tl, coord);
+              row[INFO_INSTD] = std[fullid];
+
               /* For a check
               printf("---------\n");
               printf("\t%f --> %zu\n", row[INFO_Y]/row[INFO_NFF], coord[1]);
@@ -1311,7 +1323,7 @@ clumps_true_find_sn_thresh(struct noisechiselparams *p)
                     p->cp.minmapsize, "CLUMP_S/N", "ratio",
                     "Signal-to-noise ratio");
   snind = ( p->checkclumpsn
-            ? gal_data_alloc(NULL, clprm.snind->type, 1, &numsn, NULL, 0,
+            ? gal_data_alloc(NULL, GAL_TYPE_INT32, 1, &numsn, NULL, 0,
                              p->cp.minmapsize, "CLUMP_ID", "counter",
                              "Unique ID for this clump.")
             : NULL );
