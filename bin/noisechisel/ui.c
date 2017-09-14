@@ -119,7 +119,6 @@ ui_initialize_options(struct noisechiselparams *p,
   cp->numthreads         = gal_threads_number();
   cp->coptions           = gal_commonopts_options;
 
-
   /* Modify common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
     {
@@ -236,7 +235,6 @@ ui_read_check_only_options(struct noisechiselparams *p)
 {
   /* A general check on the neighbor connectivity values. */
   ui_ngb_check(p->erodengb,   "erodengb");
-  ui_ngb_check(p->dilatengb,  "dilatengb");
   ui_ngb_check(p->openingngb, "openingngb");
 
   /* Make sure that the no-erode-quantile is not smaller or equal to
@@ -256,6 +254,36 @@ ui_read_check_only_options(struct noisechiselparams *p)
           "following command for more information (use `SPACE' to go down "
           "the page and `q' to return to the command-line):\n\n"
           "    $ info gnuastro \"Input Output options\"");
+
+  /* Kernel checks. */
+  if(p->kernelname)
+    {
+      /* Check if it exists. */
+      gal_checkset_check_file(p->kernelname);
+
+      /* If its FITS, see if a HDU has been provided. */
+      if( gal_fits_name_is_fits(p->kernelname) && p->khdu==NULL )
+        error(EXIT_FAILURE, 0, "no HDU specified for kernel. When the "
+              "kernel is a FITS file, a HDU must also be specified. You "
+              "can use the `--khdu' option and give it the HDU number "
+              "(starting from zero), extension name, or anything "
+              "acceptable by CFITSIO");
+    }
+
+  /* Wide kernel checks. */
+  if(p->widekernelname)
+    {
+      /* Check if it exists. */
+      gal_checkset_check_file(p->widekernelname);
+
+      /* If its FITS, see if a HDU has been provided. */
+      if( gal_fits_name_is_fits(p->widekernelname) && p->wkhdu==NULL )
+        error(EXIT_FAILURE, 0, "no HDU specified for wide kernel. When the "
+              "wide kernel is a FITS file, a HDU must also be specified. You "
+              "can use the `--khdu' option and give it the HDU number "
+              "(starting from zero), extension name, or anything "
+              "acceptable by CFITSIO");
+    }
 }
 
 
@@ -281,21 +309,6 @@ ui_check_options_and_arguments(struct noisechiselparams *p)
     }
   else
     error(EXIT_FAILURE, 0, "no input file is specified");
-
-  /* Basic Kernel file checks. */
-  if(p->kernelname)
-    {
-      /* Check if it exists. */
-      gal_checkset_check_file(p->kernelname);
-
-      /* If its FITS, see if a HDU has been provided. */
-      if( gal_fits_name_is_fits(p->kernelname) && p->khdu==NULL )
-        error(EXIT_FAILURE, 0, "no HDU specified for kernel. When the "
-              "kernel is a FITS file, a HDU must also be specified, you "
-              "can use the `--khdu' option and give it the HDU number "
-              "(starting from zero), extension name, or anything "
-              "acceptable by CFITSIO");
-    }
 }
 
 
@@ -367,7 +380,7 @@ ui_set_output_names(struct noisechiselparams *p)
                    ? "_detsn_det.txt" : "_detsn_det.fits") );
       p->detsn_D_name=gal_checkset_automatic_output(&p->cp, basename,
                  ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
-                   ? "_detsn_dilated.txt" : "_detsn_dilated.fits") );
+                   ? "_detsn_grown.txt" : "_detsn_grown.fits") );
     }
 
   /* Detection steps. */
@@ -535,6 +548,13 @@ ui_prepare_kernel(struct noisechiselparams *p)
       ff = (f=p->kernel->array) + p->kernel->size;
       do *f=*k++; while(++f<ff);
     }
+
+
+  /* If a wide kernel is given, then read it into memory. Otherwise, just
+     ignore it. */
+  if(p->widekernelname)
+    p->widekernel=gal_fits_img_read_kernel(p->widekernelname, p->wkhdu,
+                                           p->cp.minmapsize);
 }
 
 
@@ -699,9 +719,7 @@ ui_preparations(struct noisechiselparams *p)
   ui_preparations_read_input(p);
 
 
-  /* Check for blank values to help later processing. AFTERWARDS, set the
-     USE_ZERO flag, so the zero-bit (if the input doesn't have any blank
-     value) will be meaningful. */
+  /* Check for blank values to help later processing.  */
   gal_blank_present(p->input, 1);
 
 
@@ -805,12 +823,18 @@ ui_read_check_inputs_setup(int argc, char *argv[],
              p->cp.numthreads==1 ? "." : "s.");
       printf("  - Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
       if(p->kernelname)
-        printf("  - Kernel: %s (hdu: %s)\n", p->kernelname, p->khdu);
+        printf("  - %s: %s (hdu: %s)\n",
+               p->widekernelname ? "Sharp Kernel" : "Kernel",
+               p->kernelname, p->khdu);
       else
         printf(p->kernel->ndim==2
-               ? "  - Kernel: FWHM=2 pixel Gaussian.\n"
-               : "  - Kernel: FWHM=1.5 pixel Gaussian (half extent in "
-               "3rd dimension).\n");
+               ? "  - %s: FWHM=2 pixel Gaussian.\n"
+               : "  - %s: FWHM=1.5 pixel Gaussian (half extent in "
+               "3rd dimension).\n",
+               p->widekernelname ? "Sharp Kernel" : "Kernel");
+      if(p->widekernelname)
+        printf("  - Wide Kernel: %s (hdu: %s)\n", p->widekernelname,
+               p->wkhdu);
     }
 }
 
@@ -890,11 +914,13 @@ ui_free_report(struct noisechiselparams *p, struct timeval *t1)
   gal_data_free(p->sky);
   gal_data_free(p->std);
   gal_data_free(p->conv);
+  gal_data_free(p->wconv);
   gal_data_free(p->input);
   gal_data_free(p->kernel);
   gal_data_free(p->binary);
   gal_data_free(p->olabel);
   gal_data_free(p->clabel);
+  gal_data_free(p->widekernel);
 
   /* Clean up the tile structure. */
   p->ltl.numchannels=NULL;
