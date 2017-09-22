@@ -4596,6 +4596,37 @@ display in the @option{--help} output of the program.
 
 @table @option
 
+@item --minmapsize=INT
+The minimum size (in bytes) to store the contents of each main processing
+array of a program as a file (on the non-volatile HDD/SSD), not in
+RAM. This can be very useful for large datasets which can be very memory
+intensive such that your RAM will not be sufficient to keep/process them. A
+random filename is assigned to the array (in a @file{.gnuastro} directory
+within the running directory) which will keep the contents of the array as
+long as it is necessary.
+
+When this option has a value of @code{0} (zero), all arrays that use this
+option in a program will actually be in a file (not in RAM). When the value
+is @code{-1} (largest possible number in the unsigned integer types) these
+arrays will be definitely allocated in RAM. However, for complex programs
+like @ref{NoiseChisel}, it is recommended to not set it to @code{0}, but a
+value like @code{10000} so the many small arrays necessary during
+processing are stored in RAM and only larger ones are saved as a file.
+
+Please note that using a non-volatile file (in the HDD/SDD) instead of RAM
+can significantly increase the program's running time, especially on
+HDDs. So it is best to give this option large values by default. You can
+then decrease it for a specific program's invocation on a large input after
+you see memory issues arise (for example an error, or the program not
+aborting and fully consuming your memory).
+
+The random file will be deleted once it is no longer needed by the
+program. The @file{.gnuastro} directory will also be deleted if it has no
+other contents (you may also have configuration files in this directory,
+see @ref{Configuration files}). If you see randomly named files remaining
+in this directory, please send us a bug report so we address the problem,
+see @ref{Report a bug}.
+
 @item -Z INT[,INT[,...]]
 @itemx --tilesize=[,INT[,...]]
 The size of regular tiles for tessellation, see @ref{Tessellation}. For
@@ -6647,10 +6678,13 @@ One line examples:
 $ astfits image.fits
 
 ## Print the header keywords in the second HDU (counting from 0):
-$ astfits image.fits -h1 --printallkeys
+$ astfits image.fits -h1
 
 ## Only print header keywords that contain `NAXIS':
-$ astfits image.fits -h1 --printallkeys | grep NAXIS
+$ astfits image.fits -h1 | grep NAXIS
+
+## Only print the WCS standard PC matrix elements
+$ astfits image.fits -h1 | grep 'PC._.'
 
 ## Copy a HDU from input.fits to out.fits:
 $ astfits input.fits --copy=hdu-name --output=out.fits
@@ -6706,6 +6740,18 @@ HDU (extension) information: `image.fits'.
 3      CATALOG         table_binary    12371x5
 @end example
 
+If a specific HDU is identified on the command-line with the @option{--hdu}
+(or @option{-h} option) and no operation requested, then the full list of
+header keywords in that HDU will be printed (as if the
+@option{--printallkeys} was called, see below). It is important to remember
+that this only occurs when @option{--hdu} is given on the command-line. The
+@option{--hdu} value given in a configuration file will only be used when a
+specific operation on keywords requested. Therefore as described in the
+paragraphs above, when no explicit call to the @option{--hdu} option is
+made on the command-line and no operation is requested (on the command-line
+or configuration files), the basic information of each HDU/extension is
+printed.
+
 The operating mode and input/output options to Fits are similar to the
 other programs and fully described in @ref{Common options}. The options
 particular to Fits can be divided into two groups: 1) those related to
@@ -6736,8 +6782,8 @@ extensions will be copied from the input FITS file to the output FITS file
 in the given order (on the command-line and also in configuration files,
 see @ref{Configuration file precedence}). If the separate classes are
 called together in one run of Fits, then first @option{--copy} is run (on
-all specified HDUs), followed @option{--cut} (again on all specified HDUs),
-and then @option{--remove} (on all specified HDUs).
+all specified HDUs), followed by @option{--cut} (again on all specified
+HDUs), and then @option{--remove} (on all specified HDUs).
 
 The @option{--copy} and @option{--cut} options need an output FITS file
 (specified with the @option{--output} option). If the output file exists,
@@ -12177,15 +12223,43 @@ successfully.
 Before using NoiseChisel it is strongly recommended to read
 @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]} to
 gain a good understanding of what it does and how each parameter influences
-the output. Thanks to that paper, there is no more need to continue this
-introduction any further and we can just dive into the details of running
-NoiseChisel in @ref{Invoking astnoisechisel}. However, the paper cannot
-undergo any further updates, but NoiseChisel will evolve: better algorithms
-or steps will be found, thus options will be added or removed. So this book
-is the final and definitive guide. To make the transition form the paper to
-this book easier (and encourage reading the paper), below you can see the
-major changes since that paper was published.
+the output. Thanks to that paper, there is no need to go into the details
+of the major processing steps. Hence we can just dive into the details of
+running NoiseChisel in @ref{Invoking astnoisechisel}.
 
+However, the paper cannot undergo any further updates, but NoiseChisel will
+evolve: better algorithms or steps will be found, thus options will be
+added or removed. So this book is the final and definitive guide. For a
+more detailed list of changes in each release, please follow the
+@file{NEWS} file. The @file{NEWS} file is in the released Gnuastro tarball
+(see @ref{Release tarball}). You can also view the most recent @file{NEWS}
+file @url{http://git.savannah.gnu.org/cgit/gnuastro.git/plain/NEWS,
+online}@footnote{The online version of the @file{NEWS} file here may
+contain features that have been implemented, but not yet officially
+released as a tarball (see @ref{Downloading the source}). Therefore, please
+be sure to look at the dates and versions above each group of changed
+features and make sure it corresponds to your installed version. It is
+hence recommended to always stay up to date, see @ref{Announcements}).}.
+
+To make the transition form the paper to this book easier (and encourage
+reading the paper), below you can see the major changes since the paper was
+published. First, the options that have been removed are discussed,
+followed by those that have been added.
+
+@noindent
+Removed options:
+@itemize
+@item
+@option{--dilate}: In the paper, true detections were dilated for a final
+dig into the noise. However, simple 8-connected dilation can produce boxy
+results which are not realistic and could miss diffuse flux. The finalq dig
+into the noise is now done by ``grow''ing the true detections, similar to
+how true clumps were grown, see the description of @option{--detgrowquant}
+below and in @ref{Detection options} for more on the new alternative.
+@end itemize
+
+@noindent
+Added options:
 @itemize
 
 @item
@@ -12213,6 +12287,11 @@ give this option a value of 1 (only the largest valued pixel in the input
 will not be eroded).
 
 @item
+@option{--qthreshtilequant}: to manually remove the measured qthresh from
+some tiles. This feature helps in detecting large and extended diffuse
+(almost flat) signal when necessary, see @ref{Detection options}.
+
+@item
 @option{--detgrowquant}: is used to grow the final true detections until a
 given quantile in the same way that clumps are grown during segmentation
 (compare columns 2 and 3 in Figure 10 of the paper). It replaces the old
@@ -12226,17 +12305,17 @@ noise properties and how cleanly it was Sky subtracted. The new
 size to fill as part of this growth, see the description in @ref{Detection
 options} for more details.
 
+This new growth process can be much more successful in detecting diffuse
+flux around true detections compared to dilation and give more realistic
+results, but it can also increase the NoiseChisel run time (depending on
+the given value and input size).
+
 @item
 @option{--cleangrowndet}: A process to further clean/remove the possibility
 of false detections, see the descriptions under this option in
 @ref{Detection options}.
 
 @end itemize
-
-For a more detailed list of updates in each release, please follow the
-@file{NEWS} file. The @file{NEWS} file is in the released Gnuastro tarball
-(see @ref{Release tarball}). You can also see it online at
-@url{http://git.savannah.gnu.org/cgit/gnuastro.git/plain/NEWS}.
 
 @node Invoking astnoisechisel,  , NoiseChisel changes after publication, NoiseChisel
 @subsection Invoking NoiseChisel
@@ -12601,6 +12680,44 @@ integer to) @mymath{q\times{N}} in the sorted data set. After thresholding
 is complete, we will have a binary (two valued) image. The pixels above the
 threshold are known as foreground pixels (have a value of 1) while those
 which lie below the threshold are known as background (have a value of 0).
+
+@item --qthreshtilequant=FLT
+Only keep tiles which have a q-thresh value above the given quantile of the
+all successful tiles. Hence, when given a value of @code{1}, this option
+will be ignored. When there is more than one channel (and
+@option{--workoverch} is not called), quantile calculation and application
+will be done on each channel independently.
+
+This option is useful when a large and diffuse (almost flat within each
+tile) signal exists with very small regions of Sky. The flat-ness of the
+profile will cause it to successfully pass the tests of @ref{Quantifying
+signal in a tile}. As a result, without this option the flat and diffuse
+signal will be interpretted as sky. In such cases, you can see the status
+of the tiles with the @option{--checkqthresh} option (first image extension
+is enough) and select a quantile through this option to ignore the measured
+values in the higher-valued tiles.
+
+This option can also be useful when there are large bright objects in the
+image with large flat wings which can also pass the tests and give outlier
+values. When there is a sky gradient over the image (mainly due to
+post-processing issues like bad flat fielding), this option must be set to
+@code{1} so it is completely ignored and the sky gradient is accurately
+measured and subtracted.
+
+To get an estimate of the measured qthresh distribution, you can run the
+following commands. The first will create the qthresh check image with one
+value/pixel per tile (see @ref{Processing options}). Open the image in a
+FITS viewer and inspect it. The second command below will print the basic
+information about the distribution of values and the third will print the
+value at the 0.4 quantile. Recall that Gnuastro's Statistics program
+ignores blank values (in this case: tiles with significant signal), see
+@ref{Statistics}.
+
+@example
+$ astnoisechisel image.fits --checkqthresh --oneelempertile
+$ aststatistics image_qthresh.fits
+$ aststatistics image_qthresh.fits --quantile=0.4
+@end example
 
 @item --smoothwidth=INT
 Width of flat kernel used to smooth the interpolated quantile thresholds,
@@ -18261,23 +18378,14 @@ will be deleted.
 The minimum size of an array (in bytes) to store the contents of
 @code{array} as a file (on the non-volatile HDD/SSD), not in RAM. This can
 be very useful for large datasets which can be very memory intensive and
-the user's hardware RAM might not be sufficient to keep/process it. A random
+the user's RAM might not be sufficient to keep/process it. A random
 filename is assigned to the array which is available in the @code{mmapname}
-element of @code{gal_data_t} (above), see there for more.
+element of @code{gal_data_t} (above), see there for more. @code{minmapsize}
+is stored in each @code{gal_data_t}, so it can be passed on to
+subsequent/derived datasets.
 
-When this variable has a value of @code{0} (zero), any allocated
-@code{array} will actually be in a file (not in RAM). When the value is
-@code{-1} (largest possible number in the unsigned types including
-@code{size_t}) the array will be definitely allocated in RAM.
-
-Please note that using a non-volatile file instead of RAM will
-significantly increase the programs running time, especially on HDDs. So it
-is best to give this option very large values (depending on how much memory
-you will need for a given input). For example your processing might involve
-a copy of the the input (possibly to a wider data type which takes more
-bytes for each element), so take all such issues into
-consideration. @code{minmapsize} is actually stored in each
-@code{gal_data_t}, so it can be passed on to subsequent/derived datasets.
+See the description of the @option{--minmapsize} option in @ref{Processing
+options} for more on using this value.
 
 @item nwcs
 The number of WCS coordinate representations (for WCSLIB).

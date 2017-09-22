@@ -1324,6 +1324,7 @@ clumps_true_find_sn_thresh(struct noisechiselparams *p)
                            p->ltl.tottiles, p->cp.numthreads);
     }
 
+
   /* Destroy the mutex if it was initialized. */
   if( p->cp.numthreads>1 && (p->checksegmentation || p->checkclumpsn) )
     pthread_mutex_destroy(&clprm.labmutex);
@@ -1441,7 +1442,7 @@ clumps_det_label_indexs(struct noisechiselparams *p)
      to allocate). */
   areas=gal_data_calloc_array(GAL_TYPE_SIZE_T, p->numdetections+1, __func__,
                               "areas");
-  if(p->input->flag & GAL_DATA_FLAG_HASBLANK)
+  if(gal_blank_present(p->input, 1))
     {
       lf=(l=p->olabel->array)+p->olabel->size; /* Blank pixels have a      */
       do if(*l>0) ++areas[*l]; while(++l<lf);  /* negative value in int32. */
