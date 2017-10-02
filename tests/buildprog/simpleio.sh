@@ -41,14 +41,25 @@ source=$topsrc/tests/$prog/simpleio.c
 #
 #   - The input data was not made (for example the test that created the
 #     data file failed).
+#
+#   - Gnuastro ships with its own version of Libtool for the building of
+#     the libraries and programs. But here, we want to test the user's
+#     libtool (and how it works with BuildProgram). So if libtool wasn't
+#     found at configure time, we need to skip this test.
 if [ ! -f $execname ]; then echo "$execname not created.";  exit 77; fi
 if [ ! -f $img      ]; then echo "$img does not exist.";    exit 77; fi
 if [ ! -f $source   ]; then echo "$source does not exist."; exit 77; fi
-
+if [ "x$haslibtool" != "xyes" ];then echo "libtool not present.";  exit 77;fi
 
 
 
 
 # Actual test script
 # ==================
-$execname $source $img 1
+#
+# We want to use the `libgnuastro.la' corresponding to this install, not
+# the one (that is possibly) installed (hence the use of `--la').
+#
+# Except for `gnuastro/config.h', all headers are installed in
+# `$topsrc/lib' and `gnuastro/config.h' is in "../lib/"
+$execname $source $img 1 --la=../lib/libgnuastro.la -I$topsrc/lib -I../lib/

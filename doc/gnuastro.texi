@@ -1760,9 +1760,9 @@ distributions. If you use another graphical desktop environment, replace
 @command{eog} with any other image viewer.}. Since he has used it before,
 he knows that once it opens an image, he can use the @key{ENTER} or
 @key{SPACE} keys on the keyboard to go to the next image in the directory
-or the @key{Backspace} key to to go the previous image. So he opens the
-image of the first object with the command below and with his cup of coffee
-in his other hand, he flips through his targets very fast to get a good
+or the @key{Backspace} key to go the previous image. So he opens the image
+of the first object with the command below and with his cup of coffee in
+his other hand, he flips through his targets very fast to get a good
 initial impression of the morphologies of these extra-galactic nebulae.
 
 @example
@@ -2597,6 +2597,23 @@ take effect.
 
 @table @asis
 
+@item libtool
+@cindex GNU Libtool
+GNU Libtool is a program to simplify managing of the libraries to build an
+executable (program). It is used by @ref{BuildProgram} in Gnuastro to help
+you easily link to all the necessary libraries that Gnuastro's library
+depends on. Libtool is a low-level program that is probably already present
+on your system (and in your operating system package manager). However, if
+you want to install it's latest version from source, please visit its
+@url{https://www.gnu.org/software/libtool/, webpage}.
+
+Gnuastro's tarball ships with Libtool and it is extensively used during its
+building and installing. Therefore, you can easily build Gnuastro even if
+you don't have Libtool installed on your system. However, this internal
+Libtool does not get installed. Hence, if you want to use the installed
+BuildProgram to compile and link your own source code later, you need to
+have Libtool on your system (independent of Gnuastro).
+
 @item libgit2
 @cindex Git
 @cindex libgit2
@@ -3001,7 +3018,9 @@ telling it to copy some files (instead of making symbolic links, with the
 @option{--copy} option, this is not mandatory@footnote{The @option{--copy}
 option is recommended because some backup systems might do strange things
 with symbolic links.}) and where to look for Gnulib (with the
-@option{--gnulib-srcdir} option).
+@option{--gnulib-srcdir} option). Please note that teh address given to
+@option{--gnulib-srcdir} has to be an absolute address (so don't use
+@file{~} or @file{../} for example).
 
 @example
 $ cd $TOPGNUASTRO/gnuastro
@@ -4929,10 +4948,13 @@ ignored.
 @item -N INT
 @itemx --numthreads=INT
 Use @option{INT} CPU threads when running a Gnuastro program (see
-@ref{Multi-threaded operations}). Note that multi-threaded programming is only
-relevant to some programs. In others, this option will be ignored. If this
-option is not specified on the command-line or any configuration file, the
-number of threads will be determined by the programs at configuration time.
+@ref{Multi-threaded operations}). If the value is zero (@code{0}), or this
+option is not given on the command-line or any configuration file, the
+value will be determined at run-time: the maximum number of threads
+available to the system when you run a Gnuastro program.
+
+Note that multi-threaded programming is only relevant to some programs. In
+others, this option will be ignored.
 
 @end vtable
 
@@ -4971,15 +4993,15 @@ necessary parameters are not given through any of these methods, the
 program will print a missing option error and abort. The only exception to
 this is @option{--numthreads}, whose default value is determined at
 run-time using the number of threads available to your system, see
-@ref{Multi-threaded operations}. Of course, you can still provide a default value
-for the number of threads at any of the levels below, but if you don't, the
-program will not abort. Also note that through automatic output name
-generation, the value to the @option{--output} option is also not mandatory
-on the command-line or in the configuration files for all programs which
-don't rely on that value as an input@footnote{One example of a program
-which uses the value given to @option{--output} as an input is ConvertType,
-this value specifies the type of the output through the value to
-@option{--output}, see @ref{Invoking astconvertt}.}, see @ref{Automatic
+@ref{Multi-threaded operations}. Of course, you can still provide a default
+value for the number of threads at any of the levels below, but if you
+don't, the program will not abort. Also note that through automatic output
+name generation, the value to the @option{--output} option is also not
+mandatory on the command-line or in the configuration files for all
+programs which don't rely on that value as an input@footnote{One example of
+a program which uses the value given to @option{--output} as an input is
+ConvertType, this value specifies the type of the output through the value
+to @option{--output}, see @ref{Invoking astconvertt}.}, see @ref{Automatic
 output}.
 
 
@@ -17402,6 +17424,17 @@ confronts).
 @itemx --onlybuild
 Only build the program, don't run it. By default, the built program is
 immediately run afterwards.
+
+@item -a STR
+@itemx --la=STR
+Use the given @file{.la} file (Libtool control file) instead of the one
+that was produced from Gnuastro's configuration results. The Libtool
+control file keeps all the necesary information for building and linking a
+program with a library built by Libtool. The default
+@file{prefix/lib/libgnuastro.la} keeps all the information necessary to
+build a program using the Gnuastro library gathered during configure time
+(see @ref{Installation directory} for prefix). This option is useful when
+you prefer to use another Libtool control file.
 @end table
 
 
@@ -19599,9 +19632,9 @@ this example multiple images are linked together as a list:
 @example
 size_t minmapsize=-1;
 gal_data_t *tmp, *list=NULL;
-tmp = gal_fits_img_read("file1.fits", "1", minmapsize);
+tmp = gal_fits_img_read("file1.fits", "1", minmapsize, 0, 0);
 gal_list_data_add( &list, tmp );
-tmp = gal_fits_img_read("file2.fits", "1", minmapsize);
+tmp = gal_fits_img_read("file2.fits", "1", minmapsize, 0, 0);
 gal_list_data_add( &list, tmp );
 @end example
 @end deftypefun
@@ -20040,23 +20073,30 @@ then if the image has a name and units, the respective string will be put
 in these pointers.
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_fits_img_read (char @code{*filename}, char @code{*hdu}, size_t @code{minmapsize})
+@deftypefun {gal_data_t *} gal_fits_img_read (char @code{*filename}, char @code{*hdu}, size_t @code{minmapsize}, size_t @code{hstartwcs}, size_t @code{hendwcs})
 Read the contents of the @code{hdu} extension/HDU of @code{filename} into a
 Gnuastro generic data container (see @ref{Generic data container}) and
 return it. If the necessary space is larger than @code{minmapsize}, then
 don't keep the data in RAM, but in a file on the HDD/SSD. For more on
 @code{minmapsize} see the description under the same name in @ref{Generic
 data container}.
+
+The @code{hstartwcs} and @code{hendwcs} arguments are the starting and
+ending header keywords to search for WCS information, if no limit is
+needed, set them to zero. For more on these two options, please see the
+description of @code{gal_wcs_read_fitsptr} in @ref{World Coordinate
+System}.
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_fits_img_read_to_type (char @code{*inputname}, char @code{*inhdu}, uint8_t @code{type}, size_t @code{minmapsize})
+@deftypefun {gal_data_t *} gal_fits_img_read_to_type (char @code{*inputname}, char @code{*inhdu}, uint8_t @code{type}, size_t @code{minmapsize}, )
 Read the contents of the @code{hdu} extension/HDU of @code{filename} into a
 Gnuastro generic data container (see @ref{Generic data container}) of type
 @code{type} and return it.
 
 This is just a wrapper around @code{gal_fits_img_read} (to read the
 image/array of any type) and @code{gal_data_copy_to_new_type_free} (to
-convert it to @code{type} and free the initially read dataset).
+convert it to @code{type} and free the initially read dataset). See the
+description there for more.
 @end deftypefun
 
 @cindex NaN
@@ -21365,7 +21405,7 @@ char *filename="input.fits", *hdu="1";
 ...
 
 /* Read the input dataset. */
-input=gal_fits_img_read(filename, hdu, -1);
+input=gal_fits_img_read(filename, hdu, -1, 0, 0);
 
 /* Do a sanity check and preparations. */
 gal_tile_full_sanity_check(filename, hdu, input, &tl);
@@ -21653,7 +21693,7 @@ both polygons have to be sorted in an anti-clock-wise manner.
 
 The C programming language comes with the @code{qsort} (Quick sort)
 function. @code{qsort} is a generic function which allows you to sort any
-kind of data structure (not just a single number). To to define greater and
+kind of data structure (not just a single number). To define greater and
 smaller (for sorting), @code{qsort} needs another function, even for simple
 numerical types. To facilitate numerical sorting for Gnuastro's
 programs/libraries, Gnuastro defines a function for each type's increasing
@@ -22033,14 +22073,15 @@ Apply @mymath{\sigma}-clipping on a given dataset and return a dataset that
 contains the results. For a description of @mymath{\sigma}-clipping see
 @ref{Sigma clipping}. @code{multip} is the multiple of the standard
 deviation (@mymath{\sigma} that is used to define outliers in each round of
-clipping.
+clipping).
 
 The role of @code{param} is determined based on its value. If @code{param}
 is larger than @code{1} (one), it must be an integer and will be
 interpretted as the number clips to do. If it is less than @code{1} (one),
 it is interpretted as the tolerance level to stop the iteration.
 
-The output dataset has the following elements:
+The output dataset has the following elements with a
+@code{GAL_TYPE_FLOAT32} type:
 @example
 array[0]: Number of points used.
 array[1]: Median.
@@ -22422,7 +22463,8 @@ main(void)
 
 
   /* Read `img.fits' (HDU: 1) as a float32 array. */
-  image=gal_fits_img_read_to_type(filename, hdu, GAL_TYPE_FLOAT32, -1);
+  image=gal_fits_img_read_to_type(filename, hdu, GAL_TYPE_FLOAT32, -1,
+                                  0, 0);
 
 
   /* Use the allocated space as a single precision floating
@@ -22471,7 +22513,8 @@ main(void)
   float *array;
   size_t i, num, *dinc;
   gal_data_t *input=gal_fits_img_read_to_type("input.fits", "1",
-                                              GAL_TYPE_FLOAT32, -1);
+                                              GAL_TYPE_FLOAT32, -1,
+                                              0, 0);
 
   /* To avoid the `void *' pointer and have `dinc'. */
   array=input->array;
@@ -22612,7 +22655,7 @@ main(void)
    * `-1' for `minmapsize' to ensure that the image is read into
    * memory. */
   p.image=gal_fits_img_read_to_type(filename, hdu, GAL_TYPE_FLOAT32,
-                                    -1);
+                                    -1, 0, 0);
 
 
   /* Print some basic information before the actual contents: */
@@ -22794,9 +22837,8 @@ benefit, and the larger community if they are willing to share it. In
 short, we hope that at least from the software point of view, the
 ``obscurantist faith in the expert's special skill and in his personal
 knowledge and authority'' can be broken, see @ref{Science and its
-tools}. With this aim in mind, Gnuastro was designed to to have a very
-basic, simple, and easy to understand architecture for any interested
-inquirer.
+tools}. With this aim in mind, Gnuastro was designed to have a very basic,
+simple, and easy to understand architecture for any interested inquirer.
 
 This chapter starts with very general design choices, in particular
 @ref{Why C} and @ref{Program design philosophy}. It will then get a little
@@ -22949,15 +22991,19 @@ speed'' is desired.
 @node Program design philosophy, Coding conventions, Why C, Developing
 @section Program design philosophy
 
+@cindex Gnulib
 The core processing functions of each program (and all libraries) are
 written mostly with the basic ISO C90 standard. We do make lots of use of
-the GNU additions to the C language in the GNU C library, but these
-additional functions are mainly used in the user interface functions
-(reading your inputs and preparing them prior to or after the
-analysis). The actual algorithms, which most scientists would be more
-interested in, are much more closer to ISO C90. For this reason, program
-source files that deal with user interface issues and those doing the
-actual processing are clearly separated, see @ref{Program source}. If
+the GNU additions to the C language in the GNU C library@footnote{Gnuastro
+uses many GNU additions to the C library. However, thanks to the GNU
+Portability library (Gnulib) which is included in the Gnuastro tarball,
+users of non-GNU/Linux operating systems can also benefit from all these
+features when using Gnuastro.}, but these functions are mainly used in the
+user interface functions (reading your inputs and preparing them prior to
+or after the analysis). The actual algorithms, which most scientists would
+be more interested in, are much more closer to ISO C90. For this reason,
+program source files that deal with user interface issues and those doing
+the actual processing are clearly separated, see @ref{Program source}. If
 anything particular to the GNU C library is used in the processing
 functions, it is explained in the comments in between the code.
 
@@ -23025,17 +23071,16 @@ in. However, this visual aid greatly helps in general inspections of the
 code and help the reader get a grip of the function's processing.
 
 @item
-When ever you see that the function cannot be fully displayed (vertically)
-in your monitor, this is a sign that it has probably become too long and
-should be broken up into multiple functions. 40 lines is usually a good
-reference. When the start and end of a function are clearly visible in one
-glance, the function is much more easier to understand. This is most
-important for low-level functions (which usually define a lot of
-variables). Low-level functions do most of the processing, they will also
-be the most interesting part of a program for an inquiring astronomer. This
-convention is less important for higher level functions that don't define
-too many variables and whose only purpose is to run the lower-level
-functions in a specific order and with checks.
+A function that cannot be fully displayed (vertically) in your monitor is
+probably too long and may be more useful if it is broken up into multiple
+functions. 40 lines is usually a good reference. When the start and end of
+a function are clearly visible in one glance, the function is much more
+easier to understand. This is most important for low-level functions (which
+usually define a lot of variables). Low-level functions do most of the
+processing, they will also be the most interesting part of a program for an
+inquiring astronomer. This convention is less important for higher level
+functions that don't define too many variables and whose only purpose is to
+run the lower-level functions in a specific order and with checks.
 
 @cindex Optimization flag
 @cindex GNU Compiler Collection
@@ -23329,11 +23374,11 @@ program containing all these files, see @ref{The TEMPLATE program}.
 @item main.c
 @cindex @code{main} function
 Each executable has a @code{main} function, which is located in
-@file{main.c}. Therefore this file in any program's source code will be the
-starting point. No actual processing functions must be defined in this
-file, the function(s) in this file are only meant to connect the most high
-level steps of each program. Generally, @code{main} will first call the top
-user interface function to read user input and make all the
+@file{main.c}. Therefore this file is the starting point when reading any
+program's source code. No actual processing functions must be defined in
+this file, the function(s) in this file are only meant to connect the most
+high level steps of each program. Generally, @code{main} will first call
+the top user interface function to read user input and make all the
 preparations. Then it will pass control to the top processing function for
 that program. The functions to do both these jobs must be defined in other
 source files.
@@ -23683,9 +23728,8 @@ $ ./configure --disable-shared CFLAGS="-g -O0"
 @end example
 
 @noindent
-These options to configure are already included in
-@file{tmpfs-config-make}, you just have to un-comment them when you want to
-start developing or debugging.
+In @file{tmpfs-config-make} you can ask for this behavior by setting
+@code{debug_noshared} to @code{1}.
 
 In order to understand the building process, you can go through the
 Autoconf, Automake and Libtool manuals, like all GNU manuals they provide
@@ -23728,10 +23772,11 @@ executable.
 The most important thing to have in mind about all the test scripts is that
 they are run from inside the @file{tests/} directory in the ``build
 tree''. Which can be different from the directory they are stored in (known
-as the ``source tree''). The @file{tmpfs-config-make} script uses this
-feature (see @ref{Configure and build in RAM}). This distinction is made by
-GNU Autoconf and Automake (which configure, build and install Gnuastro) so
-that you can install the program even if you don't have write access to the
+as the ``source tree'')@footnote{The @file{tmpfs-config-make} script also
+uses this feature to keep the source and build directories separate (see
+@ref{Configure and build in RAM}).}. This distinction is made by GNU
+Autoconf and Automake (which configure, build and install Gnuastro) so that
+you can install the program even if you don't have write access to the
 directory keeping the source files. See the ``Parallel build trees (a.k.a
 VPATH builds)'' in the Automake manual for a nice explanation.
 
@@ -23960,7 +24005,7 @@ addition/change with the whole community as part of the official
 release. This is great and your contribution is most welcome. This section
 and the next (see @ref{Developer's checklist}) are written in the hope of
 making it as easy as possible for you to share your great idea with the
-Gnuastro community.
+community.
 
 @cindex FSF
 @cindex Free Software Foundation
@@ -24216,22 +24261,24 @@ might change and evolve to better suit our needs.
 @node Forking tutorial,  , Production workflow, Contributing to Gnuastro
 @subsection Forking tutorial
 
-This is a tutorial on the second suggested method that you can submit your
-modifications in Gnuastro (see @ref{Production workflow}), which is
-commonly known as forking. Let's assume you want to start contributing to
-Gnuastro and you would like to use GitLab@footnote{See
+This is a tutorial on the second suggested method (commonly known as
+forking) that you can submit your modifications in Gnuastro (see
+@ref{Production workflow}).
+
+To start, please create an empty repository on your hosting service webpage
+(we recommend GitLab@footnote{See
 @url{https://www.gnu.org/software/repo-criteria-evaluation.html} for an
-evaluation of the major existing repositories.} to host your work remotely
-and share it with other Gnuastro developers once you are ready. You can
-create an empty repository on your hosting service webpage. If this is your
-first hosted repository on the webpage, you also have to upload your public
-SSH key@footnote{For example see this explanation provided by GitLab:
+evaluation of the major existing repositories. Gnuastro uses GNU Savannah
+(which also has the highest ranking in the evaluation), but for starters,
+GitLab may be easier.}). If this is your first hosted repository on the
+webpage, you also have to upload your public SSH key@footnote{For example
+see this explanation provided by GitLab:
 @url{http://docs.gitlab.com/ce/ssh/README.html}.} for the @command{git
 push} command below to work. Here we'll assume you use the name
 @file{janedoe} to refer to yourself everywhere and that you choose
 @file{gnuastro-janedoe} as the name of your Gnuastro fork. Any online
-hosting service will give you an address (similar to
-`@file{git@@gitlab.com:}' below) of the empty repository you have created
+hosting service will give you an address (similar to the
+`@file{git@@gitlab.com:...}' below) of the empty repository you have created
 using their webpage, use that address in the third line below.
 
 @example
@@ -24252,20 +24299,19 @@ repository.
 
 To test (compile) your changes during your work, you will need to bootstrap
 the version controlled source, see @ref{Bootstrapping} for a full
-description. The process above is only necessary for your first time setup,
-you don't need to repeat it. However, please repeat the steps below for
-each independent issue you intend to work on.
+description. The cloning process above is only necessary for your first
+time setup, you don't need to repeat it. However, please repeat the steps
+below for each independent issue you intend to work on.
 
 Let's assume you have found a bug in @file{lib/statistics.c}'s median
-calculating function. You announce it (see @ref{Report a bug}) so everyone
-knows you are working on it. However, if it is a very simple, clear/obvious
-and straightforward bug to fix you can skip this initial announcement. With
-the commands below, you make a branch, checkout to it, correct the bug,
-check if it is indeed fixed, add it to the staging area, commit it to the
-new branch and push it to your hosting service. But before all of them,
-make sure that you are on the @file{master} branch and that your
-@file{master} branch is up to date with the main Gnuastro repository with
-the first two commands.
+calculating function. Before actually doing anything, please announce it
+(see @ref{Report a bug}) so everyone knows you are working on it or to find
+out others aren't already working on it. With the commands below, you make
+a branch, checkout to it, correct the bug, check if it is indeed fixed, add
+it to the staging area, commit it to the new branch and push it to your
+hosting service. But before all of them, make sure that you are on the
+@file{master} branch and that your @file{master} branch is up to date with
+the main Gnuastro repository with the first two commands.
 
 @example
 $ git checkout master
@@ -24286,8 +24332,8 @@ be merged into the main Gnuastro history, they will merge it into the
 @file{master} branch. After that is done, you can simply checkout your
 local @file{master} branch and pull all the changes from the main
 repository. After the pull you can run `@command{git log}' as shown below,
-to see how @file{bug-median-stats} is merged with master. So you can push
-all the changes to your hosted repository and delete the branches:
+to see how @file{bug-median-stats} is merged with master. To finalize, you
+can push all the changes to your hosted repository and delete the branch:
 
 @example
 $ git checkout master
@@ -24301,10 +24347,11 @@ $ git push janedoe --delete bug-median-stats    # delete remote branch
 Just as a reminder, always keep your work on each issue in a separate local
 and remote branch so work can progress on them independently. After you
 make your announcement, other people might contribute to the branch before
-merging it in to @file{master}, so this is very important. Also before
-starting each issue branch from @file{master}, be sure to run @command{git
-pull} in @file{master} as shown above, to start your branch (work) from the
-most recent history point and thus simplify the final merging of your work.
+merging it in to @file{master}, so this is very important. As a final
+reminder: before starting each issue branch from @file{master}, be sure to
+run @command{git pull} in @file{master} as shown above. This will enable
+you to start your branch (work) from the most recent commit and thus
+simplify the final merging of your work.
 
 
 

@@ -650,8 +650,7 @@ ui_preparations_read_input(struct noisechiselparams *p)
   /* Read the input as a single precision floating point dataset. */
   p->input = gal_fits_img_read_to_type(p->inputname, p->cp.hdu,
                                        GAL_TYPE_FLOAT32,
-                                       p->cp.minmapsize);
-  p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu, 0, 0, &p->input->nwcs);
+                                       p->cp.minmapsize, 0, 0);
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
 
@@ -899,6 +898,7 @@ ui_free_report(struct noisechiselparams *p, struct timeval *t1)
   /* Free the simply allocated spaces. */
   free(p->cp.hdu);
   free(p->maxtsize);
+  free(p->maxltsize);
   free(p->cp.output);
   if(p->skyname)          free(p->skyname);
   if(p->detskyname)       free(p->detskyname);
