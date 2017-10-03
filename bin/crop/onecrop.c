@@ -847,15 +847,24 @@ onecrop_center_filled(struct onecropparams *crp)
   fitsfile *ofp=crp->outfits;
   int status=0, anynul=0, type;
   long checkcenter=p->checkcenter;
-  long naxes[2], fpixel[2], lpixel[2], inc[2]={1,1};
+  long naxes[3], fpixel[3], lpixel[3], inc[3]={1,1,1};
 
   /* If checkcenter is zero, then don't check. */
   if(checkcenter==0) return GAL_BLANK_UINT8;
 
   /* Get the final size of the output image. */
   gal_fits_img_info(ofp, &type, &ndim, &dsize, NULL, NULL);
-  naxes[0]=dsize[1];
-  naxes[1]=dsize[0];
+  if(ndim==2)
+    {
+      naxes[0]=dsize[1];
+      naxes[1]=dsize[0];
+    }
+  else
+    {
+      naxes[0]=dsize[2];
+      naxes[1]=dsize[1];
+      naxes[2]=dsize[0];
+    }
 
   /* Get the size and range of the central region to check. The +1 is
      because in FITS, counting begins from 1, not zero. It might happen
@@ -864,10 +873,23 @@ onecrop_center_filled(struct onecropparams *crp)
      full image to check. */
   size = ( (naxes[0]>checkcenter ? checkcenter : naxes[0])
            * (naxes[1]>checkcenter ? checkcenter : naxes[1]) );
-  fpixel[0] = naxes[0]>checkcenter ? (naxes[0]/2+1)-checkcenter/2 : 1;
-  fpixel[1] = naxes[1]>checkcenter ? (naxes[1]/2+1)-checkcenter/2 : 1;
-  lpixel[0] = naxes[0]>checkcenter ? (naxes[0]/2+1)+checkcenter/2 : naxes[0];
-  lpixel[1] = naxes[1]>checkcenter ? (naxes[1]/2+1)+checkcenter/2 : naxes[1];
+  fpixel[0] = naxes[0]>checkcenter ? ((naxes[0]/2+1)-checkcenter/2) : 1;
+  fpixel[1] = naxes[1]>checkcenter ? ((naxes[1]/2+1)-checkcenter/2) : 1;
+  lpixel[0] = ( naxes[0]>checkcenter
+                ? ((naxes[0]/2+1)+checkcenter/2) : naxes[0] );
+  lpixel[1] = ( naxes[1]>checkcenter
+                ? ((naxes[1]/2+1)+checkcenter/2) : naxes[1] );
+
+
+  /* For the third dimension. */
+  if(ndim==3)
+    {
+      size *= (naxes[2]>checkcenter ? checkcenter : naxes[2]);
+      fpixel[2] = naxes[2]>checkcenter ? ((naxes[2]/2+1)-checkcenter/2) : 1;
+      lpixel[2] = ( naxes[2]>checkcenter
+                    ? ((naxes[2]/2+1)+checkcenter/2) : naxes[2] );
+    }
+
 
   /* For a check:
   printf("naxes: %ld, %ld\nfpixel: (%ld, %ld)\nlpixel: (%ld, %ld)\n"
