@@ -8,6 +8,10 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   All programs: a value of `0' to the `--numthreads' option will use the
   number of threads available to the system at run time.
 
+  Arithmetic: The new operators `filter-median' and `filter-mean' can be
+  used to filter (smooth) the input. The size of the filter can be set as
+  the other operands to these operators.
+
   BuildProgram: The new `--la' option allows the identification of a
   different Libtool `.la' file for Libtool linking information.
 
@@ -15,6 +19,20 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   `--hdu' option and no operation is requested, the full list of header
   keywords in that HDU will be printed (as if only `--printallkeys' was
   called).
+
+  MakeCatalog: physical nature agnostic WCS column names. Previously the
+  first WCS axis was always assumed to be RA and the second DEC. So for
+  example even if you had a spectrum (with X and wavelength as the two WCS
+  dimensions), you would have to ask for `--ra' and `--dec'. The new `--w1'
+  and `--w2' options are now generic and don't assume any particular type
+  only their order in the FITS header. MakeCatalog now also uses the CTYPE
+  and CUNIT keywords to set the names and units of its output columns. The
+  `--ra' and `--dec' options are now just internal aliases for `--w1' or
+  `--w2' which will be determined based on the input's CTYPE keyword. Also
+  the new `--geow1', `--geow2', `--clumpsw1', `--clumpsw2',
+  `--clumpsgeow1', `--clumpsgeow2' options replace the old options
+  `--geora', `--geodec', `--clumpsra', `--clumpsdec', `--clumpsgeora',
+  `--clumpsgeodec'. No alias is currently defined for the latter group.
 
   NoiseChisel: with the new `--widekernel' option it is now possible to use
   a wider kernel to identify which tiles contain signal. The rest of the
@@ -36,10 +54,18 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   now possible to detect signal out to much lower surface brightness limits
   and the detections don't look boxy any more.
 
+  Cosmology library: A new set of cosmology functions are now included in
+  the library (declared in `gnuastro/cosmology.h'). These functions are
+  also used in the CosmicCalculator program.
+
   `gal_fits_key_img_blank': returns the value that must be used in the
   BLANK keyword for the given type as defined by the FITS standard.
 
 ** Removed features
+
+  MakeCatalog: `--zeropoint' option doesn't have a short option name any
+  more. Previously it was `-z' which was confusing because `-x' and `-y'
+  were used to refer to image coordinate positions.
 
   NoiseChisel: The `--dilate' and `--dilatengb' options have been
   removed. Growing of true detections is no longer done through dilation
@@ -61,6 +87,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   arguments: `hstartwcs' and `hendwcs'. With these options it is possible
   to limit the range of header keywords to read the WCS, similar to how
   they are used in `gal_wcs_read'.
+
+  `gal_wcs_pixel_area_arcsec2' will return NaN (instead of aborting) when
+  input is unreasonable (not two dimensions or not in units of degrees).
 
 ** Bug fixes
 

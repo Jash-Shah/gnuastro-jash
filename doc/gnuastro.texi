@@ -555,6 +555,7 @@ Gnuastro library
 * Convolution functions::       Library functions to do convolution.
 * Interpolation::               Interpolate (over blank values possibly).
 * Git wrappers::                Wrappers for functions in libgit2.
+* Cosmology library::           Cosmological calculations.
 
 Multithreaded programming (@file{threads.h})
 
@@ -2088,9 +2089,9 @@ Warp started on Mon Apr  6 16:51:59 953
  Using 8 CPU threads.
  Input: cat_convolved.fits (hdu: 1)
  matrix:
-	0.2000   0.0000   0.4000
-	0.0000   0.2000   0.4000
-	0.0000   0.0000   1.0000
+        0.2000   0.0000   0.4000
+        0.0000   0.2000   0.4000
+        0.0000   0.0000   1.0000
 
 $ ls
 0_cat.fits          cat_convolved_scaled.fits     cat.txt
@@ -8691,6 +8692,49 @@ standard deviation of the respective pixels in all operands in the stack.
 Similar to @command{min}, but the pixels of the output will contain
 the median of the respective pixels in all operands in the stack.
 
+@item filter-mean
+Apply mean filtering (or @url{https://en.wikipedia.org/wiki/Moving_average,
+moving average}) on the input dataset. During mean filtering, each pixel
+(data element) is replaced by the mean value of all its surrounding pixels
+(excluding blank values). The number of surrounding pixels in each
+dimension (to calculate the mean) is determined through the earlier
+operands that have been pushed onto the stack prior to the input
+dataset. The number of necessary operands is determined by the
+dimensionality of the input dataset (first popped operand). The order of
+the dimensions on the command-line is the order in FITS format. Here is one
+example:
+
+@example
+$ astarithmetic 5 4 image.fits filter-mean
+@end example
+
+@noindent
+In this example, each pixel is replaced by the mean of a 5 by 4 box around
+it. The box is 5 pixels along the first FITS dimension (horizontal when
+viewed in ds9) and 4 pixels along the second FITS dimension (vertical).
+
+Each pixel will be placed in the center of the box that the mean is
+calculated on. If the given width along a dimension is even, then the
+center is assumed to be between the pixels (not in the center of a
+pixel). When the pixel is close to the center, the pixels of the box that
+fall outside the image are ignored. Therefore, on the edge, less points
+will be used in calculating the mean.
+
+The final effect of mean filtering is to smooth the input image, it is
+essentially a convolution with a kernel that has identical values for all
+its pixels (is flat), see @ref{Convolution process}.
+
+@item filter-median
+Apply @url{https://en.wikipedia.org/wiki/Median_filter, median filtering}
+on the input dataset. This is very similar to @command{filter-mean}, except
+that instead of the mean value of the box pixels, the median value is used
+to replace a pixel value. For more on how to use this operator, please see
+@command{filter-mean}.
+
+The median is less susceptible to outliers compared to the mean. As a
+result, after median filtering, the pixel values will be more discontinuous
+than mean filtering.
+
 @item lt
 Less than: If the second popped (or left operand in infix notation, see
 @ref{Reverse polish notation}) value is smaller than the first popped
@@ -14213,7 +14257,7 @@ only one of them. The latter cases are explicitly marked with [Objects] or
 
 @item --i
 @itemx --ids
-This is a unique option it can add multiple columns to the final
+This is a unique option which can add multiple columns to the final
 catalog(s). Calling this option will put the object IDs (@option{--objid})
 in the objects catalog and host-object-ID (@option{--hostobjid}) and
 ID-in-host-object (@option{--idinhostobj}) into the clumps catalog. Hence
@@ -14289,35 +14333,61 @@ the second FITS axis. See @option{--geox}.
 
 @item -r
 @itemx --ra
-Flux weighted right ascension of all objects or clumps, see @option{--x}.
+Flux weighted right ascension of all objects or clumps, see
+@option{--x}. This is just an alias for one of the lower-level
+@option{--w1} or @option{--w2} options. Using the FITS WCS keywords
+(@code{CTYPE}), MakeCatalog will determine which axis corresponds to the
+right ascension. If no @code{CTYPE} keywords start with @code{RA}, an error
+will be printed when requesting this column and MakeCatalog will abort.
 
 @item -d
 @itemx --dec
-Flux weighted declination of all objects or clumps, see @option{--x}.
+Flux weighted declination of all objects or clumps, see @option{--x}. This
+is just an alias for one of the lower-level @option{--w1} or @option{--w2}
+options. Using the FITS WCS keywords (@code{CTYPE}), MakeCatalog will
+determine which axis corresponds to the declination. If no @code{CTYPE}
+keywords start with @code{DEC}, an error will be printed when requesting
+this column and MakeCatalog will abort.
 
-@item --geora
-Geometric center right ascension of all objects or clumps, see
-@option{--geox}.
+@item --w1
+Flux weighted first WCS axis of all objects or clumps, see
+@option{--x}. The first WCS axis is commonly used as right ascension in
+images.
 
-@item --geodec
-Geometric center declination of all objects or clumps, see
-@option{--geox}.
+@item --w2
+Flux weighted second WCS axis of all objects or clumps, see
+@option{--x}. The second WCS axis is commonly used as declination in
+images.
 
-@item --clumpsra
-[Objects] Flux weighted right ascension of all clumps in this object,
-see @option{--x}.
+@item --geow1
+Geometric center in first WCS axis of all objects or clumps, see
+@option{--geox}. The first WCS axis is commonly used as right ascension in
+images.
 
-@item --clumpsdec
+@item --geow2
+Geometric center in second WCS axis of all objects or clumps, see
+@option{--geox}. The second WCS axis is commonly used as declination in
+images.
+
+@item --clumpsw1
+[Objects] Flux weighted center in first WCS axis of all clumps in this
+object, see @option{--x}. The first WCS axis is commonly used as right
+ascension in images.
+
+@item --clumpsw2
 [Objects] Flux weighted declination of all clumps in this object, see
-@option{--x}.
+@option{--x}. The second WCS axis is commonly used as declination in
+images.
 
-@item --clumpsgeora
-[Objects] Geometric center right ascension of all clumps in this
-object, see @option{--geox}.
+@item --clumpsgeow1
+[Objects] Geometric center right ascension of all clumps in this object,
+see @option{--geox}. The first WCS axis is commonly used as right ascension
+in images.
 
-@item --clumpsgeodec
-[Objects] Geometric center declination of all clumps in this object,
-see @option{--geox}.
+@item --clumpsgeow2
+[Objects] Geometric center declination of all clumps in this object, see
+@option{--geox}. The second WCS axis is commonly used as declination in
+images.
 
 @item -b
 @itemx --brightness
@@ -16182,8 +16252,8 @@ One line examples:
 ## Add noise with a standard deviation of 100 to image:
 $ astmknoise --sigma=100 image.fits
 
-## Add noise to input image assuming a background magnitude (with zeropoint
-## magnitude of 0) and a certain instrumental noise:
+## Add noise to input image assuming a background magnitude (with
+## zeropoint magnitude of 0) and a certain instrumental noise:
 $ astmknoise --background=-10 -z0 --instrumental=20 mockimage.fits
 @end example
 
@@ -16305,36 +16375,44 @@ interested readers can study those books.
 @node Distance on a 2D curved space, Extending distance concepts to 3D, CosmicCalculator, CosmicCalculator
 @subsection Distance on a 2D curved space
 
-The observations to date (for example the Plank 2013 results), have
-not measured the presence of a significant curvature in the
-universe. However to be generic (and allow its measurement if it does
-in fact exist), it is very important to create a framework that allows
-curvature. As 3D beings, it is impossible for us to mentally create
-(visualize) a picture of the curvature of a 3D volume in a 4D
-space. Hence, here we will assume a 2D surface and discuss distances
-on that 2D surface when it is flat, or when the 2D surface is curved
-(in a 3D space). Once the concepts have been created/visualized here,
-in @ref{Extending distance concepts to 3D}, we will extend them to the
-real 3D universe we live in and hope to study.
+The observations to date (for example the Planck 2015 results), have not
+measured@footnote{The observations are interpeted under the assumption of
+uniform curvature. For a relativistic alternative to dark energy (and maybe
+also some part of dark matter), non-uniform curvature may be even be more
+critical, but that is beyond the scope of this brief explanation.} the
+presence of significant curvature in the universe. However to be generic
+(and allow its measurement if it does in fact exist), it is very important
+to create a framework that allows non-zero uniform curvature. However, this
+section is not intended to be a fully thorough and mathematically complete
+derivation of these concepts. There are many references available for such
+reviews that go deep into the abstract mathematical proofs. The emphasis
+here is on visualization of the concepts for a beginner.
 
-To be more understandable (actively discuss from an observer's point
-of view) let's assume we have an imaginary 2D friend living on the 2D
-space (which @emph{might} be curved in 3D). So here we will be working
-with it in its efforts to analyze distances on its 2D universe. The
-start of the analysis might seem too mundane, but since it is
-impossible to imagine a 3D curved space, it is important to review all
-the very basic concepts thoroughly for an easy transition to a
-universe we cannot visualize any more (a curved 3D space in 4D).
+As 3D beings, it is difficult for us to mentally create (visualize) a
+picture of the curvature of a 3D volume. Hence, here we will assume a 2D
+surface/space and discuss distances on that 2D surface when it is flat and
+when it is curved. Once the concepts have been created/visualized here, we
+will extend them, in @ref{Extending distance concepts to 3D}, to a real 3D
+spatial @emph{slice} of the Universe we live in and hope to study.
+
+To be more understandable (actively discuss from an observer's point of
+view) let's assume there's an imaginary 2D creature living on the 2D space
+(which @emph{might} be curved in 3D). Here, we will be working with this
+creature in its efforts to analyze distances in its 2D universe. The start
+of the analysis might seem too mundane, but since it is difficult to
+imagine a 3D curved space, it is important to review all the very basic
+concepts thoroughly for an easy transition to a universe that is more
+difficult to visualize (a curved 3D space embedded in 4D).
 
 To start, let's assume a static (not expanding or shrinking), flat 2D
-surface similar to @ref{flatplane} and that our 2D friend is observing its
-universe from point @mymath{A}. One of the most basic ways to parametrize
-this space is through the Cartesian coordinates (@mymath{x},
+surface similar to @ref{flatplane} and that the 2D creature is observing
+its universe from point @mymath{A}. One of the most basic ways to
+parametrize this space is through the Cartesian coordinates (@mymath{x},
 @mymath{y}). In @ref{flatplane}, the basic axes of these two coordinates
 are plotted. An infinitesimal change in the direction of each axis is
 written as @mymath{dx} and @mymath{dy}. For each point, the infinitesimal
 changes are parallel with the respective axes and are not shown for
-clarity. Another very useful way of parameterizing this space is through
+clarity. Another very useful way of parametrizing this space is through
 polar coordinates. For each point, we define a radius (@mymath{r}) and
 angle (@mymath{\phi}) from a fixed (but arbitrary) reference axis. In
 @ref{flatplane} the infinitesimal changes for each polar coordinate are
@@ -16348,69 +16426,72 @@ the same radius.
 plane.}
 @end float
 
-Assuming a certain position, which can be parameterized as @mymath{(x,y)},
-or @mymath{(r,\phi)}, a general infinitesimal change change in its position
-will place it in the coordinates @mymath{(x+dx,y+dy)} and
-@mymath{(r+dr,\phi+d\phi)}. The distance (on the flat 2D surface) that is
-covered by this infinitesimal change in the static universe (@mymath{ds_s},
-the subscript signifies the static nature of this universe) can be written
-as:
+Assuming an object is placed at a certain position, which can be
+parameterized as @mymath{(x,y)}, or @mymath{(r,\phi)}, a general
+infinitesimal change in its position will place it in the coordinates
+@mymath{(x+dx,y+dy)} and @mymath{(r+dr,\phi+d\phi)}. The distance (on the
+flat 2D surface) that is covered by this infinitesimal change in the static
+universe (@mymath{ds_s}, the subscript signifies the static nature of this
+universe) can be written as:
 
 @dispmath{ds_s=dx^2+dy^2=dr^2+r^2d\phi^2}
 
-The main question is this: how can our 2D friend incorporate the (possible)
-curvature in its universe when it is calculating distances? The universe it
-lives in might equally be a locally flat but globally curved surface like
-@ref{sphericalplane}. The answer to this question but for a 3D being (us)
-is the whole purpose to this discussion. So here we want to give our 2D
-friend (and later, ourselves) the tools to measure distances if the space
+The main question is this: how can the 2D creature incorporate the
+(possible) curvature in its universe when it's calculating distances? The
+universe that it lives in might equally be a curved surface like
+@ref{sphereandplane}. The answer to this question but for a 3D being (us)
+is the whole purpose to this discussion. Here, we want to give the 2D
+creature (and later, ourselves) the tools to measure distances if the space
 (that hosts the objects) is curved.
 
-@ref{sphericalplane} assumes a spherical shell with radius @mymath{R}
-as the curved 2D plane for simplicity. The spherical shell is tangent
-to the 2D plane and only touches it at @mymath{A}. The result will be
-generalized afterwards. The first step in measuring the distance in a
-curved space is to imagine a third dimension along the @mymath{z} axis
-as shown in @ref{sphericalplane}. For simplicity, the @mymath{z} axis
-is assumed to pass through the center of the spherical shell. Our
-imaginary 2D friend cannot visualize the third dimension or a curved
-2D surface within it, so the remainder of this discussion is purely
-abstract for it (similar to us being unable to visualize a 3D curved
-space in 4D). But since we are 3D creatures, we have the advantage of
-visualizing the following steps. Fortunately our 2D friend knows our
-mathematics, so it can follow along with us.
+@ref{sphereandplane} assumes a spherical shell with radius @mymath{R} as
+the curved 2D plane for simplicity. The 2D plane is tangent to the
+spherical shell and only touches it at @mymath{A}. This idea will be
+generalized later. The first step in measuring the distance in a curved
+space is to imagine a third dimension along the @mymath{z} axis as shown in
+@ref{sphereandplane}. For simplicity, the @mymath{z} axis is assumed to
+pass through the center of the spherical shell. Our imaginary 2D creature
+cannot visualize the third dimension or a curved 2D surface within it, so
+the remainder of this discussion is purely abstract for it (similar to us
+having difficulty in visualizing a 3D curved space in 4D). But since we are
+3D creatures, we have the advantage of visualizing the following
+steps. Fortunately the 2D creature is already familiar with our
+mathematical constructs, so it can follow our reasoning.
 
-With the third axis added, a generic infinitesimal change over
-@emph{the full} 3D space corresponds to the distance:
-@dispmath{ds_s^2=dx^2+dy^2+dz^2=dr^2+r^2d\phi^2+dz^2.}It is very
-important to recognize that this change of distance is for @emph{any}
-point in the 3D space, not just those changes that occur on the 2D
-spherical shell of @ref{sphericalplane}. Recall that our 2D friend can
-only do measurements in the 2D spherical shell, not the full 3D
-space. So we have to constrain this general change to any change on
-the 2D spherical shell. To do that, let's look at the arbitrary point
-@mymath{P} on the 2D spherical shell. Its image (@mymath{P'}) on the
-flat plain is also displayed. From the dark triangle, we see that
+With the third axis added, a generic infinitesimal change over @emph{the
+full} 3D space corresponds to the distance:
 
-@float Figure,sphericalplane
-@center@image{gnuastro-figures/sphericalplane, 10cm, , }
+@dispmath{ds_s^2=dx^2+dy^2+dz^2=dr^2+r^2d\phi^2+dz^2.}
 
-@caption{2D spherical plane (centered on @mymath{O}) and flat plane
-(gray) tangent to it at point @mymath{A}.}
+@float Figure,sphereandplane
+@center@image{gnuastro-figures/sphereandplane, 10cm, , }
+
+@caption{2D spherical shell (centered on @mymath{O}) and flat plane (light
+gray) tangent to it at point @mymath{A}.}
 @end float
 
+It is very important to recognize that this change of distance is for
+@emph{any} point in the 3D space, not just those changes that occur on the
+2D spherical shell of @ref{sphereandplane}. Recall that our 2D friend can
+only do measurements on the 2D surfaces, not the full 3D space. So we have
+to constrain this general change to any change on the 2D spherical
+shell. To do that, let's look at the arbitrary point @mymath{P} on the 2D
+spherical shell. Its image (@mymath{P'}) on the flat plain is also
+displayed. From the dark gray triangle, we see that
+
 @dispmath{\sin\theta={r\over R},\quad\cos\theta={R-z\over R}.}These
-relations allow our 2D friend to find the value of @mymath{z} (an
-abstract dimension for it) as a function of r (distance on a flat 2D
-plane, which it can visualize) and thus eliminate @mymath{z}. From
-@mymath{\sin^2\theta+\cos^2\theta=1}, we get @mymath{z^2-2Rz+r^2=0}
-and solving for @mymath{z}, we find:
-@dispmath{z=R\left(1\pm\sqrt{1-{r^2\over R^2}}\right).}The
-@mymath{\pm} can be understood from @ref{sphericalplane}: For each
-@mymath{r}, there are two points on the sphere, one in the upper
-hemisphere and one in the lower hemisphere. An infinitesimal change in
-@mymath{r}, will create the following infinitesimal change in
-@mymath{z}:
+relations allow the 2D creature to find the value of @mymath{z} (an
+abstract dimension for it) as a function of r (distance on a flat 2D plane,
+which it can visualize) and thus eliminate @mymath{z}. From
+@mymath{\sin^2\theta+\cos^2\theta=1}, we get @mymath{z^2-2Rz+r^2=0} and
+solving for @mymath{z}, we find:
+
+@dispmath{z=R\left(1\pm\sqrt{1-{r^2\over R^2}}\right).}
+
+The @mymath{\pm} can be understood from @ref{sphereandplane}: For each
+@mymath{r}, there are two points on the sphere, one in the upper hemisphere
+and one in the lower hemisphere. An infinitesimal change in @mymath{r},
+will create the following infinitesimal change in @mymath{z}:
 
 @dispmath{dz={\mp r\over R}\left(1\over
 \sqrt{1-{r^2/R^2}}\right)dr.}Using the positive signed equation
@@ -16418,45 +16499,48 @@ instead of @mymath{dz} in the @mymath{ds_s^2} equation above, we get:
 
 @dispmath{ds_s^2={dr^2\over 1-r^2/R^2}+r^2d\phi^2.}
 
-The derivation above was done for a spherical shell of radius
-@mymath{R} as a curved 2D surface. To generalize it to any surface, we
-can define @mymath{K=1/R^2} as the curvature parameter. Then the
-general infinitesimal change in a static universe can be written as:
-@dispmath{ds_s^2={dr^2\over 1-Kr^2}+r^2d\phi^2.}Therefore, we see that
-a positive @mymath{K} represents a real @mymath{R} which signifies a
-closed 2D spherical shell like @ref{sphericalplane}. When
-@mymath{K=0}, we have a flat plane (@ref{flatplane}) and a negative
-@mymath{K} will correspond to an imaginary @mymath{R}. The latter two
-cases are open universes (where @mymath{r} can extend to infinity).
-However, when @mymath{K>0}, we have a closed universe, where
-@mymath{r} cannot become larger than @mymath{R} as in
-@ref{sphericalplane}.
+The derivation above was done for a spherical shell of radius @mymath{R} as
+a curved 2D surface. To generalize it to any surface, we can define
+@mymath{K=1/R^2} as the curvature parameter. Then the general infinitesimal
+change in a static universe can be written as:
+
+@dispmath{ds_s^2={dr^2\over 1-Kr^2}+r^2d\phi^2.}
+
+Therefore, when @mymath{K>0} (and curvature is the same everywhere), we
+have a finite universe, where @mymath{r} cannot become larger than
+@mymath{R} as in @ref{sphereandplane}. When @mymath{K=0}, we have a flat
+plane (@ref{flatplane}) and a negative @mymath{K} will correspond to an
+imaginary @mymath{R}. The latter two cases may be infinite in area (which
+is not a simple concept, but mathematically can be modelled with @mymath{r}
+extending infinitely), or finite-area (like a cylinder is flat everywhere
+with @mymath{ds_s^2={dx^2 + dy^2}}, but finite in one direction in size).
 
 @cindex Proper distance
-A very important issue that can be discussed now (while we are still
-in 2D and can actually visualize things) is that
-@mymath{\overrightarrow{r}} is tangent to the curved space at the
-observer's position. In other words, it is on the gray flat surface of
-@ref{sphericalplane}, even when the universe if curved:
-@mymath{\overrightarrow{r}=P'-A}. Therefore for the point @mymath{P}
-on a curved space, the raw coordinate @mymath{r} is the distance to
-@mymath{P'}, not @mymath{P}. The distance to the point @mymath{P} (at
-a specific coordinate @mymath{r} on the flat plane) on the curved
-surface (thick line in @ref{sphericalplane}) is called the
-@emph{proper distance} and is displayed with @mymath{l}. For the
-specific example of @ref{sphericalplane}, the proper distance can be
-calculated with: @mymath{l=R\theta} (@mymath{\theta} is in
-radians). using the @mymath{\sin\theta} relation found above, we can
-find @mymath{l} as a function of @mymath{r}:
+A very important issue that can be discussed now (while we are still in 2D
+and can actually visualize things) is that @mymath{\overrightarrow{r}} is
+tangent to the curved space at the observer's position. In other words, it
+is on the gray flat surface of @ref{sphereandplane}, even when the universe
+if curved: @mymath{\overrightarrow{r}=P'-A}. Therefore for the point
+@mymath{P} on a curved space, the raw coordinate @mymath{r} is the distance
+to @mymath{P'}, not @mymath{P}. The distance to the point @mymath{P} (at a
+specific coordinate @mymath{r} on the flat plane) over the curved surface
+(thick line in @ref{sphereandplane}) is called the @emph{proper distance}
+and is displayed with @mymath{l}. For the specific example of
+@ref{sphereandplane}, the proper distance can be calculated with:
+@mymath{l=R\theta} (@mymath{\theta} is in radians). using the
+@mymath{\sin\theta} relation found above, we can find @mymath{l} as a
+function of @mymath{r}:
 
 @dispmath{\theta=\sin^{-1}\left({r\over R}\right)\quad\rightarrow\quad
-l(r)=R\sin^{-1}\left({r\over R}\right)}@mymath{R} is just an arbitrary
-constant and can be directly found from @mymath{K}, so for cleaner
-equations, it is common practice to set @mymath{R=1}, which gives:
-@mymath{l(r)=\sin^{-1}r}. Also note that if @mymath{R=1}, then
-@mymath{l=\theta}. Generally, depending on the the curvature, in a
-@emph{static} universe the proper distance can be written as a
-function of the coordinate @mymath{r} as (from now on we are assuming
+l(r)=R\sin^{-1}\left({r\over R}\right)}
+
+
+@mymath{R} is just an arbitrary constant and can be directly found from
+@mymath{K}, so for cleaner equations, it is common practice to set
+@mymath{R=1}, which gives: @mymath{l(r)=\sin^{-1}r}. Also note that when
+@mymath{R=1}, then @mymath{l=\theta}. Generally, depending on the the
+curvature, in a @emph{static} universe the proper distance can be written
+as a function of the coordinate @mymath{r} as (from now on we are assuming
 @mymath{R=1}):
 
 @dispmath{l(r)=\sin^{-1}(r)\quad(K>0),\quad\quad
@@ -16467,71 +16551,91 @@ more simpler and abstract form of
 @dispmath{ds_s^2=dl^2+r^2d\phi^2.}
 
 @cindex Comoving distance
-Until now, we had assumed a static universe (not changing with
-time). But our observations so far appear to indicate that the
-universe is expanding (isn't static). Since there is no reason to
-expect the observed expansion is unique to our particular position of
-the universe, we expect the universe to be expanding at all points
-with the same rate at the same time. Therefore, to add a time
-dependence to our distance measurements, we can simply add a
-multiplicative scaling factor, which is a function of time:
+Until now, we had assumed a static universe (not changing with time). But
+our observations so far appear to indicate that the universe is expanding
+(it isn't static). Since there is no reason to expect the observed
+expansion is unique to our particular position of the universe, we expect
+the universe to be expanding at all points with the same rate at the same
+time. Therefore, to add a time dependence to our distance measurements, we
+can include a multiplicative scaling factor, which is a function of time:
 @mymath{a(t)}. The functional form of @mymath{a(t)} comes from the
-cosmology and the physics we assume for it: general relativity.
+cosmology, the physics we assume for it: general relativity, and the choice
+of whether the universe is uniform (`homogeneous') in density and curvature
+or inhomogeneous. In this section, the functional form of @mymath{a(t)} is
+irrelevant, so we can aviod these issues.
 
-With this scaling factor, the proper distance will also depend on
-time. As the universe expands (moves), the distance will also move to
-larger values. We thus define a distance measure, or coordinate, that
-is independent of time and thus doesn't `move' which we call the
-@emph{comoving distance} and display with @mymath{\chi} such that:
-@mymath{l(r,t)=\chi(r)a(t)}. We thus shift the @mymath{r} dependence
-of the proper distance we derived above for a static universe to the
-comoving distance:
+With this scaling factor, the proper distance will also depend on time. As
+the universe expands, the distance between two given points will shift to
+larger values. We thus define a distance measure, or coordinate, that is
+independent of time and thus doesn’t `move'. We call it the @emph{comoving
+distance} and display with @mymath{\chi} such that:
+@mymath{l(r,t)=\chi(r)a(t)}.  We have therefore, shifted the @mymath{r}
+dependence of the proper distance we derived above for a static universe to
+the comoving distance:
 
 @dispmath{\chi(r)=\sin^{-1}(r)\quad(K>0),\quad\quad
 \chi(r)=r\quad(K=0),\quad\quad \chi(r)=\sinh^{-1}(r)\quad(K<0).}
 
-Therefore @mymath{\chi(r)} is the proper distance of an object at a
-specific reference time: @mymath{t=t_r} (the @mymath{r} subscript
-signifies ``reference'') when @mymath{a(t_r)=1}. At any arbitrary
-moment (@mymath{t\neq{t_r}}) before or after @mymath{t_r}, the proper
-distance to the object can simply be scaled with
-@mymath{a(t)}. Measuring the change of distance in a time-dependent
-(expanding) universe will also involve the speed of the object
-changing positions. Hence, let's assume that we are only thinking
-about the change in distance caused by something (light) moving at the
-speed of light. This speed is postulated as the only constant and
-frame-of-reference-independent speed in the universe, making our
-calculations easier, light is also the major source of information we
-receive from the universe, so this is a reasonable assumption for most
-extra-galactic studies. We can thus parametrize the change in distance
-as
+Therefore, @mymath{\chi(r)} is the proper distance to an object at a
+specific reference time: @mymath{t=t_r} (the @mymath{r} subscript signifies
+``reference'') when @mymath{a(t_r)=1}. At any arbitrary moment
+(@mymath{t\neq{t_r}}) before or after @mymath{t_r}, the proper distance to
+the object can be scaled with @mymath{a(t)}.
 
-@dispmath{ds^2=c^2dt^2-a^2(t)ds_s^2 =
-c^2dt^2-a^2(t)(d\chi^2+r^2d\phi^2).}
+Measuring the change of distance in a time-dependent (expanding) universe
+only makes sense if we can add up space and time@footnote{In other words,
+making our spacetime consistent with Minkowski spacetime geometry. In this
+geometry, different observers at a given point (event) in spacetime split
+up spacetime into `space' and `time' in different ways, just like people at
+the same spatial position can make different choices of splitting up a map
+into `left--right' and `up--down'. This model is well supported by
+twentieth and twenty-first century observations.}. But we can only add bits
+of space and time together if we measure them in the same units: with a
+conversion constant (similar to how 1000 is used to convert a kilometer
+into meters).  Experimentally, we find strong support for the hypothesis
+that this conversion constant is the speed of light (or gravitational
+waves@footnote{The speed of gravitational waves was recently found to be
+very similar to that of light in vaccum, see
+@url{https://arxiv.org/abs/1710.05834, arXiv:1710.05834}.}) in a
+vacuum. This speed is postulated to be constant@footnote{In @emph{natural
+units}, speed is measured in units of the speed of light in vaccum.} and is
+almost always written as @mymath{c}. We can thus parametrize the change in
+distance on an expanding 2D surface as
+
+@dispmath{ds^2=c^2dt^2-a^2(t)ds_s^2 = c^2dt^2-a^2(t)(d\chi^2+r^2d\phi^2).}
 
 
 @node Extending distance concepts to 3D, Invoking astcosmiccal, Distance on a 2D curved space, CosmicCalculator
 @subsection Extending distance concepts to 3D
 
-The concepts of @ref{Distance on a 2D curved space} are here extended
-to a 3D space that @emph{might} be curved in a 4D space. We can start
-with the generic infinitesimal distance in a static 3D universe, but
-this time not in spherical coordinates instead of polar coordinates.
-@mymath{\theta} is shown in @ref{sphericalplane}, but here we are 3D
-beings, positioned on @mymath{O} (the center of the sphere) and the
-point @mymath{O} is tangent to a 4D-sphere. In our 3D space, a generic
-infinitesimal displacement will have the distance:
-@dispmath{ds_s^2=dx^2+dy^2+dz^2=dr^2+r^2(d\theta^2+\sin^2{\theta}d\phi^2).}Like
-our 2D friend before, we now have to assume an abstract dimension
-which we cannot visualize. Let's call the fourth dimension @mymath{w},
-then the general change in coordinates in the @emph{full} four
+The concepts of @ref{Distance on a 2D curved space} are here extended to a
+3D space that @emph{might} be curved. We can start with the generic
+infinitesimal distance in a static 3D universe, but this time in spherical
+coordinates instead of polar coordinates.  @mymath{\theta} is shown in
+@ref{sphereandplane}, but here we are 3D beings, positioned on @mymath{O}
+(the center of the sphere) and the point @mymath{O} is tangent to a
+4D-sphere. In our 3D space, a generic infinitesimal displacement will
+correspond to the following distance in spherical coordinates:
+
+@dispmath{ds_s^2=dx^2+dy^2+dz^2=dr^2+r^2(d\theta^2+\sin^2{\theta}d\phi^2).}
+
+Like the 2D creature before, we now have to assume an abstract dimension
+which we cannot visualize easily. Let's call the fourth dimension
+@mymath{w}, then the general change in coordinates in the @emph{full} four
 dimensional space will be:
-@dispmath{ds_s^2=dr^2+r^2(d\theta^2+\sin^2{\theta}d\phi^2)+dw^2.}But we
-can only work on a 3D curved space, so following exactly the same
+
+@dispmath{ds_s^2=dr^2+r^2(d\theta^2+\sin^2{\theta}d\phi^2)+dw^2.}
+
+@noindent
+But we can only work on a 3D curved space, so following exactly the same
 steps and conventions as our 2D friend, we arrive at:
-@dispmath{ds_s^2={dr^2\over
-1-Kr^2}+r^2(d\theta^2+\sin^2{\theta}d\phi^2).}In a non-static universe
-(with a scale factor a(t), the distance can be written as:
+
+@dispmath{ds_s^2={dr^2\over 1-Kr^2}+r^2(d\theta^2+\sin^2{\theta}d\phi^2).}
+
+@noindent
+In a non-static universe (with a scale factor a(t)), the distance can be
+written as:
+
 @dispmath{ds^2=c^2dt^2-a^2(t)[d\chi^2+r^2(d\theta^2+\sin^2{\theta}d\phi^2)].}
 
 
@@ -17515,6 +17619,7 @@ documentation will correspond to your installed version.
 * Convolution functions::       Library functions to do convolution.
 * Interpolation::               Interpolate (over blank values possibly).
 * Git wrappers::                Wrappers for functions in libgit2.
+* Cosmology library::           Cosmological calculations.
 @end menu
 
 @node Configuration information, Multithreaded programming, Gnuastro library, Gnuastro library
@@ -17742,7 +17847,7 @@ number of threads on the system and spin-off threads. You can see a
 demonstration of using these functions in @ref{Library demo -
 multi-threaded operation}.
 
-@deftp {C @code{struct})} gal_threads_params
+@deftp {C @code{struct}} gal_threads_params
 Structure keeping the parameters of each thread. When each thread is
 created, a pointer to this structure is passed to it. The @code{params}
 element can be the pointer to a structure defined by the user which
@@ -20342,7 +20447,9 @@ for each dimension.
 @end deftypefun
 
 @deftypefun double gal_wcs_pixel_area_arcsec2 (struct wcsprm @code{*wcs})
-Return the pixel area of @code{wcs} in arcsecond squared.
+Return the pixel area of @code{wcs} in arcsecond squared. If the input WCS
+structure is not two dimensional and the units (@code{CUNIT} keywords) are
+not @code{deg} (for degrees), then this function will return a NaN.
 @end deftypefun
 
 @deftypefun void gal_wcs_world_to_img (struct wcsprm @code{*wcs}, double @code{*ra}, double @code{*dec}, double @code{**x}, double @code{**y}, size_t @code{size})
@@ -22372,7 +22479,7 @@ checking that is the most CPU intensive part will only be done once.
 @end deftypefun
 
 
-@node Git wrappers,  , Interpolation, Gnuastro library
+@node Git wrappers, Cosmology library, Interpolation, Gnuastro library
 @subsection Git wrappers (@file{git.h})
 
 @cindex Git
@@ -22406,6 +22513,62 @@ Space for the output string is allocated within this function, so after
 using the value you have to @code{free} the output string. If libgit2 is
 not installed or the program calling this function is not within a version
 controlled directory, then the output will be the @code{NULL} pointer.
+@end deftypefun
+
+
+@node Cosmology library,  , Git wrappers, Gnuastro library
+@subsection Cosmology library (@file{cosmology.h})
+
+This library does the main cosmological calculations that are commonly
+necessary in extra-galactic astronomical studies. The main variable in this
+context is the redshift (@mymath{z}). The cosmological input parameters in
+the functions below are @code{H0}, @code{o_lambda_0}, @code{o_matter_0},
+@code{o_radiation_0} which respectively represent the current (at redshift
+0) expansion rate (Hubble constant in units of km/sec/Mpc), cosmological
+constant (@mymath{\Lambda}), matter and radiation densities.
+
+All these functions are declared in @file{gnuastro/cosmology.h}. For a more
+extended introduction/discussion of the cosmological parameters, please see
+@ref{CosmicCalculator}.
+
+@deftypefun double gal_cosmology_age (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Returns the age of the universe at redshift @code{z} in units of Giga
+years.
+@end deftypefun
+
+@deftypefun double gal_cosmology_proper_distance (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Returns the proper distance to an object at redshift @code{z} in units of
+Mega parsecs.
+@end deftypefun
+
+@deftypefun double gal_cosmology_comoving_volume (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Returns the comoving volume over 4pi stradian to @code{z} in units of Mega
+parsecs cube.
+@end deftypefun
+
+@deftypefun double gal_cosmology_critical_density (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Returns the critical density at redshift @code{z} in units of
+@mymath{g/cm^3}.
+@end deftypefun
+
+@deftypefun double gal_cosmology_angular_distance (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Return the angular diameter distance to an object at redshift @code{z} in
+units of Mega parsecs.
+@end deftypefun
+
+@deftypefun double gal_cosmology_luminosity_distance (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Return the luminosity diameter distance to an object at redshift @code{z}
+in units of Mega parsecs.
+@end deftypefun
+
+@deftypefun double gal_cosmology_distance_modulus (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Return the distance modulus at redshift @code{z} (with no units).
+@end deftypefun
+
+@deftypefun double gal_cosmology_to_absolute_mag (double @code{z}, double @code{H0}, double @code{o_lambda_0}, double @code{o_matter_0}, double @code{o_radiation_0})
+Return the conversion from apparent to absolute magnitdue for an object at
+redshift @code{z}. This value has to be added to the apparent magnitude to
+give the absolute magnitude of an object at redshift @code{z}.
 @end deftypefun
 
 
