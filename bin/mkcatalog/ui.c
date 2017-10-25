@@ -383,7 +383,7 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
 
 
   /* Currently MakeCatalog is only implemented for 2D images. */
-  if(p->input->ndim!=2)
+  if(p->input->ndim!=2 && p->input->ndim!=3)
     error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions, MakeCatalog "
           "currently only supports 2D inputs", p->inputname, p->cp.hdu,
           p->input->ndim);
@@ -688,8 +688,10 @@ ui_one_tile_per_object(struct mkcatalogparams *p)
 
   /* For a check.
   for(i=0;i<p->numobjects;++i)
-    printf("%zu: (%zu, %zu) --> (%zu, %zu)\n", i+1, minmax[i*width],
-           minmax[i*width+1], minmax[i*width+2], minmax[i*width+3]);
+    printf("%zu: (%zu, %zu, %zu) --> (%zu, %zu, %zu)\n", i+1, minmax[i*width],
+           minmax[i*width+1], minmax[i*width+2], minmax[i*width+3],
+           minmax[i*width+4], minmax[i*width+5]);
+  exit(0);
   */
 
   /* Make the tiles. */
@@ -1010,28 +1012,13 @@ ui_free_report(struct mkcatalogparams *p, struct timeval *t1)
 {
   size_t d;
 
-  /* The temporary arrays for RA and Dec. */
-  if(p->rd_vo || p->rd_vc || p->rd_go || p->rd_gc || p->rd_vcc || p->rd_gcc)
-    {
-      /* First free the separate dimensions in each value. */
-      for(d=0;d<p->input->ndim;++d)
-        {
-          if(p->rd_vo)  free(p->rd_vo[d]);
-          if(p->rd_vc)  free(p->rd_vc[d]);
-          if(p->rd_go)  free(p->rd_go[d]);
-          if(p->rd_gc)  free(p->rd_gc[d]);
-          if(p->rd_vcc) free(p->rd_vcc[d]);
-          if(p->rd_gcc) free(p->rd_gcc[d]);
-        }
-
-      /* Then free the container arrays. */
-      if(p->rd_vo)  free(p->rd_vo);
-      if(p->rd_vc)  free(p->rd_vc);
-      if(p->rd_go)  free(p->rd_go);
-      if(p->rd_gc)  free(p->rd_gc);
-      if(p->rd_vcc) free(p->rd_vcc);
-      if(p->rd_gcc) free(p->rd_gcc);
-    }
+  /* The temporary arrays for WCS coordinates. */
+  if(p->wcs_vo ) gal_list_data_free(p->wcs_vo);
+  if(p->wcs_vc ) gal_list_data_free(p->wcs_vc);
+  if(p->wcs_go ) gal_list_data_free(p->wcs_go);
+  if(p->wcs_gc ) gal_list_data_free(p->wcs_gc);
+  if(p->wcs_vcc) gal_list_data_free(p->wcs_vcc);
+  if(p->wcs_gcc) gal_list_data_free(p->wcs_gcc);
 
   /* Free the types of the WCS coordinates (for catalog meta-data). */
   if(p->ctype)

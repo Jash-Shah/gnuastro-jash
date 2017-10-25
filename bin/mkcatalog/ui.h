@@ -29,7 +29,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 /* Available letters for short options:
 
-   f g k l u v w x y z
+   f g k l u v w x y
    H J L W X Y
 */
 enum option_keys_enum
@@ -49,6 +49,7 @@ enum option_keys_enum
   UI_KEY_AREA            = 'a',
   UI_KEY_X               = 'x',
   UI_KEY_Y               = 'y',
+  UI_KEY_Z               = 'z',
   UI_KEY_RA              = 'r',
   UI_KEY_DEC             = 'd',
   UI_KEY_BRIGHTNESS      = 'b',
@@ -82,18 +83,25 @@ enum option_keys_enum
   UI_KEY_WEIGHTAREA,
   UI_KEY_GEOX,
   UI_KEY_GEOY,
+  UI_KEY_GEOZ,
   UI_KEY_CLUMPSX,
   UI_KEY_CLUMPSY,
+  UI_KEY_CLUMPSZ,
   UI_KEY_CLUMPSGEOX,
   UI_KEY_CLUMPSGEOY,
+  UI_KEY_CLUMPSGEOZ,
   UI_KEY_W1,
   UI_KEY_W2,
+  UI_KEY_W3,
   UI_KEY_GEOW1,
   UI_KEY_GEOW2,
+  UI_KEY_GEOW3,
   UI_KEY_CLUMPSW1,
   UI_KEY_CLUMPSW2,
+  UI_KEY_CLUMPSW3,
   UI_KEY_CLUMPSGEOW1,
   UI_KEY_CLUMPSGEOW2,
+  UI_KEY_CLUMPSGEOW3,
   UI_KEY_CLUMPSBRIGHTNESS,
   UI_KEY_NORIVERBRIGHTNESS,
   UI_KEY_CLUMPSMAGNITUDE,

@@ -71,8 +71,10 @@ enum objectcols
     OCOL_SUM,            /* Sum of (value-sky) in object.             */
     OCOL_VX,             /* Sum of (value-sky) * x.                   */
     OCOL_VY,             /* Sum of (value-sky) * y.                   */
+    OCOL_VZ,             /* Sum of (value-sky) * z.                   */
     OCOL_SX,             /* Shift along X axis.                       */
     OCOL_SY,             /* Shift along Y axis.                       */
+    OCOL_SZ,             /* Shift along Z axis.                       */
     OCOL_VXX,            /* Sum of (value-sky) * x * x.               */
     OCOL_VYY,            /* Sum of (value-sky) * y * y.               */
     OCOL_VXY,            /* Sum of (value-sky) * x * y.               */
@@ -82,6 +84,7 @@ enum objectcols
     OCOL_NUMWHT,         /* Number of positive pixels used for wht.   */
     OCOL_GX,             /* Geometric center of object in X.          */
     OCOL_GY,             /* Geometric center of object in Y.          */
+    OCOL_GZ,             /* Geometric center of object in Z.          */
     OCOL_GXX,            /* Second order geometric variable: X*X.     */
     OCOL_GYY,            /* Second order geometric variable: Y*Y.     */
     OCOL_GXY,            /* Second order geometric variable: X*Y.     */
@@ -91,8 +94,10 @@ enum objectcols
     OCOL_C_SUM,          /* Brightness  in object clumps.             */
     OCOL_C_VX,           /* Sum of (value-sky)*x on clumps.           */
     OCOL_C_VY,           /* Sum of (value-sky)*y on obj. clumps.      */
+    OCOL_C_VZ,           /* Sum of (value-sky)*z on obj. clumps.      */
     OCOL_C_GX,           /* Geometric center of clumps in object X.   */
     OCOL_C_GY,           /* Geometric center of clumps in object Y.   */
+    OCOL_C_GZ,           /* Geometric center of clumps in object Z.   */
     OCOL_C_SUMWHT,       /* Sum of positive image pixels for wht.     */
     OCOL_C_NUMWHT,       /* Num of positive image pixels for wht.     */
 
@@ -105,6 +110,7 @@ enum clumpcols
     CCOL_NUM,            /* Area of this clump.                       */
     CCOL_VX,             /* Sum of (value-sky) * x.                   */
     CCOL_VY,             /* Sum of (value-sky) * y.                   */
+    CCOL_VZ,             /* Sum of (value-sky) * z.                   */
     CCOL_VXX,            /* Sum of flux*x*x of this clump.            */
     CCOL_VYY,            /* Sum of flux*y*y of this clump.            */
     CCOL_VXY,            /* Sum of flux*x*y of this clump.            */
@@ -117,6 +123,7 @@ enum clumpcols
     CCOL_NUMWHT,         /* Num of positive image pixels for wht.     */
     CCOL_GX,             /* Geometric center of clump in X.           */
     CCOL_GY,             /* Geometric center of clump in Y.           */
+    CCOL_GZ,             /* Geometric center of clump in Y.           */
     CCOL_GXX,            /* Second order geometric moment.            */
     CCOL_GYY,            /* Second order geometric moment.            */
     CCOL_GXY,            /* Second order geometric moment.            */
@@ -188,12 +195,12 @@ struct mkcatalogparams
   uint64_t               seed;  /* Random number generator seed.        */
   const char         *rngname;  /* Name of random number generator.     */
 
-  double              **rd_vo;  /* Object RA-Dec flux weighted X, Y.    */
-  double              **rd_vc;  /* Clump RA-Dec flux weighted X, Y.     */
-  double              **rd_go;  /* Object RA-Dec geometric X,Y.         */
-  double              **rd_gc;  /* Clump RA-Dec geometric X, Y.         */
-  double             **rd_vcc;  /* All clumps RA-Dec flx. wht. X, Y.    */
-  double             **rd_gcc;  /* All clumps RA-Dec geometric X, Y.    */
+  gal_data_t          *wcs_vo;  /* Object RA-Dec flux weighted X, Y.    */
+  gal_data_t          *wcs_vc;  /* Clump RA-Dec flux weighted X, Y.     */
+  gal_data_t          *wcs_go;  /* Object RA-Dec geometric X,Y.         */
+  gal_data_t          *wcs_gc;  /* Clump RA-Dec geometric X, Y.         */
+  gal_data_t         *wcs_vcc;  /* All clumps RA-Dec flx. wht. X, Y.    */
+  gal_data_t         *wcs_gcc;  /* All clumps RA-Dec geometric X, Y.    */
 
   char                **ctype;  /* Type of WCS axis.                    */
 

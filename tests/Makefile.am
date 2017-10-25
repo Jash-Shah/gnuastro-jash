@@ -118,9 +118,11 @@ if COND_FITS
   fits/copyhdu.sh: fits/write.sh.log mkprof/mosaic2.sh.log
 endif
 if COND_MKCATALOG
-  MAYBE_MKCATALOG_TESTS = mkcatalog/simple.sh mkcatalog/aperturephot.sh
+  MAYBE_MKCATALOG_TESTS = mkcatalog/simple.sh mkcatalog/simple-3d.sh \
+  mkcatalog/aperturephot.sh
 
   mkcatalog/simple.sh: noisechisel/noisechisel.sh.log
+  mkcatalog/simple-3d.sh: noisechisel/noisechisel-3d.sh.log
   mkcatalog/aperturephot.sh: noisechisel/noisechisel.sh.log          \
                              mkprof/clearcanvas.sh.log
 endif
