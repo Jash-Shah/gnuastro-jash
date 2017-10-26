@@ -15,6 +15,14 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   BuildProgram: The new `--la' option allows the identification of a
   different Libtool `.la' file for Libtool linking information.
 
+  CosmicCalculator: all the various cosmological calculations can now be
+  requested individually in one line with a specific option added for each
+  calculation (for example `--age' or `--luminositydist' for the age of the
+  universe at a given redshift or the luminosity distance). Therefore the
+  old `--onlyvolume' and `--onlyabsmagconv' options are now removed. To
+  effectively use these new features, please review the "Invoking
+  CosmicCalculator" section of the book.
+
   Fits: when an extension/HDU is identified on the command-line with the
   `--hdu' option and no operation is requested, the full list of header
   keywords in that HDU will be printed (as if only `--printallkeys' was
@@ -74,6 +82,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 
 ** Changed features
 
+  CosmicCalculator: The redshift is no longer mandatory. When no redshift
+  is given, it will only print the input parameters (cosmology) and abort.
+
   `gal_binary_fill_holes' now accepts a `connectivity' and `maxsize'
   argument to specify the connectivity of the holes and the maximum size of
   acceptable holes to fill.
@@ -91,6 +102,13 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   `gal_wcs_pixel_area_arcsec2' will return NaN (instead of aborting) when
   input is unreasonable (not two dimensions or not in units of degrees).
 
+  `gal_wcs_world_to_img' and `gal_wcs_img_to_world': Until now, these two
+  WCS conversion functions would explicitly assume RA and Dec and work
+  based on input arrays (so for example it was also necessary to give the
+  number of elements and etc). They now accept `gal_data_t' as input for
+  the input coordinates, thus their API has been greatly simplified and
+  their functionality increased.
+
 ** Bug fixes
 
   ConvertType crash when changing values (bug #52010).
@@ -101,6 +119,8 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   NoiseChisel segfault when memory mapping to a file (bug #52043).
 
   CFITSIO 3.42 and libcurl crash at Gnuastro configure time (bug #52152).
+
+  MakeCatalog crash in upper-limit with full size label (bug #52281).
 
 
 
@@ -122,26 +142,13 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   is called, the `--background', `--zeropoint' and other option values will
   be ignored.
 
-  MakeProfiles: can build 3D ellipsoids of any orientation and shape. The
-  following options are new to MakeProfiles for enabling 3D profiles:
-  `--p2col', `--p3col' (second two Euler angles), and `--q2col' (axis ratio
-  of third axis to major axis). To help in using the 3D features, a
-  `astmkprof-3d.conf' configuration file will also be installed with
-  Gnuastro. The `--config' option can be used to specify default values for
-  3D profiles.
+  MakeProfiles: the new `--kernel' option can make a kernel image without
+  the need to define a catalog. With this option, a catalog (or
+  accompanying background image) must not be given.
 
   MakeProfiles: the new `--pc', `--cunit' and `--ctype' options can be used
-  along with `--crpix', `--crval' and `--cdelt' to fully specify the world
-  coordinate system (WCS) keywords of the output FITS file.
-
-  MakeProfiles: can build a new raidal profile called `distance' (code
-  7). The value this profile gives to each pixel is equal to its distance
-  from the center. It can be used to build any other radial profile that is
-  not supported by MakeProfiles.
-
-  MakeProfiles: with the new `--mcolisbrightness' ("mcol-is-brightness")
-  option, the `--mcol' values of the catalog will be interpretted as total
-  brightness (sum of pixel values), not magnitude.
+  to specify the PC matrix, CUNIT and CTYPE world coordinate system
+  keywords of the output FITS file.
 
   MakeProfiles: the new `distance' profile will save the radial distance of
   each pixel. This may be used to define your own profiles that are not
