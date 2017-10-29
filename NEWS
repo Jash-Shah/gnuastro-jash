@@ -15,6 +15,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   BuildProgram: The new `--la' option allows the identification of a
   different Libtool `.la' file for Libtool linking information.
 
+  BuildProgram: The new `--deletecompiled' option will delete the compiled
+  program after running it.
+
   CosmicCalculator: all the various cosmological calculations can now be
   requested individually in one line with a specific option added for each
   calculation (for example `--age' or `--luminositydist' for the age of the
@@ -41,6 +44,11 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   `--clumpsgeow1', `--clumpsgeow2' options replace the old options
   `--geora', `--geodec', `--clumpsra', `--clumpsdec', `--clumpsgeora',
   `--clumpsgeodec'. No alias is currently defined for the latter group.
+
+  MakeCatalog: The new `--uprange' option allows you to specify a range for
+  the random values around each object. This is useful when the noise
+  properies of the dataset vary gradually and sampling from the whole
+  dataset might produce biased results.
 
   NoiseChisel: with the new `--widekernel' option it is now possible to use
   a wider kernel to identify which tiles contain signal. The rest of the
@@ -69,6 +77,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   `gal_fits_key_img_blank': returns the value that must be used in the
   BLANK keyword for the given type as defined by the FITS standard.
 
+  `gal_txt_write' and `gal_fits_tab_write' now accept an extension name as
+  argument to allow a name for the FITS extension they write.
+
 ** Removed features
 
   MakeCatalog: `--zeropoint' option doesn't have a short option name any
@@ -85,19 +96,29 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   CosmicCalculator: The redshift is no longer mandatory. When no redshift
   is given, it will only print the input parameters (cosmology) and abort.
 
+  MakeCatalog: when the output is a FITS file, the two object and clumps
+  catalogs will be stored as multiple extensions of a single file. Until
+  now, two separate FITS files would be created. Plain text outputs are the
+  same as before (two files will be created).
+
   `gal_binary_fill_holes' now accepts a `connectivity' and `maxsize'
   argument to specify the connectivity of the holes and the maximum size of
   acceptable holes to fill.
-
-  `gal_tile_block_write_const_value' and `gal_tile_full_values_write' now
-  accept a new `withblank' option to set all pixels that are blank in the
-  tile's block to be blank in the check image.
 
   `gal_fits_img_read' and `gal_fits_img_read_to_type' now also read the WCS
   structure of the extension/HDU in a FITS file and have two extra
   arguments: `hstartwcs' and `hendwcs'. With these options it is possible
   to limit the range of header keywords to read the WCS, similar to how
   they are used in `gal_wcs_read'.
+
+  `gal_txt_write', `gal_table_write_log', `gal_fits_tab_write' and
+  `gal_txt_write' don't have the `dontdelete' argument any more. The action
+  they take if the file already exists depends on the file: for FITS, a new
+  extension will be added and for text, they will abort with an error.
+
+  `gal_tile_block_write_const_value' and `gal_tile_full_values_write' now
+  accept a new `withblank' option to set all pixels that are blank in the
+  tile's block to be blank in the check image.
 
   `gal_wcs_pixel_area_arcsec2' will return NaN (instead of aborting) when
   input is unreasonable (not two dimensions or not in units of degrees).
@@ -121,6 +142,8 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   CFITSIO 3.42 and libcurl crash at Gnuastro configure time (bug #52152).
 
   MakeCatalog crash in upper-limit with full size label (bug #52281).
+
+
 
 
 
