@@ -133,6 +133,7 @@ ui_initialize_options(struct mkcatalogparams *p,
       /* Select individually. */
       switch(cp->coptions[i].key)
         {
+        case GAL_OPTIONS_KEY_LOG:
         case GAL_OPTIONS_KEY_TYPE:
         case GAL_OPTIONS_KEY_SEARCHIN:
         case GAL_OPTIONS_KEY_IGNORECASE:
@@ -859,7 +860,7 @@ ui_preparations_upperlimit(struct mkcatalogparams *p)
 
   /* Set the random number generator. */
   gsl_rng_env_setup();
-  p->rng=gsl_rng_alloc(gsl_rng_default);
+  p->rng=gsl_rng_alloc(gsl_rng_ranlxs1);
   p->seed = ( p->envseed
               ? gsl_rng_default_seed
               : gal_timing_time_based_rng_seed() );

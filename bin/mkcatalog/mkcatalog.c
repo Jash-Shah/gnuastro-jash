@@ -837,6 +837,28 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
       asprintf(&str, "Number of random samples: %zu", p->upnum);
       gal_list_str_add(&comments, str, 0);
 
+      if(p->uprange)
+        {
+          switch(p->input->ndim)
+            {
+            case 2:
+              asprintf(&str, "Range of random samples about target: %zu, %zu",
+                       p->uprange[1], p->uprange[0]);
+              break;
+            case 3:
+              asprintf(&str, "Range of random samples about target: %zu, "
+                       "%zu, %zu", p->uprange[2], p->uprange[1],
+                       p->uprange[0]);
+              break;
+            default:
+              error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                    "address the problem. The value %zu is not recognized for "
+                    "`p->input->ndim'", __func__, PACKAGE_BUGREPORT,
+                    p->input->ndim);
+            }
+          gal_list_str_add(&comments, str, 0);
+        }
+
       asprintf(&str, "Random number generator name: %s", p->rngname);
       gal_list_str_add(&comments, str, 0);
 
