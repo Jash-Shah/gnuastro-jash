@@ -106,8 +106,8 @@ detection_initial(struct noisechiselparams *p)
   /* Erode the image. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
   gal_binary_erode(p->binary, p->erode,
-                   detection_ngb_to_connectivity(p->input->ndim, p->erodengb),
-                   1);
+                   detection_ngb_to_connectivity(p->input->ndim,
+                                                 p->erodengb), 1);
   if(!p->cp.quiet)
     {
       asprintf(&msg, "Eroded %zu time%s (%zu-connectivity).", p->erode,
@@ -131,8 +131,8 @@ detection_initial(struct noisechiselparams *p)
   /* Do the opening. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
   gal_binary_open(p->binary, p->opening,
-                  detection_ngb_to_connectivity(p->input->ndim, p->openingngb),
-                  1);
+                  detection_ngb_to_connectivity(p->input->ndim,
+                                                p->openingngb), 1);
   if(!p->cp.quiet)
     {
       asprintf(&msg, "Opened (depth: %zu, %s connectivity).",
@@ -143,7 +143,8 @@ detection_initial(struct noisechiselparams *p)
 
 
   /* Label the connected components. */
-  p->numinitialdets=gal_binary_connected_components(p->binary, &p->olabel, 1);
+  p->numinitialdets=gal_binary_connected_components(p->binary, &p->olabel,
+                                                    p->binary->ndim);
   if(p->detectionname)
     {
       p->olabel->name="OPENED-AND-LABELED";
@@ -1010,7 +1011,7 @@ detection_quantile_expand(struct noisechiselparams *p, gal_data_t *workbin)
   while(++o<of);
 
   /* Expand the detections. */
-  clumps_grow(p->olabel, diffuseindexs, 0);
+  clumps_grow(p->olabel, diffuseindexs, 0, p->olabel->ndim);
 
 
   /* Only keep the 1 valued pixels in the binary array. */
@@ -1035,7 +1036,8 @@ detection_quantile_expand(struct noisechiselparams *p, gal_data_t *workbin)
     }
 
   /* Get the labeled image. */
-  numexpanded=gal_binary_connected_components(workbin, &p->olabel, 8);
+  numexpanded=gal_binary_connected_components(workbin, &p->olabel,
+                                              workbin->ndim);
 
   /* Set all the input's blank pixels to blank in the labeled and binary
      arrays. */
