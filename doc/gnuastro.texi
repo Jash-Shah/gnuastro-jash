@@ -12585,6 +12585,58 @@ a wider FWHM in the spatial directions, see @ref{Sampling theorem}.
 HDU containing the kernel in the file given to the @option{--kernel}
 option.
 
+@item --convolved=STR
+Use this file as the convolved image and don't do convolution and ignore
+@option{--kernel}. NoiseChisel will just check the size of the given
+dataset is the same as the input's size. If a wrong image (with the same
+size) is given to this option, the results (errors, bugs, and etc) are
+un-predictable. So please use this option with care and in a highly
+controlled environment. On such scenario is discussed below.
+
+In almost all situations, as the input gets larger, the single most CPU and
+time consuming step in NoiseChisel is convolution (the first step in its
+processing). The process of testing NoiseChisel for the best parameters in
+a given analysis will involve running NoiseChisel multiple times: to see
+the effect of each new option value. Therefore, once the kernel is
+finalized, re-convolving the input will greatly hinder fast testing of
+higher-level parameters. With this option, you can convolve the input image
+with your chosen kernel once before running NoiseChisel, then feed it to
+NoiseChisel on each test run and thus save valuable time for better/more
+tests.
+
+To build your desired convolution kernel, you can use
+@ref{MakeProfiles}. To convolve the image with a given kernel you can use
+@ref{Convolve}. Spatial domain convolution is mandatory. In the frequency
+domain, blank pixels (if present) will cover the whole image and gradients
+will appear on the edges, see @ref{Spatial vs. Frequency domain}.
+
+Below you can see an example of such a scenario: you want to see how
+variation of the growth level (through the @option{--detgrowquant} option)
+will affect the final result. Recall that you can ignore all the extra
+spaces, new lines, and `@code{\}' if you are typing in the terminal (in a
+shell script, remove the @code{$} signs at the start of the lines).
+
+@example
+## Make the kernel to convolve with.
+$ astmkprof --oversample=1 --kernel=gaussian,2,5
+
+## Convolve the input with the given kernel.
+$ astconvolve input.fits --kernel=kernel.fits                \
+              --domain=spatial --output=convolved.fits
+
+## Run NoiseChisel with seven growth quantile values.
+$ for g in 60 65 70 75 80 85 90; do                          \
+    astnoisechisel input.fits --convolved=convolved.fits     \
+                   --detgrowquant=0.$g --output=$g.fits;     \
+  done
+@end example
+
+
+
+@item --convolvedhdu=STR
+The HDU/extension containing the convolved image in the file given to
+@option{--convolved}.
+
 @item -w STR
 @itemx --widekernel=STR
 File name of a wider kernel to use in estimating the difference of the mode
@@ -12688,13 +12740,6 @@ catalog). You can then run MakeCatalog on A normally, see
 @ref{MakeCatalog}. To run MakeCatalog on B, you simply set the object and
 clump labels images to those that NoiseChisel produced for A, see
 @ref{Invoking astmkcatalog}.
-
-@item --grownclumps
-In the output (see @ref{NoiseChisel output}) store the grown clumps (or
-full detected region if only one clump was present in that detection). By
-default the original clumps are stored as the third extension of the
-output, if this option is called, it is replaced with the grown clump
-labels.
 
 @item --continueaftercheck
 Continue NoiseChisel after any of the options starting with
@@ -13140,6 +13185,13 @@ the only Signal to noise ratio that the user gives into
 NoiseChisel. The `true' detections and clumps can be objectively
 identified from the noise characteristics of the image, so you don't
 have to give any hand input Signal to noise ratio.
+
+@item --grownclumps
+In the output (see @ref{NoiseChisel output}) store the grown clumps (or
+full detected region if only one clump was present in that detection). By
+default the original clumps are stored as the third extension of the
+output, if this option is called, it is replaced with the grown clump
+labels.
 
 @item --checksegmentation
 A file with the suffix @file{_seg.fits} will be created. This file keeps
@@ -20792,17 +20844,19 @@ formats, see @ref{Table input output}.
 Tables are a collection of one dimensional datasets that are packed
 together into one file. They are the single most common format to store
 high-level (processed) information, hence they play a very important role
-in Gnuastro. For a more thorough introduction, please see Gnuastro's
+in Gnuastro. For a more thorough introduction, please see
 @ref{Table}. Gnuastro's Table program, and all the other programs that can
-read from and write into tables, use the functions of this section. For a
-simple demonstration of using the constructs introduced here, see
-@ref{Library demo - reading and writing table columns}.
+read from and write into tables, use the functions of this section for
+reading and writing their input/output tables. For a simple demonstration
+of using the constructs introduced here, see @ref{Library demo - reading
+and writing table columns}.
 
 Currently only plain text (see @ref{Gnuastro text table format}) and FITS
-tables are supported by Gnuastro. However, the low-level table
-infra-structure is written such that for other formats are also possible
-and in future releases more formats will be supported, please let us know
-your priorities so they get higher priorities.
+(ASCII and binary) tables are supported by Gnuastro. However, the low-level
+table infra-structure is written such that accommodating other formats is
+also possible and in future releases more formats will hopefully be
+supported. Please don't hesitate to suggest your favorite format so it can
+be implemented when possible.
 
 @deffn  Macro GAL_TABLE_DEF_WIDTH_STR
 @deffnx Macro GAL_TABLE_DEF_WIDTH_INT
@@ -23081,24 +23135,24 @@ column selection is discussed in @ref{Selecting table columns}. The first
 and second columns can be any type, but this program will convert them to
 @code{int32_t} and @code{float} for its internal usage
 respectively. However, the third column must be double for this program. So
-if it isn't the program will abort with an error. Having the columns in
+if it isn't, the program will abort with an error. Having the columns in
 memory, it will print them out along with their sum (just a simple
 application, you can do what ever you want at this stage). Reading the
 table finishes here.
 
 The rest of the program is a demonstration of writing a table. While
 parsing the rows, this program will change the first column (to be
-counters) and multiply the second by 10 (to the output may be
+counters) and multiply the second by 10 (so the output will be
 different). Then it will define the order of the output columns by setting
 the @code{next} element (to create a @ref{List of gal_data_t}). Before
 writing, this function will also set names for the columns (units and
 comments can be defined in a similar manner). Writing the columns to a file
 is then done through a simple call to @code{gal_table_write}.
 
-The operations that are shows in this example program are not necessary all
+The operations that are shown in this example program are not necessary all
 the time. For example, in many cases, you know the numerical data type of
-the column before writing the program (see @ref{Numeric data types}), so
-type checking and copying won't be necessary.
+the column before writing your program (see @ref{Numeric data types}), so
+type checking and copying to a specific type won't be necessary.
 
 @example
 #include <stdio.h>
@@ -24757,12 +24811,12 @@ simplify the final merging of your work.
 @appendix Gnuastro programs list
 
 GNU Astronomy Utilities @value{VERSION}, contains the following
-programs. They are sorted in alphabetical order and followed by their
-version number. A short description is provided for each program which
-starts with the executable names in @file{thisfont} followed by a link to
-the respective section in parenthesis, see @ref{Naming
-convention}. Throughout this book, they are ordered based on their context,
-please see the book contents for contextual ordering.
+programs. They are sorted in alphabetical order and a short description is
+provided for each program. The description starts with the executable names
+in @file{thisfont} followed by a pointer to the respective section in
+parenthesis. Throughout this book, they are ordered based on their context,
+please see the top-level contents for contextual ordering (based on what
+they do).
 
 
 @table @asis

@@ -119,6 +119,7 @@ ui_initialize_options(struct noisechiselparams *p,
       /* Select individually. */
       switch(cp->coptions[i].key)
         {
+        case GAL_OPTIONS_KEY_LOG:
         case GAL_OPTIONS_KEY_TYPE:
         case GAL_OPTIONS_KEY_SEARCHIN:
         case GAL_OPTIONS_KEY_IGNORECASE:
@@ -227,6 +228,14 @@ ui_ngb_check(size_t value, char *optionname)
 static void
 ui_read_check_only_options(struct noisechiselparams *p)
 {
+  /* If the convolved option is given, then the convolved HDU is also
+     mandatory. */
+  if(p->convolvedname && p->convolvedhdu==NULL)
+    error(EXIT_FAILURE, 0, "no value given to `--convolvedhdu'. When the "
+          "`--convolved' option is called (to specify a convolved image "
+          "and avoid convolution) it is mandatory to also specify a HDU "
+          "for it");
+
   /* A general check on the neighbor connectivity values. */
   ui_ngb_check(p->erodengb,   "erodengb");
   ui_ngb_check(p->openingngb, "openingngb");
@@ -712,12 +721,28 @@ ui_preparations(struct noisechiselparams *p)
   ui_preparations_read_input(p);
 
 
+  /* If a convolved image was given, read it in. Otherwise, read the given
+     kernel. */
+  if(p->convolvedname)
+    {
+      /* Read the input convolved image. */
+      p->conv = gal_fits_img_read_to_type(p->convolvedname, p->convolvedhdu,
+                                          GAL_TYPE_FLOAT32, p->cp.minmapsize,
+                                          0, 0);
+
+      /* Make sure the convolved image is the same size as the input. */
+      if( gal_data_dsize_is_different(p->input, p->conv) )
+        error(EXIT_FAILURE, 0, "%s (hdu %s), given to `--convolved' and "
+              "`--convolvehdu', is not the same size as NoiseChisel's "
+              "input: %s (hdu: %s)", p->convolvedname, p->convolvedhdu,
+              p->inputname, p->cp.hdu);
+    }
+  else
+    ui_prepare_kernel(p);
+
+
   /* Check for blank values to help later processing.  */
   gal_blank_present(p->input, 1);
-
-
-  /* Read in the kernel for convolution. */
-  ui_prepare_kernel(p);
 
 
   /* Prepare the tessellation. */
@@ -815,16 +840,22 @@ ui_read_check_inputs_setup(int argc, char *argv[],
       printf("  - Using %zu CPU thread%s\n", p->cp.numthreads,
              p->cp.numthreads==1 ? "." : "s.");
       printf("  - Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
-      if(p->kernelname)
-        printf("  - %s: %s (hdu: %s)\n",
-               p->widekernelname ? "Sharp Kernel" : "Kernel",
-               p->kernelname, p->khdu);
+      if(p->convolvedname)
+        printf("  - Convolved input: %s (hdu: %s)\n",
+               p->convolvedname, p->convolvedhdu);
       else
-        printf(p->kernel->ndim==2
-               ? "  - %s: FWHM=2 pixel Gaussian.\n"
-               : "  - %s: FWHM=1.5 pixel Gaussian (half extent in "
-               "3rd dimension).\n",
-               p->widekernelname ? "Sharp Kernel" : "Kernel");
+        {
+          if(p->kernelname)
+            printf("  - %s: %s (hdu: %s)\n",
+                   p->widekernelname ? "Sharp Kernel" : "Kernel",
+                   p->kernelname, p->khdu);
+          else
+            printf(p->kernel->ndim==2
+                   ? "  - %s: FWHM=2 pixel Gaussian.\n"
+                   : "  - %s: FWHM=1.5 pixel Gaussian (half extent in "
+                   "3rd dimension).\n",
+                   p->widekernelname ? "Sharp Kernel" : "Kernel");
+        }
       if(p->widekernelname)
         printf("  - Wide Kernel: %s (hdu: %s)\n", p->widekernelname,
                p->wkhdu);
