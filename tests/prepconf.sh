@@ -72,9 +72,9 @@ rm addedoptions.txt
 # file in each program's source. This is because some programs come with
 # some supplementary configuration files to help the users (like
 # MakeProfiles to operate in 3D).
-for prog in arithmetic convertt convolve cosmiccal crop fits      \
-            mkcatalog mknoise mkprof noisechisel statistics       \
-            table warp
+for prog in arithmetic buildprog convertt convolve cosmiccal crop fits  \
+            match mkcatalog mknoise mkprof noisechisel statistics table \
+            warp
 do
     cp $topsrc/bin/$prog/ast*.conf .gnuastro/
 done

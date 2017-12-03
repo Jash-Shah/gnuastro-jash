@@ -21,22 +21,32 @@ all the commits needed for this release have been completed.
  - Check if README includes all the recent updates and important features.
 
 
- - Check if THANKS is up to date and includes recently updated
-   people/institutions.
+ - Check if THANKS and the book's Acknowledgments section have everyone in
+   `doc/announce-acknowledge.txt' in them.
 
 
- - Make sure THANKS corresponds to the acknowledgements in the book.
+ - [STABLE] Correct the links in the webpage (`doc/gnuastro-top.html' and
+   `doc/gnuastro.fr.html').
 
 
- - [STABLE] Update the webpage (`doc/gnuastro-top.html') and correct the
-   links.
+ - Run the following commands to keep the list of people who contributed
+   code and those that must be acknowledged for the announcement (`P.P' is
+   the previous version). Finally, if in a stable release, clean
+   `doc/announce-acknowledge.txt' for the next release. We will use
+   `~/people.txt' in the announcement.
+
+     $ git shortlog gnuastro_vP.P...HEAD --numbered --summary > ~/people.txt
+     $ cat doc/announce-acknowledge.txt >> ~/people.txt
+
+     [STABLE]:
+     $ echo "People who's help must be acknowledged in the next release." \
+            > doc/announce-acknowledge.txt
 
 
- - Commit all these changes and tag the commit:
+ - Commit all these changes:
 
      $ git add -u
      $ git commit
-
 
  - Make sure all the bootstrapping tools are up to date (keep the
    versions in text file to use in the release), then bootstrap and
@@ -100,7 +110,7 @@ all the commits needed for this release have been completed.
        $ cd doc
        $ ./forwebpage /path/to/local/copy/of/webpage
 
-   If any of the files have a `?' infront of them, run these two commands
+   If any of the files have a `?' in front of them, run these two commands
    in the webpage directory:
 
        $ cvs add filename1 filename2 filename3
@@ -131,13 +141,13 @@ all the commits needed for this release have been completed.
               --archive-suffix=tar.lz > announcement.txt
 
 
- - After finishing the announcement (adding an intro and NEWS file), run a
-   spell-check on it.
+ - Based on previous announcements, add an intro, the NEWS file and the
+   contents of `~/people.txt' to the announcement.
 
 
- - IMPORTANT: In the announcements, double check the changes in the list of
-   authors and the list in THANKS and make sure everyone's contribution is
-   correctly included.
+ - Run a spell-check on the announcement and remove `~/people.txt'.
+
+     $ rm ~/people.txt
 
 
  - Announce the release on `info-gnuastro@gnu.org', `info-gnu@gnu.org'
@@ -233,34 +243,15 @@ Steps necessary to Package Gnuastro for Debian.
      $ git checkout master
 
 
- - Again, we need to clean everything that already exists here, except
-   `.git' and `debian':
+ - Merge the upstream branch into the master branch to update the Gnuastro
+   files in master also:
 
-     $ mv debian ../gnuastro-tmp-debian    # We want to keep `debian'.
-     $ mv .git ../gnuastro-tmp-git         # We want to keep `.git'.
-     $ rm -rf ./* ./.*                     # Delete everything.
-     $ mv ../gnuastro-tmp-git .git         # Bring back the `.git' directory.
-     $ mv ../gnuastro-tmp-debian debian    # Bring back the `debian' directory.
+     $ git merge upstream
 
 
- - Unpack the distribution tarball into the master branch too:
-
-     $ tar xf ../gnuastro_$ver.orig.tar.gz --strip-components=1
-
-
- - Update the ChangeLog. But first get all the changes in this version from
-   the NEWS file.
-
-   IMPORTANT: An official release should have `unstable' after the
-   version. But if you just want to making sure Gnuastro builds on all
-   systems, it should be `experimental'.
-
-     $ git diff NEWS
-     $ emacs debian/changelog
-
-
- - Check the current Debian policy version at
-   https://www.debian.org/doc/debian-policy/ and update debian/control:
+ - Check the current Debian policy version and update it in
+   `debian/control'. The policy can be found here:
+   https://www.debian.org/doc/debian-policy/
 
      $ emacs debian/control
 
@@ -271,6 +262,18 @@ Steps necessary to Package Gnuastro for Debian.
        soname).
 
      - In `debian/control', change all the old sonames to the new value.
+
+
+ - Update `debian/changeLog' with all the Debian-related changes (since
+   merging with the upstream branch). Gnuastro's changes don't need to be
+   mentioned here. If there was no major changes, just say "New upstream
+   version".
+
+   IMPORTANT: An official release should have `unstable' after the
+   version. But if you just want to make sure Gnuastro builds on all
+   systems, it should be `experimental'. If it is experimental, also add
+   this line in `debian/changelog': "Switch to experimental to prepare
+   transition".
 
 
  - Update your version of `pbuilder':
@@ -289,8 +292,8 @@ Steps necessary to Package Gnuastro for Debian.
                /var/cache/pbuilder/result/gnuastro_$ver-1_amd64.changes
 
 
- - Commit the contents of the new release, make sure everything except the
-   `debian' directory is commited (with `git status'):
+ - Commit the contents of the new release (should be just the contents of
+   the `debian' directory).
 
      $ git add --all
      $ git status                         # For a visual check

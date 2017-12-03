@@ -114,6 +114,26 @@ CC="$PTHREAD_CC"
 
 
 
+# See if the C++ compiler understands `-Qunused-arguments'. AX_PTHREAD adds
+# this option to LDFLAGS when the C compiler knows this option. But as
+# reported in bug #52490, it can happen that at the same time, the C++
+# compiler doesn't recognize it.
+cpp_Qunused_arguments_problem=no
+for flg in $LDFLAGS; do
+  AS_IF([test "$flg" = \-Qunused-arguments],
+        [ AC_LANG(C++)
+          AX_CHECK_COMPILE_FLAG([-Qunused-arguments],
+                                [cpp_Qunused_arguments_problem=no],
+                                [cpp_Qunused_arguments_problem=yes])
+          AC_LANG(C) ])
+done
+AM_CONDITIONAL([COND_NO_CPP_QUNUSED_ARGUMENTS_PROBLEM],
+               [test "x$cpp_Qunused_arguments_problem" = "xno"])
+
+
+
+
+
 # Check if `malloc(0)' returns valid pointer
 AC_FUNC_MALLOC
 
@@ -129,7 +149,7 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_SIZEOF_SIZE_T], [$ac_cv_sizeof_size_t],
 AC_CHECK_SIZEOF([long])
 AC_SUBST(SIZEOF_LONG, [$ac_cv_sizeof_long])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_SIZEOF_LONG], [$ac_cv_sizeof_long],
-                   [Depends on bit length of system.])
+                   [On 32bit will be 4, on 64 bit, will be 8])
 
 
 
@@ -234,7 +254,8 @@ AC_SUBST(HAVE_LIBGIT2, [$has_libgit2])
 
 
 # Check the libtool executable: needed by BuildProgram.
-AC_CHECK_PROG(has_libtool, libtool, [yes], [no])
+AC_CHECK_PROG(has_libtool, libtool, [yes], [no], ,
+              ./libtool .//libtool $ac_pwd/libtool)
 
 # If Libtool is present, make sure it is GNU Libtool
 AS_IF([test "x$has_libtool" = "xyes"],
@@ -538,9 +559,15 @@ AC_ARG_ENABLE([crop],
 AC_ARG_ENABLE([fits],
               [AS_HELP_STRING([--enable-fits],
                     [Install Fits and other enabled programs.])],
-	      [AS_IF([test "x$enable_Fits" != xno],
+	      [AS_IF([test "x$enable_fits" != xno],
                      [enable_fits=yes; ayes=true])],
               [enable_fits=notset])
+AC_ARG_ENABLE([match],
+              [AS_HELP_STRING([--enable-match],
+                    [Install Match and other enabled programs.])],
+	      [AS_IF([test "x$enable_match" != xno],
+                     [enable_match=yes; ayes=true])],
+              [enable_match=notset])
 AC_ARG_ENABLE([mkcatalog],
               [AS_HELP_STRING([--enable-mkcatalog],
                     [Install MakeCatalog and other enabled programs.])],
@@ -607,6 +634,7 @@ AS_IF([test $ayes = true ],
        AS_IF([test $enable_cosmiccal = notset], [enable_cosmiccal=no])
        AS_IF([test $enable_crop = notset], [enable_crop=no])
        AS_IF([test $enable_fits = notset], [enable_fits=no])
+       AS_IF([test $enable_match = notset], [enable_match=no])
        AS_IF([test $enable_mkcatalog = notset], [enable_mkcatalog=no])
        AS_IF([test $enable_mknoise = notset], [enable_mknoise=no])
        AS_IF([test $enable_mkprof = notset], [enable_mkprof=no])
@@ -625,6 +653,7 @@ AS_IF([test $ayes = true ],
        AS_IF([test $enable_cosmiccal = notset], [enable_cosmiccal=yes])
        AS_IF([test $enable_crop = notset], [enable_crop=yes])
        AS_IF([test $enable_fits = notset], [enable_fits=yes])
+       AS_IF([test $enable_match = notset], [enable_match=yes])
        AS_IF([test $enable_mkcatalog = notset], [enable_mkcatalog=yes])
        AS_IF([test $enable_mknoise = notset], [enable_mknoise=yes])
        AS_IF([test $enable_mkprof = notset], [enable_mkprof=yes])
@@ -656,6 +685,7 @@ AM_CONDITIONAL([COND_CONVOLVE], [test $enable_convolve = yes])
 AM_CONDITIONAL([COND_COSMICCAL], [test $enable_cosmiccal = yes])
 AM_CONDITIONAL([COND_CROP], [test $enable_crop = yes])
 AM_CONDITIONAL([COND_FITS], [test $enable_fits = yes])
+AM_CONDITIONAL([COND_MATCH], [test $enable_match = yes])
 AM_CONDITIONAL([COND_MKCATALOG], [test $enable_mkcatalog = yes])
 AM_CONDITIONAL([COND_MKNOISE], [test $enable_mknoise = yes])
 AM_CONDITIONAL([COND_MKPROF], [test $enable_mkprof = yes])
@@ -680,6 +710,7 @@ AC_CONFIG_FILES([Makefile
                  bin/fits/Makefile
                  bin/warp/Makefile
                  bin/table/Makefile
+                 bin/match/Makefile
                  bin/mkprof/Makefile
                  bin/mknoise/Makefile
                  bin/convertt/Makefile
@@ -729,6 +760,7 @@ AC_OUTPUT
 
 
 
+
 # Print a message if necessary
 AS_IF([test x$enable_guide_message = xyes],
 [
@@ -764,7 +796,12 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    warning is only to let you know that BuildProgram will not be"])
                AS_ECHO(["    part of this build. The executable names searched were \`libtool'"])
                AS_ECHO(["    and \`glibtool'."])
-               AS_ECHO([]) ])
+               AS_ECHO([])
+               AS_IF([test "x$has_libtool" = "xyes"],
+                     [AS_ECHO(["    -- A libtool implementation was found, but it isn't GNU."])
+                      AS_ECHO([])
+                     ])
+              ])
         AS_IF([test "x$has_ghostscript" = "xno"],
               [AS_ECHO(["  - GPL GhostScript version 9.10 or later, with the executable"])
                AS_ECHO(["    name \`gs', was not found in your PATH environment variable."])

@@ -237,7 +237,7 @@ txt_info_from_comment(char *line, gal_data_t **datall, char *comm_start)
          are dealing with the string type, we have to pull out the number
          part first. If there is no number for a string type, then ignore
          the line. */
-      if(typestr)
+      if(typestr && *typestr!='\0')
         {
           typestr=txt_trim_space(typestr);
           if( !strncmp(typestr, "str", 3) )
@@ -1244,6 +1244,9 @@ gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename)
   char **fmts;
   size_t i, j, num=0, fmtlen;
   gal_data_t *data, *next2d=NULL;
+
+  /* Make sure input is valid. */
+  if(input==NULL) error(EXIT_FAILURE, 0, "%s: input is NULL", __func__);
 
 
   /* Currently only 1 and 2 dimension datasets are acceptable. */

@@ -52,6 +52,10 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 */
 
 void
+gal_box_bound_ellipse_extent(double a, double b, double theta_deg,
+                             double *extent);
+
+void
 gal_box_bound_ellipse(double a, double b, double theta_deg, long *width);
 
 void

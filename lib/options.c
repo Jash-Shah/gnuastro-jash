@@ -618,15 +618,15 @@ gal_options_parse_csv_strings_raw(char *string, char *filename, size_t lineno)
 
 /* `arg' is the value given to an option. It contains multiple strings
    separated by a comma (`,'). This function will parse `arg' and make a
-   `gal_data_t' that contains all the strings separately. The output
-   `gal_data_t' will be put in `option->value'. */
+   `gal_data_t' array of strings from it. The output `gal_data_t' will be
+   put in `option->value'. */
 void *
 gal_options_parse_csv_strings(struct argp_option *option, char *arg,
                               char *filename, size_t lineno, void *junk)
 {
-  int i;
   size_t nc;
-  char **strarr;
+  char *c, **strarr;
+  int i, has_space=0;
   gal_data_t *values;
   char *str, sstr[GAL_OPTIONS_STATIC_MEM_FOR_VALUES];
 
@@ -636,9 +636,25 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
       /* Set the pointer to the values dataset. */
       values = *(gal_data_t **)(option->value);
 
-      /* Write each string into the output string */
-      nc=0;
+      /* See if there are any space characters in the final string. */
       strarr=values->array;
+      for(i=0;i<values->size;++i)
+        if(has_space==0)
+        {
+          for(c=strarr[i];*c!='\0';++c)
+            if(*c==' ' || *c=='\t')
+              {
+                has_space=1;
+                break;
+              }
+        }
+
+      /* If there is a space, the string must start wth quotation marks. */
+      nc = has_space ? 1 : 0;
+      if(has_space) {sstr[0]='"'; sstr[1]='\0';}
+
+
+      /* Write each string into the output string */
       for(i=0;i<values->size;++i)
         {
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
@@ -649,7 +665,11 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
                   GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
           nc += sprintf(sstr+nc, "%s,", strarr[i]);
         }
-      sstr[nc-1]='\0';
+
+      /* If there was a space, we need a quotation mark at the end of the
+         string. */
+      if(has_space) { sstr[nc-1]='"'; sstr[nc]='\0'; }
+      else            sstr[nc-1]='\0';
 
       /* Copy the string into a dynamically allocated space, because it
          will be freed later.*/
@@ -755,6 +775,65 @@ gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
       /* Put the array of size_t into the option, clean up and return.*/
       *(size_t **)(option->value) = array;
       gal_data_free(values);
+      return NULL;
+    }
+}
+
+
+
+
+
+/* Parse options with values of a list of numbers. */
+void *
+gal_options_parse_csv_float64(struct argp_option *option, char *arg,
+                              char *filename, size_t lineno, void *junk)
+{
+  size_t i, nc;
+  double *darray;
+  gal_data_t *values;
+  char *str, sstr[GAL_OPTIONS_STATIC_MEM_FOR_VALUES];
+
+  /* We want to print the stored values. */
+  if(lineno==-1)
+    {
+      /* Set the pointer to the values dataset. */
+      values = *(gal_data_t **)(option->value);
+      darray=values->array;
+
+      /* Write each string into the output string */
+      nc=0;
+      for(i=0;i<values->size;++i)
+        {
+          if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
+                  "can address the problem. The number of necessary "
+                  "characters in the statically allocated string has become "
+                  "too close to %d", __func__, PACKAGE_BUGREPORT,
+                  GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
+          nc += sprintf(sstr+nc, "%g,", darray[i]);
+        }
+      sstr[nc-1]='\0';
+
+      /* Copy the string into a dynamically allocated space, because it
+         will be freed later.*/
+      gal_checkset_allocate_copy(sstr, &str);
+      return str;
+    }
+
+  /* We want to read the user's string. */
+  else
+    {
+      /* If the option is already set, just return. */
+      if(option->set) return NULL;
+
+      /* Read the values. */
+      values=gal_options_parse_list_of_numbers(arg, filename, lineno);
+
+      /* Put the values into the option. */
+      *(gal_data_t **)(option->value) = values;
+
+      /* The return value is only for printing mode, so we can return
+         NULL after reading is complete. */
       return NULL;
     }
 }

@@ -282,6 +282,7 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
                     char *unit, char *comment)
 {
   size_t i;
+  size_t data_size_limit = (size_t)(-1);
 
   /* Do the simple copying cases. For the display elements, set them all to
      impossible (negative) values so if not explicitly set by later steps,
@@ -321,11 +322,24 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
       data->size=1;
       for(i=0;i<ndim;++i)
         {
-          /* Do a small sanity check. */
-          if(dsize[i]<=0)
-            error(EXIT_FAILURE, 0, "%s: the size of a dimension cannot be "
-                  "zero or negative. dsize[%zu], but has a value of %zu",
-                  __func__, i, dsize[i]);
+          /* Size along a dimension cannot be negative. */
+          if(dsize[i] == 0)
+            error(EXIT_FAILURE, 0, "%s: dsize[%zu]==0. The size of a "
+                  "dimension cannot be zero", __func__, i);
+
+          /* Check for possible overflow while multiplying. */
+          if (dsize[i] >= data_size_limit / data->size)
+            error(EXIT_FAILURE, 0, "%s: dimension %zu size is too "
+                    "large %zu. Total is out of bounds",
+                    __func__, i, dsize[i]);
+
+          /* Print a warning if the size in this dimension is too
+             large. May happen when the user (mistakenly) writes a negative
+             value in this dimension.. */
+          if (dsize[i] >= data_size_limit / 2)
+            fprintf(stderr, "%s: WARNING: dsize[%zu] value %zu is probably "
+                    "a mistake: it exceeds the limit %zu", __func__, i,
+                    dsize[i], data_size_limit / 2);
 
           /* Write this dimension's size, also correct the total number of
              elements. */
@@ -694,9 +708,9 @@ data_copy_to_string(gal_data_t *from, gal_data_t *to)
   if(to->type!=GAL_TYPE_STRING)
     error(EXIT_FAILURE, 0, "%s: `to' must have a string type", __func__);
   if(from->block)
-    error(EXIT_FAILURE, 0, "%s: tile inputs not currently supported (`block' "
-          "element must be NULL). Please contact us at %s so we can implement "
-          "this feature", __func__, PACKAGE_BUGREPORT);
+    error(EXIT_FAILURE, 0, "%s: tile inputs not currently supported "
+          "(`block' element must be NULL). Please contact us at %s so we "
+          "can implement this feature", __func__, PACKAGE_BUGREPORT);
 
   /* Do the copying */
   switch(from->type)
@@ -918,9 +932,9 @@ gal_data_copy_to_new_type_free(gal_data_t *in, uint8_t newtype)
 
 
 /* Copy a given dataset (`in') into an already allocated dataset `out' (the
-   actual dataset and its `array' element). The meta-data of `in' will be
-   fully copied into `out' also. `out->size' will be used to find the
-   available space in the allocated space.
+   actual dataset and its `array' element). The meta-data of `in' (except
+   for `block') will be fully copied into `out' also. `out->size' will be
+   used to find the available space in the allocated space.
 
    When `in->size != out->size' this function will behave as follows:
 

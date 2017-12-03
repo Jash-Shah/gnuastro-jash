@@ -51,6 +51,11 @@ endif
 if COND_HASGNULIBTOOL
   MAYBE_HASGNULIBTOOL = "yes"
 endif
+if COND_NO_CPP_QUNUSED_ARGUMENTS_PROBLEM
+  MAYBE_VERSIONCPP    = versioncpp
+  MAYBE_VERSIONCPP_SH = lib/versioncpp.sh
+  versioncpp_SOURCES  = lib/versioncpp.cpp
+endif
 if COND_ARITHMETIC
   MAYBE_ARITHMETIC_TESTS = arithmetic/snimage.sh arithmetic/onlynumbers.sh \
   arithmetic/where.sh arithmetic/or.sh
@@ -117,6 +122,11 @@ if COND_FITS
   fits/delete.sh: fits/write.sh.log
   fits/copyhdu.sh: fits/write.sh.log mkprof/mosaic2.sh.log
 endif
+if COND_MATCH
+  MAYBE_MATCH_TESTS = match/positions.sh
+
+  match/positions.sh: prepconf.sh.log
+endif
 if COND_MKCATALOG
   MAYBE_MKCATALOG_TESTS = mkcatalog/simple.sh mkcatalog/simple-3d.sh \
   mkcatalog/aperturephot.sh
@@ -180,11 +190,9 @@ endif
 
 
 
-
-
-# `config.h' is built by `../lib/Makefile.am' and is only meant for
-# outside users (internally `config.h' has everything. Thus, we need to add
-# it to the include directories of the test programs in this directory.
+# `config.h' is built by `../lib/Makefile.am' and is only meant for outside
+# users (internally `config.h' has everything). Thus, we need to add it to
+# the include directories of the test programs in this directory.
 AM_CPPFLAGS = -I../lib
 
 
@@ -213,8 +221,7 @@ export hasghostscript=$(MAYBE_HASGHOSTSCRIPT);
 # `TESTS'. So they do not need to be specified as any dependency, they will
 # be present when the `.sh' based tests are run.
 LDADD = -lgnuastro
-check_PROGRAMS = versioncpp multithread
-versioncpp_SOURCES = lib/versioncpp.cpp
+check_PROGRAMS = multithread $(MAYBE_VERSIONCPP)
 multithread_SOURCES = lib/multithread.c
 lib/multithread.sh: mkprof/mosaic1.sh.log
 
@@ -223,23 +230,24 @@ lib/multithread.sh: mkprof/mosaic1.sh.log
 
 # Final Tests
 # ===========
-TESTS = prepconf.sh lib/versioncpp.sh lib/multithread.sh                   \
+TESTS = prepconf.sh lib/multithread.sh $(MAYBE_VERSIONCPP_SH)              \
   $(MAYBE_ARITHMETIC_TESTS) $(MAYBE_BUILDPROG_TESTS)                       \
   $(MAYBE_CONVERTT_TESTS) $(MAYBE_CONVOLVE_TESTS) $(MAYBE_COSMICCAL_TESTS) \
-  $(MAYBE_CROP_TESTS) $(MAYBE_FITS_TESTS) $(MAYBE_MKCATALOG_TESTS)         \
-  $(MAYBE_MKNOISE_TESTS) $(MAYBE_MKPROF_TESTS) $(MAYBE_NOISECHISEL_TESTS)  \
-  $(MAYBE_STATISTICS_TESTS) $(MAYBE_SUBTRACTSKY_TESTS)                     \
-  $(MAYBE_TABLE_TESTS) $(MAYBE_WARP_TESTS)
+  $(MAYBE_CROP_TESTS) $(MAYBE_FITS_TESTS) $(MAYBE_MATCH_TESTS)             \
+  $(MAYBE_MKCATALOG_TESTS) $(MAYBE_MKNOISE_TESTS) $(MAYBE_MKPROF_TESTS)    \
+  $(MAYBE_NOISECHISEL_TESTS) $(MAYBE_STATISTICS_TESTS)                     \
+  $(MAYBE_SUBTRACTSKY_TESTS) $(MAYBE_TABLE_TESTS) $(MAYBE_WARP_TESTS)
 
 
 
 
 
 # Files to distribute along with the tests.
-EXTRA_DIST = $(TESTS) during-dev.sh buildprog/simpleio.c crop/cat.txt   \
-  mkprof/3d-cat.txt mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt    \
-  mkprof/clearcanvas.txt mkprof/mkprofcat2.txt mkprof/mkprofcat3.txt    \
-  mkprof/mkprofcat4.txt mkprof/radeccat.txt table/table.txt
+EXTRA_DIST = $(TESTS) during-dev.sh buildprog/simpleio.c crop/cat.txt     \
+  mkprof/3d-cat.txt match/positions-1.txt match/positions-2.txt           \
+  mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt mkprof/clearcanvas.txt \
+  mkprof/mkprofcat2.txt mkprof/mkprofcat3.txt mkprof/mkprofcat4.txt       \
+  mkprof/radeccat.txt table/table.txt
 
 
 
