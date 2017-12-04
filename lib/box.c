@@ -92,8 +92,8 @@ gal_box_bound_ellipse(double a, double b, double theta_deg, long *width)
      want the final height and width of the box enclosing the
      ellipse. So we have to multiply them by two, then take one from
      them (for the center). */
-  width[0] = 2 * ( (size_t)extent[0] + 1 ) + 1;
-  width[1] = 2 * ( (size_t)extent[1] + 1 ) + 1;
+  width[0] = 2 * ( (long)extent[0] + 1 ) + 1;
+  width[1] = 2 * ( (long)extent[1] + 1 ) + 1;
 }
 
 
@@ -198,17 +198,12 @@ gal_box_bound_ellipse(double a, double b, double theta_deg, long *width)
       x = M[1,4] \pm sqrt( M[1,1]^2 + M[1,2]^2 + M[1,3]^2 )
       y = M[2,4] \pm sqrt( M[2,1]^2 + M[2,2]^2 + M[2,3]^2 )
       z = M[3,4] \pm sqrt( M[3,1]^2 + M[3,2]^2 + M[3,3]^2 )        */
-#define PRINT3BY3(C, A){                                                \
-    printf("%s: | %-15g%-15g%-15g |\n"                                  \
-           "   | %-15g%-15g%-15g |\n"                                   \
-           "   | %-15g%-15g%-15g |\n\n", (C), (A)[0], (A)[1], (A)[2],   \
-           (A)[3], (A)[4], (A)[5], (A)[6], (A)[7], (A)[8]);             \
-  }
 void
-gal_box_bound_ellipsoid(double *semiaxes, double *euler_deg, long *width)
+gal_box_bound_ellipsoid_extent(double *semiaxes, double *euler_deg,
+                               double *extent)
 {
   size_t i, j;
-  double sumsq, a=semiaxes[0], b=semiaxes[1], c=semiaxes[2];
+  double a=semiaxes[0], b=semiaxes[1], c=semiaxes[2];
   double c1=cos(euler_deg[0]*M_PI/180), s1=sin(euler_deg[0]*M_PI/180);
   double c2=cos(euler_deg[1]*M_PI/180), s2=sin(euler_deg[1]*M_PI/180);
   double c3=cos(euler_deg[2]*M_PI/180), s3=sin(euler_deg[2]*M_PI/180);
@@ -225,8 +220,10 @@ gal_box_bound_ellipsoid(double *semiaxes, double *euler_deg, long *width)
   /* Find the width along each dimension. */
   for(i=0;i<3;++i)
     {
-      sumsq=0.0f; for(j=0;j<3;++j) sumsq += R[i*3+j] * R[i*3+j];
-      width[i] = 2 * ((long)sqrt(sumsq)+1) + 1;
+      extent[i]=0.0;
+      for(j=0;j<3;++j)
+        extent[i] += R[i*3+j] * R[i*3+j];
+      extent[i] = sqrt(extent[i]);
     }
 
   /* For a check:
@@ -236,9 +233,35 @@ gal_box_bound_ellipsoid(double *semiaxes, double *euler_deg, long *width)
   printf("c1: %f, s1: %f\nc2: %f, s2: %f\nc3: %f, s3: %f\n",
          c1, s1, c2, s2, c3, s3);
   PRINT3BY3("R", R);
-  printf("width: %ld, %ld, %ld\n", width[0], width[1], width[2]);
+  printf("extent: %ld, %ld, %ld\n", extent[0], extent[1], extent[2]);
   exit(0);
   */
+}
+
+
+
+
+
+/* Using `gal_box_bound_ellipsoid_extent', find the integer width of a box
+   that contains the ellipsoid. */
+#define PRINT3BY3(C, A){                                                \
+    printf("%s: | %-15g%-15g%-15g |\n"                                  \
+           "   | %-15g%-15g%-15g |\n"                                   \
+           "   | %-15g%-15g%-15g |\n\n", (C), (A)[0], (A)[1], (A)[2],   \
+           (A)[3], (A)[4], (A)[5], (A)[6], (A)[7], (A)[8]);             \
+  }
+void
+gal_box_bound_ellipsoid(double *semiaxes, double *euler_deg, long *width)
+{
+  size_t i;
+  double extent[3];
+
+  /* Find the extent of the ellipsoid in each axis. */
+  gal_box_bound_ellipsoid_extent(semiaxes, euler_deg, extent);
+
+  /* Find the width along each dimension. */
+  for(i=0;i<3;++i)
+    width[i] = 2 * ((long)extent[i] + 1) + 1;
 }
 
 

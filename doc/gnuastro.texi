@@ -15798,6 +15798,10 @@ $ astmatch --aperture=1/3600,2/3600 in1.fits in2.txt
 ## and DEC_D columns of the second within a 0.5 arcseconds aperture.
 $ astmatch --ccol1=RA,DEC --ccol2=RA_D,DEC_D --aperture0.5/3600  \
            in1.fits in2.fits
+
+## Match in 3D (RA, Dec and Wavelength).
+$ astmatch --ccol1=2,3,4 --ccol2=2,3,4 -a0.5/3600,0.5/3600,5e-10 \
+           in1.fits in2.txt
 @end example
 
 Two inputs are necessary for Match to start processing. The inputs can be
@@ -15866,8 +15870,8 @@ columns}. See the one-line examples above for some usages of this option.
 The coordinate columns of the second input. See the example in
 @option{--ccol1} for more.
 
-@item -a FLT[,FLT[,FLT]]
-@itemx --aperture=FLT[,FLT[,FLT]]
+@item -a FLT[,...]
+@itemx --aperture=FLT[,...]
 Parameters of the aperture for matching. The values given to this option
 can be fractions, for example when the position columns are in units of
 degrees, @option{1/3600} can be used to ask for one arcsecond. The
@@ -15875,15 +15879,23 @@ interpretation of the values depends on the requested dimensionality
 (determined from @option{--ccol1} and @code{--ccol2}) and how many values
 are given to this option.
 
+When multiple objects are found within the aperture, the match is defined
+as the nearest one. In a multi-dimensional dataset, when the aperture is a
+general ellipse or ellipsoid (and not a circle or sphere), the distance is
+calculated in the elliptical space along the major axis. For the defintion
+of this distance, see @mymath{r_{el}} in @ref{Defining an ellipse and
+ellipsoid}.
+
 @table @asis
-@item 1D match
+@item 1D
 The aperture/interval can only take one value: half of the interval around
 each point (maximum distance from each point).
 
-@item 2D match
-In a 2D match, the aperture can be a circle, an ellipse aligned in the axes
-or an ellipse with a rotated major axis. To simply the usage, you can
-determine the shape based on the number of free parameters for each.
+@item 2D
+The aperture can be a circle, an ellipse aligned in the axes or an ellipse
+with a rotated major axis. To simplify the usage, the shape can be
+determined based on the number of values given to this option.
+
 @table @asis
 @item 1 number
 For example @option{--aperture=2}. The aperture will be a circle of the
@@ -15891,24 +15903,48 @@ given radius. The value will be in the same units as the columns in
 @option{--ccol1} and @option{--ccol2}).
 
 @item 2 numbers
-For example @option{--aperture=3,4e-10}. The aperture will be an ellipse
-(if the two numbers are different) with the respective value along each
-dimension. The numbers are in units of the first and second axis. In the
-example above, the semi-axis value along the first axis will be 3 (in units
-of the first coordinate) and along the second axis will be
-@mymath{4\times10^{-10}} (in units of the second coordinate). Such values
-can happen if you are comparing catalogs of a spectra for example. If more
-than one object exists in the aperture, the nearest will be found along the
-major axis as described in @ref{Defining an ellipse and ellipsoid}.
+For example @option{--aperture=3,4e-10}. The aperture will be a general
+ellipse with the respective value along each dimension. The numbers are in
+units of the first and second axis. In the example above, the semi-axis
+value along the first axis will be 3 (in units of the first coordinate) and
+along the second axis will be @mymath{4\times10^{-10}} (in units of the
+second coordinate). Such values can happen if you are comparing catalogs of
+a spectra for example.
 
 @item 3 numbers
 For example @option{--aperture=2,0.6,30}. The aperture will be an ellipse
 (if the second value is not 1). The first number is the semi-major axis,
 the second is the axis ratio and the third is the position angle (in
-degrees). If multiple matches are found within the ellipse, the distance
-(to find the nearest) is calculated along the major axis in the elliptical
-space, see @ref{Defining an ellipse and ellipsoid}.
+degrees).
 @end table
+
+@item 3D
+The aperture (matching volume) can be a sphere, an ellipsoid aligned on the
+three axises or a genenral ellipsoid rotated in any direction. To simplify
+the usage, the shape can be determined based on the number of values given
+to this option.
+
+@table @asis
+@item 1 number
+For example @option{--aperture=3}. The matching volume will be a sphere of
+the given radius. The value is in the same units as the input coordinates.
+
+@item 3 numbers
+For example @option{--aperture=4,5,6e-10}. The aperture will be a general
+ellipsoid with the respective extent along each dimension. The numbers must
+be in the same units as each axis. This is very similar to the two number
+case of 2D inputs. See there for more.
+
+@item 6 numbers
+For example @option{--aperture=4,0.5,0.6,10,20,30}. The numbers represent
+the full general ellipsoid definition (in any orientation). For the
+definition of a general ellipsoid, see @ref{Defining an ellipse and
+ellipsoid}. The first number is the semi-major axis. The second and third
+are the two axis ratios. The last three are the three Euler angles in units
+of degrees in the ZXZ order as fully described in @ref{Defining an ellipse
+and ellipsoid}.
+@end table
+
 @end table
 @end table
 
@@ -23177,9 +23213,9 @@ must already be allocated before this function.
 
 @deftypefun void gal_box_bound_ellipse (double @code{a}, double @code{b}, double @code{theta_deg}, long @code{*width})
 Any ellipse can be enclosed into a rectangular box. The purpose of this
-function is to give the height and width of that box assuming the center of
-the ellipse is in the box center. @code{a} is the ellipse major axis,
-@code{b} is the minor axis, @code{theta_deg} is the position angle in
+function is to give the integer height and width of that box assuming the
+center of the ellipse is in the box center. @code{a} is the ellipse major
+axis, @code{b} is the minor axis, @code{theta_deg} is the position angle in
 degrees. The @code{width} array will contain the output size in long
 integer type. @code{width[0]}, and @code{width[1]} are the number of pixels
 along the first and second FITS axis. Since the ellipse center is assumed
@@ -23187,10 +23223,21 @@ to be in the center of the box, all the values in @code{width} will be an
 odd integer.
 @end deftypefun
 
+@deftypefun void gal_box_bound_ellipsoid_extent (double @code{*semiaxes}, double @code{*euler_deg}, double @code{*extent})
+Return the maximum extent along each dimension of the given ellipsoid from
+its center. Therefore this is half the extent of the box in each
+dimension. The semi-axis lengths of the ellipsoid must be present in the 3
+element @code{semiaxis} array. The @code{euler_deg} array contains the
+three ellipsoid Euler angles in degrees. For a description of the Euler
+angles, see description of @code{gal_box_bound_ellipsoid} below. The extent
+in each dimension is in floating point format and stored in @code{extent}
+which must already be allocated before this function.
+@end deftypefun
+
 @deftypefun void gal_box_bound_ellipsoid (double @code{*semiaxes}, double @code{*euler_deg}, long @code{*width})
 Any ellipsoid can be enclosed into a rectangular volume/box. The purpose of
-this function is to give the size/width of that box. The semi-axes lengths
-of the ellipse must be in the @code{semiaxes} array (with three
+this function is to give the integer size/width of that box. The semi-axes
+lengths of the ellipse must be in the @code{semiaxes} array (with three
 elements). The major axis length must be the first element of
 @code{semiaxes}. The only other condition is that the next two semi-axes
 must both be smaller than the first. The orientation of the major axis is
