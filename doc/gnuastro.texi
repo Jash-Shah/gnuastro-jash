@@ -2340,8 +2340,14 @@ analysis. Here, we will use Gnuastro's programs to detect objects in a
 Hubble Space Telescope (HST) image and measure their colors. We will use
 the @url{https://archive.stsci.edu/prepds/xdf, eXtreme Deep Field}
 dataset. Like almost all astronomical surveys, this dataset is free for
-download and usable by the public. You will need the following tools in
-this tutorial: Gnuastro, SAO DS9 @footnote{See @ref{SAO ds9}, available at
+download and usable by the public. This tutorial was first prepared for the
+``Exploring the Ultra-Low Surface Brightness Universe'' workshop (November
+2017) at the International Space Science Institute (ISSI) in Bern,
+Switzerland. We would like to thank them and the attendees for a very
+fruiteful week.
+
+You will need the following tools in this tutorial: Gnuastro, SAO DS9
+@footnote{See @ref{SAO ds9}, available at
 @url{http://ds9.si.edu/site/Home.html}.}, GNU
 Wget@footnote{@url{https://www.gnu.org/software/wget}.}, and AWK (most
 common implementation is GNU
@@ -15790,6 +15796,13 @@ $ astmatch --aperture=5e-10 --ccol1=5 --ccol2=10 in1.fits in2.txt
 ##  The number of values to these determines the dimensionality).
 $ astmatch --aperture=2 input1.txt input2.fits
 
+## Similar to before, but the output is created by merging various
+## columns from the two inputs: columns 1, RA, DEC from the first
+## input, followed by all columns starting with MAG and the 8th
+## column from second input and finaly the 10th from first input.
+$ astmatch --aperture=2 input1.txt input2.fits                   \
+           --outcols=a1,aRA,aDEC,b/^MAG/,bBRG,a10
+
 ## Match the two catalogs within an elliptical aperture of 1 and 2
 ## arcseconds along RA and Dec respectively.
 $ astmatch --aperture=1/3600,2/3600 in1.fits in2.txt
@@ -15805,31 +15818,32 @@ $ astmatch --ccol1=2,3,4 --ccol2=2,3,4 -a0.5/3600,0.5/3600,5e-10 \
 @end example
 
 Two inputs are necessary for Match to start processing. The inputs can be
-plain text tables or FITS tables, see @ref{Tables}. When @option{--quiet}
-is not called, Match will print the number of matches found in standard
-output (on the command-line). If no match was found, no output file will be
-created (table or log file). When matches are found, the output file(s)
-will be the re-arranged input tables such that the rows match each other:
-both output tables will have the same number of rows which are matched with
-each other. If the @option{--logasoutput} option is called, the output will
-be a single table with the contents of the log file, see below.
+plain text tables or FITS tables, see @ref{Tables}. Match follows the same
+basic behavior of all Gnuastro programs as fully described in @ref{Common
+program behavior}. If the first input is a FITS file, the common
+@option{--hdu} option (see @ref{Input output options}) should be used to
+identify the extension. When the second input is FITS, the extension must
+be specified with @option{--hdu2}.
 
-Match follows the same basic behavior of all Gnuastro programs as fully
-described in @ref{Common program behavior}. If the first input is a FITS
-file, the common @option{--hdu} option (see @ref{Input output options})
-should be used to identify the extension. When the second input is FITS,
-the extension can be specified with @option{--hdu2}.
+When @option{--quiet} is not called, Match will print the number of matches
+found in standard output (on the command-line). If no match was found, no
+output file will be created (table or log file). When matches are found, by
+default, the output file(s) will be the re-arranged input tables such that
+the rows match each other: both output tables will have the same number of
+rows which are matched with each other. If @option{--outcols} is called,
+the output is a single table with rows chosen from either of the two inputs
+in any order, see the description of @option{--outcols}. If the
+@option{--logasoutput} option is called, the output will be a single table
+with the contents of the log file, see below.
 
 If no output file name is given with the @option{--output} option, then
 automatic output @ref{Automatic output} will be used to determine the
-output names. Depending on @option{--tableformat} (see @ref{Input output
-options}), the output will then be a multi-extension FITS file or two plain
-text files.
-
-When @option{--output} is a FITS file (and @option{--logasoutput} is not
-called, see below), the re-arranged inputs will be two extensions of the
-output FITS file. If the output name is a text file, then two files will be
-created with a @file{_matched_1.txt} and @file{_matched_2.txt} suffix.
+output name(s). Depending on @option{--tableformat} (see @ref{Input output
+options}), the output will then be a (possibly multi-extension) FITS file
+or (possibly two) plain text file(s). When the output is a FITS file, the
+default re-arranged inputs will be two extensions of the output FITS
+file. With @option{--outcols} and @option{--logasoutput}, the FITS output
+will be a single table (in one extension).
 
 When the @option{--log} option is called (see @ref{Operating mode
 options}), Match will also create a file named @file{astmatch.fits} (or
@@ -15851,6 +15865,25 @@ The extension/HDU of the second input if it is a FITS file. When it isn't a
 FITS file, this option's value is ignored. For the first input, the common
 option @option{--hdu} must be used.
 
+@item --outcols=STR
+Columns from both inputs to write into a single matched table output. The
+value to @code{--outcols} must be a comma-separated list of strings, for
+example @option{--outcols=a1,bRA,bDEC}. The first character of each string
+specifies the input catalog: @option{a} for the first and @option{b} for
+the second. The rest of the characters of the string will be directly used
+to identify the proper column(s) in the respective table. See
+@ref{Selecting table columns} for how columns can be specified in
+Gnuastro. In this example, the output will have three columns: the first
+column of the first input and the @option{RA} and @option{DEC} columns of
+the second input.
+
+Another example is given in the one-line examples above. Compared to the
+default case (where two tables with all their columns) are printed, using
+this option is much faster: it will only read and re-arrange the necessary
+columns and it will write a single outputtable. Combined with regular
+expressions in large tables, this can be a very powerful and convenient way
+to retrieve your desired information and do the match at the same time.
+
 @item -l
 @itemx --logasoutput
 The output file will have the contents of the log file: indexs in the two
@@ -15859,14 +15892,24 @@ description above. When this option is called, a log file called
 @file{astmatch.txt} will not be created. With this option, the default
 output behavior (two tables containing the re-arranged inputs) will be
 
-@item --ccol1=INT/STR[,INT/STR]
+@item --notmatched
+Write the non-matching rows into the outputs, not the matched ones. Note
+that with this option, the two output tables will not necessarily have the
+same number of rows. Therefore, this option cannot be called with
+@option{--outcols}. @option{--outcols} prints mixed columns from both
+inputs, so they must all have the same number of elements and must
+correspond to each other.
+
+@item -c INT/STR[,INT/STR]
+@itemx --ccol1=INT/STR[,INT/STR]
 The coordinate columns of the first input. The number of dimensions for the
 match is determined by the number of comma-separated values given to this
 option. The values can be the column number (counting from 1), exact column
 name or a regular expression. For more, see @ref{Selecting table
 columns}. See the one-line examples above for some usages of this option.
 
-@item --ccol2=INT/STR
+@item -C INT/STR[,INT/STR]
+@itemx --ccol2=INT/STR[,INT/STR]
 The coordinate columns of the second input. See the example in
 @option{--ccol1} for more.
 
@@ -21287,8 +21330,11 @@ linked list and thus any number of tiles can be represented with one
 variable.
 
 @deftypefun void gal_list_data_add (gal_data_t @code{**list}, gal_data_t @code{*newnode})
-Add an already allocated dataset (@code{newnode}) to top of @code{list}. In
-this example multiple images are linked together as a list:
+Add an already allocated dataset (@code{newnode}) to top of
+@code{list}. Note that if @code{newnode->next!=NULL} (@code{newnode} is
+itself a list), then @code{list} will be added to its end.
+
+In this example multiple images are linked together as a list:
 @example
 size_t minmapsize=-1;
 gal_data_t *tmp, *list=NULL;
@@ -22259,7 +22305,7 @@ $ asttable --info table.fits
 @end example
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, int @code{minmapsize})
+@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, int @code{minmapsize}, size_t @code{colmatch})
 Read the specified columns in a text file (named @code{filename}) into a
 linked list of data structures. If the file is FITS, then @code{hdu} will
 also be used, otherwise, @code{hdu} is ignored.
@@ -22280,6 +22326,10 @@ example from regular expressions), in this case, the order of output
 columns that correspond to that one input, are in order of the table (which
 column was read first). So the first requested column is the first popped
 data structure and so on.
+
+if @code{colmatch!=NULL}, it is assumed to be an array that has atleast the
+same number of elements as nodes in the @code{cols} list. The number of
+columns that matched each input column will be sored in each element.
 @end deftypefun
 
 @cindex Git
@@ -24600,7 +24650,7 @@ main(void)
 
   /* Read the desired columns. */
   columns = gal_table_read(inname, hdu, column_ids,
-                           GAL_TABLE_SEARCH_NAME, 1, -1);
+                           GAL_TABLE_SEARCH_NAME, 1, -1, NULL);
 
   /* Go over the columns, we'll assume that you don't know their type
    * a-priori, so we'll check  */
@@ -24777,26 +24827,26 @@ complicated, the speed of Python scripts significantly decrease. So when
 the program doesn't change too often and is widely used in a large
 community, mostly on large data sets (like astronomical images), using
 Python will waste a lot of valuable research-hours. It is possible to wrap
-C or C++ functions with Python to fix the speed issue. But this adds to
-complexity, because the interested scientist will now have to master two
+C or C++ functions with Python to fix the speed issue. But this creates
+further complexity, because the interested scientist has to master two
 programming languages and their connection (which is not trivial).
 
 Like C++, Python is object oriented, so as explained above, it needs a high
-level of experience with that particular program to fully understand its
-inner workings. To make things worse, since it is mainly for fast and on
-the go programming@footnote{Note that Python is good for fast programming,
-not fast programs.}, it can undergo significant changes. One recent example
-is how Python 2.x and Python 3.x are not compatible. Lots of research teams
+level of experience with that particular program to reasonably understand
+its inner workings. To make things worse, since it is mainly for on-the-go
+programming@footnote{Note that Python is good for fast programming, not
+fast programs.}, it can undergo significant changes. One recent example is
+how Python 2.x and Python 3.x are not compatible. Lots of research teams
 that invested heavily in Python 2.x cannot benefit from Python 3.x or
 future versions any more. Some converters are available, but since they are
-automatic, lots of complications might arise in the conversion. Thus,
-re-writing all the changes would be the only truly reliable option. If a
-research project begins using Python 3.x today, there is no telling how
-compatible their investments will be when Python 4.x or 5.x will come
-out. This stems from the core principles of Python, which are very useful
-when you look in the `on the go' basis as described before and not future
-usage. Future-proof code (as long as current operating systems will be
-used) is written in C.
+automatic, lots of complications might arise in the conversion@footnote{For
+example see @url{https://arxiv.org/abs/1712.00461, Jenness (2017)} which
+describes how LSST is managing the transition.}. If a research project
+begins using Python 3.x today, there is no telling how compatible their
+investments will be when Python 4.x or 5.x will come out. This stems from
+the core principles of Python, which are very useful when you look in the
+`on the go' basis as described before and not future usage. Future-proof
+code (as long as current operating systems will be used) is written in C.
 
 The portability of C is best demonstrated by the fact that both C++ and
 Python are part of the C-family of programming languages which also include
@@ -24851,11 +24901,14 @@ anything particular to the GNU C library is used in the processing
 functions, it is explained in the comments in between the code.
 
 @cindex GNU Coreutils
-Similar to GNU Coreutils, all the Gnuastro programs provide very low level
-operations. This enables you to use shell scripting languages (for example
-GNU Bash) to operate on a large number of files or do very complex things
-through the creative combinations of these tools that the authors had never
-dreamed of. We have put a few simple examples in @ref{Tutorials}.
+All the Gnuastro programs provide very low level and modular operations
+(modeled on GNU Coreutils). Almost all the basic command-line programs like
+@command{ls}, @command{cp} or @command{rm} on GNU/Linux operting systems
+are part of GNU Coreutils. This enables you to use shell scripting
+languages (for example GNU Bash) to operate on a large number of files or
+do very complex things through the creative combinations of these tools
+that the authors had never dreamed of. We have put a few simple examples in
+@ref{Tutorials}.
 
 @cindex @LaTeX{}
 @cindex GNU Bash
@@ -24869,24 +24922,24 @@ check your results. If you want to include the plots in a document, you can
 use the PGFplots package within @LaTeX{}, no attempt is made to include
 such operations in Gnuastro. In short, Bash can act as a glue to connect
 the inputs and outputs of all these various Gnuastro programs (and other
-programs) in any fashion you please. Of course, Gnuastro's programs are just
+programs) in any fashion. Of course, Gnuastro's programs are just
 front-ends to the main workhorse (@ref{Gnuastro library}), allowing a user
 to create their own programs (for example with @ref{BuildProgram}). So once
 the functions within programs become mature enough, they will be moved
-within the libraries for more general applications.
+within the libraries for even more general applications.
 
 The advantage of this architecture is that the programs become small and
 transparent: the starting and finishing point of every program is clearly
-demarcated. For nearly all operations on a modern computer, the read/write
-speed is very insignificant compared to the actual processing a program
-does. Therefore the complexity which arises from sharing memory in a large
-application is simply not worth the speed gain. Gnuastro's design is
-heavily influenced from Eric Raymond's ``The Art of Unix
-Programming''@footnote{Eric S. Raymond, 2004, @emph{The Art of Unix
-Programming}, Addison-Wesley Professional Computing Series.}  which
-beautifully describes the design philosophy and practice which lead to the
-success of Unix-based operating systems@footnote{KISS principle: Keep It
-Simple, Stupid!}.
+demarcated. For nearly all operations on a modern computer (fast file
+input-output) with a modest level of complexity, the read/write speed is
+insignificant compared to the actual processing a program does. Therefore
+the complexity which arises from sharing memory in a large application is
+simply not worth the speed gain. Gnuastro's design is heavily influenced
+from Eric Raymond's ``The Art of Unix Programming''@footnote{Eric
+S. Raymond, 2004, @emph{The Art of Unix Programming}, Addison-Wesley
+Professional Computing Series.}  which beautifully describes the design
+philosophy and practice which lead to the success of Unix-based operating
+systems@footnote{KISS principle: Keep It Simple, Stupid!}.
 
 
 

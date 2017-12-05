@@ -213,8 +213,12 @@ parse_opt(int key, char *arg, struct argp_state *state)
 static void
 ui_read_check_only_options(struct matchparams *p)
 {
-
+  if(p->outcols && p->notmatched)
+    error(EXIT_FAILURE, 0, "`--outcols' and `--notmatched' cannot be called "
+          "at the same time. The former is only for cases when the matches "
+          "are required");
 }
+
 
 
 
@@ -516,6 +520,59 @@ ui_read_columns_aperture_3d(struct matchparams *p)
 
 
 
+/* We want to keep the columns as double type. So what-ever their original
+   type is, convert it. */
+static gal_data_t *
+ui_read_columns_to_double(struct matchparams *p, char *filename, char *hdu,
+                          gal_list_str_t *cols, size_t numcols)
+{
+  gal_data_t *tmp, *ttmp, *tout, *out=NULL;
+  struct gal_options_common_params *cp=&p->cp;
+  char *diff_cols_error="%s: the number of columns matched (%zu) "
+    "differs from the number of usable calls to `--ccol1' (%zu). "
+    "Please give more specific values to `--ccol1' (column "
+    "numberes are the only identifiers guaranteed to be unique).";
+
+  /* Read the columns. */
+  tout=gal_table_read(filename, hdu, cols, cp->searchin, cp->ignorecase,
+                      cp->minmapsize, NULL);
+
+  /* A small sanity check. */
+  if(gal_list_data_number(tout)!=numcols)
+    error(EXIT_FAILURE, 0, diff_cols_error,
+          gal_checkset_dataset_name(filename, hdu),
+          gal_list_data_number(tout), numcols);
+
+  /* Go over the columns and see if they are double or not. To keep things
+     simple, we'll keep a new list even if all the types are float64.*/
+  tmp=tout;
+  while(tmp!=NULL)
+    {
+      /* We need ot set the `next' pointer  */
+      ttmp=tmp->next;
+      tmp->next=NULL;
+
+      /* Correct the type if necessary. */
+      if(tmp->type==GAL_TYPE_FLOAT64)
+        gal_list_data_add(&out, tmp);
+      else
+        gal_list_data_add(&out,
+                          gal_data_copy_to_new_type_free(tmp,
+                                                         GAL_TYPE_FLOAT64) );
+
+      /* Set `tmp' to the initial `next pointer. */
+      tmp=ttmp;
+    }
+
+  /* The `out' above is in reverse, so correct it and return */
+  gal_list_data_reverse(&out);
+  return out;
+}
+
+
+
+
+
 /* Read catalog columns */
 static void
 ui_read_columns(struct matchparams *p)
@@ -524,12 +581,7 @@ ui_read_columns(struct matchparams *p)
   size_t ccol1n=p->ccol1->size;
   size_t ccol2n=p->ccol2->size;
   gal_list_str_t *cols1=NULL, *cols2=NULL;
-  struct gal_options_common_params *cp=&p->cp;
   char **strarr1=p->ccol1->array, **strarr2=p->ccol2->array;
-  char *diff_cols_error="%s: the number of columns matched (%zu) "
-    "differs from the number of usable calls to `--ccol1' (%zu). "
-    "Please give more specific values to `--ccol1' (column "
-    "numberes are the only identifiers guaranteed to be unique).";
 
   /* Make sure the same number of columns is given to both. */
   if(ccol1n!=ccol2n)
@@ -577,23 +629,13 @@ ui_read_columns(struct matchparams *p)
 
 
   /* Read the columns. */
-  if(cp->searchin)
+  if(p->cp.searchin)
     {
       /* Read the first dataset. */
-      p->cols1=gal_table_read(p->input1name, cp->hdu, cols1,
-                              cp->searchin, cp->ignorecase, cp->minmapsize);
-      if(gal_list_data_number(p->cols1)!=ccol1n)
-        error(EXIT_FAILURE, 0, diff_cols_error,
-              gal_checkset_dataset_name(p->input1name, cp->hdu),
-              gal_list_data_number(p->cols1), ccol1n);
-
-      /* Read the second dataset. */
-      p->cols2=gal_table_read(p->input2name, p->hdu2, cols2,
-                              cp->searchin, cp->ignorecase, cp->minmapsize);
-      if(gal_list_data_number(p->cols2)!=ccol2n)
-        error(EXIT_FAILURE, 0, diff_cols_error,
-              gal_checkset_dataset_name(p->input2name, p->hdu2),
-              gal_list_data_number(p->cols2), ccol2n);
+      p->cols1=ui_read_columns_to_double(p, p->input1name, p->cp.hdu,
+                                         cols1, ccol1n);
+      p->cols2=ui_read_columns_to_double(p, p->input2name, p->hdu2,
+                                         cols2, ccol2n);
     }
   else
     error(EXIT_FAILURE, 0, "no `--searchin' option specified. Please run "
@@ -606,6 +648,40 @@ ui_read_columns(struct matchparams *p)
   gal_data_free(p->ccol1);
   gal_data_free(p->ccol2);
   p->ccol1=p->ccol2=NULL;
+}
+
+
+
+
+
+static void
+ui_preparations_out_cols(struct matchparams *p)
+{
+  size_t i;
+  char **strarr=p->outcols->array;
+
+  /* Go over all the values and put the respective column identifier in the
+     proper list. */
+  for(i=0;i<p->outcols->size;++i)
+    switch(strarr[i][0])
+      {
+      case 'a': gal_list_str_add(&p->acols, strarr[i]+1, 0); break;
+      case 'b': gal_list_str_add(&p->bcols, strarr[i]+1, 0); break;
+      default:
+        error(EXIT_FAILURE, 0, "`%s' is not a valid value for `--outcols'. "
+              "The first character of each value to this option must be "
+              "either `a' or `b'. The former specifies a column from the "
+              "first input and the latter a column from the second. The "
+              "characters after them can be any column identifier (number, "
+              "name, or regular expression). For more on column selection, "
+              "please run this command:\n\n"
+              "    $ info gnuastro \"Selecting table columns\"\n",
+              strarr[i]);
+      }
+
+  /* Revere the lists so they correspond to the input order. */
+  gal_list_str_reverse(&p->acols);
+  gal_list_str_reverse(&p->bcols);
 }
 
 
@@ -635,42 +711,58 @@ ui_preparations_out_name(struct matchparams *p)
     }
   else
     {
-      /* Set `p->out1name' and `p->out2name'. */
-      if(p->cp.output)
+      if(p->outcols)
         {
-          if( gal_fits_name_is_fits(p->cp.output) )
-            {
-              gal_checkset_allocate_copy(p->cp.output, &p->out1name);
-              gal_checkset_allocate_copy(p->cp.output, &p->out2name);
-            }
-          else
-            {
-              p->out1name=gal_checkset_automatic_output(&p->cp, p->cp.output,
-                                                        "_matched_1.txt");
-              p->out2name=gal_checkset_automatic_output(&p->cp, p->cp.output,
-                                                        "_matched_2.txt");
-            }
+          if(p->cp.output==NULL)
+            p->cp.output = gal_checkset_automatic_output(&p->cp,
+                 p->input1name, ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
+                                  ? "_matched.txt" : "_matched.fits") );
+          gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
         }
       else
         {
-          if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
+          /* Set `p->out1name' and `p->out2name'. */
+          if(p->cp.output)
             {
-              p->out1name=gal_checkset_automatic_output(&p->cp, p->input1name,
-                                                        "_matched_1.txt");
-              p->out2name=gal_checkset_automatic_output(&p->cp, p->input2name,
-                                                        "_matched_2.txt");
+              if( gal_fits_name_is_fits(p->cp.output) )
+                {
+                  gal_checkset_allocate_copy(p->cp.output, &p->out1name);
+                  gal_checkset_allocate_copy(p->cp.output, &p->out2name);
+                }
+              else
+                {
+                  p->out1name=gal_checkset_automatic_output(&p->cp,
+                                                            p->cp.output,
+                                                            "_matched_1.txt");
+                  p->out2name=gal_checkset_automatic_output(&p->cp,
+                                                            p->cp.output,
+                                                            "_matched_2.txt");
+                }
             }
           else
             {
-              p->out1name=gal_checkset_automatic_output(&p->cp, p->input1name,
-                                                        "_matched.fits");
-              gal_checkset_allocate_copy(p->out1name, &p->out2name);
+              if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
+                {
+                  p->out1name=gal_checkset_automatic_output(&p->cp,
+                                                            p->input1name,
+                                                            "_matched_1.txt");
+                  p->out2name=gal_checkset_automatic_output(&p->cp,
+                                                            p->input2name,
+                                                            "_matched_2.txt");
+                }
+              else
+                {
+                  p->out1name=gal_checkset_automatic_output(&p->cp,
+                                                            p->input1name,
+                                                            "_matched.fits");
+                  gal_checkset_allocate_copy(p->out1name, &p->out2name);
+                }
             }
-        }
 
-      /* Make sure no file with these names exists. */
-      gal_checkset_writable_remove(p->out1name, 0, p->cp.dontdelete);
-      gal_checkset_writable_remove(p->out2name, 0, p->cp.dontdelete);
+          /* Make sure no file with these names exists. */
+          gal_checkset_writable_remove(p->out1name, 0, p->cp.dontdelete);
+          gal_checkset_writable_remove(p->out2name, 0, p->cp.dontdelete);
+        }
 
       /* If a log file is necessary, set its name here. */
       if(p->cp.log)
@@ -698,7 +790,10 @@ ui_preparations(struct matchparams *p)
     error(EXIT_FAILURE, 0, "currently Match only works on catalogs, we will "
           "implement the WCS matching routines later");
   else
-    ui_read_columns(p);
+    {
+      ui_read_columns(p);
+      if(p->outcols) ui_preparations_out_cols(p);
+    }
 
   /* Set the output filename. */
   ui_preparations_out_name(p);

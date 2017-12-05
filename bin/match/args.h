@@ -34,7 +34,7 @@ struct argp_option program_options[] =
     /* Input file parameters. */
     {
       "hdu2",
-      GAL_OPTIONS_KEY_HDU,
+      UI_KEY_HDU2,
       "STR/INT",
       0,
       "Extension name or number of second input.",
@@ -62,6 +62,33 @@ struct argp_option program_options[] =
       GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
+    },
+    {
+      "notmatched",
+      UI_KEY_NOTMATCHED,
+      0,
+      0,
+      "Output is rows that don't match.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->notmatched,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "outcols",
+      UI_KEY_OUTCOLS,
+      "STR",
+      0,
+      "Out cols in CSV, `a': first, `b': second input.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->outcols,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_strings
     },
 
 
@@ -115,6 +142,7 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET,
       gal_options_parse_csv_float64
     },
+
 
 
     {0}

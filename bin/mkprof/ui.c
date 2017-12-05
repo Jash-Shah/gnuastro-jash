@@ -668,7 +668,7 @@ ui_read_cols_2d(struct mkprofparams *p)
 
   /* Read the desired columns from the file. */
   cols=gal_table_read(p->catname, p->cp.hdu, colstrs, p->cp.searchin,
-                      p->cp.ignorecase, p->cp.minmapsize);
+                      p->cp.ignorecase, p->cp.minmapsize, NULL);
 
   /* Set the number of objects. */
   p->num=cols->size;
@@ -876,7 +876,7 @@ ui_read_cols_3d(struct mkprofparams *p)
 
   /* Read the desired columns from the file. */
   cols=gal_table_read(p->catname, p->cp.hdu, colstrs, p->cp.searchin,
-                      p->cp.ignorecase, p->cp.minmapsize);
+                      p->cp.ignorecase, p->cp.minmapsize, NULL);
 
   /* Set the number of objects. */
   p->num=cols->size;
