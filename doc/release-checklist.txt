@@ -25,15 +25,13 @@ all the commits needed for this release have been completed.
    `doc/announce-acknowledge.txt' in them.
 
 
- - [STABLE] Correct the links in the webpage (`doc/gnuastro-top.html' and
+ - [STABLE] Correct the links in the webpage (`doc/gnuastro.en.html' and
    `doc/gnuastro.fr.html').
 
 
  - Run the following commands to keep the list of people who contributed
    code and those that must be acknowledged for the announcement (`P.P' is
-   the previous version). Finally, if in a stable release, clean
-   `doc/announce-acknowledge.txt' for the next release. We will use
-   `~/people.txt' in the announcement.
+   the previous version).
 
      $ git shortlog gnuastro_vP.P...HEAD --numbered --summary > ~/people.txt
      $ cat doc/announce-acknowledge.txt >> ~/people.txt
@@ -41,6 +39,7 @@ all the commits needed for this release have been completed.
      [STABLE]:
      $ echo "People who's help must be acknowledged in the next release." \
             > doc/announce-acknowledge.txt
+
 
 
  - Commit all these changes:
@@ -88,16 +87,20 @@ all the commits needed for this release have been completed.
    uses `ncftpput' which comes with the `ncftp' package. The replaces
    are necessary for the symbolic links.
 
+   - Set the key-ID as a variable for easy steps later:
+
+       $ mykeyid=1849814357EFB73A
+
    - For an alpha upload:
 
        $  /path/to/gnulib/build-aux/gnupload --to alpha.gnu.org:gnuastro   \
                --replace --symlink-regex="s/X.X.XXX-XXXX/alpha-latest/"    \
-               gnuastro-X.X.XXX-XXXX.tar.lz
+               --user $mykeyid gnuastro-X.X.XXX-XXXX.tar.lz
 
    - For a stable release:
 
        $  /path/to/gnulib/build-aux/gnupload --to ftp.gnu.org:gnuastro     \
-               --replace --symlink-regex                                   \
+               --replace --symlink-regex --user $mykeyid                   \
                gnuastro-X.X.tar.gz gnuastro-X.X.tar.lz
 
 
@@ -136,13 +139,16 @@ all the commits needed for this release have been completed.
      $ cd build
      $ /path/to/gnulib/build-aux/announce-gen --release-type=XXXX          \
               --package-name=gnuastro --previous-version=0.1               \
-              --current-version=0.2 --gpg-key-id=16A8A4B2AEC42AFF          \
+              --current-version=0.2 --gpg-key-id=$mykeyid                  \
               --url-directory=http://YYYY.gnu.org/gnu/gnuastro             \
               --archive-suffix=tar.lz > announcement.txt
 
 
  - Based on previous announcements, add an intro, the NEWS file and the
    contents of `~/people.txt' to the announcement.
+
+
+ - Add the size of the files (in mega-bytes) to the announcement.
 
 
  - Run a spell-check on the announcement and remove `~/people.txt'.
@@ -171,8 +177,8 @@ Steps necessary to Package Gnuastro for Debian.
    do that, you can update the `/etc/apt/sources.list' file. You can get
    the current releases from this webpage:
    http://ftp.debian.org/debian/. See which release is currently the
-   `testing' release and use replace its name with the one that is
-   currently present in that file. Afterwards, run these commands:
+   `testing' release and replace its name with the one that is currently
+   present in that file. Afterwards, run these commands:
 
      $ sudo apt-get update
      $ sudo apt-get upgrade
@@ -234,7 +240,7 @@ Steps necessary to Package Gnuastro for Debian.
      $ git add --all
      $ git commit -m "Upstream Gnuastro $ver"
      $ git tag upstream/$ver
-     $ pristine-tar commit ../gnuastro_$ver.orig.tar.gz
+     $ pristine-tar -s commit ../gnuastro_$ver.orig.tar.gz
 
 
  - We are done with the `upstream' and `pristine-tar' branches and can
@@ -271,9 +277,14 @@ Steps necessary to Package Gnuastro for Debian.
 
    IMPORTANT: An official release should have `unstable' after the
    version. But if you just want to make sure Gnuastro builds on all
-   systems, it should be `experimental'. If it is experimental, also add
-   this line in `debian/changelog': "Switch to experimental to prepare
-   transition".
+   systems for testing, it should be `experimental'.
+
+   When changing the state (from experimental to unstable or vice versa)
+   add the following line in `debian/changelog' (this is necessary to avoid
+   Lintian warnings):
+
+   Experimental -> Unstable: "Switch to unstable for upstream stable release"
+   Unstable -> Experimental: "Switch to experimental to prepare transition".
 
 
  - Update your version of `pbuilder':

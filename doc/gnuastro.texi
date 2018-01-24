@@ -818,24 +818,25 @@ was changed.
 
 @cindex Anscombe's quartet
 @cindex Statistical analysis
-Anscombe's quartet
-@footnote{@url{http://en.wikipedia.org/wiki/Anscombe%27s_quartet}}
-demonstrates how four data sets with widely different shapes (when
-plotted) give nearly identical output from standard regression
-techniques.  Anscombe argues that ``Good statistical analysis is not a
-purely routine matter, and generally calls for more than one pass
-through the computer''. Anscombe's quartet can be generalized to say
-that users of a software cannot claim to understand how it works only
-based on the experience they have gained by frequently using it. This
-kind of subjective experience is prone to very serious
-mis-understandings about what it really does behind the scenes and can
-be misleading. This attitude is further encouraged through non-free
-software@footnote{@url{https://www.gnu.org/philosophy/free-sw.html}}.
-This approach to scientific software only helps in producing dogmas
-and an ``obscurantist faith in the expert's special skill, and in his
-personal knowledge and authority''@footnote{Karl Popper. The logic of
-scientific discovery. 1959. Larger quote is given at the start of the
-PDF (for print) version of this book.}.
+@url{http://en.wikipedia.org/wiki/Anscombe%27s_quartet,Anscombe's quartet}
+demonstrates how four data sets with widely different shapes (when plotted)
+give nearly identical output from standard regression techniques. Anscombe
+uses this (now famous) quartet, which was introduced in the paper quoted
+above, to argue that ``Good statistical analysis is not a purely routine
+matter, and generally calls for more than one pass through the
+computer''. Anscombe's quartet can be generalized to say that users of a
+software cannot claim to understand how it works only based on the
+experience they have gained by frequently using it. This kind of subjective
+experience is prone to very serious mis-understandings about the data, what
+the software/statistical-method really does (especially as it gets more
+complicated), and thus the scientific interpretation of the result. This
+attitude is further encouraged through non-free
+software@footnote{@url{https://www.gnu.org/philosophy/free-sw.html}}. This
+approach to scientific software only helps in producing dogmas and an
+``obscurantist faith in the expert's special skill, and in his personal
+knowledge and authority''@footnote{Karl Popper. The logic of scientific
+discovery. 1959. Larger quote is given at the start of the PDF (for print)
+version of this book.}.
 
 @quotation
 @cindex Douglas Rushkoff
@@ -910,16 +911,15 @@ first edition, 2008.}. Science is not independent of its tools.
 @cindex Stroustrup, Bjarne
 Bjarne Stroustrup (creator of the C++ language) says: ``Without
 understanding software, you are reduced to believing in magic''.  Ken
-Thomson (the designer or the Unix operating system) says ``I abhor a
-system designed for the `user' if that word is a coded pejorative
-meaning `stupid and unsophisticated'.'' Certainly no scientist (user
-of a scientific software) would want to be considered a believer in
-magic, or `stupid and unsophisticated'. However, this can happen when
-scientists get too distant from the raw data and are mainly indulging
-themselves in their own high-level (abstract) models (creations). For
-example, roughly 5 years before special relativity and about two
-decades before quantum mechanics fundamentally changed Physics, Kelvin
-is quoted as saying:
+Thomson (the designer or the Unix operating system) says ``I abhor a system
+designed for the `user' if that word is a coded pejorative meaning `stupid
+and unsophisticated'.'' Certainly no scientist (user of a scientific
+software) would want to be considered a believer in magic, or `stupid and
+unsophisticated'. However, this can happen when scientists get too distant
+from the raw data and are mainly indulging themselves in their own
+high-level (abstract) models (creations). For example, roughly five years
+before special relativity and about two decades before quantum mechanics
+fundamentally changed Physics, Kelvin is quoted as saying:
 
 @quotation
 @cindex Lord Kelvin
@@ -1577,24 +1577,31 @@ The Japanese Ministry of Science and Technology (MEXT) scholarship for
 Mohammad Akhlaghi's Masters and PhD period in Tohoku University
 Astronomical Institute had an instrumental role in the long term learning
 and planning that made the idea of Gnuastro possible. The very critical
-view points of Professor Takashi Ichikawa (from Tohoku University) were
-also instrumental in the initial ideas and creation of Gnuastro. Brandon
-Invergo, Karl Berry and Richard Stallman also provided very useful
-suggestions during the GNU evaluation process. Bob Proulx from Savannah,
-has kindly supported Gnuastro's project webpage on Savannah and the
-management of its version controlled source server there.
+view points of Professor Takashi Ichikawa (Mohammad's adviser) were also
+instrumental in the initial ideas and creation of Gnuastro. The European
+Research Council (ERC) advanced grant 339659-MUSICOS (Principal
+investigator: Roland Bacon) was vital in the growth and expansion of
+Gnuastro, enabling a thorough re-write of the core functionality of all
+libraries and programs, turning Gnuastro into the large collection of
+generic programs and libraries it is today.
 
 @c To the developers: please keep this in the same order as the THANKS file
 @c (alphabetical, except for the names in the paragraph above).
-We would also like to gratefully thank (in alphabetical order by family
-name) Marjan Akbari, Roland Bacon, Nicolas Bouch@'e, Fernando Buitrago,
-Adrian Bunk, Rosa Calvi, Antonio Diaz Diaz, Stephen Hamer, Ra@'ul Infante
-Sainz, Aur@'elien Jarno, Lee Kelvin, Mohammad-Reza Khellat, Alan Lefor,
-Guillaume Mahler, Francesco Montanari, William Pence, Yahya Sefidbakht, Ole
-Streicher, Ignacio Trujillo, David Valls-Gabaud and Christopher Willmer for
-their useful and constructive comments and suggestions. Finally we should
-thank all the (sometimes anonymous) people in various online forums which
-patiently answered all our small (but important) technical questions.
+In general, we would like to gratefully thank the following people for
+their useful and constructive comments and suggestions (in alphabetical
+order by family name): Marjan Akbari, Roland Bacon, Karl Berry, Leindert
+Boogaard, Nicolas Bouch@'e, Fernando Buitrago, Adrian Bunk, Rosa Calvi,
+Benjamin Clement, Antonio Diaz Diaz, Th@'er@`ese Godefroy, Madusha
+Gunawardhana, Stephen Hamer, Takashi Ichikawa, Ra@'ul Infante Sainz,
+Brandon Invergo, Aur@'elien Jarno, Lee Kelvin, Mohammad-Reza Khellat,
+Floriane Leclercq, Alan Lefor, Guillaume Mahler, Francesco Montanari,
+William Pence, Bob Proulx, Yahya Sefidbakht, Alejandro Serrano Borlaff, Lee
+Spitler, Richard Stallman, Ole Streicher, Alfred M. Szmidt, Ignacio
+Trujillo, David Valls-Gabaud and Christopher Willmer. The GNU French
+Translation Team is also managing the French version of the top Gnuastro
+webpage which we highly appreciate. Finally we should thank all the
+(sometimes anonymous) people in various online forums which patiently
+answered all our small (but important) technical questions.
 
 All work on Gnuastro has been voluntary, but the authors are most grateful
 to the following institutions (in chronological order) for hosting us in
@@ -1607,8 +1614,6 @@ University of Salento, Lecce, Italy.@*
 Centre national de la recherche scientifique (CNRS), France.@*
 Centre de Recherche Astrophysique de Lyon, University of Lyon 1, France.@*
 @end quotation
-
-
 
 
 
@@ -2344,7 +2349,7 @@ download and usable by the public. This tutorial was first prepared for the
 ``Exploring the Ultra-Low Surface Brightness Universe'' workshop (November
 2017) at the International Space Science Institute (ISSI) in Bern,
 Switzerland. We would like to thank them and the attendees for a very
-fruiteful week.
+fruitful week.
 
 You will need the following tools in this tutorial: Gnuastro, SAO DS9
 @footnote{See @ref{SAO ds9}, available at
@@ -2438,14 +2443,13 @@ $ info gnuastro "Detection options"
 $ info gnuastro "segmentation options"
 @end example
 
-In general, Info is a wonderful and powerfull way to access this whole book
+In general, Info is a wonderful and powerful way to access this whole book
 with detailed information about the programs you are running very fast. If
 you are not already familiar with it, please run the following command and
 just read along and do what it says to learn it. Don't stop until you feel
-have become sufficiently fluent in it. Please invest the half an hour's
-time necessary to start using Info comfortably. It will greatly improve
-your productivity and you will start reaping the rewards of this investment
-very soon.
+sufficiently fluent in it. Please invest the half an hour's time necessary
+to start using Info comfortably. It will greatly improve your productivity
+and you will start reaping the rewards of this investment very soon.
 
 @example
 $ info info
@@ -2483,7 +2487,7 @@ Wide Field Camera} dataset. If you already have them in another directory
 be a symbolic link to @file{XDFDIR} with a command like this:
 
 @example
-ln -s XDFDIR download
+$ ln -s XDFDIR download
 @end example
 
 @noindent
@@ -2530,7 +2534,7 @@ will fit the whole dataset in the window. If the window is too small,
 expand it with your mouse, then press the ``zoom'' button on the top row of
 buttons above the image, then in the row below it, press ``zoom fit''. You
 can also zoom in and out by scrolling your mouse or the respective
-operation on your touchpad when your cursor/pointer is over the image.
+operation on your touch-pad when your cursor/pointer is over the image.
 
 @example
 $ ds9 download/hlsp_xdf_hst_wfc3ir-60mas_hudf_f160w_v1_sci.fits     \
@@ -2540,7 +2544,7 @@ $ ds9 download/hlsp_xdf_hst_wfc3ir-60mas_hudf_f160w_v1_sci.fits     \
 The first thing you might notice is that the regions with no data have a
 value of zero in this image. The next thing might be that the dataset
 actually has two ``depth''s (see @ref{Quantifying measurement limits}). The
-exposure time of the inner region is more than 4 times more than the outer
+exposure time of the inner region is more than 4 times of the outer
 parts. Fortunately the XDF survey webpage (above) contains the vertices of
 the deep flat WFC3-IR field. You can use those vertices in @ref{Crop} to
 cutout this deep infra-red region from the larger image. We'll make a
@@ -2588,7 +2592,7 @@ This is the deepest image we currently have of the sky. The first thing
 that comes to mind may be this: ``How large is this field?''. Let's find
 the answer to this question with the commands below. The lines starting
 with @code{##} are just comments for you to help in following the steps.
-Don't type them on the terminal. The commands are intentionally repetative
+Don't type them on the terminal. The commands are intentionally repetitive
 in some places to better understand each step and also to demonstrate the
 beauty of command-line features like variables, pipes and loops. Later, if
 you would like to repeat this process on another dataset, you can just use
@@ -2710,19 +2714,124 @@ $ for z in $(seq 0.5 0.1 5); do                                  \
   done
 @end example
 
-Let's stop for a moment here. CosmicCalculator has a very limited set of
-parameters and it is fast, so, we'll use it to discuss configuration files
-(@ref{Configuration files}). Once you get comfortable with what is done
-below, you can easily do the same for the options of all Gnuastro
-programs. For example, NoiseChisel has the largest number of options in all
-Gnuastro's programs. Therefore configuration files will be very useful for
-it when you use different datasets (with different noise properties).
+If you want a fast result and commonly need such processing for a larger
+number of redshifts, the command above can be slow. This is because the
+CosmicCalculator program has a lot of overhead: it has to parse the
+command-line and all configuration files (see below). These are both
+human-readable characters, not computer-readable bits. CosmicCalculator
+then has to check the sanity of its inputs and check which of its many
+options you have asked for. It has to do all of these for every
+redshift. To greatly speed up the processing, Gnuastro gives you direct
+access to the root work-horse of CosmicCalculator without all that
+overhead: @ref{Gnuastro library}.
+
+Using Gnuastro's library, you can write your own tiny little program for
+this same calculation, without all that extra overhead of CosmicCalculator
+(or any of Gnuastro's programs, see @ref{Library}). For this particular
+job, you want Gnuastro's @ref{Cosmology library}. Here is one example: put
+the following small C program in a file called @file{myprogram.c}.
+
+@example
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <gnuastro/cosmology.h>
+
+int
+main(void)
+@{
+  double area=4.03817;          /* Area of field (arcmin^2). */
+  double z, adist, tandist;     /* Temporary variables.      */
+
+  /* Constants from Plank 2015 (Paper XIII, A&A 594, 2016) */
+  double H0=67.74, olambda=0.6911, omatter=0.3089, oradiation=0;
+
+  /* Do the same thing for all redshifts (z) between 0.1 and 5. */
+  for(z=0.1; z<5; z+=0.1)
+    @{
+      /* Calculate the angular diameter distance. */
+      adist=gal_cosmology_angular_distance(z, H0, olambda,
+                                           omatter, oradiation);
+
+      /* Calculate the tangential distance of one arcsecond. */
+      tandist = adist * 1000 * M_PI / 3600 / 180;
+
+      /* Print the redshift and area. */
+      printf("%-5.2f %g\n", z, pow(tandist * 60,2) * area / 1e6);
+    @}
+
+  /* Tell the system that everything finished successfully. */
+  return EXIT_SUCCESS;
+@}
+@end example
+
+@noindent
+To build and run this C program, you can use @ref{BuildProgram}. It is
+designed to manage Gnuastro's dependencies, compile the program you give it
+and then run it. In short, it hides all the complexities of compiling,
+linking and running C programs based on Gnuastro's library. The library
+will later be usable higher level languages like Python or Julia, for now
+it is only usable by C and C++ programs.
+
+@example
+$ astbuildprog myprogram.c
+@end example
+
+See how much faster this is compared to the shell loop we wrote above? You
+might have noticed that a new file called @file{myprogram} is also created
+in the directory. This is the compiled program that was created and run by
+the command above (its in binary machine code, not human-readable any
+more). You can run it again to get the same results with a command like
+this:
+
+@example
+$ ./myprogram
+@end example
+
+The efficiency of @file{myprogram} compared to CosmicCalculator is because
+the requested processing is faster/comparable to the overheads. For other
+programs that take large input datasets (images for example), the overhead
+is usually negligible compared to the processing. In such cases, the
+libraries are only useful if you want a different/new processing compared
+to the functionalities in Gnuastro's existing programs.
+
+Gnuastro has a large library which all the programs use for various steps
+their processing. For the full list of available functions classified by
+context, please see @ref{Gnuastro library}. Gnuastro's library and
+BuildProgram are created to make it easy for you to use these powerful
+features and get to your scientific results as efficiently (fast) and
+accurately as possible. Several other complete working examples (involving
+images and tables) of Gnuastro's libraries can be see in @ref{Library demo
+programs}. We'll stop with the libraries at this point in this tutorial and
+get back to Gnuastro's already built programs which ready to be used on the
+command-line.
+
+None of Gnuastro's programs keep a default value internally within their
+code. However, when you ran CosmicCalculator with the @option{-z2} option
+above, it completed its processing and printed results. So where did the
+``default'' cosmological parameter values (like the matter density and etc)
+come from?  The values come from the command-line or a configuration file
+(see @ref{Configuration file precedence}).
+
+CosmicCalculator has a very limited set of parameters and doesn't need any
+particular file inputs. Therefore, we'll use it to discuss configuration
+files which are an important part of all Gnuastro's programs (see
+@ref{Configuration files}).
+
+Once you get comfortable with configuration files, you can easily do the
+same for the options of all Gnuastro programs. For example, NoiseChisel has
+the largest number of options in the programs. Therefore configuration
+files will be very useful for it when you use different datasets (with
+different noise properties or in different research contexts). The
+configuration of each program (besides its version) is vital for the
+reproducibility of your results, so it is very important to manage them
+properly.
 
 As we saw above, the full list of the options in all Gnuastro programs can
-be seen with the @option{--help} option. Try using it with the command
-below. Note how options are grouped by context to make it easier to find
-your desired option. However, in each group, options are ordered
-alphabetically.
+be seen with the @option{--help} option. Try calling it with
+CosmicCalculator as shown below. Note how options are grouped by context to
+make it easier to find your desired option. However, in each group, options
+are ordered alphabetically.
 
 @example
 $ astcosmiccal --help
@@ -2732,8 +2841,8 @@ $ astcosmiccal --help
 The options that need a value have an @key{=} sign after their long version
 and @code{FLT}, @code{INT} or @code{STR} for floating point numbers,
 integer numbers and strings (filenames for example) respectively. All
-options have a long format and some have a (single character) short format,
-see @ref{Options}.
+options have a long format and some have a short format (a single
+character), for more see @ref{Options}.
 
 When you are using a program, it is often necessary to check the value the
 option has just before the program starts its processing. In other words,
@@ -2747,21 +2856,16 @@ with @option{--printparams} to see how both do the same operation.
 $ astcosmiccal -P
 @end example
 
-None of Gnuastro's programs keep a default value internally. But when you
-ran CosmicCalculator with the @option{-z2} option above, it completed its
-processing. Where did the ``default'' cosmological parameter values come
-from?  The values come from the command-line or a configuration file (see
-@ref{Configuration file precedence}). The highest priority is given to the
-command-line. Let's say you want a different Hubble constant. Try running
-the following command to see how the hubble constant in the output of the
-command above has changed. Then replace the @option{-P} with @option{-z2}
-to confirm the new results.
+Let's say you want a different Hubble constant. Try running the following
+command to see how the Hubble constant in the output of the command above
+has changed. Afterwards, delete the @option{-P} and add a @option{-z2} to
+see the results with the new cosmology (or configuration).
 
 @example
-$ astcosmiccal --H0=70 -P
+$ astcosmiccal -P --H0=70
 @end example
 
-From the output of the @code{--help} option, note how the option for hubble
+From the output of the @code{--help} option, note how the option for Hubble
 constant has both short (@code{-H}) and long (@code{--H0}) formats. One
 final note is that the equal (@key{=}) sign is not mandatory. In the short
 format, the value can stick to the actual option (the short option name is
@@ -2785,11 +2889,14 @@ But having to type these extra options every time you run CosmicCalculator
 will be prone to errors (typos in particular) and also will be frustrating
 and slow. Therefore in Gnuastro, you can put all the options and their
 values in a ``Configuration file'' and tell the programs to read the option
-values from there. Create a file named @file{my-cosmology.conf} (or
-@file{my-cosmology.txt}, the suffix doesn't matter) with these lines. One
-space between the option value and name is enough, the values are just
-under each other to help in readability). Also note that you can only use
-long option names in configuration files.
+values from there.
+
+Let's create a configuration file. In your favorite text editor, make a
+file named @file{my-cosmology.conf} (or @file{my-cosmology.txt}, the suffix
+doesn't matter) which contains the following lines. One space between the
+option value and name is enough, the values are just under each other to
+help in readability. Also note that you can only use long option names in
+configuration files.
 
 @example
 H0       70
@@ -2800,7 +2907,8 @@ omatter  0.3
 @noindent
 You can now tell CosmicCalculator to read this file for option values
 immediately using the @option{--config} option as shown below. Do you see
-how the output corresponds to the option values in @file{my-cosmology.txt}?
+how the output of the following command corresponds to the option values in
+@file{my-cosmology.txt} (previous command)?
 
 @example
 $ astcosmiccal --config=my-cosmology.conf -z2
@@ -2811,14 +2919,19 @@ directory, you can benefit from Gnuastro's default configuration files to
 avoid having to call the @option{--config} option. Let's assume that you
 want any CosmicCalculator call you make in the @file{my-cosmology}
 directory to use these parameters. You just have to copy the above
-configuration file into a special directory and file. Once you run
-CosmicCalculator, you will see the results implement your desired option
-values without having to type anything extra on the command-line.
+configuration file into a special directory and file:
 
 @example
 $ mkdir my-cosmology
 $ mkdir my-cosmology/.gnuastro
 $ mv my-cosmology.conf my-cosmology/.gnuastro/astcosmiccal.conf
+@end example
+
+Once you run CosmicCalculator within @file{my-cosmology} as shown below,
+you will see how your cosmology has been implemented without having to type
+anything extra on the command-line.
+
+@example
 $ cd my-cosmology
 $ astcosmiccal -z2
 $ cd ..
@@ -2827,14 +2940,15 @@ $ cd ..
 To further simplify the process, you can use the @option{--setdirconf}
 option. If you are already in your desired directory, calling this option
 with the others will automatically write the final values (along with
-descriptions) in @file{.gnuastro/astcosmiccal.conf}. For example this
-command:
+descriptions) in @file{.gnuastro/astcosmiccal.conf}. For example the
+commands below will make the same configuration file automatically (with
+one extra call to CosmicCalculator).
 
 @example
-$ rm -rf my-cosmology         # Make sure the directory doesn't exist.
-$ mkdir my-cosmology
+$ mkdir my-cosmology2
+$ cd my-cosmology2
 $ astcosmiccal --H0 70 --olambda=0.7 --omatter=0.3 --setdirconf
-$ cat .gnuastro/astcosmiccal.conf # See the output configuration file.
+$ astcosmiccal -z2
 $ cd ..
 @end example
 
@@ -2843,26 +2957,32 @@ user (when run in any directory). This allows you to set a special behavior
 every time a program is run by a specific user. Only the directory and
 filename differ from the above, the rest of the process is similar to
 before. Finally, there are also system-wide configuration files that can be
-used to define the option values for all users on a system. Please see
-@ref{Configuration file precedence} for where the programs look for default
-user and system wide configuration files.
+used to define the option values for all users on a system. See
+@ref{Configuration file precedence} for a more detailed discussion.
 
 We are now ready to start processing the downloaded images. Since these
 datasets are already aligned, you don't need to align them to make sure the
 pixel grid covers the same region in all inputs. Gnuastro's Warp program
 has features for such pixel-grid warping (see @ref{Warp}). Therefore, just
 for a demonstration, let's assume one image needs to be rotated by 20
-degrees to correspond to the other. To do that, you can run this command:
+degrees to correspond to the other. To do that, you can run the following
+command:
 
 @example
 $ astwarp flat-ir/xdf-f160w.fits --rotate=20
 @end example
 
-Warp can generally be used for any kind of pixel grid manipulation. For
-example the outputs of the commands below will respectively have larger
-pixels (new resolution being one quarter the original resolution), get
-shifted by 2.8 (by sub-pixel), get a shear of 2, and be tilted
-(projected).
+@noindent
+Open the output and see the output. If your final image is already aligned
+with RA and Dec, you can simply use the @option{--align} option and let
+Warp calculate the necessary rotation.
+
+Warp can generally be used for any kind of pixel grid manipulation
+(warping). For example the outputs of the commands below will respectively
+have larger pixels (new resolution being one quarter the original
+resolution), get shifted by 2.8 (by sub-pixel), get a shear of 2, and be
+tilted (projected). After running each, please open the output file and see
+the effect.
 
 @example
 $ astwarp flat-ir/xdf-f160w.fits --scale=0.25
@@ -2872,8 +2992,8 @@ $ astwarp flat-ir/xdf-f160w.fits --project=0.001,0.0005
 @end example
 
 @noindent
-You can also combine multiple warps in one command. For example rotation
-and scaling with the command below.
+You can also combine multiple warps in one command. For example to first
+rotate the image, then scale it, run this command:
 
 @example
 $ astwarp flat-ir/xdf-f160w.fits --rotate=20 --scale=0.25
@@ -2885,9 +3005,9 @@ you see in the matrix that is printed when you run Warp, it merges all the
 warps into a single warping matrix (see @ref{Warping basics} and
 @ref{Merging multiple warpings}) and simply applies that just once. Recall
 that since this is done through matrix multiplication, order matters in the
-separate operations. Infact through Warp's @option{--matrix} option, you
-can directly request your desired final rotation and don't have to break it
-up into different warps (see @ref{Invoking astwarp}).
+separate operations. In fact through Warp's @option{--matrix} option, you
+can directly request your desired final warp and don't have to break it up
+into different warps like above (see @ref{Invoking astwarp}).
 
 Fortunately these datasets are already aligned to the same pixel grid, so
 you don't actually need the files that were just generated. You can safely
@@ -2958,7 +3078,7 @@ $ astfits noisechisel/xdf-f160w.fits -h2                             \
           | awk '$1=="NUMLABS" @{print $3@}'
 @end example
 
-Grep and AWK are simple, but very powerfull command-line software for
+Grep and AWK are simple, but very powerful command-line software for
 processing text files. Learning them properly can greatly simplify your
 processing, while improve your creativity, productivity and speed. When you
 get time, it is highly recommended to master them. The most common
@@ -3044,7 +3164,7 @@ We can now get back to the curious situation we noticed after running
 NoiseChisel: the number of false clumps to find an S/N limit was very small
 (given the extent of this image). This is bad, because we use quantiles in
 NoiseChisel and such a small number will result in a relatively large
-scatter. Since this is a segmenation issue, let's see why this happens with
+scatter. Since this is a segmentation issue, let's see why this happens with
 @option{--checksegmentation}.
 
 @example
@@ -3095,7 +3215,7 @@ false clump S/N. So it is always important to find a good balance between a
 larger @option{--minskyfrac} while having a sufficient number of resulting
 clumps (to avoid scatter).
 
-NoiseChisel doesn't just find the labelled pixels, it also finds the Sky
+NoiseChisel doesn't just find the labeled pixels, it also finds the Sky
 value and the Sky standard deviation in the final two extensions of its
 output. To generate a catalog of the colors, we will be using the
 NoiseChisel labeled image from the F160W image. But the Sky and Sky
@@ -3255,8 +3375,8 @@ of NoiseChisel's labeled detection image.
 @cindex GNU AWK
 We'll use the objects catalog in the F160W catalog we generated before for
 the positions and set the other parameters of each profile to be a fixed
-circle of radious 5 pixels (we want all apertures to be fixed
-afterall). AWK is a wonderful tool for such jobs as the command below
+circle of radius 5 pixels (we want all apertures to be fixed
+after all). AWK is a wonderful tool for such jobs as the command below
 shows.
 
 @example
@@ -3370,10 +3490,11 @@ $ parallel astconvertt --fluxlow=-0.001 --fluxhigh=0.005 --invert      \
 
 You can now easily use your general GUI image viewer to flip through the
 images more easily. On GNOME, you can use the ``Eye of GNOME'' image viewer
-with a command like below and by pressing the @key{<SPACE>} key, you can
-flip through the images and compare them visually more easily. Ofcourse,
-the flux ranges have been chosen generically here for seeing the fainter
-parts. Therefore, brighter objects will be fully black.
+(with executable name of @file{eog}). Run the command below and by pressing
+the @key{<SPACE>} key, you can flip through the images and compare them
+visually more easily. Of course, the flux ranges have been chosen
+generically here for seeing the fainter parts. Therefore, brighter objects
+will be fully black.
 
 @example
 $ eog 1-f105w.jpg
@@ -3710,29 +3831,38 @@ take effect.
 
 @table @asis
 
-@item libtool
+@item GNU Libtool
 @cindex GNU Libtool
-GNU Libtool is a program to simplify managing of the libraries to build an
-executable (program). It is used by @ref{BuildProgram} in Gnuastro to help
-you when you are writing your own C code. It will enable easy linking to
-all the necessary libraries that Gnuastro's library depends on. If GNU
-Libtool isn't present on your system, then BuildProgram won't be built or
-installed. The configure script will look for GNU Libtool through the
-following executable names in your search path @command{libtool} (if it is
-GNU's implementation) or @command{glibtool}.
+Libtool is a program to simplify managing of the libraries to build an
+executable (a program). GNU Libtool has some added functionality compared
+to other implementations. If GNU Libtool isn't present on your system at
+configuration time, a warning will be printed and @ref{BuildProgram} won't
+be built or installed. The configure script will look into your search path
+(@code{PATH}) for GNU Libtool through the following executable names:
+@command{libtool} (acceptable only if it is the GNU implementation) or
+@command{glibtool}. See @ref{Installation directory} for more on
+@code{PATH}.
 
-Libtool is a low-level program that is probably already present on your
-system (and in your operating system package manager). However, if you want
-to install it's latest version from source, please visit its
+GNU Libtool (the binary/executable file) is a low-level program that is
+probably already present on your system, and if not, is available in your
+operating system package manager@footnote{Note that we want the
+binary/executable Libtool program which can be run on the command-line. In
+Debian-based operating systems which separate various parts of a package,
+you want want @code{libtool-bin}, the @code{libtool} package won't contain
+the executable program.}. If you want to install GNU Libtool's latest
+version from source, please visit its
 @url{https://www.gnu.org/software/libtool/, webpage}.
 
-Gnuastro's tarball ships with an internal implementation of GNU Libtool and
-it is extensively used while Gnuastro is being built and
-installed. Therefore, you can still build Gnuastro even if you don't have
-GNU Libtool installed on your system. However, this internal Libtool does
-not get installed. Hence, if you want to use BuildProgram to compile and
-link your own C source code later, you need to have GNU Libtool available
-on your system (independent of Gnuastro).
+Gnuastro's tarball is shipped with an internal implementation of GNU
+Libtool. Even if you have GNU Libtool, Gnuastro's internal implementation
+is used for the building and installation of Gnuastro. As a result, you can
+still build, install and use Gnuastro even if you don't have GNU Libtool
+installed on your system. However, this internal Libtool does not get
+installed. Therefore, after Gnuastro's installation, if you want to use
+@ref{BuildProgram} to compile and link your own C source code which uses
+the @ref{Gnuastro library}, you need to have GNU Libtool available on your
+system (independent of Gnuastro). See @ref{Review of library fundamentals}
+to learn more about libraries.
 
 @item libgit2
 @cindex Git
@@ -3760,13 +3890,13 @@ compression and decompression algorithms.
 
 @item GPL Ghostscript
 @cindex GPL Ghostscript
-GPL Ghostscript's executable (@command{gs}) is called used by
-ConvertType to compile a PDF file from a source PostScript file, see
+GPL Ghostscript's executable (@command{gs}) is called by ConvertType to
+compile a PDF file from a source PostScript file, see
 @ref{ConvertType}. Therefore its headers (and libraries) are not
-needed. With a very high probability you already have it in your
-GNU/Linux distribution. Unfortunately it does not follow the standard
-GNU build style so installing it is very hard. It is best to rely on
-your distribution's package managers for this.
+needed. With a very high probability you already have it in your GNU/Linux
+distribution. Unfortunately it does not follow the standard GNU build style
+so installing it is very hard. It is best to rely on your distribution's
+package managers for this.
 
 @end table
 
@@ -4389,74 +4519,6 @@ Do not build or install the program named @file{progname}. This is
 very similar to the @option{--enable-progname}, but will build and
 install all the other programs except this one.
 
-@item --enable-bin-op-uint8
-@itemx --enable-bin-op-int8
-@itemx --enable-bin-op-uint16
-@itemx --enable-bin-op-int16
-@itemx --enable-bin-op-uint32
-@itemx --enable-bin-op-int32
-@itemx --enable-bin-op-uint64
-@itemx --enable-bin-op-int64
-@itemx --enable-bin-op-float32
-@itemx --enable-bin-op-float64
-Enable the binary data-structure operators to work natively on the
-respective type of data (@option{u} stands for unsigned types, see
-@ref{Numeric data types}). Some are compiled by default, to disable them
-(or disable any other type), either run @option{enable-bin-op-TYPE=no}, or
-run @option{--disable-bin-op-TYPE}. The final list of enabled/disabled
-types can be inspected in the outputs of @command{./configure} (close to
-the end).
-
-Binary operators, for example @code{+} or @code{>} (greater than), are some
-of the most common operators to the @ref{Arithmetic} program or the
-@code{data_arithmetic} function in @ref{Gnuastro library}. To operate
-most efficiently (as fast as possible without using extra memory or CPU
-resources), it is best to rely on the native types of the input data. For
-example, if you want to add an integer array with a floating point array,
-using the native types, means relying the system's internal type conversion
-for each array element, see @ref{Invoking astarithmetic}. If we don't use
-the native conversion, then the integer array has to be converted to the
-same type as the floating point array to do the conversion. This will
-consume memory (to copy the integer array into a new float array) and CPU
-(integer types need much less processing) resources and ultimately slow
-down the running.
-
-There are many binary operators and in order to have them operate natively
-on of each of the above types, the compiler has to prepare for all the
-different combinations of these types. This can greatly slow down the
-compilation@footnote{It can also greatly increase the file size of the
-library, from a few hundred kilobytes to a few megabytes.} (when you run
-@command{make}). For example, with only one type, @command{make} will
-finish in less than a minute, but if you enable all types, it can take
-roughly half an hour. However, the profits of this one-time investment at
-compilation time will be directly felt (more significantly on large
-images/datasets) each time you run Gnuastro programs or libraries, because
-no internal type conversion will be necessary.
-
-If build time is important for you (mainly developers), disabling shared
-libraries and optimizations (as in @ref{Building and debugging}) is the
-first step to take. If you commonly work with very specific data-types, you
-can enable them (and disable the default types that you don't need) with
-these configuration options. Since the outputs of comparison operators are
-@code{unsigned char} (or @code{uint8_t}) type and most astronomical
-datasets are in single precision (32-bit) floating point (@code{float}),
-the recommended minimum enabled types are @code{uint8} and @code{float32}.
-
-GNU/Linux distribution package managers who compile once, for a large
-audience of users who just download the compiled programs and executables,
-are recommended to enable all types to help their users.
-
-@item --enable-bin-op-alltypes
-Enable native binary arithmetic operation on all types, see the description
-above for the various types for a full discussion. As discussed there,
-enabling all types can greatly speed up arithmetic operations on any
-arbitrary dataset, but will also slow down the building time of
-Gnuastro. Recall that in practice this only affects the @ref{Arithmetic}
-program and the @code{gal_arithmetic} library binary operators, nothing
-else. This option is strongly recommended when you are building Gnuastro to
-be included in a package manager of a GNU/Linux distribution (or other
-operating systems).
-
 @item --enable-gnulibcheck
 @cindex GNU C library
 @cindex Gnulib: GNU Portability Library
@@ -4499,15 +4561,16 @@ is equivalent to simply enabling those that were enabled. Listing the
 disabled programs is redundant.
 @end cartouche
 
-Note that the tests of some programs might require other programs to
-have been installed and tested. For example MakeProfiles is the first
-program to be tested when you run @command{$ make check}, it provides
-the inputs to all the other tests. So if you don't install
-MakeProfiles, then the tests for all the other programs will be
-skipped or fail. To avoid this, in one run, you can install all the
-packages and run the tests but not install. If everything is working
-correctly, you can run configure again with only the packages you want
-but not run the tests and directly install after building.
+The tests of some programs might depend on the outputs of the tests of
+other programs. For example MakeProfiles is one the first programs to be
+tested when you run @command{$ make check}. MakeProfiles' test outputs
+(FITS images) are inputs to many other programs (which in turn provide
+inputs for other programs). Therefore, if you don't install MakeProfiles
+for example, the tests for many the other programs will be skipped. To
+avoid this, in one run, you can install all the programs and run the tests
+but not install. If everything is working correctly, you can run configure
+again with only the programs you want. However, don't run the tests and
+directly install after building.
 
 
 
@@ -4544,9 +4607,10 @@ program (an executable file) is to be used a lot, specifying all those
 directories will become a significant burden. For example, the @file{ls}
 executable lists the contents in a given directory and it is (usually)
 installed in the @file{/usr/bin/} directory by the operating system
-maintainers. So each time you want to use it you would have to run the
-following command (which is very inconvenient, both in writing and in
-remembering the various directories).
+maintainers. Therefore, if using the full address was the only way to
+access an executable, each time you wanted a listing of a directory, you
+would have to run the following command (which is very inconvenient, both
+in writing and in remembering the various directories).
 
 @example
 $ /usr/bin/ls
@@ -4558,8 +4622,9 @@ To address this problem, we have the @file{PATH} environment variable. To
 understand it better, we will start with a short introduction to the shell
 variables. Shell variable values are basically treated as strings of
 characters. For example, it doesn't matter if the value is a name (string
-of @emph{alphabetic} characters) or a number (string of @emph{numeric}
-characters). You can define a variable and a value for it by running
+of @emph{alphabetic} characters), or a number (string of @emph{numeric}
+characters), or both. You can define a variable and a value for it by
+running
 @example
 $ myvariable1=a_test_value
 $ myvariable2="a test value"
@@ -10206,33 +10271,14 @@ for(i=0;i<100;++i) out[i]=a[i]+b[i];
 
 @noindent
 Relying on the default C type conversion significantly speeds up the
-processing and also requires less RAM (when using very large
-images). However this great advantage comes at the cost of preparing for
-all the combinations of types while building/compiling Gnuastro. With the
-full list of CFITSIO types, compilation can take roughly half an
-hour. However, some types are not too common, therefore Gnuastro comes with
-a set of configure time options letting you enable certain types for native
-compilation. You can see the full list of @option{--enable-bin-op-XXXX}
-options in @ref{Gnuastro configure options}.
-
-When a type isn't enabled for native binary operations, the input data will
-be internally converted to the smallest, larger type that was enabled. This
-can slow down your processing (which is faster for smaller/integer types)
-and consume more RAM (to copy the new type), so if you often deal with data
-of a specific types, it is much better to make the one-time investment at
-compilation time and reap the benefits each time you run
-Gnuastro/Arithmetic. Note all arithmetic operations are done by
-@code{gal_data_arithmetic} function in @ref{Gnuastro library}, so the
-choice of native binary operator types will affect any program (within
-Gnuastro or outside of it) that uses this function (including Arithmetic).
+processing and also requires less RAM (when using very large images).
 
 Some operators can only work on integer types (of any length, for example
 bitwise operators) while others only work on floating point types,
 (currently only the @code{pow} operator). In such cases, if the operand
-type(s) are different an error will be printed and internal conversion
-won't occur. Arithmetic also comes with internal type conversion operators
-which you can use to convert the data into the appropriate type, see
-@ref{Arithmetic operators}.
+type(s) are different, an error will be printed. Arithmetic also comes with
+internal type conversion operators which you can use to convert the data
+into the appropriate type, see @ref{Arithmetic operators}.
 
 @cindex Options
 The hyphen (@command{-}) can be used both to specify options (see
@@ -15786,20 +15832,20 @@ $ astmatch [OPTION ...] input-1 input-2
 One line examples:
 
 @example
-## 1D wavelength match (within 5 angestroms) of the two inputs.
+## 1D wavelength match (within 5 angstroms) of the two inputs.
 ## The wavelengths are in the 5th and 10th columns respectively.
 $ astmatch --aperture=5e-10 --ccol1=5 --ccol2=10 in1.fits in2.txt
 
 ## Match the two catalogs with a circular aperture of width 2.
 ## (Units same as given positional columns).
 ## (By default two columns are given for `--ccol1' and `--ccol2',
-##  The number of values to these determines the dimensionality).
+##  The number of values to these determines the dimensions).
 $ astmatch --aperture=2 input1.txt input2.fits
 
 ## Similar to before, but the output is created by merging various
 ## columns from the two inputs: columns 1, RA, DEC from the first
-## input, followed by all columns starting with MAG and the 8th
-## column from second input and finaly the 10th from first input.
+## input, followed by all columns starting with MAG and the BRG
+## column from second input and finally the 10th from first input.
 $ astmatch --aperture=2 input1.txt input2.fits                   \
            --outcols=a1,aRA,aDEC,b/^MAG/,bBRG,a10
 
@@ -15809,7 +15855,7 @@ $ astmatch --aperture=1/3600,2/3600 in1.fits in2.txt
 
 ## Match the RA and DEC columns of the first input with the RA_D
 ## and DEC_D columns of the second within a 0.5 arcseconds aperture.
-$ astmatch --ccol1=RA,DEC --ccol2=RA_D,DEC_D --aperture0.5/3600  \
+$ astmatch --ccol1=RA,DEC --ccol2=RA_D,DEC_D --aperture=0.5/3600  \
            in1.fits in2.fits
 
 ## Match in 3D (RA, Dec and Wavelength).
@@ -15880,7 +15926,7 @@ the second input.
 Another example is given in the one-line examples above. Compared to the
 default case (where two tables with all their columns) are printed, using
 this option is much faster: it will only read and re-arrange the necessary
-columns and it will write a single outputtable. Combined with regular
+columns and it will write a single output table. Combined with regular
 expressions in large tables, this can be a very powerful and convenient way
 to retrieve your desired information and do the match at the same time.
 
@@ -15918,7 +15964,7 @@ The coordinate columns of the second input. See the example in
 Parameters of the aperture for matching. The values given to this option
 can be fractions, for example when the position columns are in units of
 degrees, @option{1/3600} can be used to ask for one arcsecond. The
-interpretation of the values depends on the requested dimensionality
+interpretation of the values depends on the requested dimensions
 (determined from @option{--ccol1} and @code{--ccol2}) and how many values
 are given to this option.
 
@@ -18958,9 +19004,10 @@ will be done correctly.
 @cartouche
 @noindent
 @strong{BuildProgram requires GNU Libtool:} BuildProgram depends on GNU
-Libtool, therefore if GNU Libtool isn't available at Gnuastro's configure
-time, BuildProgram will not be built or installed. Please see @ref{Optional
-dependencies} for more information.
+Libtool, other implementations don't have some necessary features. If GNU
+Libtool isn't available at Gnuastro's configure time, you will get a notice
+at the end of the configuration step and BuildProgram will not be built or
+installed. Please see @ref{Optional dependencies} for more information.
 @end cartouche
 
 @menu
@@ -19275,24 +19322,6 @@ one of the @command{./configure} step checks, Gnuastro we check if your
 system has this POSIX thread barriers. If so, this macro will have a value
 of @code{1}, otherwise it will have a value of @code{0}. see
 @ref{Implementation of pthread_barrier} for more.
-@end deffn
-
-@deffn Macro GAL_CONFIG_BIN_OP_UINT8
-@deffnx Macro GAL_CONFIG_BIN_OP_INT8
-@deffnx Macro GAL_CONFIG_BIN_OP_UINT16
-@deffnx Macro GAL_CONFIG_BIN_OP_INT16
-@deffnx Macro GAL_CONFIG_BIN_OP_UINT32
-@deffnx Macro GAL_CONFIG_BIN_OP_INT32
-@deffnx Macro GAL_CONFIG_BIN_OP_UINT64
-@deffnx Macro GAL_CONFIG_BIN_OP_INT64
-@deffnx Macro GAL_CONFIG_BIN_OP_FLOAT32
-@deffnx Macro GAL_CONFIG_BIN_OP_FLOAT64
-If binary arithmetic operators were configured for any type, the respective
-macro will have a value of @code{1} (one), otherwise its value will be
-@code{0} (zero). Please see the similar configure-time options in
-@ref{Gnuastro configure options} for a thorough explanation. These are only
-relevant for you if you intend to use the binary operators of
-@ref{Arithmetic on datasets}
 @end deffn
 
 @cindex 32-bit
@@ -19995,7 +20024,7 @@ included by any library header that uses @code{gal_data_t}.
 
 @deftp {Type (C @code{struct})} gal_data_t
 The main container for datasets in Gnuastro. It can host data of any
-dimensionality, with any numeric data type. It is actually a structure, but
+dimensions, with any numeric data type. It is actually a structure, but
 @code{typedef}'d as a new type to avoid having to write the @code{struct}
 before any declaration. The actual structure is shown below which is
 followed by a description of each element.
@@ -20096,8 +20125,8 @@ an increment along that dimension becomes larger.
 The total number of elements in the dataset. This is actually a
 multiplication of all the values in the @code{dsize} array, so it is not an
 independent parameter. However, low-level operations with the dataset
-(irrespective of its dimensionality) commonly need this number, so this
-element is designed to avoid calculating it every time.
+(irrespective of its dimensions) commonly need this number, so this element
+is designed to avoid calculating it every time.
 
 @item char *mmapname
 Name of file hosting the @code{mmap}'d contents of @code{array}. If the
@@ -20458,12 +20487,12 @@ single-element dataset.
 An array is a contiguous region of memory.  Hence, at the lowest level,
 every element of an array just has one single-valued position: the number
 of elements that lie between it and the first element in the array. This is
-also known as the @emph{index} of the element within the
-array. Dimensionality is high-level abstraction (meta-data) that we project
+also known as the @emph{index} of the element within the array. A dataset's
+number of dimensions is high-level abstraction (meta-data) that we project
 onto that contiguous patch of memory. When the array is interpreted as a
 one-dimensional dataset, this index is also the @emph{coordinate} of the
-element. But once we associate the patch of memory with a higher
-dimensionality, there must also be one coordinate for each dimension.
+element. But once we associate the patch of memory with a higher dimension,
+there must also be one coordinate for each dimension.
 
 The functions and macros in this section provide you with the tools to
 convert an index into a coordinate and vice-versa along with several other
@@ -21899,13 +21928,13 @@ of rows in the table is also put into the memory that @code{numrows} points
 to. The format of the table (e.g., FITS binary or ASCII table) will be put
 in @code{tableformat} (macros defined in @ref{Table input output}).
 
-Note that other than the character strings (column name, units and
-comments), nothing in the data structure(s) will be allocated by this
-function for the actual data (e.g., the @code{array} or @code{dsize}
-elements). This function is just for column information. This is a
-low-level function particular to reading tables in FITS format. It is
-recommended to use @code{gal_table_info} to be generic (see @ref{Table
-input output}).
+This function is just for column information. Therefore it only stores
+meta-data like column name, units and comments. No actual data (contents of
+the columns for example the @code{array} or @code{dsize} elements) will be
+allocated by this function. This is a low-level function particular to
+reading tables in FITS format. To be generic, it is recommended to use
+@code{gal_table_info} which will allow getting information from a variety
+of table formats based on the filename (see @ref{Table input output}).
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_fits_tab_read (char @code{*filename}, char @code{*hdu}, size_t @code{numrows}, gal_data_t @code{*colinfo}, gal_list_sizet_t @code{*indexll}, int @code{minmapsize})
@@ -22118,10 +22147,11 @@ also follow those conventions.
 @deffnx Macro GAL_TXT_LINESTAT_BLANK
 @deffnx Macro GAL_TXT_LINESTAT_COMMENT
 @deffnx Macro GAL_TXT_LINESTAT_DATAROW
-Status codes for lines in a plain text file that may be returned by
-@code{gal_txt_line_stat}). Lines which have a @key{#} character as their
+Status codes for lines in a plain text file that are returned by
+@code{gal_txt_line_stat}. Lines which have a @key{#} character as their
 first non-white character are considered to be comments. Lines with nothing
-but white space characters are considered blank.
+but white space characters are considered blank. The remaining lines are
+considered as containing data.
 @end deffn
 
 @deftypefun int gal_txt_line_stat (char @code{*line})
@@ -22136,13 +22166,14 @@ data structures with @code{numcols} elements (one data structure for each
 column) see @ref{Arrays of datasets}. The total number of rows in the table
 is also put into the memory that @code{numrows} points to.
 
-Note that other than the character strings (column name, units and
-comments), nothing in the data structure(s) will be allocated by this
-function for the actual data (e.g., the @code{array} or @code{dsize}
-elements). This function is just for column information. This is a
-low-level function particular to reading tables in FITS format. It is
-recommended to use @code{gal_table_info} which will allow getting
-information from a variety of table formats (see @ref{Table input output}).
+This function is just for column information. Therefore it only stores
+meta-data like column name, units and comments. No actual data (contents of
+the columns for example the @code{array} or @code{dsize} elements) will be
+allocated by this function. This is a low-level function particular to
+reading tables in plain text format. To be generic, it is recommended to
+use @code{gal_table_info} which will allow getting information from a
+variety of table formats based on the filename (see @ref{Table input
+output}).
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_txt_table_read (char @code{*filename}, size_t @code{numrows}, gal_data_t @code{*colinfo}, gal_list_sizet_t @code{*indexll}, size_t @code{minmapsize})
@@ -22327,9 +22358,9 @@ columns that correspond to that one input, are in order of the table (which
 column was read first). So the first requested column is the first popped
 data structure and so on.
 
-if @code{colmatch!=NULL}, it is assumed to be an array that has atleast the
+if @code{colmatch!=NULL}, it is assumed to be an array that has at least the
 same number of elements as nodes in the @code{cols} list. The number of
-columns that matched each input column will be sored in each element.
+columns that matched each input column will be stored in each element.
 @end deftypefun
 
 @cindex Git
@@ -22387,7 +22418,7 @@ When the dataset's type and other information are already known, any
 programming language (including C) provides some very good tools for
 various operations (including arithmetic operations like addition) on the
 dataset with a simple loop. However, as an author of a program, making
-assumptions about the type of data, its dimensionality and other basic
+assumptions about the type of data, its dimensions and other basic
 characteristics will come with a large processing burden.
 
 For example if you always read your data as double precision floating
@@ -22610,7 +22641,7 @@ directly use those functions.
 @end deffn
 
 
-@deftypefun {gal_data_t *} gal_arithmetic (int operator, unsigned char flags, ...)
+@deftypefun {gal_data_t *} gal_arithmetic (int operator, int flags, ...)
 Do the arithmetic operation of @code{operator} on the given operands (the
 third argument and any further argument). Certain special conditions can
 also be specified with the @code{flag} operator. The acceptable values for
@@ -22808,8 +22839,8 @@ to this function are:
 @item tilevalues
 This must be an array that has the same number of elements as the nodes in
 in @code{tilesll} and in the same order that `tilesll' elements are parsed
-(from top to bottom, see @ref{Linked lists}). As a result the
-dimensionality of this array is irrelevant, it will be parsed contiguously.
+(from top to bottom, see @ref{Linked lists}). As a result the array's
+number of dimensions is irrelevant, it will be parsed contiguously.
 
 @item tilesll
 The list of input tiles (see @ref{List of gal_data_t}). Internally, it
@@ -23582,9 +23613,9 @@ Return the permutations that when applied, the first @code{nummatched} rows
 of both inputs match with each other (are the nearest within the given
 aperture). The two inputs (@code{coord1} and @code{coord2}) must be
 @ref{List of gal_data_t}. Each @code{gal_data_t} node in the list should be
-a single dimensional dataset (column in a table). The dimensionality of the
+a single dimensional dataset (column in a table). The dimensions of the
 coordinates is determined by the number of @code{gal_data_t} nodes in the
-input lists (which must be equal). Note that the number of rows (or the
+two input lists (which must be equal). Note that the number of rows (or the
 number of elements in each @code{gal_data_t}) in the columns of
 @code{coord1} and @code{coord2} can be different.
 
@@ -23614,7 +23645,7 @@ If internal allocation is necessary and the space is larger than
 @code{minmapsize}, the space will be not allocated in the RAM, but in a
 file, see description of @option{--minmapsize} in @ref{Processing options}.
 
-The number of matchs will be put in the space pointed by
+The number of matches will be put in the space pointed by
 @code{nummatched}. If there wasn't any match, this function will return
 @code{NULL}. If match(s) were found, a list with three @code{gal_data_t}
 nodes will be returned. The top two nodes in the list are the permutations
@@ -24841,12 +24872,17 @@ that invested heavily in Python 2.x cannot benefit from Python 3.x or
 future versions any more. Some converters are available, but since they are
 automatic, lots of complications might arise in the conversion@footnote{For
 example see @url{https://arxiv.org/abs/1712.00461, Jenness (2017)} which
-describes how LSST is managing the transition.}. If a research project
-begins using Python 3.x today, there is no telling how compatible their
-investments will be when Python 4.x or 5.x will come out. This stems from
-the core principles of Python, which are very useful when you look in the
-`on the go' basis as described before and not future usage. Future-proof
-code (as long as current operating systems will be used) is written in C.
+describes how LSST is managing the transition.}.
+
+If a research project begins using Python 3.x today, there is no telling
+how compatible their investments will be when Python 4.x or 5.x will come
+out. This stems from the core principles of Python, which are very useful
+when you look in the `on the go' basis as described before and not future
+usage. Reproducibility (ability to run the code in the future) is a core
+principal of any scientific result, or the software that produced that
+result. Rebuilding all the dependencies of a software in an obsolete
+language is not easy. Future-proof code (as long as current operating
+systems will be used) is written in C.
 
 The portability of C is best demonstrated by the fact that both C++ and
 Python are part of the C-family of programming languages which also include
@@ -24903,7 +24939,7 @@ functions, it is explained in the comments in between the code.
 @cindex GNU Coreutils
 All the Gnuastro programs provide very low level and modular operations
 (modeled on GNU Coreutils). Almost all the basic command-line programs like
-@command{ls}, @command{cp} or @command{rm} on GNU/Linux operting systems
+@command{ls}, @command{cp} or @command{rm} on GNU/Linux operating systems
 are part of GNU Coreutils. This enables you to use shell scripting
 languages (for example GNU Bash) to operate on a large number of files or
 do very complex things through the creative combinations of these tools

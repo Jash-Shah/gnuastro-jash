@@ -60,15 +60,9 @@ AC_SUBST(GAL_LT_VERSION)
 
 
 
-# By default we assume no warnings
-anywarnings=no
-
-
-
-
-
 # Checks for programs.
 : ${CFLAGS=""}
+: ${CXXFLAGS=""}
 AC_PROG_CC
 AC_PROG_CXX
 gl_EARLY
@@ -95,6 +89,7 @@ AC_DEFINE([IN_GNUASTRO_BUILD], [1], [In building, not usage])
 
 # Generic compiler flags for all sub-directories.
 CFLAGS="-Wall -O3 $CFLAGS"
+CXXFLAGS="-Wall -O3 $CXXFLAGS"
 LDFLAGS="-L\$(top_builddir)/lib $LDFLAGS"
 CPPFLAGS="-I\$(top_srcdir)/lib $CPPFLAGS"
 
@@ -103,11 +98,12 @@ CPPFLAGS="-I\$(top_srcdir)/lib $CPPFLAGS"
 
 
 # Check for pthreads and add the appropriate compilation flags. AX_PTHREAD
-# comes from the GNU Autoconf Archive's ax_pthread.m4.
+# comes from the GNU Autoconf Archive's ax_pthread.m4, see there for the
+# documentation. Note that
 AX_PTHREAD([],[AC_MSG_ERROR([AC_PACKAGE_NAME Needs POSIX Threads (pthread)])])
-CLIBS="$PTHREAD_LIBS $LIBS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LDFLAGS="$LDFLAGS $PTHREAD_CFLAGS"
+LIBS="$PTHREAD_LIBS $LIBS"
 CC="$PTHREAD_CC"
 
 
@@ -115,20 +111,22 @@ CC="$PTHREAD_CC"
 
 
 # See if the C++ compiler understands `-Qunused-arguments'. AX_PTHREAD adds
-# this option to LDFLAGS when the C compiler knows this option. But as
-# reported in bug #52490, it can happen that at the same time, the C++
-# compiler doesn't recognize it.
-cpp_Qunused_arguments_problem=no
-for flg in $LDFLAGS; do
+# puts this option in `PTHREAD_CFLAGS' when the C compiler knows this
+# option. We then pass it to CFLAGS and CXXFLAGS above. But as reported in
+# bug #52490, it can happen that sometimes, the C++ compiler doesn't
+# recognize it. So we need to do a separate check for C++.
+cxxflags_tmp=
+for flg in $CXXFLAGS; do
   AS_IF([test "$flg" = \-Qunused-arguments],
         [ AC_LANG(C++)
           AX_CHECK_COMPILE_FLAG([-Qunused-arguments],
-                                [cpp_Qunused_arguments_problem=no],
-                                [cpp_Qunused_arguments_problem=yes])
-          AC_LANG(C) ])
+                                [cxx_Qunused_arguments=yes;
+                                 cxxflags_tmp="$cxxflags_tmp $flg"],
+                                [cxx_Qunused_arguments=no])
+          AC_LANG(C) ],
+        [ cxxflags_tmp="$cxxflags_tmp $flg"])
 done
-AM_CONDITIONAL([COND_NO_CPP_QUNUSED_ARGUMENTS_PROBLEM],
-               [test "x$cpp_Qunused_arguments_problem" = "xno"])
+CXXFLAGS="$cxxflags_tmp"
 
 
 
@@ -150,6 +148,55 @@ AC_CHECK_SIZEOF([long])
 AC_SUBST(SIZEOF_LONG, [$ac_cv_sizeof_long])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_SIZEOF_LONG], [$ac_cv_sizeof_long],
                    [On 32bit will be 4, on 64 bit, will be 8])
+
+
+
+
+
+# By default we assume no warnings
+anywarnings=no
+
+
+
+
+
+# Remove any occurance of the current directory `./', `.', or the full
+# address of the current directory in PATH. The main problem is the
+# `libtool' executable which Gnuastro builds internally in the top build
+# directory. However, we also need to know if the system has libtool or
+# not.
+AC_MSG_CHECKING(if PATH contains current directory)
+oldPATH=$PATH
+currpwd=$(pwd)
+
+# The first call to SED will remove any occurance of the current directory:
+# `./', `.', or the full address.
+#
+#    NOTE 1: We cannot simply remove all `.'s, because hidden directories
+#            (like the `~/.local' that is suggested for local
+#            installations) will also be altered.
+#
+#    NOTE 2: An empty string in the list of strings (separated by `:')
+#            means the current directory. This includes cases like: `::',
+#            or a leading and trailing `:'. So after all the removals of
+#            the current directory, we will remove all such cases.
+#
+#    NOTE 3: The SED separator can be any character immediately after `s',
+#            it doesn't just have to be the commonly used `/'. Since `$pwd'
+#            will possibly contain many `/'s, it is much more easier to use
+#            a differen separator (`|' in this call to SED).
+PATH=$(AS_ECHO([$PATH]) | $SED -e 's|'"$currpwd"'||g' \
+                               -e 's|\.\.*//*||g'     \
+                               -e 's|:\.\.*:|:|g'     \
+                               -e 's|\.*$||'          \
+                               -e 's|^\.*||'          \
+                               -e 's|::*|:|g'         \
+                               -e 's|^:||'            \
+                               -e 's|:$||' )
+AS_IF([test $oldPATH = $PATH],
+      [ path_warning=no ],
+      [ path_warning=yes; anywarnings=yes ])
+AC_MSG_RESULT( $path_warning )
 
 
 
@@ -183,12 +230,15 @@ AC_SEARCH_LIBS([wcspih], [wcs], [],
 # These are secondary tests for more fine-grained control in libraries that
 # have already been checked. We don't need to add them to the LIBS
 # variable, so we are using AC_CHECK_LIB for these tests.
+
+# If the WCS library has the `wcslib_version' function.
 AC_CHECK_LIB([wcs], [wcslib_version], [has_wcslib_version=1],
              [has_wcslib_version=0], [-lcfitsio -lm])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_VERSION], [$has_wcslib_version],
                    [WCSLIB comes with wcslib_version])
 AC_SUBST(HAVE_WCSLIB_VERSION, [$has_wcslib_version])
 
+# If the pthreads library has `pthread_barrier_wait'.
 AC_CHECK_LIB([pthread], [pthread_barrier_wait], [has_pthread_barrier=1],
              [has_pthread_barrier=0])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_PTHREAD_BARRIER], [$has_pthread_barrier],
@@ -253,9 +303,11 @@ AC_SUBST(HAVE_LIBGIT2, [$has_libgit2])
 
 
 
-# Check the libtool executable: needed by BuildProgram.
-AC_CHECK_PROG(has_libtool, libtool, [yes], [no], ,
-              ./libtool .//libtool $ac_pwd/libtool)
+# Check the libtool executable on the system. Note that Gnuastro also ships
+# with a version of Libtool. We don't want Gnuastro's Libtool, here we want
+# to see if the system has libtool independent of Gnuastro so BuildProgram
+# can use it later.
+AC_CHECK_PROG(has_libtool, libtool, [yes], [no])
 
 # If Libtool is present, make sure it is GNU Libtool
 AS_IF([test "x$has_libtool" = "xyes"],
@@ -322,194 +374,6 @@ AC_DEFINE_UNQUOTED([CONF_POSTFIX], [".conf"], [Configuration file post fix.])
 AC_DEFINE_UNQUOTED([USERCONFIG_DIR], [".local/etc"], [User data dir.])
 AC_DEFINE_UNQUOTED([CONF_SHOWFMT], [" %-20s"],
                    [Configuration file name format.])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# The native types for binary arithmetic operations, see the manual for a
-# detailed discussion. The initial list of which types to compile can be
-# determined with the `--enable-bin-op-alltypes' option. If they have a
-# value of 1, they will be compiled. It is possible to disable a previously
-# compiled type with with `--disable-bin-op-TYPENAME', or
-# `--enable-bin-op-TYPENAME=no'.
-binop_alltypes=0
-AC_ARG_ENABLE([bin-op-alltypes],
-              [AS_HELP_STRING([--enable-bin-op-alltypes],
-                    [Allow native binary operations for all types.])],
-	      [AS_IF([test "x$enable_bin_op_alltypes" != xno],
-                     [binop_alltypes=1], [binop_alltypes=0])], [])
-AS_IF([test "x$binop_alltypes" != x0],
-      [binop_uint8=1
-       binop_int8=1
-       binop_uint16=1
-       binop_int16=1
-       binop_uint32=1
-       binop_int32=1
-       binop_uint64=1
-       binop_int64=1
-       binop_float32=1
-       binop_float64=1],
-      [binop_uint8=1
-       binop_int8=0
-       binop_uint16=0
-       binop_int16=0
-       binop_uint32=0
-       binop_int32=0
-       binop_uint64=1
-       binop_int64=1
-       binop_float32=1
-       binop_float64=1] )
-
-AC_MSG_CHECKING(compilation of 8-bit unsigned int binary operators)
-AC_ARG_ENABLE([bin-op-uint8],
-              [AS_HELP_STRING([--enable-bin-op-uint8],
-                    [Native binary operators on unsigned 8-bit int.])],
-	      [AS_IF([test "x$enable_bin_op_uint8" != xno],
-                     [binop_uint8=1], [binop_uint8=0])], [])
-AS_IF([test "x$binop_uint8" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_UINT8], [$binop_uint8],
-                   [Native binary operations on unsigned 8-bit int.])
-AC_SUBST(HAVE_BIN_OP_UINT8, [$binop_uint8])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 8-bit signed int binary operators)
-AC_ARG_ENABLE([bin-op-int8],
-              [AS_HELP_STRING([--enable-bin-op-int8],
-                    [Native binary operations on int8 data.])],
-	      [AS_IF([test "x$enable_bin_op_int8" != xno],
-                     [binop_int8=1], [binop_int8=0])], [])
-AS_IF([test "x$binop_int8" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_INT8], [$binop_int8],
-                   [Native binary operations on int8 data.])
-AC_SUBST(HAVE_BIN_OP_INT8, [$binop_int8])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 16-bit unsigned int binary operators)
-AC_ARG_ENABLE([bin-op-uint16],
-              [AS_HELP_STRING([--enable-bin-op-uint16],
-                    [Native binary operators on unsigned short data.])],
-	      [AS_IF([test "x$enable_bin_op_uint16" != xno],
-                     [binop_uint16=1], [binop_uint16=0])], [])
-AS_IF([test "x$binop_uint16" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_UINT16], [$binop_uint16],
-                   [Native binary operations on unsigned short data.])
-AC_SUBST(HAVE_BIN_OP_UINT16, [$binop_uint16])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 16-bit signed int binary operators)
-AC_ARG_ENABLE([bin-op-int16],
-              [AS_HELP_STRING([--enable-bin-op-int16],
-                    [Native binary operations on int16 data.])],
-	      [AS_IF([test "x$enable_bin_op_int16" != xno],
-                     [binop_int16=1], [binop_int16=0])], [])
-AS_IF([test "x$binop_int16" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_INT16], [$binop_int16],
-                   [Native binary operations on int16 data.])
-AC_SUBST(HAVE_BIN_OP_INT16, [$binop_int16])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 32-bit unsigned int binary operators)
-AC_ARG_ENABLE([bin-op-uint32],
-              [AS_HELP_STRING([--enable-bin-op-uint32],
-                    [Native binary operators on unsigned int32 data.])],
-	      [AS_IF([test "x$enable_bin_op_uint32" != xno],
-                     [binop_uint32=1], [binop_uint32=0])], [])
-AS_IF([test "x$binop_uint32" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_UINT32], [$binop_uint32],
-                   [Native binary operations on unsigned int32 data.])
-AC_SUBST(HAVE_BIN_OP_UINT32, [$binop_uint32])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 32-bit signed int binary operators)
-AC_ARG_ENABLE([bin-op-int32],
-              [AS_HELP_STRING([--enable-bin-op-int32],
-                    [Native binary operations on int32 data.])],
-	      [AS_IF([test "x$enable_bin_op_int32" != xno],
-                     [binop_int32=1], [binop_int32=0])], [])
-AS_IF([test "x$binop_int32" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_INT32], [$binop_int32],
-                   [Native binary operations on int32 data.])
-AC_SUBST(HAVE_BIN_OP_INT32, [$binop_int32])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 64-bit unsigned int binary operators)
-AC_ARG_ENABLE([bin-op-uint64],
-              [AS_HELP_STRING([--enable-bin-op-uint64],
-                    [Native binary operators on unsigned long data.])],
-	      [AS_IF([test "x$enable_bin_op_uint64" != xno],
-                     [binop_uint64=1], [binop_uint64=0])], [])
-AS_IF([test "x$binop_uint64" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_UINT64], [$binop_uint64],
-                   [Native binary operations on unsigned long data.])
-AC_SUBST(HAVE_BIN_OP_UINT64, [$binop_uint64])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 64-bit signed int binary operators)
-AC_ARG_ENABLE([bin-op-int64],
-              [AS_HELP_STRING([--enable-bin-op-int64],
-                    [Native binary operations on int64 data.])],
-	      [AS_IF([test "x$enable_bin_op_int64" != xno],
-                     [binop_int64=1], [binop_int64=0])], [])
-AS_IF([test "x$binop_int64" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_INT64], [$binop_int64],
-                   [Native binary operations on long64 data.])
-AC_SUBST(HAVE_BIN_OP_INT64, [$binop_int64])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 32-bit floating point binary operators)
-AC_ARG_ENABLE([bin-op-float32],
-              [AS_HELP_STRING([--enable-bin-op-float32],
-                    [Native binary operations on float32 data.])],
-	      [AS_IF([test "x$enable_bin_op_float32" != xno],
-                     [binop_float32=1], [binop_float32=0])], [])
-AS_IF([test "x$binop_float32" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_FLOAT32], [$binop_float32],
-                   [Native binary operations on float32 data.])
-AC_SUBST(HAVE_BIN_OP_FLOAT32, [$binop_float32])
-AC_MSG_RESULT($binoptprint)
-
-AC_MSG_CHECKING(compilation of 64-bit floating point binary operators)
-AC_ARG_ENABLE([bin-op-float64],
-              [AS_HELP_STRING([--enable-bin-op-float64],
-                    [Native binary operations on float64 data.])],
-	      [AS_IF([test "x$enable_bin_op_float64" != xno],
-                     [binop_float64=1], [binop_float64=0])], [])
-AS_IF([test "x$binop_float64" != x0], [binoptprint=yes], [binoptprint=no])
-AC_DEFINE_UNQUOTED([GAL_CONFIG_BIN_OP_FLOAT64], [$binop_float64],
-                   [Native binary operations on float64 data.])
-AC_SUBST(HAVE_BIN_OP_FLOAT64, [$binop_float64])
-AC_MSG_RESULT($binoptprint)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -807,6 +671,22 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    name \`gs', was not found in your PATH environment variable."])
                AS_ECHO(["    If PDF outputs are desired from ConvertType, it will abort"])
                AS_ECHO(["    with an EPS output which you can convert to PDF by other means."])
+               AS_ECHO([]) ])
+        # The last two scenarios described below are taken from
+        # https://unix.stackexchange.com/questions/65700/is-it-safe-to-add-to-my-path-how-come
+        AS_IF([test "x$path_warning" = "xyes"],
+              [AS_ECHO(["  - Your PATH contains the current directory. This does not affect"])
+               AS_ECHO(["    this build and installation of Gnuastro in any way, it is just to"])
+               AS_ECHO(["    to remind you that this is a security risk."])
+               AS_ECHO(["      It is a very serious security risk if it is closer to the start"])
+               AS_ECHO(["    of your PATH: a malicious/wrong program might be run instead of"])
+               AS_ECHO(["    a desired program, someone might find out you frequently mistype"])
+               AS_ECHO(["    a command and install a matching one, someone might install a"])
+               AS_ECHO(["    fake command with the name of one that is not installed. You can"])
+               AS_ECHO(["    always run a program in the current directory by explicity adding"])
+               AS_ECHO(["    a \`./' before it's name. Run the following command after"])
+               AS_ECHO(["    installing Gnuastro to learn more about PATH:"])
+               AS_ECHO(["        $ info gnuastro \"Installation directory\""])
                AS_ECHO([]) ])
         AS_ECHO(["  All checks related to the warning(s) above will be skipped."])
         AS_ECHO([])

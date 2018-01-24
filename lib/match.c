@@ -495,6 +495,7 @@ match_coordinates_second_in_first(gal_data_t *A, gal_data_t *B,
   double dist[3]={NAN, NAN, NAN}, delta[3]={NAN, NAN, NAN};
   double *a[3]={NULL, NULL, NULL}, *b[3]={NULL, NULL, NULL};
 
+
   /* Necessary preperations. */
   match_coordinates_sif_prepare(A, B, aperture,  ndim, a, b, dist, c, s,
                                 &iscircle);

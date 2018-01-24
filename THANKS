@@ -16,14 +16,16 @@ authors of Gnuastro. We hereby gratefully acknowledge their help and
 support in Gnuastro. The list is ordered alphabetically (by family name).
 
     Marjan Akbari                        mrjakbari@gmail.com
-    Karl Berry                           karl@gnu.org
     Roland Bacon                         roland.bacon@univ-lyon1.fr
+    Karl Berry                           karl@gnu.org
     Leindert Boogaard                    boogaard@strw.leidenuniv.nl
     Nicolas Bouché                       nicolas.bouche@irap.omp.eu
     Fernando Buitrago                    fbuitrago@oal.ul.pt
     Adrian Bunk                          bunk@debian.org
     Rosa Calvi                           rcalvi@iac.es
+    Benjamin Clement                     benjamin.clement@univ-lyon1.fr
     Antonio Diaz Diaz                    antonio@gnu.org
+    Thérèse Godefroy                     godef.th@free.fr
     Madusha Gunawardhana                 gunawardhana@strw.leidenuniv.nl
     Stephen Hamer                        stephen.hamer@univ-lyon1.fr
     Takashi Ichikawa                     ichikawa@astr.tohoku.ac.jp
@@ -36,15 +38,26 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Alan Lefor                           alefor@astr.tohoku.ac.jp
     Guillaume Mahler                     guillaume.mahler@univ-lyon1.fr
     Francesco Montanari                  francesco.montanari@openmailbox.org
-    William Pence                        William.Pence@nasa.gov
+    William Pence                        william.pence@nasa.gov
+    Bob Proulx                           bob@proulx.com
     Yahya Sefidbakht                     y.sefidbakht@gmail.com
     Alejandro Serrano Borlaff            asborlaff@ucm.es
     Lee Spitler                          lee.spitler@mq.edu.au
     Richard Stallman                     rms@gnu.org
     Ole Streicher                        olebole@debian.org
+    Alfred M. Szmidt                     ams@gnu.org
     Ignacio Trujillo                     trujillo@iac.es
     David Valls-Gabaud                   david.valls-gabaud@obspm.fr
     Christopher Willmer                  cnaw@as.arizona.edu
+
+
+Teams
+-----
+
+The members of the following teams also provided great help and support.
+
+    GNU French Translation Team:
+        https://savannah.gnu.org/projects/www-fr
 
 
 Institutions

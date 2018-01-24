@@ -59,13 +59,13 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 __BEGIN_C_DECLS  /* From C++ preparations */
 
 int
-gal_arithmetic_binary_out_type(int operator, gal_data_t *l, gal_data_t *r);
+gal_arithmetic_binary_checkblank(gal_data_t *l, gal_data_t *r);
 
 char *
 gal_arithmetic_operator_string(int operator);
 
 gal_data_t *
-gal_arithmetic_convert_to_compiled_type(gal_data_t *in, unsigned char flags);
+gal_arithmetic_convert_to_compiled_type(gal_data_t *in, int flags);
 
 
 

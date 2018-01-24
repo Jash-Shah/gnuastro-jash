@@ -1,7 +1,7 @@
 GNU Astronomy Utilities NEWS                          -*- outline -*-
 
 
-* Noteworthy changes in release 0.4.XXX (library 3.0.0) (YYYY-MM-DD) [stable]
+* Noteworthy changes in release 0.5 (library 3.0.0) (2017-12-22) [stable]
 
 ** New features
 
@@ -13,8 +13,8 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   New Program and library: Match is a new program that will match two given
   inputs (currently catalogs). Its output is the re-arranged inputs with
   the same number of rows/records such that all the rows match. The main
-  work is also done with the new `gal_match_catalog' library function which
-  can also be used in other contexts.
+  work is also done with the new low-level `gal_match_catalog' library
+  function which can also be used in more generic contexts.
 
   All programs: a value of `0' to the `--numthreads' option will use the
   number of threads available to the system at run time.
@@ -106,6 +106,12 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   ellipse along each axis from the ellipse center in floating point.
 
 ** Removed features
+
+  Installation: The `--enable-bin-op-*' configuration options that were
+  introduced in Gnuastro 0.3 have been removed. By managing the arithmetic
+  functions in a better manner (a separate source file for each operator),
+  compilation for all types (when done in parallel) takes about the same
+  time as it took with the default (only four) types until now.
 
   MakeCatalog: `--zeropoint' option doesn't have a short option name any
   more. Previously it was `-z' which was confusing because `-x' and `-y'
