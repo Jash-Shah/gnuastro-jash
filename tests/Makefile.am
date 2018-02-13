@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.inx
 ##
 ## Original author:
-##     Mohammad Akhlaghi <akhlaghi@gnu.org>
+##     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
-## Copyright (C) 2015, Free Software Foundation, Inc.
+## Copyright (C) 2015-2018, Free Software Foundation, Inc.
 ##
 ## Gnuastro is free software: you can redistribute it and/or modify it
 ## under the terms of the GNU General Public License as published by
@@ -199,6 +199,7 @@ AM_CPPFLAGS = -I../lib
 AM_TESTS_ENVIRONMENT =                              \
 export mkdir_p="$(MKDIR_P)";                        \
 export topsrc=$(top_srcdir);                        \
+export topbuild=$(top_builddir);                    \
 export haslibjpeg=$(MAYBE_HASLIBJPEG);              \
 export hasgnulibtool=$(MAYBE_HASGNULIBTOOL);        \
 export hasghostscript=$(MAYBE_HASGHOSTSCRIPT);

@@ -3,9 +3,9 @@ Crop - Crop a given size from one or multiple images.
 Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016, Free Software Foundation, Inc.
+Copyright (C) 2016-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -726,8 +726,9 @@ ui_make_log(struct cropparams *p)
   if(p->cp.log==0) return;
 
   /* Column to specify if the central pixels are filled. */
-  asprintf(&comment, "Are the central pixels filled? (1: yes, 0: no, "
-           "%u: not checked)", GAL_BLANK_UINT8);
+  if( asprintf(&comment, "Are the central pixels filled? (1: yes, 0: no, "
+               "%u: not checked)", GAL_BLANK_UINT8)<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
   gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT8, 1, &p->numout,
                           NULL, 1, p->cp.minmapsize, "CENTER_FILLED",
                           "bool", comment);
@@ -959,13 +960,15 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct cropparams *p)
   if(!p->cp.quiet)
     {
       printf(PROGRAM_NAME" started on %s", ctime(&p->rawtime));
-      asprintf(&msg, "Read metadata of %zu dataset%s.", p->numin,
-              p->numin>1 ? "s" : "");
+      if( asprintf(&msg, "Read metadata of %zu dataset%s.", p->numin,
+                   p->numin>1 ? "s" : "")<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 1);
       if(p->numout>1)
         {
-          asprintf(&msg, "Will try making %zu crops (from catalog).",
-                   p->numout);
+          if( asprintf(&msg, "Will try making %zu crops (from catalog).",
+                       p->numout)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
           gal_timing_report(NULL, msg, 1);
         }
     }

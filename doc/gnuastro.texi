@@ -29,7 +29,7 @@ This book documents version @value{VERSION} of the GNU Astronomy Utilities
 (Gnuastro). Gnuastro provides various programs and libraries for
 astronomical data manipulation and analysis.
 
-Copyright @copyright{} 2015-2017 Free Software Foundation, Inc.
+Copyright @copyright{} 2015-2018 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document under
@@ -80,6 +80,9 @@ License''.
 
 * MakeProfiles: (gnuastro)MakeProfiles. Make mock profiles.
 * astmkprof: (gnuastro)Invoking astmkprof. Options to MakeProfiles.
+
+* Match: (gnuastro)Match. Match two separate catalogs.
+* astmatch: (gnuastro)Invoking astmatch. Options to Match.
 
 * NoiseChisel: (gnuastro)NoiseChisel. Detect signal in noise.
 * astnoisechisel: (gnuastro)Invoking astnoisechisel. Options to NoiseChisel.
@@ -735,7 +738,12 @@ Let's assume the downloaded tarball is in the @file{TOPGNUASTRO}
 directory. The first two commands below can be used to decompress the
 source. If you download @file{tar.lz} and your Tar implementation doesn't
 recognize Lzip (the second command fails), run the third and fourth
-lines. Note that lines starting with @code{##} don't need to be typed.
+lines@footnote{In case Tar doesn't directly uncompress your @file{.tar.lz}
+tarball, you can merge the separate calls to Lzip and Tar (shown in the
+main body of text) into one command by directly piping the output of Lzip
+into Tar with a command like this: @command{$ lzip -cd gnuastro-0.5.tar.lz
+| tar -xf -}}. Note that lines starting with @code{##} don't need to be
+typed.
 
 @example
 ## Go into the download directory.
@@ -948,7 +956,7 @@ looked for in the sixth place of decimals.
 If scientists are considered to be more than mere ``puzzle
 solvers''@footnote{Thomas S. Kuhn. @emph{The Structure of Scientific
 Revolutions}, University of Chicago Press, 1962.} (simply adding to
-the decimals of known values or observing a feature in 10, 100, or
+the decimals of existing values or observing a feature in 10, 100, or
 100000 more galaxies or stars, as Kelvin and Michelson clearly
 believed), they cannot just passively sit back and uncritically repeat
 the previous (observational or theoretical) methods/tools on new
@@ -3080,8 +3088,8 @@ $ astfits noisechisel/xdf-f160w.fits -h2                             \
 
 Grep and AWK are simple, but very powerful command-line software for
 processing text files. Learning them properly can greatly simplify your
-processing, while improve your creativity, productivity and speed. When you
-get time, it is highly recommended to master them. The most common
+processing, while improving your creativity, productivity and speed. When
+you get time, it is highly recommended to master them. The most common
 implementation of both is from GNU. Like almost all GNU software, both GNU
 Grep and GNU AWK have wonderful manuals which come with the program for
 free. You don't have to read the whole manual at once, they both start with
@@ -3794,18 +3802,34 @@ old@footnote{As of early June 2016, its most recent version was uploaded in
 February 2001.}, so its installation is not easy, there are also many great
 modern WCS plotting tools (mostly in written in Python). Hence, if you will
 not be using those plotting functions in WCSLIB, you can configure it with
-the @option{--without-pgplot} option as shown below. Let's assume you have
-downloaded @url{ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2,
-@file{wcslib.tar.bz2}} and are in the same directory:
+the @option{--without-pgplot} option as shown below.
+
+If you have the cURL library @footnote{@url{https://curl.haxx.se}} on your
+system and you installed CFITSIO version 3.42 or later, you will need to
+also link with the cURL library at configure time (through the
+@code{-lcurl} option as shown below). CFITSIO uses the cURL library for its
+HTTPS (or HTTP Secure@footnote{@url{https://en.wikipedia.org/wiki/HTTPS}})
+support and if it is present on your system, CFITSIO will depend on
+it. Therefore, if @command{./configure} command below fails (you don't have
+the cURL library), then remove this option and rerun it.
+
+Let's assume you have downloaded
+@url{ftp://ftp.atnf.csiro.au/pub/software/wcslib/wcslib.tar.bz2,
+@file{wcslib.tar.bz2}} and are in the same directory, to configure, build,
+check and install WCSLIB follow the steps below.
 @example
 $ tar xf wcslib.tar.bz2
-$ cd wcslib-X.X                    # Replace X.X with version number
-$ ./configure --without-pgplot LIBS="-pthread -lm" --disable-fortran
+
+## In the `cd' command, replace `X.X' with version number.
+$ cd wcslib-X.X
+
+## If `./configure' fails, remove `-lcurl' and run again.
+$ ./configure LIBS="-pthread -lcurl -lm" --without-pgplot     \
+              --disable-fortran
 $ make
 $ make check
 $ sudo make install
 @end example
-
 
 
 
@@ -5255,17 +5279,22 @@ re-configure Gnuastro, then re-run make.
 @cindex Tests, only one passes
 @cindex @file{LD_LIBRARY_PATH}
 @item
-@command{$ make check}: @emph{Only one @file{.sh} test passes, all the rest
-fail.}  It is highly likely that your distribution doesn't look into the
-@file{/usr/local/lib} directory when searching for shared libraries. To
-make sure it is added to the list of directories, run the following command
-and restart your terminal: (you can ignore the @command{\} and extra space
-if you type it, it is only necessary if you copy and paste). See
-@ref{Installation directory} for more details.
+@command{$ make check}: @emph{Only the first couple of tests pass, all the
+rest fail or get skipped.}  It is highly likely that when searching for
+shared libraries, your system doesn't look into the @file{/usr/local/lib}
+directory (or wherever you installed Gnuastro or its dependencies). To make
+sure it is added to the list of directories, add the following line to your
+@file{~/.bashrc} file and restart your terminal. Don't forget to change
+@file{/usr/local/lib} if the libraries are installed in other
+(non-standard) directories.
+
 @example
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib' \
-     >> ~/.bashrc
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 @end example
+
+You can also add more directories by using a colon `@code{:}' to separate
+them. See @ref{Installation directory} and @ref{Linking} to learn more on
+the @code{PATH} variables and dynamic linking respectively.
 
 @cindex GPL Ghostscript
 @item
@@ -17237,7 +17266,7 @@ A circular Gaussian kernel with FWHM of 2 pixels and truncated at 3 times
 the FWHM.
 @end table
 
-This option may also be used to create a 3D kernel. To do that, to small
+This option may also be used to create a 3D kernel. To do that, two small
 modifications are necessary: add a @code{-3d} (or @code{-3D}) to the
 profile name (for example @code{moffat-3d}) and add a fraction (value
 between 0 and 1) to the end of the parameters for all profiles except
@@ -18816,8 +18845,8 @@ library, you might need another tool.} program, for example:
 $ ldd /usr/local/bin/astarithmetic
 @end example
 
-Library file names start with a @file{lib} and end with suffix depending on
-their type as described below. In between these two is the name of the
+Library file names start with a @file{lib} and end with a suffix depending
+on their type as described below. In between these two is the name of the
 library, for example @file{libgnuastro.a} (Gnuastro's static library) and
 @file{libgsl.so.0.0.0} (GSL's shared library).
 
@@ -18853,16 +18882,17 @@ the @file{prefix/lib/} directory (see @ref{Installation directory}). In
 this way other programs can make which ever kind of link that they want.
 
 To link with a library, the linker needs to know where to find the
-library. You do that with two separate options to the linker (see
-@ref{Summary and example on libraries} for an example):
+library. @emph{At compilation time}, these locations can be passed to the
+linker with two separate options (see @ref{Summary and example on
+libraries} for an example) as described below.
 
 @table @option
 @item -L DIR
 Will tell the linker to look into @file{DIR} for the libraries. For example
 @file{-L/usr/local/lib}, or @file{-L/home/yourname/.local/lib}. You can
 make multiple calls to this option, so the linker looks into several
-directories. Note that the space between @key{L} and the directory is
-optional and commonly not used.
+directories at compilation time. Note that the space between @key{L} and
+the directory is optional and commonly not used.
 
 @item -lLIBRARY
 Specify the unique name of a library to be linked. As discussed above,
@@ -18892,6 +18922,14 @@ the linker will complain and abort.
 
 @end table
 
+If you have compiled and linked your program with a dynamic library, then
+the linker needs to know the location of the libraries @emph{every time}
+the final program is run. For this purpose, the linker looks into the
+@code{LD_LIBRARY_PATH} environment variable. Therefore, if you don't get
+any errors when compiling/linking, but are unable to run your program
+because of a failure to find a library, it is because the linker hasn't
+found the dynamic library @emph{at run time}. See @ref{Installation
+directory} on how to add any directory to @code{LD_LIBRARY_PATH}.
 
 
 

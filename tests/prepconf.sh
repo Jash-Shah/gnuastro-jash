@@ -4,9 +4,9 @@
 # Utilities (Gnuastro).
 #
 # Original author:
-#     Mohammad Akhlaghi <akhlaghi@gnu.org>
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2016, Free Software Foundation, Inc.
+# Copyright (C) 2016-2018, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -64,17 +64,21 @@ rm addedoptions.txt
 
 
 
+
 # Bring utility configuration files
 # ---------------------------------
 #
 # Each utility's configuration file is copied in the `tests' directory for
-# easy readability. We are just using a wildcard to copy any configuration
-# file in each program's source. This is because some programs come with
-# some supplementary configuration files to help the users (like
-# MakeProfiles to operate in 3D).
-for prog in arithmetic buildprog convertt convolve cosmiccal crop fits  \
-            match mkcatalog mknoise mkprof noisechisel statistics table \
-            warp
+# easy readability. Note that some programs may need to build their
+# configuration files during compilation. Hence, their configuration files
+# are in the build directory, not the source directory.
+for prog in arithmetic buildprog convertt convolve cosmiccal crop fits \
+            match mkcatalog mknoise mkprof noisechisel statistics table warp
 do
-    cp $topsrc/bin/$prog/ast*.conf .gnuastro/
+    if test -f $topsrc/bin/$prog/ast$prog.conf; then
+        ctopdir=$topsrc
+    else
+        ctopdir=$topbuild
+    fi
+    cp $ctopdir/bin/$prog/*.conf .gnuastro/
 done

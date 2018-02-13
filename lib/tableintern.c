@@ -3,9 +3,9 @@ table -- Functions for I/O on tables.
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016, Free Software Foundation, Inc.
+Copyright (C) 2016-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -54,10 +54,12 @@ gal_tableintern_error_col_selection(char *filename, char *hdu,
   /* Set the proper pointers. */
   if(gal_fits_name_is_fits(filename))
     {
-      asprintf(&name, "%s (hdu: %s)", filename, hdu);
+      if( asprintf(&name, "%s (hdu: %s)", filename, hdu)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       c=hdu; while(*c!='\0') if(isspace(*c++)) break;
-      asprintf(&command, *c=='\0' ? "%s --hdu=%s" : "%s --hdu=\"%s\"",
-               filename, hdu);
+      if( asprintf(&command, *c=='\0' ? "%s --hdu=%s" : "%s --hdu=\"%s\"",
+                   filename, hdu)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
     }
   else command=name=filename;
 

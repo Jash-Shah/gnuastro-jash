@@ -3,9 +3,9 @@ Crop - Crop a given size from one or multiple images.
 Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015, Free Software Foundation, Inc.
+Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -452,12 +452,14 @@ onecrop_name(struct onecropparams *crp)
       if(p->name)
         {
           strarr=p->name;
-          asprintf(&crp->name, "%s%s%s", cp->output, strarr[crp->out_ind],
-                   p->suffix);
+          if( asprintf(&crp->name, "%s%s%s", cp->output, strarr[crp->out_ind],
+                       p->suffix)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
         }
       else
-        asprintf(&crp->name, "%s%zu%s", cp->output, crp->out_ind+1,
-                 p->suffix);
+        if( asprintf(&crp->name, "%s%zu%s", cp->output, crp->out_ind+1,
+                     p->suffix)<0 )
+          error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
       /* Make sure the file doesn't exist. */
       gal_checkset_writable_remove(crp->name, 0, cp->dontdelete);

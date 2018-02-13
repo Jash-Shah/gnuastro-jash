@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.inx
 ##
 ## Original author:
-##     Your Name <your@email>
+##     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
-## Copyright (C) YYYY, Free Software Foundation, Inc.
+## Copyright (C) 2017-2018, Free Software Foundation, Inc.
 ##
 ## Gnuastro is free software: you can redistribute it and/or modify it
 ## under the terms of the GNU General Public License as published by
@@ -35,9 +35,46 @@ bin_PROGRAMS = astbuildprog
 
 astbuildprog_LDADD = -lgnuastro
 
-astbuildprog_SOURCES = main.c ui.c buildprog.c
+astbuildprog_SOURCES = main.c ui.c buildprog.c astbuildprog.conf
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h buildprog.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h buildprog.h astbuildprog.conf.in
+
+
+
+
+
+# Build the final configuration file. The main problem is the possible
+# CPPFLAGS and LDFLAGS that the user might have given at configure time
+# (stored in `IN_CPPFLAGS' and `IN_LDFLAGS' Makefile
+# variables). BuildProgram also needs to know these directories in order to
+# compile its programs. Here, we will be going
+astbuildprog.conf: $(top_srcdir)/bin/buildprog/astbuildprog.conf.in
+	cp $< $@
+	infoadded="no";                                \
+	for i in $(IN_CPPFLAGS); do                    \
+          if test x"$$i" != x; then                    \
+	    if test $$infoadded = "no"; then           \
+	      echo "" >> $@;                           \
+	      echo "# Installation information" >> $@; \
+	      infoadded="yes";                         \
+	    fi;                                        \
+	    v=$$(echo $$i | sed -e 's/-I//');          \
+	    echo " includedir $$v" >> $@;              \
+          fi;                                          \
+	done;                                          \
+	for i in $(IN_LDFLAGS); do                     \
+          if test x"$$i" != x; then                    \
+	    if test $$infoadded = "no"; then           \
+	      echo "" >> $@;                           \
+	      echo "# Installation information" >> $@; \
+	      infoadded="yes";                         \
+	    fi;                                        \
+	    v=$$(echo $$i | sed -e 's/-L//');          \
+	    echo " linkdir $$v" >> $@;                 \
+	  fi;                                          \
+	done
+
+
 
 
 

@@ -10,9 +10,9 @@
 # we don't need to explicitly call that directory here.
 #
 # Original author:
-#     Mohammad Akhlaghi <akhlaghi@gnu.org>
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015 - 2016, Free Software Foundation, Inc.
+# Copyright (C) 2015-2018, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ AC_CONFIG_MACRO_DIRS([bootstrapped/m4])
 
 # Library version, see the GNU Libtool manual ("Library interface versions"
 # section for the exact definition of each) for
-GAL_CURRENT=3
+GAL_CURRENT=4
 GAL_REVISION=0
 GAL_AGE=0
 GAL_LT_VERSION="${GAL_CURRENT}:${GAL_REVISION}:${GAL_AGE}"
@@ -82,6 +82,16 @@ LT_INIT
 # is only built at installation time and doesn't exist when building
 # Gnuastro. Therefore, this macro must not be defined in a user's program.
 AC_DEFINE([IN_GNUASTRO_BUILD], [1], [In building, not usage])
+
+
+
+
+
+# If any specific CPPFLAGS and LDFLAGS are given, we need to keep the raw
+# values (before they are changed in the next step) to pass onto
+# BuildProgram (which also needs them).
+AC_SUBST(IN_LDFLAGS, "$LDFLAGS")
+AC_SUBST(IN_CPPFLAGS, "$CPPFLAGS")
 
 
 

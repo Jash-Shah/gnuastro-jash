@@ -3,9 +3,9 @@ ConvertType - Convert between various types of files.
 ConvertType is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016, Free Software Foundation, Inc.
+Copyright (C) 2016-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -614,7 +614,8 @@ ui_add_dot_use_automatic_output(struct converttparams *p)
   /* If the suffix does not start with a `.', put one there. */
   if(suffix[0]!='.')
     {
-      asprintf(&tmp, ".%s", suffix);
+      if( asprintf(&tmp, ".%s", suffix)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       free(suffix);
       suffix=tmp;
     }

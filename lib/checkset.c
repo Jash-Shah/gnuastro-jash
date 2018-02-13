@@ -3,9 +3,9 @@ Functions to check and set command line argument values and files.
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015, Free Software Foundation, Inc.
+Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -146,7 +146,10 @@ gal_checkset_dataset_name(char *filename, char *hdu)
 {
   char *out;
   if( gal_fits_name_is_fits(filename) )
-    asprintf(&out, "%s (hdu %s)", filename, hdu);
+    {
+      if( asprintf(&out, "%s (hdu %s)", filename, hdu)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+    }
   else
     gal_checkset_allocate_copy(filename, &out);
   return out;

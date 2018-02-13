@@ -3,9 +3,9 @@ NoiseChisel - Detect and segment signal in a noisy dataset.
 NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015, Free Software Foundation, Inc.
+Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -759,8 +759,9 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
   gal_data_free(qprm.noerode_th);
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "%.2f & %0.2f quantile thresholds applied.",
-               p->qthresh, p->noerodequant);
+      if( asprintf(&msg, "%.2f & %0.2f quantile thresholds applied.",
+                   p->qthresh, p->noerodequant)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }

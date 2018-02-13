@@ -3,9 +3,9 @@ ConvertType - Convert between various types of files.
 ConvertType is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015, Free Software Foundation, Inc.
+Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -261,7 +261,8 @@ jpeg_read_to_ll(char *filename, gal_data_t **list, size_t minmapsize)
     {
       dsize[0]=s0;
       dsize[1]=s1;
-      asprintf(&name, "JPEG_CH_%zu", i+1);
+      if( asprintf(&name, "JPEG_CH_%zu", i+1)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_list_data_add_alloc(list, allcolors[i], GAL_TYPE_UINT8, ndim,
                               dsize, NULL, 0, minmapsize, name, NULL, NULL);
       free(name);

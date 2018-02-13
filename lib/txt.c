@@ -3,9 +3,9 @@ txt -- functions to deal with plain text files.
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016, Free Software Foundation, Inc.
+Copyright (C) 2016-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -1206,7 +1206,8 @@ txt_open_file_write_info(gal_data_t *datall, char **fmts,
      over-write the one that `sprintf' puts with a `:' for the columns
      that have the same number of digits as the final column. */
   i=0;
-  asprintf(&nstr, "%zu:", num);
+  if( asprintf(&nstr, "%zu:", num)<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
   nlen=strlen(nstr);
   for(data=datall; data!=NULL; data=data->next)
     {

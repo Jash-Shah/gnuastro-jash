@@ -3,9 +3,9 @@ NoiseChisel - Detect and segment signal in a noisy dataset.
 NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015, Free Software Foundation, Inc.
+Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -1397,8 +1397,9 @@ clumps_true_find_sn_thresh(struct noisechiselparams *p)
   p->clumpsnthresh = *((float *)(quant->array));
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "Clump S/N: %.2f (%.3f quant of %zu).",
-               p->clumpsnthresh, p->segquant, sn->size);
+      if( asprintf(&msg, "Clump S/N: %.2f (%.3f quant of %zu).",
+                   p->clumpsnthresh, p->segquant, sn->size)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }

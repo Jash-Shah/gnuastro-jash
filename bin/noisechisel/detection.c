@@ -5,7 +5,7 @@ NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <akhlaghi@gnu.org>
 Contributing author(s):
-Copyright (C) 2015, Free Software Foundation, Inc.
+Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -110,8 +110,9 @@ detection_initial(struct noisechiselparams *p)
                                                  p->erodengb), 1);
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "Eroded %zu time%s (%zu-connectivity).", p->erode,
-               p->erode>1?"s":"", p->erodengb);
+      if( asprintf(&msg, "Eroded %zu time%s (%zu-connectivity).", p->erode,
+                   p->erode>1?"s":"", p->erodengb)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }
@@ -135,8 +136,9 @@ detection_initial(struct noisechiselparams *p)
                                                 p->openingngb), 1);
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "Opened (depth: %zu, %s connectivity).",
-              p->opening, p->openingngb==4 ? "4" : "8");
+      if( asprintf(&msg, "Opened (depth: %zu, %s connectivity).",
+                   p->opening, p->openingngb==4 ? "4" : "8")<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }
@@ -156,7 +158,9 @@ detection_initial(struct noisechiselparams *p)
   /* Report the ending of initial detection. */
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "%zu initial detections found.", p->numinitialdets);
+      if( asprintf(&msg, "%zu initial detections found.",
+                   p->numinitialdets)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t0, msg, 1);
       free(msg);
     }
@@ -439,9 +443,10 @@ detection_sn_write_to_file(struct noisechiselparams *p, gal_data_t *sn,
   gal_list_str_t *comments=NULL;
 
   /* Comment for extension on further explanation. */
-  asprintf(&str, "See also: `%s' HDU of output with "
-           "`--checkdetection'", ( s0d1D2<2
-                                   ? "PSEUDOS-FOR-SN": "DILATED" ));
+  if( asprintf(&str, "See also: `%s' HDU of output with "
+               "`--checkdetection'", ( s0d1D2<2
+                                       ? "PSEUDOS-FOR-SN": "DILATED" ))<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
   gal_list_str_add(&comments, str, 0);
 
 
@@ -767,8 +772,9 @@ detection_pseudo_real(struct noisechiselparams *p)
   p->detsnthresh = *((float *)(quant->array));
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "Pseudo-det S/N: %.2f (%.2f quant of %zu).",
-               p->detsnthresh, p->detquant, sn->size);
+      if( asprintf(&msg, "Pseudo-det S/N: %.2f (%.2f quant of %zu).",
+                   p->detsnthresh, p->detquant, sn->size)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }
@@ -1099,8 +1105,9 @@ detection(struct noisechiselparams *p)
   threshold_apply(p, p->sky->array, p->std->array, THRESHOLD_SKY_STD);
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "Pseudo-detection thresh (%.3f sigma) applied.",
-               p->dthresh);
+      if( asprintf(&msg, "Pseudo-detection thresh (%.3f sigma) applied.",
+                   p->dthresh)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }
@@ -1117,8 +1124,9 @@ detection(struct noisechiselparams *p)
   num_true_initial=detection_remove_false_initial(p, workbin);
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "%zu false initial detections removed.",
-               p->numinitialdets - num_true_initial);
+      if( asprintf(&msg, "%zu false initial detections removed.",
+                   p->numinitialdets - num_true_initial)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }
@@ -1132,10 +1140,17 @@ detection(struct noisechiselparams *p)
   if(!p->cp.quiet)
     {
       if(p->detgrowquant==1.0f)
-        asprintf(&msg, "%zu detections with no growth.", num_true_initial);
+        {
+          if( asprintf(&msg, "%zu detections with no growth.",
+                       num_true_initial)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+        }
       else
-        asprintf(&msg, "%zu detections after growth to %.3f quantile.",
-                 num_true_initial, p->detgrowquant);
+        {
+          if( asprintf(&msg, "%zu detections after growth to %.3f quantile.",
+                       num_true_initial, p->detgrowquant)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+        }
       gal_timing_report(&t1, msg, 2);
       free(msg);
     }
@@ -1153,7 +1168,8 @@ detection(struct noisechiselparams *p)
                        : num_true_initial );
   if(!p->cp.quiet)
     {
-      asprintf(&msg, "%zu final true detections.", p->numdetections);
+      if( asprintf(&msg, "%zu final true detections.", p->numdetections)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t0, msg, 1);
       free(msg);
     }
