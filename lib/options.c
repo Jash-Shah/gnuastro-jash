@@ -179,35 +179,60 @@ void *
 gal_options_check_version(struct argp_option *option, char *arg,
                           char *filename, size_t lineno, void *junk)
 {
-  /* Check if the given value is different from this version. */
-  if( strcmp(arg, PACKAGE_VERSION) )
-    {
-      /* Print an error message and abort.  */
-      error_at_line(EXIT_FAILURE, 0, filename, lineno, "version mis-match: "
-                    "you are running GNU Astronomy Utilities (Gnuastro) "
-                    "version `%s'. However, the `onlyversion' option is set "
-                    "to version `%s'.\n\n"
-                    "This was probably done for reproducibility. Therefore, "
-                    "manually removing, or changing, the option value might "
-                    "produce errors or unexpected results. It is thus "
-                    "strongly advised to build Gnuastro %s and re-run this "
-                    "command/script.\n\n"
-                    "You can download previously released tar-balls from the "
-                    "following URLs respectively:\n\n"
-                    "    Stable (version format: X.Y):      "
-                    "http://ftpmirror.gnu.org/gnuastro\n"
-                    "    Alpha  (version format: X.Y.A-B):  "
-                    "http://alpha.gnu.org/gnu/gnuastro\n\n"
-                    "Alternatively, you can clone Gnuastro, checkout the "
-                    "respective commit (from the version number), then "
-                    "bootstrap and build it. Please run the following "
-                    "command for more information:\n\n"
-                    "    $ info gnuastro \"Version controlled source\"\n",
-                    PACKAGE_VERSION, arg, arg);
+  char *str;
 
-      /* Just to avoid compiler warnings for unused variables. The program
-         will never reach this point! */
-      arg=filename=NULL; lineno=0; option=NULL; junk=NULL;
+  /* First see if we are reading or writing. */
+  if(lineno==-1)
+    {
+      /* `PACKAGE_VERSION' is a static/literal string, but the pointer
+         returned by this function will be freed, so we must allocate space
+         for it.
+
+         We didn't allocate and give this option a value when we read it
+         because it is redundant and much more likely for the option to
+         just be present (for a check in a reproduction pipeline for
+         example) than for it to be printed. So we don't want to waste
+         resources in allocating a redundant value. */
+      gal_checkset_allocate_copy(PACKAGE_VERSION, &str);
+      return str;
+    }
+
+  /* Check if the given value is different from this version. */
+  else
+    {
+      if(arg==NULL)
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+              "the problem. The value to `arg' is NULL", __func__,
+              PACKAGE_BUGREPORT);
+      else if( strcmp(arg, PACKAGE_VERSION) )
+        {
+          /* Print an error message and abort.  */
+          error_at_line(EXIT_FAILURE, 0, filename, lineno, "version "
+                        "mis-match: you are running GNU Astronomy Utilities "
+                        "(Gnuastro) version `%s'. However, the `onlyversion' "
+                        "option is set to version `%s'.\n\n"
+                        "This was probably done for reproducibility. "
+                        "Therefore, manually removing, or changing, the "
+                        "option value might produce errors or unexpected "
+                        "results. It is thus strongly advised to build "
+                        "Gnuastro %s and re-run this command/script.\n\n"
+                        "You can download previously released tar-balls "
+                        "from the following URLs respectively:\n\n"
+                        "    Stable (version format: X.Y):      "
+                        "http://ftpmirror.gnu.org/gnuastro\n"
+                        "    Alpha  (version format: X.Y.A-B):  "
+                        "http://alpha.gnu.org/gnu/gnuastro\n\n"
+                        "Alternatively, you can clone Gnuastro, checkout the "
+                        "respective commit (from the version number), then "
+                        "bootstrap and build it. Please run the following "
+                        "command for more information:\n\n"
+                        "    $ info gnuastro \"Version controlled source\"\n",
+                        PACKAGE_VERSION, arg, arg);
+
+          /* Just to avoid compiler warnings for unused variables. The program
+             will never reach this point! */
+          arg=filename=NULL; lineno=0; option=NULL; junk=NULL;
+        }
     }
   return NULL;
 }
@@ -2118,37 +2143,52 @@ gal_options_print_state(struct gal_options_common_params *cp)
         case GAL_OPTIONS_KEY_PRINTPARAMS:
         case GAL_OPTIONS_KEY_SETDIRCONF:
         case GAL_OPTIONS_KEY_SETUSRCONF:
+
+          /* Note that these options can have a value of 1 (enabled) or 0
+             (explicitly disabled). Therefore the printing should only be
+             done if they have a value of 1. This is why we have defined
+             the `OPTIONS_UINT8VAL' macro above. */
           sum += OPTIONS_UINT8VAL;
         }
-  if(sum>1)
-    error(EXIT_FAILURE, 0, "only one of the `printparams', `setdirconf' "
-          "and `setusrconf' options can be called in each run");
 
 
-  /* Print the required configuration files. Note that simply having a
-     non-NULL value is not enough. They can have a value of 1 or 0, and the
-     respective file should only be created if we have a value of 1. */
-  for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
-    if(cp->coptions[i].set && OPTIONS_UINT8VAL)
-      switch(cp->coptions[i].key)
-        {
-        case GAL_OPTIONS_KEY_PRINTPARAMS:
-          options_print_all(cp, NULL, NULL);
-          break;
+  /* See if the values should be printed and if so, where. */
+  switch(sum)
+    {
+    /* No printing option has been called, so just return. */
+    case 0:  return;
 
-        case GAL_OPTIONS_KEY_SETDIRCONF:
-          if( asprintf(&dirname, ".%s", PACKAGE)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          options_print_all(cp, dirname, cp->coptions[i].name);
-          free(dirname);
-          break;
+    /* (Only) one of the printing options has been called, so we'll need to
+       print the values in the proper place. */
+    case 1:
+      for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
+        if(cp->coptions[i].set && OPTIONS_UINT8VAL)
+          switch(cp->coptions[i].key)
+            {
+            case GAL_OPTIONS_KEY_PRINTPARAMS:
+              options_print_all(cp, NULL, NULL);
+              break;
 
-        case GAL_OPTIONS_KEY_SETUSRCONF:
-          home=options_get_home();
-          if( asprintf(&dirname, "%s/%s", home, USERCONFIG_DIR)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          options_print_all(cp, dirname, cp->coptions[i].name);
-          free(dirname);
-          break;
-        }
+            case GAL_OPTIONS_KEY_SETDIRCONF:
+              if( asprintf(&dirname, ".%s", PACKAGE)<0 )
+                error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+              options_print_all(cp, dirname, cp->coptions[i].name);
+              free(dirname);
+              break;
+
+            case GAL_OPTIONS_KEY_SETUSRCONF:
+              home=options_get_home();
+              if( asprintf(&dirname, "%s/%s", home, USERCONFIG_DIR)<0 )
+                error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+              options_print_all(cp, dirname, cp->coptions[i].name);
+              free(dirname);
+              break;
+            }
+      break;
+
+    /* More than one of the printing options has been called. */
+    default:
+      error(EXIT_FAILURE, 0, "only one of the `printparams', `setdirconf' "
+            "and `setusrconf' options can be called in each run");
+    }
 }
