@@ -855,6 +855,42 @@ columns_define_alloc(struct mkcatalogparams *p)
           ciflag[ CCOL_SUM ] = 1;
           break;
 
+        case UI_KEY_MEAN:
+          name           = "MEAN";
+          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          ocomment       = "Mean of sky subtracted values.";
+          ccomment       = "Mean of pixels subtracted by rivers.";
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_width     = 10;
+          disp_precision = 4;
+          oiflag[ OCOL_NUM ] = 1;
+          oiflag[ OCOL_SUM ] = 1;
+          ciflag[ CCOL_NUM ] = 1;
+          ciflag[ CCOL_SUM ] = 1;
+          ciflag[ CCOL_RIV_NUM ] = 1;
+          ciflag[ CCOL_RIV_SUM ] = 1;
+          break;
+
+        case UI_KEY_MEDIAN:
+          name           = "MEDIAN";
+          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          ocomment       = "Median of sky subtracted values.";
+          ccomment       = "Median of pixels subtracted by rivers.";
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_width     = 10;
+          disp_precision = 4;
+          oiflag[ OCOL_MEDIAN  ] = 1;
+          oiflag[ OCOL_NUMALL  ] = 1;
+          ciflag[ CCOL_MEDIAN  ] = 1;
+          ciflag[ CCOL_NUMALL  ] = 1;
+          ciflag[ CCOL_RIV_NUM ] = 1;
+          ciflag[ CCOL_RIV_SUM ] = 1;
+          break;
+
         case UI_KEY_MAGNITUDE:
           name           = "MAGNITUDE";
           unit           = "log";
@@ -1585,6 +1621,18 @@ columns_fill(struct mkcatalog_passparams *pp)
                                       : NAN );
           break;
 
+        case UI_KEY_MEAN:
+          ((float *)colarr)[oind] = ( oi[ OCOL_NUM ]>0.0f
+                                      ? oi[ OCOL_SUM ] / oi[ OCOL_NUM ]
+                                      : NAN );
+          break;
+
+        case UI_KEY_MEDIAN:
+          ((float *)colarr)[oind] = ( oi[ OCOL_NUM ]>0.0f
+                                      ? oi[ OCOL_MEDIAN ]
+                                      : NAN );
+          break;
+
         case UI_KEY_MAGNITUDE:
           ((float *)colarr)[oind] = MKC_MAG(oi[ OCOL_SUM ]);
           break;
@@ -1758,6 +1806,24 @@ columns_fill(struct mkcatalog_passparams *pp)
           case UI_KEY_NORIVERBRIGHTNESS:
             ((float *)colarr)[cind] = ( ci[ CCOL_NUM ]>0.0f
                                         ? ci[ CCOL_SUM ] : NAN );
+            break;
+
+          case UI_KEY_MEAN:
+            /* Similar to brightness. */
+            tmp = ( ci[ CCOL_RIV_NUM ]>0.0f
+                    ? ci[ CCOL_RIV_SUM ]/ci[ CCOL_RIV_NUM ]
+                    : 0 );
+
+            /* Subtract it from the clump's mean. */
+            ((float *)colarr)[cind] = ( ci[ CCOL_NUM ]>0.0f
+                                        ? (ci[CCOL_SUM]/ci[CCOL_NUM] - tmp)
+                                        : NAN );
+
+            break;
+
+          case UI_KEY_MEDIAN:
+            ((float *)colarr)[cind] = ( ci[ CCOL_NUM ]>0.0f
+                                        ? ci[ CCOL_MEDIAN ] : NAN );
             break;
 
           case UI_KEY_MAGNITUDE: /* Similar: brightness for clumps */

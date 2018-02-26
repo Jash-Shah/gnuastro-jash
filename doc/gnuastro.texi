@@ -830,21 +830,45 @@ was changed.
 demonstrates how four data sets with widely different shapes (when plotted)
 give nearly identical output from standard regression techniques. Anscombe
 uses this (now famous) quartet, which was introduced in the paper quoted
-above, to argue that ``Good statistical analysis is not a purely routine
-matter, and generally calls for more than one pass through the
-computer''. Anscombe's quartet can be generalized to say that users of a
-software cannot claim to understand how it works only based on the
-experience they have gained by frequently using it. This kind of subjective
-experience is prone to very serious mis-understandings about the data, what
-the software/statistical-method really does (especially as it gets more
+above, to argue that ``@emph{Good statistical analysis is not a purely
+routine matter, and generally calls for more than one pass through the
+computer}''. Echoing Anscombe's concern after 44 years, some of the highly
+recognized statisticians of our time (Leek, McShane, Gelman, Colquhoun,
+Nuijten and Goodman), wrote in Nature that:
+
+@quotation
+We need to appreciate that data analysis is not purely computational and
+algorithmic — it is a human behaviour....Researchers who hunt hard enough
+will turn up a result that fits statistical criteria — but their discovery
+will probably be a false positive.
+@author Five ways to fix statistics, Nature, 551, Nov 2017.
+@end quotation
+
+Users of statistical (scientific) methods (software) are therefore not
+passive (objective) agents in their result. Therefore, it is necessary to
+actually understand the method not just use it as a black box. The
+subjective experience gained by frequently using a method/software is not
+sufficient to claim an understanding of how the tool/method works and how
+relevant it is to the data and analysis. This kind of subjective experience
+is prone to very serious mis-understandings about the data, what the
+software/statistical-method really does (especially as it gets more
 complicated), and thus the scientific interpretation of the result. This
 attitude is further encouraged through non-free
-software@footnote{@url{https://www.gnu.org/philosophy/free-sw.html}}. This
-approach to scientific software only helps in producing dogmas and an
-``obscurantist faith in the expert's special skill, and in his personal
-knowledge and authority''@footnote{Karl Popper. The logic of scientific
-discovery. 1959. Larger quote is given at the start of the PDF (for print)
-version of this book.}.
+software@footnote{@url{https://www.gnu.org/philosophy/free-sw.html}},
+poorly written (or non-existant) scientific software manuals, and
+non-reproducible papers@footnote{Where the authors omit many of the
+analysis/processing ``details'' from the paper by arguing that they would
+make the paper too long/unreadable. However, software methods do allows us
+to supplement papers with all the details necessary to exactly reproduce
+the result. For example see @url{https://doi.org/10.5281/zenodo.1163746,
+zenodo.1163746} and @url{https://doi.org/10.5281/zenodo.1164774,
+zenodo.1164774} and this @url{
+http://akhlaghi.org/reproducible-science.html, general discussion}.}. This
+approach to scientific software and methods only helps in producing dogmas
+and an ``@emph{obscurantist faith in the expert's special skill, and in his
+personal knowledge and authority}''@footnote{Karl Popper. The logic of
+scientific discovery. 1959. Larger quote is given at the start of the PDF
+(for print) version of this book.}.
 
 @quotation
 @cindex Douglas Rushkoff
@@ -907,8 +931,8 @@ Imagine if Galileo did not have the technical knowledge to build a
 telescope. Astronomical objects could not be seen with the Dutch military
 design of the telescope. In the beginning of his ``The Sidereal Messenger''
 (1610) he cautions the readers on this issue and instructs them on how to
-build a suitable instrument: without a detailed description of ``how'' he
-made his observations, no one would believe him. The same is true today,
+build a suitable instrument: without a detailed description of @emph{how}
+he made his observations, no one would believe him. The same is true today,
 science cannot progress with a black box. Before he actually saw the moons
 of Jupiter, the mountains on the Moon or the crescent of Venus, he was
 “evasive” to Kepler@footnote{Galileo G. (Translated by Maurice
@@ -917,17 +941,19 @@ first edition, 2008.}. Science is not independent of its tools.
 
 @cindex Ken Thomson
 @cindex Stroustrup, Bjarne
-Bjarne Stroustrup (creator of the C++ language) says: ``Without
-understanding software, you are reduced to believing in magic''.  Ken
-Thomson (the designer or the Unix operating system) says ``I abhor a system
-designed for the `user' if that word is a coded pejorative meaning `stupid
-and unsophisticated'.'' Certainly no scientist (user of a scientific
-software) would want to be considered a believer in magic, or `stupid and
-unsophisticated'. However, this can happen when scientists get too distant
-from the raw data and are mainly indulging themselves in their own
-high-level (abstract) models (creations). For example, roughly five years
-before special relativity and about two decades before quantum mechanics
-fundamentally changed Physics, Kelvin is quoted as saying:
+Bjarne Stroustrup (creator of the C++ language) says: ``@emph{Without
+understanding software, you are reduced to believing in magic}''.  Ken
+Thomson (the designer or the Unix operating system) says ``@emph{I abhor a
+system designed for the `user' if that word is a coded pejorative meaning
+`stupid and unsophisticated'}.'' Certainly no scientist (user of a
+scientific software) would want to be considered a believer in magic, or
+stupid and unsophisticated. However, this often happen when scientists get
+too distant from the raw data and methods and are mainly indulging
+themselves in their own high-level (abstract) models (creations).
+
+Roughly five years before special relativity and about two decades before
+quantum mechanics fundamentally changed Physics, Kelvin is quoted as
+saying:
 
 @quotation
 @cindex Lord Kelvin
@@ -2391,22 +2417,24 @@ unambiguous. In short, you often don't need to type the full name of the
 program you want to run.
 
 Gnuastro contains a large number of programs and it is natural to forget
-the details of each program's options. Therefore, before starting the
-analysis, let's review how you can refresh your memory any time you want on
-the command-line while working (without taking your hands off the
-keyboard). This book comes with your installation, so it will always
-correspond to your installed version of Gnuastro. Please see @ref{Info} for
-more.
+the details of each program's options or inputs and outputs. Therefore,
+before starting the analysis, let's review how you can access this book to
+refresh your memory any time you want. For example when working on the
+command-line, without having to take your hands off the keyboard. When you
+install Gnuastro, this book is also installed on your system along with all
+the programs and libraries, so you don't need an internet connection to to
+access/read it. Also, by accessing this book as described below, you can be
+sure that it corresponds to your installed version of Gnuastro.
 
 @cindex GNU Info
 GNU Info@footnote{GNU Info is already available on almost all Unix-like
 operating systems.} is the program in charge of displaying the manual on
-the command-line. To see this whole book on your command-line, please run
-the following command and subsequent keys. Info has its own
-mini-environment, therefore we'll show the keys that must be pressed in the
-mini-environment after a @code{->} sign. You can also ignore anything after
-the @code{#} sign in the middle of the line, they are only for your
-information.
+the command-line (for more, see @ref{Info}). To see this whole book on your
+command-line, please run the following command and press subsequent
+keys. Info has its own mini-environment, therefore we'll show the keys that
+must be pressed in the mini-environment after a @code{->} sign. You can
+also ignore anything after the @code{#} sign in the middle of the line,
+they are only for your information.
 
 @example
 $ info gnuastro                # Open the top of the manual.
@@ -2722,22 +2750,22 @@ $ for z in $(seq 0.5 0.1 5); do                                  \
   done
 @end example
 
-If you want a fast result and commonly need such processing for a larger
-number of redshifts, the command above can be slow. This is because the
-CosmicCalculator program has a lot of overhead: it has to parse the
-command-line and all configuration files (see below). These are both
-human-readable characters, not computer-readable bits. CosmicCalculator
-then has to check the sanity of its inputs and check which of its many
-options you have asked for. It has to do all of these for every
-redshift. To greatly speed up the processing, Gnuastro gives you direct
-access to the root work-horse of CosmicCalculator without all that
-overhead: @ref{Gnuastro library}.
+This is a fast and simple way for this repeated calculation when it is only
+necessary once. However, if you commonly need this calculation and possibly
+for a larger number of redshifts, the command above can be slow. This is
+because the CosmicCalculator program has a lot of overhead. To be generic
+and easy to operate, it has to parse the command-line and all configuration
+files (see below) which contain human-readable characters and need a lot of
+processing to be ready for processing by the computer. Afterwards,
+CosmicCalculator has to check the sanity of its inputs and check which of
+its many options you have asked for. It has to do all of these for every
+redshift in the loop above.
 
-Using Gnuastro's library, you can write your own tiny little program for
-this same calculation, without all that extra overhead of CosmicCalculator
-(or any of Gnuastro's programs, see @ref{Library}). For this particular
-job, you want Gnuastro's @ref{Cosmology library}. Here is one example: put
-the following small C program in a file called @file{myprogram.c}.
+To greatly speed up the processing, you can directly access the root
+work-horse of CosmicCalculator without all that overhead. Using Gnuastro's
+library, you can write your own tiny program particularly designed for this
+exact calculation (and nothing else!). To do that, copy and paste the
+following C program in a file called @file{myprogram.c}.
 
 @example
 #include <math.h>
@@ -2774,45 +2802,46 @@ main(void)
 @end example
 
 @noindent
-To build and run this C program, you can use @ref{BuildProgram}. It is
-designed to manage Gnuastro's dependencies, compile the program you give it
-and then run it. In short, it hides all the complexities of compiling,
-linking and running C programs based on Gnuastro's library. The library
-will later be usable higher level languages like Python or Julia, for now
-it is only usable by C and C++ programs.
+To greatly simplify the compilation, linking and running of simple C
+programs like this that use Gnuastro's library, Gnuastro has
+@ref{BuildProgram}. This program designed to manage Gnuastro's
+dependencies, compile and link the program and then run the new program. To
+build and run the program above, simply run the following command:
 
 @example
 $ astbuildprog myprogram.c
 @end example
 
-See how much faster this is compared to the shell loop we wrote above? You
-might have noticed that a new file called @file{myprogram} is also created
-in the directory. This is the compiled program that was created and run by
-the command above (its in binary machine code, not human-readable any
-more). You can run it again to get the same results with a command like
-this:
+Did you notice how much faster this was compared to the shell loop we wrote
+above? You might have noticed that a new file called @file{myprogram} is
+also created in the directory. This is the compiled program that was
+created and run by the command above (its in binary machine code format,
+not human-readable any more). You can run it again to get the same results
+with a command like this:
 
 @example
 $ ./myprogram
 @end example
 
 The efficiency of @file{myprogram} compared to CosmicCalculator is because
-the requested processing is faster/comparable to the overheads. For other
-programs that take large input datasets (images for example), the overhead
-is usually negligible compared to the processing. In such cases, the
-libraries are only useful if you want a different/new processing compared
-to the functionalities in Gnuastro's existing programs.
+the requested processing is faster/comparable to the overheads necessary
+for each processing. For other programs that take large input datasets
+(images for example), the overhead is usually negligible compared to the
+processing. In such cases, the libraries are only useful if you want a
+different/new processing compared to the functionalities in Gnuastro's
+existing programs.
 
-Gnuastro has a large library which all the programs use for various steps
-their processing. For the full list of available functions classified by
-context, please see @ref{Gnuastro library}. Gnuastro's library and
-BuildProgram are created to make it easy for you to use these powerful
-features and get to your scientific results as efficiently (fast) and
-accurately as possible. Several other complete working examples (involving
-images and tables) of Gnuastro's libraries can be see in @ref{Library demo
-programs}. We'll stop with the libraries at this point in this tutorial and
-get back to Gnuastro's already built programs which ready to be used on the
-command-line.
+Gnuastro has a large library which is heavily used by all the programs. In
+other words, the library is like the skeleton of Gnuastro. For the full
+list of available functions classified by context, please see @ref{Gnuastro
+library}. Gnuastro's library and BuildProgram are created to make it easy
+for you to use these powerful features as you like. This gives you a high
+level of creativity, while also providing efficiency and
+robustness. Several other complete working examples (involving images and
+tables) of Gnuastro's libraries can be see in @ref{Library demo
+programs}. Let's stop the discussion on libraries at this point in this
+tutorial and get back to Gnuastro's already built programs which were the
+main purpose of this tutorial.
 
 None of Gnuastro's programs keep a default value internally within their
 code. However, when you ran CosmicCalculator with the @option{-z2} option
@@ -15147,7 +15176,7 @@ variable to the @code{mkcatalogparams} structure.
 
 @item ui.h
 The @code{option_keys_enum} associates a unique value for each option to
-MakeProfiles. The options that have a short option version, the single
+MakeCatalog. The options that have a short option version, the single
 character short comment is used for the value. Those that don't have a
 short option version, get a large integer automatically. You should add a
 variable here to identify your desired column.
@@ -15167,15 +15196,14 @@ sanity checks and preparations for it here. Otherwise, you can ignore this
 file.
 
 @item columns.c
-This file will contain the main definition and high-level calculation of
-your new column through the @code{columns_define_alloc} and
-@code{columns_fill} functions. In the first, you specify the basic
-information about the column: its name, units, comments, type (see
-@ref{Numeric data types}) and how it should be printed if the output is a
-text file. You should also specify the raw/internal columns that are
-necessary for this column here as the many existing examples show. Through
-the types for objects and rows, you can specify if this column is only for
-clumps, objects or both.
+This file contains the main definition and high-level calculation of your
+new column through the @code{columns_define_alloc} and @code{columns_fill}
+functions. In the first, you specify the basic information about the
+column: its name, units, comments, type (see @ref{Numeric data types}) and
+how it should be printed if the output is a text file. You should also
+specify the raw/internal columns that are necessary for this column here as
+the many existing examples show. Through the types for objects and rows,
+you can specify if this column is only for clumps, objects or both.
 
 The second main function (@code{columns_fill}) writes the final value into
 the appropriate column for each object and clump. As you can see in the
@@ -15187,6 +15215,9 @@ As described before, this file contains the two main MakeCatalog
 work-horses: @code{mkcatalog_first_pass} and @code{mkcatalog_second_pass},
 their names are descriptive enough and their internals are also clear and
 heavily commented.
+
+@item doc/gnuastro.texi
+Update this manual and add a description for the new column.
 
 @end table
 
@@ -15728,6 +15759,16 @@ simply the sum of the pixels associated with clumps in the object. If no
 usable pixels (blank or below the threshold) are present over the clump or
 object, the stored value will be NaN, because zero (note that zero is
 meaningful).
+
+@item --mean
+The mean sky subtracted value of pixels within the object or clump. For
+clumps, the average river flux is subtracted from the sky subtracted
+mean.
+
+@item --median
+The median sky subtracted value of pixels within the object or clump. For
+clumps, the average river flux is subtracted from the sky subtracted
+median.
 
 @item --noriverbrightness
 [Clumps] The Sky (not river) subtracted clump brightness. By definition,
@@ -23011,15 +23052,14 @@ use to access an element of the @code{OTHER} dataset (if
 (similar to @code{itype} and @code{INPUT} discussed above). If
 @code{PARSE_OTHER} is non-zero, then @code{o} will also be incremented to
 the same index element but in the other array. You can use these along with
-any other variable you define before this macro to process the input and
-store it in the other.
+any other variable you define before this macro to process the input and/or
+the other.
 
 All variables within this function-like macro begin with @code{tpo_} except
-for the three variables listed above. So as long as you don't start the
-names of your variables with this prefix everything will be fine. Note that
-@code{i} (and possibly @code{o}) will be incremented once by this
-function-like macro, so don't increment them within @code{OP}. As a
-summary, the three variables you have access to within @code{OP} are:
+for the three variables listed below. Therefore, as long as you don't start
+the names of your variables with this prefix everything will be fine. Note
+that @code{i} (and possibly @code{o}) will be incremented once by this
+function-like macro, so don't increment them within @code{OP}.
 
 @table @code
 @item i

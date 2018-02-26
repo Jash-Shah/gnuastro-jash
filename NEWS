@@ -9,6 +9,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   cumulative frequency plots to be set outside the minimum or maximum
   values of the dataset.
 
+  MakeCatalog: The new `--mean' and `--median' options will calculate the
+  mean and median pixel value within an object or clump respectively.
+
 ** Removed features
 
 ** Changed features
@@ -22,6 +25,10 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Crash when printing values with the `--onlyversion' option (bug #53142).
 
   NULL value of onlyversion option causing a crash (bug #53147).
+
+  Match output directory ignored when making multiple files (bug #53226).
+
+  Statistics program bad results on integer columns with limits (bug #53230).
 
 
 
