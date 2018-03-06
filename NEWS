@@ -5,16 +5,30 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 
 ** New features
 
+  MakeCatalog: The new `--mean' and `--median' options will calculate the
+  mean and median pixel value within an object or clump respectively.
+
+  MakeCatalog: The new `--upperlimitsigma' and `--upperlimitquantile'
+  columns will report the postion of the object's brightness with respect
+  to the distribution of randomly measured values. The former as a multiple
+  of sigma and the latter as a quantile. Also, `--upperlimitonesigma' will
+  return the 1-sigma value of the randomly placed upper limit magnitudes
+  (irrespective of the value given to `--upnsigma').
+
+  NoiseChisel: a value of `none' to the `--kernel' option will disable
+  convolution.
+
   Statistics: the new `--manualbinrange' allows the bins in histograms or
   cumulative frequency plots to be set outside the minimum or maximum
   values of the dataset.
 
-  MakeCatalog: The new `--mean' and `--median' options will calculate the
-  mean and median pixel value within an object or clump respectively.
-
 ** Removed features
 
 ** Changed features
+
+  Libraries: `gal_statistics_quantile_function' returns `inf' or `-inf' if
+  the given value is smaller than the minimum or larger than the maximum of
+  the input dataset's range.
 
 ** Bug fixes
 
@@ -30,7 +44,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 
   Statistics program bad results on integer columns with limits (bug #53230).
 
+  NoiseChisel crash when no growth is possible (bug #53268).
 
+  MakeCatalog parses area larger than clump (bug #53295).
 
 
 

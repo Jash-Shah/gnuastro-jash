@@ -34,6 +34,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/statistics.h>
 
 #include "main.h"
+
+#include "ui.h"
 #include "mkcatalog.h"
 
 
@@ -45,7 +47,7 @@ static gal_data_t *
 upperlimit_make_clump_tiles(struct mkcatalog_passparams *pp)
 {
   gal_data_t *input=pp->p->input;
-  size_t ndim=input->ndim, *dsize=input->dsize;
+  size_t ndim=input->ndim, *tsize=pp->tile->dsize;
 
   int32_t *O, *C;
   gal_data_t *tiles=NULL;
@@ -68,7 +70,8 @@ upperlimit_make_clump_tiles(struct mkcatalog_passparams *pp)
         minmax[ i * width + ndim + d ] = 0;                /* Maximum. */
       }
 
-  /* Parse over the object and get the clump's minimum and maximum. */
+  /* Parse over the object and get the clump's minimum and maximum
+     positions.*/
   while( pp->start_end_inc[0] + increment <= pp->start_end_inc[1] )
     {
       /* Set the pointers for this tile. */
@@ -77,14 +80,15 @@ upperlimit_make_clump_tiles(struct mkcatalog_passparams *pp)
       C = pp->st_c + increment;
 
       /* Go over the contiguous region. */
-      II = I + dsize[ndim-1];
+      II = I + tsize[ndim-1];
       do
         {
           /* Only consider clumps. */
           if( *O==pp->object && *C>0 )
             {
               /* Get the coordinates of this pixel. */
-              gal_dimension_index_to_coord(I-start, ndim, dsize, coord);
+              gal_dimension_index_to_coord(I-start, ndim, input->dsize,
+                                           coord);
 
               /* Check to see if this coordinate is the smallest/largest
                  found so far for this label. Note that labels start from
@@ -104,7 +108,7 @@ upperlimit_make_clump_tiles(struct mkcatalog_passparams *pp)
       while(++I<II);
 
       /* Increment to the next contiguous region. */
-      increment += ( gal_tile_block_increment(input, dsize, num_increment++,
+      increment += ( gal_tile_block_increment(input, tsize, num_increment++,
                                               NULL) );
     }
 
@@ -261,17 +265,112 @@ upperlimit_random_position(struct mkcatalog_passparams *pp, gal_data_t *tile,
 
 
 
-static double
+/* Given the distribution of values, do the upper-limit calculations. */
+static void
+upperlimit_measure(struct mkcatalog_passparams *pp, int32_t clumplab,
+                   int do_measurement)
+{
+  float *scarr;
+  gal_data_t *column;
+  size_t init_size, col, one=1;
+  struct mkcatalogparams *p=pp->p;
+  gal_data_t *sum, *qfunc=NULL, *sigclip=NULL;
+  double *o = ( clumplab
+                ? &pp->ci[ (clumplab-1) * CCOL_NUMCOLS ]
+                : pp->oi );
+
+  /* If the random distribution exsits, then fill it in. */
+  if(do_measurement)
+    {
+      /* These columns are for both objects and clumps, so if they are
+         requested in objects, they will also be written for clumps here
+         (the order is irrelevant here). */
+      for(column=p->objectcols; column!=NULL; column=column->next)
+        {
+          switch(column->status)
+            {
+            /* Columns that depend on the sigma of the distribution. */
+            case UI_KEY_UPPERLIMIT:
+            case UI_KEY_UPPERLIMITMAG:
+            case UI_KEY_UPPERLIMITSIGMA:
+            case UI_KEY_UPPERLIMITONESIGMA:
+
+              /* We only need to do this once. */
+              if(sigclip==NULL)
+                {
+                  /* Calculate the sigma-clipped standard deviation. Since
+                     it is done in place, the size will change, so we'll
+                     keep the size here and put it back after we are
+                     done. */
+                  init_size=pp->up_vals->size;
+                  sigclip=gal_statistics_sigma_clip(pp->up_vals,
+                                                    p->upsigmaclip[0],
+                                                    p->upsigmaclip[1], 1, 1);
+                  pp->up_vals->size=pp->up_vals->dsize[0]=init_size;
+                  scarr=sigclip->array;
+
+                  /* Write the raw sigma. */
+                  col = clumplab ? CCOL_UPPERLIMIT_S : OCOL_UPPERLIMIT_S;
+                  o[col] = scarr[3];
+
+                  /* Write the multiple of `upnsigma'. */
+                  col = clumplab ? CCOL_UPPERLIMIT_B : OCOL_UPPERLIMIT_B;
+                  o[col] = scarr[3] * p->upnsigma;
+
+                  /* Clean up. */
+                  gal_data_free(sigclip);
+                }
+              break;
+
+            /* Quantile column. */
+            case UI_KEY_UPPERLIMITQUANTILE:
+
+              /* Also only necessary once (if requested multiple times). */
+              if(qfunc==NULL)
+                {
+                  /* Similar to the case for sigma-clipping, we'll need to
+                     keep the size here also. */
+                  init_size=pp->up_vals->size;
+                  sum=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0,
+                                     -1, NULL, NULL, NULL);
+                  ((float *)(sum->array))[0]=o[clumplab?CCOL_SUM:OCOL_SUM];
+                  qfunc=gal_statistics_quantile_function(pp->up_vals, sum, 1);
+
+                  /* Fill in the column. */
+                  col = clumplab ? CCOL_UPPERLIMIT_Q : OCOL_UPPERLIMIT_Q;
+                  pp->up_vals->size=pp->up_vals->dsize[0]=init_size;
+                  o[col] = ((double *)(qfunc->array))[0];
+
+                  /* Clean up. */
+                  gal_data_free(sum);
+                  gal_data_free(qfunc);
+                }
+              break;
+            }
+        }
+    }
+  else
+    {
+      o[ clumplab ? CCOL_UPPERLIMIT_S : OCOL_UPPERLIMIT_S ] = NAN;
+      o[ clumplab ? CCOL_UPPERLIMIT_B : OCOL_UPPERLIMIT_B ] = NAN;
+      o[ clumplab ? CCOL_UPPERLIMIT_Q : OCOL_UPPERLIMIT_Q ] = NAN;
+    }
+}
+
+
+
+
+
+static void
 upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
                     unsigned long seed, int32_t clumplab)
 {
   struct mkcatalogparams *p=pp->p;
   size_t ndim=p->input->ndim, *dsize=p->input->dsize;
 
+  double sum;
   void *tarray;
-  double sum, out;
   int continueparse;
-  gal_data_t *sigclip;
   uint8_t *M=NULL, *st_m=NULL;
   float *uparr=pp->up_vals->array;
   float *I, *II, *SK, *st_i, *st_sky;
@@ -373,19 +472,12 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
       ++tcounter;
     }
 
-  /* Calculate the standard deviation of this distribution. */
-  if(counter==p->upnum)
-    {
-      sigclip=gal_statistics_sigma_clip(pp->up_vals, p->upsigmaclip[0],
-                                        p->upsigmaclip[1], 1, 1);
-      out = ((float *)(sigclip->array))[3] * p->upnsigma;
-    }
-  else out=NAN;
+  /* Do the measurement on the random distribution. */
+  upperlimit_measure(pp, clumplab, counter==p->upnum);
 
   /* Reset the tile's array pointer, clean up and return. */
   tile->array=tarray;
   free(rcoord);
-  return out;
 }
 
 
@@ -414,16 +506,14 @@ void
 upperlimit_calculate(struct mkcatalog_passparams *pp)
 {
   size_t i;
-  double *ci;
   unsigned long seed;
   gal_data_t *clumptiles;
   struct mkcatalogparams *p=pp->p;
 
   /* First find the upper limit magnitude for this object. */
-  pp->oi[OCOL_UPPERLIMIT_B] = upperlimit_one_tile(pp, pp->tile,
-                                                  p->seed+pp->object, 0);
+  upperlimit_one_tile(pp, pp->tile, p->seed+pp->object, 0);
 
-  /* If a clumps image is present (a clump catalog is requested( and this
+  /* If a clumps image is present (a clump catalog is requested) and this
      object has clumps, then find the upper limit magnitude for the clumps
      within this object. */
   if(p->clumps && pp->clumpsinobj)
@@ -438,10 +528,8 @@ upperlimit_calculate(struct mkcatalog_passparams *pp)
          IDs. */
       for(i=0;i<pp->clumpsinobj;++i)
         {
-          ci=&pp->ci[ i * CCOL_NUMCOLS ];
           seed = p->seed + p->numobjects + p->numclumps * pp->object + i;
-          ci[CCOL_UPPERLIMIT_B] = upperlimit_one_tile(pp, &clumptiles[i],
-                                                          seed, i+1);
+          upperlimit_one_tile(pp, &clumptiles[i], seed, i+1);
         }
 
       /* Clean up the clump tiles. */
