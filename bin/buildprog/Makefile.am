@@ -47,37 +47,35 @@ EXTRA_DIST = main.h authors-cite.h args.h ui.h buildprog.h astbuildprog.conf.in
 # CPPFLAGS and LDFLAGS that the user might have given at configure time
 # (stored in `IN_CPPFLAGS' and `IN_LDFLAGS' Makefile
 # variables). BuildProgram also needs to know these directories in order to
-# compile its programs. Here, we will be going
+# compile its programs. Thus with the rule below, the directories in these
+# variables will be written into the final BuildProgram configuration file.
 astbuildprog.conf: $(top_srcdir)/bin/buildprog/astbuildprog.conf.in
 	cp $< $@
 	infoadded="no";                                \
 	for i in $(IN_CPPFLAGS); do                    \
-          if test x"$$i" != x; then                    \
-	    if test $$infoadded = "no"; then           \
-	      echo "" >> $@;                           \
-	      echo "# Installation information" >> $@; \
-	      infoadded="yes";                         \
-	    fi;                                        \
-	    v=$$(echo $$i | sed -e 's/-I//');          \
-	    echo " includedir $$v" >> $@;              \
-          fi;                                          \
+	  if test $$infoadded = "no"; then             \
+	    echo "" >> $@;                             \
+	    echo "# Installation information" >> $@;   \
+	    infoadded="yes";                           \
+	  fi;                                          \
+	  v=$$(echo $$i | sed -e 's/-I//');            \
+	  echo " includedir $$v" >> $@;                \
 	done;                                          \
 	for i in $(IN_LDFLAGS); do                     \
-          if test x"$$i" != x; then                    \
-	    if test $$infoadded = "no"; then           \
-	      echo "" >> $@;                           \
-	      echo "# Installation information" >> $@; \
-	      infoadded="yes";                         \
-	    fi;                                        \
-	    v=$$(echo $$i | sed -e 's/-L//');          \
-	    echo " linkdir $$v" >> $@;                 \
+	  if test $$infoadded = "no"; then             \
+	    echo "" >> $@;                             \
+	    echo "# Installation information" >> $@;   \
+	    infoadded="yes";                           \
 	  fi;                                          \
+	  v=$$(echo $$i | sed -e 's/-L//');            \
+	  echo " linkdir $$v" >> $@;                   \
 	done
 
 
 
 
 
-## The configuration file (distribute and install).
+## The configuration file (clean, distribute and install).
 ## NOTE: the man page is created in doc/Makefile.am
+CLEANFILES = astbuildprog.conf
 dist_sysconf_DATA = astbuildprog.conf

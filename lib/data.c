@@ -450,7 +450,7 @@ gal_data_free_contents(gal_data_t *data)
   if(data->type==GAL_TYPE_STRING && data->array)
     {
       strarr=data->array;
-      for(i=0;i<data->size;++i) free(strarr[i]);
+      for(i=0;i<data->size;++i) if(strarr[i]) free(strarr[i]);
     }
 
   /* Free the array. */
@@ -533,9 +533,13 @@ gal_data_array_calloc(size_t size)
       out[i].type       = GAL_TYPE_INVALID;
       out[i].ndim       = 0;
       out[i].dsize      = NULL;
+      out[i].size       = 0;
+      out[i].mmapname   = NULL;
+      out[i].minmapsize = -1;
       out[i].nwcs       = 0;
       out[i].wcs        = NULL;
-      out[i].mmapname   = NULL;
+      out[i].flag       = 0;
+      out[i].status     = 0;
       out[i].next       = NULL;
       out[i].block      = NULL;
       out[i].name = out[i].unit = out[i].comment = NULL;

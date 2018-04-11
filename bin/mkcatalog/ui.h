@@ -47,18 +47,17 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   f g k l u v w x y
-   H J L W X Y
+   f g k w x y z
+   E H J L O R W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
-  UI_KEY_OBJECTSFILE     = 'O',         /* General settings. */
-  UI_KEY_CLUMPSFILE      = 'C',
-  UI_KEY_SKYFILE         = 's',
-  UI_KEY_STDFILE         = 't',
-  UI_KEY_SKYSUBTRACTED   = 'E',
-  UI_KEY_THRESHOLD       = 'R',
+  UI_KEY_CLUMPSCAT       = 'C',         /* General settings. */
+  UI_KEY_VALUESFILE      = 'v',
+  UI_KEY_CLUMPSFILE      = 'l',
+  UI_KEY_INSKY           = 's',
+  UI_KEY_INSTD           = 't',
   UI_KEY_ENVSEED         = 'e',
 
   UI_KEY_IDS             = 'i',         /* Catalog columns. */
@@ -82,11 +81,14 @@ enum option_keys_enum
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
-  UI_KEY_OBJECTSHDU      = 1000,        /* General settings. */
+  UI_KEY_VALUESHDU       = 1000,        /* General settings. */
   UI_KEY_CLUMPSHDU,
   UI_KEY_SKYHDU,
   UI_KEY_STDHDU,
+  UI_KEY_WITHCLUMPS,
   UI_KEY_ZEROPOINT,
+  UI_KEY_VARIANCE,
+  UI_KEY_SUBTRACTSKY,
   UI_KEY_SFMAGNSIGMA,
   UI_KEY_SFMAGAREA,
   UI_KEY_UPMASKFILE,
@@ -95,11 +97,14 @@ enum option_keys_enum
   UI_KEY_UPRANGE,
   UI_KEY_UPSIGMACLIP,
   UI_KEY_UPNSIGMA,
+  UI_KEY_CHECKUPPERLIMIT,
+  UI_KEY_NOCLUMPSORT,
 
   UI_KEY_OBJID,                         /* Catalog columns. */
   UI_KEY_IDINHOSTOBJ,
   UI_KEY_CLUMPSAREA,
   UI_KEY_WEIGHTAREA,
+  UI_KEY_GEOAREA,
   UI_KEY_GEOX,
   UI_KEY_GEOY,
   UI_KEY_GEOZ,
@@ -121,6 +126,7 @@ enum option_keys_enum
   UI_KEY_CLUMPSGEOW1,
   UI_KEY_CLUMPSGEOW2,
   UI_KEY_CLUMPSGEOW3,
+  UI_KEY_BRIGHTNESSERR,
   UI_KEY_CLUMPSBRIGHTNESS,
   UI_KEY_NORIVERBRIGHTNESS,
   UI_KEY_MEAN,
@@ -130,6 +136,7 @@ enum option_keys_enum
   UI_KEY_UPPERLIMITONESIGMA,
   UI_KEY_UPPERLIMITSIGMA,
   UI_KEY_UPPERLIMITQUANTILE,
+  UI_KEY_UPPERLIMITSKEW,
   UI_KEY_RIVERAVE,
   UI_KEY_RIVERNUM,
   UI_KEY_SKY,

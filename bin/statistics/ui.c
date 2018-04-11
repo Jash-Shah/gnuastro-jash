@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/tile.h>
+#include <gnuastro/array.h>
 #include <gnuastro/qsort.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/table.h>
@@ -797,7 +798,9 @@ ui_preparations(struct statisticsparams *p)
   if(p->isfits && p->hdu_type==IMAGE_HDU)
     {
       p->inputformat=INPUT_FORMAT_IMAGE;
-      p->input=gal_fits_img_read(p->inputname, cp->hdu, cp->minmapsize, 0, 0);
+      p->input=gal_array_read_one_ch(p->inputname, cp->hdu, cp->minmapsize);
+      p->input->wcs=gal_wcs_read(p->inputname, cp->hdu, 0, 0,
+                                 &p->input->nwcs);
     }
   else
     {
@@ -850,6 +853,12 @@ ui_preparations(struct statisticsparams *p)
     {
       /* Only keep the elements we want. */
       gal_blank_remove(p->input);
+
+      /* Make sure there actually are any (non-blank) elements left. */
+      if(p->input->size==0)
+        error(EXIT_FAILURE, 0, "%s: all elements are blank",
+              gal_fits_name_save_as_string(p->inputname, cp->hdu));
+
       p->input->flag &= ~GAL_DATA_FLAG_HASBLANK ;
       p->input->flag |= GAL_DATA_FLAG_BLANK_CH ;
 

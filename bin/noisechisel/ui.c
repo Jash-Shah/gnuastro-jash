@@ -1,5 +1,5 @@
 /*********************************************************************
-NoiseChisel - Detect and segment signal in a noisy dataset.
+NoiseChisel - Detect signal in a noisy dataset.
 NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/array.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/dimension.h>
@@ -230,8 +231,8 @@ ui_read_check_only_options(struct noisechiselparams *p)
 {
   /* If the convolved option is given, then the convolved HDU is also
      mandatory. */
-  if(p->convolvedname && p->convolvedhdu==NULL)
-    error(EXIT_FAILURE, 0, "no value given to `--convolvedhdu'. When the "
+  if(p->convolvedname && p->chdu==NULL)
+    error(EXIT_FAILURE, 0, "no value given to `--chdu'. When the "
           "`--convolved' option is called (to specify a convolved image "
           "and avoid convolution) it is mandatory to also specify a HDU "
           "for it");
@@ -250,9 +251,9 @@ ui_read_check_only_options(struct noisechiselparams *p)
 
   /* For the options that make tables, the table format option is
      mandatory. */
-  if( (p->checkdetsn || p->checkclumpsn) && p->cp.tableformat==0 )
+  if( p->checksn && p->cp.tableformat==0 )
     error(EXIT_FAILURE, 0, "`--tableformat' is necessary with the "
-          "`--checkdetsn' and `--checkclumpsn' options.\n"
+          "`--checksn' option.\n"
           "Please see description for `--tableformat' after running the "
           "following command for more information (use `SPACE' to go down "
           "the page and `q' to return to the command-line):\n\n"
@@ -280,12 +281,12 @@ ui_read_check_only_options(struct noisechiselparams *p)
       gal_checkset_check_file(p->widekernelname);
 
       /* If its FITS, see if a HDU has been provided. */
-      if( gal_fits_name_is_fits(p->widekernelname) && p->wkhdu==NULL )
-        error(EXIT_FAILURE, 0, "no HDU specified for wide kernel. When the "
-              "wide kernel is a FITS file, a HDU must also be specified. You "
-              "can use the `--khdu' option and give it the HDU number "
-              "(starting from zero), extension name, or anything "
-              "acceptable by CFITSIO");
+      if( gal_fits_name_is_fits(p->widekernelname) && p->whdu==NULL )
+        error(EXIT_FAILURE, 0, "no HDU specified for the given wide kernel "
+              "(`%s'). When the wide kernel is a FITS file, a HDU must also "
+              "be specified. You can use the `--whdu' option and give it the "
+              "HDU number (starting from zero), extension name, or any "
+              "HDU identifier acceptable by CFITSIO", p->widekernelname);
     }
 }
 
@@ -355,7 +356,7 @@ ui_set_output_names(struct noisechiselparams *p)
     }
   else
     p->cp.output=gal_checkset_automatic_output(&p->cp, p->inputname,
-                                               "_labeled.fits");
+                                               "_detected.fits");
 
   /* Tile check. */
   if(p->cp.tl.checktiles)
@@ -373,7 +374,7 @@ ui_set_output_names(struct noisechiselparams *p)
                                                 "_detsky.fits");
 
   /* Pseudo-detection S/N values. */
-  if(p->checkdetsn)
+  if(p->checksn)
     {
       p->detsn_s_name=gal_checkset_automatic_output(&p->cp, basename,
                  ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
@@ -389,27 +390,11 @@ ui_set_output_names(struct noisechiselparams *p)
   /* Detection steps. */
   if(p->checkdetection)
     p->detectionname=gal_checkset_automatic_output(&p->cp, basename,
-                                               "_det.fits");
+                                               "_detcheck.fits");
 
-  /* Detection steps. */
+  /* Sky checks. */
   if(p->checksky)
     p->skyname=gal_checkset_automatic_output(&p->cp, basename, "_sky.fits");
-
-  /* Clump S/N values. */
-  if(p->checkclumpsn)
-    {
-      p->clumpsn_s_name=gal_checkset_automatic_output(&p->cp, basename,
-                 ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
-                   ? "_clumpsn_sky.txt" : "_clumpsn_sky.fits") );
-      p->clumpsn_d_name=gal_checkset_automatic_output(&p->cp, basename,
-                 ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
-                   ? "_clumpsn_det.txt" : "_clumpsn_det.fits") );
-    }
-
-  /* Segmentation steps. */
-  if(p->checksegmentation)
-    p->segmentationname=gal_checkset_automatic_output(&p->cp, basename,
-                                                      "_seg.fits");
 }
 
 
@@ -417,120 +402,19 @@ ui_set_output_names(struct noisechiselparams *p)
 
 
 /* Prepare the kernel, either from a file, or from the default arrays
-   (depending on the dimensionality). The default kernels were created as
-   follows:
-
-   2D: The following commands were put in a script and run. It will create
-   a plain text array along with a FITS image.
-
-       set -o errexit           # Stop if a program returns false.
-       echo "0 0.0 0.0 3 2 0 0 1 1 5" > tmp.txt
-       export GSL_RNG_TYPE=ranlxs2
-       export GSL_RNG_SEED=1
-       astmkprof tmp.txt --oversample=1 --envseed --numrandom=10000 \
-                 --tolerance=0.01 --nomerged
-       astcrop 0_tmp.fits --section=2:*-1,2:*-1 --zeroisnotblank    \
-               --output=fwhm2.fits
-       astconvertt fwhm2.fits --output=fwhm2.txt
-       rm 0_tmp.fits tmp.txt
-
-   3D: MakeProfiles was initially run with these commands:
-
-       $ export GSL_RNG_SEED=1
-       $ export GSL_RNG_TYPE=ranlxs2
-       $ astmkprof --kernel=gaussian-3d,1.5,5,0.5 --oversample=1 --envseed
-
-   The resulting fits file was converted to text with the this C program to
-   generate the `kernel-3d.h' header file (until ConvertType supports 3D
-   datasets) which is then "include"d into this function.
-
-       #include <stdio.h>
-       #include <stdlib.h>
-       #include <gnuastro/fits.h>
-
-       int
-       main(void)
-       {
-         size_t i;
-         float *arr;
-         gal_data_t *img=gal_fits_img_read_to_type("kernel.fits", "1",
-                                                   GAL_TYPE_FLOAT32, -1);
-
-         arr=img->array;
-
-         printf("size_t kernel_3d_dsize[3]={%zu, %zu, %zu};\n",
-                img->dsize[0], img->dsize[1], img->dsize[2]);
-         printf("float kernel_3d[%zu]={", img->size);
-         for(i=0;i<img->size;++i)
-           {
-             if(i>0)
-               {
-                 if(i % img->dsize[2]                 == 0 ) printf("\n");
-	         if(i % (img->dsize[2]*img->dsize[1]) == 0 ) printf("\n");
-	       }
-
-	     // We cannot use `\b' here, since we are writing directly
-	     // to the command-line, so we'll first write the number,
-	     // then decide if any subsequent character (a comma)
-	     // should be written.
-	     printf("%.7g", arr[i]);
-
-	     // The last element doesn't need a comma. In each line,
-	     // the last character must not be a space, but for easy
-	     // readability, the elements in between need a space.
-	     if( i!=(img->size-1) )
-	       printf("%s", ((i+1)%img->dsize[2]) ? ", " : ",");
-           }
-         printf("};\n");
-
-         return EXIT_SUCCESS;
-       }
-
-   Assuming this C program is in a file named `kernel.c', it can be
-   compiled, run and saved into `kernel-3d.h' with the command below:
-
-       $ astbuildprog -q kernel.c > kernel-3d.h
-*/
+   available in the headers. The default kernels were created as
+   follows. */
 static void
 ui_prepare_kernel(struct noisechiselparams *p)
 {
-#include <kernel-3d.h>
   float *f, *ff, *k;
   size_t ndim=p->input->ndim;
-  size_t kernel_2d_dsize[2]={11,11};
-  float  kernel_2d[121]=
-    {
-      0, 0, 0, 0, 0, 6.57699e-09, 0, 0, 0, 0, 0,
 
-      0, 0, 6.57699e-09, 2.10464e-07, 1.68371e-06, 3.36742e-06, 1.68371e-06,
-      2.10464e-07, 6.57699e-09, 0, 0,
-
-      0, 6.57699e-09, 8.41855e-07, 2.69394e-05, 0.000383569, 0.000717224,
-      0.000379782, 2.69394e-05, 8.41855e-07, 6.57699e-09, 0,
-
-      0, 2.10464e-07, 2.69394e-05, 0.00140714, 0.00888549, 0.016448,
-      0.00867408, 0.00138203, 2.69394e-05, 2.10464e-07, 0,
-
-      0, 1.68371e-06, 0.000381138, 0.00875434, 0.0573377, 0.106308, 0.0570693,
-      0.00891745, 0.000378914, 1.68371e-06, 0,
-
-      6.57699e-09, 3.36742e-06, 0.00071364, 0.0164971, 0.106865, 0.197316,
-      0.106787, 0.0166434, 0.000713827, 3.36742e-06, 6.57699e-09,
-
-      0, 1.68371e-06, 0.000215515, 0.00894112, 0.0573699, 0.106239, 0.0567907,
-      0.00901191, 0.000215515, 1.68371e-06, 0,
-
-      0, 2.10464e-07, 2.69394e-05, 0.00135085, 0.0089288, 0.0164171,
-      0.00879334, 0.0013622, 2.69394e-05, 2.10464e-07, 0,
-
-      0, 6.57699e-09, 8.41855e-07, 2.69394e-05, 0.000215515, 0.000724137,
-      0.000215515, 2.69394e-05, 8.41855e-07, 6.57699e-09, 0,
-
-      0, 0, 6.57699e-09, 2.10464e-07, 1.68371e-06, 3.36742e-06, 1.68371e-06,
-      2.10464e-07, 6.57699e-09, 0, 0,
-
-      0, 0, 0, 0, 0, 6.57699e-09, 0, 0, 0, 0, 0
-    };
+/* Since the default kernel has to be identical between NoiseChisel and
+   Segment, we have defined it in a shared header file to be accessible by
+   both programs. */
+#include <gnuastro-internal/kernel-2d.h>
+#include <gnuastro-internal/kernel-3d.h>
 
   /* If a kernel file is given, then use it. Otherwise, use the default
      kernel. */
@@ -556,11 +440,10 @@ ui_prepare_kernel(struct noisechiselparams *p)
       do *f=*k++; while(++f<ff);
     }
 
-
   /* If a wide kernel is given, then read it into memory. Otherwise, just
      ignore it. */
   if(p->widekernelname)
-    p->widekernel=gal_fits_img_read_kernel(p->widekernelname, p->wkhdu,
+    p->widekernel=gal_fits_img_read_kernel(p->widekernelname, p->whdu,
                                            p->cp.minmapsize);
 }
 
@@ -655,9 +538,11 @@ ui_preparations_read_input(struct noisechiselparams *p)
   char *option_name=NULL, *good_values=NULL;
 
   /* Read the input as a single precision floating point dataset. */
-  p->input = gal_fits_img_read_to_type(p->inputname, p->cp.hdu,
-                                       GAL_TYPE_FLOAT32,
-                                       p->cp.minmapsize, 0, 0);
+  p->input = gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
+                                           GAL_TYPE_FLOAT32,
+                                           p->cp.minmapsize);
+  p->input->wcs = gal_wcs_read(p->inputname, p->cp.hdu, 0, 0,
+                               &p->input->nwcs);
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
 
@@ -730,15 +615,15 @@ ui_preparations(struct noisechiselparams *p)
   if(p->convolvedname)
     {
       /* Read the input convolved image. */
-      p->conv = gal_fits_img_read_to_type(p->convolvedname, p->convolvedhdu,
-                                          GAL_TYPE_FLOAT32, p->cp.minmapsize,
-                                          0, 0);
+      p->conv = gal_array_read_one_ch_to_type(p->convolvedname, p->chdu,
+                                              GAL_TYPE_FLOAT32,
+                                              p->cp.minmapsize);
 
       /* Make sure the convolved image is the same size as the input. */
       if( gal_data_dsize_is_different(p->input, p->conv) )
         error(EXIT_FAILURE, 0, "%s (hdu %s), given to `--convolved' and "
               "`--convolvehdu', is not the same size as NoiseChisel's "
-              "input: %s (hdu: %s)", p->convolvedname, p->convolvedhdu,
+              "input: %s (hdu: %s)", p->convolvedname, p->chdu,
               p->inputname, p->cp.hdu);
     }
   else
@@ -846,7 +731,7 @@ ui_read_check_inputs_setup(int argc, char *argv[],
       printf("  - Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
       if(p->convolvedname)
         printf("  - Convolved input: %s (hdu: %s)\n",
-               p->convolvedname, p->convolvedhdu);
+               p->convolvedname, p->chdu);
       else
         {
           if(p->kernelname)
@@ -867,7 +752,7 @@ ui_read_check_inputs_setup(int argc, char *argv[],
         }
       if(p->widekernelname)
         printf("  - Wide Kernel: %s (hdu: %s)\n", p->widekernelname,
-               p->wkhdu);
+               p->whdu);
     }
 }
 
@@ -948,9 +833,6 @@ ui_free_report(struct noisechiselparams *p, struct timeval *t1)
   if(p->detsn_s_name)     free(p->detsn_s_name);
   if(p->detsn_d_name)     free(p->detsn_d_name);
   if(p->detectionname)    free(p->detectionname);
-  if(p->clumpsn_s_name)   free(p->clumpsn_s_name);
-  if(p->clumpsn_d_name)   free(p->clumpsn_d_name);
-  if(p->segmentationname) free(p->segmentationname);
 
   /* Free the allocated datasets. */
   gal_data_free(p->sky);
@@ -960,7 +842,6 @@ ui_free_report(struct noisechiselparams *p, struct timeval *t1)
   gal_data_free(p->kernel);
   gal_data_free(p->binary);
   gal_data_free(p->olabel);
-  gal_data_free(p->clabel);
   gal_data_free(p->widekernel);
   if(p->conv!=p->input) gal_data_free(p->conv);
 

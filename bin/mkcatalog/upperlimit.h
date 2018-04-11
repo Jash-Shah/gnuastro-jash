@@ -24,6 +24,10 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define UPPERLIMIT_H
 
 void
+upperlimit_write_comments(struct mkcatalogparams *p,
+                          gal_list_str_t **comments, int withsigclip);
+
+void
 upperlimit_calculate(struct mkcatalog_passparams *pp);
 
 #endif

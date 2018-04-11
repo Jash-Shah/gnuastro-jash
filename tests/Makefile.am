@@ -53,12 +53,13 @@ if COND_HASGNULIBTOOL
 endif
 if COND_ARITHMETIC
   MAYBE_ARITHMETIC_TESTS = arithmetic/snimage.sh arithmetic/onlynumbers.sh \
-  arithmetic/where.sh arithmetic/or.sh
+  arithmetic/where.sh arithmetic/or.sh arithmetic/connected-components.sh
 
   arithmetic/onlynumbers.sh: prepconf.sh.log
+  arithmetic/connected-components.sh: noisechisel/noisechisel.sh.log
   arithmetic/snimage.sh: noisechisel/noisechisel.sh.log
   arithmetic/where.sh: noisechisel/noisechisel.sh.log
-  arithmetic/or.sh: noisechisel/noisechisel.sh.log
+  arithmetic/or.sh: segment/segment.sh.log
 endif
 if COND_BUILDPROG
   MAYBE_BUILDPROG_TESTS = buildprog/simpleio.sh
@@ -124,11 +125,12 @@ if COND_MATCH
   match/merged-cols.sh: prepconf.sh.log
 endif
 if COND_MKCATALOG
-  MAYBE_MKCATALOG_TESTS = mkcatalog/simple.sh mkcatalog/simple-3d.sh \
-  mkcatalog/aperturephot.sh
+  MAYBE_MKCATALOG_TESTS = mkcatalog/detections.sh mkcatalog/simple-3d.sh   \
+  mkcatalog/objects-clumps.sh mkcatalog/aperturephot.sh
 
-  mkcatalog/simple.sh: noisechisel/noisechisel.sh.log
-  mkcatalog/simple-3d.sh: noisechisel/noisechisel-3d.sh.log
+  mkcatalog/objects-clumps.sh: segment/segment.sh.log
+  mkcatalog/detections.sh: arithmetic/connected-components.sh.log
+  mkcatalog/simple-3d.sh: segment/segment-3d.sh.log
   mkcatalog/aperturephot.sh: noisechisel/noisechisel.sh.log          \
                              mkprof/clearcanvas.sh.log
 endif
@@ -160,6 +162,12 @@ if COND_NOISECHISEL
 
   noisechisel/noisechisel.sh: mknoise/addnoise.sh.log
   noisechisel/noisechisel-3d.sh: mknoise/addnoise-3d.sh.log
+endif
+if COND_SEGMENT
+  MAYBE_SEGMENT_TESTS = segment/segment.sh segment/segment-3d.sh
+
+  segment/segment.sh: noisechisel/noisechisel.sh.log
+  segment/segment-3d.sh: noisechisel/noisechisel-3d.sh.log
 endif
 if COND_STATISTICS
   MAYBE_STATISTICS_TESTS = statistics/basicstats.sh statistics/estimate_sky.sh
@@ -228,13 +236,14 @@ lib/multithread.sh: mkprof/mosaic1.sh.log
 
 # Final Tests
 # ===========
-TESTS = prepconf.sh lib/multithread.sh lib/versioncxx.sh              \
+TESTS = prepconf.sh lib/multithread.sh lib/versioncxx.sh                   \
   $(MAYBE_ARITHMETIC_TESTS) $(MAYBE_BUILDPROG_TESTS)                       \
   $(MAYBE_CONVERTT_TESTS) $(MAYBE_CONVOLVE_TESTS) $(MAYBE_COSMICCAL_TESTS) \
   $(MAYBE_CROP_TESTS) $(MAYBE_FITS_TESTS) $(MAYBE_MATCH_TESTS)             \
   $(MAYBE_MKCATALOG_TESTS) $(MAYBE_MKNOISE_TESTS) $(MAYBE_MKPROF_TESTS)    \
-  $(MAYBE_NOISECHISEL_TESTS) $(MAYBE_STATISTICS_TESTS)                     \
-  $(MAYBE_SUBTRACTSKY_TESTS) $(MAYBE_TABLE_TESTS) $(MAYBE_WARP_TESTS)
+  $(MAYBE_NOISECHISEL_TESTS) $(MAYBE_SEGMENT_TESTS)                        \
+  $(MAYBE_STATISTICS_TESTS) $(MAYBE_SUBTRACTSKY_TESTS)                     \
+  $(MAYBE_TABLE_TESTS) $(MAYBE_WARP_TESTS)
 
 
 

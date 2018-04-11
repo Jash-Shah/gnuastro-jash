@@ -1,11 +1,15 @@
 People who's help must be acknowledged in the next release.
 
+Leindert Boogaard
 Nima Dehdilani
 Antonio Diaz Diaz
+Lee Kelvin
 Guillaume Mahler
+Bertrand Pain
 Ole Streicher
 Michel Tallon
 Juan C. Tello
 Éric Thiébaut
 Aaron Watkins
 Sara Yousefi Taemeh
+Johannes Zabl

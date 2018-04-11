@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/array.h>
 #include <gnuastro/table.h>
 #include <gnuastro/threads.h>
 
@@ -337,9 +338,11 @@ ui_check_options_and_arguments(struct warpparams *p)
               "by CFITSIO)");
 
       /* Read the input image as double type and its WCS structure. */
-      p->input=gal_fits_img_read_to_type(p->inputname, p->cp.hdu,
-                                         GAL_TYPE_FLOAT64, p->cp.minmapsize,
-                                         p->hstartwcs, p->hendwcs);
+      p->input=gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
+                                             GAL_TYPE_FLOAT64,
+                                             p->cp.minmapsize);
+      p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu, p->hstartwcs,
+                                 p->hendwcs, &p->input->nwcs);
       if(p->input->wcs)
         {
           p->pixelscale=gal_wcs_pixel_scale(p->input->wcs);
@@ -890,6 +893,7 @@ ui_preparations(struct warpparams *p)
 void
 ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
 {
+  double *matrix;
   struct gal_options_common_params *cp=&p->cp;
 
 
@@ -937,7 +941,7 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
   /* Everything is ready, notify the user of the program starting. */
   if(!p->cp.quiet)
     {
-      double *matrix=p->matrix->array;
+      matrix=p->matrix->array;
       printf(PROGRAM_NAME" started on %s", ctime(&p->rawtime));
       printf(" Using %zu CPU thread%s\n", p->cp.numthreads,
              p->cp.numthreads==1 ? "." : "s.");

@@ -30,10 +30,10 @@ bin_PROGRAMS = astmkcatalog
 
 astmkcatalog_LDADD = -lgnuastro
 
-astmkcatalog_SOURCES = main.c ui.c mkcatalog.c columns.c upperlimit.c
+astmkcatalog_SOURCES = main.c ui.c mkcatalog.c columns.c upperlimit.c parse.c
 
 EXTRA_DIST = main.h authors-cite.h args.h ui.h mkcatalog.h columns.h	\
-  upperlimit.h
+  upperlimit.h parse.h
 
 
 

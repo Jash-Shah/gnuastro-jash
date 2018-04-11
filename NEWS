@@ -5,48 +5,164 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 
 ** New features
 
-  MakeCatalog: The new `--mean' and `--median' options will calculate the
-  mean and median pixel value within an object or clump respectively.
+  All programs:
+    - Input image dataset(s) can be in any of the formats recognized by
+      Gnuastro (e.g., FITS, TIFF, JPEG), provided that their libraries
+      (optional dependencies) were present at installation time.
 
-  MakeCatalog: The new `--upperlimitsigma' and `--upperlimitquantile'
-  columns will report the postion of the object's brightness with respect
-  to the distribution of randomly measured values. The former as a multiple
-  of sigma and the latter as a quantile. Also, `--upperlimitonesigma' will
-  return the 1-sigma value of the randomly placed upper limit magnitudes
-  (irrespective of the value given to `--upnsigma').
+  New program:
+    - Segment: new program in charge of segmentation over detections. This
+      operation was previously done by NoiseChisel. NoiseChisel is now ONLY
+      in charge of detection.
 
-  NoiseChisel: a value of `none' to the `--kernel' option will disable
-  convolution.
+  Arithmetic:
+    - connected-components: label the connected elements of the input.
+    - filter-sigclip-mean: sigma-clipped, mean filter operator.
+    - filter-sigclip-median: sigma-clipped, median filter operator.
+    - invert: subtract the maximum of unsigned types (absorption to emission).
 
-  Statistics: the new `--manualbinrange' allows the bins in histograms or
-  cumulative frequency plots to be set outside the minimum or maximum
-  values of the dataset.
+  ConvertType:
+    - TIFF images can also be used as input.
+
+  MakeCatalog:
+    MakeCatalog will only read the datasets necessary for the requested
+    columns. Until now, it would read all the possible datasets and all the
+    intermediate measurements. This is thus major improvement in memory and
+    CPU usage. As a result, the input argument is no longer assumed to be
+    the values file, but the object labels file. Please see the
+    "MakeCatalog inputs and basic settings" section of the book for
+    more. Here is the summary of the the options:
+    --insky: Sky value as a single value or file (dataset).
+    --instd: Sky standard deviation as a single value or file (dataset).
+    --valuesfile: filename containing the values dataset.
+    --valueshdu: HDU/extension containing the values dataset.
+    --clumpscat: Make a clumps catalog also (`WCLUMPS' keyword not used anymore).
+    --noclumpsort: Don't sort the clumps catalog by host object ID.
+    --subtractsky: Subtract the given Sky from the values dataset.
+    --variance: input standard deviation image is actually variance.
+    --checkupperlimit: make a table for random positions and measurements.
+    --geoarea: the number of labeled pixels (irrespective of value).
+    --brightnesserr: error in estimating the brightness.
+    --mean: calculate the mean pixel value within an object or clump.
+    --median: calculate the median pixel value within an object or clump.
+    --upperlimitsigma: position in random distribution (in units of sigma).
+    --upperlimitquantile: position in random distribution (quantile).
+    --upperlimitonesigma: 1sigma value of the random distribution.
+    --upperlimitskew: (mean-median)/sigma or skewness of random distribution.
+
+  NoiseChisel:
+    --rawoutput: only output the detection labels and Sky and its STD.
+    --label: label the connected detections. Until now this was the default
+      behavior. However, from this release, NoiseChisel is only in charge
+      of detection. Segmentation is done by a new program (Segment). Since
+      detection is ultimately just a binary operator, the default output
+      now has an 8-bit unsigned integer type with values of 0 or 1. With
+      this option, you can ask for it to label/count the connected
+      detections instead of the default binary output.
+
+  Statistics:
+    --manualbinrange: histogram or CFP range can be outside of distribution.
+
+  Libraries:
+    gal_array_read: read array from any of known formats (FITS,TIFF,JPEG,...).
+    gal_array_read_to_type: similar to `gal_array_read', but to given type.
+    gal_array_read_one_ch: Read in the data and make sure it is in one channel.
+    gal_array_read_one_ch_to_type: Make sure input is in one channel and type.
+    gal_blank_is: check to see if argument is blank in its type or not.
+    gal_eps_name_is_eps: Returns 1 if given filename is EPS.
+    gal_eps_suffix_is_eps: Returns 1 if given suffix is EPS.
+    gal_eps_to_pt: Converts dataset size to PostScript points.
+    gal_eps_write: Writes a dataset into an EPS file.
+    gal_jpeg_name_is_jpeg: Returns 1 if given filename is JPEG.
+    gal_jpeg_suffix_is_jpeg: Returns 1 if given suffix is JPEG.
+    gal_jpeg_read: Reads input JPEG image into `gal_data_t'.
+    gal_jpeg_write: Writes a `gal_data_t' into a JPEG file.
+    gal_label_grow_indexs: grow known indexs into desired areas.
+    gal_label_oversegment: apply over-segmentation to an input dataset.
+    gal_pdf_name_is_pdf: Returns 1 if given filename is PDF.
+    gal_pdf_suffix_is_pdf: Returns 1 if given suffix is PDF.
+    gal_pdf_write: Writes a dataset into an PDF file.
+    gal_tiff_name_is_tiff: check if name contains a TIFF suffix.
+    gal_tiff_suffix_is_tiff: check if suffix is a TIFF suffix.
+    gal_tiff_dir_string_read: convert a string to a TIFF directory number.
+    gal_tiff_read: Read the contents of a TIFF "directory" to `gal_data_t'.
 
 ** Removed features
 
+  NoiseChisel:
+
+    - Segmentation (and thus the options below) moved to the new Segment
+      program: --onlydetection, --segsnminarea, --checkclumpsn, --segquant,
+      --keepmaxnearriver, --gthresh, --minriverlength, --objbordersn,
+      --grownclumps, --checksegmentation.
+
+    --skysubtracted: no longer necessary, included in noise measuremnts.
+
+  MakeCatalog:
+    --skysubtracted: no longer necessary, included in noise measuremnts.
+
 ** Changed features
 
-  Libraries: `gal_statistics_quantile_function' returns `inf' or `-inf' if
-  the given value is smaller than the minimum or larger than the maximum of
-  the input dataset's range.
+  Fits:
+    --history: can be called/written multiple times in one run.
+    --comment: can be called/written multiple times in one run.
+
+  NoiseChisel:
+    From this release, NoiseChisel is only in charge of detection and won't
+    do segmentation any more. The new Segment program is in charge of
+    segmentation. Many of the changes below are due to this new limited
+    scope of NoiseChisel.
+    --kernel: value `none' will disable convolution.
+    - Renamed options:
+      --convolvedhdu ==> --chdu
+      --wkhdu        ==> --whdu
+      --detsnminarea ==> --snminarea
+      --checkdetsn   ==> --checksn
+      --detquant     ==> --snquant
+    - By default the detection map is a binary image (values of 0 or 1).
+    - With no output name, the output has a `_detected.fits' suffix.
+
+  MakeCatalog:
+    - Estimation of noise-level is now done per-pixel over the whole
+         label. Until now the average noise level was used.
+    --objectsfile has been removed. The main input argument is now assumed
+         to be the objects file.
+
+  Table:
+    --column: multiple columns (comma separated) can be used in one
+         instance of this option (multiple instances of this option are
+         still acceptable also).
+
+  Libraries:
+    gal_fits_img_read: now only reads the data not the WCS, therefore it no
+        longer needs the last two arguments. A subsequent call to
+        `gal_wcs_read' can be used to read the WCS information in the file.
+
+    gal_statistics_quantile_function: returns `inf' or `-inf' if the given
+        value is smaller than the minimum or larger than the maximum of the
+        input dataset's range. Until now, it would return blank in such
+        cases.
+
+    gal_statistics_number: the output dataset now has a `size_t' type. Until
+        now it was `uint64_t'.
 
 ** Bug fixes
 
-  Many unused result warnings for asprintf in some compilers (bug #52979).
+  bug #52979: Many unused result warnings for asprintf in some compilers.
+  bug #53122: Configure time CPPFLAGS and LDFLAGS don't pass to BuildProgram.
+  bug #53142: Crash when printing values with the `--onlyversion' option.
+  bug #53147: NULL value of onlyversion option causing a crash.
+  bug #53226: Match output directory ignored when making multiple files.
+  bug #53230: Statistics program bad results on integer columns with limits.
+  bug #53268: NoiseChisel crash when no growth is possible.
+  bug #53295: MakeCatalog parses area larger than clump.
+  bug #53304: NoiseChisel crash when there is no detection.
+  bug #53312: Fits crash on keyword editing (except --delete).
+  bug #53407: Instrumental noise in MakeNoise should be squared.
+  bug #53424: Sigma-clipping seg-faults when there are no more elements.
+  bug #53580: Warp crash when no WCS present.
 
-  Configure time CPPFLAGS and LDFLAGS don't pass to BuildProgram (bug #53122).
 
-  Crash when printing values with the `--onlyversion' option (bug #53142).
-
-  NULL value of onlyversion option causing a crash (bug #53147).
-
-  Match output directory ignored when making multiple files (bug #53226).
-
-  Statistics program bad results on integer columns with limits (bug #53230).
-
-  NoiseChisel crash when no growth is possible (bug #53268).
-
-  MakeCatalog parses area larger than clump (bug #53295).
 
 
 

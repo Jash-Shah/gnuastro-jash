@@ -287,8 +287,6 @@ AM_CONDITIONAL([COND_HASHELP2MAN], [test "x$has_help2man" = "xyes"])
 
 
 
-
-
 # Check libjpeg:
 AC_SEARCH_LIBS([jpeg_stdio_dest], [jpeg],
                [has_libjpeg=yes], [has_libjpeg=no])
@@ -296,6 +294,18 @@ AS_IF([test "x$has_libjpeg" = "xyes"],
       [AC_DEFINE([HAVE_LIBJPEG], [], [Has libjpeg])],
       [anywarnings=yes])
 AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
+
+
+
+
+
+# Check libtiff:
+AC_SEARCH_LIBS([TIFFOpen], [tiff],
+               [has_libtiff=yes], [has_libtiff=no])
+AS_IF([test "x$has_libtiff" = "xyes"],
+      [AC_DEFINE([HAVE_LIBTIFF], [], [Has libtiff])],
+      [anywarnings=yes])
+AM_CONDITIONAL([COND_HASLIBTIFF], [test "x$has_libtiff" = "xyes"])
 
 
 
@@ -344,9 +354,9 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_GNULIBTOOL_EXEC], ["$gnulibtool_exec"],
 
 
 
-# Check Ghostscript: "-dPDFFitPage" option to Ghostscript, used by
-# ConvertType to convert from EPS to PDF, has been introduced in
-# Ghostscript 9.10.  Make sure we have at least that version.
+# Check Ghostscript: "-dPDFFitPage" option to Ghostscript, used by the
+# library to convert from EPS to PDF, has been introduced in Ghostscript
+# 9.10.  Make sure we have at least that version.
 #
 # Below, only when Ghostscript exists, we check its version and only if its
 # version is larger than 9.10, does Gnuastro finally assume the existence
@@ -466,6 +476,12 @@ AC_ARG_ENABLE([noisechisel],
 	      [AS_IF([test "x$enable_noisechisel" != xno],
                      [enable_noisechisel=yes; ayes=true])],
               [enable_noisechisel=notset])
+AC_ARG_ENABLE([segment],
+              [AS_HELP_STRING([--enable-segment],
+                    [Install Segment and other enabled programs.])],
+	      [AS_IF([test "x$enable_segment" != xno],
+                     [enable_segment=yes; ayes=true])],
+              [enable_segment=notset])
 AC_ARG_ENABLE([statistics],
               [AS_HELP_STRING([--enable-statistics],
                     [Install Statistics and other enabled programs.])],
@@ -501,41 +517,43 @@ AC_ARG_ENABLE([warp],
 # disabled).
 AS_IF([test $ayes = true ],
       [
-       AS_IF([test $enable_arithmetic = notset], [enable_arithmetic=no])
-       AS_IF([test $enable_buildprog = notset], [enable_buildprog=no])
-       AS_IF([test $enable_convertt = notset], [enable_convertt=no])
-       AS_IF([test $enable_convolve = notset], [enable_convolve=no])
-       AS_IF([test $enable_cosmiccal = notset], [enable_cosmiccal=no])
-       AS_IF([test $enable_crop = notset], [enable_crop=no])
-       AS_IF([test $enable_fits = notset], [enable_fits=no])
-       AS_IF([test $enable_match = notset], [enable_match=no])
-       AS_IF([test $enable_mkcatalog = notset], [enable_mkcatalog=no])
-       AS_IF([test $enable_mknoise = notset], [enable_mknoise=no])
-       AS_IF([test $enable_mkprof = notset], [enable_mkprof=no])
+       AS_IF([test $enable_arithmetic = notset],  [enable_arithmetic=no])
+       AS_IF([test $enable_buildprog = notset],   [enable_buildprog=no])
+       AS_IF([test $enable_convertt = notset],    [enable_convertt=no])
+       AS_IF([test $enable_convolve = notset],    [enable_convolve=no])
+       AS_IF([test $enable_cosmiccal = notset],   [enable_cosmiccal=no])
+       AS_IF([test $enable_crop = notset],        [enable_crop=no])
+       AS_IF([test $enable_fits = notset],        [enable_fits=no])
+       AS_IF([test $enable_match = notset],       [enable_match=no])
+       AS_IF([test $enable_mkcatalog = notset],   [enable_mkcatalog=no])
+       AS_IF([test $enable_mknoise = notset],     [enable_mknoise=no])
+       AS_IF([test $enable_mkprof = notset],      [enable_mkprof=no])
        AS_IF([test $enable_noisechisel = notset], [enable_noisechisel=no])
-       AS_IF([test $enable_statistics = notset], [enable_statistics=no])
-       AS_IF([test $enable_table = notset], [enable_table=no])
-#      AS_IF([test $enable_TEMPLATE = notset], [enable_TEMPLATE=no])
-       AS_IF([test $enable_warp = notset], [enable_warp=no])
+       AS_IF([test $enable_segment = notset],     [enable_segment=no])
+       AS_IF([test $enable_statistics = notset],  [enable_statistics=no])
+       AS_IF([test $enable_table = notset],       [enable_table=no])
+#      AS_IF([test $enable_TEMPLATE = notset],    [enable_TEMPLATE=no])
+       AS_IF([test $enable_warp = notset],        [enable_warp=no])
        ],
 
       [
-       AS_IF([test $enable_arithmetic = notset], [enable_arithmetic=yes])
-       AS_IF([test $enable_buildprog = notset], [enable_buildprog=yes])
-       AS_IF([test $enable_convertt = notset], [enable_convertt=yes])
-       AS_IF([test $enable_convolve = notset], [enable_convolve=yes])
-       AS_IF([test $enable_cosmiccal = notset], [enable_cosmiccal=yes])
-       AS_IF([test $enable_crop = notset], [enable_crop=yes])
-       AS_IF([test $enable_fits = notset], [enable_fits=yes])
-       AS_IF([test $enable_match = notset], [enable_match=yes])
-       AS_IF([test $enable_mkcatalog = notset], [enable_mkcatalog=yes])
-       AS_IF([test $enable_mknoise = notset], [enable_mknoise=yes])
-       AS_IF([test $enable_mkprof = notset], [enable_mkprof=yes])
+       AS_IF([test $enable_arithmetic = notset],  [enable_arithmetic=yes])
+       AS_IF([test $enable_buildprog = notset],   [enable_buildprog=yes])
+       AS_IF([test $enable_convertt = notset],    [enable_convertt=yes])
+       AS_IF([test $enable_convolve = notset],    [enable_convolve=yes])
+       AS_IF([test $enable_cosmiccal = notset],   [enable_cosmiccal=yes])
+       AS_IF([test $enable_crop = notset],        [enable_crop=yes])
+       AS_IF([test $enable_fits = notset],        [enable_fits=yes])
+       AS_IF([test $enable_match = notset],       [enable_match=yes])
+       AS_IF([test $enable_mkcatalog = notset],   [enable_mkcatalog=yes])
+       AS_IF([test $enable_mknoise = notset],     [enable_mknoise=yes])
+       AS_IF([test $enable_mkprof = notset],      [enable_mkprof=yes])
        AS_IF([test $enable_noisechisel = notset], [enable_noisechisel=yes])
-       AS_IF([test $enable_statistics = notset], [enable_statistics=yes])
-       AS_IF([test $enable_table = notset], [enable_table=yes])
-#      AS_IF([test $enable_TEMPLATE = notset], [enable_TEMPLATE=yes])
-       AS_IF([test $enable_warp = notset], [enable_warp=yes])
+       AS_IF([test $enable_segment = notset],     [enable_segment=yes])
+       AS_IF([test $enable_statistics = notset],  [enable_statistics=yes])
+       AS_IF([test $enable_table = notset],       [enable_table=yes])
+#      AS_IF([test $enable_TEMPLATE = notset],    [enable_TEMPLATE=yes])
+       AS_IF([test $enable_warp = notset],        [enable_warp=yes])
        ]
      )
 
@@ -552,22 +570,23 @@ AS_IF([test "x$has_gnulibtool" = "xno"], [enable_buildprog=no])
 
 
 # Make the enable_package values available for the Makefile:
-AM_CONDITIONAL([COND_ARITHMETIC], [test $enable_arithmetic = yes])
-AM_CONDITIONAL([COND_BUILDPROG], [test $enable_buildprog = yes])
-AM_CONDITIONAL([COND_CONVERTT], [test $enable_convertt = yes])
-AM_CONDITIONAL([COND_CONVOLVE], [test $enable_convolve = yes])
-AM_CONDITIONAL([COND_COSMICCAL], [test $enable_cosmiccal = yes])
-AM_CONDITIONAL([COND_CROP], [test $enable_crop = yes])
-AM_CONDITIONAL([COND_FITS], [test $enable_fits = yes])
-AM_CONDITIONAL([COND_MATCH], [test $enable_match = yes])
-AM_CONDITIONAL([COND_MKCATALOG], [test $enable_mkcatalog = yes])
-AM_CONDITIONAL([COND_MKNOISE], [test $enable_mknoise = yes])
-AM_CONDITIONAL([COND_MKPROF], [test $enable_mkprof = yes])
+AM_CONDITIONAL([COND_ARITHMETIC],  [test $enable_arithmetic = yes])
+AM_CONDITIONAL([COND_BUILDPROG],   [test $enable_buildprog = yes])
+AM_CONDITIONAL([COND_CONVERTT],    [test $enable_convertt = yes])
+AM_CONDITIONAL([COND_CONVOLVE],    [test $enable_convolve = yes])
+AM_CONDITIONAL([COND_COSMICCAL],   [test $enable_cosmiccal = yes])
+AM_CONDITIONAL([COND_CROP],        [test $enable_crop = yes])
+AM_CONDITIONAL([COND_FITS],        [test $enable_fits = yes])
+AM_CONDITIONAL([COND_MATCH],       [test $enable_match = yes])
+AM_CONDITIONAL([COND_MKCATALOG],   [test $enable_mkcatalog = yes])
+AM_CONDITIONAL([COND_MKNOISE],     [test $enable_mknoise = yes])
+AM_CONDITIONAL([COND_MKPROF],      [test $enable_mkprof = yes])
 AM_CONDITIONAL([COND_NOISECHISEL], [test $enable_noisechisel = yes])
-AM_CONDITIONAL([COND_STATISTICS], [test $enable_statistics = yes])
-AM_CONDITIONAL([COND_TABLE], [test $enable_table = yes])
-#AM_CONDITIONAL([COND_TEMPLATE], [test $enable_TEMPLATE = yes])
-AM_CONDITIONAL([COND_WARP], [test $enable_warp = yes])
+AM_CONDITIONAL([COND_SEGMENT],     [test $enable_segment = yes])
+AM_CONDITIONAL([COND_STATISTICS],  [test $enable_statistics = yes])
+AM_CONDITIONAL([COND_TABLE],       [test $enable_table = yes])
+#AM_CONDITIONAL([COND_TEMPLATE],   [test $enable_TEMPLATE = yes])
+AM_CONDITIONAL([COND_WARP],        [test $enable_warp = yes])
 
 
 
@@ -587,6 +606,7 @@ AC_CONFIG_FILES([Makefile
                  bin/match/Makefile
                  bin/mkprof/Makefile
                  bin/mknoise/Makefile
+                 bin/segment/Makefile
                  bin/convertt/Makefile
                  bin/convolve/Makefile
                  bin/buildprog/Makefile
@@ -648,17 +668,26 @@ AS_IF([test x$enable_guide_message = xyes],
       [
         AS_ECHO(["Configuration warning(s):"])
         AS_ECHO([])
+
         AS_IF([test "x$has_libjpeg" = "xno"],
               [AS_ECHO(["  - libjpeg, could not be linked with in your library search path."])
-               AS_ECHO(["    If JPEG outputs are desired from ConvertType, it will warn"])
-               AS_ECHO(["    you and abort with an error."])
+               AS_ECHO(["    If JPEG inputs/outputs are requested, the respective tool will"])
+               AS_ECHO(["    inform you and abort with an error."])
                AS_ECHO([]) ])
+
+        AS_IF([test "x$has_libtiff" = "xno"],
+              [AS_ECHO(["  - libtiff, could not be linked with in your library search path."])
+               AS_ECHO(["    If TIFF inputs/outputs are requested, the respective tool will"])
+               AS_ECHO(["    inform you and abort with an error."])
+               AS_ECHO([]) ])
+
         AS_IF([test "x$has_libgit2" = "x0"],
               [AS_ECHO(["  - libgit2, could not be linked with in your library search path."])
                AS_ECHO(["    When present, Git's describe output will be stored in the"])
                AS_ECHO(["    output files if Gnuastro's programs were called within a Git"])
                AS_ECHO(["    version controlled directory to help in reproducibility."])
                AS_ECHO([]) ])
+
         AS_IF([test "x$has_gnulibtool" = "xno"],
               [AS_ECHO(["  - GNU Libtool, could not be found in your search path."])
                AS_ECHO(["    Gnuastro's BuildProgram uses GNU libtool to link your source code"])
@@ -676,12 +705,14 @@ AS_IF([test x$enable_guide_message = xyes],
                       AS_ECHO([])
                      ])
               ])
+
         AS_IF([test "x$has_ghostscript" = "xno"],
               [AS_ECHO(["  - GPL GhostScript version 9.10 or later, with the executable"])
                AS_ECHO(["    name \`gs', was not found in your PATH environment variable."])
-               AS_ECHO(["    If PDF outputs are desired from ConvertType, it will abort"])
+               AS_ECHO(["    If PDF outputs are desired, the respective tool it will abort"])
                AS_ECHO(["    with an EPS output which you can convert to PDF by other means."])
                AS_ECHO([]) ])
+
         # The last two scenarios described below are taken from
         # https://unix.stackexchange.com/questions/65700/is-it-safe-to-add-to-my-path-how-come
         AS_IF([test "x$path_warning" = "xyes"],
@@ -698,6 +729,7 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    installing Gnuastro to learn more about PATH:"])
                AS_ECHO(["        $ info gnuastro \"Installation directory\""])
                AS_ECHO([]) ])
+
         AS_ECHO(["  All checks related to the warning(s) above will be skipped."])
         AS_ECHO([])
       ]

@@ -1,9 +1,9 @@
 /*********************************************************************
-NoiseChisel - Detect and segment signal in a noisy dataset.
+NoiseChisel - Detect signal in a noisy dataset.
 NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <akhlaghi@gnu.org>
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
 Copyright (C) 2015-2018, Free Software Foundation, Inc.
 
@@ -29,18 +29,19 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 
 #include <gnuastro/fits.h>
+#include <gnuastro/label.h>
 #include <gnuastro/binary.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/dimension.h>
 #include <gnuastro/statistics.h>
 
 #include <gnuastro-internal/timing.h>
+#include <gnuastro-internal/checkset.h>
 
 #include "main.h"
 
 #include "ui.h"
 #include "sky.h"
-#include "clumps.h"
 #include "threshold.h"
 
 
@@ -526,7 +527,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
   sn         = gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &tablen, NULL, 1,
                               p->cp.minmapsize, "SIGNAL-TO-NOISE", "ratio",
                               NULL);
-  snind      = ( p->checkdetsn==0 ? NULL
+  snind      = ( p->checksn==0 ? NULL
                  : gal_data_alloc(NULL, GAL_TYPE_INT32, 1, &tablen, NULL, 1,
                                   p->cp.minmapsize, "LABEL", "counter",
                                   NULL) );
@@ -601,7 +602,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
           plabend = (plab=worklab->array) + worklab->size;
           do
             if( *plab!=GAL_BLANK_INT32
-                && ( area[*plab]<p->detsnminarea || brightness[*plab]<0) )
+                && ( area[*plab]<p->snminarea || brightness[*plab]<0) )
               *plab=0;
           while(++plab<plabend);
         }
@@ -618,7 +619,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
   for(i=1;i<tablen;++i)
     {
       ave=brightness[i]/area[i];
-      if( area[i]>p->detsnminarea && ave>0.0f && pos[i*pcols]>0.0f )
+      if( area[i]>p->snminarea && ave>0.0f && pos[i*pcols]>0.0f )
         {
           /* Get the flux weighted center coordinates. */
           for(j=0;j<ndim;++j)
@@ -630,10 +631,6 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
           err  = ((float *)(p->std->array))[
                          gal_tile_full_id_from_coord(&p->cp.tl, coord) ];
 
-          /* If the image was already sky subtracted, the second power of
-             the error needs to be doubled. */
-          err *= p->skysubtracted ? err : 2.0f*err;
-
           /* Correct the index in the sn to store the Signal to noise
              ratio. When we are dealing with the noise, we only want the
              non-zero signal to noise values, so we will just use a
@@ -643,7 +640,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
           ind = s0d1D2 ? i : counter++;
           if(snind) indarr[ind]=i;
           snarr[ind] = ( sqrt( (float)(area[i])/p->cpscorr )
-                         * ave / sqrt(ave+err) );
+                         * ave / sqrt( ave + err*err ) );
         }
       else
         /* In detection pseudo-detections, order matters, so we will set
@@ -761,19 +758,19 @@ detection_pseudo_real(struct noisechiselparams *p)
     error(EXIT_FAILURE, 0, "only %zu pseudo-detections could be found over "
           "the sky region to estimate an S/N. This is less than %zu (value "
           "to `--minnumfalse' option). Please adjust parameters like "
-          "`--dthresh', `--detsnminarea', or make sure that there actually "
+          "`--dthresh', `--snminarea', or make sure that there actually "
           "is sufficient sky area after initial detection. You can use "
           "`--checkdetection' to see every step until this point", sn->size,
           p->minnumfalse);
 
 
   /* Get the S/N quantile and report it if we are in non-quiet mode. */
-  quant=gal_statistics_quantile(sn, p->detquant, 1);
+  quant=gal_statistics_quantile(sn, p->snquant, 1);
   p->detsnthresh = *((float *)(quant->array));
   if(!p->cp.quiet)
     {
-      if( asprintf(&msg, "Pseudo-det S/N: %.2f (%.2f quant of %zu).",
-                   p->detsnthresh, p->detquant, sn->size)<0 )
+      if( asprintf(&msg, "Pseudo-det S/N: %.3f (%g quant of %zu).",
+                   p->detsnthresh, p->snquant, sn->size)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
@@ -1034,7 +1031,7 @@ detection_quantile_expand(struct noisechiselparams *p, gal_data_t *workbin)
           /* If the binary value is 1, then we want an initial label of 1
              (the object is already detected). If it isn't, then we only
              want it if it is above the threshold. */
-          *o = *b==1 ? 1 : ( *arr>*e_th ? CLUMPS_INIT : 0);
+          *o = *b==1 ? 1 : ( *arr>*e_th ? GAL_LABEL_INIT : 0);
           if(*b==0 && *arr>*e_th)
             *d++ = o - (int32_t *)(p->olabel->array);
 
@@ -1046,7 +1043,7 @@ detection_quantile_expand(struct noisechiselparams *p, gal_data_t *workbin)
       while(++o<of);
 
       /* Expand the detections. */
-      clumps_grow(p->olabel, diffuseindexs, 0, p->olabel->ndim);
+      gal_label_grow_indexs(p->olabel, diffuseindexs, 0, p->olabel->ndim);
 
       /* Only keep the 1 valued pixels in the binary array and fill its
          holes. */
@@ -1162,28 +1159,22 @@ detection(struct noisechiselparams *p)
 
 
   /* Update the user on the progress, if necessary. */
-  if(!p->cp.quiet)
+  if(!p->cp.quiet && p->detgrowquant!=1.0f && num_expanded!=GAL_BLANK_SIZE_T )
     {
-      if(p->detgrowquant==1.0f)
+      /* If the user hasn't asked for a labeled image, then don't confuse
+         them with the number of detections, just let them know that growth
+         is complete. */
+      if(p->label)
         {
-          if( asprintf(&msg, "%zu detections with no growth.",
-                       num_true_initial)<0 )
+          if( asprintf(&msg, "%zu detections after growth to %.3f "
+                       "quantile.", num_true_initial, p->detgrowquant)<0 )
             error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
         }
       else
         {
-          if(num_expanded==GAL_BLANK_SIZE_T)
-            {
-              if(asprintf(&msg, "%zu detections (no growth to %.3f "
-                          "quantile).", num_true_initial, p->detgrowquant)<0)
-                error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-            }
-          else
-            {
-              if( asprintf(&msg, "%zu detections after growth to %.3f "
-                           "quantile.", num_true_initial, p->detgrowquant)<0 )
-                error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-            }
+          if( asprintf(&msg, "Growth to %.3f quantile complete.",
+                       p->detgrowquant)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
         }
       gal_timing_report(&t1, msg, 2);
       free(msg);
@@ -1202,8 +1193,17 @@ detection(struct noisechiselparams *p)
                        : num_true_initial );
   if(!p->cp.quiet)
     {
-      if( asprintf(&msg, "%zu final true detections.", p->numdetections)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+      /* If the user hasn't asked for a labeled image, then don't confuse
+         them with the number of detections, just let them know that growth
+         is complete. */
+      if(p->label)
+        {
+          if( asprintf(&msg, "%zu final true detections.",
+                       p->numdetections)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+        }
+      else
+        gal_checkset_allocate_copy("Detection complete.", &msg);
       gal_timing_report(&t0, msg, 1);
       free(msg);
     }

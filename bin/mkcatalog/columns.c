@@ -59,14 +59,14 @@ columns_alloc_radec(struct mkcatalogparams *p)
 
   /* For objects. */
   if(p->wcs_vo==NULL)
-    for(i=0;i<p->input->ndim;++i)
+    for(i=0;i<p->objects->ndim;++i)
       gal_list_data_add_alloc(&p->wcs_vo, NULL, GAL_TYPE_FLOAT64, 1,
                               &p->numobjects, NULL, 0, p->cp.minmapsize,
                               NULL, NULL, NULL);
 
   /* For clumps */
   if(p->clumps && p->wcs_vc==NULL)
-    for(i=0;i<p->input->ndim;++i)
+    for(i=0;i<p->objects->ndim;++i)
       gal_list_data_add_alloc(&p->wcs_vc, NULL, GAL_TYPE_FLOAT64, 1,
                               &p->numclumps, NULL, 0, p->cp.minmapsize,
                               NULL, NULL, NULL);
@@ -84,14 +84,14 @@ columns_alloc_georadec(struct mkcatalogparams *p)
 
   /* For objects. */
   if(p->wcs_go==NULL)
-    for(i=0;i<p->input->ndim;++i)
+    for(i=0;i<p->objects->ndim;++i)
       gal_list_data_add_alloc(&p->wcs_go, NULL, GAL_TYPE_FLOAT64, 1,
                               &p->numobjects, NULL, 0, p->cp.minmapsize,
                               NULL, NULL, NULL);
 
   /* For clumps */
   if(p->clumps && p->wcs_gc==NULL)
-    for(i=0;i<p->input->ndim;++i)
+    for(i=0;i<p->objects->ndim;++i)
       gal_list_data_add_alloc(&p->wcs_gc, NULL, GAL_TYPE_FLOAT64, 1,
                               &p->numclumps, NULL, 0, p->cp.minmapsize,
                               NULL, NULL, NULL);
@@ -108,7 +108,7 @@ columns_alloc_clumpsradec(struct mkcatalogparams *p)
   size_t i;
 
   if(p->wcs_vcc==NULL)
-    for(i=0;i<p->input->ndim;++i)
+    for(i=0;i<p->objects->ndim;++i)
       gal_list_data_add_alloc(&p->wcs_vcc, NULL, GAL_TYPE_FLOAT64, 1,
                               &p->numobjects, NULL, 0, p->cp.minmapsize,
                               NULL, NULL, NULL);
@@ -125,7 +125,7 @@ columns_alloc_clumpsgeoradec(struct mkcatalogparams *p)
   size_t i;
 
   if(p->wcs_gcc==NULL)
-    for(i=0;i<p->input->ndim;++i)
+    for(i=0;i<p->objects->ndim;++i)
       gal_list_data_add_alloc(&p->wcs_gcc, NULL, GAL_TYPE_FLOAT64, 1,
                               &p->numobjects, NULL, 0, p->cp.minmapsize,
                               NULL, NULL, NULL);
@@ -139,10 +139,10 @@ columns_alloc_clumpsgeoradec(struct mkcatalogparams *p)
 #define SET_WCS_PREPARE(ARR, LIST, ARRNAME) {                           \
     d=0;                                                                \
     errno=0;                                                            \
-    (ARR)=malloc(p->input->ndim * sizeof (ARR) );                       \
+    (ARR)=malloc(p->objects->ndim * sizeof (ARR) );                     \
     if( (ARR)==NULL )                                                   \
       error(EXIT_FAILURE, 0, "%s: %zu bytes for %s", __func__,          \
-            p->input->ndim * sizeof (ARR), ARRNAME);                    \
+            p->objects->ndim * sizeof (ARR), ARRNAME);                  \
     for(tmp=(LIST);tmp!=NULL;tmp=tmp->next) (ARR)[d++]=tmp->array;      \
   }
 
@@ -210,13 +210,13 @@ columns_wcs_preparation(struct mkcatalogparams *p)
             case UI_KEY_CLUMPSW2:
             case UI_KEY_CLUMPSGEOW1:
             case UI_KEY_CLUMPSGEOW2:
-              if(p->input->wcs)
+              if(p->objects->wcs)
                 continue_wcs_check=0;
               else
-                error(EXIT_FAILURE, 0, "input doesn't have WCS meta-data for "
-                      "defining world coordinates (like RA and Dec). Atleast "
-                      "one of the requested columns requires this "
-                      "information");
+                error(EXIT_FAILURE, 0, "%s (hdu: %s): no WCS meta-data "
+                      "found by WCSLIB. Atleast one of the requested columns "
+                      "requires world coordinate system meta-data",
+                      p->objectsfile, p->cp.hdu);
               break;
             }
         }
@@ -231,7 +231,7 @@ columns_wcs_preparation(struct mkcatalogparams *p)
       case UI_KEY_RA:
       case UI_KEY_DEC:
         /* Check all the CTYPES. */
-        for(i=0;i<p->input->ndim;++i)
+        for(i=0;i<p->objects->ndim;++i)
           if( !strcmp(p->ctype[i], colcode->v==UI_KEY_RA ? "RA" : "DEC") )
             {
               colcode->v = i==0 ? UI_KEY_W1 : UI_KEY_W2;
@@ -239,9 +239,9 @@ columns_wcs_preparation(struct mkcatalogparams *p)
             }
 
         /* Make sure it actually existed. */
-        if(i==p->input->ndim)
+        if(i==p->objects->ndim)
           error(EXIT_FAILURE, 0, "%s (hdu: %s): %s not present in any of "
-                "the WCS axis types (CTYPE)", p->inputname, p->cp.hdu,
+                "the WCS axis types (CTYPE)", p->objectsfile, p->cp.hdu,
                 colcode->v==UI_KEY_RA ? "RA" : "DEC");
         break;
       }
@@ -264,7 +264,7 @@ columns_sanity_check(struct mkcatalogparams *p)
   columns_wcs_preparation(p);
 
   /* Check for dimension-specific columns. */
-  switch(p->input->ndim)
+  switch(p->objects->ndim)
     {
     case 2:
       for(colcode=p->columnids; colcode!=NULL; colcode=colcode->next)
@@ -280,7 +280,7 @@ columns_sanity_check(struct mkcatalogparams *p)
           case UI_KEY_CLUMPSGEOW3:
             error(EXIT_FAILURE, 0, "%s (hdu %s) is a 2D dataset, so columns "
                   "relating to a third dimension cannot be requested",
-                  p->inputname, p->cp.hdu);
+                  p->objectsfile, p->cp.hdu);
           }
       break;
 
@@ -307,7 +307,7 @@ columns_sanity_check(struct mkcatalogparams *p)
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
             "fix the problem. MakeCatalog should not reach this point "
             "when the input has %zu dimensions", __func__,
-            PACKAGE_BUGREPORT, p->input->ndim);
+            PACKAGE_BUGREPORT, p->objects->ndim);
     }
 }
 
@@ -321,6 +321,7 @@ void
 columns_define_alloc(struct mkcatalogparams *p)
 {
   gal_list_i32_t *colcode;
+  size_t ndim=p->objects->ndim;
   gal_list_str_t *strtmp, *noclumpimg=NULL;
   int disp_fmt=0, disp_width=0, disp_precision=0;
   char *name=NULL, *unit=NULL, *ocomment=NULL, *ccomment=NULL;
@@ -353,7 +354,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           unit           = "counter";
           ocomment       = "Object identifier.";
           ccomment       = NULL;
-          otype          = GAL_TYPE_INT32;  /* Same type as clumps image. */
+          otype          = GAL_TYPE_INT32;
           ctype          = GAL_TYPE_INVALID;
           disp_fmt       = 0;
           disp_width     = 6;
@@ -403,42 +404,53 @@ columns_define_alloc(struct mkcatalogparams *p)
         case UI_KEY_AREA:
           name           = "AREA";
           unit           = "counter";
-          ocomment       = "Number of pixels covered.";
+          ocomment       = "Number of non-blank pixels.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_INT32;
           ctype          = GAL_TYPE_INT32;
           disp_fmt       = 0;
-          disp_width     = 5;
+          disp_width     = 6;
           disp_precision = 0;
-          oiflag[ OCOL_NUMALL ] = 1;
-          ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_NUM ] = ciflag[ CCOL_NUM ] = 1;
           break;
 
         case UI_KEY_CLUMPSAREA:
-          name           = "CLUMPS_AREA";
+          name           = "AREA_CLUMPS";
           unit           = "counter";
           ocomment       = "Total number of clump pixels in object.";
           ccomment       = NULL;
           otype          = GAL_TYPE_INT32;
           ctype          = GAL_TYPE_INVALID;
           disp_fmt       = 0;
-          disp_width     = 5;
+          disp_width     = 6;
           disp_precision = 0;
           oiflag[ OCOL_C_NUM ] = 1;
           break;
 
         case UI_KEY_WEIGHTAREA:
-          name           = "WEIGHT_AREA";
+          name           = "AREA_WEIGHT";
           unit           = "counter";
           ocomment       = "Area used for flux-weighted positions.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_INT32;
           ctype          = GAL_TYPE_INT32;
           disp_fmt       = 0;
-          disp_width     = 5;
+          disp_width     = 6;
           disp_precision = 0;
-          oiflag[ OCOL_NUMWHT ] = 1;
-          ciflag[ CCOL_NUMWHT ] = 1;
+          oiflag[ OCOL_NUMWHT ] = ciflag[ CCOL_NUMWHT ] = 1;
+          break;
+
+        case UI_KEY_GEOAREA:
+          name           = "AREA_FULL";
+          unit           = "counter";
+          ocomment       = "Full area of label (irrespective of values).";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_INT32;
+          ctype          = GAL_TYPE_INT32;
+          disp_fmt       = 0;
+          disp_width     = 6;
+          disp_precision = 0;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
           break;
 
         case UI_KEY_X:
@@ -451,8 +463,10 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_VX ] = 1;
-          ciflag[ CCOL_VX ] = 1;
+          oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_NUMWHT ] = ciflag[ CCOL_NUMWHT ] = 1;
           break;
 
         case UI_KEY_Y:
@@ -465,8 +479,10 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_VY ] = 1;
-          ciflag[ CCOL_VY ] = 1;
+          oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_NUMWHT ] = ciflag[ CCOL_NUMWHT ] = 1;
           break;
 
         case UI_KEY_Z:
@@ -493,8 +509,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_GX ] = 1;
-          ciflag[ CCOL_GX ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
           break;
 
         case UI_KEY_GEOY:
@@ -507,8 +523,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_GY ] = 1;
-          ciflag[ CCOL_GY ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
           break;
 
         case UI_KEY_GEOZ:
@@ -535,7 +551,10 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_C_VX ] = 1;
+          oiflag[ OCOL_C_VX     ] = 1;
+          oiflag[ OCOL_C_GX     ] = 1;
+          oiflag[ OCOL_C_SUMWHT ] = 1;
+          oiflag[ OCOL_C_NUMWHT ] = 1;
           break;
 
         case UI_KEY_CLUMPSY:
@@ -548,7 +567,10 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_C_VY ] = 1;
+          oiflag[ OCOL_C_VY     ] = 1;
+          oiflag[ OCOL_C_GY     ] = 1;
+          oiflag[ OCOL_C_SUMWHT ] = 1;
+          oiflag[ OCOL_C_NUMWHT ] = 1;
           break;
 
         case UI_KEY_CLUMPSZ:
@@ -574,7 +596,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_C_GX ] = 1;
+          oiflag[ OCOL_C_GX     ] = 1;
+          oiflag[ OCOL_C_NUMALL ] = 1;
           break;
 
         case UI_KEY_CLUMPSGEOY:
@@ -587,7 +610,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_C_GY ] = 1;
+          oiflag[ OCOL_C_GY     ] = 1;
+          oiflag[ OCOL_C_NUMALL ] = 1;
           break;
 
         case UI_KEY_CLUMPSGEOZ:
@@ -605,7 +629,7 @@ columns_define_alloc(struct mkcatalogparams *p)
 
         case UI_KEY_W1:
           name           = p->ctype[0];
-          unit           = p->input->wcs->cunit[0];
+          unit           = p->objects->wcs->cunit[0];
           ocomment       = "Flux weighted center (WCS axis 1).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
@@ -613,18 +637,23 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_VX ] = 1;
-          oiflag[ OCOL_VY ] = 1;
-          oiflag[ OCOL_VZ ] = 1;
-          oiflag[ CCOL_VX ] = 1;
-          oiflag[ CCOL_VY ] = 1;
-          oiflag[ CCOL_VZ ] = 1;
           columns_alloc_radec(p);
+          oiflag[     OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[     OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[     OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[     OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[     OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[     OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          if(ndim==3)
+            {
+              oiflag[ OCOL_VZ ] = ciflag[ CCOL_VZ ] = 1;
+              oiflag[ OCOL_GZ ] = ciflag[ CCOL_GZ ] = 1;
+            }
           break;
 
         case UI_KEY_W2:
           name           = p->ctype[1];
-          unit           = p->input->wcs->cunit[1];
+          unit           = p->objects->wcs->cunit[1];
           ocomment       = "Flux weighted center (WCS axis 2).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
@@ -632,37 +661,44 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_VX ] = 1;
-          oiflag[ OCOL_VY ] = 1;
-          oiflag[ OCOL_VZ ] = 1;
-          oiflag[ CCOL_VX ] = 1;
-          oiflag[ CCOL_VY ] = 1;
-          oiflag[ CCOL_VZ ] = 1;
           columns_alloc_radec(p);
+          oiflag[     OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[     OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[     OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[     OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[     OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[     OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          if(ndim==3)
+            {
+              oiflag[ OCOL_VZ     ] = ciflag[ CCOL_VZ     ] = 1;
+              oiflag[ OCOL_GZ     ] = ciflag[ CCOL_GZ     ] = 1;
+            }
           break;
 
         case UI_KEY_W3:
           name           = p->ctype[2];
-          unit           = p->input->wcs->cunit[2];
+          unit           = p->objects->wcs->cunit[2];
           ocomment       = "Flux weighted center (WCS axis 3).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_VX ] = 1;
-          oiflag[ OCOL_VY ] = 1;
-          oiflag[ OCOL_VZ ] = 1;
-          oiflag[ CCOL_VX ] = 1;
-          oiflag[ CCOL_VY ] = 1;
-          oiflag[ CCOL_VZ ] = 1;
           columns_alloc_radec(p);
+          oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[ OCOL_VZ     ] = ciflag[ CCOL_VZ     ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GZ     ] = ciflag[ CCOL_GZ     ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
           break;
 
         case UI_KEY_GEOW1:
           name           = gal_checkset_malloc_cat("GEO_", p->ctype[0]);
-          unit           = p->input->wcs->cunit[0];
+          unit           = p->objects->wcs->cunit[0];
           ocomment       = "Geometric center (WCS axis 1).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
@@ -670,18 +706,17 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_GX ] = 1;
-          oiflag[ OCOL_GY ] = 1;
-          oiflag[ OCOL_GZ ] = 1;
-          ciflag[ CCOL_GX ] = 1;
-          ciflag[ CCOL_GY ] = 1;
-          ciflag[ CCOL_GZ ] = 1;
           columns_alloc_georadec(p);
+          oiflag[   OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[   OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[   OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          if(ndim==3)
+            oiflag[ OCOL_GZ     ] = ciflag[ CCOL_GZ     ] = 1;
           break;
 
         case UI_KEY_GEOW2:
           name           = gal_checkset_malloc_cat("GEO_", p->ctype[1]);
-          unit           = p->input->wcs->cunit[1];
+          unit           = p->objects->wcs->cunit[1];
           ocomment       = "Geometric center (WCS axis 2).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
@@ -689,37 +724,34 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_GX ] = 1;
-          oiflag[ OCOL_GY ] = 1;
-          oiflag[ OCOL_GZ ] = 1;
-          ciflag[ CCOL_GX ] = 1;
-          ciflag[ CCOL_GY ] = 1;
-          ciflag[ CCOL_GZ ] = 1;
           columns_alloc_georadec(p);
+          oiflag[   OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[   OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[   OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          if(ndim==3)
+            oiflag[ OCOL_GZ     ] = ciflag[ CCOL_GZ     ] = 1;
           break;
 
         case UI_KEY_GEOW3:
           name           = gal_checkset_malloc_cat("GEO_", p->ctype[2]);
-          unit           = p->input->wcs->cunit[2];
+          unit           = p->objects->wcs->cunit[2];
           ocomment       = "Geometric center (WCS axis 3).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_GX ] = 1;
-          oiflag[ OCOL_GY ] = 1;
-          oiflag[ OCOL_GZ ] = 1;
-          ciflag[ CCOL_GX ] = 1;
-          ciflag[ CCOL_GY ] = 1;
-          ciflag[ CCOL_GZ ] = 1;
           columns_alloc_georadec(p);
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GZ     ] = ciflag[ CCOL_GZ     ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
           break;
 
         case UI_KEY_CLUMPSW1:
           name           = gal_checkset_malloc_cat("CLUMPS_", p->ctype[0]);
-          unit           = p->input->wcs->cunit[0];
+          unit           = p->objects->wcs->cunit[0];
           ocomment       = "Flux.wht center of all clumps (WCS axis 1).";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
@@ -727,15 +759,23 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_C_VX ] = 1;
-          oiflag[ OCOL_C_VY ] = 1;
-          oiflag[ OCOL_C_VZ ] = 1;
           columns_alloc_clumpsradec(p);
+          oiflag[     OCOL_C_VX     ] = 1;
+          oiflag[     OCOL_C_VY     ] = 1;
+          oiflag[     OCOL_C_GX     ] = 1;
+          oiflag[     OCOL_C_GY     ] = 1;
+          oiflag[     OCOL_C_SUMWHT ] = 1;
+          oiflag[     OCOL_C_NUMALL ] = 1;
+          if(ndim==3)
+            {
+              oiflag[ OCOL_C_VZ     ] = 1;
+              oiflag[ OCOL_C_GZ     ] = 1;
+            }
           break;
 
         case UI_KEY_CLUMPSW2:
           name           = gal_checkset_malloc_cat("CLUMPS_", p->ctype[1]);
-          unit           = p->input->wcs->cunit[1];
+          unit           = p->objects->wcs->cunit[1];
           ocomment       = "Flux.wht center of all clumps (WCS axis 2).";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
@@ -743,31 +783,47 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 15;
           disp_precision = 7;
-          oiflag[ OCOL_C_VX ] = 1;
-          oiflag[ OCOL_C_VY ] = 1;
-          oiflag[ OCOL_C_VZ ] = 1;
           columns_alloc_clumpsradec(p);
+          oiflag[     OCOL_C_VX     ] = 1;
+          oiflag[     OCOL_C_VY     ] = 1;
+          oiflag[     OCOL_C_GX     ] = 1;
+          oiflag[     OCOL_C_GY     ] = 1;
+          oiflag[     OCOL_C_SUMWHT ] = 1;
+          oiflag[     OCOL_C_NUMALL ] = 1;
+          if(ndim==3)
+            {
+              oiflag[ OCOL_C_VZ     ] = 1;
+              oiflag[ OCOL_C_GZ     ] = 1;
+            }
           break;
 
         case UI_KEY_CLUMPSW3:
           name           = gal_checkset_malloc_cat("CLUMPS_", p->ctype[2]);
-          unit           = p->input->wcs->cunit[2];
+          unit           = p->objects->wcs->cunit[2];
           ocomment       = "Flux.wht center of all clumps (WCS axis 3).";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 15;
           disp_precision = 7;
-          oiflag[ OCOL_C_VX ] = 1;
-          oiflag[ OCOL_C_VY ] = 1;
-          oiflag[ OCOL_C_VZ ] = 1;
           columns_alloc_clumpsradec(p);
+          oiflag[ OCOL_C_VX     ] = 1;
+          oiflag[ OCOL_C_VY     ] = 1;
+          oiflag[ OCOL_C_VZ     ] = 1;
+          oiflag[ OCOL_C_GX     ] = 1;
+          oiflag[ OCOL_C_GY     ] = 1;
+          oiflag[ OCOL_C_GZ     ] = 1;
+          oiflag[ OCOL_C_SUMWHT ] = 1;
+          oiflag[ OCOL_C_NUMALL ] = 1;
+          if(ndim==3)
+            {
+            }
           break;
 
         case UI_KEY_CLUMPSGEOW1:
           name           = gal_checkset_malloc_cat("CLUMPS_GEO", p->ctype[0]);
-          unit           = p->input->wcs->cunit[0];
+          unit           = p->objects->wcs->cunit[0];
           ocomment       = "Geometric center of all clumps (WCS axis 1).";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
@@ -775,15 +831,17 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_C_GX ] = 1;
-          oiflag[ OCOL_C_GY ] = 1;
-          oiflag[ OCOL_C_GZ ] = 1;
           columns_alloc_clumpsgeoradec(p);
+          oiflag[   OCOL_C_GX     ] = 1;
+          oiflag[   OCOL_C_GY     ] = 1;
+          oiflag[   OCOL_C_NUMALL ] = 1;
+          if(ndim==3)
+            oiflag[ OCOL_C_GZ     ] = 1;
           break;
 
         case UI_KEY_CLUMPSGEOW2:
           name           = gal_checkset_malloc_cat("CLUMPS_GEO", p->ctype[1]);
-          unit           = p->input->wcs->cunit[1];
+          unit           = p->objects->wcs->cunit[1];
           ocomment       = "Geometric center of all clumps (WCS axis 2).";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
@@ -791,104 +849,121 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_C_GX ] = 1;
-          oiflag[ OCOL_C_GY ] = 1;
-          oiflag[ OCOL_C_GZ ] = 1;
           columns_alloc_clumpsgeoradec(p);
+          oiflag[   OCOL_C_GX     ] = 1;
+          oiflag[   OCOL_C_GY     ] = 1;
+          oiflag[   OCOL_C_NUMALL ] = 1;
+          if(ndim==3)
+            oiflag[ OCOL_C_GZ     ] = 1;
           break;
 
         case UI_KEY_CLUMPSGEOW3:
           name           = gal_checkset_malloc_cat("CLUMPS_GEO", p->ctype[2]);
-          unit           = p->input->wcs->cunit[2];
+          unit           = p->objects->wcs->cunit[2];
           ocomment       = "Geometric center of all clumps (WCS axis 3).";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 13;
           disp_precision = 7;
-          oiflag[ OCOL_C_GX ] = 1;
-          oiflag[ OCOL_C_GY ] = 1;
-          oiflag[ OCOL_C_GZ ] = 1;
           columns_alloc_clumpsgeoradec(p);
+          oiflag[ OCOL_C_GX     ] = 1;
+          oiflag[ OCOL_C_GY     ] = 1;
+          oiflag[ OCOL_C_GZ     ] = 1;
+          oiflag[ OCOL_C_NUMALL ] = 1;
           break;
 
         case UI_KEY_BRIGHTNESS:
           name           = "BRIGHTNESS";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Brightness (sum of sky subtracted values).";
           ccomment       = "Brightness (sum of pixels subtracted by rivers).";
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
-          disp_precision = 4;
-          oiflag[ OCOL_SUM ]     = 1;
-          ciflag[ CCOL_SUM ]     = 1;
-          ciflag[ CCOL_RIV_NUM ] = 1;
-          ciflag[ CCOL_RIV_SUM ] = 1;
+          disp_precision = 5;
+          oiflag[ OCOL_NUM     ] = ciflag[ CCOL_NUM     ] = 1;
+          oiflag[ OCOL_SUM     ] = ciflag[ CCOL_SUM     ] = 1;
+                                   ciflag[ CCOL_RIV_NUM ] = 1;
+                                   ciflag[ CCOL_RIV_SUM ] = 1;
+          break;
+
+        case UI_KEY_BRIGHTNESSERR:
+          name           = "BRIGHTNESS_ERROR";
+          unit           = MKCATALOG_NO_UNIT;
+          ocomment       = "Error (1-sigma) in measuring brightness.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_width     = 10;
+          disp_precision = 5;
+          oiflag[ OCOL_NUM     ] = ciflag[ CCOL_NUM         ] = 1;
+          oiflag[ OCOL_SUM_VAR ] = ciflag[ CCOL_SUM_VAR     ] = 1;
+                                   ciflag[ CCOL_RIV_NUM     ] = 1;
+                                   ciflag[ CCOL_RIV_SUM_VAR ] = 1;
           break;
 
         case UI_KEY_CLUMPSBRIGHTNESS:
           name           = "CLUMPS_BRIGHTNESS";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Brightness (sum of pixel values) in clumps.";
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
-          disp_precision = 4;
+          disp_precision = 5;
+          oiflag[ OCOL_C_NUM ] = 1;
           oiflag[ OCOL_C_SUM ] = 1;
           break;
 
         case UI_KEY_NORIVERBRIGHTNESS:
           name           = "NO_RIVER_BRIGHTNESS";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = NULL;
           ccomment       = "Brightness (sum of sky subtracted values).";
           otype          = GAL_TYPE_INVALID;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
-          disp_precision = 4;
+          disp_precision = 5;
+          ciflag[ CCOL_NUM ] = 1;
           ciflag[ CCOL_SUM ] = 1;
           break;
 
         case UI_KEY_MEAN:
           name           = "MEAN";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Mean of sky subtracted values.";
           ccomment       = "Mean of pixels subtracted by rivers.";
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
-          disp_precision = 4;
-          oiflag[ OCOL_NUM ] = 1;
-          oiflag[ OCOL_SUM ] = 1;
-          ciflag[ CCOL_NUM ] = 1;
-          ciflag[ CCOL_SUM ] = 1;
-          ciflag[ CCOL_RIV_NUM ] = 1;
-          ciflag[ CCOL_RIV_SUM ] = 1;
+          disp_precision = 5;
+          oiflag[ OCOL_NUM     ] = ciflag[ CCOL_NUM     ] = 1;
+          oiflag[ OCOL_SUM     ] = ciflag[ CCOL_SUM     ] = 1;
+                                   ciflag[ CCOL_RIV_NUM ] = 1;
+                                   ciflag[ CCOL_RIV_SUM ] = 1;
           break;
 
         case UI_KEY_MEDIAN:
           name           = "MEDIAN";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Median of sky subtracted values.";
           ccomment       = "Median of pixels subtracted by rivers.";
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
-          disp_precision = 4;
-          oiflag[ OCOL_MEDIAN  ] = 1;
-          oiflag[ OCOL_NUMALL  ] = 1;
-          ciflag[ CCOL_MEDIAN  ] = 1;
-          ciflag[ CCOL_NUMALL  ] = 1;
-          ciflag[ CCOL_RIV_NUM ] = 1;
-          ciflag[ CCOL_RIV_SUM ] = 1;
+          disp_precision = 5;
+          oiflag[ OCOL_NUM     ] = ciflag[ CCOL_NUM     ] = 1;
+          oiflag[ OCOL_MEDIAN  ] = ciflag[ CCOL_MEDIAN  ] = 1;
+                                   ciflag[ CCOL_RIV_NUM ] = 1;
+                                   ciflag[ CCOL_RIV_SUM ] = 1;
           break;
 
         case UI_KEY_MAGNITUDE:
@@ -901,13 +976,17 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 8;
           disp_precision = 3;
-          oiflag[ OCOL_SUM ] = 1;
-          ciflag[ CCOL_SUM ] = 1;
           p->hasmag      = 1;
+          oiflag[ OCOL_NUM     ] = ciflag[ CCOL_NUM     ] = 1;
+          oiflag[ OCOL_SUM     ] = ciflag[ CCOL_SUM     ] = 1;
+                                   ciflag[ CCOL_SUM     ] = 1;
+                                   ciflag[ CCOL_RIV_NUM ] = 1;
+                                   ciflag[ CCOL_RIV_SUM ] = 1;
+                                   ciflag[ CCOL_RIV_NUM ] = 1;
           break;
 
         case UI_KEY_MAGNITUDEERR:
-          name           = "MAGNITUDE_ERR";
+          name           = "MAGNITUDE_ERROR";
           unit           = "log";
           ocomment       = "Error in measuring magnitude.";
           ccomment       = ocomment;
@@ -916,12 +995,10 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 8;
           disp_precision = 3;
-          oiflag[ OCOL_SUMSTD ] = 1;
-          oiflag[ OCOL_NUM    ] = 1;
-          oiflag[ OCOL_SUM    ] = 1;
-          ciflag[ CCOL_SUMSTD ] = 1;
-          ciflag[ CCOL_NUM    ] = 1;
-          ciflag[ CCOL_SUM    ] = 1;
+          oiflag[ OCOL_SUM         ] = ciflag[ CCOL_SUM         ] = 1;
+          oiflag[ OCOL_SUM_VAR     ] = ciflag[ CCOL_SUM_VAR     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM_VAR ] = 1;
           break;
 
         case UI_KEY_CLUMPSMAGNITUDE:
@@ -934,21 +1011,27 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 8;
           disp_precision = 3;
-          oiflag[ OCOL_C_SUM ] = 1;
           p->hasmag      = 1;
+          oiflag[ OCOL_SUM         ] = ciflag[ CCOL_SUM         ] = 1;
+          oiflag[ OCOL_SUM_VAR     ] = ciflag[ CCOL_SUM_VAR     ] = 1;
+                                       ciflag[ CCOL_RIV_NUM     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM_VAR ] = 1;
           break;
 
         case UI_KEY_UPPERLIMIT:
           name           = "UPPERLIMIT";
-          unit           = p->input->unit;
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Upper limit value (random positionings).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
-          disp_width     = 8;
-          disp_precision = 3;
-          p->upperlimit  = 1;   /* Doesn't need per-pixel calculations. */
+          disp_width     = 10;
+          disp_precision = 5;
+          p->upperlimit  = 1;
+          oiflag[ OCOL_UPPERLIMIT_B ] = ciflag[ CCOL_UPPERLIMIT_B ] = 1;
+
           break;
 
         case UI_KEY_UPPERLIMITMAG:
@@ -961,34 +1044,42 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 8;
           disp_precision = 3;
+          p->hasmag      = 1;
           p->upperlimit  = 1;
-          p->hasmag      = 1;   /* Doesn't need per-pixel calculations. */
+          oiflag[ OCOL_UPPERLIMIT_B ] = ciflag[ CCOL_UPPERLIMIT_B ] = 1;
           break;
 
         case UI_KEY_UPPERLIMITONESIGMA:
           name           = "UPPERLIMIT_ONE_SIGMA";
-          unit           = p->input->unit;
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "One sigma value of all random measurements.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
-          disp_width     = 8;
-          disp_precision = 3;
+          disp_width     = 10;
+          disp_precision = 5;
           p->upperlimit  = 1;
+          oiflag[ OCOL_UPPERLIMIT_S ] = ciflag[ CCOL_UPPERLIMIT_S ] = 1;
           break;
 
         case UI_KEY_UPPERLIMITSIGMA:
           name           = "UPPERLIMIT_SIGMA";
           unit           = "frac";
-          ocomment       = "Place in upperlimit distribution (sigma multiple).";
+          ocomment       = "Place in upperlimit distribution (sigma "
+                           "multiple).";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
-          disp_width     = 8;
-          disp_precision = 3;
+          disp_width     = 10;
+          disp_precision = 5;
           p->upperlimit  = 1;
+          oiflag[ OCOL_NUM          ] = ciflag[ CCOL_NUM          ] = 1;
+          oiflag[ OCOL_SUM          ] = ciflag[ CCOL_SUM          ] = 1;
+          oiflag[ OCOL_UPPERLIMIT_S ] = ciflag[ CCOL_UPPERLIMIT_S ] = 1;
+                                        ciflag[ CCOL_RIV_NUM      ] = 1;
+                                        ciflag[ CCOL_RIV_SUM      ] = 1;
           break;
 
         case UI_KEY_UPPERLIMITQUANTILE:
@@ -999,23 +1090,37 @@ columns_define_alloc(struct mkcatalogparams *p)
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_width     = 10;
+          disp_precision = 5;
+          p->upperlimit  = 1;
+          oiflag[ OCOL_UPPERLIMIT_Q ] = ciflag[ CCOL_UPPERLIMIT_Q ] = 1;
+          break;
+
+        case UI_KEY_UPPERLIMITSKEW:
+          name           = "UPPERLIMIT_SKEW";
+          unit           = "frac";
+          ocomment       = "(Mean-Median)/STD of random distribution.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 8;
           disp_precision = 3;
           p->upperlimit  = 1;
+          oiflag[ OCOL_UPPERLIMIT_SKEW ] = oiflag[ CCOL_UPPERLIMIT_SKEW ] = 1;
           break;
 
         case UI_KEY_RIVERAVE:
           name           = "RIVER_AVE";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = NULL;
           ccomment       = "Average river value surrounding this clump.";
           otype          = GAL_TYPE_INVALID;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
-          disp_precision = 4;
-          ciflag[ CCOL_RIV_NUM ] = 1;
-          ciflag[ CCOL_RIV_SUM ] = 1;
+          disp_precision = 5;
+          ciflag[ CCOL_RIV_NUM ] = ciflag[ CCOL_RIV_SUM ] = 1;
           break;
 
         case UI_KEY_RIVERNUM:
@@ -1041,17 +1146,16 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_SUMSTD ] = 1;
-          oiflag[ OCOL_NUM    ] = 1;
-          oiflag[ OCOL_SUM    ] = 1;
-          ciflag[ CCOL_SUMSTD ] = 1;
-          ciflag[ CCOL_NUM    ] = 1;
-          ciflag[ CCOL_SUM    ] = 1;
+          oiflag[ OCOL_SUM         ] = ciflag[ CCOL_SUM         ] = 1;
+          oiflag[ OCOL_SUM_VAR     ] = ciflag[ CCOL_SUM_VAR     ] = 1;
+                                       ciflag[ CCOL_RIV_NUM     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM_VAR ] = 1;
           break;
 
         case UI_KEY_SKY:
           name           = "SKY";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Average input sky value.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
@@ -1059,15 +1163,13 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
           disp_precision = 4;
-          oiflag[ OCOL_NUM    ] = 1;
-          oiflag[ OCOL_SUMSKY ] = 1;
-          ciflag[ CCOL_NUM    ] = 1;
-          ciflag[ CCOL_SUMSKY ] = 1;
+          oiflag[ OCOL_NUM    ] = ciflag[ CCOL_NUM    ] = 1;
+          oiflag[ OCOL_SUMSKY ] = ciflag[ CCOL_SUMSKY ] = 1;
           break;
 
         case UI_KEY_STD:
           name           = "STD";
-          unit           = p->input->unit ? p->input->unit : "pixelunit";
+          unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Average of input standard deviation.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
@@ -1075,10 +1177,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
           disp_width     = 10;
           disp_precision = 4;
-          oiflag[ OCOL_NUM    ] = 1;
-          oiflag[ OCOL_SUMSTD ] = 1;
-          ciflag[ CCOL_NUM    ] = 1;
-          ciflag[ CCOL_SUMSTD ] = 1;
+          oiflag[ OCOL_NUM    ] = ciflag[ CCOL_NUM    ] = 1;
+          oiflag[ OCOL_SUMSTD ] = ciflag[ CCOL_SUMSTD ] = 1;
           break;
 
         case UI_KEY_SEMIMAJOR:
@@ -1091,12 +1191,18 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_VXX ] = 1;
-          oiflag[ OCOL_VYY ] = 1;
-          oiflag[ OCOL_VXY ] = 1;
-          ciflag[ CCOL_VXX ] = 1;
-          ciflag[ CCOL_VYY ] = 1;
-          ciflag[ CCOL_VXY ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[ OCOL_VXX    ] = ciflag[ CCOL_VXX    ] = 1;
+          oiflag[ OCOL_VYY    ] = ciflag[ CCOL_VYY    ] = 1;
+          oiflag[ OCOL_VXY    ] = ciflag[ CCOL_VXY    ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_SEMIMINOR:
@@ -1109,12 +1215,18 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_VXX ] = 1;
-          oiflag[ OCOL_VYY ] = 1;
-          oiflag[ OCOL_VXY ] = 1;
-          ciflag[ CCOL_VXX ] = 1;
-          ciflag[ CCOL_VYY ] = 1;
-          ciflag[ CCOL_VXY ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[ OCOL_VXX    ] = ciflag[ CCOL_VXX    ] = 1;
+          oiflag[ OCOL_VYY    ] = ciflag[ CCOL_VYY    ] = 1;
+          oiflag[ OCOL_VXY    ] = ciflag[ CCOL_VXY    ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_AXISRATIO:
@@ -1127,12 +1239,18 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 7;
           disp_precision = 3;
-          oiflag[ OCOL_VXX ] = 1;
-          oiflag[ OCOL_VYY ] = 1;
-          oiflag[ OCOL_VXY ] = 1;
-          ciflag[ CCOL_VXX ] = 1;
-          ciflag[ CCOL_VYY ] = 1;
-          ciflag[ CCOL_VXY ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[ OCOL_VXX    ] = ciflag[ CCOL_VXX    ] = 1;
+          oiflag[ OCOL_VYY    ] = ciflag[ CCOL_VYY    ] = 1;
+          oiflag[ OCOL_VXY    ] = ciflag[ CCOL_VXY    ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_POSITIONANGLE:
@@ -1145,12 +1263,18 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_VXX ] = 1;
-          oiflag[ OCOL_VYY ] = 1;
-          oiflag[ OCOL_VXY ] = 1;
-          ciflag[ CCOL_VXX ] = 1;
-          ciflag[ CCOL_VYY ] = 1;
-          ciflag[ CCOL_VXY ] = 1;
+          oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
+          oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
+          oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
+          oiflag[ OCOL_VXX    ] = ciflag[ CCOL_VXX    ] = 1;
+          oiflag[ OCOL_VYY    ] = ciflag[ CCOL_VYY    ] = 1;
+          oiflag[ OCOL_VXY    ] = ciflag[ CCOL_VXY    ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_GEOSEMIMAJOR:
@@ -1163,12 +1287,12 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_GXX ] = 1;
-          oiflag[ OCOL_GYY ] = 1;
-          oiflag[ OCOL_GXY ] = 1;
-          ciflag[ CCOL_GXX ] = 1;
-          ciflag[ CCOL_GYY ] = 1;
-          ciflag[ CCOL_GXY ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_GEOSEMIMINOR:
@@ -1181,12 +1305,12 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_GXX ] = 1;
-          oiflag[ OCOL_GYY ] = 1;
-          oiflag[ OCOL_GXY ] = 1;
-          ciflag[ CCOL_GXX ] = 1;
-          ciflag[ CCOL_GYY ] = 1;
-          ciflag[ CCOL_GXY ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_GEOAXISRATIO:
@@ -1199,12 +1323,12 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 7;
           disp_precision = 3;
-          oiflag[ OCOL_VXX ] = 1;
-          oiflag[ OCOL_VYY ] = 1;
-          oiflag[ OCOL_VXY ] = 1;
-          ciflag[ CCOL_VXX ] = 1;
-          ciflag[ CCOL_VYY ] = 1;
-          ciflag[ CCOL_VXY ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         case UI_KEY_GEOPOSITIONANGLE:
@@ -1217,12 +1341,12 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
           disp_width     = 10;
           disp_precision = 3;
-          oiflag[ OCOL_GXX ] = 1;
-          oiflag[ OCOL_GYY ] = 1;
-          oiflag[ OCOL_GXY ] = 1;
-          ciflag[ CCOL_GXX ] = 1;
-          ciflag[ CCOL_GYY ] = 1;
-          ciflag[ CCOL_GXY ] = 1;
+          oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
+          oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
+          oiflag[ OCOL_GXX    ] = ciflag[ CCOL_GXX    ] = 1;
+          oiflag[ OCOL_GYY    ] = ciflag[ CCOL_GYY    ] = 1;
+          oiflag[ OCOL_GXY    ] = ciflag[ CCOL_GXY    ] = 1;
           break;
 
         default:
@@ -1252,8 +1376,7 @@ columns_define_alloc(struct mkcatalogparams *p)
          allocating the column. */
       if(ctype!=GAL_TYPE_INVALID)
         {
-          /* A clumps image has been given, so allocate space for this
-             column. */
+          /* If a clumps labeled image, add this column for the output. */
           if(p->clumps)
             {
               gal_list_data_add_alloc(&p->clumpcols, NULL, ctype, 1,
@@ -1268,23 +1391,32 @@ columns_define_alloc(struct mkcatalogparams *p)
 
           /* If this is a clumps-only column and no clumps image was
              given. Add the column to the list of similar columns to inform
-             the user. */
-          else if(otype==GAL_TYPE_INVALID)
+             the user.
+
+             We'll just ignore the clump-specific ID-related columns,
+             because the `--ids' (generic for both objects and clumps) is a
+             simple generic solution for identifiers. Also, ultimately,
+             they aren't measurements. */
+          else if( otype==GAL_TYPE_INVALID
+                   && colcode->v!=UI_KEY_HOSTOBJID
+                   && colcode->v!=UI_KEY_IDINHOSTOBJ )
             gal_list_str_add(&noclumpimg, name, 1);
         }
     }
 
 
-  /* If a warning for clumps columns and no clumps image is necessary make
-     the warning. */
+  /* If the user has asked for clump-only columns, but no clumps catalog is
+     to be created (the `--clumpscat' option was not given or there were no
+     clumps in the specified image), then print an informative message that
+     the columns in question will be ignored. */
   if(noclumpimg)
     {
       gal_list_str_reverse(&noclumpimg);
-      fprintf(stderr, "\n-------\n"
-              "WARNING: the following column(s) are unique to "
-              "clumps (not objects), but the objects image doesn't have "
-              " `WCLUMPS' keyword. So these requested columns will be "
-              "ignored.\n\n");
+      fprintf(stderr, "WARNING: the following column(s) are unique to "
+              "clumps (not objects), but the `--clumpscat' option has not "
+              "been called, or there were no clumps in the clumps labeled "
+              "image. Hence, these columns will be ignored in the "
+              "output.\n\n");
       for(strtmp=noclumpimg; strtmp!=NULL; strtmp=strtmp->next)
         fprintf(stderr, "\t%s\n", strtmp->v);
       gal_list_str_free(noclumpimg, 1);
@@ -1327,38 +1459,33 @@ columns_define_alloc(struct mkcatalogparams *p)
 
 
 
+/* Calculate the error in brightness. */
+static double
+columns_brightness_error(struct mkcatalogparams *p, double *row, int o0c1)
+{
+  double V = row[ o0c1 ? CCOL_SUM_VAR : OCOL_SUM_VAR ];
+  double OV = (o0c1 && row[ CCOL_RIV_NUM ]) ? row[ CCOL_RIV_SUM_VAR ] : 0.0;
+  return sqrt(V+OV);
+}
+
+
+
+
+
 /* Calculate the Signal to noise ratio for the object. */
 static double
 columns_sn(struct mkcatalogparams *p, double *row, int o0c1)
 {
-  double var, sn, std, Ni, I, O;
+  double I = row[ o0c1 ? CCOL_SUM     : OCOL_SUM     ];
 
-  /* Get all the values as averages (per pixel). */
-  Ni  = row[ o0c1 ? CCOL_NUM : OCOL_NUM ];
-  I   = MKC_RATIO( row[ o0c1 ? CCOL_SUM    : OCOL_SUM ],    Ni );
-  std = MKC_RATIO( row[ o0c1 ? CCOL_SUMSTD : OCOL_SUMSTD ], Ni );
-  var = (p->skysubtracted ? 2.0f : 1.0f) * std * std;
-
-
-  /* Calculate the S/N. Note that when grown clumps are requested from
-     NoiseChisel, some "clumps" will completely cover their objects and
-     there will be no rivers. So if this is a clump, and the river area is
-     0, we should treat the S/N as a an object. */
-  if( o0c1 && row[ CCOL_RIV_NUM ] )
-    {
-      /* If the Sky is already subtracted, the varience should be counted
-         two times. */
-      O   = row[ CCOL_RIV_SUM ] / row[ CCOL_RIV_NUM ];  /* Outside.  */
-      sn  = ( (I-O)>0
-              ? ( sqrt(Ni/p->cpscorr) * (I-O)
-                  / sqrt( (I>0?I:-1*I) + (O>0?O:-1*O) + var ) )
-              : NAN );
-    }
-  else
-    sn  = I>0 ? sqrt(Ni/p->cpscorr) * I / sqrt( (I>0?I:-1*I) + var ) : NAN;
+  /* When grown clumps are requested from NoiseChisel, some "clumps" will
+     completely cover their objects and there will be no rivers. So if this
+     is a clump, and the river area is 0, we should treat the S/N as a an
+     object. */
+  double O = (o0c1 && row[ CCOL_RIV_NUM ]) ? row[ CCOL_RIV_SUM ] : 0.0 ;
 
   /* Return the derived value. */
-  return sn;
+  return sqrt(1/p->cpscorr) * (I-O) / columns_brightness_error(p, row, o0c1);
 }
 
 
@@ -1373,7 +1500,7 @@ columns_second_order(struct mkcatalog_passparams *pp, double *row,
                      int key, int o0c1)
 {
   double x=NAN, y=NAN, xx=NAN, yy=NAN, xy=NAN;
-  double denom, kx=pp->shift[1]+1, ky=pp->shift[0]+1;
+  double denom, kx=pp->shift[1], ky=pp->shift[0];
 
   /* Preparations. */
   switch(key)
@@ -1387,15 +1514,15 @@ columns_second_order(struct mkcatalog_passparams *pp, double *row,
       denom = row[ o0c1 ? CCOL_SUMWHT : OCOL_SUMWHT ];
 
       /* First order. */
-      x  = MKC_RATIO( row[ o0c1 ? CCOL_VX     : OCOL_VX     ], denom );
-      y  = MKC_RATIO( row[ o0c1 ? CCOL_VY     : OCOL_VY     ], denom );
+      x  = MKC_RATIO( row[ o0c1 ? CCOL_VX : OCOL_VX ], denom );
+      y  = MKC_RATIO( row[ o0c1 ? CCOL_VY : OCOL_VY ], denom );
 
       /* Second order. */
-      xx = ( MKC_RATIO( row[ o0c1 ? CCOL_VXX    : OCOL_VXX    ], denom )
+      xx = ( MKC_RATIO( row[ o0c1 ? CCOL_VXX : OCOL_VXX ], denom )
              - (x-kx) * (x-kx) );
-      yy = ( MKC_RATIO( row[ o0c1 ? CCOL_VYY    : OCOL_VYY    ], denom )
+      yy = ( MKC_RATIO( row[ o0c1 ? CCOL_VYY : OCOL_VYY ], denom )
              - (y-ky) * (y-ky) );
-      xy = ( MKC_RATIO( row[ o0c1 ? CCOL_VXY    : OCOL_VXY    ], denom )
+      xy = ( MKC_RATIO( row[ o0c1 ? CCOL_VXY : OCOL_VXY ], denom )
              - (x-kx) * (y-ky) );
       break;
 
@@ -1408,8 +1535,8 @@ columns_second_order(struct mkcatalog_passparams *pp, double *row,
       denom = row[ o0c1 ? CCOL_NUMALL : OCOL_NUMALL ];
 
       /* First order. */
-      x  = MKC_RATIO( row[ o0c1 ? CCOL_GX  : OCOL_GX  ], denom );
-      y  = MKC_RATIO( row[ o0c1 ? CCOL_GY  : OCOL_GY  ], denom );
+      x  = MKC_RATIO( row[ o0c1 ? CCOL_GX : OCOL_GX  ], denom );
+      y  = MKC_RATIO( row[ o0c1 ? CCOL_GY : OCOL_GY  ], denom );
 
       /* Second order. */
       xx = ( MKC_RATIO( row[ o0c1 ? CCOL_GXX : OCOL_GXX ], denom )
@@ -1438,7 +1565,6 @@ columns_second_order(struct mkcatalog_passparams *pp, double *row,
     /* Semi-minor axis. */
     case UI_KEY_SEMIMINOR:
     case UI_KEY_GEOSEMIMINOR:
-      /*printf("\nhere\n");*/
       return sqrt( ( xx + yy )/2
                    - sqrt( (xx - yy)/2 * (xx - yy)/2 + xy * xy ) );
 
@@ -1507,7 +1633,11 @@ columns_clump_brightness(double *ci)
   `1/S'. So
 
       `DM = 2.5 / ( S * ln(10) )'               */
-#define MAG_ERROR(P,ROW,O0C1) (2.5f/(columns_sn((P),(ROW),(O0C1)) * log(10)))
+#define MAG_ERROR(P,ROW,O0C1) ( 2.5f                                    \
+                                / ( ( columns_sn((P),(ROW),(O0C1)) > 0  \
+                                      ? columns_sn((P),(ROW),(O0C1))    \
+                                      : NAN )                           \
+                                    * log(10) ) )
 
 
 
@@ -1547,6 +1677,11 @@ columns_fill(struct mkcatalog_passparams *pp)
       key=column->status;
       colarr=column->array;
 
+      /* Put the number of clumps in the internal array which we will need
+         later to order the clump table by object ID. */
+      if(p->numclumps_c)
+        p->numclumps_c[oind]=pp->clumpsinobj;
+
       /* Go over all the columns. */
       switch(key)
         {
@@ -1559,24 +1694,28 @@ columns_fill(struct mkcatalog_passparams *pp)
           break;
 
         case UI_KEY_AREA:
-          ((int32_t *)colarr)[oind] = oi[OCOL_NUMALL];
+          ((int32_t *)colarr)[oind] = oi[OCOL_NUM];
           break;
 
         case UI_KEY_CLUMPSAREA:
-          ((int32_t *)colarr)[oind] = oi[OCOL_C_NUMALL];
+          ((int32_t *)colarr)[oind] = oi[OCOL_C_NUM];
           break;
 
         case UI_KEY_WEIGHTAREA:
           ((int32_t *)colarr)[oind] = oi[OCOL_NUMWHT];
           break;
 
+        case UI_KEY_GEOAREA:
+          ((int32_t *)colarr)[oind] = oi[OCOL_NUMALL];
+          break;
+
         case UI_KEY_X:
-          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_SUMWHT, OCOL_NUMALL,
+          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_SUMWHT, OCOL_NUMWHT,
                                             OCOL_VX, OCOL_GX);
           break;
 
         case UI_KEY_Y:
-          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_SUMWHT, OCOL_NUMALL,
+          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_SUMWHT, OCOL_NUMWHT,
                                             OCOL_VY, OCOL_GY);
           break;
 
@@ -1598,12 +1737,12 @@ columns_fill(struct mkcatalog_passparams *pp)
           break;
 
         case UI_KEY_CLUMPSX:
-          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_C_SUMWHT, OCOL_C_NUMALL,
+          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_C_SUMWHT, OCOL_C_NUMWHT,
                                             OCOL_C_VX, OCOL_C_GX);
           break;
 
         case UI_KEY_CLUMPSY:
-          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_C_SUMWHT, OCOL_C_NUMALL,
+          ((float *)colarr)[oind] = POS_V_G(oi, OCOL_C_SUMWHT, OCOL_C_NUMWHT,
                                             OCOL_C_VY, OCOL_C_GY);
           break;
 
@@ -1634,7 +1773,7 @@ columns_fill(struct mkcatalog_passparams *pp)
                                 OCOL_GX);
           vo[1][oind] = POS_V_G(oi, OCOL_SUMWHT, OCOL_NUMALL, OCOL_VY,
                                 OCOL_GY);
-          if(p->input->ndim==3)
+          if(p->objects->ndim==3)
             vo[2][oind] = POS_V_G(oi, OCOL_SUMWHT, OCOL_NUMALL, OCOL_VZ,
                                   OCOL_GZ);
           break;
@@ -1644,7 +1783,7 @@ columns_fill(struct mkcatalog_passparams *pp)
         case UI_KEY_GEOW3:
           go[0][oind] = MKC_RATIO( oi[OCOL_GX], oi[OCOL_NUMALL] );
           go[1][oind] = MKC_RATIO( oi[OCOL_GY], oi[OCOL_NUMALL] );
-          if(p->input->ndim==3)
+          if(p->objects->ndim==3)
             go[2][oind] = MKC_RATIO( oi[OCOL_GZ], oi[OCOL_NUMALL] );
           break;
 
@@ -1655,7 +1794,7 @@ columns_fill(struct mkcatalog_passparams *pp)
                                  OCOL_C_GX);
           vcc[1][oind] = POS_V_G(oi, OCOL_C_SUMWHT, OCOL_C_NUMALL, OCOL_C_VY,
                                  OCOL_C_GY);
-          if(p->input->ndim==3)
+          if(p->objects->ndim==3)
             vcc[2][oind] = POS_V_G(oi, OCOL_C_SUMWHT, OCOL_C_NUMALL,
                                    OCOL_C_VZ, OCOL_C_GZ);
           break;
@@ -1665,13 +1804,19 @@ columns_fill(struct mkcatalog_passparams *pp)
         case UI_KEY_CLUMPSGEOW3:
           gcc[0][oind] = MKC_RATIO( oi[OCOL_C_GX], oi[OCOL_C_NUMALL] );
           gcc[1][oind] = MKC_RATIO( oi[OCOL_C_GY], oi[OCOL_C_NUMALL] );
-          if(p->input->ndim==3)
+          if(p->objects->ndim==3)
             gcc[2][oind] = MKC_RATIO( oi[OCOL_C_GZ], oi[OCOL_C_NUMALL] );
           break;
 
         case UI_KEY_BRIGHTNESS:
           ((float *)colarr)[oind] = ( oi[ OCOL_NUM ]>0.0f
                                       ? oi[ OCOL_SUM ]
+                                      : NAN );
+          break;
+
+        case UI_KEY_BRIGHTNESSERR:
+          ((float *)colarr)[oind] = ( oi[ OCOL_NUM ]>0.0f
+                                      ? columns_brightness_error(p, oi, 0)
                                       : NAN );
           break;
 
@@ -1694,7 +1839,9 @@ columns_fill(struct mkcatalog_passparams *pp)
           break;
 
         case UI_KEY_MAGNITUDE:
-          ((float *)colarr)[oind] = MKC_MAG(oi[ OCOL_SUM ]);
+          ((float *)colarr)[oind] = ( oi[ OCOL_NUM ]>0.0f
+                                      ? MKC_MAG(oi[ OCOL_SUM ])
+                                      : NAN );
           break;
 
         case UI_KEY_MAGNITUDEERR:
@@ -1725,6 +1872,10 @@ columns_fill(struct mkcatalog_passparams *pp)
 
         case UI_KEY_UPPERLIMITQUANTILE:
           ((float *)colarr)[oind] = oi[ OCOL_UPPERLIMIT_Q ];
+          break;
+
+        case UI_KEY_UPPERLIMITSKEW:
+          ((float *)colarr)[oind] = oi[ OCOL_UPPERLIMIT_SKEW ];
           break;
 
         case UI_KEY_SN:
@@ -1793,6 +1944,11 @@ columns_fill(struct mkcatalog_passparams *pp)
         key    = column->status;
         ci     = &pp->ci[ coind * CCOL_NUMCOLS ];
 
+        /* Put the object ID of this clump into the temporary array that we
+           will later need to sort the final clumps catalog. */
+        if(p->hostobjid_c)
+          p->hostobjid_c[cind]=pp->object;
+
         /* Parse columns */
         switch(key)
           {
@@ -1805,11 +1961,15 @@ columns_fill(struct mkcatalog_passparams *pp)
             break;
 
           case UI_KEY_AREA:
-            ((int32_t *)colarr)[cind]=ci[CCOL_NUMALL];
+            ((int32_t *)colarr)[cind]=ci[CCOL_NUM];
             break;
 
           case UI_KEY_WEIGHTAREA:
             ((int32_t *)colarr)[cind]=ci[CCOL_NUMWHT];
+            break;
+
+          case UI_KEY_GEOAREA:
+            ((int32_t *)colarr)[cind]=ci[CCOL_NUMALL];
             break;
 
           case UI_KEY_X:
@@ -1849,7 +2009,7 @@ columns_fill(struct mkcatalog_passparams *pp)
                                   CCOL_GX);
             vc[1][cind] = POS_V_G(ci, CCOL_SUMWHT, CCOL_NUMALL, CCOL_VY,
                                   CCOL_GY);
-            if(p->input->ndim==3)
+            if(p->objects->ndim==3)
               vc[2][cind] = POS_V_G(ci, CCOL_SUMWHT, CCOL_NUMALL, CCOL_VZ,
                                     CCOL_GZ);
             break;
@@ -1859,12 +2019,18 @@ columns_fill(struct mkcatalog_passparams *pp)
           case UI_KEY_GEOW3:
             gc[0][cind] = MKC_RATIO( ci[CCOL_GX], ci[CCOL_NUMALL] );
             gc[1][cind] = MKC_RATIO( ci[CCOL_GY], ci[CCOL_NUMALL] );
-            if(p->input->ndim==3)
+            if(p->objects->ndim==3)
               gc[2][cind] = MKC_RATIO( ci[CCOL_GZ], ci[CCOL_NUMALL] );
             break;
 
           case UI_KEY_BRIGHTNESS:
             ((float *)colarr)[cind] = columns_clump_brightness(ci);
+            break;
+
+          case UI_KEY_BRIGHTNESSERR:
+            ((float *)colarr)[cind] = ( ci[ CCOL_NUM ]>0.0f
+                                        ? columns_brightness_error(p, ci, 1)
+                                        : NAN );
             break;
 
           case UI_KEY_NORIVERBRIGHTNESS:
@@ -1908,9 +2074,14 @@ columns_fill(struct mkcatalog_passparams *pp)
           case UI_KEY_UPPERLIMITSIGMA:
             ((float *)colarr)[cind] = ( columns_clump_brightness(ci)
                                         / ci[ CCOL_UPPERLIMIT_S ] );
+            break;
 
           case UI_KEY_UPPERLIMITQUANTILE:
             ((float *)colarr)[cind] = ci[ CCOL_UPPERLIMIT_Q ];
+            break;
+
+          case UI_KEY_UPPERLIMITSKEW:
+            ((float *)colarr)[cind] = ci[ CCOL_UPPERLIMIT_SKEW ];
             break;
 
           case UI_KEY_RIVERAVE:
@@ -1947,9 +2118,9 @@ columns_fill(struct mkcatalog_passparams *pp)
 
           case UI_KEY_AXISRATIO:
             ((float *)colarr)[cind]
-              = ( columns_second_order(pp, ci, UI_KEY_SEMIMINOR, 1)
+              = ( columns_second_order(  pp, ci, UI_KEY_SEMIMINOR, 1)
                   / columns_second_order(pp, ci, UI_KEY_SEMIMAJOR, 1) );
-          break;
+            break;
 
           case UI_KEY_POSITIONANGLE:
             ((float *)colarr)[cind] = columns_second_order(pp, ci, key, 1);
@@ -1965,9 +2136,9 @@ columns_fill(struct mkcatalog_passparams *pp)
 
           case UI_KEY_GEOAXISRATIO:
             ((float *)colarr)[cind]
-              = ( columns_second_order(pp, ci, UI_KEY_GEOSEMIMINOR, 1)
+              = ( columns_second_order(  pp, ci, UI_KEY_GEOSEMIMINOR, 1)
                   / columns_second_order(pp, ci, UI_KEY_GEOSEMIMAJOR, 1) );
-          break;
+            break;
 
           case UI_KEY_GEOPOSITIONANGLE:
             ((float *)colarr)[cind] = columns_second_order(pp, ci, key, 1);

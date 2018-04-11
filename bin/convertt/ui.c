@@ -28,10 +28,14 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <string.h>
 
+#include <gnuastro/eps.h>
 #include <gnuastro/txt.h>
 #include <gnuastro/wcs.h>
+#include <gnuastro/pdf.h>
 #include <gnuastro/list.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/jpeg.h>
+#include <gnuastro/tiff.h>
 #include <gnuastro/table.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/arithmetic.h>
@@ -44,8 +48,6 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 #include "ui.h"
-#include "eps.h"
-#include "jpeg.h"
 #include "authors-cite.h"
 
 
@@ -393,9 +395,9 @@ static void
 ui_make_channels_ll(struct converttparams *p)
 {
   char *hdu=NULL;
-  size_t dsize=0;
   gal_data_t *data;
   gal_list_str_t *name;
+  size_t dsize=0, dirnum;
 
   /* Go through the input files and add the channel(s). */
   p->numch=0;
@@ -423,7 +425,8 @@ ui_make_channels_ll(struct converttparams *p)
                   "for each input FITS image (in the same order)");
 
           /* Read in the array and its WCS information. */
-          data=gal_fits_img_read(name->v, hdu, p->cp.minmapsize, 0, 0);
+          data=gal_fits_img_read(name->v, hdu, p->cp.minmapsize);
+          data->wcs=gal_wcs_read(name->v, hdu, 0, 0, &data->nwcs);
           gal_list_data_add(&p->chll, data);
 
           /* A FITS file only has one channel. */
@@ -431,19 +434,31 @@ ui_make_channels_ll(struct converttparams *p)
         }
 
 
+      /* TIFF: */
+      else if( gal_tiff_name_is_tiff(name->v) )
+        {
+          /* Get the directory value for this channel. */
+          if(p->hdus)
+            {
+              hdu=gal_list_str_pop(&p->hdus);
+              dirnum=gal_tiff_dir_string_read(hdu);
+            }
+          else
+            dirnum=0;
+
+          /* Read the TIFF image into memory. */
+          data=gal_tiff_read(name->v, dirnum, p->cp.minmapsize);
+          p->numch += gal_list_data_number(data);
+          gal_list_data_add(&p->chll, data);
+        }
+
 
       /* JPEG: */
-      else if ( nameisjpeg(name->v) )
+      else if ( gal_jpeg_name_is_jpeg(name->v) )
         {
-#ifndef HAVE_LIBJPEG
-          error(EXIT_FAILURE, 0, "you are giving a JPEG input, however, "
-                "when %s was configured libjpeg was not available. To read "
-                "from (and write to) JPEG files, libjpeg is required. "
-                "Please install it and configure, make and install %s "
-                "again", PACKAGE_STRING, PACKAGE_STRING);
-#else
-          p->numch += jpeg_read_to_ll(name->v, &p->chll, p->cp.minmapsize);
-#endif
+          data=gal_jpeg_read(name->v, p->cp.minmapsize);
+          p->numch += gal_list_data_number(data);
+          gal_list_data_add(&p->chll, data);
         }
 
 
@@ -460,18 +475,18 @@ ui_make_channels_ll(struct converttparams *p)
 
 
       /* EPS:  */
-      else if ( nameiseps(name->v) )
+      else if ( gal_eps_name_is_eps(name->v) )
         error(EXIT_FAILURE, 0, "EPS files cannot be used as input. Since "
-              "EPS files are not raster graphics, they are only used as "
-              "output");
+              "EPS files are not raster graphics. EPS is only an output "
+              "format");
 
 
 
       /* PDF:  */
-      else if ( nameispdf(name->v) )
+      else if ( gal_pdf_name_is_pdf(name->v) )
         error(EXIT_FAILURE, 0, "PDF files cannot be used as input. Since "
-              "PDF files are not raster graphics, they are only used as "
-              "output");
+              "PDF files are not raster graphics. PDF is only an output "
+              "format");
 
 
       /* Text: */
@@ -636,49 +651,55 @@ ui_set_output(struct converttparams *p)
 {
   struct gal_options_common_params *cp=&p->cp;
 
-  /* Determine the type */
+  /* FITS */
   if(gal_fits_name_is_fits(cp->output))
     {
       p->outformat=OUT_FORMAT_FITS;
       if( gal_fits_suffix_is_fits(cp->output) )
         ui_add_dot_use_automatic_output(p);
     }
-  else if(nameisjpeg(cp->output))
+
+  /* JPEG */
+  else if(gal_jpeg_name_is_jpeg(cp->output))
     {
-#ifndef HAVE_LIBJPEG
-      error(EXIT_FAILURE, 0, "you have asked for a JPEG output, "
-            "however, when %s was configured libjpeg was not "
-            "available. To write to JPEG files, libjpeg is required. "
-            "Please install it and configure, make and install %s "
-            "again", PACKAGE_STRING, PACKAGE_STRING);
-#else
       /* Small sanity checks. */
       if(p->quality == GAL_BLANK_UINT8)
-        error(EXIT_FAILURE, 0, "the `--quality' (`-u') option is necessary for "
-              "jpeg outputs, but it has not been given");
+        error(EXIT_FAILURE, 0, "the `--quality' (`-u') option is necessary "
+              "for jpeg outputs, but it has not been given");
       if(p->quality > 100)
         error(EXIT_FAILURE, 0, "`%u' is larger than 100. The value to the "
-              "`--quality' (`-u') option must be between 1 and 100 (inclusive)",
-              p->quality);
+              "`--quality' (`-u') option must be between 1 and 100 "
+              "(inclusive)", p->quality);
 
       /* Preparations. */
       p->outformat=OUT_FORMAT_JPEG;
-      if( nameisjpegsuffix(cp->output) )
+      if( gal_jpeg_suffix_is_jpeg(cp->output) )
         ui_add_dot_use_automatic_output(p);
-#endif
     }
-  else if(nameiseps(cp->output))
+
+  /* TIFF */
+  else if( gal_tiff_name_is_tiff(cp->output) )
+      error(EXIT_FAILURE, 0, "writing TIFF files is not yet supported, "
+            "please get in touch with us at %s so we implement it",
+            PACKAGE_BUGREPORT);
+
+  /* EPS */
+  else if(gal_eps_name_is_eps(cp->output))
     {
       p->outformat=OUT_FORMAT_EPS;
-      if( nameisepssuffix(cp->output) )
+      if( gal_eps_suffix_is_eps(cp->output) )
         ui_add_dot_use_automatic_output(p);
     }
-  else if(nameispdf(cp->output))
+
+  /* PDF */
+  else if(gal_pdf_name_is_pdf(cp->output))
     {
       p->outformat=OUT_FORMAT_PDF;
-      if( nameispdfsuffix(cp->output) )
+      if( gal_pdf_suffix_is_pdf(cp->output) )
         ui_add_dot_use_automatic_output(p);
     }
+
+  /* Default: plain text. */
   else
     {
       p->outformat=OUT_FORMAT_TXT;
@@ -715,7 +736,7 @@ ui_set_output(struct converttparams *p)
         }
     }
 
-  /* Check if the output already exists. */
+  /* Check if the output already exists and remove it if allowed. */
   gal_checkset_writable_remove(cp->output, 0, cp->dontdelete);
 }
 

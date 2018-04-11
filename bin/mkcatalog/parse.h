@@ -1,11 +1,11 @@
 /*********************************************************************
-ConvertType - Convert between various types of files.
-ConvertType is part of GNU Astronomy Utilities (Gnuastro) package.
+MakeCatalog - Make a catalog from an input and labeled image.
+MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2018, Free Software Foundation, Inc.
+Copyright (C) 2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -20,22 +20,19 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef EPS_H
-#define EPS_H
-
-int
-nameiseps(char *name);
-
-int
-nameisepssuffix(char *name);
-
-int
-nameispdf(char *name);
-
-int
-nameispdfsuffix(char *name);
+#ifndef PARSE_H
+#define PARSE_H
 
 void
-eps_write_eps_or_pdf(struct converttparams *p);
+parse_initialize(struct mkcatalog_passparams *pp);
+
+void
+parse_objects(struct mkcatalog_passparams *pp);
+
+void
+parse_clumps(struct mkcatalog_passparams *pp);
+
+void
+parse_median(struct mkcatalog_passparams *pp);
 
 #endif

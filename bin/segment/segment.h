@@ -1,6 +1,6 @@
 /*********************************************************************
-ConvertType - Convert between various types of files.
-ConvertType is part of GNU Astronomy Utilities (Gnuastro) package.
+Segment - Segment initial labels based on signal structure.
+Segment is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
@@ -20,19 +20,10 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef JPEG_H
-#define JPEG_H
-
-int
-nameisjpeg(char *name);
-
-int
-nameisjpegsuffix(char *name);
-
-size_t
-jpeg_read_to_ll(char *filename, gal_data_t **list, size_t minmapsize);
+#ifndef SEGMENT_H
+#define SEGMENT_H
 
 void
-jpeg_write(struct converttparams *p);
+segment(struct segmentparams *p);
 
 #endif

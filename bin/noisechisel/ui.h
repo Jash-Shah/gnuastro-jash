@@ -1,5 +1,5 @@
 /*********************************************************************
-NoiseChisel - Detect and segment signal in a noisy dataset.
+NoiseChisel - Detect signal in a noisy dataset.
 NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
@@ -50,8 +50,8 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b f j l n u x z
-   A H J W X Y
+   a b f g i j n u v x y z
+   A E G H J O W X Y
 */
 enum option_keys_enum
 {
@@ -59,7 +59,6 @@ enum option_keys_enum
   UI_KEY_LARGETILESIZE      = 'L',
   UI_KEY_KERNEL             = 'k',
   UI_KEY_WIDEKERNEL         = 'w',
-  UI_KEY_SKYSUBTRACTED      = 'E',
   UI_KEY_MINSKYFRAC         = 'B',
   UI_KEY_MIRRORDIST         = 'r',
   UI_KEY_MODMEDQDIFF        = 'Q',
@@ -68,27 +67,20 @@ enum option_keys_enum
   UI_KEY_OPENING            = 'p',
   UI_KEY_SIGMACLIP          = 's',
   UI_KEY_DTHRESH            = 'R',
-  UI_KEY_DETSNMINAREA       = 'i',
-  UI_KEY_DETQUANT           = 'c',
+  UI_KEY_SNMINAREA          = 'm',
+  UI_KEY_SNQUANT            = 'c',
   UI_KEY_DETGROWQUANT       = 'd',
-  UI_KEY_SEGSNMINAREA       = 'm',
-  UI_KEY_SEGQUANT           = 'g',
-  UI_KEY_KEEPMAXNEARRIVER   = 'v',
-  UI_KEY_GTHRESH            = 'G',
-  UI_KEY_MINRIVERLENGTH     = 'y',
-  UI_KEY_OBJBORDERSN        = 'O',
   UI_KEY_CONTINUEAFTERCHECK = 'C',
+  UI_KEY_LABEL              = 'l',
 
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
   UI_KEY_KHDU               = 1000,
   UI_KEY_CONVOLVED,
-  UI_KEY_CONVOLVEDHDU,
-  UI_KEY_WKHDU,
+  UI_KEY_CHDU,
+  UI_KEY_WHDU,
   UI_KEY_MINNUMFALSE,
-  UI_KEY_ONLYDETECTION,
-  UI_KEY_GROWNCLUMPS,
   UI_KEY_SMOOTHWIDTH,
   UI_KEY_QTHRESHTILEQUANT,
   UI_KEY_CHECKQTHRESH,
@@ -96,13 +88,12 @@ enum option_keys_enum
   UI_KEY_NOERODEQUANT,
   UI_KEY_OPENINGNGB,
   UI_KEY_CHECKDETSKY,
-  UI_KEY_CHECKDETSN,
+  UI_KEY_CHECKSN,
   UI_KEY_DETGROWMAXHOLESIZE,
   UI_KEY_CLEANGROWNDET,
   UI_KEY_CHECKDETECTION,
   UI_KEY_CHECKSKY,
-  UI_KEY_CHECKCLUMPSN,
-  UI_KEY_CHECKSEGMENTATION,
+  UI_KEY_RAWOUTPUT,
 };
 
 

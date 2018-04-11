@@ -25,7 +25,7 @@
 prog=mkcatalog
 objimg=clearcanvas.fits
 execname=../bin/$prog/ast$prog
-img=convolve_spatial_noised_labeled.fits
+img=convolve_spatial_noised_detected.fits
 
 
 
@@ -51,6 +51,6 @@ if [ ! -f $objimg   ]; then echo "$objimg does not exist";  exit 77; fi
 
 # Actual test script
 # ==================
-$execname $img --objectsfile=$objimg --objectshdu=1 \
-          --output=aperturephot.fits                \
+$execname $objimg --hdu=1 --valuesfile=$img             \
+          --output=aperturephot.fits                    \
           --objid --x --y --ra --dec --magnitude --sn

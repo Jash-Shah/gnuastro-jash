@@ -1,11 +1,11 @@
 /*********************************************************************
-NoiseChisel - Detect and segment signal in a noisy dataset.
-NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
+Segment - Segment initial labels based on signal structure.
+Segment is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2018, Free Software Foundation, Inc.
+Copyright (C) 2018, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -20,10 +20,39 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef SEGMENTATION_H
-#define SEGMENTATION_H
+#include <config.h>
 
-void
-segmentation(struct noisechiselparams *p);
+#include <stdio.h>
+#include <stdlib.h>
 
-#endif
+#include <gnuastro-internal/timing.h>
+
+#include "main.h"
+
+#include "ui.h"
+#include "segment.h"
+
+
+/* Main function */
+int
+main (int argc, char *argv[])
+{
+  struct timeval t1;
+  struct segmentparams p={{{0},0},{0},0};
+
+  /* Set the starting time. */
+  time(&p.rawtime);
+  gettimeofday(&t1, NULL);
+
+  /* Read the input parameters. */
+  ui_read_check_inputs_setup(argc, argv, &p);
+
+  /* Run Segment */
+  segment(&p);
+
+  /* Free all non-freed allocations. */
+  ui_free_report(&p, &t1);
+
+  /* Return successfully.*/
+  return EXIT_SUCCESS;
+}

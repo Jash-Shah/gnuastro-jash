@@ -1,5 +1,5 @@
 /*********************************************************************
-NoiseChisel - Detect and segment signal in a noisy dataset.
+NoiseChisel - Detect signal in a noisy dataset.
 NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
@@ -196,10 +196,17 @@ threshold_write_sn_table(struct noisechiselparams *p, gal_data_t *insn,
      set of blank elements, but checking on the integer array is faster. */
   if( gal_blank_present(inind, 1) )
     {
+      /* Remove blank elements. */
       ind=gal_data_copy(inind);
       sn=gal_data_copy(insn);
       gal_blank_remove(ind);
       gal_blank_remove(sn);
+
+      /* A small sanity check. */
+      if(ind->size==0 || sn->size==0)
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+              "the problem. For some reason, all the elements in `ind' or "
+              "`sn' are blank", __func__, PACKAGE_BUGREPORT);
     }
   else
     {
@@ -648,6 +655,8 @@ void
 threshold_quantile_find_apply(struct noisechiselparams *p)
 {
   char *msg;
+  size_t nval;
+  gal_data_t *num;
   struct timeval t1;
   struct qthreshparams qprm;
   struct gal_options_common_params *cp=&p->cp;
@@ -734,6 +743,38 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
                             p->qthreshname);
 
 
+  /* Check if the number of acceptable tiles is more than the minimum
+     interpolated number. Since this is a common problem for users, it is
+     much more useful to do the check here rather than printing multiple
+     errors in parallel. */
+  num=gal_statistics_number(qprm.erode_th);
+  nval=((size_t *)(num->array))[0];
+  if( nval < cp->interpnumngb)
+    error(EXIT_FAILURE, 0, "%zu tiles can be used for interpolation of the "
+          "quantile threshold values over the full dataset. This is smaller "
+          "than the requested minimum value of %zu (value to the "
+          "`--interpnumngb' option).\n\n"
+          "There are several ways to address the problem. The best and most "
+          "highly recommended is to use a larger input if possible (when the "
+          "input is a crop from a larger dataset). If that is not the case, "
+          "or it doesn't solve the problem, you need to loosen the "
+          "parameters (and therefore cause scatter in the final result). "
+          "Thus don't loosen them too much. Recall that you can see all the "
+          "option values to Gnuastro's programs by appending `-P' to the "
+          "end of your command.\n\n"
+          "  * Decrease `--interpnumngb' to be smaller than %zu.\n"
+          "  * Slightly decrease `--tilesize' to have more tiles.\n"
+          "  * Slightly increase `--modmedqdiff' to accept more tiles.\n\n"
+          "Try appending your command with `--checkqthresh' to see the "
+          "successful tiles (and get a feeling of the cause/solution. Note "
+          "that the output is a multi-extension FITS file).\n\n"
+          "To better understand this important step, please run the "
+          "following command (press `SPACE'/arrow-keys to navigate and "
+          "`Q' to return back to the command-line):\n\n"
+          "    $ info gnuastro \"Quantifying signal in a tile\"\n",
+          nval, cp->interpnumngb, cp->interpnumngb);
+
+
   /* Interpolate and smooth the derived values. */
   threshold_interp_smooth(p, &qprm.erode_th, &qprm.noerode_th,
                           qprm.expand_th ? &qprm.expand_th : NULL,
@@ -747,7 +788,11 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
 
   /* Write the binary image if check is requested. */
   if(p->qthreshname && !tl->oneelempertile)
-    gal_fits_img_write(p->binary, p->qthreshname, NULL, PROGRAM_NAME);
+    {
+      p->binary->name="QTHRESH-APPLIED";
+      gal_fits_img_write(p->binary, p->qthreshname, NULL, PROGRAM_NAME);
+      p->binary->name=NULL;
+    }
 
 
   /* Set the expansion quantile if necessary. */

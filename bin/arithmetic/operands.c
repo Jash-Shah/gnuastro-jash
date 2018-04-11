@@ -31,6 +31,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/tiff.h>
+#include <gnuastro/array.h>
 #include <gnuastro-internal/checkset.h>
 
 #include "main.h"
@@ -77,17 +79,18 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
       newnode->data=data;
       newnode->filename=filename;
 
-      if(filename != NULL && gal_fits_name_is_fits(filename))
+      /* See if a HDU must be read or not. */
+      if(filename != NULL
+         && ( gal_fits_name_is_fits(filename)
+              || gal_tiff_name_is_tiff(filename) ) )
         {
           /* Set the HDU for this filename. */
           if(p->globalhdu)
             gal_checkset_allocate_copy(p->globalhdu, &newnode->hdu);
           else
             newnode->hdu=gal_list_str_pop(&p->hdus);
-
-          /* Increment the FITS counter. */
-          ++p->addcounter;
         }
+      else newnode->hdu=NULL;
 
       /* Make the link to the previous list. */
       newnode->next=p->operands;
@@ -122,21 +125,12 @@ operands_pop(struct arithmeticparams *p, char *operator)
       filename=operands->filename;
 
       /* Read the dataset. */
-      data=gal_fits_img_read(filename, hdu, p->cp.minmapsize, 0, 0);
+      data=gal_array_read_one_ch(filename, hdu, p->cp.minmapsize);
 
       /* In case this is the first image that is read, then keep the WCS
-         information in the `refdata' structure. Otherwise, the WCS is not
-         necessary and we can safely free it. In any case, `data' must not
-         have a WCS structure. */
+         information in the `refdata' structure.  */
       if(p->popcounter==0)
-        {
-          p->refdata.wcs=data->wcs;
-          p->refdata.nwcs=data->nwcs;
-        }
-      else
-        wcsfree(data->wcs);
-      data->wcs=NULL;
-      data->nwcs=0;
+        p->refdata.wcs=gal_wcs_read(filename, hdu, 0, 0, &p->refdata.nwcs);
 
       /* When the reference data structure's dimensionality is non-zero, it
          means that this is not the first image read. So, write its basic
