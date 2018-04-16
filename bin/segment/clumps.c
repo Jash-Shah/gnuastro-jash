@@ -29,7 +29,6 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 
 #include <gnuastro/fits.h>
-#include <gnuastro/qsort.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/label.h>
 #include <gnuastro/threads.h>
@@ -70,8 +69,8 @@ clumps_grow_prepare_initial(struct clumps_thread_params *cltprm)
   double wcoord[3]={0.0f,0.0f,0.0f}, sum=0.0f;
   size_t ndiffuse=0, coord[3], tcoord[3], *dindexs;
   size_t *s, *sf, *dsize=input->dsize, ndim=input->ndim;
+  float glimit, *imgss=input->array, *std=p->std->array;
   int32_t *olabel=p->olabel->array, *clabel=p->clabel->array;
-  float glimit, *imgss=input->array, *std=p->std?p->std->array:NULL;
 
 
   /* Find the flux weighted center (meaningful only for positive valued
@@ -116,14 +115,14 @@ clumps_grow_prepare_initial(struct clumps_thread_params *cltprm)
 
 
   /* Find the growth limit. Note that the STD may be a value, or a dataset
-     (which may be a full sized image or a tessellation). If its a dataset,
-     `stdval==NAN', and we'll check through the number of elements to see
-     what kind of dataset it is.. */
-  cltprm->std = ( p->std
+     (which may be a full sized image or a tessellation). If its not a
+     single value, we'll check through the number of elements to see what
+     kind of dataset it is (if its a tile or full image). */
+  cltprm->std = ( p->std->size>1
                   ? ( p->std->size==p->input->size
                       ? std[gal_dimension_coord_to_index(ndim, dsize, coord)]
                       : std[gal_tile_full_id_from_coord(&p->cp.tl, coord)] )
-                  : p->stdval );
+                  : std[0] );
   if(p->variance) cltprm->std = sqrt(cltprm->std);
 
 
@@ -248,9 +247,9 @@ clumps_get_raw_info(struct clumps_thread_params *cltprm)
   double *row, *info=cltprm->info->array;
   size_t nngb=gal_dimension_num_neighbors(ndim);
   struct gal_tile_two_layer_params *tl=&p->cp.tl;
+  float *arr=p->input->array, *std=p->std->array;
   size_t *dinc=gal_dimension_increment(ndim, dsize);
   int32_t lab, nlab, *ngblabs, *clabel=p->clabel->array;
-  float *arr=p->input->array, *std=p->std?p->std->array:NULL;
 
   /* Allocate the array to keep the neighbor labels of river pixels. */
   ngblabs=gal_data_malloc_array(GAL_TYPE_INT32, nngb, __func__, "ngblabs");
@@ -341,13 +340,13 @@ clumps_get_raw_info(struct clumps_thread_params *cltprm)
                 coord[2]=GAL_DIMENSION_FLT_TO_INT(row[INFO_Z]/row[INFO_SFF]);
 
               /* Find the corresponding standard deviation. */
-              row[INFO_INSTD]=( p->std
+              row[INFO_INSTD]=( p->std->size>1
                                 ? ( p->std->size==p->input->size
                                     ? std[gal_dimension_coord_to_index(ndim,
                                                                dsize, coord)]
                                     : std[gal_tile_full_id_from_coord(tl,
                                                                     coord)] )
-                                : p->stdval );
+                                : std[0] );
               if(p->variance) row[INFO_INSTD] = sqrt(row[INFO_INSTD]);
 
               /* For a check
@@ -440,7 +439,7 @@ clumps_make_sn_table(struct clumps_thread_params *cltprm)
          noise cases) or the area is smaller than the minimum area to
          calculate signal-to-noise, then set the S/N of this segment to
          zero. */
-      if( I>O && Ni>p->snminarea )
+      if( (p->minima ? O>I : I>O) && Ni>p->snminarea )
         {
           /* For easy reading, define `var' for variance.  */
           var = row[INFO_INSTD] * row[INFO_INSTD];
@@ -452,7 +451,7 @@ clumps_make_sn_table(struct clumps_thread_params *cltprm)
              equal to i. */
           ind = sky0_det1 ? i : counter++;
           if(cltprm->snind) indarr[ind]=i;
-          snarr[ind]=( sqrt(Ni/p->cpscorr) * (I-O)
+          snarr[ind]=( sqrt(Ni/p->cpscorr) * ( p->minima ? O-I : I-O)
                        / sqrt( (I>0?I:-1*I) + (O>0?O:-1*O) + var ) );
         }
       else
@@ -639,9 +638,9 @@ clumps_find_make_sn_table(void *in_prm)
              rivers and not include them in the list of indexs to set
              clumps. To do that, we need this tile's starting
              coordinates. */
-          gal_dimension_index_to_coord(gal_data_ptr_dist(p->clabel->array,
-                                                         tile->array,
-                                                         p->clabel->type),
+          gal_dimension_index_to_coord(gal_data_num_between(p->clabel->array,
+                                                            tile->array,
+                                                            p->clabel->type),
                                        ndim, dsize, scoord);
 
 
@@ -686,16 +685,16 @@ clumps_find_make_sn_table(void *in_prm)
                     {
                       if(cltprm.id==282) *i+=2;
                   */
-                      indarr[c++]=gal_data_ptr_dist(p->clabel->array, i,
-                                                    p->clabel->type);
+                      indarr[c++]=gal_data_num_between(p->clabel->array, i,
+                                                       p->clabel->type);
                   /*
                     }
                   else
                     if(cltprm.id==282)
                       {
                         int32_t *clabel=p->clabel->array;
-                        size_t kjd=gal_data_ptr_dist(p->clabel->array, i,
-                                                     p->clabel->type);
+                        size_t kjd=gal_data_num_between(p->clabel->array, i,
+                                                        p->clabel->type);
                         printf("%zu, %zu: %u\n", kjd%dsize[1]+1,
                                kjd/dsize[1]+1, clabel[kjd]);
                       }
@@ -711,7 +710,8 @@ clumps_find_make_sn_table(void *in_prm)
           /* Generate the clumps over this region. */
           cltprm.numinitclumps=gal_label_oversegment(p->conv, cltprm.indexs,
                                                      p->clabel,
-                                                     cltprm.topinds);
+                                                     cltprm.topinds,
+                                                     !p->minima);
 
 
           /* Set all river pixels to GAL_LABEL_INIT (to be distinguishable

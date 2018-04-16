@@ -60,6 +60,7 @@ struct segmentparams
   char               *stdname;  /* File name of Standard deviation image. */
   char                *stdhdu;  /* HDU of Stanard deviation image.        */
   uint8_t            variance;  /* The input STD is actually variance.    */
+  uint8_t              minima;  /* Build clumps from their minima, maxima.*/
   uint8_t           rawoutput;  /* Output only object and clump labels.   */
 
   float            minskyfrac;  /* Undetected area min. frac. in tile.    */
@@ -69,6 +70,7 @@ struct segmentparams
   float               snquant;  /* Quantile of clumps in sky for true S/N.*/
   uint8_t    keepmaxnearriver;  /* Keep clumps with a peak near a river.  */
   float         clumpsnthresh;  /* Clump S/N threshold.                   */
+  uint8_t          onlyclumps;  /* Finish after finding true clumps.      */
   float               gthresh;  /* Multiple of STD to stop growing clumps.*/
   size_t       minriverlength;  /* Min, len of good grown clump rivers.   */
   float           objbordersn;  /* Minimum S/N for grown clumps to be one.*/
@@ -88,8 +90,6 @@ struct segmentparams
   gal_data_t          *olabel;  /* Object labels.                         */
   gal_data_t          *clabel;  /* Clumps labels.                         */
   gal_data_t             *std;  /* STD of undetected pixels, per tile.    */
-  float                stdval;  /* Single value to use for std deviation. */
-  float                skyval;  /* Single value to use for Sky.           */
 
   float               cpscorr;  /* Counts/second correction.              */
   size_t        numdetections;  /* Number of final detections.            */

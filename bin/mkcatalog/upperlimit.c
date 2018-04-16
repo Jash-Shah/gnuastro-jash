@@ -160,8 +160,8 @@ upperlimit_random_range(struct mkcatalog_passparams *pp, gal_data_t *tile,
   /* Set the minimum and maximum acceptable value for the range.  */
   if(p->uprange)
     {
-      tstart=gal_data_ptr_dist(tile->block->array, tile->array,
-                               p->objects->type);
+      tstart=gal_data_num_between(tile->block->array, tile->array,
+                                  p->objects->type);
       gal_dimension_index_to_coord(tstart, ndim, dsize, coord);
     }
 
@@ -746,7 +746,7 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
 
 
 /*********************************************************************/
-/*******************     High level funciton      ********************/
+/*******************     High level function      ********************/
 /*********************************************************************/
 void
 upperlimit_calculate(struct mkcatalog_passparams *pp)

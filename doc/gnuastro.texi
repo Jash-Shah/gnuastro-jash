@@ -14809,12 +14809,14 @@ many illustrative figures) is Section 3.2 of
 @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.
 
 As a summary, Segment first finds true @emph{clump}s over the
-detections. Clumps are associated with local maxima and extend over the
-neighboring pixels until they reach a local minimum (@emph{river}). Segment
-will use the distribution of clump signal-to-noise ratios over the
-undetected regions as reference to find ``true'' clumps over the
-detections. Using the undetected regions can be disabled by directly giving
-a signal-to-noise ratio to @option{--clumpsnthresh}.
+detections. Clumps are associated with local maxima/minima@footnote{By
+default the maximum is used as the first clump pixel, to define clumps
+based on local minima, use the @option{--minima} option.})  and extend over
+the neighboring pixels until they reach a local minimum/maximum
+(@emph{river}). Segment will use the distribution of clump signal-to-noise
+ratios over the undetected regions as reference to find ``true'' clumps
+over the detections. Using the undetected regions can be disabled by
+directly giving a signal-to-noise ratio to @option{--clumpsnthresh}.
 
 The true clumps are then grown to a certain threshold over the
 detections. Based on the strength of the connections between the grown
@@ -15132,6 +15134,13 @@ fields. Operationally, this is almost identical to NoiseChisel's
 @option{--minskyfrac} option (@ref{Detection options}). Please see the
 descriptions there for more.
 
+@item --minima
+Build the clumps based on the local minima, not maxima. By default, clumps
+are built starting from local maxima (see Figure 8 of
+@url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa
+[2015]}). Therefore, this option can be useful when you are searching for
+true local minima (for example absorption features).
+
 @item -m INT
 @itemx --snminarea=INT
 The minimum area which a clump in the undetected regions should have in
@@ -15181,14 +15190,14 @@ option and visually inspected with @option{--checksegmentation}.
 
 @item -v
 @itemx --keepmaxnearriver
-Keep a clump whose maximum flux is 8-connected to a river pixel. By default
-such clumps over detections are considered to be noise and are removed
-irrespective of their brightness (see @ref{Flux Brightness and
-magnitude}). Over large profiles, that sink into the noise very slowly,
-noise can cause part of the profile (which was flat without noise) to
-become a very large and with a very high Signal to noise ratio. In such
-cases, the pixel with the maximum flux in the clump will be immediately
-touching a river pixel.
+Keep a clump whose maximum (minimum if @option{--minima} is called) flux is
+8-connected to a river pixel. By default such clumps over detections are
+considered to be noise and are removed irrespective of their brightness
+(see @ref{Flux Brightness and magnitude}). Over large profiles, that sink
+into the noise very slowly, noise can cause part of the profile (which was
+flat without noise) to become a very large and with a very high Signal to
+noise ratio. In such cases, the pixel with the maximum flux in the clump
+will be immediately touching a river pixel.
 
 @item -s FLT
 @itemx --clumpsnthresh=FLT
@@ -15266,14 +15275,15 @@ definition of clumps and objects, please see Section 3.2 of
 @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]} and
 @ref{Segmentation options}.
 
-The clumps are ``true'' local maxima and their surrounding pixels until a
-local minimum (caused by noise fluctuations, or another ``true''
-clump). Therefore it may happen that some of the input detections aren't
-covered by clumps at all (very diffuse objects without any strong peak),
-while some objects may contain many clumps. Even in those that have clumps,
-there will be regions that are too diffuse. The diffuse regions (within the
-input detected regions) are given a negative label (-1) to help you
-separate them from the undetected regions (with a value of zero).
+The clumps are ``true'' local maxima (minima if @option{--minima} is
+called) and their surrounding pixels until a local minimum/maximum (caused
+by noise fluctuations, or another ``true'' clump). Therefore it may happen
+that some of the input detections aren't covered by clumps at all (very
+diffuse objects without any strong peak), while some objects may contain
+many clumps. Even in those that have clumps, there will be regions that are
+too diffuse. The diffuse regions (within the input detected regions) are
+given a negative label (-1) to help you separate them from the undetected
+regions (with a value of zero).
 
 Each clump is labeled with respect to its host object. Therefore, if an
 object has three clumps for example, the clumps within it have labels 1, 2
@@ -15319,6 +15329,18 @@ are listed below:
 Don't abort Segment after producing the check image(s). The usage of this
 option is identical to NoiseChisel's @option{--continueaftercheck} option
 (@ref{NoiseChisel input}). Please see the descriptions there for more.
+
+@item --onlyclumps
+Abort Segment after finding true clumps and don't continue with finding
+options. Therefore, no @code{OBJECTS} extension will be present in the
+output. Each true clump in @code{CLUMPS} will get a unique label, but
+diffuse regions will still have a negative value.
+
+To make a catalog of the clumps, the input detection map (where all the
+labels are one) can be fed into @ref{MakeCatalog} along with the input
+detection map to Segment (that only had a value of @code{1} for all
+detected pixels) with @option{--clumpscat}. In this way, MakeCatalog will
+assume all the clumps belong to a single ``object''.
 
 @item --grownclumps
 In the output @code{CLUMPS} extension, store the grown clumps. If a
@@ -21466,10 +21488,10 @@ function will use the given @code{type} to calculate where the incremented
 element is located in memory.
 @end deftypefun
 
-@deftypefun size_t gal_data_ptr_dist (void @code{*earlier}, void @code{*later}, uint8_t @code{type})
-Return the number of elements between @code{earlier} and @code{later}
-assuming each element has a type defined by @code{type} (for the type
-codes, see @ref{Library data types}).
+@deftypefun size_t gal_data_num_between (void @code{*earlier}, void @code{*later}, uint8_t @code{type})
+Return the number of elements (in the given @code{type}) between
+@code{earlier} and @code{later}. For the type codes, see @ref{Library data
+types}).
 @end deftypefun
 
 @deftypefun {void *} gal_data_malloc_array (uint8_t @code{type}, size_t @code{size}, const char @code{*funcname}, const char @code{*varname})
@@ -22590,7 +22612,7 @@ Getting arrays (commonly images or cubes) from a file into your program or
 writing them after the processing into an output file are some of the most
 common operations. The functions in this section are designed for such
 operations with the known file types. The functions here are thus just
-wrappers around funcitons of lower-level file type functions of this
+wrappers around functions of lower-level file type functions of this
 library, for example @ref{FITS files} or @ref{TIFF files}. If the file type
 of the input/output file is already known, you can use the functions in
 those sections respectively.
@@ -24381,7 +24403,7 @@ must have the same size. When @code{OTHER} is a tile it must have the same
 size as @code{IN} and parsing will start from its starting element/pixel.
 Also, the respective allocated blocks of @code{OTHER} and @code{IN} (if
 different) may have different sizes. Using @code{OTHER} (along with
-@code{PARSE_OTHER}), this funciton-like macro will thus enable you to parse
+@code{PARSE_OTHER}), this function-like macro will thus enable you to parse
 and define your own operation on two fixed size regions in one or two
 blocks of memory. In the latter case, they may have different numeric
 datatypes, see @ref{Numeric data types}).
@@ -24995,6 +25017,12 @@ main (void)
 
 @noindent
 The output will be: @code{2, 0, 1, 3}.
+@end deftypefun
+
+@deftypefun int gal_qsort_index_float_increasing (const void @code{*a}, const void @code{*b})
+Similar to @code{gal_qsort_index_float_decreasing}, but will sort the
+indexes such that the values of @code{gal_qsort_index_arr} are in
+increasing order.
 @end deftypefun
 
 
@@ -25628,7 +25656,19 @@ Although the adjacency matrix as used here is symmetric, currently this
 function assumes that it is filled on both sides of the diagonal.
 @end deftypefun
 
-@deftypefun void gal_binary_fill_holes (gal_data_t @code{*input}, int @code{connectivity})
+@deftypefun {gal_data_t *} gal_binary_holes_label (gal_data_t @code{*input}, int @code{connectivity}, size_t @code{*numholes})
+Label all the holes in the foreground (non-zero elements in input) as
+independent regions. Holes are background regions (zero-valued in input)
+that are fully surrounded by the foreground, as defined by
+@code{connectivity}. The returned dataset has a 32-bit signed integer type
+with the size of the input. All holes in the input will have
+labels/counters greater or equal to @code{1}. The rest of the background
+regions will still have a value of @code{0} and the initial foreground
+pixels will have a value of @code{-1}. The total number of holes will be
+written where @code{numholes} points to.
+@end deftypefun
+
+@deftypefun void gal_binary_holes_fill (gal_data_t @code{*input}, int @code{connectivity})
 Fill all the holes (0 valued pixels surrounded by 1 valued pixels) within a
 region of the binary @code{input} dataset. The connectivity of the holes
 can be set with @code{connectivity}. This function currently only works on
