@@ -37,6 +37,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/dimension.h>
 #include <gnuastro/statistics.h>
 #include <gnuastro/arithmetic.h>
+#include <gnuastro/interpolate.h>
 
 #include <gnuastro-internal/checkset.h>
 
@@ -179,121 +180,110 @@ arithmetic_filter(void *in_prm)
       /* For easy reading, put the index in `ind'. */
       ind=tprm->indexs[i];
 
-      /* If we are on a blank element, then just set the output to blank
-         also. */
-      if( afp->hasblank
-          && gal_blank_is(gal_data_ptr_increment(input->array, ind,
-                                                 input->type), input->type) )
-        gal_blank_write(gal_data_ptr_increment(afp->out->array, ind,
-                                               afp->out->type),
-                        afp->out->type);
-      else
+      /* Get the coordinate of the pixel. */
+      gal_dimension_index_to_coord(ind, ndim, dsize, coord);
+
+      /* See which dimensions need trimming. */
+      tile->size=1;
+      for(j=0;j<ndim;++j)
         {
-          /* Get the coordinate of the pixel. */
-          gal_dimension_index_to_coord(ind, ndim, dsize, coord);
-
-          /* See which dimensions need trimming. */
-          tile->size=1;
-          for(j=0;j<ndim;++j)
+          /* Estimate the coordinate of the filter's starting point. Note
+             that we are dealing with size_t (unsigned int) type here, so
+             there are no negatives. A negative result will produce an
+             extremely large number, so instead of checking for negative,
+             we can just see if the result of a subtraction is less than
+             the width of the input. */
+          if( (coord[j] - hnfsize[j] > dsize[j])
+              || (coord[j] + hpfsize[j] >= dsize[j]) )
             {
-              /* Estimate the coordinate of the filter's starting
-                 point. Note that we are dealing with size_t (unsigned int)
-                 type here, so there are no negatives. A negative result
-                 will produce an extremely large number, so instead of
-                 checking for negative, we can just see if the result of a
-                 subtraction is less than the width of the input. */
-              if( (coord[j] - hnfsize[j] > dsize[j])
-                  || (coord[j] + hpfsize[j] >= dsize[j]) )
-                {
-                  start[j] = ( (coord[j] - hnfsize[j] > dsize[j])
-                               ? 0 : coord[j] - hnfsize[j] );
-                  end[j]   = ( (coord[j] + hpfsize[j] >= dsize[j])
-                               ? dsize[j]
-                               : coord[j] + hpfsize[j] + 1);
-                  tsize[j] = end[j] - start[j];
-                }
-              else  /* NOT on the edge (given requested filter width). */
-                {
-                  tsize[j] = fsize[j];
-                  start[j] = coord[j] - hnfsize[j];
-                }
-              tile->size *= tsize[j];
+              start[j] = ( (coord[j] - hnfsize[j] > dsize[j])
+                           ? 0 : coord[j] - hnfsize[j] );
+              end[j]   = ( (coord[j] + hpfsize[j] >= dsize[j])
+                           ? dsize[j]
+                           : coord[j] + hpfsize[j] + 1);
+              tsize[j] = end[j] - start[j];
             }
+          else  /* NOT on the edge (given requested filter width). */
+            {
+              tsize[j] = fsize[j];
+              start[j] = coord[j] - hnfsize[j];
+            }
+          tile->size *= tsize[j];
+        }
 
-          /* For a test.
-             printf("coord: %zu, %zu\n", coord[1]+1, coord[0]+1);
-             printf("\tstart: %zu, %zu\n", start[1]+1, start[0]+1);
-             printf("\ttsize: %zu, %zu\n", tsize[1], tsize[0]);
-          */
+      /* For a test.
+         printf("coord: %zu, %zu\n", coord[1]+1, coord[0]+1);
+         printf("\tstart: %zu, %zu\n", start[1]+1, start[0]+1);
+         printf("\ttsize: %zu, %zu\n", tsize[1], tsize[0]);
+      */
 
-          /* Set the tile's starting pointer. */
-          index=gal_dimension_coord_to_index(ndim, dsize, start);
-          tile->array=gal_data_ptr_increment(input->array, index,
-                                             input->type);
+      /* Set the tile's starting pointer. */
+      index=gal_dimension_coord_to_index(ndim, dsize, start);
+      tile->array=gal_data_ptr_increment(input->array, index,
+                                         input->type);
 
-          /* Do the necessary calculation. */
+      /* Do the necessary calculation. */
+      switch(afp->operator)
+        {
+        case ARITHMETIC_OP_FILTER_MEDIAN:
+          result=gal_statistics_median(tile, 0);
+          break;
+
+
+        case ARITHMETIC_OP_FILTER_MEAN:
+          result=gal_statistics_mean(tile);
+          break;
+
+
+        case ARITHMETIC_OP_FILTER_SIGCLIP_MEAN:
+        case ARITHMETIC_OP_FILTER_SIGCLIP_MEDIAN:
+          /* Find the sigma-clipped results. */
+          sigclip=gal_statistics_sigma_clip(tile, afp->sclip_multip,
+                                            afp->sclip_param, 0, 1);
+
+          /* Set the required index. */
           switch(afp->operator)
             {
-            case ARITHMETIC_OP_FILTER_MEDIAN:
-              result=gal_statistics_median(tile, 0);
-              break;
-
-
-            case ARITHMETIC_OP_FILTER_MEAN:
-              result=gal_statistics_mean(tile);
-              break;
-
-
-            case ARITHMETIC_OP_FILTER_SIGCLIP_MEAN:
-            case ARITHMETIC_OP_FILTER_SIGCLIP_MEDIAN:
-              /* Find the sigma-clipped results. */
-              sigclip=gal_statistics_sigma_clip(tile, afp->sclip_multip,
-                                                afp->sclip_param, 0, 1);
-
-              /* Set the required index. */
-              switch(afp->operator)
-                {
-                case ARITHMETIC_OP_FILTER_SIGCLIP_MEAN:   sind = 2; break;
-                case ARITHMETIC_OP_FILTER_SIGCLIP_MEDIAN: sind = 1; break;
-                default:
-                  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
-                        "%s to fix the problem. The `afp->operator' value "
-                        "%d is not recognized as sigma-clipped median or "
-                        "mean", __func__, PACKAGE_BUGREPORT, afp->operator);
-                }
-
-              /* Allocate the output and write the value into it. */
-              result=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL,
-                                    0, -1, NULL, NULL, NULL);
-              ((float *)(result->array))[0] =
-                ((float *)(sigclip->array))[sind];
-
-              /* Clean up. */
-              gal_data_free(sigclip);
-              break;
-
-
+            case ARITHMETIC_OP_FILTER_SIGCLIP_MEAN:   sind = 2; break;
+            case ARITHMETIC_OP_FILTER_SIGCLIP_MEDIAN: sind = 1; break;
             default:
-              error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
-                    "to fix the problem. `afp->operator' code %d is not "
-                    "recognized", PACKAGE_BUGREPORT, __func__,
-                    afp->operator);
+              error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                    "%s to fix the problem. The `afp->operator' value "
+                    "%d is not recognized as sigma-clipped median or "
+                    "mean", __func__, PACKAGE_BUGREPORT, afp->operator);
             }
 
-          /* Make sure the output array type and result's type are the
-             same. */
-          if(result->type!=afp->out->type)
-            result=gal_data_copy_to_new_type_free(result, afp->out->type);
+          /* Allocate the output and write the value into it. */
+          result=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL,
+                                0, -1, NULL, NULL, NULL);
+          ((float *)(result->array))[0] =
+            ((float *)(sigclip->array))[sind];
+
+          /* Clean up. */
+          gal_data_free(sigclip);
+          break;
 
 
-          /* Copy the result into the output array. */
-          memcpy(gal_data_ptr_increment(afp->out->array, ind,
-                                        afp->out->type),
-                 result->array, gal_type_sizeof(afp->out->type));
-
-          /* Clean up for this pixel. */
-          gal_data_free(result);
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+                "to fix the problem. `afp->operator' code %d is not "
+                "recognized", PACKAGE_BUGREPORT, __func__,
+                afp->operator);
         }
+
+      /* Make sure the output array type and result's type are the
+         same. */
+      if(result->type!=afp->out->type)
+        result=gal_data_copy_to_new_type_free(result, afp->out->type);
+
+
+      /* Copy the result into the output array. */
+      memcpy(gal_data_ptr_increment(afp->out->array, ind,
+                                    afp->out->type),
+             result->array, gal_type_sizeof(afp->out->type));
+
+      /* Clean up for this pixel. */
+      gal_data_free(result);
     }
 
 
@@ -513,6 +503,85 @@ wrapper_for_filter(struct arithmeticparams *p, char *token, int operator)
 /***************************************************************/
 /*************            Other functions          *************/
 /***************************************************************/
+static int
+arithmetic_binary_conn_sanity_checks(gal_data_t *in, gal_data_t *conn,
+                                     char *operator)
+{
+  int conn_int;
+
+  /* Do proper sanity checks on `conn'. */
+  if(conn->size!=1)
+    error(EXIT_FAILURE, 0, "the first popped operand to `%s' must be a "
+          "single number. However, it has %zu elements", operator,
+          conn->size);
+  if(conn->type==GAL_TYPE_FLOAT32 || conn->type==GAL_TYPE_FLOAT64)
+    error(EXIT_FAILURE, 0, "the first popped operand to `%s' is the "
+          "connectivity (a value between 1 and the number of dimensions) "
+          "therefore, it must NOT be a floating point", operator);
+
+  /* Convert the connectivity value to a 32-bit integer and read it in and
+     make sure it is not larger than the number of dimensions. */
+  conn=gal_data_copy_to_new_type_free(conn, GAL_TYPE_INT32);
+  conn_int = *((int32_t *)(conn->array));
+  if(conn_int>in->ndim)
+    error(EXIT_FAILURE, 0, "the first popped operand of `%s' (%d) is "
+          "larger than the number of dimensions in the second-popped "
+          "operand (%zu)", operator, conn_int, in->ndim);
+
+  /* Make sure the array has an unsigned 8-bit type. */
+  if(in->type!=GAL_TYPE_UINT8)
+    error(EXIT_FAILURE, 0, "the second popped operand of `%s' doesn't "
+          "have an 8-bit unsigned integer type. It must be a binary "
+          "dataset (only being equal to zero is checked). You can use "
+          "the `uint8' operator for type conversion", operator);
+
+  /* Clean up and return the integer value of `conn'. */
+  gal_data_free(conn);
+  return conn_int;
+}
+
+
+
+
+
+static void
+arithmetic_erode_dilate(struct arithmeticparams *p, char *token, int op)
+{
+  int conn_int;
+
+  /* Pop the two necessary operands. */
+  gal_data_t *conn = operands_pop(p, token);
+  gal_data_t *in   = operands_pop(p, token);
+
+  /* Do the sanity checks and  */
+  switch(op)
+    {
+    case ARITHMETIC_OP_ERODE:
+      conn_int=arithmetic_binary_conn_sanity_checks(in, conn, "erode");
+      gal_binary_erode(in, 1, conn_int, 1);
+      break;
+
+    case ARITHMETIC_OP_DILATE:
+      conn_int=arithmetic_binary_conn_sanity_checks(in, conn, "dilate");
+      gal_binary_dilate(in, 1, conn_int, 1);
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+            "problem. The operator code %d not recognized", __func__,
+            PACKAGE_BUGREPORT, op);
+    }
+
+  /* Push the result onto the stack. */
+  operands_add(p, NULL, in);
+
+  /* Recall that`conn' was freed in the sanity check. */
+}
+
+
+
+
+
 static void
 arithmetic_connected_components(struct arithmeticparams *p, char *token)
 {
@@ -523,44 +592,18 @@ arithmetic_connected_components(struct arithmeticparams *p, char *token)
   gal_data_t *conn = operands_pop(p, token);
   gal_data_t *in   = operands_pop(p, token);
 
-  /* Do proper sanity checks on `conn'. */
-  if(conn->size!=1)
-    error(EXIT_FAILURE, 0, "the first popped operand to "
-          "`connected-components' must be a single number. However, it has "
-          "%zu elements", conn->size);
-  if(conn->type==GAL_TYPE_FLOAT32 || conn->type==GAL_TYPE_FLOAT64)
-    error(EXIT_FAILURE, 0, "the first popped operand to "
-          "`connected-components' is the connectivity (a value between 1 "
-          "and the number of dimensions) therefore, it must NOT be a "
-          "floating point");
-
-  /* Convert the connectivity value to a 32-bit integer and read it in and
-     make sure it is not larger than the number of dimensions. */
-  conn=gal_data_copy_to_new_type_free(conn, GAL_TYPE_INT32);
-  conn_int = *((int32_t *)(conn->array));
-  if(conn_int>in->ndim)
-    error(EXIT_FAILURE, 0, "the first popped operand of "
-          "`connected-components' (%d) is larger than the number of "
-          "dimensions in the second-popped operand (%zu)", conn_int,
-          in->ndim);
-
-  /* Make sure the array has an unsigned 8-bit type. */
-  if(in->type!=GAL_TYPE_UINT8)
-    error(EXIT_FAILURE, 0, "the second popped operand of "
-          "`connected-components' doesn't have an 8-bit unsigned "
-          "integer type. It must be a binary dataset (only being equal "
-          "to zero is checked). You can use the `uint8' operator to "
-          "convert the type of this operand.");
+  /* Basic sanity checks. */
+  conn_int=arithmetic_binary_conn_sanity_checks(in, conn,
+                                                "connected-components");
 
   /* Do the connected components labeling. */
-  gal_binary_connected_components(in, &out, 1);
+  gal_binary_connected_components(in, &out, conn_int);
 
   /* Push the result onto the stack. */
   operands_add(p, NULL, out);
 
-  /* Clean up. */
+  /* Clean up (`conn' was freed in the sanity check). */
   gal_data_free(in);
-  gal_data_free(conn);
 }
 
 
@@ -594,6 +637,49 @@ arithmetic_invert(struct arithmeticparams *p, char *token)
 
   /* Push the result onto the stack. */
   operands_add(p, NULL, in);
+}
+
+
+
+
+
+static void
+arithmetic_interpolate(struct arithmeticparams *p, char *token)
+{
+  int num_int;
+  gal_data_t *interpolated;
+
+  /* First pop the number of nearby neighbors.*/
+  gal_data_t *num = operands_pop(p, token);
+
+  /* Then pop the actual dataset to interpolate. */
+  gal_data_t *in = operands_pop(p, token);
+
+  /* Do proper sanity checks on `num'. */
+  if(num->size!=1)
+    error(EXIT_FAILURE, 0, "the first popped operand to "
+          "`interpolate-medianngb' must be a single number. However, "
+          "it has %zu elements", num->size);
+  if(num->type==GAL_TYPE_FLOAT32 || num->type==GAL_TYPE_FLOAT64)
+    error(EXIT_FAILURE, 0, "the first popped operand to "
+          "`interpolate-medianngb' is the number of nearby neighbors (a "
+          "counter, an integer). It must NOT be a floating point.\n\n"
+          "If its already an integer, but in a floating point container, "
+          "you can use the `int32' operator to convert it to a 32-bit "
+          "integer for example");
+
+  /* Convert the given number to a 32-bit integer and read it in. */
+  num=gal_data_copy_to_new_type_free(num, GAL_TYPE_INT32);
+  num_int = *((int32_t *)(num->array));
+
+  /* Call the interpolation function. */
+  interpolated=gal_interpolate_close_neighbors(in, NULL, num_int,
+                                               p->cp.numthreads, 1, 0);
+
+  /* Clean up and push the interpolated array onto the stack. */
+  gal_data_free(in);
+  gal_data_free(num);
+  operands_add(p, NULL, interpolated);
 }
 
 
@@ -778,10 +864,16 @@ reversepolish(struct arithmeticparams *p)
             { op=ARITHMETIC_OP_FILTER_SIGCLIP_MEAN;   nop=0;  }
           else if (!strcmp(token->v, "filter-sigclip-median"))
             { op=ARITHMETIC_OP_FILTER_SIGCLIP_MEDIAN; nop=0;  }
+          else if (!strcmp(token->v, "erode"))
+            { op=ARITHMETIC_OP_ERODE;                 nop=0;  }
+          else if (!strcmp(token->v, "dilate"))
+            { op=ARITHMETIC_OP_DILATE;                nop=0;  }
           else if (!strcmp(token->v, "connected-components"))
             { op=ARITHMETIC_OP_CONNECTED_COMPONENTS;  nop=0;  }
           else if (!strcmp(token->v, "invert"))
             { op=ARITHMETIC_OP_INVERT;                nop=0;  }
+          else if (!strcmp(token->v, "interpolate-medianngb"))
+            { op=ARITHMETIC_OP_INTERPOLATE_MEDIANNGB; nop=0;  }
 
 
           /* Finished checks with known operators */
@@ -856,12 +948,21 @@ reversepolish(struct arithmeticparams *p)
                   wrapper_for_filter(p, token->v, op);
                   break;
 
+                case ARITHMETIC_OP_ERODE:
+                case ARITHMETIC_OP_DILATE:
+                  arithmetic_erode_dilate(p, token->v, op);
+                  break;
+
                 case ARITHMETIC_OP_CONNECTED_COMPONENTS:
                   arithmetic_connected_components(p, token->v);
                   break;
 
                 case ARITHMETIC_OP_INVERT:
                   arithmetic_invert(p, token->v);
+                  break;
+
+                case ARITHMETIC_OP_INTERPOLATE_MEDIANNGB:
+                  arithmetic_interpolate(p, token->v);
                   break;
 
                 default:

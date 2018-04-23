@@ -16,10 +16,13 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
       in charge of detection.
 
   Arithmetic:
-    - connected-components: label the connected elements of the input.
+    - erode: Erode the foreground of a binary dataset.
+    - dilate: Dilate the foreground of a binary dataset.
     - filter-sigclip-mean: sigma-clipped, mean filter operator.
     - filter-sigclip-median: sigma-clipped, median filter operator.
+    - connected-components: label the connected elements of the input.
     - invert: subtract the maximum of unsigned types (absorption to emission).
+    - interpolate-medianngb: Interpolate (only blanks) with nearest neighbors.
 
   ConvertType:
     - TIFF images can also be used as input.
@@ -104,6 +107,11 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
     --skysubtracted: no longer necessary, included in noise measuremnts.
 
 ** Changed features
+
+  Arithmetic:
+    - filter-mean: a blank value in the input can be non-blank in the
+         output when non-blank elements present in filter.
+    - filter-median: similar to filter-mean.
 
   Fits:
     --history: can be called/written multiple times in one run.

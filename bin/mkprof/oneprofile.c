@@ -195,8 +195,10 @@ oneprofile_r_circle(size_t index, struct mkonthread *mkp)
 float
 oneprofile_randompoints(struct mkonthread *mkp)
 {
+  double r_before=mkp->r;
   double range[3], sum=0.0f;
   size_t i, j, numrandom=mkp->p->numrandom, ndim=mkp->p->ndim;
+  double coord_before[3]={mkp->coord[0], mkp->coord[1], mkp->coord[2]};
 
   /* Set the range in each dimension. */
   for(i=0;i<ndim;++i)
@@ -211,6 +213,16 @@ oneprofile_randompoints(struct mkonthread *mkp)
       sum+=mkp->profile(mkp);
     }
 
+  /* Reset the original distance and coordinate of the pixel and return the
+     average random value. The resetting is mostly redundant (only useful
+     in checks), but since it has a very negligible cost (compared to the
+     random checks above) cost, its good to reset it to help in debugging
+     when necessary (avoid confusion when un-commenting the checks in
+     `oneprofile_pix_by_pix'). */
+  mkp->r=r_before;
+  mkp->coord[0]=coord_before[0];
+  mkp->coord[1]=coord_before[1];
+  mkp->coord[2]=coord_before[2];
   return sum/numrandom;
 }
 
@@ -399,7 +411,7 @@ oneprofile_pix_by_pix(struct mkonthread *mkp)
           oneprofile_r_el(mkp);
           if(mkp->r > truncr) continue;
 
-          /* Find the value for this pixel: */
+          /* Set the range for this pixel. */
           for(i=0;i<ndim;++i)
             {
               mkp->lower[i]  = mkp->coord[i] - hp;
@@ -411,6 +423,12 @@ oneprofile_pix_by_pix(struct mkonthread *mkp)
           approx=profile(mkp);
           if (fabs(array[p]-approx)/array[p] < tolerance)
             use_rand_points=0;
+
+          /* For a check:
+          printf("coord: %g, %g\n", mkp->coord[0], mkp->coord[1]);
+          printf("r_rand: %g (rand: %g, center: %g)\n\n", mkp->r, array[p],
+                 approx);
+          */
 
           /* Save the peak flux if this is the first pixel: */
           if(ispeak) { mkp->peakflux=array[p]; ispeak=0; }
@@ -462,6 +480,10 @@ oneprofile_pix_by_pix(struct mkonthread *mkp)
 
       /* Find the value for this pixel: */
       array[p]=profile(mkp);
+
+      /* For a check:
+      printf("r_center: %g\n", mkp->r);
+      */
 
       /* Save the peak flux if this is the first pixel: */
       if(ispeak) { mkp->peakflux=array[p]; ispeak=0; }
