@@ -279,8 +279,14 @@ detection_fill_holes_open(void *in_prm)
       gal_data_copy_to_allocated(tile, copy);
 
       /* Fill the holes in this tile: holes with maximal connectivity means
-         that they are most strongly bounded. */
-      gal_binary_holes_fill(copy, copy->ndim, -1);
+         that they are most strongly bounded.
+
+         IMPORTANT NOTE: For 2D, the strongest connectivity (2) is
+         fine. But for 3D, the strongest connectivity is too strong and
+         will not be too useful for diffuse signal. So for 3D, we are now
+         using the second-strongest connectivity of 2 (numerically: same as
+         the 2D case). */
+      gal_binary_holes_fill(copy, 2, -1);
       if(fho_prm->step==1)
         {
           detection_write_in_large(tile, copy);
