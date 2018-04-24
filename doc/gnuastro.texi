@@ -18374,21 +18374,26 @@ the FWHM.
 
 This option may also be used to create a 3D kernel. To do that, two small
 modifications are necessary: add a @code{-3d} (or @code{-3D}) to the
-profile name (for example @code{moffat-3d}) and add a fraction (value
-between 0 and 1) to the end of the parameters for all profiles except
-@code{point}. The fractional value is the axis ratio in the third
-dimension. The main reason behind the fractional value is that commonly in
-3D astronomical datasets the third dimension doesn't have the same nature
-as the first and second.
+profile name (for example @code{moffat-3d}) and add a number (axis-ratio
+along the third dimension) to the end of the parameters for all profiles
+except @code{point}. The main reason behind providing an axis ratio in the
+third dimension is that in 3D astronomical datasets, commonly the third
+dimension doesn't have the same nature (units/sampling) as the first and
+second.
 
 For example in IFU datacubes, the first and second dimensions are angular
 positions (like RA and Dec) but the third is in units of Angstroms for
 wavelength. Because of this different nature (which also affects the
 processing), it may be necessary for the kernel to have a different extent
-in that direction@footnote{So far, only cases where the third dimension
-extent must be less than the first two have been useful for us. If you need
-it to be larger, then please contact us and we will implement it.}. For
-example, let's have a look at the two examples above but in 3D:
+in that direction.
+
+If the 3rd dimension axis ratio is equal to @mymath{1.0}, then the kernel
+will be a spheroid. If its smaller than @mymath{1.0}, the kernel will be
+button-shaped: extended less in the third dimension. However, when it is
+larger than @mymath{1.0}, the kernel will be bullet-shaped: extended more
+in the third dimension. In the latter case, the radial parameter will
+correspond to the length along the 3rd dimension. For example, let's have a
+look at the two examples above but in 3D:
 
 @table @option
 @item --kernel=moffat-3d,3,2.8,5,0.5
@@ -18401,6 +18406,13 @@ two.
 A spherical Gaussian kernel with FWHM of 2 pixels and truncated at 3 times
 the FWHM.
 @end table
+
+Ofcourse, if a specific kernel is needed that doesn't fit the constraints
+imposed by this option, you can always use a catalog to define any
+arbitrary kernel. Just call the @option{--individual} and
+@option{--nomerged} options to make sure that it is built as a separate
+file (individually) and no ``merged'' image of the input profiles is
+created.
 
 @item -x INT,INT
 @itemx --naxis=INT,INT

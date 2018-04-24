@@ -424,21 +424,6 @@ ui_parse_kernel(struct argp_option *option, char *arg,
                       kernel->size, kernel->size>1?"s are":" is");
 
 
-      /* If we want a 3D kernel, the last value (axis ratio) must be
-         positive and smaller and equal to 1. Note that we have already
-         checked for everything to be positive, so it can't be negative at
-         this point.
-
-         IMPORTANT NOTE: a `point' profile can have a kernel parameter list
-         of zero elements. So we need to make sure there are actually
-         numbers in the list also. */
-      if(kernel->flag==3 && kernel->size && darray[kernel->size-1]>1.0f)
-        error(EXIT_FAILURE, 0, "%g (last value in the list of kernel "
-              "parameters `%s') is interpretted as the kernel axis ratio "
-              "along the third dimension. Hence it must not be larger than 1",
-              darray[kernel->size-1], arg);
-
-
       /* Our job is done, return NULL. */
       return NULL;
     }
@@ -1063,7 +1048,7 @@ static void
 ui_prepare_columns(struct mkprofparams *p)
 {
   double *karr;
-  float r, n, t;
+  float r, n, t, q2;
 
   /* If the kernel option was called, then we need to build a series of
      single element columns to create an internal catalog. */
@@ -1115,10 +1100,27 @@ ui_prepare_columns(struct mkprofparams *p)
       p->t[0]  = t;
       if(p->ndim==3)
         {
-          p->z[0]  = 0.0f;
-          p->p2[0] = 0.0f;
-          p->p3[0] = 0.0f;
-          p->q2[0] = p->kernel->size ? karr[ p->kernel->size - 1 ] : 0.0f;
+          /* Parameters for any case. */
+          p->z[0] = 0.0f;
+          q2      = p->kernel->size ? karr[ p->kernel->size - 1 ] : 0.0f;
+
+          /* 3rd-dim axis ratio > 1: Set the major axis in the direction of
+             the 3rd dimension (90 degree rotation for all three
+             rotations). Also set the two axis ratios to the inverse of the
+             requested value. */
+          if(q2>1.0)
+            {
+              p->q1[0] = p->q2[0] = 1/q2;
+              p->p1[0] = p->p2[0] = p->p3[0] = 90.0;
+            }
+
+          /* 3rd-dim axis ratio <=1: No extra rotation is necessary and
+             `q2'can simply be put in the respective column. */
+          else
+            {
+              p->q2[0] = q2;
+              p->p2[0] = p->p3[0] = 0.0;
+            }
         }
     }
   else
