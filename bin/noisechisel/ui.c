@@ -420,9 +420,19 @@ ui_prepare_kernel(struct noisechiselparams *p)
      kernel. */
   if(p->kernelname)
     {
+      /* Read the kernel. */
       if( strcmp(p->kernelname, UI_NO_CONV_KERNEL_NAME) )
-        p->kernel=gal_fits_img_read_kernel(p->kernelname, p->khdu,
-                                           p->cp.minmapsize);
+        {
+          /* Read the kernel into memory. */
+          p->kernel=gal_fits_img_read_kernel(p->kernelname, p->khdu,
+                                             p->cp.minmapsize);
+
+          /* Make sure it has the same dimensions as the input. */
+          if( p->kernel->ndim != p->input->ndim )
+            error(EXIT_FAILURE, 0, "%s (hdu %s): is %zuD, however, %s (%s) "
+                  "is a %zuD dataset", p->kernelname, p->khdu,
+                  p->kernel->ndim, p->inputname, p->cp.hdu, p->input->ndim);
+        }
       else
         p->kernel=NULL;
     }
