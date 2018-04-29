@@ -20308,7 +20308,8 @@ list. Some of the most common values to this option are: @option{pedantic}
 (Warnings related to standard C) and @option{all} (all issues the compiler
 confronts).
 
-@item --tag=STR
+@item -t
+@itemx --tag=STR
 The language configuration information. Libtool can build objects and
 libraries in many languages. In many cases, it can identify the language
 automatically, but when it doesn't you can use this option to explicitly
@@ -20323,7 +20324,8 @@ all these languages.
 Only build the program, don't run it. By default, the built program is
 immediately run afterwards.
 
-@item --deletecompiled
+@item -d
+@itemx --deletecompiled
 Delete the compiled binary file after running it. This option is only
 relevant when the compiled program is run after being built. In other
 words, it is only relevant when @option{--onlybuild} is not called. It can
@@ -21930,7 +21932,7 @@ remain. Here is one short/simple example of initializing and adding
 elements to a string list:
 
 @example
-gal_list_str_t *strlist;
+gal_list_str_t *strlist=NULL;
 gal_list_str_add(&strlist, "bottom of list.");
 gal_list_str_add(&strlist, "second last element of list.");
 @end example
@@ -22756,7 +22758,7 @@ $ asttable --info table.fits
 @end example
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, int @code{minmapsize}, size_t @code{colmatch})
+@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, size_t @code{minmapsize}, size_t @code{colmatch})
 Read the specified columns in a text file (named @code{filename}) into a
 linked list of data structures. If the file is FITS, then @code{hdu} will
 also be used, otherwise, @code{hdu} is ignored.
@@ -23101,8 +23103,8 @@ Here is one example of using this function:
 /* Allocate an array of datasets. */
 gal_data_t *keysll=gal_data_array_calloc(N);
 
-/* Use the array as a list.*/
-for(i=0;i<N-2;++i) keysll[i].next=keysll[i+1];
+/* Make the array usable as a list too (by setting `next'). */
+for(i=0;i<N-1;++i) keysll[i].next=keysll[i+1];
 
 /* Fill the datasets with a `name' and a `type'. */
 keysll[0].name="NAME1";     keysll[0].type=GAL_TYPE_INT32;
@@ -23117,8 +23119,8 @@ gal_fits_key_read_from_ptr(fptr, keysll, 0, 0);
 
 /* Free all the allocated spaces. Note that `name' wasn't allocated
    in this example, so we should explicitly set it to NULL before
-   calling `gal_data_array_free'.                                   */
-for(i=0;i<N-2;++i) keysll[i].name=NULL;
+   calling `gal_data_array_free'. */
+for(i=0;i<N;++i) keysll[i].name=NULL;
 gal_data_array_free(keysll, N, 1);
 @end example
 
@@ -23378,7 +23380,7 @@ reading tables in FITS format. To be generic, it is recommended to use
 of table formats based on the filename (see @ref{Table input output}).
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_fits_tab_read (char @code{*filename}, char @code{*hdu}, size_t @code{numrows}, gal_data_t @code{*colinfo}, gal_list_sizet_t @code{*indexll}, int @code{minmapsize})
+@deftypefun {gal_data_t *} gal_fits_tab_read (char @code{*filename}, char @code{*hdu}, size_t @code{numrows}, gal_data_t @code{*colinfo}, gal_list_sizet_t @code{*indexll}, size_t @code{minmapsize})
 Read the columns given in the list @code{indexll} from a FITS table into a
 linked list of data structures, see @ref{List of size_t} and @ref{List of
 gal_data_t}. If the necessary space for each column is larger than
