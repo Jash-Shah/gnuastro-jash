@@ -31,6 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/list.h>
 #include <gnuastro/qsort.h>
 #include <gnuastro/label.h>
+#include <gnuastro/pointer.h>
 #include <gnuastro/dimension.h>
 #include <gnuastro/statistics.h>
 
@@ -107,7 +108,8 @@ gal_label_indexs(gal_data_t *labels, size_t numlabs, size_t minmapsize)
      to allocate). If blank values are present, an extra check is
      necessary, so to get faster results when there aren't any blank
      values, we'll also do a check. */
-  areas=gal_data_calloc_array(GAL_TYPE_SIZE_T, numlabs+1, __func__, "areas");
+  areas=gal_pointer_allocate(GAL_TYPE_SIZE_T, numlabs+1, 1, __func__,
+                             "areas");
   lf=(l=labels->array)+labels->size;
   do
     if(*l>0)  /* Only labeled regions: *l==0 (undetected), *l<0 (blank). */
@@ -192,7 +194,7 @@ gal_label_oversegment(gal_data_t *values, gal_data_t *indexs,
   label_check_type(values, GAL_TYPE_FLOAT32, "values", __func__);
   label_check_type(indexs, GAL_TYPE_SIZE_T,  "indexs", __func__);
   label_check_type(labels, GAL_TYPE_INT32,   "labels", __func__);
-  if( gal_data_dsize_is_different(values, labels) )
+  if( gal_dimension_is_different(values, labels) )
     error(EXIT_FAILURE, 0, "%s: the `values' and `labels' arguments must "
           "have the same size", __func__);
   if(indexs->ndim!=1)
@@ -234,13 +236,18 @@ gal_label_oversegment(gal_data_t *values, gal_data_t *indexs,
   if(indexs->size==0) return 0;
 
 
-  /* Sort the given indexs based on their flux (`gal_qsort_index_arr' is
+  /* If the indexs aren't already sorted (by the value they correspond to),
+     sort them given indexs based on their flux (`gal_qsort_index_arr' is
      defined as static in `gnuastro/qsort.h') */
-  gal_qsort_index_arr=values->array;
-  qsort(indexs->array, indexs->size, sizeof(size_t),
-        min0_max1
-        ? gal_qsort_index_float_decreasing
-        : gal_qsort_index_float_increasing );
+  if( !( (indexs->flag & GAL_DATA_FLAG_SORT_CH)
+        && ( indexs->flag
+             & (GAL_DATA_FLAG_SORTED_I
+                | GAL_DATA_FLAG_SORTED_D) ) ) )
+    {
+      gal_qsort_index_single=values->array;
+      qsort(indexs->array, indexs->size, sizeof(size_t),
+            min0_max1 ? gal_qsort_index_single_d : gal_qsort_index_single_i);
+    }
 
 
   /* Initialize the region we want to over-segment. */

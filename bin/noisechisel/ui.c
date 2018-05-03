@@ -33,6 +33,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/array.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/threads.h>
+#include <gnuastro/pointer.h>
 #include <gnuastro/dimension.h>
 
 #include <gnuastro-internal/timing.h>
@@ -67,8 +68,8 @@ args_doc[] = "ASTRdata";
 const char
 doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" Detects and segments signal "
   "that is deeply burried in noise. It employs a noise-based detection and "
-  "segmentation method enabling it to be very resilient to the rich diversity "
-  "of shapes in astronomical targets.\n"
+  "segmentation method enabling it to be very resilient to the rich "
+  "diversity of shapes in astronomical targets.\n"
   GAL_STRINGS_MORE_HELP_INFO
   /* After the list of options: */
   "\v"
@@ -471,8 +472,8 @@ ui_prepare_tiles(struct noisechiselparams *p)
   /* Check the tile parameters for the small tile sizes and make the tile
      structure. We will also need the dimensions of the tile with the
      maximum required memory. */
-  p->maxtsize=gal_data_malloc_array(GAL_TYPE_SIZE_T, p->input->ndim,
-                                    __func__, "p->maxtsize");
+  p->maxtsize=gal_pointer_allocate(GAL_TYPE_SIZE_T, p->input->ndim, 0,
+                                   __func__, "p->maxtsize");
   gal_tile_full_sanity_check(p->inputname, p->cp.hdu, p->input, tl);
   gal_tile_full_two_layers(p->input, tl);
   gal_tile_full_permutation(tl);
@@ -491,8 +492,8 @@ ui_prepare_tiles(struct noisechiselparams *p)
   ltl->workoverch     = tl->workoverch;
   ltl->checktiles     = tl->checktiles;
   ltl->oneelempertile = tl->oneelempertile;
-  p->maxltsize=gal_data_malloc_array(GAL_TYPE_SIZE_T, p->input->ndim,
-                                     __func__, "p->maxltsize");
+  p->maxltsize=gal_pointer_allocate(GAL_TYPE_SIZE_T, p->input->ndim, 0,
+                                    __func__, "p->maxltsize");
   gal_tile_full_sanity_check(p->inputname, p->cp.hdu, p->input, ltl);
   gal_tile_full_two_layers(p->input, ltl);
   gal_tile_full_permutation(ltl);
@@ -544,6 +545,7 @@ ui_prepare_tiles(struct noisechiselparams *p)
 static void
 ui_preparations_read_input(struct noisechiselparams *p)
 {
+  float *f;
   size_t value;
   char *option_name=NULL, *good_values=NULL;
 
@@ -555,7 +557,6 @@ ui_preparations_read_input(struct noisechiselparams *p)
                                &p->input->nwcs);
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
-
 
   /* Check dimensionality and neighbors. */
   switch(p->input->ndim)
@@ -596,13 +597,36 @@ ui_preparations_read_input(struct noisechiselparams *p)
             p->input->ndim);
     }
 
-
   /* Abort with an error message if necessary. */
   if(option_name)
     error(EXIT_FAILURE, 0, "%zu not acceptable for `--%s' for the "
           "input %zu-dimensional dataset in `%s' (hdu %s). It must be %s "
           "(specifying the type of connectivity)", value, option_name,
           p->input->ndim, p->inputname, p->cp.hdu, good_values);
+
+  /* A small check to see if the edges of the dataset aren't zero valued:
+     they should be masked. */
+  f=p->input->array;
+  if( (f[0]==0.0 && f[1]==0.0)
+      || (f[ p->input->size-1 ]==0.0 && f[ p->input->size-2 ]==0.0) )
+    error(0, 0, "%s (hdu %s): [*** WARNING ***]: The first and/or last few "
+          "pixels have a value of 0.0. As described below, the result of "
+          "this run may thus not be reasonable/optimal.\n\n"
+          "Some data reduction pipelines put 0.0 where there isn't data "
+          "(most commonly on the edges). However, NoiseChisel's "
+          "noise-based detection paradigm starts from the lower values of "
+          "the dataset (not high S/N peaks): its initial threshold is "
+          "mostly below the Sky value (0.0 in processed images). Therefore "
+          "0.0 is meaningful for NoiseChisel and must not be used for a "
+          "blank value.\n\n"
+          "To ignore certain pixels, they must have a blank/NaN value. "
+          "To mask (set to blank/NaN) the 0.0 valued elements, you can use "
+          "Gnuastro's Arithmetic program with a command like this:\n\n"
+          "    $ astarithmetic %s %s 0.0 eq nan where -g%s\n\n"
+          "If the few 0.0 valued pixels on the edges are meaningful for "
+          "your analysis, please ignore this warming message.\n"
+          "--------------------------",
+          p->inputname, p->cp.hdu, p->inputname, p->inputname, p->cp.hdu);
 }
 
 
@@ -615,10 +639,8 @@ ui_preparations(struct noisechiselparams *p)
   /* Prepare the names of the outputs. */
   ui_set_output_names(p);
 
-
-  /* Read the input dataset and check the dimensions. */
+  /* Read the input datasets and do the basic checks.*/
   ui_preparations_read_input(p);
-
 
   /* If a convolved image was given, read it in. Otherwise, read the given
      kernel. */
@@ -630,7 +652,7 @@ ui_preparations(struct noisechiselparams *p)
                                               p->cp.minmapsize);
 
       /* Make sure the convolved image is the same size as the input. */
-      if( gal_data_dsize_is_different(p->input, p->conv) )
+      if( gal_dimension_is_different(p->input, p->conv) )
         error(EXIT_FAILURE, 0, "%s (hdu %s), given to `--convolved' and "
               "`--convolvehdu', is not the same size as NoiseChisel's "
               "input: %s (hdu: %s)", p->convolvedname, p->chdu,
@@ -639,14 +661,11 @@ ui_preparations(struct noisechiselparams *p)
   else
     ui_prepare_kernel(p);
 
-
   /* Check for blank values to help later processing.  */
   gal_blank_present(p->input, 1);
 
-
   /* Prepare the tessellation. */
   ui_prepare_tiles(p);
-
 
   /* Allocate space for the over-all necessary arrays. */
   p->binary=gal_data_alloc(NULL, GAL_TYPE_UINT8, p->input->ndim,

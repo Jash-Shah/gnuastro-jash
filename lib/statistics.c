@@ -36,6 +36,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/fits.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/qsort.h>
+#include <gnuastro/pointer.h>
 #include <gnuastro/arithmetic.h>
 #include <gnuastro/statistics.h>
 
@@ -358,13 +359,13 @@ gal_statistics_quantile(gal_data_t *input, double quantile, int inplace)
       /* Write the value at this index into the output. */
       if(index==GAL_BLANK_SIZE_T)
         {
-          blank=gal_data_malloc_array(nbs->type, 1, __func__, "blank");
+          blank=gal_pointer_allocate(nbs->type, 1, 0, __func__, "blank");
           memcpy(out->array, blank, gal_type_sizeof(nbs->type));
           free(blank);
         }
       else
         memcpy(out->array,
-               gal_data_ptr_increment(nbs->array, index, nbs->type),
+               gal_pointer_increment(nbs->array, index, nbs->type),
                gal_type_sizeof(nbs->type));
     }
   else
@@ -997,7 +998,7 @@ gal_statistics_mode(gal_data_t *input, float mirrordist, int inplace)
      same type as the input. */
   modeindex = mode_golden_section(&p);
   memcpy( tmptype->array,
-          gal_data_ptr_increment(p.data->array, modeindex, p.data->type),
+          gal_pointer_increment(p.data->array, modeindex, p.data->type),
           gal_type_sizeof(p.data->type) );
 
 
@@ -1263,25 +1264,25 @@ gal_statistics_sort_increasing(gal_data_t *input)
     switch(input->type)
       {
       case GAL_TYPE_UINT8:
-        STATISTICS_SORT(gal_qsort_uint8_increasing);    break;
+        STATISTICS_SORT(gal_qsort_uint8_i);    break;
       case GAL_TYPE_INT8:
-        STATISTICS_SORT(gal_qsort_int8_increasing);     break;
+        STATISTICS_SORT(gal_qsort_int8_i);     break;
       case GAL_TYPE_UINT16:
-        STATISTICS_SORT(gal_qsort_uint16_increasing);   break;
+        STATISTICS_SORT(gal_qsort_uint16_i);   break;
       case GAL_TYPE_INT16:
-        STATISTICS_SORT(gal_qsort_int16_increasing);    break;
+        STATISTICS_SORT(gal_qsort_int16_i);    break;
       case GAL_TYPE_UINT32:
-        STATISTICS_SORT(gal_qsort_uint32_increasing);   break;
+        STATISTICS_SORT(gal_qsort_uint32_i);   break;
       case GAL_TYPE_INT32:
-        STATISTICS_SORT(gal_qsort_int32_increasing);    break;
+        STATISTICS_SORT(gal_qsort_int32_i);    break;
       case GAL_TYPE_UINT64:
-        STATISTICS_SORT(gal_qsort_uint64_increasing);   break;
+        STATISTICS_SORT(gal_qsort_uint64_i);   break;
       case GAL_TYPE_INT64:
-        STATISTICS_SORT(gal_qsort_int64_increasing);    break;
+        STATISTICS_SORT(gal_qsort_int64_i);    break;
       case GAL_TYPE_FLOAT32:
-        STATISTICS_SORT(gal_qsort_float32_increasing);  break;
+        STATISTICS_SORT(gal_qsort_float32_i);  break;
       case GAL_TYPE_FLOAT64:
-        STATISTICS_SORT(gal_qsort_float64_increasing);  break;
+        STATISTICS_SORT(gal_qsort_float64_i);  break;
       default:
         error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
               __func__, input->type);
@@ -1306,25 +1307,25 @@ gal_statistics_sort_decreasing(gal_data_t *input)
     switch(input->type)
       {
       case GAL_TYPE_UINT8:
-        STATISTICS_SORT(gal_qsort_uint8_decreasing);    break;
+        STATISTICS_SORT(gal_qsort_uint8_d);    break;
       case GAL_TYPE_INT8:
-        STATISTICS_SORT(gal_qsort_int8_decreasing);     break;
+        STATISTICS_SORT(gal_qsort_int8_d);     break;
       case GAL_TYPE_UINT16:
-        STATISTICS_SORT(gal_qsort_uint16_decreasing);   break;
+        STATISTICS_SORT(gal_qsort_uint16_d);   break;
       case GAL_TYPE_INT16:
-        STATISTICS_SORT(gal_qsort_int16_decreasing);    break;
+        STATISTICS_SORT(gal_qsort_int16_d);    break;
       case GAL_TYPE_UINT32:
-        STATISTICS_SORT(gal_qsort_uint32_decreasing);   break;
+        STATISTICS_SORT(gal_qsort_uint32_d);   break;
       case GAL_TYPE_INT32:
-        STATISTICS_SORT(gal_qsort_int32_decreasing);    break;
+        STATISTICS_SORT(gal_qsort_int32_d);    break;
       case GAL_TYPE_UINT64:
-        STATISTICS_SORT(gal_qsort_uint64_decreasing);   break;
+        STATISTICS_SORT(gal_qsort_uint64_d);   break;
       case GAL_TYPE_INT64:
-        STATISTICS_SORT(gal_qsort_int64_decreasing);    break;
+        STATISTICS_SORT(gal_qsort_int64_d);    break;
       case GAL_TYPE_FLOAT32:
-        STATISTICS_SORT(gal_qsort_float32_decreasing);  break;
+        STATISTICS_SORT(gal_qsort_float32_d);  break;
       case GAL_TYPE_FLOAT64:
-        STATISTICS_SORT(gal_qsort_float64_decreasing);  break;
+        STATISTICS_SORT(gal_qsort_float64_d);  break;
       default:
         error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
               __func__, input->type);
