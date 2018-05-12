@@ -106,7 +106,6 @@ EXTRA_DIST = gnuastro.pc.in $(headersdir)/README $(internaldir)/README  \
   $(internaldir)/arithmetic-or.h $(internaldir)/arithmetic-plus.h       \
   $(internaldir)/checkset.h $(internaldir)/commonopts.h                 \
   $(internaldir)/config.h.in $(internaldir)/fixedstringmacros.h         \
-  $(internaldir)/kernel-2d.h $(internaldir)/kernel-3d.h                 \
   $(internaldir)/options.h $(internaldir)/tableintern.h                 \
   $(internaldir)/timing.h
 
