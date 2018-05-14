@@ -32,7 +32,8 @@ astsegment_LDADD = -lgnuastro
 
 astsegment_SOURCES = main.c ui.c segment.c clumps.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h segment.h clumps.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h segment.h clumps.h   \
+            kernel-2d.h kernel-3d.h
 
 
 
