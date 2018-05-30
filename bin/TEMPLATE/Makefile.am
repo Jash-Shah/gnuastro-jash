@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.inx
 ##
 ## Original author:
-##      Mohammad akhlaghi <mohammad@akhlaghi.org>
+##     Mohammad akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
 ## Copyright (C) 2016-2018, Free Software Foundation, Inc.
 ##
@@ -19,16 +19,21 @@
 ## along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
-## Pre-processer flags (for Gnulib's headers). Recall that the compiled
-## Gnulib library was statically linked to (copied in) Gnuastro's library.
-AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib
+## Necessary pre-processer and linker flags.
+AM_LDFLAGS = -L\$(top_builddir)/lib
+AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib -I\$(top_srcdir)/lib
 
 
 
 ## Program definition (name, linking, sources and headers)
 bin_PROGRAMS = astTEMPLATE
 
-astTEMPLATE_LDADD = -lgnuastro
+## We are linking with `libgnu' first eventhough `libgnu' is already linked
+## to `libgnuastro'. The reason is that some linkers (Mac OS for example),
+## don't keep external variables (needed in Argp) after the first link. So
+## the `libgnu' (that is indirectly linked through `libgnuastro') can't see
+## those variables. We thus need to explicitly link with `libgnu' first.
+astTEMPLATE_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la -lgnuastro
 
 astTEMPLATE_SOURCES = main.c ui.c TEMPLATE.c
 

@@ -676,7 +676,7 @@ label_clump_significance_raw(gal_data_t *values_d, gal_data_t *std_d,
             /* For easy reading. */
             row = &info [ label[*a] * INFO_NCOLS ];
 
-            /* Get the area and flux. */
+            /* Add this pixel to this clump's area. */
             ++row[ INFO_INAREA ];
 
             /* In the loop `INFO_INAREA' is just the pixel counter of this
@@ -806,8 +806,9 @@ gal_label_clump_significance(gal_data_t *values, gal_data_t *std,
   label_clump_significance_raw(values, std, label, indexs, tl, info);
 
 
-  /* Calculate the signal to noise ratio for successful clumps */
+  /* Calculate the signficance value for successful clumps */
   sigarr=sig->array;
+  if(keepsmall) sigarr[0]=NAN;
   if(sigind) indarr=sigind->array;
   for(i=1;i<tablen;++i)
     {

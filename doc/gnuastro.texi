@@ -254,6 +254,7 @@ Dependencies
 * Mandatory dependencies::      Gnuastro will not install without these.
 * Optional dependencies::       Adding more functionality.
 * Bootstrapping dependencies::  If you have the version controlled source.
+* Dependencies from package managers::  Installing from OS package managers.
 
 Mandatory dependencies
 
@@ -274,6 +275,7 @@ Version controlled source
 Build and install
 
 * Configuring::                 Configure Gnuastro
+* Separate build and source directories::  Keeping derivate/build files separate.
 * Tests::                       Run tests to see if it is working.
 * A4 print book::               Customize the print book.
 * Known issues::                Issues you might encounter.
@@ -712,7 +714,7 @@ environment. Gnuastro also comes with a large set of libraries, so you can
 write your own programs using Gnuastro's building blocks, see @ref{Review
 of library fundamentals} for an introduction.
 
-In Gnuastro, no change to any program or library will be commited to its
+In Gnuastro, no change to any program or library will be committed to its
 history, before it has been fully documented here first. As discussed in
 @ref{Science and its tools} this is a founding principle of the Gnuastro.
 
@@ -876,7 +878,7 @@ actually understand the method not just use it as a black box. The
 subjective experience gained by frequently using a method/software is not
 sufficient to claim an understanding of how the tool/method works and how
 relevant it is to the data and analysis. This kind of subjective experience
-is prone to very serious mis-understandings about the data, what the
+is prone to serious misunderstandings about the data, what the
 software/statistical-method really does (especially as it gets more
 complicated), and thus the scientific interpretation of the result. This
 attitude is further encouraged through non-free
@@ -904,15 +906,14 @@ the last real choice you get to make.
 @author Douglas Rushkoff. Program or be programmed, O/R Books (2010).
 @end quotation
 
-It is obviously impractical for any one human being to gain the
-intricate knowledge explained above for every step of an analysis. On
-the other hand, scientific data can be very large and numerous, for
-example images produced by telescopes in astronomy. This requires very
-efficient algorithms. To make things worse, natural scientists have
-generally not been trained in the advanced software techniques,
-paradigms and architecture that are taught in computer science or
-engineering courses and thus used in most software. The GNU Astronomy
-Utilities are an effort to tackle this issue.
+It is obviously impractical for any one human being to gain the intricate
+knowledge explained above for every step of an analysis. On the other hand,
+scientific data can be large and numerous, for example images produced by
+telescopes in astronomy. This requires efficient algorithms. To make things
+worse, natural scientists have generally not been trained in the advanced
+software techniques, paradigms and architecture that are taught in computer
+science or engineering courses and thus used in most software. The GNU
+Astronomy Utilities are an effort to tackle this issue.
 
 Gnuastro is not just a software, this book is as important to the idea
 behind Gnuastro as the source code (software). This book has tried to learn
@@ -956,24 +957,43 @@ mathematics behind the tools) to understand and modify any step of Gnuastro
 if you feel the need to do so, see @ref{Why C} and @ref{Program design
 philosophy}.
 
-@cindex Galileo, G.
-Imagine if Galileo did not have the technical knowledge to build a
-telescope. Astronomical objects could not be seen with the Dutch military
-design of the telescope. In other words, he couldn't have asked a lens
-maker to build a modified version. It is hard to imagine having the idea of
-modifying the optics for astronomy, if he wasn't already faimilar, and
-experienced, in optics @emph{guided} by his astronomical curiosity. In the
-beginning of his ``The Sidereal Messenger'' (published in 1610) he cautions
-the readers on this issue and instructs them on how to build a suitable
-instrument: without a detailed description of @emph{how} he made his
-observations, no one would believe him. The same is true today: science
-cannot progress with a black box, and technical knowledge (to experiment on
-its tool tools, software in this context), is critical to scientific
-vitality. Before he actually saw the moons of Jupiter, the mountains on the
-Moon or the crescent of Venus, he was “evasive” to Kepler@footnote{Galileo
+@cindex Brahe, Tycho
+@cindex Galileo, Galilei
+Without prior familiarity and experience with optics, it is hard to imagine
+how, Galileo could have come up with the idea of modifying the Dutch
+military telescope optics to use in astronomy. Astronomical objects could
+not be seen with the Dutch military design of the telescope. In other
+words, it is unlikely that Galileo could have asked a random optician to
+make modifications (not understood by Galileo) to the Dutch design, to do
+something no astronomer of the time took seriously. In the paradigm of the
+day, what could be the purpose of enlarging geometric spheres (planets) or
+points (stars)? In that paradigm only the position and movement of the
+heavenly bodies was important, and that had already been accurately studied
+(recently by Tyco Brahe).
+
+In the beginning of his ``The Sidereal Messenger'' (published in 1610) he
+cautions the readers on this issue and @emph{before} describing his
+results/observations, Galileo instructs us on how to build a suitable
+instrument. Without a detailed description of @emph{how} he made his tools
+and done his observations, no reasonable person would believe his
+results. Before he actually saw the moons of Jupiter, the mountains on the
+Moon or the crescent of Venus, Galileo was “evasive”@footnote{Galileo
 G. (Translated by Maurice A. Finocchiaro). @emph{The essential
-Galileo}. Hackett publishing company, first edition, 2008.}. Science is not
-independent of its tools.
+Galileo}. Hackett publishing company, first edition, 2008.} to
+Kepler. Science is defined by its tools/methods, @emph{not} its
+results@footnote{For example, take the following two results on the age of
+the universe: roughly 14 billion years (suggested by the current consensus
+of the standard model of cosmology) and less than 10,000 years (suggested
+from some interpretations of the Bible). Both these numbers are
+@emph{results}. What distinguishes these two results, is the tools/methods
+used to derive them. Therefore, as the term ``Scientific method'' also
+signifies, it is the @emph{method} that defines a scientific statement, not
+the result of one implementation of the method.}.
+
+The same is true today: science cannot progress with a black box. Technical
+knowledge and experience (to experiment on its tools, or software in this
+context@footnote{Of course, this also applies to hardware.}), is critical
+to scientific vitality.
 
 @cindex Ken Thomson
 @cindex Stroustrup, Bjarne
@@ -985,12 +1005,13 @@ system designed for the `user' if that word is a coded pejorative meaning
 scientific software) would want to be considered a believer in magic, or
 stupid and unsophisticated.
 
-However, this can happen when scientists get too distant from the raw data
-and methods and are mainly indulging themselves in their own high-level
-(abstract) models (creations) and are happy with the data acquisition and
-analysis methods in vogue. For example, roughly five years before special
-relativity and about two decades before quantum mechanics fundamentally
-changed Physics, Kelvin is quoted as saying:
+This can happen when scientists get too distant from the raw data and
+methods, and are mainly discussing results. In other words, when they feel
+they have tamed Nature into their own high-level (abstract) models
+(creations), and are mainly concerned with scaling up, or industrializing
+science. Roughly five years before special relativity, and about two
+decades before quantum mechanics fundamentally changed Physics, Lord Kelvin
+is quoted as saying:
 
 @quotation
 @cindex Lord Kelvin
@@ -1016,18 +1037,18 @@ looked for in the sixth place of decimals.
 
 @cindex Puzzle solving scientist
 @cindex Scientist, puzzle solver
-If scientists are considered to be more than mere ``puzzle
-solvers''@footnote{Thomas S. Kuhn. @emph{The Structure of Scientific
-Revolutions}, University of Chicago Press, 1962.} (simply adding to
-the decimals of existing values or observing a feature in 10, 100, or
-100000 more galaxies or stars, as Kelvin and Michelson clearly
-believed), they cannot just passively sit back and uncritically repeat
-the previous (observational or theoretical) methods/tools on new
-data. Today there is a wealth of raw telescope images ready (mostly
-for free) at the finger tips of anyone who is interested with a fast
-enough internet connection to download them. The only thing lacking is
-new ways to analyze this data and dig out the treasure that is lying
-hidden in them to existing methods and techniques.
+If scientists are considered to be more than mere ``puzzle''
+solvers@footnote{Thomas S. Kuhn. @emph{The Structure of Scientific
+Revolutions}, University of Chicago Press, 1962.} (simply adding to the
+decimals of existing values or observing a feature in 10, 100, or 100000
+more galaxies or stars, as Kelvin and Michelson clearly believed), they
+cannot just passively sit back and uncritically repeat the previous
+(observational or theoretical) methods/tools on new data. Today there is a
+wealth of raw telescope images ready (mostly for free) at the finger tips
+of anyone who is interested with a fast enough internet connection to
+download them. The only thing lacking is new ways to analyze this data and
+dig out the treasure that is lying hidden in them to existing methods and
+techniques.
 
 @quotation
 @cindex Jaynes E. T.
@@ -1085,7 +1106,7 @@ their recipients to know that what they have is not what we distributed,
 so that any problems introduced by others will not reflect on our
 reputation.
 
-@cindex GNU General Public License
+@cindex GNU General Public License (GPL)
 @cindex GNU Free Documentation License
 The full text of the licenses for the Gnuastro book and software can be
 respectively found in @ref{GNU General Public License}@footnote{Also
@@ -1144,12 +1165,13 @@ releases. Unofficial releases can mark any point in Gnuastro's development
 history. This is done to allow astronomers to easily use any point in the
 version controlled history for their data-analysis and research
 publication. See @ref{Version controlled source} for a complete
-introduction. This section is not just for developers and is very
-straightforward, so please have a look if you are interested in the
-cutting-edge. This unofficial version number is a meaningful and easy to
-read string of characters, unique to that particular point of history. With
-this feature, users can easily stay up to date with the most recent bug
-fixes and additions that are committed between official releases.
+introduction. This section is not just for developers and is intended to
+straightforward and easy to read, so please have a look if you are
+interested in the cutting-edge. This unofficial version number is a
+meaningful and easy to read string of characters, unique to that particular
+point of history. With this feature, users can easily stay up to date with
+the most recent bug fixes and additions that are committed between official
+releases.
 
 The unofficial version number is formatted like: @file{A.B.C-D}. @file{A}
 and @file{B} are the most recent official version number. @file{C} is the
@@ -1163,8 +1185,8 @@ the version for this commit could be @file{5b17}, or
 `@code{3.92.8-29c8}', corresponds to the 8th commit after the official
 version @code{3.92} and its commit hash begins with @code{29c8}. The
 unofficial version number is sort-able (unlike the raw hash) and as shown
-above is very descriptive of the state of the unofficial release. Of course
-an official release is preferred for publication (since its tarballs are
+above is descriptive of the state of the unofficial release. Of course an
+official release is preferred for publication (since its tarballs are
 easily available and it has gone through more tests, making it more
 stable), so if an official release is announced prior to your publication's
 final review, please consider updating to the official release.
@@ -1174,8 +1196,8 @@ developers and user community before hand, for example see @ref{GNU
 Astronomy Utilities 1.0}. The incremental work done in minor releases are
 commonly small steps in achieving the major goal. Therefore, there is no
 limit on the number of minor releases and the difference between the
-(hypothetical) versions 2.927 and 3.0 can be a very small (negligible to
-the user) improvement that finalizes the defined goals.
+(hypothetical) versions 2.927 and 3.0 can be a small (negligible to the
+user) improvement that finalizes the defined goals.
 
 @menu
 * GNU Astronomy Utilities 1.0::  Plans for version 1.0 release
@@ -1198,12 +1220,12 @@ analysis. This script can set configuration files for all the required
 programs to work with that particular camera. The script can then run the
 proper programs in the proper sequence. The user/observer can easily follow
 the standard shell script to understand (and modify) each step and the
-parameters used easily. Bash (or other modern GNU/Linux shell scripts) are
-very powerful and made for this gluing job. This will simultaneously
-improve performance and transparency. Shell scripting (or Makefiles) are
-also very basic constructs that are easy to learn and readily available as
-part of the Unix-like operating systems. If there is no program to do a
-desired step, Gnuastro's libraries can be used to build specific programs.
+parameters used easily. Bash (or other modern GNU/Linux shell scripts) is
+powerful and made for this gluing job. This will simultaneously improve
+performance and transparency. Shell scripting (or Makefiles) are also basic
+constructs that are easy to learn and readily available as part of the
+Unix-like operating systems. If there is no program to do a desired step,
+Gnuastro's libraries can be used to build specific programs.
 
 The main factor is that all observatories or projects can freely contribute
 to Gnuastro and all simultaneously benefit from it (since it doesn't belong
@@ -1226,9 +1248,9 @@ this environment, the transition is not necessarily easy. To encourage you
 in investing the patience and time to make this transition, we define the
 GNU/Linux system and argue for the command-line interface of scientific
 software and how it is worth the (apparently steep) learning curve.
-@ref{Command-line interface} contains a short overview of the very
-powerful command-line user interface. @ref{Tutorials} is a complete chapter
-with some real world example applications of Gnuastro making good use of
+@ref{Command-line interface} contains a short overview of the powerful
+command-line user interface. @ref{Tutorials} is a complete chapter with
+some real world example applications of Gnuastro making good use of
 GNU/Linux capabilities written for newcomers to this environment. It is
 fully explained, easy and (hopefully) entertaining.
 
@@ -1289,37 +1311,37 @@ enhance your productivity while complementing your GUI experience.
 
 @cindex GNOME 3
 Through GNOME 3@footnote{@url{http://www.gnome.org/}}, most GNU/Linux based
-operating systems now have a very advanced and useful GUI. Since the GUI
-was created long after the command-line, some wrongly consider the command
-line to be obsolete. Both interfaces are very useful for different tasks
-(for example you can't view an image, video, pdf document or web page on
-the command-line!), on the other hand you can't reproduce your results
-easily in the GUI. Therefore they should not be regarded as rivals but as
+operating systems now have an advanced and useful GUI. Since the GUI was
+created long after the command-line, some wrongly consider the command line
+to be obsolete. Both interfaces are useful for different tasks (for example
+you can't view an image, video, pdf document or web page on the
+command-line!), on the other hand you can't reproduce your results easily
+in the GUI. Therefore they should not be regarded as rivals but as
 complementary user interfaces, here we will outline how the CLI can be
 useful in scientific programs.
 
-You can think of the GUI as a veneer over the CLI to facilitate a
-small subset of all the possible CLI operations. Each click you do on
-the GUI, can be thought of as internally running a different CLI
-command. So asymptotically (if a good designer can design a GUI which
-is able to show you all the possibilities to click on) the GUI is only
-as powerful as the command-line. In practice, such graphical designers
-are very hard to find for every program, so the GUI operations are always
-a subset of the internal CLI commands. For programs that are only made
-for the GUI, this results in not including lots of potentially useful
-operations. It also results in `interface design' to be a crucially
-important part of any GUI program. Scientists don't usually have
-enough resources to hire a graphical designer, also the complexity of
-the GUI code is far more than CLI code, which is harmful for a
-scientific software, see @ref{Science and its tools}.
+You can think of the GUI as a veneer over the CLI to facilitate a small
+subset of all the possible CLI operations. Each click you do on the GUI,
+can be thought of as internally running a different CLI command. So
+asymptotically (if a good designer can design a GUI which is able to show
+you all the possibilities to click on) the GUI is only as powerful as the
+command-line. In practice, such graphical designers are very hard to find
+for every program, so the GUI operations are always a subset of the
+internal CLI commands. For programs that are only made for the GUI, this
+results in not including lots of potentially useful operations. It also
+results in `interface design' to be a crucially important part of any GUI
+program. Scientists don't usually have enough resources to hire a graphical
+designer, also the complexity of the GUI code is far more than CLI code,
+which is harmful for a scientific software, see @ref{Science and its
+tools}.
 
 @cindex GUI: repeating operations
 For programs that have a GUI, one action on the GUI (moving and clicking a
 mouse, or tapping a touchscreen) might be more efficient and easier than
 its CLI counterpart (typing the program name and your desired
 configuration). However, if you have to repeat that same action more than
-once, the GUI will soon become very frustrating and prone to errors. Unless
-the designers of a particular program decided to design such a system for a
+once, the GUI will soon become frustrating and prone to errors. Unless the
+designers of a particular program decided to design such a system for a
 particular GUI action, there is no general way to run any possible series
 of actions automatically on the GUI.
 
@@ -1342,14 +1364,14 @@ beautifully explained web page:
 even fully understand the whole thing, only a general knowledge of the
 first few chapters are enough to get you going.
 
-Since the operations in the GUI are very limited and they are visible,
-reading a manual is not that important in the GUI (most programs don't
-even have any!). However, to give you the creative power explained
-above, with a CLI program, it is best if you first read the manual of
-any program you are using. You don't need to memorize any details,
-only an understanding of the generalities is needed. Once you start
-working, there are more easier ways to remember a particular option or
-operation detail, see @ref{Getting help}.
+Since the operations in the GUI are limited and they are visible, reading a
+manual is not that important in the GUI (most programs don't even have
+any!). However, to give you the creative power explained above, with a CLI
+program, it is best if you first read the manual of any program you are
+using. You don't need to memorize any details, only an understanding of the
+generalities is needed. Once you start working, there are more easier ways
+to remember a particular option or operation detail, see @ref{Getting
+help}.
 
 @cindex GNU Emacs
 @cindex Virtual console
@@ -1377,11 +1399,11 @@ to the programs you are running and thus reduce the operating time.
 @cindex Secure shell
 @cindex SSH
 @cindex Remote operation
-Since it uses far less system resources, the CLI is also very
-convenient for remote access to your computer. Using secure shell
-(SSH) you can log in securely to your system (similar to the virtual
-console) from anywhere even if the connection speeds are low. There
-are apps for smart phones and tablets which allow you to do this.
+Since it uses far less system resources, the CLI is also convenient for
+remote access to your computer. Using secure shell (SSH) you can log in
+securely to your system (similar to the virtual console) from anywhere even
+if the connection speeds are low. There are apps for smart phones and
+tablets which allow you to do this.
 
 
 
@@ -1401,13 +1423,13 @@ are apps for smart phones and tablets which allow you to do this.
 @cindex Inconsistent results
 According to Wikipedia ``a software bug is an error, flaw, failure, or
 fault in a computer program or system that causes it to produce an
-incorrect or unexpected result, or to behave in unintended ways''. So
-when you see that a program is crashing, not reading your input
-correctly, giving the wrong results, or not writing your output
-correctly, you have found a bug. In such cases, it is best if you
-report the bug to the developers. The programs will also report bugs
-in known impossible situations (which are caused by something
-unexpected) and will ask the users to report the bug.
+incorrect or unexpected result, or to behave in unintended ways''. So when
+you see that a program is crashing, not reading your input correctly,
+giving the wrong results, or not writing your output correctly, you have
+found a bug. In such cases, it is best if you report the bug to the
+developers. The programs will also inform you if known impossible
+situations occur (which are caused by something unexpected) and will ask
+the users to report the bug issue.
 
 @cindex Bug reporting
 Prior to actually filing a bug report, it is best to search previous
@@ -1432,8 +1454,8 @@ To solve the issue as readily as possible, please follow the following to
 guidelines in your bug report. The
 @url{http://www.chiark.greenend.org.uk/~sgtatham/bugs.html, How to Report
 Bugs Effectively} and @url{http://catb.org/~esr/faqs/smart-questions.html,
-How To Ask Questions The Smart Way} essays also provide some very good
-generic advice for all software (don't contact their authors for Gnuastro's
+How To Ask Questions The Smart Way} essays also provide some good generic
+advice for all software (don't contact their authors for Gnuastro's
 problems). Mastering the art of giving good bug reports (like asking good
 questions) can greatly enhance your experience with any free and open
 source software. So investing the time to read through these essays will
@@ -1450,10 +1472,10 @@ expectation was wrong. Also please clearly state which sections of the
 Gnuastro book (this book), or other references you have studied to
 understand the problem. This can be useful in correcting the book (adding
 links to likely places where users will check). But more importantly, it
-will be very encouraging for the developers, since you are showing how
-serious you are about the problem and that you have actually put some
-thought into it. ``To be able to ask a question clearly is two-thirds of
-the way to getting it answered.'' -- John Ruskin (1819-1900).
+will be encouraging for the developers, since you are showing how serious
+you are about the problem and that you have actually put some thought into
+it. ``To be able to ask a question clearly is two-thirds of the way to
+getting it answered.'' -- John Ruskin (1819-1900).
 
 @item Individual and independent bug reports
 If you have found multiple bugs, please send them as separate (and
@@ -1533,7 +1555,7 @@ is a full chapter devoted to developing it: @ref{Developing}.
 
 @cindex Feature requests
 @cindex Additions to Gnuastro
-We would always be very happy to hear of suggested new features. For every
+We would always be happy to hear of suggested new features. For every
 program there are already lists of features that we are planning to
 add. You can see the current list of plans from the Gnuastro project
 webpage at @url{https://savannah.gnu.org/projects/gnuastro/} and following
@@ -1547,13 +1569,13 @@ documentation or libraries. Also be sure to set the ``Open/Closed'' value
 to ``Any''.
 
 If the feature you want to suggest is not already listed in the task
-manager, then follow the steps that are fully described in @ref{Report
-a bug}. Please have in mind that the developers are all very busy with
-their own astronomical research, and implementing existing ``task''s
-to add or resolving bugs. Gnuastro is a volunteer effort and none of
-the developers are paid for their hard work. So, although we will try
-our best, please don't not expect that your suggested feature be
-immediately included (with the next release of Gnuastro).
+manager, then follow the steps that are fully described in @ref{Report a
+bug}. Please have in mind that the developers are all busy with their own
+astronomical research, and implementing existing ``task''s to add or
+resolving bugs. Gnuastro is a volunteer effort and none of the developers
+are paid for their hard work. So, although we will try our best, please
+don't not expect that your suggested feature be immediately included (with
+the next release of Gnuastro).
 
 The best person to apply the exciting new feature you have in mind is
 you, since you have the motivation and need. In fact Gnuastro is
@@ -1572,8 +1594,8 @@ people in contact.
 @cartouche
 @noindent
 @strong{Gnuastro is a collection of low level programs:} As described in
-@ref{Program design philosophy}, a founding principle of Gnuastro is that each
-library or program should be very basic and low-level. High level jobs
+@ref{Program design philosophy}, a founding principle of Gnuastro is that
+each library or program should be basic and low-level. High level jobs
 should be done by running the separate programs or using separate functions
 in succession through a shell script or calling the libraries by higher
 level functions, see the examples in @ref{Tutorials}. So when making the
@@ -1598,8 +1620,8 @@ updated/new features, or dependencies (see @ref{Dependencies}).
 
 To subscribe to this list, please visit
 @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}. Traffic (number
-of mails per unit time) in this list is designed to be very low: only a
-handful of mails per year. Previous announcements are available on
+of mails per unit time) in this list is designed to be low: only a handful
+of mails per year. Previous announcements are available on
 @url{http://lists.gnu.org/archive/html/info-gnuastro/, its archive}.
 
 
@@ -1668,16 +1690,18 @@ In general, we would like to gratefully thank the following people for
 their useful and constructive comments and suggestions (in alphabetical
 order by family name): Marjan Akbari, Roland Bacon, Karl Berry, Leindert
 Boogaard, Nicolas Bouch@'e, Fernando Buitrago, Adrian Bunk, Rosa Calvi,
-Benjamin Clement, Antonio Diaz Diaz, Th@'er@`ese Godefroy, Madusha
-Gunawardhana, Stephen Hamer, Takashi Ichikawa, Ra@'ul Infante Sainz,
-Brandon Invergo, Aur@'elien Jarno, Lee Kelvin, Mohammad-Reza Khellat,
-Floriane Leclercq, Alan Lefor, Guillaume Mahler, Francesco Montanari,
-William Pence, Bob Proulx, Yahya Sefidbakht, Alejandro Serrano Borlaff, Lee
-Spitler, Richard Stallman, Ole Streicher, Alfred M. Szmidt, Ignacio
-Trujillo, David Valls-Gabaud and Christopher Willmer. The GNU French
-Translation Team is also managing the French version of the top Gnuastro
-webpage which we highly appreciate. Finally we should thank all the
-(sometimes anonymous) people in various online forums which patiently
+Nushkia Chamba, Benjamin Clement, Nima Dehdilani, Antonio Diaz Diaz,
+Th@'er@`ese Godefroy, Madusha Gunawardhana, Stephen Hamer, Takashi
+Ichikawa, Ra@'ul Infante Sainz, Brandon Invergo, Aur@'elien Jarno, Lee
+Kelvin, Brandon Kelly, Mohammad-Reza Khellat, Floriane Leclercq, Alan
+Lefor, Guillaume Mahler, Francesco Montanari, Bertrand Pain, William Pence,
+Bob Proulx, Yahya Sefidbakht, Alejandro Serrano Borlaff, Lee Spitler,
+Richard Stallman, Ole Streicher, Alfred M. Szmidt, Michel Tallon, Juan
+C. Tello, Éric Thi@'ebaut, Ignacio Trujillo, David Valls-Gabaud, Aaron
+Watkins, Christopher Willmer, Sara Yousefi Taemeh, Johannes Zabl. The GNU
+French Translation Team is also managing the French version of the top
+Gnuastro webpage which we highly appreciate. Finally we should thank all
+the (sometimes anonymous) people in various online forums which patiently
 answered all our small (but important) technical questions.
 
 All work on Gnuastro has been voluntary, but the authors are most grateful
@@ -1709,17 +1733,18 @@ Centre de Recherche Astrophysique de Lyon, University of Lyon 1, France.@*
 
 @cindex Tutorial
 @cindex Cookbook
-To help new users get started smoothly with Gnuastro, in this chapter
-several thoroughly elaborated tutorials or cookbooks are provided in this
-chapter to demonstrate the capabilities of Gnuastro and the best practices
-of using them.
+To help new users have a smooth and easy start with Gnuastro, in this
+chapter several thoroughly elaborated tutorials, or cookbooks, are
+provided. These tutorials demonstrate the capabilities of different
+Gnuastro programs and libraries, along with tips and guidelines for the
+best practices of using them in various realistic situations.
 
 We strongly recommend going through these tutorials to get a good feeling
 of how the programs are related (built in a modular design to be used
-together in a pipeline) and demonstrate the Unix-based tought-process that
-went into creating them. Therefore these tutorials will greatly help in
-using Gnuastro's programs (and generally the Unix-like command-line
-environment) effectively.
+together in a pipeline), very similar to the core Unix-based programs that
+they were modeled on. Therefore these tutorials will greatly help in
+optimally using Gnuastro's programs (and generally, the Unix-like
+command-line environment) effectively for your research.
 
 In @ref{Sufi simulates a detection}, we'll start with a
 fictional@footnote{The two historically motivated tutorials (@ref{Sufi
@@ -1727,66 +1752,67 @@ simulates a detection} and @ref{Hubble visually checks and classifies his
 catalog}) are not intended to be a historical reference (the historical
 facts of this fictional tutorial used Wikipedia as a reference). This form
 of presenting a tutorial was influenced by the PGF/TikZ and Beamer
-manuals. The first provides graphic capabilities in @TeX{} and @LaTeX{},
-while with the second you can make presentation slides. In these manuals,
-Till Tantau (author of the manual) uses Euclid as the protagonist. On a
-similar topic, there are also some nice words of wisdom for Unix-like
-systems called @url{http://catb.org/esr/writings/unix-koans, Rootless
-Root}. These also have a similar style but they use a mythical figure named
-Master Foo. If you already have some experience in Unix-like systems, you
-will definitely find these Unix Koans very entertaining/educative.}
-tutorial explaining how Abd al-rahman Sufi (903 -- 986 A.D., the first
-recorded description of ``nebulous'' objects in the heavens is attributed
-to him) could have used some of Gnuastro's programs for a realistic
-simulation of his observations and see if his detection of nebulous objects
-was trustable. Because all conditions are under control in a simulated
-environment/dataset, they can be a very valuable tool to inspect the
-limitations of your data analysis and processing. But they need to be as
-realistic as possible, so the first tutorial is dedicated to this important
-step of an analysis.
+manuals. They are both packages in in @TeX{} and @LaTeX{}, the first is a
+high-level vector graphic programming environment, while with the second
+you can make presentation slides. On a similar topic, there are also some
+nice words of wisdom for Unix-like systems called
+@url{http://catb.org/esr/writings/unix-koans, Rootless Root}. These also
+have a similar style but they use a mythical figure named Master Foo. If
+you already have some experience in Unix-like systems, you will definitely
+find these Unix Koans entertaining/educative.} tutorial explaining how Abd
+al-rahman Sufi (903 -- 986 A.D., the first recorded description of
+``nebulous'' objects in the heavens is attributed to him) could have used
+some of Gnuastro's programs for a realistic simulation of his observations
+and see if his detection of nebulous objects was trust-able. Because all
+conditions are under control in a simulated/mock environment/dataset, mock
+datasets can be a valuable tool to inspect the limitations of your data
+analysis and processing. But they need to be as realistic as possible, so
+the first tutorial is dedicated to this important step of an analysis.
 
 The next two tutorials (@ref{General program usage tutorial} and
 @ref{Detecting large extended targets}) use real input datasets from some
 of the deep Hubble Space Telescope (HST) images and the Sloan Digital Sky
 Survey (SDSS) respectively. Their aim is to demonstrate some real-world
-problems that can be solved with Gnuastro's programs.
+problems that many astronomers often face and how they can be be solved
+with Gnuastro's programs.
 
 The ultimate aim of @ref{General program usage tutorial} is to detect
 galaxies in a deep HST image, measure their positions and brightness and
-select those with the strongest colors. In the process it takes many
+select those with the strongest colors. In the process, it takes many
 detours to introduce you to the useful capabilities of many of the
-programs. If you don't have much time and can only try one of the
-tutorials, we recommend this one.
+programs. So please be patient in reading it. If you don't have much time
+and can only try one of the tutorials, we recommend this one.
 
 @cindex PSF
 @cindex Point spread function
 @ref{Detecting large extended targets} deals with a major problem in
 astronomy: effectively detecting the faint outer wings of bright (and
 large) nearby galaxies to extremely low surface brightness levels (roughly
-1/20th of the local noise level in the example discussed). This is an
-important issue, especially in wide surveys. Because bright/large galaxies
-and stars@footnote{Stars also have similarly large and extended wings due
-to the point spread function, see @ref{PSF}.}, cover a significant fraction
-of the survey area. Besides the interesting scientific questions in these
-low-surface brightness features, failure to properly detect them will bias
-the measurements of the background objects and the survey's noise
-estimates.
+1/20th of the local noise level in the example discussed). Besides the
+interesting scientific questions in these low-surface brightness features,
+failure to properly detect them will bias the measurements of the
+background objects and the survey's noise estimates. This is an important
+issue, especially in wide surveys. Because bright/large galaxies and
+stars@footnote{Stars also have similarly large and extended wings due to
+the point spread function, see @ref{PSF}.}, cover a significant fraction of
+the survey area.
 
 Finally, in @ref{Hubble visually checks and classifies his catalog}, we go
-into the historical/fictional world again to see how Hubble could use
-Gnuastro's programs to visually check and classify his sample of galaxies
+into the historical/fictional world again to see how Hubble could have used
+Gnuastro's programs to visually check and classify a sample of galaxies
 which ultimately lead him to the ``Hubble fork'' classification of galaxy
 morphologies.
 
 In these tutorials, we have intentionally avoided too many cross references
-to make it more easily readable. For more information about a particular
+to make it more easy to read. For more information about a particular
 program, you can visit the section with the same name as the program in
 this book. Each program section in the subsequent chapters starts by
-explaining the general concepts behind what it does. If you only want to
-see an explanation of the options and arguments of any program, see the
-subsection titled ``Invoking ProgramName'', for example @ref{Invoking
-astnoisechisel}. See @ref{Conventions}, for an explanation of the
-conventions we use in the example codes through the book.
+explaining the general concepts behind what it does, for example see
+@ref{Convolve}. If you only want practical information on running a
+program, for example its options/configuration, input(s) and output(s),
+please consult the subsection titled ``Invoking ProgramName'', for example
+see @ref{Invoking astnoisechisel}. For an explanation of the conventions we
+use in the example codes through the book, please see @ref{Conventions}.
 
 @menu
 * Sufi simulates a detection::  Simulating a detection.
@@ -1799,6 +1825,9 @@ conventions we use in the example codes through the book.
 @node Sufi simulates a detection, General program usage tutorial, Tutorials, Tutorials
 @section Sufi simulates a detection
 
+@cindex Azophi
+@cindex Abd al-rahman Sufi
+@cindex Sufi, Abd al-rahman
 It is the year 953 A.D.  and Sufi@footnote{Abd al-rahman Sufi (903 --
 986 A.D.), also known in Latin as Azophi was an Iranian
 astronomer. His manuscript ``Book of fixed stars'' contains the first
@@ -1817,6 +1846,9 @@ astronomical objects or if they were only the result of some bias in
 his observations. Could such diffuse objects actually be detected at
 all with his detection technique?
 
+@cindex Almagest
+@cindex Claudius Ptolemy
+@cindex Ptolemy, Claudius
 He still had a few hours left until nightfall (when he would continue
 his studies on the ecliptic) so he decided to find an answer to this
 question. He had thoroughly studied Claudius Ptolemy's (90 -- 168 A.D)
@@ -1995,10 +2027,10 @@ stars will take the shape of the PSF after convolution and this is how they
 would look if we didn't have an atmosphere or an aperture when we took the
 image. The size of the image was also surprising for the student, instead
 of 500 by 500, it was 2630 by 2630 pixels. So Sufi had to explain why
-oversampling is very important for parts of the image where the flux change
-is significant over a pixel. Sufi then explained to him that after
-convolving we will re-sample the image to get our originally desired
-size. To convolve the image, Sufi ran the following command:
+oversampling is important for parts of the image where the flux change is
+significant over a pixel. Sufi then explained to him that after convolving
+we will re-sample the image to get our originally desired size. To convolve
+the image, Sufi ran the following command:
 
 @example
 $ astconvolve --kernel=0_cat.fits cat.fits
@@ -2051,7 +2083,7 @@ NAXIS2  =                  526 / length of data axis 2
 @file{cat_convolved_warped.fits} now has the correct pixel scale. However,
 the image is still larger than what we had wanted, it is 526
 (@mymath{500+13+13}) by 526 pixels. The student is slightly confused, so
-Sufi also resamples the PSF with the same scale and shows him that it is 27
+Sufi also re-samples the PSF with the same scale and shows him that it is 27
 (@mymath{2\times13+1}) by 27 pixels. Sufi goes on to explain how frequency
 space convolution will dim the edges and that is why he added the
 @option{--prepforconv} option to MakeProfiles, see @ref{If convolving
@@ -2109,16 +2141,15 @@ with the Shell's capabilities. So Sufi decided to show this to the student
 by making a shell script from the commands he had used before.
 
 The command-line shell has the capability to read all the separate input
-commands from a file. This is very useful when you want to do the same
-thing multiple times, with only the names of the files or minor parameters
+commands from a file. This is useful when you want to do the same thing
+multiple times, with only the names of the files or minor parameters
 changing between the different instances. Using the shell's history (by
 pressing the up keyboard key) Sufi reviewed all the commands and then he
 retrieved the last 5 commands with the @command{$ history 5} command. He
 selected all those lines he had input and put them in a text file named
 @file{mymock.sh}. Then he defined the @code{edge} and @code{base} shell
 variables for easier customization later. Finally, before every command, he
-added some comments (lines starting with @key{#}) for future
-readability.
+added some comments (lines starting with @key{#}) for future readability.
 
 @example
 # Basic settings:
@@ -2154,14 +2185,14 @@ rm 0*.fits cat*.fits
 
 @cindex Comments
 He used this chance to remind the student of the importance of comments in
-code or shell scripts: when writing the code, you have a very good mental
+code or shell scripts: when writing the code, you have a good mental
 picture of what you are doing, so writing comments might seem superfluous
 and excessive. However, in one month when you want to re-use the script,
-you have lost that mental picture and rebuilding it is can be very
+you have lost that mental picture and rebuilding it is can be
 time-consuming and frustrating. The importance of comments is further
 amplified when you want to share the script with a friend/colleague. So it
-is very good to accompany any script/code with useful comments while you
-are writing it (have a good mental picture of what/why you are doing
+is good to accompany any script/code with useful comments while you are
+writing it (have a good mental picture of what/why you are doing
 something).
 
 @cindex Gedit
@@ -2191,17 +2222,16 @@ Then finally, Sufi ran the script, simply by calling its file name:
 $ ./mymock.sh
 @end example
 
-After the script finished, the only file remaining is the
-@file{out.fits} file that Sufi had wanted in the beginning.  Sufi then
-explained to the student how he could run this script anywhere that he
-has a catalog if the script is in the same directory. The only thing
-the student had to modify in the script was the name of the catalog
-(the value of the @code{base} variable in the start of the script) and
-the value to the @code{edge} variable if he changed the PSF size. The
-student was also very happy to hear that he won't need to make it
-executable again when he makes changes later, it will remain
-executable unless he explicitly changes the executable flag with
-@command{chmod}.
+After the script finished, the only file remaining is the @file{out.fits}
+file that Sufi had wanted in the beginning.  Sufi then explained to the
+student how he could run this script anywhere that he has a catalog if the
+script is in the same directory. The only thing the student had to modify
+in the script was the name of the catalog (the value of the @code{base}
+variable in the start of the script) and the value to the @code{edge}
+variable if he changed the PSF size. The student was also happy to hear
+that he won't need to make it executable again when he makes changes later,
+it will remain executable unless he explicitly changes the executable flag
+with @command{chmod}.
 
 The student was really excited, since now, through simple shell
 scripting, he could really speed up his work and run any command in
@@ -2231,15 +2261,31 @@ night's measurements on the ecliptic.
 @node General program usage tutorial, Detecting large extended targets, Sufi simulates a detection, Tutorials
 @section General program usage tutorial
 
-@cindex HST
-@cindex XDF survey
-@cindex Hubble Space Telescope
-@cindex Extreme Deep Field survey
+@cindex Hubble Space Telescope (HST)
+@cindex Colors, broad-band photometry
 Measuring colors of astronomical objects in broad-band or narrow-band
 images is one of the most basic and common steps in astronomical
-analysis. Here, we will use Gnuastro's programs to detect objects in a
-Hubble Space Telescope (HST) image and measure their colors. We will use
-the @url{https://archive.stsci.edu/prepds/xdf, eXtreme Deep Field}
+analysis. Here, we will use Gnuastro's programs to get a physical scale
+(area at certain redshifts) of the field we are studying, detect objects in
+a Hubble Space Telescope (HST) image, measure their colors and identify the
+ones with the largest colors to visual inspection and their spatial
+position in the image. After this tutorial, you can also try the
+@ref{Detecting large extended targets} tutorial which goes into a little
+more detail on optimally configuring NoiseChisel (Gnuastro's detection
+tool) in special situations.
+
+During the tutorial, we will take many detours to explain, and practically
+demonstrate, the many capabilities of Gnuastro's programs. In the end you
+will see that the things you learned during this toturial are much more
+generic than this particular problem and can be used in solving a wide
+variety of problems involving the analysis of data (images or tables). So
+please don't rush, and go through the steps patiently to optimally master
+Gnuastro.
+
+@cindex XDF survey
+@cindex eXtreme Deep Field (XDF) survey
+In this tutorial, we'll use the HST
+@url{https://archive.stsci.edu/prepds/xdf, eXtreme Deep Field}
 dataset. Like almost all astronomical surveys, this dataset is free for
 download and usable by the public. This tutorial was first prepared for the
 ``Exploring the Ultra-Low Surface Brightness Universe'' workshop (November
@@ -2256,11 +2302,11 @@ AWK@footnote{@url{https://www.gnu.org/software/gawk}.}).
 
 @cartouche
 @noindent
-@strong{Type the example commands:} Try to type the example commands on
-your terminal and use the history feature of your command-line (by pressing
-the ``up'' button to retrieve previous commands). Don't simply copy and
-paste the commands shown here. This will help simulate future situations
-when you are processing your own datasets.
+@strong{Write the example commands manually:} Try to type the example
+commands on your terminal manually and use the history feature of your
+command-line (by pressing the ``up'' button to retrieve previous
+commands). Don't simply copy and paste the commands shown here. This will
+help simulate future situations when you are processing your own datasets.
 @end cartouche
 
 A handy feature of Gnuastro is that all program names start with
@@ -2341,10 +2387,10 @@ Info when calling a title in this manner.
 $ info gnuastro "Detection options"
 @end example
 
-In general, Info is a wonderful and powerful way to access this whole book
-with detailed information about the programs you are running very fast. If
-you are not already familiar with it, please run the following command and
-just read along and do what it says to learn it. Don't stop until you feel
+In general, Info is a powerful and convenient way to access this whole book
+with detailed information about the programs you are running. If you are
+not already familiar with it, please run the following command and just
+read along and do what it says to learn it. Don't stop until you feel
 sufficiently fluent in it. Please invest the half an hour's time necessary
 to start using Info comfortably. It will greatly improve your productivity
 and you will start reaping the rewards of this investment very soon.
@@ -2355,7 +2401,7 @@ $ info info
 
 As a good scientist you need to feel comfortable to play with the
 features/options and avoid (be critical to) using default values as much as
-possible. On the other hand, our human memory is very limited, so it is
+possible. On the other hand, our human memory is limited, so it is
 important to be able to easily access any part of this book fast and
 remember the option names, what they do and their acceptable values.
 
@@ -2598,10 +2644,10 @@ $ for z in 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0; do           \
 @end example
 
 @noindent
-Fortunately, the shell has a very useful tool/program to print a sequence
-of numbers that is nicely called @code{seq}. You can use it instead of
-typing all the different redshifts in this example. For example the loop
-below will print the same range of redshifts (between 0.5 and 5) but with
+Fortunately, the shell has a useful tool/program to print a sequence of
+numbers that is nicely called @code{seq}. You can use it instead of typing
+all the different redshifts in this example. For example the loop below
+will print the same range of redshifts (between 0.5 and 5) but with
 increments of 0.1.
 
 @example
@@ -2711,7 +2757,7 @@ above, it completed its processing and printed results. So where did the
 come from?  The values come from the command-line or a configuration file
 (see @ref{Configuration file precedence}).
 
-CosmicCalculator has a very limited set of parameters and doesn't need any
+CosmicCalculator has a limited set of parameters and doesn't need any
 particular file inputs. Therefore, we'll use it to discuss configuration
 files which are an important part of all Gnuastro's programs (see
 @ref{Configuration files}).
@@ -2719,11 +2765,10 @@ files which are an important part of all Gnuastro's programs (see
 Once you get comfortable with configuration files, you can easily do the
 same for the options of all Gnuastro programs. For example, NoiseChisel has
 the largest number of options in the programs. Therefore configuration
-files will be very useful for it when you use different datasets (with
-different noise properties or in different research contexts). The
-configuration of each program (besides its version) is vital for the
-reproducibility of your results, so it is very important to manage them
-properly.
+files will be useful for it when you use different datasets (with different
+noise properties or in different research contexts). The configuration of
+each program (besides its version) is vital for the reproducibility of your
+results, so it is important to manage them properly.
 
 As we saw above, the full list of the options in all Gnuastro programs can
 be seen with the @option{--help} option. Try calling it with
@@ -3040,13 +3085,13 @@ $ astnoisechisel -P | grep tilesize
 Its a 50 by 50 box. Flip back and forth between the @code{CONVOLVED} and
 @code{QTHRESH_ERODE} extensions of the check image to get a feeling of
 which tiles succeeded (have non-blank values)@footnote{The other extensions
-don't matter much for the check here. They show the qthresh values for the
-other thresholds (on the same tiles), followed by the interpolated values
-for all the thresholds and afterwards the smoothed values that are used for
-the next steps. The final extension (@code{QTHRESH-APPLIED}, shows the
-result of applying the erode and no-erode thresholds.}. Since this is a
-relatively large image and we don't have any gradients, let's increase the
-tile size to 100 by 100
+don't matter much for the check here. They show the @option{--qthresh}
+values for the other thresholds (on the same tiles), followed by the
+interpolated values for all the thresholds and afterwards the smoothed
+values that are used for the next steps. The final extension
+(@code{QTHRESH-APPLIED}, shows the result of applying the erode and
+no-erode thresholds.}. Since this is a relatively large image and we don't
+have any gradients, let's increase the tile size to 100 by 100
 
 @example
 $ astnoisechisel flat-ir/xdf-f160w.fits --tilesize=100,100    \
@@ -3080,11 +3125,11 @@ $ astnoisechisel flat-ir/xdf-f105w.fits --tilesize=75,75    \
 
 Before continuing with the higher-level processing of this dataset, we'll
 pause to use NoiseChisel's multi-extension output for showing how the Fits
-program can make it very easy to work with this wonderful data container
-(see @ref{Fits}). Let's say you need to copy a HDU/extension from one FITS
-file to another. Try the command below to make an @file{objects.fits} file
-that contains only NoiseChisel's binary detection map. There are similar
-options to conveniently cut or delete HDUs from a FITS file also.
+program can make it easy to work with this wonderful data container (see
+@ref{Fits}). Let's say you need to copy a HDU/extension from one FITS file
+to another. Try the command below to make an @file{objects.fits} file that
+contains only NoiseChisel's binary detection map. There are similar options
+to conveniently cut or delete HDUs from a FITS file also.
 
 @example
 $ astfits nc/xdf-f160w.fits --copy=DETECTIONS -odetections.fits
@@ -3275,7 +3320,7 @@ this step onward, we'll continue with clumps.
 
 We can finally calculate the colors of the objects from these two
 datasets. We'll merge them into one table using the @command{paste} program
-on the command-line. But, we only want the magntitude from the F105W
+on the command-line. But, we only want the magnitude from the F105W
 dataset, so we'll only pull out the @code{MAGNITUDE} and @code{SN}
 column. The output of @command{paste} will have each line of both catalogs
 merged into a single line.
@@ -4074,7 +4119,7 @@ of them have actually been detected as true clumps. Do you have a good
 balance between completeness and purity? Also look out far into the wings
 of the group and inspect the completeness and purity there.
 
-An easer way to inspect completness (and only completeness) is to mask all
+An easier way to inspect completeness (and only completeness) is to mask all
 the pixels detected as clumps and visually inspecting the rest of the
 pixels. You can do this using Arithmetic in a command like below. For easy
 reading of the command, we'll define the shell variable @code{i} for the
@@ -4103,7 +4148,7 @@ purity). We'll finish the discussion on finding true clumps at this point.
 The properties of the background objects can then easily be measured using
 @ref{MakeCatalog}. To measure the properties of the background objects
 (detected as clumps over the diffuse region), you shouldn't mask the
-diffuse region. When measuing clump properties with @ref{MakeCatalog}, the
+diffuse region. When measuring clump properties with @ref{MakeCatalog}, the
 ambient flux (from the diffuse region) is calculated and subtracted. If the
 diffuse region is masked, its effect on the clump brightness cannot be
 calculated and subtracted.
@@ -4428,28 +4473,31 @@ Gnuastro but might be useful in conjunction with it is discussed.
 @node Dependencies, Downloading the source, Installation, Installation
 @section Dependencies
 
-The dependencies needed to build and install Gnuastro are defined by the
-features you want and how you would like to obtain the source code (see
-@ref{Downloading the source}). A minimal set of dependencies are mandatory,
-if they are not present you cannot get passed the configuration step. Such
-mandatory dependencies are therefore very basic (low-level) tools which are
-easy to obtain, build and install, see @ref{Mandatory dependencies} for a
-full discussion.
+A minimal set of dependencies are mandatory for building Gnuastro from the
+standard tarball release. If they are not present you cannot pass
+Gnuastro's configuration step. The mandatory dependencies are therefore
+very basic (low-level) tools which are easy to obtain, build and install,
+see @ref{Mandatory dependencies} for a full discussion.
 
 If you have the packages of @ref{Optional dependencies}, Gnuastro will have
 additional functionality (for example converting FITS images to JPEG or
 PDF). If you are installing from a tarball as explained in @ref{Quick
-start}, you can stop reading after this section. However, if you decided to
-use the version controlled source instead of the tarball (see @ref{Version
-controlled source}), an additional bootstrapping step is required before
-configuration and its dependencies are explained in @ref{Bootstrapping
-dependencies}.
+start}, you can stop reading after this section. If you are cloning the
+version controlled source (see @ref{Version controlled source}), an
+additional bootstrapping step is required before configuration and its
+dependencies are explained in @ref{Bootstrapping dependencies}.
 
+Your operating system's package manager is an easy and convenient way to
+download and install the dependencies that are already pre-built for your
+operating system. In @ref{Dependencies from package managers}, we'll list
+some common operating system package manager commands to install the
+optional and mandatory dependencies.
 
 @menu
 * Mandatory dependencies::      Gnuastro will not install without these.
 * Optional dependencies::       Adding more functionality.
 * Bootstrapping dependencies::  If you have the version controlled source.
+* Dependencies from package managers::  Installing from OS package managers.
 @end menu
 
 @node Mandatory dependencies, Optional dependencies, Dependencies, Dependencies
@@ -4462,45 +4510,6 @@ tools. They all follow the same basic GNU based build system (like that
 shown in @ref{Quick start}), so even if you don't have them, installing
 them should be pretty straightforward. In this section we explain each
 program and any specific note that might be necessary in the installation.
-
-@cindex Building from source
-@cindex Compiling from source
-@cindex Source code building
-@cindex Source code compilation
-@cindex Package managers
-The most basic choice is to build the packages from source yourself,
-instead of relying on your distribution's package management system. While
-the latter choice is indeed possible, we recommend that you build these
-dependencies yourself as discussed below. We will send out notifications in
-the @command{info-gnuastro} mailing list, see @ref{Announcements} when we
-find out that these requirements are updated.
-
-@enumerate
-
-@item
-For each package, Gnuastro might preform better (or require) certain
-configuration options that your distribution's package managers didn't add
-for you. If present, these configuration options are explained during the
-installation of each in the sections below. When the proper configuration
-has not been set, the programs should complain and inform you.
-
-@item
-Your distribution's pre-built package might not be the most recent
-release.
-
-@item
-For the libraries, they might separate the binary file from the header
-files, see @ref{Known issues}.
-
-@item
-Like any other tool, the science you derive from Gnuastro's tools
-highly depend on these lower level dependencies, so generally it is
-much better to have a close connection with them. By reading their
-manuals, installing them and staying up to date with changes/bugs in
-them, your scientific results and understanding will also
-correspondingly improve.
-@end enumerate
-
 
 
 @menu
@@ -4566,21 +4575,22 @@ for most purposes. Don't forget to read chapter two of the manual though,
 for example the second option is only for 64bit systems. The manual also
 explains how to check if it has been installed correctly.
 
-CFITSIO comes with two executables called fpack and funpack. From their
-manual: they ``are standalone programs for compressing and uncompressing
-images and tables that are stored in the FITS (Flexible Image Transport
-System) data format. They are analogous to the gzip and gunzip compression
-programs except that they are optimized for the types of astronomical
-images that are often stored in FITS format''. The commands below will
-compile and install them on your system along with CFITSIO. They are not
-essential for Gnuastro, since they are just wrappers for functions within
-CFITSIO, but they can come in handy. The @command{make utils} command is
-only available for versions above 3.39, it will build these executables
-along with several other test executables which are deleted before the
-installation (otherwise they will also be installed).
+CFITSIO comes with two executable files called @command{fpack} and
+@command{funpack}. From their manual: they ``are standalone programs for
+compressing and uncompressing images and tables that are stored in the FITS
+(Flexible Image Transport System) data format. They are analogous to the
+gzip and gunzip compression programs except that they are optimized for the
+types of astronomical images that are often stored in FITS format''. The
+commands below will compile and install them on your system along with
+CFITSIO. They are not essential for Gnuastro, since they are just wrappers
+for functions within CFITSIO, but they can come in handy. The @command{make
+utils} command is only available for versions above 3.39, it will build
+these executable files along with several other executable test files which
+are deleted in the following commands before the installation (otherwise
+the test files will also be installed).
 
-The CFITSIO installation from source process is given below. Let's assume
-you have downloaded
+The commands necessary to decompress, build and install CFITSIO from source
+are described below. Let's assume you have downloaded
 @url{http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio_latest.tar.gz,
 @file{cfitsio_latest.tar.gz}} and are in the same directory:
 
@@ -4669,11 +4679,11 @@ If the @command{./configure} script can't find these requirements, it will
 warn you in the end that they are not present and notify you of the
 operation(s) you can't do due to not having them. If the output you request
 from a program requires a missing library, that program is going to warn
-you and abort. In the case of executables like GPL GhostScript, if you
-install them at a later time, the program will run. This is because if
-required libraries are not present at build time, the executables cannot be
-built, but an executable is called by the built program at run time so if
-it becomes available, it will be used. If you do install an optional
+you and abort. In the case of program dependencies (like GPL GhostScript),
+if you install them at a later time, the program will run. This is because
+if required libraries are not present at build time, the executables cannot
+be built, but an executable is called by the built program at run time so
+if it becomes available, it will be used. If you do install an optional
 library later, you will have to rebuild Gnuastro and reinstall it for it to
 take effect.
 
@@ -4732,9 +4742,9 @@ very basic library that provides tools to read and write JPEG images, most
 Unix-like graphic programs and libraries use it. Therefore you most
 probably already have it installed.
 @url{http://libjpeg-turbo.virtualgl.org/, libjpeg-turbo} is an alternative
-to libjpeg. It uses SIMD instructions for ARM based systems that
-significantly decreases the processing time of JPEG compression and
-decompression algorithms.
+to libjpeg. It uses Single instruction, multiple data (SIMD) instructions
+for ARM based systems that significantly decreases the processing time of
+JPEG compression and decompression algorithms.
 
 @item libtiff
 @pindex libtiff
@@ -4762,7 +4772,7 @@ package managers for this.
 
 
 
-@node Bootstrapping dependencies,  , Optional dependencies, Dependencies
+@node Bootstrapping dependencies, Dependencies from package managers, Optional dependencies, Dependencies
 @subsection Bootstrapping dependencies
 
 Bootstrapping is only necessary if you have decided to obtain the full
@@ -4911,6 +4921,128 @@ ImageMagick is a wonderful and robust program for image manipulation on the
 command-line. @file{bootsrap} uses it to convert the book images into the
 formats necessary for the various book formats.
 
+@end table
+
+
+
+@node Dependencies from package managers,  , Bootstrapping dependencies, Dependencies
+@subsection Dependencies from package managers
+
+@cindex Package managers
+@cindex Source code building
+@cindex Building from source
+@cindex Compiling from source
+@cindex Source code compilation
+@cindex Distributions, GNU/Linux
+The most basic way to install a package on your system is to build the
+packages from source yourself. Alternatively, you can use your operating
+system's package manager to download pre-compiled files and install
+them. The latter choice is easier and faster. However, we recommend that
+you build the @ref{Mandatory dependencies} yourself from source (all
+necessary commands and links are given in the respective section). Here are
+some basic reasons behind this recommendation.
+
+@enumerate
+
+@item
+Your distribution's pre-built package might not be the most recent
+release.
+
+@item
+For each package, Gnuastro might preform better (or require) certain
+configuration options that your distribution's package managers didn't add
+for you. If present, these configuration options are explained during the
+installation of each in the sections below (for example in
+@ref{CFITSIO}). When the proper configuration has not been set, the
+programs should complain and inform you.
+
+@item
+For the libraries, they might separate the binary file from the header
+files which can cause confusion, see @ref{Known issues}.
+
+@item
+Like any other tool, the science you derive from Gnuastro's tools highly
+depend on these lower level dependencies, so generally it is much better to
+have a close connection with them. By reading their manuals, installing
+them and staying up to date with changes/bugs in them, your scientific
+results and understanding (of what is going on, and thus how you interpret
+your scientific results) will also correspondingly improve.
+@end enumerate
+
+Based on your operating system and its package manager, you can use any of
+the following commands to install the mandatory and optional
+dependencies. If your operating system or package manager are not included,
+please send us the respective command, so we add it here. Gnuastro itself
+if also already packaged in some package managers (for example Debian or
+Homebrew).
+
+As discussed above, we recommend installing the @emph{mandatory}
+dependencies manually from source. Therefore, in each command below, first
+the optional dependencies are given. The mandatory dependencies are
+included after an empty line. If you would also like to install the
+mandatory dependencies with your package manager, just ignore the empty
+line.
+
+@table @asis
+@item Debian-based OSs (@command{apt-get})
+@cindex Debian
+@cindex Ubuntu
+@cindex @command{apt-get}
+@cindex Advanced Packaging Tool (APT, Debian)
+Debian-based GNU/Linux
+distributions@footnote{@url{https://en.wikipedia.org/wiki/List_of_Linux_distributions#Debian-based}}
+(for example Ubuntu or its derivatives) are arguably the largest, and most
+used, class of GNU/Linux distributions. All such GNU/Linux distributions
+use Debian's Advanced Packaging Tool (APT, for example @command{apt-get})
+for managing packages.
+@example
+$ sudo apt-get install ghostscript libtool-bin  libjpeg-dev \
+                       libtiff-dev libgit2-dev              \
+                                                            \
+                       libgsl0-dev libcfitsio-dev wcslib-dev
+@end example
+
+@item macOS (@command{brew})
+@cindex macOS
+@cindex Homebrew
+@cindex MacPorts
+@cindex @command{brew}
+macOS is the operating system used on Apple devices
+(@url{https://en.wikipedia.org/wiki/MacOS}). macOS does not come with a
+package manager pre-installed, but several widely used, third-party package
+managers exist, such as Homebrew or MacPorts. Both are free
+software. Currently we have only tested Gnuastro's installation with
+Homebrew as described below.
+
+If not already installed, first obtain Homebrew by following the
+instructions at @url{https://brew.sh}. Homebrew manages packages in
+different `taps'. To install WCSLIB (discussed in @ref{Mandatory
+dependencies}) via Homebrew you will need to @command{tap} into
+@command{brewsci/science} first (the tap may change in the future, but can
+be found by calling @command{brew search wcslib}).
+@example
+$ brew install ghostscript libtool libjpeg libtiff libgit2 \
+                                                           \
+               gsl cfitsio
+$ brew tap brewsci/science
+$ brew install wcslib
+@end example
+
+@item Arch Linux (@command{pacman})
+@cindex Arch Linux
+@cindex @command{pacman}
+Arch Linux is a smaller GNU/Linux distribution. As discussed in
+@url{https://en.wikipedia.org/wiki/Arch_Linux, Wikipedia}, it follows ``the
+KISS principle ("keep it simple, stupid") as the general guideline, and
+focuses on elegance, code correctness, minimalism and simplicity, and
+expects the user to be willing to make some effort to understand the
+system's operation''. Arch Linux uses ``Package manager'' (Pacman) to
+manage its packages.
+@example
+$ sudo pacman -S ghostscript libtool libjpeg libtiff libgit2 \
+                                                             \
+                 gsl cfitsio wcslib
+@end example
 @end table
 
 
@@ -5148,7 +5280,7 @@ $ ./bootstrap --copy --gnulib-srcdir=$DEVDIR/gnulib
 @cindex GNU build system
 Since Gnulib and Autoconf archives are now available in your local
 directories, you don't need an internet connection every time you decide to
-remove all untracked files and redo the bootstrap (see box below). You can
+remove all un-tracked files and redo the bootstrap (see box below). You can
 also use the same command on any other project that uses Gnulib. All the
 necessary GNU C library functions, Autoconf macros and Automake inputs are
 now available along with the book figures. The standard GNU build system
@@ -5205,33 +5337,54 @@ lists}).  Subscribing to them can help you decide when to synchronize with
 the official repository.
 
 To pull all the most recent work in Gnuastro, run the following command
-from the top Gnuastro directory:
+from the top Gnuastro directory. If you don't already have a built system,
+ignore @command{make distclean}. The separate steps are described in detail
+afterwards.
 
 @example
-$ git pull && autoconf -f
+$ make distclean && git pull && autoreconf -f
+@end example
+
+@noindent
+You can also run the commands separately:
+
+@example
+$ make distclean
+$ git pull
+$ autoreconf -f
 @end example
 
 @cindex GNU Autoconf
 @cindex Mailing list: info-gnuastro
 @cindex @code{info-gnuastro@@gnu.org}
-GNU Autoconf is part of the GNU build system and will update the
-@file{./configure} script based on the hand-written configurations (in
-@file{configure.ac}, which is version controlled in Gnuastro). The pulled
-changes might contain changes in the build system configurations. However,
-The most important reason for running this command is to generate a version
-number for your Gnuastro snapshot. This generated version number will
-include the commit information if you are building Gnuastro from any point
-in Gnuastro's history (see @ref{Version numbering}). Since the version
-number is included in nearly all outputs of the programs, this can help
-you later exactly reproduce an old result by checking out the exact point
-in Gnuastro's history that produced those results. Therefore, be sure to
-run `@file{autoconf -f}' after every synchronization. You can also run them
-separately:
+If Gnuastro was already built in this directory, you don't want some
+outputs from the previous version being mixed with outputs from the newly
+pulled work. Therefore, the first step is to clean/delete all the built
+files with @command{make distclean}. Fortunately the GNU build system
+allows the separation of source and built files (in separate
+directories). You can use it to avoid the cleaning step. Gnuastro already
+has script for this, see @ref{Configure and build in RAM}.
 
-@example
-$ git pull
-$ autoconf -f
-@end example
+After the pull, we must re-configure Gnuastro with @command{autoreconf -f}
+(part of GNU Autoconf). It will update the @file{./configure} script and
+all the @file{Makefile.in}@footnote{In the GNU build system,
+@command{./configure} will use the @file{Makefile.in} files to create the
+necessary @file{Makefile} files that are later read by @command{make} to
+build the package.} files based on the hand-written configurations (in
+@file{configure.ac} and the @file{Makefile.am} files). After running
+@command{autoreconf -f}, a warning about @code{TEXI2DVI} might show up, you
+can ignore that.
+
+The most important reason for re-building Gnuastro's build system is to
+generate/update the version number for your updated Gnuastro snapshot. This
+generated version number will include the commit information (see
+@ref{Version numbering}). The version number is included in nearly all
+outputs of Gnuastro's programs, therefore it is vital for reproducing an
+old result.
+
+As a summary, be sure to run `@command{autoreconf -f}' after every change
+in the Git history. This includes synchronization with the main server or
+even a commit you have made yourself.
 
 If you would like to see what has changed since you last synchronized your
 local clone, you can take the following steps instead of the simple command
@@ -5242,7 +5395,7 @@ $ git checkout master             # Confirm if you are on master.
 $ git fetch origin                # Fetch all new commits from server.
 $ git log master..origin/master   # See all the new commit messages.
 $ git merge origin/master         # Update your master branch.
-$ autoconf -f                     # Update ./configure.
+$ autoreconf -f                   # Update the build system.
 @end example
 
 @noindent
@@ -5251,18 +5404,17 @@ By default @command{git log} prints the most recent commit first, add the
 exactly what has been changed in the source code along with the commit
 message, add a @option{-p} option to the @command{git log}.
 
-If you intend make changes in the code, have a look at @ref{Developing} to
+If you want to make changes in the code, have a look at @ref{Developing} to
 get started easily. Be sure to commit your changes in a separate branch
 (keep your @code{master} branch to follow the official repository) and
-re-run @command{autoconf -f} after the commit. If you intend to send your
-changes to us (see @ref{Contributing to Gnuastro}) for the benefit of the
-whole community. If you send your work to us, you can safely use your
-commit since it will be ultimately recorded in Gnuastro's official
-history. If not, please upload your separate branch to a public hosting
-service (for example GitLab, see @ref{Forking tutorial}) and link to it in
-your report, or run @command{make distcheck} and upload the output
-@file{gnuastro-X.X.X.XXXX.tar.gz} to a publicly accessible webpage so your
-results can be considered scientific (reproducible).
+re-run @command{autoreconf -f} after the commit. If you intend to send your
+work to us, you can safely use your commit since it will be ultimately
+recorded in Gnuastro's official history. If not, please upload your
+separate branch to a public hosting service, for example
+@url{https://gitlab.com, GitLab}, and link to it in your
+report/paper. Alternatively, run @command{make distcheck} and upload the
+output @file{gnuastro-X.X.X.XXXX.tar.gz} to a publicly accessible webpage
+so your results can be considered scientific (reproducible) later.
 
 
 
@@ -5302,6 +5454,7 @@ encounter in the installation steps and ways you can solve them.
 
 @menu
 * Configuring::                 Configure Gnuastro
+* Separate build and source directories::  Keeping derivate/build files separate.
 * Tests::                       Run tests to see if it is working.
 * A4 print book::               Customize the print book.
 * Known issues::                Issues you might encounter.
@@ -5311,7 +5464,7 @@ encounter in the installation steps and ways you can solve them.
 
 
 
-@node Configuring, Tests, Build and install, Build and install
+@node Configuring, Separate build and source directories, Build and install, Build and install
 @subsection Configuring
 
 @pindex ./configure
@@ -5816,7 +5969,7 @@ In case all of this does not convince you and you still want to type
 short names, some suggestions are given below. You should have in mind
 though, that if you are writing a shell script that you might want to
 pass on to others, it is best to use the standard name because other
-users might not have adopted the same customizations. The long names
+users might not have adopted the same customization. The long names
 also serve as a form of documentation in such scripts. A similar
 reasoning can be given for option names in scripts: it is good
 practice to always use the long formats of the options in shell
@@ -5879,11 +6032,11 @@ $ ./configure --program-transform-name='s/ast/ /'
 
 @cindex File I/O
 @cindex Input/Output, file
-The configure and build process involves the creation, reading, and
-modification of a large number of files (input/output, or I/O). Therefore
-file I/O issues can directly affect the work of developers who need to
-configure and build Gnuastro numerous times. Some of these issues are
-listed below:
+Gnuastro's configure and build process (the GNU build system) involves the
+creation, reading, and modification of a large number of files
+(input/output, or I/O). Therefore file I/O issues can directly affect the
+work of developers who need to configure and build Gnuastro numerous
+times. Some of these issues are listed below:
 
 @itemize
 @cindex HDD
@@ -5919,44 +6072,171 @@ considered as an automatic cleanup.
 @cindex Linux kernel
 @cindex GNU C library
 @cindex GNU build system
-The modern GNU C library (and thus the Linux kernel) define the
-@file{/dev/shm} directory for this purpose (POSIX shared memory). So using
-GNU Build System's ability to build in a separate directory (not
-necessarily in the source directory), we can configure and build the
-programs in @file{/dev/shm} to benefit from the RAM. To simplify the
-process, Gnuastro comes with a @file{tmpfs-config-make} script. This script
-will create a directory in the shared memory, and put a symbolic link to it
-(called @file{build}) in the top source directory (the backup/sync software
-therefore only needs to ignore this single link/file). The script will then
-internally change to that directory and configure and build (@command{make
--kjN}, where @command{N} is the number of threads for a parallel build)
-Gnuastro in there. To benefit from this script, simply run the following
-command instead of @command{./configure} and @command{make}:
+The modern GNU C library (and thus the Linux kernel) defines the
+@file{/dev/shm} directory for this purpose in the RAM (POSIX shared
+memory). To build in it, you can use the GNU build system's ability to
+build in a separate directory (not necessarily in the source directory) as
+shown below. Just set @file{SRCDIR} as the address of Gnuastro's top source
+directory (for example, the unpacked tarball).
 
 @example
-$ ./tmpfs-config-make
+$ mkdir /dev/shm/tmp-gnuastro-build
+$ cd /dev/shm/tmp-gnuastro-build
+$ SRCDIR/configure --srcdir=SRCDIR
+$ make
 @end example
 
-@cindex GNU Emacs
-After this script is finished, you can `@command{cd build}' and run other
-Make commands (for example, `@command{make check}', `@command{make
-install}', or `@command{make pdf}') from there. In Emacs, the command to be
-run with the @command{M-x compile} command (by default: @command{make -k})
-can be changed to `@command{cd build; make -kjN}', or `@command{make -C
-build -kjN}' (@command{N} is the number of threads; an integer
-@mymath{\geq1}). For subsequent builds (during development) the
-@command{M-x recompile} command will also do all the building in the RAM
-while you modify the clean, and backed-up source files and make
-minimal/efficient use of your non-volatile HDD or SSD.
+Gnuastro comes with a script to simplify this process of configuring and
+building in a different directory (a ``clean'' build), for more see
+@ref{Separate build and source directories}.
 
-This script can be used in any software which is configured and built using
-the GNU Build System. Just copy it in the top source directory of that
-software and run it from there. The default number of threads and location
-of the shared memory (@file{/dev/shm}) are currently hard-coded within the
-script. If you need to change them, please open the script with a text
-editor and set their values manually.
+@node Separate build and source directories, Tests, Configuring, Build and install
+@subsection Separate build and source directories
 
-@node Tests, A4 print book, Configuring, Build and install
+The simple steps of @ref{Quick start} will mix the source and built files.
+This can cause inconvenience for developers or enthusiasts following the
+the most recent work (see @ref{Version controlled source}). The current
+section is mainly focused on this later group of Gnuastro users. If you
+just install Gnuastro on major releases (following @ref{Announcements}),
+you can safely ignore this section.
+
+@cindex GNU build system
+When it is necessary to keep the source (which is under version control),
+but not the derivative (built) files (after checking or installing), the
+best solution is to keep the source and the built files in separate
+directories. One application of this is already discussed in @ref{Configure
+and build in RAM}.
+
+To facilitate this process of configuring and building in a separate
+directory, Gnuastro comes with the @file{developer-build} script. It is
+available in the top source directory and is @emph{not} installed. It will
+make a directory under a given top-level directory (given to
+@option{--top-build-dir}) and build Gnuastro in there directory. It thus
+keeps the source completely separated from the built files. For easy access
+to the built files, it also makes a symbolic link to the built directory in
+the top source files called @file{build}.
+
+When run without any options, default values will be used for its
+configuration. As with Gnuastro's programs, you can inspect the default
+values with @option{-P} (or @option{--printparams}, the output just looks a
+little different here). The default top-level build directory is
+@file{/dev/shm}: the shared memory directory in RAM on GNU/Linux systems as
+described in @ref{Configure and build in RAM}.
+
+@cindex Debug
+Besides these, it also has some features to facilitate the job of
+developers or bleeding edge users like the @option{--debug} option to do a
+fast build, with debug information, no optimization, and no shared
+libraries. Here is the full list of options you can feed to this script to
+configure its operations.
+
+@cartouche
+@noindent
+@strong{Not all Gnuastro's common program behavior usable here:}
+@file{developer-build} is just a non-installed script with a very limited
+scope as described above. It thus doesn't have all the common option
+behaviors or configuration files for example.
+@end cartouche
+
+@cartouche
+@noindent
+@strong{White space between option and value:} @file{developer-build}
+doesn't accept an @key{=} sign between the options and their values. It
+also needs atleast one character between the option and its
+value. Therefore @option{-n 4} or @option{--numthreads 4} are acceptable,
+while @option{-n4}, @option{-n=4}, or @option{--numthreads=4}
+aren't. Finally multiple short option names cannot be merged: for example
+you can say @option{-c -n 4}, but unlike Gnuastro's programs, @option{-cn4}
+is not acceptable.
+@end cartouche
+
+@cartouche
+@noindent
+@strong{Reusable for other packages:} This script can be used in any
+software which is configured and built using the GNU Build System. Just
+copy it in the top source directory of that software and run it from there.
+@end cartouche
+
+@table @option
+
+@item -b STR
+@itemx --top-build-dir STR
+The top build directory to make a directory for the build. If this option
+isn't called, the top build directory is @file{/dev/shm} (only available in
+GNU/Linux operating systems, see @ref{Configure and build in RAM}).
+
+@item -V
+@itemx --version
+Print the version string of Gnuastro that will be used in the build. This
+string will be appended to the directory name containing the built files.
+
+@item -c
+@itemx --clean
+@cindex GNU Autoreconf
+Delete the contents of the build directory (clean it) before starting the
+configuration and building of this run.
+
+This is useful when you have recently pulled changes from the main Git
+repository, or commited a change your self and ran @command{autoreconf -f},
+see @ref{Synchronizing}. After running GNU Autoconf, the version will be
+updated and you need to do a clean build.
+
+@item -d
+@itemx --debug
+@cindex Valgrind
+@cindex GNU Debugger (GDB)
+Build with debugging flags (for example to use in GNU Debugger, also known
+as GDB, or Valgrind), disable optimization and also the building of shared
+libraries. Similar to running the configure script of below
+
+@example
+$ ./configure CFLAGS="-g -O0" --disable-shared
+@end example
+
+Besides all the debugging advantages of building with this option, it will
+also be significantly speed up the build (at the cost of slower built
+programs). So when you are testing something small or working on the build
+system itself, it will be much faster to test your work with this option.
+
+@item -j INT
+@itemx --jobs INT
+The maximum number of threads/jobs for Make to build at any moment. As the
+name suggests (Make has an identical option), the number given to this
+option is directly passed on to any call of Make with its @option{-j}
+option.
+
+@item -C
+@itemx --check
+After finishing the build, also run @command{make check}. By default,
+@command{make check} isn't run because the developer usually has their own
+checks to work on (for example defined in @file{tests/during-dev.sh}).
+
+@item -i
+@itemx --install
+After finishing the build, also run @command{make install}.
+
+@item -u STR
+@item --tar-pdf-upload STR
+After finishing the build, run @command{make dist-lzip pdf} to build an
+Lzip tarball and pdf manual. Then rename the tarball suffix to
+@file{-latest.tar.lz} (instead of the version number). Then use secure copy
+(@command{scp}, part of the SSH tools) to copy the tarball and PDF to the
+server and directory specified in the value to this option. For example
+@command{--tar-pdf-upload my-server:dir}, will copy the two files to the
+@file{dir} directory of @code{my-server}.
+
+@item -h
+@itemx --help
+@itemx -P
+@itemx --printparams
+Print a description of this script along with all the options and their
+current values.
+
+@end table
+
+
+
+@node Tests, A4 print book, Separate build and source directories, Build and install
 @subsection Tests
 
 @cindex @command{make check}
@@ -5973,7 +6253,7 @@ $ make check
 
 For every program some tests are designed to check some possible
 operations. Running the command above will run those tests and give
-you a final report. If everything is ok and you have built all the
+you a final report. If everything is OK and you have built all the
 programs, all the tests should pass. In case any of the tests fail,
 please have a look at @ref{Known issues} and if that still doesn't fix
 your problem, look that the @file{./tests/test-suite.log} file to see
@@ -6010,7 +6290,7 @@ size. If you would like to have the print version of this book on
 paper and you are living in a country which uses A4, then you can
 rebuild the book. The great thing about the GNU build system is that
 the book source code which is in Texinfo is also distributed with
-the program source code, enabling you to do such customizations
+the program source code, enabling you to do such customization
 (hacking).
 
 @cindex GNU Texinfo
@@ -6868,7 +7148,7 @@ system and the time they were reported.
 
 As an example, you can give your full command-line options and even the
 input and output file names and finally just add @option{-P} to check if
-all the parameters are finely set. If everything is ok, you can just run
+all the parameters are finely set. If everything is OK, you can just run
 the same command (easily retrieved from the shell history, with the top
 arrow key) and simply remove the last two characters that showed this
 option.
@@ -6984,7 +7264,7 @@ the different configuration files.
 
 Afterwards, if you run NoiseChisel as shown below (telling it to read this
 configuration file with the @file{--config} option). You can be sure that
-there will either be an error (for version mis-match) or it will produce
+there will either be an error (for version mismatch) or it will produce
 exactly the same result that you got before.
 
 @example
@@ -7459,15 +7739,14 @@ the targets (can be thousands of FITS images for example) simultaneously on
 8 threads, while fully respecting their dependencies (only building a
 file/target when its prerequisites are successfully built). Make is thus
 strongly recommended for managing scientific research where robustness,
-archivability, reproducibility and speed@footnote{Besides its
-multi-threaded capabilities, Make will only re-build those targets that
-depend on a change you have made, not the whole work. For example, if you
-have set the prerequisites properly, you can easily test the changing of a
-parameter on your paper's results without having to re-do everything (which
-is much faster). This allows you to be much more productive in easily
-checking various ideas/assumptions of the different stages of your research
-and thus produce a more robust result for your exciting science.} are very
-important.
+archiving, reproducibility and speed@footnote{Besides its multi-threaded
+capabilities, Make will only re-build those targets that depend on a change
+you have made, not the whole work. For example, if you have set the
+prerequisites properly, you can easily test the changing of a parameter on
+your paper's results without having to re-do everything (which is much
+faster). This allows you to be much more productive in easily checking
+various ideas/assumptions of the different stages of your research and thus
+produce a more robust result for your exciting science.} are important.
 
 @end table
 
@@ -8073,7 +8352,7 @@ statistics).
 @cindex Bias current
 @cindex Subaru Telescope
 @cindex Hyper Suprime-Cam
-@cindex Hubble Space Telescope
+@cindex Hubble Space Telescope (HST)
 For raw image processing, a single tessellation/grid is not sufficient. Raw
 images are the unprocessed outputs of the camera detectors. Modern
 detectors usually have multiple readout channels each with its own
@@ -8304,7 +8583,7 @@ facilities as long as the environment variable is in memory. You can
 see the full list of these formatting parameters in the ``Argp User
 Customization'' part of the GNU C library manual. If you are more
 comfortable to read the @option{--help} outputs of all GNU software in
-your customized format, you can add your customizations (similar to
+your customized format, you can add your customization (similar to
 the line above, without the @command{$} sign) to your @file{~/.bashrc}
 file. This is a standard option for all GNU software.
 
@@ -8652,16 +8931,18 @@ save them into another plain text or FITS table.
 @node Fits, ConvertType, Data containers, Data containers
 @section Fits
 
+@cindex Vatican library
 The ``Flexible Image Transport System'', or FITS, is by far the most common
 data container format in astronomy and in constant use since the
-1970s. Archivability (future usage, simplicity) has been one of the primary
+1970s. Archiving (future usage, simplicity) has been one of the primary
 design principles of this format. In the last few decades it has proved so
 useful and robust that the Vatican Library has also chosen FITS for its
 ``long-term digital preservation''
 project@footnote{@url{https://www.vaticanlibrary.va/home.php?pag=progettodigit}}.
 
+@cindex IAU, international astronomical union
 Although the full name of the standard invokes the idea that it is only for
-images, it also contains very complete and robust features for tables. It
+images, it also contains complete and robust features for tables. It
 started off in the 1970s and was formally published as a standard in 1981,
 it was adopted by the International Astronomical Union (IAU) in 1982 and an
 IAU working group to maintain its future was defined in 1988. The FITS 2.0
@@ -9207,7 +9488,7 @@ are: @file{.jpg}, @file{.JPG}, @file{.jpeg}, @file{.JPEG},
 @cindex TIFF format
 TIFF (or Tagged Image File Format) was originally designed as a common
 format for scanners in the early 90s and since then it has grown to become
-very general. In many aspects, the TIFF stanard is similar to the FITS
+very general. In many aspects, the TIFF standard is similar to the FITS
 image standard: it can allow data of many types (see @ref{Numeric data
 types}), and also allows multiple images to be stored in a single file
 (each image in the file is called a `directory' in the TIFF
@@ -9574,7 +9855,7 @@ Flux range:
 @table @option
 
 @item -c STR
-@itemx --chang=STR
+@itemx --change=STR
 @cindex Change converted pixel values
 (@option{=STR}) Change pixel values with the following format
 @option{"from1:to1, from2:to2,..."}. This option is very useful in
@@ -9868,7 +10149,7 @@ to significantly reduce the run time.
 @cindex Image mosaic
 @cindex COSMOS survey
 @cindex Imaging surveys
-@cindex Hubble Space Telescope
+@cindex Hubble Space Telescope (HST)
 Astronomical surveys are usually extremely large. So large in fact, that
 the whole survey will not fit into a reasonably sized file. Because of
 this, surveys usually cut the final image into separate tiles and store
@@ -9922,7 +10203,7 @@ the crop can be in Image (pixel) or World Coordinate System (WCS)
 standards. All coordinates are read as floating point numbers (not
 integers, except for the @option{--section} option, see below). By setting
 the @emph{mode} in Crop, you define the standard that the given coordinates
-must be interpretted. Here, the different ways to specify the crop region
+must be interpreted. Here, the different ways to specify the crop region
 are discussed within each standard. For the full list options, please see
 @ref{Invoking astcrop}.
 
@@ -9979,7 +10260,7 @@ for its syntax.
 
 @item WCS coordinates
 In WCS mode (@option{--mode=wcs}), the coordinates and widths are
-interpretted using the World Coordinate System (WCS, that must accompany
+interpreted using the World Coordinate System (WCS, that must accompany
 the dataset), not pixel coordinates. In WCS mode, Crop accepts multiple
 datasets as input. When the cropped region (defined by its center or
 vertices) overlaps with multiple of the input images/tiles, the overlapping
@@ -10231,6 +10512,7 @@ Input image parameters:
 @table @option
 
 @item --hstartwcs=INT
+@cindex CANDELS survey
 Specify the first keyword card (line number) to start finding the input
 image world coordinate system information. Distortions were only recently
 included in WCSLIB (from version 5). Therefore until now, different
@@ -10480,7 +10762,7 @@ image or WCS. The value must either be @option{img} or @option{wcs}, see
 @node Crop output,  , Crop options, Invoking astcrop
 @subsubsection Crop output
 
-The string given to @option{--output} option will be interpretted depending
+The string given to @option{--output} option will be interpreted depending
 on how many crops were requested, see @ref{Crop modes}:
 
 @itemize
@@ -10822,7 +11104,7 @@ its pixels (is flat), see @ref{Convolution process}.
 
 Note that blank pixels will also be affected by this operator: if there are
 any non-blank elements in the box surrounding a blank pixel, in the
-flitered image, it will have the mean of the non-blank elements, therefore
+filtered image, it will have the mean of the non-blank elements, therefore
 it won't be blank any more. If blank elements are important for your
 analysis, you can use the @code{isblank} with the @code{where} operator to
 set them back to blank after filtering.
@@ -10845,7 +11127,7 @@ by the @mymath{\sigma}-clipping algorithm) have been removed, see
 @ref{Sigma clipping} for more on the basics of this algorithm. As described
 there, two extra input parameters are necessary for
 @mymath{\sigma}-clipping: the multiple of @mymath{\sigma} and the
-termination critera. @code{filter-sigclip-mean} therefore needs to pop two
+termination criteria. @code{filter-sigclip-mean} therefore needs to pop two
 other operands from the stack after the dimensions of the box.
 
 For example the line below uses the same box size as the example of
@@ -11621,6 +11903,8 @@ function.
 
 @c Since these links are long, we had to write them like this so they don't
 @c jump out of the text width.
+@cindex Qutb al-Din al-Shirazi
+@cindex al-Shirazi, Qutb al-Din
 @image{gnuastro-figures/epicycles, 15.2cm, , Middle ages epicycles along
 with two demonstrations of breaking a generic function using epicycles.}
 @caption{Epicycles and the Fourier series. Left: A demonstration of
@@ -11653,6 +11937,7 @@ for a more complete historical review.}. @ref{epicycle}(Left) shows an
 example depiction of the epicycles of Mercury in the late 13th
 century.
 
+@cindex Aristarchus of Samos
 Of course we now know that if they had abdicated the Earth from its
 throne in the center of the heavens and allowed the Sun to take its
 place, everything would become much simpler and true. But there wasn't
@@ -11694,6 +11979,14 @@ take the vertical coordinate of the point and use it to find the value
 of the function at that point in time. @ref{iandtime} shows this
 relation with the axes marked.
 
+@cindex Roger Cotes
+@cindex Cotes, Roger
+@cindex Caspar Wessel
+@cindex Wassel, Caspar
+@cindex Leonhard Euler
+@cindex Euler, Leonhard
+@cindex Abraham de Moivre
+@cindex de Moivre, Abraham
 Leonhard Euler@footnote{Other forms of this equation were known before
 Euler. For example in 1707 A.D. (the year of Euler's birth) Abraham de
 Moivre (1667 -- 1754 A.D.)  showed that
@@ -12817,8 +13110,8 @@ those distortions prior to the analysis.
 @cindex WFC3
 @cindex Wide Field Camera 3
 @cindex Charge-coupled device
-@cindex Hubble Space Telescope
 @cindex Advanced camera for surveys
+@cindex Hubble Space Telescope (HST)
 @item
 @strong{Detector not on focal plane:} In some cases (like the Hubble
 Space Telescope ACS and WFC3 cameras), the CCD might be tilted
@@ -12897,8 +13190,8 @@ combinations of these transformations can be displayed with one
 @dispmath{\left[\matrix{a&b\cr c&d}\right]}
 
 @cindex Wide Field Camera 3
-@cindex Hubble Space Telescope
 @cindex Advanced Camera for Surveys
+@cindex Hubble Space Telescope (HST)
 The transformations above can cover a lot of the needs of most
 coordinate transformations. However they are limited to mapping the
 point @mymath{[\matrix{0&0}]} to @mymath{[\matrix{0&0}]}. Therefore
@@ -15585,7 +15878,7 @@ many illustrative figures) is Section 3.2 of
 @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.
 
 @cindex river
-@cindex Watershed
+@cindex Watershed algorithm
 As a summary, Segment first finds true @emph{clump}s over the
 detections. Clumps are associated with local maxima/minima@footnote{By
 default the maximum is used as the first clump pixel, to define clumps
@@ -16515,8 +16808,9 @@ multiple of @mymath{\sigma_m} as (see @ref{Flux Brightness and magnitude}):
 
 @dispmath{SB_{\rm Pixel}=-2.5\times\log_{10}{(n\sigma_m)}+z}
 
-@cindex XDF
-@cindex CANDELS
+@cindex XDF survey
+@cindex CANDELS survey
+@cindex eXtreme Deep Field (XDF) survey
 As an example, the XDF survey covers part of the sky that the Hubble space
 telescope has observed the most (for 85 orbits) and is consequently very
 small (@mymath{\sim4} arcmin@mymath{^2}). On the other hand, the CANDELS
@@ -19463,12 +19757,17 @@ discussed.  MakeNoise options and argument are then discussed in
 
 @cindex Noise
 @cindex Image noise
-Deep astronomical images, like those used in extragalactic studies
-seriously suffer from noise in the data. Generally speaking, the
-sources of noise in an astronomical image are photon counting noise
-and Instrumental noise which are discussed in detail below. We finish
-with a short introduction on how random numbers are generated and how
-you can determine the random number generator and seed value.
+Deep astronomical images, like those used in extragalactic studies,
+seriously suffer from noise in the data. Generally speaking, the sources of
+noise in an astronomical image are photon counting noise and Instrumental
+noise which are discussed in @ref{Photon counting noise} and
+@ref{Instrumental noise}. This review finishes with @ref{Generating random
+numbers} which is a short introduction on how random numbers are generated.
+We will see that while software random number generators are not perfect,
+they allow us to obtain a reproducible series of random numbers through
+setting the random number generator function and seed value. Therefore in
+this section, we'll also discuss how you can set these two parameters in
+Gnuastro's programs (including MakeNoise).
 
 @menu
 * Photon counting noise::       Poisson noise
@@ -19481,92 +19780,95 @@ you can determine the random number generator and seed value.
 @subsubsection Photon counting noise
 
 @cindex Counting error
+@cindex de Moivre, Abraham
+@cindex Poisson distribution
 @cindex Photon counting noise
-Thanks to the very accurate electronics used in today's detectors,
-this type of noise is the main cause of concern for extra galactic
-studies.  It can generally be associate with the counting error that
-is known to have a Poisson distribution. The Poisson distribution is
-about counting. But counting is a discrete operation with only
-positive values, for example we can't count @mymath{3.2} or
-@mymath{-2} of anything. We only count @mymath{0}, @mymath{1},
-@mymath{2}, @mymath{3} and so on. Therefore the Poisson distribution
-is also a discrete distribution, only applying to whole positive
-integers.
+@cindex Poisson, Sim@'eon Denis
+With the very accurate electronics used in today's detectors, photon
+counting noise@footnote{In practice, we are actually counting the electrons
+that are produced by each photon, not the actual photons.} is the most
+significant source of uncertainty in most datasets. To understand this
+noise (error in counting), we need to take a closer look at how a
+distribution produced by counting can be modeled as a parametric function.
+
+Counting is an inherently discrete operation, which can only produce
+positive (including zero) interger outputs. For example we can't count
+@mymath{3.2} or @mymath{-2} of anything. We only count @mymath{0},
+@mymath{1}, @mymath{2}, @mymath{3} and so on. The distribution of values,
+as a result of counting efforts is formally known as the
+@url{https://en.wikipedia.org/wiki/Poisson_distribution, Poisson
+distribution}. It is associated to Sim@'eon Denis Poisson, because he
+discussed it while working on the number of wrongful convictions in court
+cases in his 1837 book@footnote{[From Wikipedia] Poisson's result was also
+derived in a previous study by Abraham de Moivre in 1711. Therefore some
+people suggest it should rightly be called the de Moivre distribution.}.
 
 @cindex Probability density function
-Let's assume the mean value of counting something is known. In this case,
-we are counting the number of electrons that are produced by photons in a
-detector (for example CCD) pixel. Let's call this mean
-@mymath{\lambda}. Furthermore, let's take @mymath{k} to represent the
-result of one particular counting attempt. The probability density function
-of @mymath{k} can be written as:
+Let's take @mymath{\lambda} to represent the expected mean count of
+something. Furthermore, let's take @mymath{k} to represent the result of
+one particular counting attempt. The probability density function of
+getting @mymath{k} counts (in each attempt, given the expected/mean count
+of @mymath{\lambda}) can be written as:
 
 @cindex Poisson distribution
 @dispmath{f(k)={\lambda^k \over k!} e^{-\lambda},\quad k\in @{0, 1, 2,
 3, \dots @}}
 
 @cindex Skewed Poisson distribution
-Because the Poisson distribution is only applicable to positive values,
+Because the Poisson distribution is only applicable to positive values
+(note the factorial operator, which only applies to non-negative integers),
 naturally it is very skewed when @mymath{\lambda} is near zero. One
-qualitative way to explain it is that there simply aren't enough integers
-smaller than @mymath{\lambda}, than integers that are larger than
-it. Therefore to accommodate all possibilities, it has to be skewed when
-@mymath{\lambda} is small.
+qualitative way to understand this behavior is that there simply aren't
+enough integers smaller than @mymath{\lambda}, than integers that are
+larger than it. Therefore to accommodate all possibilities/counts, it has
+to be strongly skewed when @mymath{\lambda} is small.
 
 @cindex Compare Poisson and Gaussian
-But as @mymath{\lambda} becomes larger and larger, the distribution
-becomes more and more symmetric. One very useful property of the
-Poisson distribution is that the mean value is also its variance.
-When @mymath{\lambda} is very large, say @mymath{\lambda>1000}, then
-the normal (Gaussian) distribution, see @ref{PSF}, is an excellent
-approximation of the Poisson distribution with mean
-@mymath{\mu=\lambda} and standard deviation
-@mymath{\sigma=\sqrt{\lambda}}.
-
-We see that the variance or dispersion of the distribution depends on
-the mean value, and when it is large it can be approximated with a
-Gaussian that only has one free parameter (@mymath{\mu=\lambda} and
-@mymath{\sigma=\sqrt{\lambda}}) instead of two that it originally has.
+As @mymath{\lambda} becomes larger, the distribution becomes more and more
+symmetric. A very useful property of the Poisson distribution is that the
+mean value is also its variance.  When @mymath{\lambda} is very large, say
+@mymath{\lambda>1000}, then the
+@url{https://en.wikipedia.org/wiki/Normal_distribution, Normal (Gaussian)
+distribution}, is an excellent approximation of the Poisson distribution
+with mean @mymath{\mu=\lambda} and standard deviation
+@mymath{\sigma=\sqrt{\lambda}}. In other words, a Poisson distribution
+(with a sufficiently large @mymath{\lambda}) is simply a Gaussian that only
+has one free parameter (@mymath{\mu=\lambda} and
+@mymath{\sigma=\sqrt{\lambda}}), instead of the two parameters (independent
+@mymath{\mu} and @mymath{\sigma}) that it originally has.
 
 @cindex Sky value
 @cindex Background flux
 @cindex Undetected objects
-The astronomical objects after convolution with the PSF of the
-instrument, lie above a certain background flux. This background flux
-is defined to be the average flux of a region in the image that has
-absolutely no objects. The physical origin of this background value is
-the brightness of the atmosphere or possible stray light within the
-imaging instrument. It is thus an ideal definition, because in
-practice, what lies deep in the noise far lower than the detection
-limit is never known@footnote{See the section on sky in Akhlaghi M.,
-Ichikawa. T. 2015. Astrophysical Journal Supplement Series.}. However,
-in a real image, a relatively large number of very faint objects can
-been fully buried in the noise. These undetected objects will bias the
-background measurement to slightly larger values. The sky value is
-therefore defined to be the average of the undetected regions in the
-image, so in an ideal case where all the objects have been detected,
-the sky value and background value are the same.
-
-@cindex Background flux gradients
-@cindex Gradients in background flux
-@cindex Variation of background flux
-As longer wavelengths are used, the background value becomes more
-significant and also varies over a wide image field. Such variations
-are not currently implemented in MakeProfiles, but will be in the
-future. In a mock image, we have the luxury of setting the background
-value.
+In real situations, the photons/flux from our targets are added to a
+certain background flux (observationally, the @emph{Sky} value). The Sky
+value is defined to be the average flux of a region in the dataset with no
+targets. Its physical origin can be the brightness of the atmosphere (for
+ground-based instruments), possible stray light within the imaging
+instrument, the average flux of undetected targets, or etc. The Sky value
+is thus an ideal definition, because in real datasets, what lies deep in
+the noise (far lower than the detection limit) is never known@footnote{In a
+real image, a relatively large number of very faint objects can been fully
+buried in the noise and never detected. These undetected objects will bias
+the background measurement to slightly larger values. Our best
+approximation is thus to simply assume they are uniform, and consider their
+average effect. See Figure 1 (a.1 and a.2) and Section 2.2 in
+@url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.}. To
+account for all of these, the sky value is defined to be the average
+count/value of the undetected regions in the image. In a mock
+image/dataset, we have the luxury of setting the background (Sky) value.
 
 @cindex Simulating noise
 @cindex Noise simulation
-In each pixel of the canvas of pixels, the flux is the sum of
-contributions from various sources after convolution. Let's name this
-flux of the convolved sum of possibly overlapping objects,
+In each element of the dataset (pixel in an image), the flux is the sum of
+contributions from various sources (after convolution by the PSF, see
+@ref{PSF}). Let's name the convolved sum of possibly overlapping objects,
 @mymath{I_{nn}}.  @mymath{nn} representing `no noise'. For now, let's
-assume the background is constant and represented by @mymath{B}. In
-practice the background values are larger than @mymath{\sim1,000}
-counts. Then the flux after adding noise is a random value taken from
-a Gaussian distribution with the following mean (@mymath{\mu}) and
-standard deviation (@mymath{\sigma}):
+assume the background (@mymath{B}) is constant and sufficiently high for
+the Poisson distribution to be approximated by a Gaussian. Then the flux
+after adding noise is a random value taken from a Gaussian distribution
+with the following mean (@mymath{\mu}) and standard deviation
+(@mymath{\sigma}):
 
 @dispmath{\mu=B+I_{nn}, \quad \sigma=\sqrt{B+I_{nn}}}
 
@@ -19581,16 +19883,18 @@ then internally converted to the flux scale for further processing.
 @cindex Readout noise
 @cindex Instrumental noise
 @cindex Noise, instrumental
-While taking images with a camera, a dark current is fed to the
-pixels, the variation of the value of this dark current over the
-pixels, also adds to the final image noise. Another source of noise is
-the readout noise that is produced by the electronics in the CCD that
+While taking images with a camera, a dark current is fed to the pixels, the
+variation of the value of this dark current over the pixels, also adds to
+the final image noise. Another source of noise is the readout noise that is
+produced by the electronics in the detector. Specifically, the parts that
 attempt to digitize the voltage produced by the photo-electrons in the
-analog to digital converter. In deep extra-galactic studies these
-sources of noise are not as significant as the noise of the background
-sky. Let @mymath{C} represent the combined standard deviation of all
-these sources of noise. If only this source of noise is present, the
-noised pixel value would be a random value chosen from a Gaussian
+analog to digital converter. With the current generation of instruments,
+this source of noise is not as significant as the noise due to the
+background Sky discussed in @ref{Photon counting noise}.
+
+Let @mymath{C} represent the combined standard deviation of all these
+instrumental sources of noise. When only this source of noise is present,
+the noised pixel value would be a random value chosen from a Gaussian
 distribution with
 
 @dispmath{\mu=I_{nn}, \quad \sigma=\sqrt{C^2+I_{nn}}}
@@ -19601,15 +19905,16 @@ distribution with
 This type of noise is independent of the signal in the dataset, it is only
 determined by the instrument. So the flux scale (and not magnitude scale)
 is most commonly used for this type of noise. In practice, this value is
-usually reported in ADUs not flux or electron counts. The gain value of the
-device can be used to convert between these two, see @ref{Flux Brightness
-and magnitude}.
+usually reported in analog-to-digital units or ADUs, not flux or electron
+counts. The gain value of the device can be used to convert between these
+two, see @ref{Flux Brightness and magnitude}.
 
 @node Final noised pixel value, Generating random numbers, Instrumental noise, Noise basics
 @subsubsection Final noised pixel value
-Depending on the values you specify for @mymath{B} and @mymath{C} from
-the above, the final noised value for each pixel is a random value
-chosen from a Gaussian distribution with
+Based on the discussions in @ref{Photon counting noise} and
+@ref{Instrumental noise}, depending on the values you specify for
+@mymath{B} and @mymath{C} from the above, the final noised value for each
+pixel is a random value chosen from a Gaussian distribution with
 
 @dispmath{\mu=B+I_{nn}, \quad \sigma=\sqrt{C^2+B+I_{nn}}}
 
@@ -21258,17 +21563,20 @@ The names of all constructs in @file{headername.h} are prefixed with
 @code{gal_} prefix stands for @emph{G}NU @emph{A}stronomy @emph{L}ibrary.
 
 Gnuastro library functions are compiled into a single file which can be
-linked on the command-line with the @option{-lgnuastro} option, (see
+linked on the command-line with the @option{-lgnuastro} option. See
 @ref{Linking} and @ref{Summary and example on libraries} for an
-introduction on linking and example). Gnuastro library is a high-level
-library which depends on lower level libraries for some operations (see
-@ref{Dependencies}). Therefore if at least one of Gnuastro's functions in
-your program use functions from the dependencies, you will also need to
-link those dependencies after linking with Gnuastro. The outside libraries
-that need to be linked for such functions are mentioned following the
-function name. See @ref{BuildProgram} for a small Gnuastro program that will
-take care of the libraries to link against and lets you focus on your
-exciting science.
+introduction on linking and some fully working examples of the
+libraries.
+
+Gnuastro's library is a high-level library which depends on lower level
+libraries for some operations (see @ref{Dependencies}). Therefore if at
+least one of Gnuastro's functions in your program use functions from the
+dependencies, you will also need to link those dependencies after linking
+with Gnuastro. See @ref{BuildProgram} for a convenient way to deal with the
+dependencies. BuildProgram will take care of the libraries to link with
+your program (which uses the Gnuastro library), and can even run the built
+program afterwards. Therefore it allows you to conveniently focus on your
+exciting science/research when using Gnuastro's libraries.
 
 
 
@@ -23687,7 +23995,7 @@ $ asttable --info table.fits
 @end example
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, size_t @code{minmapsize}, size_t @code{colmatch})
+@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, size_t @code{minmapsize}, size_t @code{*colmatch})
 Read the specified columns in a text file (named @code{filename}) into a
 linked list of data structures. If the file is FITS, then @code{hdu} will
 also be used, otherwise, @code{hdu} is ignored.
@@ -26915,7 +27223,7 @@ inside @code{indexs}. If @code{withrivers} is non-zero, then pixels that
 are immediately touching more than one positive value will be given a
 @code{GAL_LABEL_RIVER} label.
 
-@cindex GNU C Library
+@cindex GNU C library
 Note that the @code{indexs->array} is not re-allocated to its new size at
 the end@footnote{Note that according to the GNU C Library, even a
 @code{realloc} to a smaller size can also cause a re-write of the whole
@@ -26985,34 +27293,35 @@ is much faster.
 @node Interpolation, Git wrappers, Convolution functions, Gnuastro library
 @subsection Interpolation (@file{interpolate.h})
 
-During data analysis, it often happens that parts of the data cannot be
-given a value. For example your image was saturated due to a very bright
-start and you have to mask that star's footprint. One other common
-situation in Gnuastro is when we do processing on tiles (for example to
-estimate the Sky value and its Standard deviation, see @ref{Sky
-value}). Some tiles must not be used for the estimation of the Sky value,
-for example because they cover a large galaxy. So we need to fill them in
-with blank values. But ultimately, we need a Sky value for every
-pixel. This job (assigning a value to blank element(s) based on their
-nearby neighbors with a value) is known as interpolation.
+@cindex Sky line
+@cindex Interpolation
+During data analysis, it happens that parts of the data cannot be given a
+value, but one is necessary for the higher-level analysis. For example a
+very bright star saturated part of your image and you need to fill in the
+saturated pixels with some values. Another common usage case are masked
+sky-lines in 1D specra that similarly need to be assigned a value for
+higher-level analysis. In other situations, you might want a value in an
+arbitrary point: between the elements/pixels where you have data. The
+functions described in this section are for such operations.
 
-There are many ways to do interpolation, but (mainly due to lack of time),
-currently Gnuastro only contains the (median of) nearest-neighbor
-method. The power of this method of interpolation is its non-parametric
-nature. The produced values are also always within the range of the known
-values and strong outliers do not get created. We will hopefully implement
-other methods too (wrappers around the GNU Scientific Library's very
-complete set of functions), but currently the developers are too busy. So
-if you do have the chance to help, your contribution would be very welcome
-and appreciated.
+@cindex GNU Scientific Library
+The parametric interpolations discussed below are wrappers around the
+interpolation functions of the GNU Scientific Library (or GSL, see @ref{GNU
+Scientific Library}). To identify the different GSL interpolation types,
+Gnuastro's @file{gnuastro/interpolate.h} header file contains macros that
+are discussed below. The GSL wrappers provided here are not yet complete
+because we are too busy. If you need them, please consider helping us in
+adding them to Gnuastro's library. Your would be very welcome and
+appreciated.
 
 @deftypefun {gal_data_t *} gal_interpolate_close_neighbors (gal_data_t @code{*input}, struct gal_tile_two_layer_params @code{*tl}, size_t @code{numneighbors}, size_t @code{numthreads}, int @code{onlyblank}, int @code{aslinkedlist})
 Interpolate the values in the image using the median value of their
-@code{numneighbors} closest neighbors. If @code{onlyblank} is non-zero,
-then only blank elements will be interpolated and pixels that already have
-a value will be left untouched. This function is multi-threaded and will
-run on @code{numthreads} threads (see @code{gal_threads_number} in
-@ref{Multithreaded programming}).
+@code{numneighbors} closest neighbors. This function is non-parametric and
+thus agnostic to the input's number of dimension. If @code{onlyblank} is
+non-zero, then only blank elements will be interpolated and pixels that
+already have a value will be left untouched. This function is
+multi-threaded and will run on @code{numthreads} threads (see
+@code{gal_threads_number} in @ref{Multithreaded programming}).
 
 @code{tl} is Gnuastro's two later tessellation structure used to define
 tiles over an image and is fully described in @ref{Tile grid}. When
@@ -27022,11 +27331,177 @@ properties, for example to not interpolate over channel borders.
 
 If several datasets have the same set of blank values, you don't need to
 call this function multiple times. When @code{aslinkedlist} is non-zero,
-then @code{input} will be seen as a @ref{List of gal_data_t} and for all
-the same neighbor position checking will be done for all the datasets in
-the list. Of course, the values for each dataset will be different, so a
-different value will be written in the each dataset, but the neighbor
-checking that is the most CPU intensive part will only be done once.
+then @code{input} will be seen as a @ref{List of gal_data_t}. In this case,
+the same neighbors will be used for all the datasets in the list. Of
+course, the values for each dataset will be different, so a different value
+will be written in the each dataset, but the neighbor checking that is the
+most CPU intensive part will only be done once.
+
+This is a non-parametric and robust function for interpolation. The
+interpolated values are also always within the range of the non-blank
+values and strong outliers do not get created. However, this type of
+interpolation must be used with care when there are gradients. This is
+because it is non-parametric and if there aren't enough neighbors,
+step-like features can be created.
+@end deftypefun
+
+@deffn Macro GAL_INTERPOLATE_1D_INVALID
+This is just a place holder to manage errors.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_LINEAR
+[From GSL:] Linear interpolation. This interpolation method does not
+require any additional memory.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_POLYNOMIAL
+@cindex Polynomial interpolation
+@cindex Interpolation: Polynomial
+[From GSL:] Polynomial interpolation. This method should only be used for
+interpolating small numbers of points because polynomial interpolation
+introduces large oscillations, even for well-behaved datasets. The number
+of terms in the interpolating polynomial is equal to the number of points.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_CSPLINE
+@cindex Interpolation: Spline
+@cindex Cubic spline interpolation
+@cindex Spline (cubic) interpolation
+[From GSL:] Cubic spline with natural boundary conditions. The resulting
+curve is piecewise cubic on each interval, with matching first and second
+derivatives at the supplied data-points.  The second derivative is chosen
+to be zero at the first point and last point.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_CSPLINE_PERIODIC
+[From GSL:] Cubic spline with periodic boundary conditions.  The resulting
+curve is piecewise cubic on each interval, with matching first and second
+derivatives at the supplied data-points.  The derivatives at the first and
+last points are also matched.  Note that the last point in the data must
+have the same y-value as the first point, otherwise the resulting periodic
+interpolation will have a discontinuity at the boundary.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_AKIMA
+@cindex Interpolation: Akima spline
+@cindex Akima spline interpolation
+@cindex Spline (Akima) interpolation
+[From GSL:] Non-rounded Akima spline with natural boundary conditions. This
+method uses the non-rounded corner algorithm of Wodicka.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_AKIMA_PERIODIC
+[From GSL:] Non-rounded Akima spline with periodic boundary
+conditions. This method uses the non-rounded corner algorithm of Wodicka.
+@end deffn
+@deffn Macro GAL_INTERPOLATE_1D_STEFFEN
+@cindex Steffen interpolation
+@cindex Interpolation: Steffen
+@cindex Interpolation: monotonic
+[From GSL:] Steffen’s
+method@footnote{@url{http://adsabs.harvard.edu/abs/1990A%26A...239..443S}}
+guarantees the monotonicity of the interpolating function between the given
+data points. Therefore, minima and maxima can only occur exactly at the
+data points, and there can never be spurious oscillations between data
+points. The interpolated function is piecewise cubic in each interval. The
+resulting curve and its first derivative are guaranteed to be continuous,
+but the second derivative may be discontinuous.
+@end deffn
+
+@deftypefun {gsl_spline *} gal_interpolate_1d_make_gsl_spline (gal_data_t @code{*X}, gal_data_t @code{*Y}, int @code{type_1d})
+@cindex GNU Scientific Library
+Allocate and initialize a GNU Scientific Library (GSL) 1D @code{gsl_spline}
+structure using the non-blank elements of @code{Y}. @code{type_1d}
+identifies the interpolation scheme and must be one of the
+@code{GAL_INTERPOLATE_1D_*} macros defined above.
+
+If @code{X==NULL}, the X-axis is assumed to be integers starting from zero
+(the index of each element in @code{Y}). Otherwise, the values in @code{X}
+will be used to initialize the interpolation structure. Note that when
+given, @code{X} must @emph{not} contain any blank elements and it must be
+sorted (in increasing order).
+
+Each interpolation scheme needs a minimum number of elements to
+successfully operate. If the number of non-blank values in @code{Y} is less
+than this number, this function will return a @code{NULL} pointer.
+
+To be as generic and modular as possible, GSL's tools are low-level.
+Therefore before doing the interpolation, many steps are necessary (like
+preparing your dataset, then allocating and initializing
+@code{gsl_spline}). The metadata available in Gnuastro's @ref{Generic data
+container} make it easy to hide all those preparations within this
+function.
+
+Once @code{gsl_spline} has been initialized by this function, the
+interpolation can be evaluated for any X value within the non-blank range
+of the input using @code{gsl_spline_eval} or @code{gsl_spline_eval_e}.
+
+For example in the small program below, we read the first two columns of
+the table in @file{table.txt} and feed them to this function to later estimate
+the values in the second column for three selected points. You can use
+@ref{BuildProgram} to compile and run this function, see @ref{Library demo
+programs} for more.
+
+@cindex first-in-first-out
+@example
+#include <stdio.h>
+#include <stdlib.h>
+#include <gnuastro/table.h>
+#include <gnuastro/interpolate.h>
+
+int
+main(void)
+@{
+  size_t i;
+  gal_data_t *X, *Y;
+  gsl_spline *spline;
+  gsl_interp_accel *acc;
+  gal_list_str_t *cols=NULL;
+
+  /* Change the values based on your input table. */
+  double points[]=@{1.8, 2.5, 10.3@};
+
+  /* Read the first two columns from `tab.txt'.
+     IMPORTANT: the list is first-in-first-out, so the output
+     column order is the inverse of the input order. */
+  gal_list_str_add(&cols, "1", 0);
+  gal_list_str_add(&cols, "2", 0);
+  Y=gal_table_read("table.txt", NULL, cols, GAL_TABLE_SEARCH_NAME,
+                   0, -1, NULL);
+  X=Y->next;
+
+  /* Allocate the GSL interpolation accelerator and make the
+     `gsl_spline' structure. */
+  acc=gsl_interp_accel_alloc();
+  spline=gal_interpolate_1d_make_gsl_spline(X, Y,
+                                 GAL_INTERPOLATE_1D_STEFFEN);
+
+  /* Calculate the respective value for all the given points,
+     if `spline' could be allocated. */
+  if(spline)
+    for(i=0; i<(sizeof points)/(sizeof *points); ++i)
+      printf("%f: %f\n", points[i],
+             gsl_spline_eval(spline, points[i], acc));
+
+  /* Clean up and return. */
+  gal_data_free(X);
+  gal_data_free(Y);
+  gsl_spline_free(spline);
+  gsl_interp_accel_free(acc);
+  gal_list_str_free(cols, 0);
+  return EXIT_SUCCESS;
+@}
+@end example
+@end deftypefun
+
+@deftypefun void gal_interpolate_1d_blank (gal_data_t @code{*in}, int @code{type_1d})
+Fill the blank elements of @code{in} using the rest of the elements and the
+given interpolation. The interpolation scheme can be set through
+@code{type_1d}, which accepts any of the @code{GAL_INTERPOLATE_1D_*} macros
+above. The interpolation is internally done in 64-bit floating point type
+(@code{double}). However the evaluated/interpolated values (originally
+blank) will be written (in @code{in}) with its original numeric datatype,
+using C's standard type conversion.
+
+By definition, interpolation is only defined ``between'' valid
+points. Therefore, if any number of elements on the start or end of the 1D
+array are blank, those elements will not be interpolated and will remain
+blank. To see if any blank (non-interpolated) elements remain, you can use
+@code{gal_blank_present} on @code{in} after this function is finished.
 @end deftypefun
 
 
@@ -28475,8 +28950,8 @@ source}). To facilitate the building and testing of your work during
 development, Gnuastro comes with two useful scripts:
 
 @table @file
-@cindex @file{tmpfs-config-make}
-@item tmpfs-config-make
+@cindex @file{developer-build}
+@item developer-build
 This is more fully described in @ref{Configure and build in RAM}. During
 development, you will usually run this command only once (at the start of
 your work).
@@ -28512,8 +28987,8 @@ $ ./configure --disable-shared CFLAGS="-g -O0"
 @end example
 
 @noindent
-In @file{tmpfs-config-make} you can ask for this behavior by setting
-@code{debug_noshared} to @code{1}.
+In @file{developer-build} you can ask for this behavior through the
+@option{--debug} option, see @ref{Separate build and source directories}.
 
 In order to understand the building process, you can go through the
 Autoconf, Automake and Libtool manuals, like all GNU manuals they provide
@@ -28552,15 +29027,15 @@ executable.
 
 @cindex Build tree
 @cindex Source tree
-@cindex @file{tmpfs-config-make}
+@cindex @file{developer-build}
 The most important thing to have in mind about all the test scripts is that
 they are run from inside the @file{tests/} directory in the ``build
 tree''. Which can be different from the directory they are stored in (known
-as the ``source tree'')@footnote{The @file{tmpfs-config-make} script also
+as the ``source tree'')@footnote{The @file{developer-build} script also
 uses this feature to keep the source and build directories separate (see
-@ref{Configure and build in RAM}).}. This distinction is made by GNU
-Autoconf and Automake (which configure, build and install Gnuastro) so that
-you can install the program even if you don't have write access to the
+@ref{Separate build and source directories}).}. This distinction is made by
+GNU Autoconf and Automake (which configure, build and install Gnuastro) so
+that you can install the program even if you don't have write access to the
 directory keeping the source files. See the ``Parallel build trees (a.k.a
 VPATH builds)'' in the Automake manual for a nice explanation.
 
@@ -29633,8 +30108,7 @@ $ ./pgdemoXX
 @appendix GNU Gen. Pub. License v3
 
 @cindex GPL
-@cindex GNU GPL
-@cindex GNU General public license
+@cindex GNU General Public License (GPL)
 @include gpl-3.0.texi
 
 

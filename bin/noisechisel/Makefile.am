@@ -19,16 +19,17 @@
 ## along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
-## Pre-processer flags (for Gnulib's headers). Recall that the compiled
-## Gnulib library was statically linked to (copied in) Gnuastro's library.
-AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib
+## Necessary pre-processer and linker flags.
+AM_LDFLAGS = -L\$(top_builddir)/lib
+AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib -I\$(top_srcdir)/lib
 
 
 
 ## Program definition (name, linking, sources and headers)
 bin_PROGRAMS = astnoisechisel
 
-astnoisechisel_LDADD = -lgnuastro
+## Reason for linking with `libgnu' described in `bin/TEMPLATE/Makefile.am'.
+astnoisechisel_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la -lgnuastro
 
 astnoisechisel_SOURCES = main.c ui.c detection.c noisechisel.c sky.c     \
   threshold.c

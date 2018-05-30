@@ -19,16 +19,17 @@
 ## along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
-## Pre-processer flags (for Gnulib's headers). Recall that the compiled
-## Gnulib library was statically linked to (copied in) Gnuastro's library.
-AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib
+## Necessary pre-processer and linker flags.
+AM_LDFLAGS = -L\$(top_builddir)/lib
+AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib -I\$(top_srcdir)/lib
 
 
 
 ## Program definition (name, linking, sources and headers)
 bin_PROGRAMS = astconvertt
 
-astconvertt_LDADD = -lgnuastro
+## Reason for linking with `libgnu' described in `bin/TEMPLATE/Makefile.am'.
+astconvertt_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la -lgnuastro
 
 astconvertt_SOURCES = main.c ui.c convertt.c
 

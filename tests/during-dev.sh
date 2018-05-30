@@ -16,7 +16,7 @@
 #      build directories) so if you need to make lots of temporary test
 #      files, there they won't get mixed up with non-output files.
 #
-# Combined with the `tmpfs-config-make', this script can be used to greatly
+# Combined with the `developer-build', this script can be used to greatly
 # simplify the development process. After running that script once, for
 # subsequent builds during your development, you can run this script from
 # the top source directory (by running `./tests/during-dev.sh', or giving
@@ -65,7 +65,7 @@
 # Set the basic test directories. If you are building over the source
 # directory, then set `builddir' to `./'. If you want the outputs to be in
 # the top source directory, set it to `./'. Since 'build' is the assumed
-# symbolic link in `tmpfs-config-make', it is also assumed in the version
+# symbolic link in `developer-build', it is also assumed in the version
 # controlled version of this script. Note, if your directory names have
 # space characters in them, quote the full value
 numjobs=8
@@ -142,6 +142,7 @@ if make -j$numjobs -C "$builddir"; then
     # of the last line).
     if [ $utilname = buildprog ]; then
         extraopts="--la=$builddir/lib/libgnuastro.la"
+        extraopts="$extraopts -I$srcdir/lib -L$builddir/lib"
         topconfdir="$builddir"
     else
         topconfdir="$srcdir"
