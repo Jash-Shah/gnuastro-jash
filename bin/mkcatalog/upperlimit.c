@@ -367,10 +367,10 @@ upperlimit_write_check(struct mkcatalogparams *p, gal_list_sizet_t *check_x,
                        gal_list_f32_t *check_s)
 {
   float *sarr;
-  gal_data_t *x, *y, *z, *s;
   char *tmp=NULL, *tmp2=NULL;
   gal_list_str_t *comments=NULL;
   size_t *xarr, *yarr, *zarr=NULL, tnum, ttnum, num;
+  gal_data_t *x=NULL, *y=NULL, *z=NULL, *s=NULL; /* To avoid warnings. */
 
 
   /* Convert the lists to an array. */
