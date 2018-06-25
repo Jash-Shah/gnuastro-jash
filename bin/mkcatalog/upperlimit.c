@@ -405,11 +405,16 @@ upperlimit_write_check(struct mkcatalogparams *p, gal_list_sizet_t *check_x,
                    "Sum of pixel values over random footprint.");
 
 
-  /* Convert the unsigned 64-bit values to 32-bit because the FITS table
-     format doesn't recognize 64-bit integers.*/
-  x=gal_data_copy_to_new_type_free(x, GAL_TYPE_UINT32);
-  y=gal_data_copy_to_new_type_free(y, GAL_TYPE_UINT32);
-  if(check_z) z=gal_data_copy_to_new_type_free(y, GAL_TYPE_UINT32);
+  /* If `size_t' isn't 32-bit on this system, then convert the unsigned
+     64-bit values to 32-bit because the FITS table format doesn't
+     recognize 64-bit integers.*/
+  if( GAL_TYPE_SIZE_T != GAL_TYPE_UINT32 )
+    {
+      x=gal_data_copy_to_new_type_free(   x, GAL_TYPE_UINT32);
+      y=gal_data_copy_to_new_type_free(   y, GAL_TYPE_UINT32);
+      if(check_z)
+        z=gal_data_copy_to_new_type_free( z, GAL_TYPE_UINT32);
+    }
 
 
   /* Write exactly what object/clump this table is for. */
@@ -684,7 +689,8 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
          parsed. */
       if(continueparse) uparr[ counter++ ] = sum;
 
-      /* If a check is necessary, write in the values. */
+      /* If a check is necessary, write in the values (in FITS
+         coordinates). */
       if(writecheck)
         {
           switch(ndim)
