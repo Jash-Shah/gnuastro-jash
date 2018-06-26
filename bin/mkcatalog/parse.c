@@ -114,8 +114,10 @@ parse_objects(struct mkcatalog_passparams *pp)
   size_t ndim=p->objects->ndim, *dsize=p->objects->dsize;
 
   double *oi=pp->oi;
-  size_t d, increment=0, num_increment=1;
+  gal_data_t *xybin=NULL;
+  uint8_t *xybinarr=NULL, *u, *uf;
   float st, sval, *V=NULL, *SK=NULL, *ST=NULL;
+  size_t d, pind=0, increment=0, num_increment=1;
   int32_t *O, *OO, *C=NULL, *objects=p->objects->array;
   float *std=p->std?p->std->array:NULL, *sky=p->sky?p->sky->array:NULL;
 
@@ -151,6 +153,17 @@ parse_objects(struct mkcatalog_passparams *pp)
                : NULL );
 
 
+  /* If an XY projection area is requested, we'll need to allocate an array
+     to keep the projected space.*/
+  if( oif[    OCOL_NUMALLXY ]
+      || oif[ OCOL_NUMXY    ] )
+    {
+      xybin=gal_data_alloc(NULL, GAL_TYPE_UINT8, 2, &pp->tile->dsize[1], NULL,
+                           1, p->cp.minmapsize, NULL, NULL, NULL);
+      xybinarr=xybin->array;
+    }
+
+
   /* Parse each contiguous patch of memory covered by this object. */
   while( pp->start_end_inc[0] + increment <= pp->start_end_inc[1] )
     {
@@ -176,7 +189,8 @@ parse_objects(struct mkcatalog_passparams *pp)
 
 
               /* Add to the area of this object. */
-              if(oif[ OCOL_NUMALL ]) oi[ OCOL_NUMALL ]++;
+              if(oif[ OCOL_NUMALL   ]) oi[ OCOL_NUMALL ]++;
+              if(oif[ OCOL_NUMALLXY ]) xybinarr[ pind ]=1;
 
 
               /* Geometric coordinate measurements. */
@@ -226,6 +240,7 @@ parse_objects(struct mkcatalog_passparams *pp)
                   /* General flux summations. */
                   if(oif[ OCOL_NUM    ]) oi[ OCOL_NUM     ]++;
                   if(oif[ OCOL_SUM    ]) oi[ OCOL_SUM     ] += *V;
+                  if(oif[ OCOL_NUMXY  ]) xybinarr[ pind ]=2;
 
                   /* Get the necessary clump information. */
                   if(p->clumps && *C>0)
@@ -297,6 +312,7 @@ parse_objects(struct mkcatalog_passparams *pp)
             }
 
           /* Increment the other pointers. */
+          if( xybin                ) ++pind;
           if( p->values            ) ++V;
           if( p->clumps            ) ++C;
           if( p->sky && pp->st_sky ) ++SK;
@@ -307,11 +323,39 @@ parse_objects(struct mkcatalog_passparams *pp)
       /* Increment to the next contiguous region of this tile. */
       increment += ( gal_tile_block_increment(p->objects, dsize,
                                               num_increment++, NULL) );
+
+      /* If a 2D projection is requested, see if we should initialize (set
+         to zero) the projection-index (`pind') not. */
+      if(xybin && (num_increment-1)%p->objects->dsize[1]==0 )
+        pind=0;
+    }
+
+  /* Write the projected area columns. */
+  if(xybin)
+    {
+      /* Any non-zero pixel must be set for NUMALLXY. */
+      uf=(u=xybin->array)+xybin->size;
+      do
+        if(*u)
+          {
+            if(oif[ OCOL_NUMALLXY ]          ) oi[ OCOL_NUMALLXY ]++;
+            if(oif[ OCOL_NUMXY    ] && *u==2 ) oi[ OCOL_NUMXY    ]++;
+          }
+      while(++u<uf);
+
+      /* For a check on the projected 2D areas.
+      if(xybin && pp->object==2)
+        {
+          gal_fits_img_write(xybin, "xybin.fits", NULL, NULL);
+          exit(0);
+        }
+      */
     }
 
   /* Clean up. */
-  if(c)  free(c);
-  if(sc) free(sc);
+  if(c)     free(c);
+  if(sc)    free(sc);
+  if(xybin) gal_data_free(xybin);
 }
 
 
@@ -326,11 +370,12 @@ parse_clumps(struct mkcatalog_passparams *pp)
   size_t ndim=p->objects->ndim, *dsize=p->objects->dsize;
 
   double *ci, *cir;
-  uint8_t *cif=p->ciflag;
+  gal_data_t *xybin=NULL;
   int32_t *O, *OO, *C=NULL, nlab;
+  uint8_t *u, *uf, *cif=p->ciflag;
   float st, sval, *V=NULL, *SK=NULL, *ST=NULL;
-  size_t i, ii, d, increment=0, num_increment=1;
   size_t nngb=gal_dimension_num_neighbors(ndim);
+  size_t i, ii, d, pind=0, increment=0, num_increment=1;
   int32_t *objects=p->objects->array, *clumps=p->clumps->array;
   float *std=p->std?p->std->array:NULL, *sky=p->sky?p->sky->array:NULL;
 
@@ -367,6 +412,18 @@ parse_clumps(struct mkcatalog_passparams *pp)
                      : NULL );
   size_t *dinc = ngblabs ? gal_dimension_increment(ndim, dsize) : NULL;
 
+  /* If an XY projection area is requested, we'll need to allocate an array
+     to keep the projected space.*/
+  if( cif[    CCOL_NUMALLXY ]
+      || cif[ CCOL_NUMXY    ] )
+    {
+      xybin=gal_data_array_calloc(pp->clumpsinobj);
+      for(i=0;i<pp->clumpsinobj;++i)
+        gal_data_initialize(&xybin[i], NULL, GAL_TYPE_UINT8, 2,
+                            &pp->tile->dsize[1], NULL, 1, p->cp.minmapsize,
+                            NULL, NULL, NULL);
+    }
+
 
   /* Parse each contiguous patch of memory covered by this object. */
   while( pp->start_end_inc[0] + increment <= pp->start_end_inc[1] )
@@ -394,7 +451,9 @@ parse_clumps(struct mkcatalog_passparams *pp)
                   ci=&pp->ci[ (*C-1) * CCOL_NUMCOLS ];
 
                   /* Add to the area of this object. */
-                  if(cif[ CCOL_NUMALL ]) ci[ CCOL_NUMALL ]++;
+                  if(cif[ CCOL_NUMALL   ]) ci[ CCOL_NUMALL ]++;
+                  if(cif[ CCOL_NUMALLXY ])
+                    ((uint8_t *)(xybin[*C-1].array))[ pind ] = 1;
 
                   /* Raw-position related measurements. */
                   if(c)
@@ -429,8 +488,10 @@ parse_clumps(struct mkcatalog_passparams *pp)
                   if( p->values && !( p->hasblank && isnan(*V) ) )
                     {
                       /* Fill in the necessary information. */
-                      if(cif[ CCOL_NUM ]) ci[ CCOL_NUM ]++;
-                      if(cif[ CCOL_SUM ]) ci[ CCOL_SUM ] += *V;
+                      if(cif[ CCOL_NUM   ]) ci[ CCOL_NUM ]++;
+                      if(cif[ CCOL_SUM   ]) ci[ CCOL_SUM ] += *V;
+                      if(cif[ CCOL_NUMXY ])
+                        ((uint8_t *)(xybin[*C-1].array))[ pind ] = 2;
                       if( *V > 0.0f )
                         {
                           if(cif[ CCOL_NUMWHT ]) ci[ CCOL_NUMWHT ]++;
@@ -543,6 +604,7 @@ parse_clumps(struct mkcatalog_passparams *pp)
 
           /* Increment the other pointers. */
           ++C;
+          if( xybin                ) ++pind;
           if( p->values            ) ++V;
           if( p->sky && pp->st_sky ) ++SK;
           if( p->std && pp->st_std ) ++ST;
@@ -552,13 +614,44 @@ parse_clumps(struct mkcatalog_passparams *pp)
       /* Increment to the next contiguous region of this tile. */
       increment += ( gal_tile_block_increment(p->objects, dsize,
                                               num_increment++, NULL) );
+
+      /* If a 2D projection is requested, see if we should initialize (set
+         to zero) the projection-index (`pind') not. */
+      if(xybin && (num_increment-1)%p->objects->dsize[1]==0 )
+        pind=0;
     }
+
+
+  /* Write the projected area columns. */
+  if(xybin)
+    for(i=0;i<pp->clumpsinobj;++i)
+      {
+        /* Pointer to make things easier. */
+        ci=&pp->ci[ i * CCOL_NUMCOLS ];
+
+        /* Any non-zero pixel must be set for NUMALLXY. */
+        uf=(u=xybin[i].array)+xybin[i].size;
+        do
+          if(*u)
+            {
+              if(cif[ CCOL_NUMALLXY ]          ) ci[ CCOL_NUMALLXY ]++;
+              if(cif[ CCOL_NUMXY    ] && *u==2 ) ci[ CCOL_NUMXY    ]++;
+            }
+        while(++u<uf);
+
+        /* For a check on the projected 2D areas. */
+        if(xybin && pp->object==2)
+          gal_fits_img_write(&xybin[i], "xybin.fits", NULL, NULL);
+
+      }
+
 
   /* Clean up. */
   if(c)       free(c);
   if(sc)      free(sc);
   if(dinc)    free(dinc);
   if(ngblabs) free(ngblabs);
+  if(xybin)   gal_data_array_free(xybin, pp->clumpsinobj, 1);
 }
 
 

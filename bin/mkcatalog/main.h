@@ -71,7 +71,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 enum objectcols
   {
     OCOL_NUMALL,         /* Number of all pixels with this label.     */
-    OCOL_NUM,            /* Number of pixels with a value.            */
+    OCOL_NUMALLXY,       /* Number of all pixels in first two dims.   */
+    OCOL_NUM,            /* Number of values used in this object.     */
+    OCOL_NUMXY,          /* Number of values in the first two dims.   */
     OCOL_SUM,            /* Sum of (value-sky) in object.             */
     OCOL_SUM_VAR,        /* Varience of sum (for brightness error).   */
     OCOL_MEDIAN,         /* Median of value in object.                */
@@ -113,7 +115,9 @@ enum objectcols
 enum clumpcols
   {
     CCOL_NUMALL,         /* Number of pixels in clump.                */
+    CCOL_NUMALLXY,       /* Number of pixels in first two dims.       */
     CCOL_NUM,            /* Number of values used in clump.           */
+    CCOL_NUMXY,          /* Number of values only in first two dims.  */
     CCOL_SUM,            /* River subtracted brightness.              */
     CCOL_SUM_VAR,        /* Variance of sum (for brightness error).   */
     CCOL_MEDIAN,         /* Median of values in clump.                */

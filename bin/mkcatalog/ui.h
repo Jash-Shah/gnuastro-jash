@@ -102,9 +102,11 @@ enum option_keys_enum
 
   UI_KEY_OBJID,                         /* Catalog columns. */
   UI_KEY_IDINHOSTOBJ,
+  UI_KEY_AREAXY,
   UI_KEY_CLUMPSAREA,
   UI_KEY_WEIGHTAREA,
   UI_KEY_GEOAREA,
+  UI_KEY_GEOAREAXY,
   UI_KEY_GEOX,
   UI_KEY_GEOY,
   UI_KEY_GEOZ,

@@ -18010,8 +18010,16 @@ input sky standard deviation image pixels that lie over this object.
 
 @item -a
 @itemx --area
-The raw area (number of pixels) in any clump or object independent of what
+The area (number of pixels) in any clump or object independent of what
 pixel it lies over (if it is NaN/blank or unused for example).
+
+@item --areaxy
+@cindex IFU: Integral Field Unit
+@cindex Integral Field Unit
+Similar to @option{--area}, when the clump or object is projected onto the
+first two dimensions. This is only available for 3-dimensional
+datasets. When working with Integral Field Unit (IFU) datasets, this
+projection onto the first two dimensions would be a narrow-band image.
 
 @item --clumpsarea
 [Objects] The total area of all the clumps in this object.
@@ -18025,6 +18033,12 @@ The area of all the pixels labeled with an object or clump. Note that
 unlike @option{--area}, pixel values are completely ignored in this
 column. For example, if a pixel value is blank, it won't be counted in
 @option{--area}, but will be counted here.
+
+@item --geoareaxy
+Similar to @option{--geoarea}, when the clump or object is projected onto
+the first two dimensions. This is only available for 3-dimensional
+datasets. When working with Integral Field Unit (IFU) datasets, this
+projection onto the first two dimensions would be a narrow-band image.
 
 @item -A
 @itemx --semimajor

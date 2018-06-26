@@ -272,6 +272,8 @@ columns_sanity_check(struct mkcatalogparams *p)
       for(colcode=p->columnids; colcode!=NULL; colcode=colcode->next)
         switch(colcode->v)
           {
+          case UI_KEY_AREAXY:
+          case UI_KEY_GEOAREAXY:
           case UI_KEY_Z:
           case UI_KEY_GEOZ:
           case UI_KEY_CLUMPSZ:
@@ -416,6 +418,19 @@ columns_define_alloc(struct mkcatalogparams *p)
           oiflag[ OCOL_NUM ] = ciflag[ CCOL_NUM ] = 1;
           break;
 
+        case UI_KEY_AREAXY:
+          name           = "AREAXY";
+          unit           = "counter";
+          ocomment       = "Projected valued pixels in first two dimensions.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_INT32;
+          ctype          = GAL_TYPE_INT32;
+          disp_fmt       = 0;
+          disp_width     = 6;
+          disp_precision = 0;
+          oiflag[ OCOL_NUMXY ] = ciflag[ CCOL_NUMXY ] = 1;
+          break;
+
         case UI_KEY_CLUMPSAREA:
           name           = "AREA_CLUMPS";
           unit           = "counter";
@@ -453,6 +468,19 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_width     = 6;
           disp_precision = 0;
           oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
+          break;
+
+        case UI_KEY_GEOAREAXY:
+          name           = "AREA_FULL_XY";
+          unit           = "counter";
+          ocomment       = "Project number in first two dimensions.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_INT32;
+          ctype          = GAL_TYPE_INT32;
+          disp_fmt       = 0;
+          disp_width     = 6;
+          disp_precision = 0;
+          oiflag[ OCOL_NUMALLXY ] = ciflag[ CCOL_NUMALLXY ] = 1;
           break;
 
         case UI_KEY_X:
@@ -1699,6 +1727,10 @@ columns_fill(struct mkcatalog_passparams *pp)
           ((int32_t *)colarr)[oind] = oi[OCOL_NUM];
           break;
 
+        case UI_KEY_AREAXY:
+          ((int32_t *)colarr)[oind] = oi[OCOL_NUMXY];
+          break;
+
         case UI_KEY_CLUMPSAREA:
           ((int32_t *)colarr)[oind] = oi[OCOL_C_NUM];
           break;
@@ -1709,6 +1741,10 @@ columns_fill(struct mkcatalog_passparams *pp)
 
         case UI_KEY_GEOAREA:
           ((int32_t *)colarr)[oind] = oi[OCOL_NUMALL];
+          break;
+
+        case UI_KEY_GEOAREAXY:
+          ((int32_t *)colarr)[oind] = oi[OCOL_NUMALLXY];
           break;
 
         case UI_KEY_X:
@@ -1966,12 +2002,20 @@ columns_fill(struct mkcatalog_passparams *pp)
             ((int32_t *)colarr)[cind]=ci[CCOL_NUM];
             break;
 
+          case UI_KEY_AREAXY:
+            ((int32_t *)colarr)[cind]=ci[CCOL_NUMXY];
+            break;
+
           case UI_KEY_WEIGHTAREA:
             ((int32_t *)colarr)[cind]=ci[CCOL_NUMWHT];
             break;
 
           case UI_KEY_GEOAREA:
             ((int32_t *)colarr)[cind]=ci[CCOL_NUMALL];
+            break;
+
+          case UI_KEY_GEOAREAXY:
+            ((int32_t *)colarr)[cind]=ci[CCOL_NUMALLXY];
             break;
 
           case UI_KEY_X:

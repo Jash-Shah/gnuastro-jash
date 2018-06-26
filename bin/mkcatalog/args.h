@@ -1131,6 +1131,20 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
+      "areaxy",
+      UI_KEY_AREAXY,
+      0,
+      0,
+      "Projected area in first two dimentions.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
       "clumpsarea",
       UI_KEY_CLUMPSAREA,
       0,
@@ -1164,6 +1178,20 @@ struct argp_option program_options[] =
       0,
       0,
       "Area labled region (irrespective of value).",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "geoareaxy",
+      UI_KEY_GEOAREAXY,
+      0,
+      0,
+      "Projected geoarea in first two dimensions.",
       UI_GROUP_COLUMNS_MORPHOLOGY,
       0,
       GAL_TYPE_INVALID,
