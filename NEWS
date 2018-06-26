@@ -12,6 +12,10 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 
 ** Changed features
 
+  MakeCatalog:
+    - `--checkuplim': new name for `--checkupperlimit'.
+    - `--brightnessnoriver': new name for `--noriverbrightness'.
+
   Library:
     - gal_txt_write: new `colinfoinstdout' argument.
     - gal_table_write: new `colinfoinstdout' argument.
@@ -21,6 +25,7 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #54057: Building failure due to not finding gsl_interp_steffen.
   bug #54063: Match tests in make check fail randomly.
   bug #54186: MakeCatalog's --checkupperlimit not keeping output's name.
+  bug #54188: MakeCatalog's Upperlimit not being sigma-clipped properly.
 
 
 
