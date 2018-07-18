@@ -577,11 +577,11 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
   uint8_t *M=NULL, *st_m=NULL;
   int continueparse, writecheck=0;
   struct gal_list_f32_t *check_s=NULL;
+  size_t d, counter=0, se_inc[2], nfailed=0;
   float *V, *st_v, *uparr=pp->up_vals->array;
-  size_t d, tcounter=0, counter=0, se_inc[2];
   size_t min[3], max[3], increment, num_increment;
   int32_t *O, *OO, *oO, *st_o, *st_oo, *st_oc, *oC=NULL;
-  size_t maxcount = p->upnum * MKCATALOG_UPPERLIMIT_STOP_MULTIP;
+  size_t maxfails = p->upnum * MKCATALOG_UPPERLIMIT_MAXFAILS_MULTIP;
   struct gal_list_sizet_t *check_x=NULL, *check_y=NULL, *check_z=NULL;
   size_t *rcoord=gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__,
                                       "rcoord");
@@ -620,7 +620,7 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
 
 
   /* Continue measuring randomly until we get the desired total number. */
-  while(tcounter<maxcount && counter<p->upnum)
+  while(nfailed<maxfails && counter<p->upnum)
     {
       /* Get the random coordinates. */
       for(d=0;d<ndim;++d)
@@ -687,9 +687,16 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
           else break;
         }
 
+
       /* Further processing is only necessary if this random tile was fully
-         parsed. */
-      if(continueparse) uparr[ counter++ ] = sum;
+         parsed. If it was, we must reset `nfailed' to zero again. */
+      if(continueparse)
+        {
+          nfailed=0;
+          uparr[ counter++ ] = sum;
+        }
+      else ++nfailed;
+
 
       /* If a check is necessary, write in the values (in FITS
          coordinates). */
@@ -715,9 +722,6 @@ upperlimit_one_tile(struct mkcatalog_passparams *pp, gal_data_t *tile,
             }
           gal_list_f32_add(&check_s, continueparse ? sum : NAN);
         }
-
-      /* Increment the total-counter. */
-      ++tcounter;
     }
 
   /* If a check is necessary, then write the values. */

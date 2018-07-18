@@ -1,16 +1,33 @@
 GNU Astronomy Utilities NEWS                          -*- outline -*-
 
-
 * Noteworthy changes in release X.X (library 5.0.0) (YYYY-MM-DD) [alpha]
 
 ** New features
 
+  Installation:
+    --enable-debug: enable debugging flags and disable optimization.
+    --enable-check-with-valgrind: Run `make check' tests within Valgrind.
+
+  Arithmetic:
+    - `collapse-sum': collapse/remove a dimension by summing over it.
+    - `collapse-mean': collapse/remove a dimension by averaging over it.
+    - `collapse-number': Number of elements included in the collapse.
+
   Table:
-   - `--colinfoinstdout': column information when writing to standard output.
+    --colinfoinstdout: column information when writing to standard output.
+
+  Library:
+    - gal_dimension_collapse_sum: collapse/remove a dimension by summing.
+    - gal_dimension_collapse_mean: collapse/remove a dimension by averaging.
+    - gal_dimension_collapse_number: collapse/remove a dimension by number.
+    - gal_wcs_remove_dimension: Remove a dimension in the given WCS structure.
 
 ** Removed features
 
 ** Changed features
+
+  Crop:
+    --checkcenter: the units of value depend on mode (image or WCS).
 
   MakeCatalog:
     - `--checkuplim': new name for `--checkupperlimit'.
@@ -26,6 +43,12 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #54063: Match tests in make check fail randomly.
   bug #54186: MakeCatalog's --checkupperlimit not keeping output's name.
   bug #54188: MakeCatalog's Upperlimit not being sigma-clipped properly.
+  bug #54284: Crop segrault when catalog contains no data.
+  bug #54285: make check fails if g++ not present.
+  bug #54286: BuildProgram's configuration file, not built by default.
+  bug #54297: No Match output when --notmatched called and no match.
+  bug #54298: Table not writing array when there are no rows.
+  bug #54312: Crash when CFITSIO doesn't have fits_is_reentrant function.
 
 
 

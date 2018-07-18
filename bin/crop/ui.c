@@ -307,7 +307,24 @@ ui_read_check_only_options(struct cropparams *p)
     }
 
 
-  /* Section is currentlyl only defined in Image mode. */
+  /* Checkcenter sanity check. */
+  if(p->incheckcenter)
+    {
+      /* We only want a single number. */
+      if(p->incheckcenter->size>1)
+        error(EXIT_FAILURE, 0, "%zu values given to `--checkcenter'. This "
+              "option only takes one value currently",
+              p->incheckcenter->size);
+
+      darray=p->incheckcenter->array;
+      if(*darray<0.0f)
+        error(EXIT_FAILURE, 0, "negative value (%f) given to "
+              "`--checkcenter'. This option only takes positive values",
+              *darray);
+    }
+
+
+  /* Section is currently only defined in Image mode. */
   if(p->section && p->mode!=IMGCROP_MODE_IMG)
     error(EXIT_FAILURE, 0, "The `--section' option is only available in "
           "image coordinate mode, currently it doesn't work with WCS mode. "
@@ -404,16 +421,33 @@ ui_check_options_and_arguments(struct cropparams *p)
   if(p->catname)
     {
       /* When multiple threads need to access a file, CFITSIO needs to be
-         configured with the `--enable-reentrant` option. */
+         configured with the `--enable-reentrant` option and we can only
+         know from the `fits_is_reentrant' function that came from CFITSIO
+         version 3.30. */
+#if GAL_CONFIG_HAVE_FITS_IS_REENTRANT == 1
       if(p->cp.numthreads>1 && fits_is_reentrant()==0)
-        error(EXIT_FAILURE, 0, "CFITSIO was not configured with the "
-              "`--enable-reentrant` option but you have asked to crop "
-              "on %zu threads.\n\nPlease configure, make and install CFITSIO "
-              "again with this flag. Alternatively, to avoid this error "
-              "you can set the number of threads to 1 by adding the "
-              "`--numthreads=1` or `-N1` options. Please run the following "
-              "command to learn more about configuring CFITSIO:\n\n"
-              "    $ info gnuastro CFITSIO", p->cp.numthreads);
+        {
+          fprintf(stderr, "WARNING: CFITSIO was not configured with the "
+                  "`--enable-reentrant' option but you have asked to crop "
+                  "on %zu threads. Therefore only one thread will be used.\n\n"
+                  "Please run the following command to learn more about "
+                  "configuring CFITSIO:\n\n"
+                  "    $ info gnuastro CFITSIO", p->cp.numthreads);
+          p->cp.numthreads=1;
+        }
+#else
+      if(p->cp.numthreads>1)
+        {
+          fprintf(stderr, "WARNING: the installed CFITSIO version doesn't "
+                  "have `fits_is_reentrant' function (it is older than "
+                  "version 3.30). But you have asked to crop on %zu threads."
+                  "Therefore only one thread will be used.\n\n"
+                  "To avoid this warning, you can set the number of threads "
+                  "to one with `-N1' or update your installation of CFITSIO.",
+                  p->cp.numthreads);
+          p->cp.numthreads=1;
+        }
+#endif
 
       /* Make sure the given output is a directory. */
       gal_checkset_check_dir_write_add_slash(&p->cp.output);
@@ -452,12 +486,11 @@ ui_check_options_and_arguments(struct cropparams *p)
    must be in actual number of pixels (an integer). But the user's values
    can be in WCS mode or even in image mode, they may be non-integers. */
 static void
-ui_set_iwidth(struct cropparams *p)
+ui_set_img_sizes(struct cropparams *p)
 {
   gal_data_t *newwidth;
-  double pwidth, *warray;
   size_t i, ndim=p->imgs->ndim;
-
+  double pwidth, pcheckcenter, *warray;
 
   /* Make sure a width value is actually given. */
   if(p->width==NULL)
@@ -492,19 +525,25 @@ ui_set_iwidth(struct cropparams *p)
     }
   else warray=p->width->array;
 
-  /* Fill in `p->iwidth' depending on the mode. */
-  for(i=0;i<ndim;++i)
+  /* WCS mode. */
+  if(p->mode==IMGCROP_MODE_WCS)
     {
-      /* Set iwidth. */
-      if(p->mode==IMGCROP_MODE_WCS)
+      /* Fill in the widths depending on the mode. */
+      for(i=0;i<ndim;++i)
         {
           /* Convert the width in units of the input's WCS into pixels. */
           pwidth = warray[i]/p->pixscale[i];
           if(pwidth<3 || pwidth>50000)
-            error(EXIT_FAILURE, 0, "%g (width along dimension %zu) "
-                  "translates to %.0f pixels. This is probably not what "
-                  "you wanted. Note that the resolution in this dimension "
-                  "is %g", warray[i], i+1, pwidth, p->pixscale[i]);
+            error(EXIT_FAILURE, 0, "value %g (requested width along "
+                  "dimension %zu) translates to %.0f pixels on this "
+                  "dataset. This is probably not what you wanted. Note "
+                  "that the dataset's resolution in this dimension is "
+                  "%g.\n\n"
+                  "You can do the conversion to the dataset's WCS units "
+                  "prior to calling Crop. Alternatively, you can specify "
+                  "all the coordinates/sizes in image (not WCS) units and "
+                  "use the `--mode=img' option", warray[i], i+1, pwidth,
+                  p->pixscale[i]);
 
           /* Write the single valued width in WCS and the image width for
              this dimension. */
@@ -515,11 +554,44 @@ ui_set_iwidth(struct cropparams *p)
               warray[i]    += p->pixscale[i];
             }
         }
-      else
+
+      /* Checkcenter: */
+      if(p->incheckcenter)
+        pcheckcenter=((double *)(p->incheckcenter->array))[0]/p->pixscale[0];
+    }
+  /* Image mode. */
+  else
+    {
+      /* The width (along each dimension). */
+      for(i=0;i<ndim;++i)
         {
           p->iwidth[i]=GAL_DIMENSION_FLT_TO_INT(warray[i]);
           if(p->iwidth[i]%2==0) p->iwidth[i] += 1;
         }
+
+      /* Checkcenter: */
+      if(p->incheckcenter)
+        {
+          /* Write the double value into the temporary variable */
+          pcheckcenter=((double *)(p->incheckcenter->array))[0];
+
+          /* In image-mode it has to be an integer. */
+          if( ceilf(pcheckcenter)!=pcheckcenter )
+            error(EXIT_FAILURE, 0, "%g is not an integer. When cropping in "
+                  "image-mode, the number of pixels to check in the "
+                  "center must be an integer", pcheckcenter);
+        }
+    }
+
+  /* Finalize the number of central pixels to check. */
+  if(p->incheckcenter)
+    {
+      /* Convert the floating point value to an integer. */
+      p->checkcenter=GAL_DIMENSION_FLT_TO_INT(pcheckcenter);
+
+      /* If `checkcenter' isn't zero, but is even, convert it to an odd
+         number (so the actual center can be checked). */
+      if(p->checkcenter && p->checkcenter%2==0) p->checkcenter += 1;
     }
 
   /* For a check:
@@ -601,6 +673,10 @@ ui_read_cols(struct cropparams *p)
   /* Read the desired columns from the file. */
   cols=gal_table_read(p->catname, p->cathdu, colstrs, p->cp.searchin,
                       p->cp.ignorecase, p->cp.minmapsize, NULL);
+  if(cols==NULL)
+    error(EXIT_FAILURE, 0, "%s: is empty! No usable information "
+          "(un-commented lines) could be read from this file",
+          gal_fits_name_save_as_string(p->catname, p->cathdu));
 
 
   /* Set the number of objects (rows in each column). */
@@ -691,7 +767,7 @@ ui_prepare_center(struct cropparams *p)
 
 
   /* Set the integer widths of the crop(s) when defined by center. */
-  ui_set_iwidth(p);
+  ui_set_img_sizes(p);
 
   /* For a catalog, we have a separate function, but for a single center
      value, put the center values into an array. This will essentially
@@ -961,6 +1037,12 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct cropparams *p)
   if(!p->cp.quiet)
     {
       printf(PROGRAM_NAME" started on %s", ctime(&p->rawtime));
+      if(p->cp.numthreads>1)
+        printf("  - Using %zu CPU thread%s\n", p->cp.numthreads,
+               p->cp.numthreads==1 ? "." : "s.");
+      if(p->checkcenter)
+        printf("  - Number of central pixels to check for blank: %zu\n",
+               p->checkcenter);
       if( asprintf(&msg, "Read metadata of %zu dataset%s.", p->numin,
                    p->numin>1 ? "s" : "")<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);

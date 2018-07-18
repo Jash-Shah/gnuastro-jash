@@ -87,9 +87,56 @@ AC_DEFINE([IN_GNUASTRO_BUILD], [1], [In building, not usage])
 
 
 
-# Add warnings and high optimization flags for all builds.
-CFLAGS="-Wall -O3 $CFLAGS"
-CXXFLAGS="-Wall -O3 $CXXFLAGS"
+# See if `make check' should be made with Valgrind. This should be done
+# before checking the compilation flags because it can re-write
+# `enable-debug').
+AC_ARG_ENABLE(check-with-valgrind,
+              [AS_HELP_STRING([--enable-check-with-valgrind],
+                              [Run `make check' programs within Valgrind])],
+              [AS_IF([test "x$enable_check_with_valgrind" != xno],
+                     [enable_check_with_valgrind=yes])],
+              [enable_check_with_valgrind=no])
+AS_IF([test "x$enable_check_with_valgrind" = "xyes"],
+      [
+        enable_debug=yes;
+        AC_CHECK_PROG(has_valgrind, valgrind, [yes], [no])
+        AS_IF([test "x$has_valgrind" = "xno"],
+              [AC_MSG_ERROR([Valgrind not found. Please install it or don't use `--enable-check-with-valgrind'])])
+      ])
+AM_CONDITIONAL([COND_CHECK_WITH_VALGRIND], [test "x$enable_check_with_valgrind" = "xyes"])
+
+
+
+
+
+# Set the compilation flags.
+AC_ARG_ENABLE(debug,
+              [AS_HELP_STRING([--enable-debug],
+                              [No optimization, build with debug flags.])],
+              [AS_IF([test "x$enable_debug" != xno], [enable_debug=yes])],
+              [enable_debug=no])
+AS_IF([test "x$enable_debug" = "xyes"],
+      [cflags_add="-g -O0"],
+      [cflags_add="-O3"])
+CFLAGS="-Wall $cflags_add $CFLAGS"
+CXXFLAGS="-Wall $cflags_add $CXXFLAGS"
+
+
+
+
+
+# See if the C++ compiler was present. `CXX' has already been set by
+# `AC_PROG_CXX' (above). According to the Autoconf manual: "if none of the
+# [AC_PROG_CXX] checks succeed, then as a last resort [it will] set `CXX'
+# to `g++'". Therefore, we can't rely on it to see if the compiler
+# executable is actually usable. Therefore tests that rely on it will
+# fail. Unfortunately some OSs (like Fedora), don't install `g++' with
+# `gcc', so it may not always be present. To fix this, here we are just
+# using `AC_CHECK_PROG' to see if the `CXX' executable is reachable in the
+# search path and if it isn't, we'll disable the C++ check during `make
+# check' with an Automake conditional.
+AC_CHECK_PROG(has_cxx, $CXX, "yes", "no")
+AM_CONDITIONAL([COND_HASCXX], [test "x$has_cxx" = "xyes"])
 
 
 
@@ -218,6 +265,7 @@ AC_CHECK_DECLS(gsl_interp_steffen,
                [ gsl_version_old=yes; anywarnings=yes ],
                [[#include <gsl/gsl_interp.h>]])
 
+
 # Since version 0.42, if `libcurl' is installed, CFITSIO will link with it
 # and thus it will be necessary to explicitly link with libcurl also. If it
 # doesn't exist on the system, then CFITSIO won't link with it and there is
@@ -229,9 +277,20 @@ AC_SEARCH_LIBS([ffopen], [cfitsio], [],
 AC_SEARCH_LIBS([wcspih], [wcs], [],
     [AC_MSG_ERROR([WCSLIB not found, cannot continue.])])
 
+
 # These are secondary tests for more fine-grained control in libraries that
 # have already been checked. We don't need to add them to the LIBS
 # variable, so we are using AC_CHECK_LIB for these tests.
+
+# If the CFITSIO library has the `fits_is_reentrant' function (it was added
+# since version 3.30 of April 2012).
+AC_CHECK_LIB([cfitsio], [fits_is_reentrant], [has_fits_is_reentrant=1],
+             [has_fits_is_reentrant=0], [-lm])
+AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_FITS_IS_REENTRANT],
+                   [$has_fits_is_reentrant],
+                   [CFITSIO has the fits_is_reentrant function])
+AC_SUBST(HAVE_FITS_IS_REENTRANT, [$has_fits_is_reentrant])
+
 
 # If the WCS library has the `wcslib_version' function.
 AC_CHECK_LIB([wcs], [wcslib_version], [has_wcslib_version=1],
@@ -239,6 +298,7 @@ AC_CHECK_LIB([wcs], [wcslib_version], [has_wcslib_version=1],
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_VERSION], [$has_wcslib_version],
                    [WCSLIB comes with wcslib_version])
 AC_SUBST(HAVE_WCSLIB_VERSION, [$has_wcslib_version])
+
 
 # If the pthreads library has `pthread_barrier_wait'.
 AC_CHECK_LIB([pthread], [pthread_barrier_wait], [has_pthread_barrier=1],
@@ -254,6 +314,7 @@ AC_SUBST(HAVE_PTHREAD_BARRIER, [$has_pthread_barrier])
 
 # Gnulib checks:
 gl_INIT
+
 
 
 

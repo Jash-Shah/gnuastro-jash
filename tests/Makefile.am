@@ -42,6 +42,9 @@
 ## .log file is created. The check if the input for a test exists or not
 ## should be checked in the test that depends on it, it can't be done here
 ## in the Makefile.
+if COND_CHECK_WITH_VALGRIND
+  MAYBE_CHECK_WITH_PROGRAM = "valgrind"
+endif
 if COND_HASGHOSTSCRIPT
   MAYBE_HASGHOSTSCRIPT = "yes"
 endif
@@ -50,6 +53,11 @@ if COND_HASLIBJPEG
 endif
 if COND_HASGNULIBTOOL
   MAYBE_HASGNULIBTOOL = "yes"
+endif
+if COND_HASCXX
+  MAYBE_CXX_PROGS    = versioncxx
+  MAYBE_CXX_TESTS    = lib/versioncxx.sh
+  versioncxx_SOURCES = lib/versioncxx.cpp
 endif
 if COND_ARITHMETIC
   MAYBE_ARITHMETIC_TESTS = arithmetic/snimage.sh arithmetic/onlynumbers.sh \
@@ -197,13 +205,14 @@ endif
 
 
 # Environment variables for the test scripts.
-AM_TESTS_ENVIRONMENT =                              \
-export mkdir_p="$(MKDIR_P)";                        \
-export topsrc=$(top_srcdir);                        \
-export topbuild=$(top_builddir);                    \
-export haslibjpeg=$(MAYBE_HASLIBJPEG);              \
-export hasgnulibtool=$(MAYBE_HASGNULIBTOOL);        \
-export hasghostscript=$(MAYBE_HASGHOSTSCRIPT);
+AM_TESTS_ENVIRONMENT =                                   \
+export mkdir_p="$(MKDIR_P)";                             \
+export topsrc=$(top_srcdir);                             \
+export topbuild=$(top_builddir);                         \
+export haslibjpeg=$(MAYBE_HASLIBJPEG);                   \
+export hasgnulibtool=$(MAYBE_HASGNULIBTOOL);             \
+export hasghostscript=$(MAYBE_HASGHOSTSCRIPT);           \
+export check_with_program=$(MAYBE_CHECK_WITH_PROGRAM);
 
 
 
@@ -228,9 +237,8 @@ AM_CPPFLAGS = -I\$(top_srcdir)/lib -I\$(top_builddir)/lib
 
 # Rest of library check settings.
 LDADD = -lgnuastro
-check_PROGRAMS = multithread versioncxx
+check_PROGRAMS = multithread $(MAYBE_CXX_PROGS)
 multithread_SOURCES = lib/multithread.c
-versioncxx_SOURCES  = lib/versioncxx.cpp
 lib/multithread.sh: mkprof/mosaic1.sh.log
 
 
@@ -239,7 +247,7 @@ lib/multithread.sh: mkprof/mosaic1.sh.log
 
 # Final Tests
 # ===========
-TESTS = prepconf.sh lib/multithread.sh lib/versioncxx.sh                   \
+TESTS = prepconf.sh lib/multithread.sh $(MAYBE_CXX_TESTS)                  \
   $(MAYBE_ARITHMETIC_TESTS) $(MAYBE_BUILDPROG_TESTS)                       \
   $(MAYBE_CONVERTT_TESTS) $(MAYBE_CONVOLVE_TESTS) $(MAYBE_COSMICCAL_TESTS) \
   $(MAYBE_CROP_TESTS) $(MAYBE_FITS_TESTS) $(MAYBE_MATCH_TESTS)             \
