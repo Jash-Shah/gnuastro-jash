@@ -414,6 +414,8 @@ parse_clumps(struct mkcatalog_passparams *pp)
                   || cif[ CCOL_MAXX ]
                   || cif[ CCOL_MINY ]
                   || cif[ CCOL_MAXY ]
+                  || cif[ CCOL_MINZ ]
+                  || cif[ CCOL_MAXZ ]
                   || sc
                   || tid==GAL_BLANK_SIZE_T )
                 ? gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__,
@@ -470,7 +472,8 @@ parse_clumps(struct mkcatalog_passparams *pp)
                   /* Add to the area of this object. */
                   if( cif[ CCOL_NUMALL ]
                       || cif[ CCOL_MINX ] || cif[ CCOL_MAXX ]
-                      || cif[ CCOL_MINY ] || cif[ CCOL_MAXY ] )
+                      || cif[ CCOL_MINY ] || cif[ CCOL_MAXY ]
+                      || cif[ CCOL_MINZ ] || cif[ CCOL_MAXZ ] )
                     ci[ CCOL_NUMALL ]++;
                   if(cif[ CCOL_NUMALLXY ])
                     ((uint8_t *)(xybin[*C-1].array))[ pind ] = 1;
@@ -482,10 +485,18 @@ parse_clumps(struct mkcatalog_passparams *pp)
                       gal_dimension_index_to_coord(O-objects, ndim, dsize, c);
 
                       /* Position extrema measurements. */
-                      if(cif[ CCOL_MINX ]) ci[CCOL_MINX]=CMIN(CCOL_MINX, 1);
-                      if(cif[ CCOL_MAXX ]) ci[CCOL_MAXX]=CMAX(CCOL_MAXX, 1);
-                      if(cif[ CCOL_MINY ]) ci[CCOL_MINY]=CMIN(CCOL_MINY, 0);
-                      if(cif[ CCOL_MAXY ]) ci[CCOL_MAXY]=CMAX(CCOL_MAXY, 0);
+                      if(cif[ CCOL_MINX ])
+                        ci[CCOL_MINX]=CMIN(CCOL_MINX, ndim-1);
+                      if(cif[ CCOL_MAXX ])
+                        ci[CCOL_MAXX]=CMAX(CCOL_MAXX, ndim-1);
+                      if(cif[ CCOL_MINY ])
+                        ci[CCOL_MINY]=CMIN(CCOL_MINY, ndim-2);
+                      if(cif[ CCOL_MAXY ])
+                        ci[CCOL_MAXY]=CMAX(CCOL_MAXY, ndim-2);
+                      if(cif[ CCOL_MINZ ])
+                        ci[CCOL_MINZ]=CMIN(CCOL_MINZ, ndim-3);
+                      if(cif[ CCOL_MAXZ ])
+                        ci[CCOL_MAXZ]=CMAX(CCOL_MAXZ, ndim-3);
 
                       /* If we need tile-ID, get the tile ID now. */
                       if(tid!=GAL_BLANK_SIZE_T)

@@ -275,6 +275,8 @@ columns_sanity_check(struct mkcatalogparams *p)
           case UI_KEY_AREAXY:
           case UI_KEY_GEOAREAXY:
           case UI_KEY_Z:
+          case UI_KEY_MINZ:
+          case UI_KEY_MAXZ:
           case UI_KEY_GEOZ:
           case UI_KEY_CLUMPSZ:
           case UI_KEY_CLUMPSGEOZ:
@@ -706,6 +708,32 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_width     = 10;
           disp_precision = 0;
           ciflag[ CCOL_MAXY ] = 1;
+          break;
+
+        case UI_KEY_MINZ:
+          name           = "MIN_Z";
+          unit           = "pixel";
+          ocomment       = "Minimum Z axis pixel position.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_UINT32;
+          ctype          = GAL_TYPE_UINT32;
+          disp_fmt       = 0;
+          disp_width     = 10;
+          disp_precision = 0;
+          ciflag[ CCOL_MINZ ] = 1;
+          break;
+
+        case UI_KEY_MAXZ:
+          name           = "MAX_Z";
+          unit           = "pixel";
+          ocomment       = "Maximum Z axis pixel position.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_UINT32;
+          ctype          = GAL_TYPE_UINT32;
+          disp_fmt       = 0;
+          disp_width     = 10;
+          disp_precision = 0;
+          ciflag[ CCOL_MAXZ ] = 1;
           break;
 
         case UI_KEY_W1:
@@ -1693,6 +1721,7 @@ columns_clump_brightness(double *ci)
 static uint32_t
 columns_xy_extrema(struct mkcatalog_passparams *pp, size_t *coord, int key)
 {
+  size_t ndim=pp->tile->ndim;
   gal_data_t *tile=pp->tile, *block=tile->block;
 
   /* We only want to do the coordinate estimation once: in `columns_fill',
@@ -1706,22 +1735,25 @@ columns_xy_extrema(struct mkcatalog_passparams *pp, size_t *coord, int key)
                                  block->ndim, block->dsize, coord);
 
   /* Return the proper value: note that `coord' is in C standard: starting
-     from the slowest dimension and counting from zero.*/
+     from the slowest dimension and counting from zero. */
   switch(key)
     {
-    case UI_KEY_MINX: return coord[1] + 1;              break;
-    case UI_KEY_MAXX: return coord[1] + tile->dsize[1]; break;
-    case UI_KEY_MINY: return coord[0] + 1;              break;
-    case UI_KEY_MAXY: return coord[0] + tile->dsize[0]; break;
+    case UI_KEY_MINX: return coord[ndim-1] + 1;                   break;
+    case UI_KEY_MAXX: return coord[ndim-1] + tile->dsize[ndim-1]; break;
+    case UI_KEY_MINY: return coord[ndim-2] + 1;                   break;
+    case UI_KEY_MAXY: return coord[ndim-2] + tile->dsize[ndim-2]; break;
+    case UI_KEY_MINZ: return coord[ndim-3] + 1;                   break;
+    case UI_KEY_MAXZ: return coord[ndim-3] + tile->dsize[ndim-3]; break;
     default:
-      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us to fix the "
-            "problem. The value %d is not a recognized value", __func__,
-            key);
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+            "the problem. The value %d is not a recognized value",
+            __func__, PACKAGE_BUGREPORT, key);
     }
 
   /* Control should not reach here. */
-  error(EXIT_FAILURE, 0, "%s: a bug! please contact us to fix the problem. "
-        "Control should not reach the end of this function", __func__);
+  error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
   return GAL_BLANK_UINT32;
 }
 
@@ -1783,7 +1815,7 @@ columns_fill(struct mkcatalog_passparams *pp)
   void *colarr;
   gal_data_t *column;
   double *ci, *oi=pp->oi;
-  size_t coord[2]={GAL_BLANK_SIZE_T, GAL_BLANK_SIZE_T};
+  size_t coord[3]={GAL_BLANK_SIZE_T, GAL_BLANK_SIZE_T, GAL_BLANK_SIZE_T};
 
   size_t sr=pp->clumpstartindex, cind, coind;
   size_t oind=pp->object-1; /* IDs start from 1, indexs from 0. */
@@ -1900,6 +1932,8 @@ columns_fill(struct mkcatalog_passparams *pp)
         case UI_KEY_MAXX:
         case UI_KEY_MINY:
         case UI_KEY_MAXY:
+        case UI_KEY_MINZ:
+        case UI_KEY_MAXZ:
           ((uint32_t *)colarr)[oind]=columns_xy_extrema(pp, coord, key);
           break;
 
@@ -2145,6 +2179,7 @@ columns_fill(struct mkcatalog_passparams *pp)
           case UI_KEY_GEOZ:
             ((float *)colarr)[cind] = MKC_RATIO( ci[CCOL_GZ],
                                                  ci[CCOL_NUMALL] );
+
           case UI_KEY_MINX:
             ((uint32_t *)colarr)[cind] = ci[CCOL_MINX];
             break;
@@ -2159,6 +2194,14 @@ columns_fill(struct mkcatalog_passparams *pp)
 
           case UI_KEY_MAXY:
             ((uint32_t *)colarr)[cind] = ci[CCOL_MAXY];
+            break;
+
+          case UI_KEY_MINZ:
+            ((uint32_t *)colarr)[cind] = ci[CCOL_MINZ];
+            break;
+
+          case UI_KEY_MAXZ:
+            ((uint32_t *)colarr)[cind] = ci[CCOL_MAXZ];
             break;
 
           case UI_KEY_W1:

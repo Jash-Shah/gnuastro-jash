@@ -120,6 +120,8 @@ enum option_keys_enum
   UI_KEY_MAXX,
   UI_KEY_MINY,
   UI_KEY_MAXY,
+  UI_KEY_MINZ,
+  UI_KEY_MAXZ,
   UI_KEY_W1,
   UI_KEY_W2,
   UI_KEY_W3,

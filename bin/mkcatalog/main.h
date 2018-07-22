@@ -144,6 +144,8 @@ enum clumpcols
     CCOL_MAXX,           /* Maximum X value of clump.                 */
     CCOL_MINY,           /* Minimum Y value of clump.                 */
     CCOL_MAXY,           /* Maximum Y value of clump.                 */
+    CCOL_MINZ,           /* Minimum Z value of clump.                 */
+    CCOL_MAXZ,           /* Maximum Z value of clump.                 */
     CCOL_UPPERLIMIT_B,   /* Upper limit brightness.                   */
     CCOL_UPPERLIMIT_S,   /* Upper limit one-sigma value.              */
     CCOL_UPPERLIMIT_Q,   /* Quantile of object in random distribution.*/

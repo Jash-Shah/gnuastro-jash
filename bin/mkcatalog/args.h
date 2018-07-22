@@ -567,6 +567,34 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
+      "minz",
+      UI_KEY_MINZ,
+      0,
+      0,
+      "Minimum third FITS axis position.",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "maxz",
+      UI_KEY_MAXZ,
+      0,
+      0,
+      "Maximum third FITS axis position.",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
       "clumpsx",
       UI_KEY_CLUMPSX,
       0,
