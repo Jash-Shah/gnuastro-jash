@@ -9,14 +9,24 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
     --enable-check-with-valgrind: Run `make check' tests within Valgrind.
 
   Arithmetic:
+    - `set-A': Set a name (`A' in this case) for the popped dataset. This
+               allows only reading the dataset it into memory once and
+               possibly using it many times.
     - `collapse-sum': collapse/remove a dimension by summing over it.
     - `collapse-mean': collapse/remove a dimension by averaging over it.
     - `collapse-number': Number of elements included in the collapse.
+
+  MakeCatalog:
+    --minx: minimum position along first FITS axis.
+    --maxx: maximum position along first FITS axis.
+    --miny: minimum position along second FITS axis.
+    --maxy: maximum position along second FITS axis.
 
   Table:
     --colinfoinstdout: column information when writing to standard output.
 
   Library:
+    - gal_array_name_recognized_multiext: If format contains multiple datasets.
     - gal_dimension_collapse_sum: collapse/remove a dimension by summing.
     - gal_dimension_collapse_mean: collapse/remove a dimension by averaging.
     - gal_dimension_collapse_number: collapse/remove a dimension by number.
@@ -43,13 +53,13 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #54063: Match tests in make check fail randomly.
   bug #54186: MakeCatalog's --checkupperlimit not keeping output's name.
   bug #54188: MakeCatalog's Upperlimit not being sigma-clipped properly.
-  bug #54284: Crop segrault when catalog contains no data.
+  bug #54284: Crop segfault when catalog contains no data.
   bug #54285: make check fails if g++ not present.
   bug #54286: BuildProgram's configuration file, not built by default.
   bug #54297: No Match output when --notmatched called and no match.
   bug #54298: Table not writing array when there are no rows.
   bug #54312: Crash when CFITSIO doesn't have fits_is_reentrant function.
-
+  bug #54346: Non '-I' or non '-L' strings in CPPFLAGS or LDFLAGS cause crash.
 
 
 

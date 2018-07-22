@@ -11811,6 +11811,52 @@ Convert the type of the popped operand to 64-bit (double precision)
 floating point (see @ref{Numeric data types}). The internal conversion of C
 will be used.
 
+@item set-AAA
+Set a name (all characters after the dash, @code{AAA} in the case shown
+here) for the first popped operand on the stack. The name can be any
+string, but avoid strings ending with standard filename suffixes (for
+example @file{.fits})@footnote{A dataset name like @file{a.fits} (which can
+be set with @command{set-a.fits}) will cause confusion in the the initial
+parser of Arithmetic. It will assume this name is a FITS file, and if it is
+used multiple times, Arithmetic will abort, complaining that you haven't
+provided enough HDUs.}. The named dataset will be freed from memory as soon
+as it is no longer needed in the rest of the command. This operator thus
+enables re-usability of a dataset without having to re-read it from a file
+everytime its necessary during a process.
+
+The name to give the popped dataset is part of the operator's name. For
+example the @code{set-a} operator of the command below, gives the name of
+``@code{a}'' to the contents of @file{image.fits}. This name is then used
+instead of the actual filename to multiply the dataset by two.
+
+@example
+$ astarithmetic image.fits set-a a 2 x
+@end example
+
+This is a unique operator, because it doesn't actually do anything to the
+contents of the popped dataset, it just assigns a name to the dataset. This
+makes it very easy to use a single dataset on the command-line multiple
+times and avoid extra attempts at reading it into memory.
+
+One example of the usefulness of this operator is in the @code{where}
+operator. For example, let's assume you want to mask all pixels larger than
+@code{5} in @file{image.fits} (extension number 1) with a NaN
+value. Without using this operator, you have to run
+
+@example
+$ astarithmetic image.fits image.fits 5 gt nan where -g1
+@end example
+
+But with this operator you can simply give @file{image.fits} the name
+@code{i} and simplify the command above:
+
+@example
+$ astarithmetic image.fits set-i   i i 5 gt nan where
+@end example
+
+This operator can thus help simplify reading/writing on the command-line
+(avoid potential bugs), while also speeding up your processing.
+
 @end table
 
 @cartouche
@@ -18092,6 +18138,18 @@ their pixel values.
 The geometric center of all objects and clumps along the second FITS axis
 axis, see @option{--geox}.
 
+@item --minx
+The minimum position of all objects and clumps along the first FITS axis.
+
+@item --maxx
+The maximum position of all objects and clumps along the first FITS axis.
+
+@item --miny
+The minimum position of all objects and clumps along the second FITS axis.
+
+@item --maxy
+The maximum position of all objects and clumps along the second FITS axis.
+
 @item --clumpsx
 [Objects] The flux weighted center of all the clumps in this object along
 the first FITS axis. See @option{--x}.
@@ -22394,10 +22452,10 @@ are fixed width types, these types are portable to all systems and are
 defined in the standard C header @file{stdint.h}. You don't need to include
 this header, it is included by any Gnuastro header that deals with the
 different types. However, the most commonly used types in a C (or C++)
-program (for example @code{int} or @code{long} are not defined by their
-exact width (storage), but by their minimum storage. So for example on some
-systems, @code{int} may be 2 bytes (16-bits, the minimum required by the
-standard) and on others it may be 4 bytes (32-bits, common in modern
+program (for example @code{int} or @code{long}) are not defined by their
+exact width (storage size), but by their minimum storage. So for example on
+some systems, @code{int} may be 2 bytes (16-bits, the minimum required by
+the standard) and on others it may be 4 bytes (32-bits, common in modern
 systems).
 
 With every type, a unique ``blank'' value (or place holder showing the
@@ -24342,6 +24400,12 @@ Return 1 if the given file name corresponds to one of the recognized file
 types for reading arrays.
 @end deftypefun
 
+@deftypefun int gal_array_name_recognized_multiext (char @code{*filename})
+Return 1 if the given file name corresponds to one of the recognized file
+types for reading arrays which may contain multiple extesions (for example
+FITS or TIFF) formats.
+@end deftypefun
+
 @deftypefun gal_data_t gal_array_read (char @code{*filename}, char @code{*extension}, size_t @code{minmapsize})
 Read the array within the given extension (@code{extension}) of
 @code{filename}. If the array is larger than @code{minmapsize} bytes, then
@@ -24677,9 +24741,9 @@ One important issue to consider is that CFITSIO's types are not fixed width
 (for example @code{long} may be 32-bits or 64-bits on different
 systems). However, Gnuastro's types are defined by their width. These
 functions will use information on the host system to do the proper
-conversion, so it strongly recommended to use these functions for
-portability of your code and not to assume a fixed correspondence between
-CFITSIO and Gnuastro's types.
+conversion. To have a portable (usable on different systems) code, is thus
+recommended to use these functions and not to assume a fixed correspondence
+between CFITSIO and Gnuastro's types.
 
 @deftypefun uint8_t gal_fits_bitpix_to_type (int @code{bitpix})
 Return the Gnuastro type identifier that corresponds to CFITSIO's
@@ -28693,7 +28757,7 @@ language, but it can be considered one of the lowest-level languages among
 all high-level languages.} (closer to the hardware), it is much less
 complex for both the human reader @emph{and} the computer. The benefits of
 simplicity for a human were discussed above. Simplicity for the computer
-translates into more efficiently (faster) programs. This creates a much
+translates into more efficient (faster) programs. This creates a much
 closer relation between the scientist/programmer (or their program) and the
 actual data and processing. The GNU coding
 standards@footnote{@url{http://www.gnu.org/prep/standards/}} also encourage
