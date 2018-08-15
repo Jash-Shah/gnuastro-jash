@@ -118,6 +118,7 @@ ui_initialize_options(struct segmentparams *p,
   p->medstd              = NAN;
   p->minstd              = NAN;
   p->maxstd              = NAN;
+  p->snquant             = NAN;
   p->clumpsnthresh       = NAN;
 
   /* Modify common options. */
@@ -892,6 +893,10 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct segmentparams *p)
      after the option checks so un-sane values are not printed in the
      output state. */
   gal_options_print_state(&p->cp);
+
+
+  /* Prepare all the options as FITS keywords to write in output later. */
+  gal_options_as_fits_keywords(&p->cp);
 
 
   /* Check that the options and arguments fit well with each other. Note

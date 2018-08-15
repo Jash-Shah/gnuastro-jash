@@ -1152,8 +1152,77 @@ gal_fits_key_list_add_end(gal_fits_list_key_t **list, uint8_t type,
 
 
 void
+gal_fits_key_list_reverse(gal_fits_list_key_t **list)
+{
+  gal_fits_list_key_t *in=*list, *tmp=in, *reversed=NULL;
+
+  /* Only do the reversal if there is more than one element. */
+  if(in && in->next)
+    {
+      /* Fill the `reversed' list. */
+      while(in!=NULL)
+        {
+          tmp=in->next;
+          in->next=reversed;
+          reversed=in;
+          in=tmp;
+        }
+
+      /* Write the reversed list into the input pointer. */
+      *list=reversed;
+    }
+}
+
+
+
+
+
+/* Write a blank keyword field and a title under it in the specified FITS
+   file pointer. */
+void
+gal_fits_key_write_title_in_ptr(char *title, fitsfile *fptr)
+{
+  size_t i;
+  int status=0;
+  char *cp, *cpf, blankrec[80], titlerec[80];
+
+  /* Just in case title is `NULL'. */
+  if(title)
+    {
+      /* A small sanity check. */
+      if( strlen(title) + strlen(GAL_FITS_KEY_TITLE_START) > 78 )
+        fprintf(stderr, "%s: FITS keyword title `%s' is too long to be fully "
+                "included in the keyword record (80 characters, where the "
+                "title is prefixed with %zu space characters)",
+                __func__, title, strlen(GAL_FITS_KEY_TITLE_START));
+
+      /* Set the last element of the blank array. */
+      cpf=blankrec+79;
+      *cpf='\0';
+      titlerec[79]='\0';
+      cp=blankrec; do *cp=' '; while(++cp<cpf);
+
+      /* Print the blank lines before the title */
+      if(fits_write_record(fptr, blankrec, &status))
+        gal_fits_io_error(status, NULL);
+
+      /* Print the title */
+      sprintf(titlerec, "%s%s", GAL_FITS_KEY_TITLE_START, title);
+      for(i=strlen(titlerec);i<79;++i)
+        titlerec[i]=' ';
+      if(fits_write_record(fptr, titlerec, &status))
+        gal_fits_io_error(status, NULL);
+    }
+}
+
+
+
+
+
+/* Write a filename into keyword values. */
+void
 gal_fits_key_write_filename(char *keynamebase, char *filename,
-                            gal_fits_list_key_t **list)
+                            gal_fits_list_key_t **list, int top1end0)
 {
   char *keyname, *value;
   size_t numkey=1, maxlength;
@@ -1165,6 +1234,7 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
      to take three from it.*/
   maxlength=FLEN_VALUE-3;
 
+  /* Parse the filename and see when it is necessary to break it. */
   i=0;
   while(i<len)
     {
@@ -1174,7 +1244,10 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
       if(keyname==NULL)
         error(EXIT_FAILURE, errno, "%s: %d bytes for `keyname'", __func__,
               FLEN_KEYWORD);
-      sprintf(keyname, "%s_%zu", keynamebase, numkey++);
+      if(len<maxlength)
+        strcpy(keyname, keynamebase);
+      else
+        sprintf(keyname, "%s_%zu", keynamebase, numkey++);
 
       /* Set the keyword value: */
       errno=0;
@@ -1191,8 +1264,12 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
          length was copied. */
       if(value[maxlength-1]=='\0')
         {
-          gal_fits_key_list_add_end(list, GAL_TYPE_STRING, keyname, 1,
-                                    value, 1, NULL, 0, NULL);
+          if(top1end0)
+            gal_fits_key_list_add(list, GAL_TYPE_STRING, keyname, 1,
+                                  value, 1, NULL, 0, NULL);
+          else
+            gal_fits_key_list_add_end(list, GAL_TYPE_STRING, keyname, 1,
+                                      value, 1, NULL, 0, NULL);
           break;
         }
       else
@@ -1207,14 +1284,28 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
                 break;
               }
           if(j==0)
-            error(EXIT_FAILURE, 0, "%s: the filename `%sP has at least one "
-                  "span of %zu characters without a `/`. It cannot be "
-                  "written to the header of the output fits file", __func__,
-                  filename, maxlength);
+            {
+              /* So the loop doesn't continue after this. */
+              i=len+1;
+
+              /* There will only be one keyword, so we'll just use the
+                 basename. */
+              strcpy(keyname, keynamebase);
+
+              /* Let the user know that  */
+              error(0,0, "%s: WARNING: `%s' is too long to fit "
+                    "into a FITS keyword value (max of %zu characters), "
+                    "it will be truncated", __func__, filename,
+                    maxlength);
+            }
 
           /* Convert the last useful character and save the file name.*/
-          gal_fits_key_list_add_end(list, GAL_TYPE_STRING, keyname, 1,
-                                    value, 1, NULL, 0, NULL);
+          if(top1end0)
+            gal_fits_key_list_add(list, GAL_TYPE_STRING, keyname, 1,
+                                  value, 1, NULL, 0, NULL);
+          else
+            gal_fits_key_list_add_end(list, GAL_TYPE_STRING, keyname, 1,
+                                      value, 1, NULL, 0, NULL);
           i+=j+1;
         }
     }
@@ -1228,24 +1319,10 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
 void
 gal_fits_key_write_wcsstr(fitsfile *fptr, char *wcsstr, int nkeyrec)
 {
-  size_t i;
   int h, status=0;
-  char *cp, *cpf, blankrec[80], titlerec[80];
 
-  /* Set the last element of the blank array. */
-  cpf=blankrec+79;
-  *cpf='\0';
-  titlerec[79]='\0';
-  cp=blankrec; do *cp=' '; while(++cp<cpf);
-
-  /* Print the first two lines before the WCS header information. */
-  if(fits_write_record(fptr, blankrec, &status))
-    gal_fits_io_error(status, NULL);
-  sprintf(titlerec, "%sWCS information", GAL_FITS_KEY_TITLE_START);
-  for(i=strlen(titlerec);i<79;++i)
-    titlerec[i]=' ';
-  if(fits_write_record(fptr, titlerec, &status))
-    gal_fits_io_error(status, NULL);
+  /* Write the title. */
+  gal_fits_key_write_title_in_ptr("World Coordinate System (WCS)", fptr);
 
   /* Write the keywords one by one: */
   for(h=0;h<nkeyrec-1;++h)
@@ -1257,11 +1334,35 @@ gal_fits_key_write_wcsstr(fitsfile *fptr, char *wcsstr, int nkeyrec)
 
 
 
+/* Write the given list of header keywords into the specified HDU of the
+   specified FITS file. */
+void
+gal_fits_key_write(gal_fits_list_key_t **keylist, char *title,
+                   char *filename, char *hdu)
+{
+  int status=0;
+  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE);
+
+  /* Write the title */
+  gal_fits_key_write_title_in_ptr(title, fptr);
+
+  /* Write the keywords into the  */
+  gal_fits_key_write_in_ptr(keylist, fptr);
+
+  /* Close the input FITS file. */
+  fits_close_file(fptr, &status);
+  gal_fits_io_error(status, NULL);
+}
+
+
+
+
+
 /* Write the keywords in the gal_fits_list_key_t linked list to the FITS
    file. Every keyword that is written is freed, that is why we need the
    pointer to the linked list (to correct it after we finish). */
 void
-gal_fits_key_write(fitsfile *fptr, gal_fits_list_key_t **keylist)
+gal_fits_key_write_in_ptr(gal_fits_list_key_t **keylist, fitsfile *fptr)
 {
   int status=0;
   gal_fits_list_key_t *tmp, *ttmp;
@@ -1308,15 +1409,34 @@ gal_fits_key_write(fitsfile *fptr, gal_fits_list_key_t **keylist)
 
 
 
+/* Write the given list of header keywords and version info into the give
+   file. */
 void
-gal_fits_key_write_version(fitsfile *fptr, gal_fits_list_key_t *headers,
-                           char *program_name)
+gal_fits_key_write_version(gal_fits_list_key_t **keylist, char *title,
+                           char *filename, char *hdu)
 {
-  size_t i;
+  int status=0;
+  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE);
+
+  /* Write the given keys followed by the versions. */
+  gal_fits_key_write_version_in_ptr(keylist, title, fptr);
+
+  /* Close the input FITS file. */
+  fits_close_file(fptr, &status);
+  gal_fits_io_error(status, NULL);
+}
+
+
+
+
+
+void
+gal_fits_key_write_version_in_ptr(gal_fits_list_key_t **keylist, char *title,
+                                  fitsfile *fptr)
+{
   int status=0;
   char *gitdescribe;
   char cfitsioversion[20];
-  char *cp, *cpf, blankrec[80], titlerec[80];
 
   /* Before WCSLIB 5.0, the wcslib_version function was not
      defined. Sometime in the future were everyone has moved to more
@@ -1328,30 +1448,15 @@ gal_fits_key_write_version(fitsfile *fptr, gal_fits_list_key_t *headers,
   const char *wcslibversion_const;
 #endif
 
-  /* Set the last element of the blank array. */
-  cpf=blankrec+79;
-  *cpf='\0';
-  titlerec[79]='\0';
-  cp=blankrec; do *cp=' '; while(++cp<cpf);
-
-  /* If any header keywords are specified add them: */
-  if(headers)
+  /* If any header keywords are specified, add them: */
+  if(keylist && *keylist)
     {
-      fits_write_record(fptr, blankrec, &status);
-      sprintf(titlerec, "%s%s", GAL_FITS_KEY_TITLE_START,
-              program_name ? program_name : PACKAGE_NAME);
-      for(i=strlen(titlerec);i<79;++i) titlerec[i]=' ';
-      fits_write_record(fptr, titlerec, &status);
-      gal_fits_key_write(fptr, &headers);
+      gal_fits_key_write_title_in_ptr(title?title:"Specific keys", fptr);
+      gal_fits_key_write_in_ptr(keylist, fptr);
     }
 
-
-  /* Start printing the version information */
-  fits_write_record(fptr, blankrec, &status);
-  sprintf(titlerec, "%sVersions and date", GAL_FITS_KEY_TITLE_START);
-  for(i=strlen(titlerec);i<79;++i) titlerec[i]=' ';
-  fits_write_record(fptr, titlerec, &status);
-  gal_fits_io_error(status, NULL);
+  /* Print `Versions and date' title. */
+  gal_fits_key_write_title_in_ptr("Versions and date", fptr);
 
   /* Set the version of CFITSIO as a string. */
   sprintf(cfitsioversion, "%-.2f", CFITSIO_VERSION);
@@ -1391,6 +1496,43 @@ gal_fits_key_write_version(fitsfile *fptr, gal_fits_list_key_t *headers,
 
   /* Report any error if a problem came up */
   gal_fits_io_error(status, NULL);
+}
+
+
+
+
+
+
+/* Write the given keywords into the given extension of the given file,
+   ending it with version information. This is primarily intended for
+   writing configuration settings of a program into the zero-th extension
+   of the FITS file (which is empty when the FITS file is created by
+   Gnuastro's program and this library). */
+void
+gal_fits_key_write_config(gal_fits_list_key_t **keylist, char *title,
+                          char *extname, char *filename, char *hdu)
+{
+  int status=0;
+  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE);
+
+  /* Delete the two extra comment lines describing the FITS standard that
+     CFITSIO puts in when it creates a new extension. We'll set status to 0
+     afterwards so even if they don't exist, the program continues
+     normally. */
+  fits_delete_key(fptr, "COMMENT", &status);
+  fits_delete_key(fptr, "COMMENT", &status);
+  status=0;
+
+  /* Put a name for the zero-th extension. */
+  if(fits_write_key(fptr, TSTRING, "EXTNAME", extname, "", &status))
+    gal_fits_io_error(status, NULL);
+
+  /* Write all the given keywords. */
+  gal_fits_key_write_version_in_ptr(keylist, title, fptr);
+
+  /* Close the FITS file. */
+  if( fits_close_file(fptr, &status) )
+    gal_fits_io_error(status, NULL);
 }
 
 
@@ -1838,7 +1980,7 @@ gal_fits_img_write(gal_data_t *data, char *filename,
   fptr=gal_fits_img_write_to_ptr(data, filename);
 
   /* Write all the headers and the version information. */
-  gal_fits_key_write_version(fptr, headers, program_string);
+  gal_fits_key_write_version_in_ptr(&headers, program_string, fptr);
 
   /* Close the FITS file. */
   fits_close_file(fptr, &status);
@@ -1917,7 +2059,7 @@ gal_fits_img_write_corr_wcs_str(gal_data_t *input, char *filename,
     }
 
   /* Write all the headers and the version information. */
-  gal_fits_key_write_version(fptr, headers, program_string);
+  gal_fits_key_write_version_in_ptr(&headers, program_string, fptr);
 
   /* Close the file and return. */
   fits_close_file(fptr, &status);
@@ -2874,7 +3016,7 @@ gal_fits_tab_write(gal_data_t *cols, gal_list_str_t *comments,
 
 
   /* Write all the headers and the version information. */
-  gal_fits_key_write_version(fptr, NULL, NULL);
+  gal_fits_key_write_version_in_ptr(NULL, NULL, fptr);
 
 
   /* Clean up and close the FITS file. Note that each element in the

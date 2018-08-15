@@ -1121,6 +1121,11 @@ segment_output(struct segmentparams *p)
       p->std->name=NULL;
     }
 
+  /* Write the configuration keywords. */
+  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+  gal_fits_key_write_config(&p->cp.okeys, "Segment configuration",
+                            "SEGMENT-CONFIG", p->cp.output, "0");
+
   /* Let the user know that the output is written. */
   if(!p->cp.quiet)
     printf("  - Output written to `%s'.\n", p->cp.output);
@@ -1228,7 +1233,7 @@ segment(struct segmentparams *p)
 
 
   /* If the user wanted to check the segmentation and hasn't called
-     `continueaftercheck', then stop NoiseChisel. */
+     `continueaftercheck', then stop Segment. */
   if(p->segmentationname && !p->continueaftercheck)
     ui_abort_after_check(p, p->segmentationname, NULL,
                          "showing all segmentation steps");

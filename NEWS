@@ -1,20 +1,64 @@
 GNU Astronomy Utilities NEWS                          -*- outline -*-
 
-* Noteworthy changes in release X.X (library 5.0.0) (YYYY-MM-DD) [alpha]
+* Noteworthy changes in release X.X (library X.X.X) (YYYY-MM-DD) [stable]
+
+** New features
+
+  All programs:
+   - Input files and parameters written as keywords in the first extension
+     of output when it is FITS. This is only relevant for some programs,
+     (for example not the Fits or Table programs).
+
+  Library:
+    -- gal_fits_key_list_reverse: Reverse the given list of FITS keywords.
+    -- gal_fits_key_write_title_in_ptr: Write a two-line title in FITS keywords.
+    -- gal_fits_key_write_in_ptr: New name of gal_fits_key_write.
+    -- gal_fits_key_write_version_in_ptr: new name of gal_fits_key_write_version.
+    -- gal_fits_key_write_config: write key list and version as config header.
+
+** Removed features
+
+** Changed features
+
+  MakeProfiles:
+    --mergedsize: new name for the old `--naxis' option. Since the option
+          names and values are now written into the FITS header of the
+          output, this option's name would get confused with the mandatory
+          FITS keyword `NAXIS'.
+
+  Library:
+    -- gal_fits_key_write: filename and hdu instead of FITS pointer.
+    -- gal_fits_key_write_version: filename and hdu instead of FITS pointer.
+    -- gal_fits_key_write_filename: write at the top or end of the input list.
+
+** Bugs fixed
+  bug #54493: Warp crashes when type isn't set.
+
+
+
+
+
+* Noteworthy changes in release 0.7 (library 5.0.0) (2018-08-08) [stable]
 
 ** New features
 
   Installation:
-    --enable-debug: enable debugging flags and disable optimization.
+    --enable-debug: debugging flags, no optimization, no shared libraries.
     --enable-check-with-valgrind: Run `make check' tests within Valgrind.
 
   Arithmetic:
     - `set-A': Set a name (`A' in this case) for the popped dataset. This
                allows only reading the dataset it into memory once and
                possibly using it many times.
+    - `fill-holes': Flip background (0) pixels surrounded by foreground (1).
     - `collapse-sum': collapse/remove a dimension by summing over it.
+    - `collapse-min': collapse/remove a dimension by using minimum value.
+    - `collapse-max': collapse/remove a dimension by using maximum value.
     - `collapse-mean': collapse/remove a dimension by averaging over it.
     - `collapse-number': Number of elements included in the collapse.
+
+  CosmicCalculator:
+    - Default cosmology set to Plank 2018 results (Paper VI).
 
   MakeCatalog:
     --minx: minimum position along first FITS axis.
@@ -30,6 +74,7 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
     - gal_dimension_collapse_sum: collapse/remove a dimension by summing.
     - gal_dimension_collapse_mean: collapse/remove a dimension by averaging.
     - gal_dimension_collapse_number: collapse/remove a dimension by number.
+    - gal_dimension_collapse_minmax: collapse/remove a dimension by extremum.
     - gal_wcs_remove_dimension: Remove a dimension in the given WCS structure.
 
 ** Removed features
@@ -60,6 +105,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #54298: Table not writing array when there are no rows.
   bug #54312: Crash when CFITSIO doesn't have fits_is_reentrant function.
   bug #54346: Non '-I' or non '-L' strings in CPPFLAGS or LDFLAGS cause crash.
+  bug #54358: Arithmetic's where, not ignoring blank values in condition.
+  bug #54406: Insufficient sanity checks in mode symmetricity calculation.
+  bug #54430: BuildProgram fails with older Libtool versions on dash.
 
 
 

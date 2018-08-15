@@ -1658,8 +1658,9 @@ columns_second_order(struct mkcatalog_passparams *pp, double *row,
 
     /* Error. */
     default:
-      error(EXIT_FAILURE, 0, "%s: a bug! Code %d not a recognized key",
-            __func__, key);
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+            "problem. %d is not a recognized key", __func__, PACKAGE_BUGREPORT,
+            key);
     }
 
   /* Return the output. */
@@ -1745,9 +1746,9 @@ columns_xy_extrema(struct mkcatalog_passparams *pp, size_t *coord, int key)
     case UI_KEY_MINZ: return coord[ndim-3] + 1;                   break;
     case UI_KEY_MAXZ: return coord[ndim-3] + tile->dsize[ndim-3]; break;
     default:
-      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-            "the problem. The value %d is not a recognized value",
-            __func__, PACKAGE_BUGREPORT, key);
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+            "problem. The value %d is not a recognized value", __func__,
+            PACKAGE_BUGREPORT, key);
     }
 
   /* Control should not reach here. */

@@ -791,8 +791,13 @@ void
 ui_preparations(struct statisticsparams *p)
 {
   gal_data_t *check;
+  int keepinputdir=p->cp.keepinputdir;
   struct gal_options_common_params *cp=&p->cp;
   struct gal_tile_two_layer_params *tl=&cp->tl;
+  char *checkbasename = p->cp.output ? p->cp.output : p->inputname;
+
+  /* Change `keepinputdir' based on if an output name was given. */
+  p->cp.keepinputdir = p->cp.output ? 1 : 0;
 
   /* Read the input. */
   if(p->isfits && p->hdu_type==IMAGE_HDU)
@@ -824,7 +829,7 @@ ui_preparations(struct statisticsparams *p)
       /* Make the tile check image if requested. */
       if(tl->checktiles)
         {
-          tl->tilecheckname=gal_checkset_automatic_output(cp, p->inputname,
+          tl->tilecheckname=gal_checkset_automatic_output(cp, checkbasename,
                                                           "_tiled.fits");
           check=gal_tile_block_check_tiles(tl->tiles);
           if(p->inputformat==INPUT_FORMAT_IMAGE)
@@ -841,7 +846,7 @@ ui_preparations(struct statisticsparams *p)
 
       /* Set the steps image name. */
       if(p->sky && p->checksky)
-        p->checkskyname=gal_checkset_automatic_output(cp, p->inputname,
+        p->checkskyname=gal_checkset_automatic_output(cp, checkbasename,
                                                       "_sky_steps.fits");
     }
 
@@ -875,6 +880,9 @@ ui_preparations(struct statisticsparams *p)
       if( !isnan(p->mirror) )             ++p->numoutfiles;
       if( p->histogram || p->cumulative ) ++p->numoutfiles;
     }
+
+  /* Reset `keepinputdir' to what it originally was. */
+  p->cp.keepinputdir=keepinputdir;
 }
 
 
@@ -949,6 +957,14 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct statisticsparams *p)
 
   /* Read/allocate all the necessary starting arrays. */
   ui_preparations(p);
+
+
+  /* Prepare all the options as FITS keywords to write in output
+     later. Note that in some modes, there is no output file, and
+     `ui_add_to_single_value' isn't yet prepared. */
+  if( (p->singlevalue && p->ontile) || p->sky || p->histogram \
+      || p->cumulative)
+    gal_options_as_fits_keywords(&p->cp);
 }
 
 

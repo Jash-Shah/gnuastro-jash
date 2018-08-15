@@ -202,6 +202,13 @@ noisechisel_output(struct noisechiselparams *p)
                              p->cp.output, keys, PROGRAM_NAME);
   p->std->name=NULL;
 
+
+  /* Write the configuration keywords. */
+  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+  gal_fits_key_write_config(&p->cp.okeys, "NoiseChisel configuration",
+                            "NOISECHISEL-CONFIG", p->cp.output, "0");
+
+
   /* Let the user know that the output is written. */
   if(!p->cp.quiet)
     printf("  - Output written to `%s'.\n", p->cp.output);

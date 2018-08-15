@@ -5,6 +5,13 @@ This file is primarily intended for the Gnuastro maintainer and lists the
 set of operations to do for making each release. This should be done after
 all the commits needed for this release have been completed.
 
+ - [STABLE] Run a spell-check (in emacs, with `M-x ispell') on the new
+   parts of the book. You can put them in a test file with this command,
+   just replace X.X with the previous version:
+
+       $ git diff gnuastro_vX.X..HEAD doc/gnuastro.texi | grep ^\+  \
+             > ~/gnuastro_book_new_parts.txt
+
 
  - Build the Debian distribution (just for a test) and correct any build or
    Lintian warnings. This is recommended, even if you don't actually want
@@ -16,16 +23,16 @@ all the commits needed for this release have been completed.
    three branchs with the following command
 
        $ git checkout master
-       $ git reset --hard HEAD~1
+       $ git tag -d debian/$ver-1
+       $ git reset --hard HEAD~1        # To go to the merge with upstream.
+       $ git reset --hard HEAD~1            # To go to last Debian release.
        $ git checkout pristine-tar
        $ git reset --hard HEAD~1
        $ git checkout upstream
        $ git tag -d upstream/$ver
        $ git reset --hard HEAD~1
        $ git checkout master
-
-
- - [STABLE] Run a spell-check (in emacs with `M-x ispell') on the whole book.
+       $ git log --oneline --graph --decorate --all   # For a visual check.
 
 
  - [STABLE] Update the versions in the NEWS file.
@@ -42,10 +49,6 @@ all the commits needed for this release have been completed.
      $ git diff gnuastro_vP.P..HEAD THANKS
 
 
- - [STABLE] Correct the links in the webpage (`doc/gnuastro.en.html' and
-   `doc/gnuastro.fr.html').
-
-
  - Run the following commands to keep the list of people who contributed
    code and those that must be acknowledged for the announcement (`P.P' is
    the previous version).
@@ -54,8 +57,13 @@ all the commits needed for this release have been completed.
      $ cat doc/announce-acknowledge.txt >> ~/people.txt
 
      [STABLE] Clean `doc/announce-acknowledge.txt':
-     $ echo "People who's help must be acknowledged in the next release." \
+     $ echo "Alphabetically ordered list to acknowledge in the next release." \
             > doc/announce-acknowledge.txt
+
+
+ - [STABLE] Correct the version links in the webpage
+   (`doc/gnuastro.en.html' and `doc/gnuastro.fr.html'). Note that this is
+   not for upload at this stage, it is only for the version control.
 
 
  - Commit all these changes:
@@ -88,11 +96,10 @@ all the commits needed for this release have been completed.
      $ git tag -a gnuastro_vX.X
 
 
- - [STABLE] The tag will cause a change in the tarball version. So clean
-   the build directory, and repeat the steps for the final release:
+ - [STABLE] The tag will cause a change in the tarball version. Run the
+   following commands to build the final tarball.
 
-     $ autoreconf -f
-     $ ./developer-build -c -C -d
+     $ ./developer-build -a -c -C -d
      $ cd build
      $ make dist dist-lzip       # to build `tar.gz' and `tar.lz'.
 
@@ -120,9 +127,10 @@ all the commits needed for this release have been completed.
 
  - [STABLE] Build the manual in all the formats and upload everything. Note
    that you will need to configure and build Gnuastro in the main source
-   directory to build the full webpage with this script.
+   directory to build the full webpage with this script. We will build with
+   debug flags so the build completes fast.
 
-       $ ./configure CFLAGS="-g -O0" --disable-shared
+       $ ./configure --enable-debug
        $ make -j8
        $ cd doc
        $ ./forwebpage /path/to/local/copy/of/webpage
@@ -154,7 +162,7 @@ all the commits needed for this release have been completed.
      $ /path/to/gnulib/build-aux/announce-gen --release-type=XXXX          \
               --package-name=gnuastro --previous-version=0.1               \
               --current-version=0.2 --gpg-key-id=$mykeyid                  \
-              --url-directory=https://YYYY.gnu.org/gnu/gnuastro             \
+              --url-directory=https://YYYY.gnu.org/gnu/gnuastro            \
               --archive-suffix=tar.lz > ~/announcement.txt
 
 
@@ -371,11 +379,9 @@ Steps necessary to Package Gnuastro for Debian.
      $ git tag -a debian/$ver-1
 
 
- - Push all the changes to the repository (you can't call `--all' and
-   `--tags' together):
+ - Push all the commits and tags to the repository.
 
-     $ git push --all
-     $ git push --tags
+     $ git push --all --follow-tags
 
 
  - Inform Debian Astro: Ole Streicher (olebole@debian.org) has been
