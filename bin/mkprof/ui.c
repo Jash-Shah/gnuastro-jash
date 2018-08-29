@@ -144,7 +144,7 @@ ui_profile_name_read(char *string, size_t row)
 
 
 
-static char *
+char *
 ui_profile_name_write(int profile_code)
 {
   switch(profile_code)
@@ -729,10 +729,11 @@ ui_read_cols_2d(struct mkprofparams *p)
 
           /* Check if there is no negative or zero-radius profile. */
           for(i=0;i<p->num;++i)
-            if(p->r[i]<=0.0f)
+            if(p->f[i]!=PROFILE_POINT && p->r[i]<=0.0f)
               error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g is "
-                    "not acceptable. It has to be larger than 0", p->catname,
-                    i+1, p->r[i]);
+                    "not acceptable for a `%s' profile. It has to be larger "
+                    "than 0", p->catname, i+1, p->r[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
 
@@ -757,10 +758,11 @@ ui_read_cols_2d(struct mkprofparams *p)
 
           /* Check if there is no negative or >1.0f axis ratio. */
           for(i=0;i<p->num;++i)
-            if(p->q1[i]<=0.0f || p->q1[i]>1.0f)
+            if( p->f[i]!=PROFILE_POINT && (p->q1[i]<=0.0f || p->q1[i]>1.0f) )
               error(EXIT_FAILURE, 0, "%s: row %zu, the axis ratio value %g "
-                    "is not acceptable. It has to be >0 and <=1", p->catname,
-                    i+1, p->q1[i]);
+                    "is not acceptable for a `%s' profile. It has to be >0 "
+                    "and <=1", p->catname, i+1, p->q1[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
 
@@ -779,10 +781,11 @@ ui_read_cols_2d(struct mkprofparams *p)
 
           /* Check if there is no negative or zero truncation radius. */
           for(i=0;i<p->num;++i)
-            if(p->t[i]<=0.0f)
+            if(p->f[i]!=PROFILE_POINT && p->t[i]<=0.0f)
               error(EXIT_FAILURE, 0, "%s: row %zu, the truncation radius "
-                    "value %g is not acceptable. It has to be larger than 0",
-                    p->catname, i+1, p->t[i]);
+                    "value %g is not acceptable for a `%s' profile. It has "
+                    "to be larger than 0", p->catname, i+1, p->t[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
 
@@ -936,6 +939,13 @@ ui_read_cols_3d(struct mkprofparams *p)
           colname="radius (`rcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->r=corrtype->array;
+
+          /* Check if there is no negative or zero-radius profile. */
+          if(p->f[i]!=PROFILE_POINT && p->r[i]<=0.0f)
+            error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g is "
+                  "not acceptable for a `%s' profile. It has to be larger "
+                  "than 0", p->catname, i+1, p->r[i],
+                  ui_profile_name_write(p->f[i]));
           break;
 
         case 6:
@@ -969,10 +979,11 @@ ui_read_cols_3d(struct mkprofparams *p)
 
           /* Check if there is no negative or >1.0f axis ratio. */
           for(i=0;i<p->num;++i)
-            if(p->q1[i]<=0.0f || p->q1[i]>1.0f)
+            if( p->f[i]!=PROFILE_POINT && (p->q1[i]<=0.0f || p->q1[i]>1.0f) )
               error(EXIT_FAILURE, 0, "%s: row %zu, the first axis ratio "
-                    "(`--qcol') value %g is not acceptable. It has to be "
-                    ">0 and <=1", p->catname, i+1, p->q1[i]);
+                    "value %g is not acceptable for a `%s' profile. It has "
+                    "to be >0 and <=1", p->catname, i+1, p->q1[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
         case 11:
@@ -982,10 +993,11 @@ ui_read_cols_3d(struct mkprofparams *p)
 
           /* Check if there is no negative or >1.0f axis ratio. */
           for(i=0;i<p->num;++i)
-            if(p->q2[i]<=0.0f || p->q2[i]>1.0f)
+            if( p->f[i]!=PROFILE_POINT && (p->q2[i]<=0.0f || p->q2[i]>1.0f) )
               error(EXIT_FAILURE, 0, "%s: row %zu, the second axis ratio "
-                    "(`--q2col') value %g is not acceptable. It has to be "
-                    ">0 and <=1", p->catname, i+1, p->q2[i]);
+                    "value %g is not acceptable for a `%s' profile. It has "
+                    "to be >0 and <=1", p->catname, i+1, p->q2[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
         case 12:
@@ -1002,10 +1014,11 @@ ui_read_cols_3d(struct mkprofparams *p)
 
           /* Check if there is no negative or zero truncation radius. */
           for(i=0;i<p->num;++i)
-            if(p->t[i]<=0.0f)
+            if(p->f[i]!=PROFILE_POINT && p->t[i]<=0.0f)
               error(EXIT_FAILURE, 0, "%s: row %zu, the truncation radius "
-                    "value %g is not acceptable. It has to be larger than 0",
-                    p->catname, i+1, p->t[i]);
+                    "value %g is not acceptable for a `%s' profile. It has "
+                    "to be larger than 0", p->catname, i+1, p->t[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
         /* If the index isn't recognized, then it is larger, showing that
@@ -1672,6 +1685,7 @@ ui_preparations(struct mkprofparams *p)
   /* Allocate the random number generator: */
   gsl_rng_env_setup();
   p->rng=gsl_rng_alloc(gsl_rng_ranlxs1);
+  p->rng_name=gsl_rng_name(p->rng);
 
   /* Make the log linked list. */
   ui_make_log(p);

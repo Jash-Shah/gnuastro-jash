@@ -498,12 +498,11 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
   int32_t *plabend, *indarr=NULL;
   double ave, err, *pos, *brightness;
   size_t ind, ndim=p->input->ndim, pcols=1+ndim;
+  float s, ss, *f, *ff, *fs, *sky=p->sky->array;
   size_t i, j, *area, counter=0, *dsize=p->input->dsize;
-  float *img=p->input->array, *f=p->input->array, *ff=f+p->input->size;
   int32_t *plab = worklab->array, *dlab = s0d1D2 ? NULL : p->olabel->array;
   size_t *coord=gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__,
                                       "coord");
-
 
   /* Sanity check. */
   if(p->input->type!=GAL_TYPE_FLOAT32)
@@ -540,6 +539,8 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
                                   NULL) );
 
   /* Go over all the pixels and get the necessary information. */
+  fs = f = p->input->array;
+  ff = f + p->input->size;
   do
     {
       /* All this work is only necessary when we are actually on a
@@ -562,22 +563,17 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
 
           /* Save all the necessary values. */
           ++area[*plab];
-          brightness[*plab] += *f;
-          if( *f > 0.0f )  /* For calculatiing the approximate center, */
+          gal_dimension_index_to_coord(f-fs, ndim, dsize, coord);
+          s  = sky[ gal_tile_full_id_from_coord(&p->cp.tl, coord) ];
+          ss = *f-s;
+          brightness[*plab] += ss;
+          if( ss > 0.0f )  /* For calculatiing the approximate center, */
             {              /* necessary for calculating Sky and STD.   */
-              pos[*plab*pcols  ] += *f;
-              switch(ndim)
-                {
-                case 2:
-                  pos[*plab*pcols+1] += ( (f-img)/dsize[1] ) * *f;
-                  pos[*plab*pcols+2] += ( (f-img)%dsize[1] ) * *f;
-                  break;
-                case 3:
-                  pos[*plab*pcols+1] += ( (f-img) % dsize[1]*dsize[2] ) * *f;
-                  pos[*plab*pcols+2] += ( (f-img)/dsize[2] ) * *f;
-                  pos[*plab*pcols+3] += ( (f-img)%dsize[2] ) * *f;
-                  break;
-                }
+              pos[  *plab*pcols   ] += ss;
+              pos[  *plab*pcols+1 ] += (double)coord[0] * ss;
+              pos[  *plab*pcols+2 ] += (double)coord[1] * ss;
+              if(ndim==3)
+                pos[*plab*pcols+3 ] += (double)coord[2] * ss;
             }
         }
 
@@ -632,9 +628,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
           for(j=0;j<ndim;++j)
             coord[j]=GAL_DIMENSION_FLT_TO_INT(pos[i*pcols+j+1]/pos[i*pcols]);
 
-          /* Calculate the Sky and Sky standard deviation on this tile. */
-          ave -= ((float *)(p->sky->array))[
-                         gal_tile_full_id_from_coord(&p->cp.tl, coord) ];
+          /* Get the Sky standard deviation on this tile. */
           err  = ((float *)(p->std->array))[
                          gal_tile_full_id_from_coord(&p->cp.tl, coord) ];
 
@@ -658,6 +652,12 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
             if(snind) indarr[i]=GAL_BLANK_INT32;;
           }
     }
+
+
+  /* A small sanity check. */
+  if( s0d1D2==0 && counter==0 )
+    error(EXIT_FAILURE, 0, "no sky pseudo-detections.");
+
 
   /* If we are in Sky mode, the sizes have to be corrected */
   if(s0d1D2==0)

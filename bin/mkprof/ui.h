@@ -102,6 +102,9 @@ enum option_keys_enum
 void
 ui_read_check_inputs_setup(int argc, char *argv[], struct mkprofparams *p);
 
+char *
+ui_profile_name_write(int profile_code);
+
 void
 ui_free_report(struct mkprofparams *p, struct timeval *t1);
 

@@ -42,6 +42,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include "main.h"
 
+#include "ui.h"
 #include "mkprof.h"             /* Needs main.h astrthreads.h */
 #include "oneprofile.h"
 
@@ -127,8 +128,9 @@ saveindividual(struct mkonthread *mkp)
 
   double *crpix;
   long os=p->oversample;
-  size_t i, ndim=p->ndim;
+  gal_fits_list_key_t *keys=NULL;
   struct builtqueue *ibq=mkp->ibq;
+  size_t i, ndim=p->ndim, id=mkp->ibq->id;
   char *filename, *jobname, *outdir=p->outdir;
 
 
@@ -145,7 +147,7 @@ saveindividual(struct mkonthread *mkp)
     }
 
 
-  /* Write the array to file (a separately built PSF doesn't need WCS
+  /* Write the array to the file (a separately built PSF doesn't need WCS
      coordinates). */
   if(ibq->ispsf && p->psfinimg==0)
     gal_fits_img_write(ibq->image, filename, NULL, PROGRAM_NAME);
@@ -164,6 +166,104 @@ saveindividual(struct mkonthread *mkp)
                                       PROGRAM_NAME);
     }
   ibq->indivcreated=1;
+
+
+  /* Write profile settings into the FITS file. */
+  gal_fits_key_list_add(&keys, GAL_TYPE_STRING, "PROFILE", 0,
+                        ui_profile_name_write(mkp->func), 0,
+                        "Radial function", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT64, "XCENTER", 0,
+                        &p->x[id], 0, "Center of profile in catalog "
+                        "(FITS axis 1)", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT64, "YCENTER", 0,
+                        &p->y[id], 0, "Center of profile in catalog "
+                        "(FITS axis 2)", 0, NULL);
+  if(ndim==3)
+    gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT64, "ZCENTER", 0,
+                          &p->z[id], 0, "Center of profile in catalog "
+                          "(FITS axis 3)", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "RADIUS", 0,
+                        &p->r[id], 0, "Radial parameter in catalog",
+                        0, NULL);
+  if( mkp->func==PROFILE_SERSIC || mkp->func==PROFILE_MOFFAT )
+    gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PINDEX", 0,
+                          &p->r[id], 0, "Index (Sersic or Moffat) of profile"
+                          "in catalog", 0, NULL);
+  if(ndim==2)
+    {
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA_DEG", 0,
+                            &p->p1[id], 0, "Position angle of profile in "
+                            "catalog", 0, "deg");
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "AXISRATIO", 0,
+                            &p->q1[id], 0, "Axis ratio of profile in catalog",
+                            0, NULL);
+    }
+  else
+    {
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA1_DEG", 0,
+                            &p->p1[id], 0, "First X-Z-X Euler angle in 3D", 0,
+                            "deg");
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA2_DEG", 0,
+                            &p->p2[id], 0, "Second X-Z-X Euler angle in 3D", 0,
+                            "deg");
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA3_DEG", 0,
+                            &p->p3[id], 0, "Third X-Z-X Euler angle in 3D", 0,
+                            "deg");
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "AXISRATIO1", 0,
+                            &p->q1[id], 0, "Axis ratio along second dim",
+                            0, NULL);
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "AXISRATIO2", 0,
+                            &p->q2[id], 0, "Axis ratio along third dim",
+                            0, NULL);
+    }
+  gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "MAGNITUDE", 0,
+                        &p->m[id], 0, "Magnitude of profile in catalog",
+                        0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "TRUNCATION", 0,
+                        &p->t[id], 0, "Truncation of profile in catalog",
+                        0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_LONG, "RNGSEED", 0,
+                        &mkp->rng_seed, 0, "Seed of random number generator",
+                        0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_STRING, "RNGNAME", 0,
+                        (void *)(p->rng_name), 0,
+                        "Name of random number generator", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_SIZE_T, "NUMRANDOM", 0,
+                        &p->numrandom, 0,
+                        "Number of random points in central pixels", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "TOLERANCE", 0,
+                        &p->tolerance, 0,
+                        "Tolerance level to stop random integration",
+                        0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_STRING, "MODE", 0,
+                        p->mode==MKPROF_MODE_IMG?"img":"wcs", 0,
+                        "Coordinates in image or WCS units", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "OVERSAMPLE", 0,
+                        &p->oversample, 0, "Oversampling factor", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "TUNITINP", 0,
+                        &p->tunitinp, 0, "Truncation is in units of pixels, "
+                        "not radius", 0, NULL);
+  if( !isnan(p->zeropoint) )
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "ZEROPOINT", 0,
+                            &p->zeropoint, 0, "Zeropoint magnitude", 0, NULL);
+  if( mkp->func==PROFILE_CIRCUMFERENCE )
+      gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "CIRCUMWIDTH", 0,
+                            &p->circumwidth, 0, "Width of circumference "
+                            "(inward) profiles", 0, NULL);
+  if( mkp->func==PROFILE_FLAT || mkp->func==PROFILE_CIRCUMFERENCE )
+      gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "MFORFLATPIX", 0,
+                            &p->mforflatpix, 0, "Magnitude is flat pixel "
+                            "value", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "MCOLISBRIGHTNESS", 0,
+                        &p->mcolisbrightness, 0, "Catalog's magnitude is "
+                        "actually brightness", 0, NULL);
+  gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "MAGATPEAK", 0,
+                        &p->magatpeak, 0, "Magnitude is for peak pixel, "
+                        "not full profile", 0, NULL);
+
+  gal_fits_key_list_reverse(&keys);
+  gal_fits_key_write_config(&keys, "Profile configuration", "PROFILE-CONFIG",
+                            filename, "0");
 
 
   /* Report if in verbose mode. */
@@ -221,8 +321,13 @@ mkprof_build_single(struct mkonthread *mkp, long *fpixel_i, long *lpixel_i,
 
   /* Set the seed of the random number generator if the
      environment is not to be used. */
-  if(mkp->p->envseed==0)
-    gsl_rng_set(mkp->rng, gal_timing_time_based_rng_seed());
+  if(mkp->p->envseed)
+    mkp->rng_seed=mkp->p->envseed;
+  else
+    {
+      mkp->rng_seed=gal_timing_time_based_rng_seed();
+      gsl_rng_set(mkp->rng, mkp->rng_seed);
+    }
 
   /* Make the profile */
   oneprofile_make(mkp);

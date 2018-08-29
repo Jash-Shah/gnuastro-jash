@@ -2070,61 +2070,101 @@ gal_statistics_sigma_clip(gal_data_t *input, float multip, float param,
 
 
 
-#if 0
-/* Using the cumulative distribution function this function will
-   remove outliers from a dataset. */
-void
-gal_statistics_remove_outliers_flat_cdf(float *sorted, size_t *outsize)
+/* Find the first outlier in a distribution. */
+#define OUTLIER_BYTYPE(IT) {                                            \
+    IT *arr=nbs->array;                                                 \
+    for(i=nbs->size/2;i<nbs->size;++i)                                  \
+      {                                                                 \
+        /* Fill in the distance array. */                               \
+        for(j=0; j<wtakeone; ++j)                                       \
+          darr[j] = arr[i-window_size+j+1] - arr[i-window_size+j];      \
+                                                                        \
+        /* Get the sigma-clipped information. */                        \
+        sclip=gal_statistics_sigma_clip(dist, sigclip_multip,           \
+                                        sigclip_param, 0, 1);           \
+        sarr=sclip->array;                                              \
+                                                                        \
+        /* For a check */                                               \
+        /*printf("%f: %f (%f, %f) %f\n", (float)(arr[i]),          */   \
+        /*       (float)(arr[i]-arr[i-1]), sarr[1], sarr[3],       */   \
+        /*       (((double)(arr[i]-arr[i-1])) - sarr[1])/sarr[3]); */  \
+                                                                        \
+        /* Terminate the loop if the dist. is larger than requested. */ \
+        /* This shows we have reached the first outlier's position. */  \
+        if( (((double)(arr[i]-arr[i-1])) - sarr[1]) > sigma*sarr[3] )   \
+          {                                                             \
+            /* Allocate the output dataset. */                          \
+            out=gal_data_alloc(NULL, input->type, 1, &one, NULL, 0, -1, \
+                               NULL, NULL, NULL);                       \
+                                                                        \
+            /* Write the outlier, clean up and break. */                \
+            *(IT *)(out->array)=arr[i-1];                               \
+            gal_data_free(sclip);                                       \
+            break;                                                      \
+          }                                                             \
+                                                                        \
+        /* Clean up (if we get here). */                                \
+        gal_data_free(sclip);                                           \
+      }                                                                 \
+  }
+gal_data_t *
+gal_statistics_outlier_positive(gal_data_t *input, float sigma,
+                                float sigclip_multip, float sigclip_param,
+                                int inplace, int quiet)
 {
-  printf("\n ... in gal_statistics_remove_outliers_flat_cdf ... \n");
-  exit(1);
-  int firstfound=0;
-  size_t size=*outsize, i, maxind;
-  float *slopes, minslope, maxslope;
+  float *sarr;
+  double *darr;
+  size_t i, j, one=1, wtakeone, window_size;
+  gal_data_t *dist, *sclip, *nbs, *out=NULL;
 
-  /* Find a slopes array, think of the cumulative frequency plot when
-     you want to think about slopes. */
-  errno=0; slopes=malloc(size*sizeof *slopes);
-  if(slopes==NULL)
-    error(EXIT_FAILURE, errno, "%s: %zu bytes for slopes",
-          __func__, size*sizeof *slopes);
+  /* Remove all blanks and sort the dataset. */
+  nbs=gal_statistics_no_blank_sorted(input, inplace);
+  window_size=nbs->size/2;
 
-  /* Calcuate the slope of the CDF and put it in the slopes array. */
-  for(i=1;i<size-1;++i)
-    slopes[i]=2/(sorted[i+1]-sorted[i-1]);
+  /* Only continue if the window size is more than 2 elements (out
+     "outlier" is hard to define on smaller datasets). */
+  if(window_size>2)
+    {
+      /* For a check.
+      if(nbs->type==GAL_TYPE_FLOAT32)
+        {
+          float *n=nbs->array;
+          for(i=0;i<nbs->size;++i)
+            printf("%f\n", n[i]);
+          exit(0);
+        }
+      */
 
-  /* Find the position of the maximum slope, note that around the
-     distribution mode, the difference between the values varies less,
-     so two neighbouring elements have the closest values, hence the
-     largest slope (when their difference is in the denominator). */
-  gal_statistics_f_max_with_index(slopes+1, size-2, &maxslope, &maxind);
 
-  /* Find the minimum slope from the second element (for the first the
-     slope is not defined. NOTE; maxind is one smaller than it should
-     be because the input array to find it began from the second
-     element. */
-  gal_statistics_float_second_min(slopes+1, maxind+1, &minslope);
+      /* Allocate space to keep the distances. */
+      wtakeone=window_size-1;
+      dist=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &wtakeone, NULL,
+                          0, -1, NULL, NULL, NULL);
+      darr=dist->array;
 
-  /* Find the second place where the slope falls below `minslope`
-     after the maximum position. When found, add it with one to
-     account for error. Note that incase there are no outliers by this
-     definition, then the final size will be equal to size! */
-  for(i=maxind+1;i<size-1;++i)
-    if(slopes[i]<minslope)
-      {
-        if(firstfound)
-          break;
-        else
-          firstfound=1;
-      }
-  *outsize=i+1;
+      /* Find the outlier based on the type of the input dataset. */
+      switch(input->type)
+        {
+        case GAL_TYPE_UINT8:     OUTLIER_BYTYPE( uint8_t  );   break;
+        case GAL_TYPE_INT8:      OUTLIER_BYTYPE( int8_t   );   break;
+        case GAL_TYPE_UINT16:    OUTLIER_BYTYPE( uint16_t );   break;
+        case GAL_TYPE_INT16:     OUTLIER_BYTYPE( int16_t  );   break;
+        case GAL_TYPE_UINT32:    OUTLIER_BYTYPE( uint32_t );   break;
+        case GAL_TYPE_INT32:     OUTLIER_BYTYPE( int32_t  );   break;
+        case GAL_TYPE_UINT64:    OUTLIER_BYTYPE( uint64_t );   break;
+        case GAL_TYPE_INT64:     OUTLIER_BYTYPE( int64_t  );   break;
+        case GAL_TYPE_FLOAT32:   OUTLIER_BYTYPE( float    );   break;
+        case GAL_TYPE_FLOAT64:   OUTLIER_BYTYPE( double   );   break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
+                __func__, input->type);
+        }
 
-  /*
-  for(i=0;i<size;++i)
-    printf("%zu\t%.3f\t%.3f\n", i, arr[i], slopes[i]);
-  printf("\n\nPlace to cut off for outliers is: %zu\n\n", *outsize);
-  */
+      /* Clean up. */
+      gal_data_free(dist);
+    }
 
-  free(slopes);
+  /* Clean up and return. */
+  if(nbs!=input) gal_data_free(nbs);
+  return out;
 }
-#endif

@@ -115,6 +115,7 @@ ui_initialize_options(struct noisechiselparams *p,
   cp->numthreads         = gal_threads_number();
   cp->coptions           = gal_commonopts_options;
 
+
   /* Modify common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
     {

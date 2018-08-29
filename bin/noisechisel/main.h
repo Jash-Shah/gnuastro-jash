@@ -56,11 +56,11 @@ struct noisechiselparams
   uint8_t           rawoutput;  /* Only detection & 1 elem/tile output.   */
   uint8_t               label;  /* Label detections that are connected.   */
 
-  float            mirrordist;  /* Maximum distance to check mode sym.    */
-  float           modmedqdiff;  /* Difference between mode and median.    */
+  float          meanmedqdiff;  /* Difference between mode and median.    */
   float            minskyfrac;  /* Undetected area min. frac. in tile.    */
   float               qthresh;  /* Quantile threshold on convolved image. */
-  float      qthreshtilequant;  /* Remove tiles with lower quantile.      */
+  float          outliersigma;  /* Multiple of sigma to define outlier.   */
+  double      outliersclip[2];  /* Outlier Sigma-clipping params.         */
   size_t          smoothwidth;  /* Interpolation: flat kernel to smooth.  */
   uint8_t        checkqthresh;  /* Save the quantile threhsold steps.     */
   size_t                erode;  /* Number of erosions after thresholding. */
