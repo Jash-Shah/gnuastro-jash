@@ -265,6 +265,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "blankasforeground",
+      UI_KEY_BLANKASFOREGROUND,
+      0,
+      0,
+      "Blanks are foreground in erosion and opening.",
+      UI_GROUP_DETECTION,
+      &p->blankasforeground,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "erode",
       UI_KEY_ERODE,
       "INT",
@@ -330,6 +343,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "skyfracnoblank",
+      UI_KEY_SKYFRACNOBLANK,
+      0,
+      0,
+      "No blanks in tile undetected frac. (minskyfrac).",
+      UI_GROUP_DETECTION,
+      &p->skyfracnoblank,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "minskyfrac",
       UI_KEY_MINSKYFRAC,
       "FLT",
@@ -379,6 +405,19 @@ struct argp_option program_options[] =
       &p->dthresh,
       GAL_TYPE_FLOAT32,
       GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "holengb",
+      UI_KEY_HOLENGB,
+      "INT",
+      0,
+      "4 or 8 connectivity for filling holes.",
+      UI_GROUP_DETECTION,
+      &p->holengb,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GT_0,
       GAL_OPTIONS_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },

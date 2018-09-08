@@ -190,7 +190,7 @@ threshold_apply(struct noisechiselparams *p, float *value1,
 void
 threshold_write_sn_table(struct noisechiselparams *p, gal_data_t *insn,
                          gal_data_t *inind, char *filename,
-                         gal_list_str_t *comments)
+                         gal_list_str_t *comments, char *extname)
 {
   gal_data_t *sn, *ind, *cols;
 
@@ -225,9 +225,11 @@ threshold_write_sn_table(struct noisechiselparams *p, gal_data_t *insn,
   gal_table_comments_add_intro(&comments, PROGRAM_STRING, &p->rawtime);
 
 
-  /* write the table. */
-  gal_checkset_writable_remove(filename, 0, 1);
-  gal_table_write(cols, comments, p->cp.tableformat, filename, "SN", 0);
+  /* Write the table. Note that we'll set the `dontdelete' argument to 0
+     because when the output is a FITS table, we want all the tables in one
+     FITS file. We have already deleted any existing file with the same
+     name in `ui_set_output_names'.*/
+  gal_table_write(cols, comments, p->cp.tableformat, filename, extname, 0);
 
 
   /* Clean up (if necessary). */
@@ -613,7 +615,7 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
      errors in parallel. */
   num=gal_statistics_number(qprm.erode_th);
   nval=((size_t *)(num->array))[0];
-  if( nval < cp->interpnumngb)
+  if( nval < cp->interpnumngb )
     error(EXIT_FAILURE, 0, "%zu tile(s) can be used for interpolation of the "
           "quantile threshold values over the full dataset. This is smaller "
           "than the requested minimum value of %zu (value to the "
@@ -627,12 +629,13 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
           "option values to Gnuastro's programs by appending `-P' to the "
           "end of your command.\n\n"
           "  * Slightly decrease `--tilesize' to have more tiles.\n"
-          "  * Slightly increase `--meanmedqdiff' to accept more tiles.\n\n"
-          "  * Decrease `--outliersigma' to reject less tiles as outliers."
-          "  * Decrease `--interpnumngb' to be smaller than %zu.\n"
-          "Try appending your command with `--checkqthresh' to see the "
-          "successful tiles (and get a feeling of the cause/solution. Note "
-          "that the output is a multi-extension FITS file).\n\n"
+          "  * Slightly increase `--meanmedqdiff' to accept more tiles.\n"
+          "  * Decrease `--outliersigma' to reject less tiles as outliers.\n"
+          "  * Decrease `--interpnumngb' to be smaller than %zu.\n\n"
+          "Append the previous command with `--checkqthresh' to see the "
+          "successful tiles and which were discarded as outliers. This will "
+          "help you find the cause/solution. Note that the output is a "
+          "multi-extension FITS file).\n\n"
           "To better understand this important step, please run the "
           "following command (press `SPACE'/arrow-keys to navigate and "
           "`Q' to return back to the command-line):\n\n"

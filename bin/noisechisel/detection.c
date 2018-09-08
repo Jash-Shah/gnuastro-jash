@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/fits.h>
 #include <gnuastro/label.h>
+#include <gnuastro/blank.h>
 #include <gnuastro/binary.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/pointer.h>
@@ -82,8 +83,10 @@ detection_ngb_to_connectivity(size_t ndim, size_t ngb)
 void
 detection_initial(struct noisechiselparams *p)
 {
+  float *f;
   char *msg;
   uint8_t *b, *bf;
+  int resetblank=0;
   struct timeval t0, t1;
 
 
@@ -105,6 +108,15 @@ detection_initial(struct noisechiselparams *p)
     }
 
 
+  /* Remove any blank elements from the binary image if requested. */
+  if(p->blankasforeground==0 && gal_blank_present(p->binary,0))
+    {
+      resetblank=1;
+      bf=(b=p->binary->array)+p->binary->size;
+      do *b = *b==GAL_BLANK_UINT8 ? 0 : *b; while(++b<bf);
+    }
+
+
   /* Erode the image. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
   gal_binary_erode(p->binary, p->erode,
@@ -112,7 +124,7 @@ detection_initial(struct noisechiselparams *p)
                                                  p->erodengb), 1);
   if(!p->cp.quiet)
     {
-      if( asprintf(&msg, "Eroded %zu time%s (%zu-connectivity).", p->erode,
+      if( asprintf(&msg, "Eroded %zu time%s (%zu-connected).", p->erode,
                    p->erode>1?"s":"", p->erodengb)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
@@ -138,11 +150,20 @@ detection_initial(struct noisechiselparams *p)
                                                 p->openingngb), 1);
   if(!p->cp.quiet)
     {
-      if( asprintf(&msg, "Opened (depth: %zu, %s connectivity).",
-                   p->opening, p->openingngb==4 ? "4" : "8")<0 )
+      if( asprintf(&msg, "Opened (depth: %zu, %zu-connected).",
+                   p->opening, p->openingngb)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_timing_report(&t1, msg, 2);
       free(msg);
+    }
+
+
+  /* Reset the blank values (if requested). */
+  if(resetblank)
+    {
+      f=p->input->array;
+      bf=(b=p->binary->array)+p->binary->size;
+      do *b = isnan(*f++) ? GAL_BLANK_UINT8 : *b; while(++b<bf);
     }
 
 
@@ -249,6 +270,7 @@ detection_fill_holes_open(void *in_prm)
   struct noisechiselparams *p=fho_prm->p;
 
   void *tarray;
+  uint8_t *b, *bf;
   gal_data_t *tile, *copy, *tblock;
   size_t i, dsize[]={1,1,1,1,1,1,1,1,1,1}; /* For upto 10-Dimensions! */
 
@@ -276,18 +298,25 @@ detection_fill_holes_open(void *in_prm)
       /* Copy the tile into the contiguous patch of memory to work on, but
          first reset the size element so `gal_data_copy_to_allocated' knows
          there is enough space. */
+      copy->flag=0;
       copy->size=p->maxltcontig;
       gal_data_copy_to_allocated(tile, copy);
 
-      /* Fill the holes in this tile: holes with maximal connectivity means
-         that they are most strongly bounded.
+      /* Take blank values to the background (set them to zero) if
+         necsesary. */
+      if( p->blankasforeground==0
+          && gal_blank_present(p->input,0)
+          && gal_blank_present(copy, 1) )
+        {
+          bf=(b=copy->array)+copy->size;
+          do *b = *b==GAL_BLANK_UINT8 ? 0 : *b; while(++b<bf);
+        }
 
-         IMPORTANT NOTE: For 2D, the strongest connectivity (2) is
-         fine. But for 3D, the strongest connectivity is too strong and
-         will not be too useful for diffuse signal. So for 3D, we are now
-         using the second-strongest connectivity of 2 (numerically: same as
-         the 2D case). */
-      gal_binary_holes_fill(copy, 2, -1);
+      /* Fill the holes in this tile: holes with maximal connectivity means
+         that they are most strongly bounded. */
+      gal_binary_holes_fill(copy, detection_ngb_to_connectivity(p->input->ndim,
+                                                                p->holengb),
+                            -1);
       if(fho_prm->step==1)
         {
           detection_write_in_large(tile, copy);
@@ -328,6 +357,8 @@ static size_t
 detection_pseudo_find(struct noisechiselparams *p, gal_data_t *workbin,
                       gal_data_t *worklab, int s0d1)
 {
+  float *f;
+  uint8_t *b, *bf;
   gal_data_t *bin;
   struct fho_params fho_prm={0, NULL, workbin, worklab, p};
 
@@ -375,6 +406,14 @@ detection_pseudo_find(struct noisechiselparams *p, gal_data_t *workbin,
           /* Do the respective step. */
           gal_threads_spin_off(detection_fill_holes_open, &fho_prm,
                                p->ltl.tottiles, p->cp.numthreads);
+
+          /* Reset the blank values (if they were changed). */
+          if( p->blankasforeground==0 && gal_blank_present(p->input,0) )
+            {
+              f=p->input->array;
+              bf=(b=workbin->array)+workbin->size;
+              do *b = isnan(*f++) ? GAL_BLANK_UINT8 : *b; while(++b<bf);
+            }
 
           /* Set the extension name based on the step. */
           switch(fho_prm.step)
@@ -447,7 +486,7 @@ static void
 detection_sn_write_to_file(struct noisechiselparams *p, gal_data_t *sn,
                            gal_data_t *snind, int s0d1D2)
 {
-  char *str;
+  char *str, *extname;
   gal_list_str_t *comments=NULL;
 
   /* Comment for extension on further explanation. */
@@ -467,11 +506,15 @@ detection_sn_write_to_file(struct noisechiselparams *p, gal_data_t *sn,
   gal_list_str_add(&comments, str, 1);
 
 
-  /* Set the file name. */
+  /* Set the file name and write the table. */
   str = ( s0d1D2
           ? ( s0d1D2==2 ? p->detsn_D_name : p->detsn_d_name )
           : p->detsn_s_name );
-  threshold_write_sn_table(p, sn, snind, str, comments);
+  if( p->cp.tableformat!=GAL_TABLE_FORMAT_TXT )
+    extname = ( s0d1D2
+                ? ( s0d1D2==2 ? "GROWN_DETECTION_SN" : "DET_PSEUDODET_SN" )
+                : "SKY_PSEUDODET_SN" );
+  threshold_write_sn_table(p, sn, snind, str, comments, extname);
   gal_list_str_free(comments, 1);
 
 
@@ -816,6 +859,7 @@ detection_final_remove_small_sn(struct noisechiselparams *p,
   gal_data_t *sn, *snind;
   int32_t *l, *lf, curlab=1;
   gal_list_str_t *comments=NULL;
+  char *extname="GROWN_DETECTION_SN";
   int32_t *newlabs=gal_pointer_allocate(GAL_TYPE_INT32, num+1, 1, __func__,
                                         "newlabs");
 
@@ -863,9 +907,8 @@ detection_final_remove_small_sn(struct noisechiselparams *p,
       gal_list_str_add(&comments, "See also: `DILATED' "
                        "HDU of output with `--checkdetection'.", 1);
       gal_list_str_add(&comments, "S/N of finally grown detections.", 1);
-
-
-      threshold_write_sn_table(p, sn, snind, p->detsn_D_name, comments);
+      threshold_write_sn_table(p, sn, snind, p->detsn_D_name, comments,
+                               extname);
       gal_list_str_free(comments, 1);
 
     }
@@ -1145,6 +1188,13 @@ detection(struct noisechiselparams *p)
      pseudo-detections. */
   if(!p->cp.quiet) gettimeofday(&t1, NULL);
   num_true_initial=detection_remove_false_initial(p, workbin);
+  if(p->detectionname)
+    {
+      p->olabel->name="DETECTIONS-INIT-TRUE";
+      gal_fits_img_write(workbin, p->detectionname, NULL,
+                         PROGRAM_NAME);
+      p->olabel->name=NULL;
+    }
   if(!p->cp.quiet)
     {
       if( asprintf(&msg, "%zu false initial detections removed.",

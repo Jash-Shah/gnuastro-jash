@@ -267,6 +267,21 @@ ui_read_check_only_options(struct segmentparams *p)
               "(starting from zero), extension name, or anything "
               "acceptable by CFITSIO");
     }
+
+  /* If the S/N quantile is less than 0.1 (an arbitrary small value), this
+     is probably due to forgetting that this is the purity level
+     (higher-is-better), not the contamination level
+     (lower-is-better). This actually happened in a few cases: where we
+     wanted a false detection rate of 0.0001 (a super-high value!), and
+     instead of inputing 0.9999, we mistakenly gave `--snquant' a value of
+     `0.0001'. We were thus fully confused with the output (an extremely
+     low value) and thought its a bug, while it wasn't! */
+  if(p->snquant<0.1)
+    fprintf(stderr, "\nWARNING: Value of `--snquant' (`-c') is %g. Note "
+            "that this is not a contamination rate (where lower is "
+            "better), it is a purity rate (where higher is better). If you "
+            "intentionally asked for such a low purity level, please "
+            "ignore this warning\n\n", p->snquant);
 }
 
 
@@ -365,10 +380,10 @@ ui_set_output_names(struct segmentparams *p)
     {
       p->clumpsn_s_name=gal_checkset_automatic_output(&p->cp, basename,
                  ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
-                   ? "_clumpsn_sky.txt" : "_clumpsn_sky.fits") );
+                   ? "_clumpsn_sky.txt" : "_clumpsn.fits") );
       p->clumpsn_d_name=gal_checkset_automatic_output(&p->cp, basename,
                  ( p->cp.tableformat==GAL_TABLE_FORMAT_TXT
-                   ? "_clumpsn_det.txt" : "_clumpsn_det.fits") );
+                   ? "_clumpsn_det.txt" : "_clumpsn.fits") );
     }
 
   /* Segmentation steps. */
@@ -913,7 +928,8 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct segmentparams *p)
   if(!p->cp.quiet)
     {
       /* Basic inputs. */
-      printf(PROGRAM_NAME" started on %s", ctime(&p->rawtime));
+      printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s",
+             ctime(&p->rawtime));
       printf("  - Using %zu CPU thread%s\n", p->cp.numthreads,
              p->cp.numthreads==1 ? "." : "s.");
       printf("  - Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
