@@ -941,11 +941,12 @@ ui_read_cols_3d(struct mkprofparams *p)
           p->r=corrtype->array;
 
           /* Check if there is no negative or zero-radius profile. */
-          if(p->f[i]!=PROFILE_POINT && p->r[i]<=0.0f)
-            error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g is "
-                  "not acceptable for a `%s' profile. It has to be larger "
-                  "than 0", p->catname, i+1, p->r[i],
-                  ui_profile_name_write(p->f[i]));
+          for(i=0;i<p->num;++i)
+            if(p->f[i]!=PROFILE_POINT && p->r[i]<=0.0f)
+              error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g is "
+                    "not acceptable for a `%s' profile. It has to be larger "
+                    "than 0", p->catname, i+1, p->r[i],
+                    ui_profile_name_write(p->f[i]));
           break;
 
         case 6:
