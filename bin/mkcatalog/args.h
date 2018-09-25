@@ -231,6 +231,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "spectrum",
+      UI_KEY_SPECTRUM,
+      0,
+      0,
+      "Object spectrum for cube (3D) datasets.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->spectrum,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

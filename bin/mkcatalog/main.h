@@ -183,6 +183,7 @@ struct mkcatalogparams
   uint8_t         subtractsky;  /* ==1: subtract the Sky from values.   */
   float           sfmagnsigma;  /* Surface brightness multiple of sigma.*/
   float             sfmagarea;  /* Surface brightness area (arcsec^2).  */
+  uint8_t            spectrum;  /* Object spectrum for 3D datasets.     */
 
   char            *upmaskfile;  /* Name of upper limit mask file.       */
   char             *upmaskhdu;  /* HDU of upper limit mask file.        */
@@ -224,6 +225,8 @@ struct mkcatalogparams
   uint8_t      uprangewarning;  /* A warning must be printed.           */
   size_t         *hostobjid_c;  /* To sort the clumps table by Obj.ID.  */
   size_t         *numclumps_c;  /* To sort the clumps table by Obj.ID.  */
+  gal_data_t   *specsliceinfo;  /* Slice information for spectra.       */
+  gal_data_t         *spectra;  /* Array of datasets containing spectra.*/
 
   char        *usedvaluesfile;  /* Ptr to final name used for values.   */
   char        *usedclumpsfile;  /* Ptr to final name used for clumps.   */
