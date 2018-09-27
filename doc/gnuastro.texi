@@ -17639,10 +17639,10 @@ the output catalog/table's central position column@footnote{See
 @ref{Measuring elliptical parameters} for a discussion on this and the
 derivation of positional parameters, which includes the
 center.}. Similarly, the sum of all these pixels will be the 42nd row in
-the brightness column and etc. Pixels with labels equal to, or smaller than
-zero will be ignored by MakeCatalog. In other words, the number of rows in
-MakeCatalog's output is already known before running it (the maximum value
-of the labeled dataset).
+the brightness column and etc. Pixels with labels equal to, or smaller
+than, zero will be ignored by MakeCatalog. In other words, the number of
+rows in MakeCatalog's output is already known before running it (the
+maximum value of the labeled dataset).
 
 Before getting into the details of running MakeCatalog (in @ref{Invoking
 astmkcatalog}, we'll start with a discussion on the basics of its approach
@@ -18408,9 +18408,9 @@ options and general setting options are described below.
 @item -l STR
 @itemx --clumpsfile=STR
 The file containing the labeled clumps dataset when @option{--clumpscat} is
-called (see @ref{MakeCatalog output}). When @option{--clumpscat} is
-called, but this option isn't, MakeCatalog will look into the main input
-file (given as an argument) for the required extension/HDU (value to
+called (see @ref{MakeCatalog output}). When @option{--clumpscat} is called,
+but this option isn't, MakeCatalog will look into the main input file
+(given as an argument) for the required extension/HDU (value to
 @option{--clumpshdu}).
 
 @item --clumpshdu=STR
@@ -18637,8 +18637,7 @@ option.
 The final group of options particular to MakeCatalog are those that specify
 which measurements/columns should be written into the final output
 table. The most basic measurement is one which only produces one final
-value for each label (for example its total brightness: a single
-number).
+value for each label (for example its total brightness: a single number).
 
 In this case, all the different label's measurements can be written as one
 column in a final table/catalog that contains other columns for other

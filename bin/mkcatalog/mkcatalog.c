@@ -730,7 +730,6 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
             printf("  - Spectra in %zu files with `-spec-NN.txt' suffix.\n",
                    p->numobjects);
         }
-
     }
 }
 
