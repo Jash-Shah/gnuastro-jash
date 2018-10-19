@@ -12,6 +12,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Arithmetic:
     --onedasimage: write output as an image if it has one dimension, not table.
 
+  Fits:
+    --numhdus: prints the number of HDUs in the given FITS file.
+
   NoiseChisel:
     - New outlier identification algorithm for quantile thresholds. This is
       very useful when there are extended and bright sources in the
@@ -101,7 +104,8 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #54493: Warp crashes when type isn't set.
   bug #54526: Invalid r, q and truncation of point profiles in MakeProfiles.
   bug #54579: NoiseChisel pseudo-detection failure when dataset is negative.
-
+  bug #54782: Segment's check image not removing sky clumps some tiles.
+  bug #54810: Arithmetic crash when previously named operand renamed.
 
 
 

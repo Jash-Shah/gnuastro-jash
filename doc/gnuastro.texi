@@ -2911,7 +2911,7 @@ omatter  0.3
 You can now tell CosmicCalculator to read this file for option values
 immediately using the @option{--config} option as shown below. Do you see
 how the output of the following command corresponds to the option values in
-@file{my-cosmology.txt} (previous command)?
+@file{my-cosmology.conf} (previous command)?
 
 @example
 $ astcosmiccal --config=my-cosmology.conf -z2
@@ -2976,9 +2976,9 @@ $ astwarp flat-ir/xdf-f160w.fits --rotate=20
 @end example
 
 @noindent
-Open the output and see the output. If your final image is already aligned
-with RA and Dec, you can simply use the @option{--align} option and let
-Warp calculate the necessary rotation.
+Open the output and see it. If your final image is already aligned with RA
+and Dec, you can simply use the @option{--align} option and let Warp
+calculate the necessary rotation and apply it.
 
 Warp can generally be used for any kind of pixel grid manipulation
 (warping). For example the outputs of the commands below will respectively
@@ -9861,6 +9861,17 @@ output file name is given, then automatic output will be used to store the
 HDUs given to this option (see @ref{Automatic output}).
 
 @table @option
+
+@item -n
+@itemx --numhdus
+Print the number of extensions/HDUs in the given file. Note that this
+option must be called alone and will only print a single number. It is thus
+useful in scripts, for example when you need to do check the number of
+extensions in a FITS file.
+
+For a complete list of basic meta-data on the extensions in a FITS file,
+don't use any of the options in this section or in @ref{Keyword
+manipulation}. For more, see @ref{Invoking astfits}.
 
 @item -C STR
 @itemx --copy=STR
@@ -23148,6 +23159,12 @@ Identifier for a @code{size_t} type. This is just an alias to
 respectively.
 @end deffn
 
+@deffn {Global integer}  GAL_TYPE_ULONG
+Identifier for a @code{unsigned long} type. This is just an alias to
+@code{uint32}, or @code{uint64} types for 32-bit, or 64-bit systems
+respectively.
+@end deffn
+
 @deffn {Global integer}  GAL_TYPE_LONG
 Identifier for a @code{long} type. This is just an alias to @code{int32},
 or @code{int64} types for 32-bit, or 64-bit systems respectively.
@@ -30657,7 +30674,7 @@ completely rely.
 @end quotation
 
 Please get in touch with the Gnuastro maintainer (currently Mohammad
-Akhlaghi, akhlaghi -at- gnu -dot- org) to follow the procedures. It is
+Akhlaghi, mohammad -at- akhlaghi -dot- org) to follow the procedures. It is
 possible to do this for each change (good for for a single contribution),
 and also more generally for all the changes/additions you do in the future
 within Gnuastro. So if you have already assigned the copyright of your work
