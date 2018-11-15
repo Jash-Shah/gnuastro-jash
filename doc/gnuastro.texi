@@ -1688,24 +1688,44 @@ character, enabling you to use multiple lines to write your commands.
 @node Acknowledgments,  , Conventions, Introduction
 @section Acknowledgments
 
-The list of Gnuastro authors is available at the start of this book and the
-@file{AUTHORS} file in the source code. Here the authors wish to gratefully
-acknowledge the help and support they received from other people and
-institutions who had an indirect (not committed in the version controlled
-history) role in Gnuastro. The plain text file @file{THANKS} which is
-distributed along with the source code also contains this list.
+Gnuastro would not have been possible without scholarships and grants from
+several funding institutions. We thus ask that if you used Gnuastro in any
+of your papers/reports, please add the proper citation and acknowledge this
+instrumental support. For details of which papers to cite (may be different
+for different programs) and get the acknowledgement statement to include in
+your paper, please run the relevant programs with the common
+@option{--cite} option like the example commands below (for more on
+@option{--cite}, please see @ref{Operating mode options}).
 
-The Japanese Ministry of Science and Technology (MEXT) scholarship for
-Mohammad Akhlaghi's Masters and PhD period in Tohoku University
-Astronomical Institute had an instrumental role in the long term learning
-and planning that made the idea of Gnuastro possible. The very critical
-view points of Professor Takashi Ichikawa (Mohammad's adviser) were also
-instrumental in the initial ideas and creation of Gnuastro. The European
-Research Council (ERC) advanced grant 339659-MUSICOS (Principal
-investigator: Roland Bacon) was vital in the growth and expansion of
-Gnuastro, enabling a thorough re-write of the core functionality of all
-libraries and programs, turning Gnuastro into the large collection of
-generic programs and libraries it is today.
+@example
+$ astnoisechisel --cite
+$ astmkcatalog --cite
+@end example
+
+Here, we'll acknowledge all the institutions (and their grants) along with
+the people who helped make Gnuastro possible. The full list of Gnuastro
+authors is available at the start of this book and the @file{AUTHORS} file
+in the source code (both are generated automatically from the version
+controlled history). The plain text file @file{THANKS}, which is also
+distributed along with the source code, contains the list of people and
+institutions who played an indirect role in Gnuastro (not committed any
+code in the Gnuastro version controlled history).
+
+The Japanese Ministry of Education, Culture, Sports, Science, and
+Technology (MEXT) scholarship for Mohammad Akhlaghi's Masters and PhD
+degree in Tohoku University Astronomical Institute had an instrumental role
+in the long term learning and planning that made the idea of Gnuastro
+possible. The very critical view points of Professor Takashi Ichikawa
+(Mohammad's adviser) were also instrumental in the initial ideas and
+creation of Gnuastro. Afterwards, the European Research Council (ERC)
+advanced grant 339659-MUSICOS (Principal investigator: Roland Bacon) was
+vital in the growth and expansion of Gnuastro. Working with Roland at the
+Centre de Recherche Astrophysique de Lyon (CRAL), enabled a thorough
+re-write of the core functionality of all libraries and programs, turning
+Gnuastro into the large collection of generic programs and libraries it is
+today.  Work on improving Gnuastro and making it mature is now continuing
+primarily in the Instituto de Astrofisica de Canarias (IAC) and in
+particular in collaboration with Johan Knapen and Ignacio Trujillo.
 
 @c To the developers: please keep this in the same order as the THANKS file
 @c (alphabetical, except for the names in the paragraph above).
@@ -1731,14 +1751,17 @@ important) technical questions.
 
 All work on Gnuastro has been voluntary, but the authors are most grateful
 to the following institutions (in chronological order) for hosting us in
-our research:
+our research. Where necessary, these institutions have disclaimed any
+ownership of the parts of Gnuastro that were developed there, thus insuring
+the freedom of Gnuastro for the future (see @ref{Copyright assignment}). We
+highly appreciate their support for free software, and thus free science,
+and therefore a free society.
 
 @quotation
-Ministry of education, culture, sports, science and technology (MEXT), Japan.@*
 Tohoku University Astronomical Institute, Sendai, Japan.@*
 University of Salento, Lecce, Italy.@*
-Centre national de la recherche scientifique (CNRS), France.@*
-Centre de Recherche Astrophysique de Lyon, University of Lyon 1, France.@*
+Centre de Recherche Astrophysique de Lyon (CRAL), Lyon, France.@*
+Instituto de Astrofisica de Canarias (IAC), Tenerife, Spain.@*
 @end quotation
 
 
@@ -3386,13 +3409,16 @@ $ astnoisechisel flat-ir/xdf-f160w.fits --output=nc/xdf-f160w.fits
 $ astnoisechisel flat-ir/xdf-f105w.fits --output=nc/xdf-f105w.fits
 @end example
 
-Before continuing with the higher-level processing of this dataset, we'll
-pause to use NoiseChisel's multi-extension output for showing how the Fits
-program can make it easy to work with this wonderful data container (see
-@ref{Fits}). Let's say you need to copy a HDU/extension from one FITS file
-to another. Try the command below to make an @file{objects.fits} file that
-contains only NoiseChisel's binary detection map. There are similar options
-to conveniently cut or delete HDUs from a FITS file also.
+Before continuing with the higher-level processing of this dataset, let's
+pause to use NoiseChisel's multi-extension output as a demonstration for
+working with FITS extensions using Gnuastro's Fits program (see @ref{Fits}.
+
+Let's say you need to copy a HDU/extension (image or table) from one FITS
+file to another. After the command below, @file{objects.fits} file will
+contain only one extension: a copy of NoiseChisel's binary detection
+map. There are similar options to conveniently cut (@option{--cut}, copy,
+then remove from the input) or delete (@option{--remove}) HDUs from a FITS
+file also.
 
 @example
 $ astfits nc/xdf-f160w.fits --copy=DETECTIONS -odetections.fits
@@ -3460,10 +3486,10 @@ more.
 
 Having localized the regions of interest in the dataset, we are ready to do
 measurements on them with @ref{MakeCatalog}. Besides the IDs, we want to
-measure the Right Ascension (with @option{--ra}), Declination
-(@option{--dec}, magnitude (@option{--magnitude} and signal-to-noise ratio
-(@option{--sn}) of the objects and clumps. The following command will make
-these measurements on Segment's F160W output:
+measure (in this order) the Right Ascension (with @option{--ra}),
+Declination (@option{--dec}), magnitude (@option{--magnitude}), and
+signal-to-noise ratio (@option{--sn}) of the objects and clumps. The
+following command will make these measurements on Segment's F160W output:
 
 @c Keep the `--zeropoint' on a single line, because later, we'll add
 @c `--valuesfile' in that line also, and it would be more clear if both
@@ -6834,12 +6860,14 @@ or sending to colleagues who don't use Git for an easy build and manual.
 
 @item -u STR
 @item --upload STR
-Activate the @option{--dist} (@option{-D}) option, but also rename the
-tarball suffix to @file{-latest.tar.lz} (instead of the version
-number). Then use secure copy (@command{scp}, part of the SSH tools) to
-copy the tarball and PDF to the server and directory specified in the value
-to this option. For example @command{--upload my-server:dir}, will copy the
-two files to the @file{dir} directory of @code{my-server} server.
+Activate the @option{--dist} (@option{-D}) option, then use secure copy
+(@command{scp}, part of the SSH tools) to copy the tarball and PDF to the
+@file{src} and @file{pdf} subdirectories of the specified server and its
+directory (value to this option). For example @command{--upload
+my-server:dir}, will copy the tarball in the @file{dir/src}, and the PDF
+manual in @file{dir/pdf} of @code{my-server} server. It will then make a
+symbolic link in the top server directory to the tarball that is called
+@file{gnuastro-latest.tar.lz}.
 
 @item -p
 @itemx --publish
@@ -7831,20 +7859,26 @@ done very fast (depending on the properties of your input) disabling these
 reports will also decrease running time.
 
 @item --cite
-Print the Bib@TeX{} entry for Gnuastro and the particular program (if
-that program comes with a separate paper) and abort. Citations are
-vital for the continued work on Gnuastro. Gnuastro started and is
-continued based on separate research projects. So if you find any of
-the tools offered in Gnuastro to be useful in your research, please
-use the output of this command to cite the program and Gnuastro in
-your research paper. Thank you.
+Print all necessary information to cite and acknowledge Gnuastro in your
+published papers. With this option, the programs will print the Bib@TeX{}
+entry to include in your paper for Gnuastro in general, and the particular
+program's paper (if that program comes with a separate paper). It will also
+print the necessary acknowledgement statement to add in the respective
+section of your paper and it will abort. For a more complete explanation,
+please see @ref{Acknowledgments}.
+
+Citations and acknowledgements are vital for the continued work on
+Gnuastro. Gnuastro started, and is continued, based on separate research
+projects. So if you find any of the tools offered in Gnuastro to be useful
+in your research, please use the output of this command to cite and
+acknowledge the program (and Gnuastro) in your research paper. Thank you.
 
 Gnuastro is still new, there is no separate paper only devoted to Gnuastro
 yet. Therefore currently the paper to cite for Gnuastro is the paper for
 NoiseChisel which is the first published paper introducing Gnuastro to the
 astronomical community. Upon reaching a certain point, a paper completely
-devoted to Gnuastro will be published, see @ref{GNU Astronomy Utilities
-1.0}.
+devoted to describing Gnuastro's many functionalities will be published,
+see @ref{GNU Astronomy Utilities 1.0}.
 
 @item -P
 @itemx --printparams
