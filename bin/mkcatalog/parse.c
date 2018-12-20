@@ -303,7 +303,7 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
   gal_data_t *area;
   float *st_v, *st_std;
   uint32_t *narr, *oarr;
-  size_t *tsize, start_end_inc[2];
+  size_t nproj=0, *tsize, start_end_inc[2];
   uint8_t *xybinarr = xybin ? xybin->array : NULL;
   int32_t *O, *OO, *st_o, *objarr=p->objects->array;
   size_t tid, *dsize=p->objects->dsize, num_increment=1;
@@ -366,6 +366,7 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
               /* Projected spectra: see if we have a value of `2' in the
                  `xybin' array (showing that there is atleast one non-blank
                  element there over the whole spectrum.  */
+              ++nproj;
               parr [ sind ] += *V;
               pearr[ sind ] += var;
 
@@ -403,7 +404,9 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
          index `pind' if we have just finished parsing a slice. */
       if( (num_increment-1)%pp->tile->dsize[1]==0 )
         {
-          pind=0;
+          if(nproj==0) parr[sind]=pearr[sind]=NAN;
+
+          nproj=pind=0;
           ++sind;
         }
     }
