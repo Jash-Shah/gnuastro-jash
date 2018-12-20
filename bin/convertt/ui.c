@@ -513,7 +513,8 @@ ui_make_channels_ll(struct converttparams *p)
 
   /* If there weren't any channels, abort with an error. */
   if(p->numch==0)
-    error(EXIT_FAILURE, 0, gal_options_stdin_error(p->cp.stdintimeout, 0));
+    error(EXIT_FAILURE, 0, "%s",
+          gal_options_stdin_error(p->cp.stdintimeout, 0, "input"));
 
   /* Reverse the list of channels into the input order. */
   gal_list_data_reverse(&p->chll);
@@ -702,6 +703,9 @@ ui_set_output(struct converttparams *p)
   /* EPS */
   else if(gal_eps_name_is_eps(cp->output))
     {
+      if(p->borderwidth==0 && p->widthincm==0)
+        error(EXIT_FAILURE, 0, "at least one of `--widthincm' (`-u'), or "
+              "`--borderwidth (`-b') options are necessary for an EPS output");
       p->outformat=OUT_FORMAT_EPS;
       if( gal_eps_suffix_is_eps(cp->output) )
         ui_add_dot_use_automatic_output(p);
@@ -710,6 +714,9 @@ ui_set_output(struct converttparams *p)
   /* PDF */
   else if(gal_pdf_name_is_pdf(cp->output))
     {
+      if(p->borderwidth==0 && p->widthincm==0)
+        error(EXIT_FAILURE, 0, "at least one of `--widthincm' (`-u'), or "
+              "`--borderwidth (`-b') options are necessary for a PDF output");
       p->outformat=OUT_FORMAT_PDF;
       if( gal_pdf_suffix_is_pdf(cp->output) )
         ui_add_dot_use_automatic_output(p);

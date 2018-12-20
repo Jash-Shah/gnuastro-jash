@@ -982,7 +982,7 @@ results. Before he actually saw the moons of Jupiter, the mountains on the
 Moon or the crescent of Venus, Galileo was “evasive”@footnote{Galileo
 G. (Translated by Maurice A. Finocchiaro). @emph{The essential
 Galileo}. Hackett publishing company, first edition, 2008.} to
-Kepler. Science is defined by its tools/methods, @emph{not} its
+Kepler. Science is defined by its tools/methods, @emph{not} its raw
 results@footnote{For example, take the following two results on the age of
 the universe: roughly 14 billion years (suggested by the current consensus
 of the standard model of cosmology) and less than 10,000 years (suggested
@@ -990,22 +990,24 @@ from some interpretations of the Bible). Both these numbers are
 @emph{results}. What distinguishes these two results, is the tools/methods
 that were used to derive them. Therefore, as the term ``Scientific method''
 also signifies, a scientific statement it defined by its @emph{method}, not
-its result.}
+its result.}.
 
 The same is true today: science cannot progress with a black box, or poorly
-released code. Technical knowledge and experience (to experiment on its
-tools, or software in this context@footnote{Of course, this also applies to
-hardware.}), is critical to scientific vitality. Scientific research are
-only considered for peer review and publication if they have a sufficiently
-high standard of English style. A similar level of quality assessment is
-necessary regarding the codes/methods scientists use to derive their
-results. Therefore, when a scientist says ``software is not my specialty, I
-am not a software engineer. So the quality of my code/processing doesn't
-matter. Why should I master good coding style, or release my code, when I
-am hired to do Astronomy/Biology?''. This statement is akin to a French
-scientist saying that "English is not my language, I am not Shakespeare. So
-the quality of my English writing doesn't matter. Why should I master good
-English style, when I am hired to do Astronomy/Biology?"
+released code. The source code of a research is the new (abstractified)
+communication language in science, understandable by humans @emph{and}
+computers. Source code (in any programming language) is a language/notation
+designed to express all the details that would be too
+tedious/long/frustrating to report in spoken languages like English,
+similar to mathematic notation.
+
+Today, the quality of the source code that goes into a scientific result
+(and the distribution of that code) is as critical to scientific vitality
+and integrity, as the quality of its written language/English used in
+publishing/distributing its paper. A scientific paper will not even be
+reviewed by any respectable journal if its written in a poor
+language/English. A similar level of quality assessment is thus
+increasingly becoming necessary regarding the codes/methods used to derive
+the results of a scientific paper.
 
 @cindex Ken Thomson
 @cindex Stroustrup, Bjarne
@@ -1692,7 +1694,7 @@ Gnuastro would not have been possible without scholarships and grants from
 several funding institutions. We thus ask that if you used Gnuastro in any
 of your papers/reports, please add the proper citation and acknowledge this
 instrumental support. For details of which papers to cite (may be different
-for different programs) and get the acknowledgement statement to include in
+for different programs) and get the acknowledgment statement to include in
 your paper, please run the relevant programs with the common
 @option{--cite} option like the example commands below (for more on
 @option{--cite}, please see @ref{Operating mode options}).
@@ -2600,7 +2602,7 @@ small number).
 This is the deepest image we currently have of the sky. The first thing
 that comes to mind may be this: ``How large is this field?''. The FITS
 world coordinate system (WCS) meta data standard contains the key to
-ansering this question: the @code{CDELT} keyword@footnote{In the FITS
+answering this question: the @code{CDELT} keyword@footnote{In the FITS
 standard, the @code{CDELT} keywords (@code{CDELT1} and @code{CDELT2} in a
 2D image) specify the scales of each coordinate. In the case of this image
 it is in units of degrees-per-pixel. See Section 8 of the
@@ -2610,7 +2612,7 @@ standard} for more. In short, with the @code{CDELT} convention, rotation
 separated. In the FITS standard the @code{CDELT} keywords are
 optional. When @code{CDELT} keywords aren't present, the @code{PC} matrix
 is assumed to contain @emph{both} the coordinate rotation and scales. Note
-that not all FITS writers use the @code{CDELT} convension. So you might not
+that not all FITS writers use the @code{CDELT} convention. So you might not
 find the @code{CDELT} keywords in the WCS meta data of some FITS
 files. However, all Gnuastro programs (which use the default FITS keyword
 writing format of WCSLIB), the @code{CDELT} convention is used, even if the
@@ -3185,7 +3187,7 @@ objects. This shows that we have dug in too deep, and that we are following
 correlated noise.
 
 Correlated noise is created when we warp datasets from individual exposures
-(that are each slightly offest compared to each other) into the same pixel
+(that are each slightly offset compared to each other) into the same pixel
 grid, then add them to form the final result. Because it mixes nearby pixel
 values, correlated noise is a form of convolution and it smooths the
 image. In terms of the number of exposures (and thus correlated noise), the
@@ -3200,7 +3202,7 @@ purely routine matter, and generally calls for more than one pass through
 the computer}'' (Anscombe 1973, see @ref{Science and its tools}). A good
 scientist must have a good understanding of her tools to make a meaningful
 analysis. So don't hesitate in playing with the default configuration and
-reviewing the manual when you have a new dataset infront of you. Robust
+reviewing the manual when you have a new dataset in front of you. Robust
 data analysis is an art, therefore a good scientist must first be a good
 artist.
 
@@ -3238,7 +3240,7 @@ NoiseChisel. We see these thin connections between smaller points are
 already present here (a relatively early stage in the processing). Such
 connections at the lowest surface brightness limits usually occur when the
 dataset is too smoothed. Because of correlated noise, the dataset is
-already artificially smoothed, therefore futher smoothing it with the
+already artificially smoothed, therefore further smoothing it with the
 default kernel may be the problem. Therefore, one solution is to use a
 sharper kernel (NoiseChisel's first step in its processing).
 
@@ -3274,7 +3276,7 @@ can see that there aren't too many pseudo-detections because of all those
 extended filled holes. If you look closely, you can see the number of
 pseudo-detections in the result NoiseChisel prints (around 4000). This is
 another side-effect of correlated noise. To address it, we should slightly
-increase the pseudo-detection threhold (@option{--dthresh}, run with
+increase the pseudo-detection threshold (@option{--dthresh}, run with
 @option{-P} to see its default value):
 
 @example
@@ -3328,7 +3330,7 @@ signal-to-noise quantile @option{--snquant} is 0.99. In effect with this
 option you specify the purity level you want (contamination by false
 detections). With the @command{aststatistics} command above, you see that a
 small number of extra false detections (impurity) in the final result
-causes a big change in completness (you can detect more lower
+causes a big change in completeness (you can detect more lower
 signal-to-noise true detections). So let's loosen-up our desired purity
 level and then mask the detected pixels like before to see if we have
 missed anything.
@@ -4157,7 +4159,7 @@ generally calls for more than one pass through the computer}'' (Anscombe
 1973, see @ref{Science and its tools}). A good scientist must have a good
 understanding of her tools to make a meaningful analysis. So don't hesitate
 in playing with the default configuration and reviewing the manual when you
-have a new dataset infront of you. Robust data analysis is an art,
+have a new dataset in front of you. Robust data analysis is an art,
 therefore a good scientist must first be a good artist.
 
 The first extension of @file{r_qthresh.fits} (@code{CONVOLVED}) is the
@@ -4184,7 +4186,7 @@ you play with the color-bar, you see that the faintest parts of the galaxy
 outskirts still remain. Therefore have two strategies for approaching this
 problem: 1) Increase the tile size to get more accurate measurements of
 skewness. 2) Strengthen the outlier rejection parameters to discard more of
-the tiles with signal. Fortunately in this image we have a sufficently
+the tiles with signal. Fortunately in this image we have a sufficiently
 large region on the right of the image that the galaxy doesn't extend
 to. So we can use the more robust first solution. In situations where this
 doesn't happen (for example if the field of view in this image was shifted
@@ -4290,7 +4292,7 @@ further configuration for a more accurate detection to you as an exercise.
 
 In this shallow image, this extent may seem too far deep into the noise for
 visual confirmation. Therefore, if the statistical argument above, to
-justify the reality of this extented structure, hasn't convinced you, see
+justify the reality of this extended structure, hasn't convinced you, see
 the deep images of this system in @url{https://arxiv.org/abs/1501.04599,
 Watkins et al. [2015]}, or a 12 hour deep image of this system (with a
 12-inch telescope): @url{https://i.redd.it/jfqgpqg0hfk11.jpg}@footnote{The
@@ -4310,7 +4312,7 @@ $ astarithmetic r_detected.fits 2 connected-components -hDETECTIONS \
                 -olabeled.fits
 @end example
 
-Ofcourse, you can find the the label of the main galaxy visually, but to
+Of course, you can find the the label of the main galaxy visually, but to
 have a little more fun, lets do this automatically. The M51 group detection
 is by far the largest detection in this image. We can thus easily find the
 ID/label that corresponds to it. We'll first run MakeCatalog to find the
@@ -4386,7 +4388,7 @@ The outer wings where therefore non-parametrically detected until
 @cindex Surface brightness
 This is very good! But the signal-to-noise ratio is a relative measurement.
 Let's also measure the depth of our detection in absolute surface
-brighntess units; or magnitudes per square arcseconds. To find out, we'll
+brightness units; or magnitudes per square arcseconds. To find out, we'll
 first need to calculate how many pixels of this image are in one
 arcsecond-squared. Fortunately the world coordinate system (or WCS) meta
 data of Gnuastro's output FITS files (in particular the @code{CDELT}
@@ -6862,7 +6864,7 @@ or sending to colleagues who don't use Git for an easy build and manual.
 @item --upload STR
 Activate the @option{--dist} (@option{-D}) option, then use secure copy
 (@command{scp}, part of the SSH tools) to copy the tarball and PDF to the
-@file{src} and @file{pdf} subdirectories of the specified server and its
+@file{src} and @file{pdf} sub-directories of the specified server and its
 directory (value to this option). For example @command{--upload
 my-server:dir}, will copy the tarball in the @file{dir/src}, and the PDF
 manual in @file{dir/pdf} of @code{my-server} server. It will then make a
@@ -6972,7 +6974,7 @@ this line:
 @end example
 
 @noindent
-In Texinfo, a line is commented with @code{@@c}. Therefore, uncomment this
+In Texinfo, a line is commented with @code{@@c}. Therefore, un-comment this
 line by deleting the first two characters such that it changes to:
 
 @example
@@ -7193,13 +7195,13 @@ datasets: setting the proper type for the usage context@footnote{For
 example if the values in your dataset can only be integers between 0 or
 65000, store them in a unsigned 16-bit type, not 64-bit floating point type
 (which is the default in most systems). It takes four times less space and
-is much faster to process.} can grealy improve the file size and also speed
+is much faster to process.} can greatly improve the file size and also speed
 of reading, writing or processing them.
 
 We'll then look into the recognized table formats in @ref{Tables} and how
 large datasets are broken into tiles, or mesh grid in
 @ref{Tessellation}. Finally, we'll take a look at the behavior regarding
-output files: @ref{Automatic output} discribes how the programs set a
+output files: @ref{Automatic output} describes how the programs set a
 default name for their output when you don't give one explicitly (using
 @option{--output}). When the output is a FITS file, all the programs also
 store some very useful information in the header that is discussed in
@@ -7249,7 +7251,7 @@ this manual for some examples of commands with each program, like
 @ref{Invoking asttable}, @ref{Invoking astfits}, or @ref{Invoking
 aststatistics}.
 
-The shell then brokes up your string into separate @emph{tokens} or
+The shell then brakes up your string into separate @emph{tokens} or
 @emph{words} using any @emph{metacharacters} (like white-space, tab,
 @command{|}, @command{>} or @command{;}) that are in the string. On the
 command-line, the first thing you usually enter is the name of the program
@@ -7863,11 +7865,11 @@ Print all necessary information to cite and acknowledge Gnuastro in your
 published papers. With this option, the programs will print the Bib@TeX{}
 entry to include in your paper for Gnuastro in general, and the particular
 program's paper (if that program comes with a separate paper). It will also
-print the necessary acknowledgement statement to add in the respective
+print the necessary acknowledgment statement to add in the respective
 section of your paper and it will abort. For a more complete explanation,
 please see @ref{Acknowledgments}.
 
-Citations and acknowledgements are vital for the continued work on
+Citations and acknowledgments are vital for the continued work on
 Gnuastro. Gnuastro started, and is continued, based on separate research
 projects. So if you find any of the tools offered in Gnuastro to be useful
 in your research, please use the output of this command to cite and
@@ -8067,7 +8069,7 @@ To solve the problem, the founders of Unix defined pipes to directly feed
 the output of one program (its ``Standard output'' stream) into the
 ``standard input'' of a next program. This removes the need to make
 temporary files between separate processes and became one of the best
-demonstrations of the Unix-way, or Unix philosopy.
+demonstrations of the Unix-way, or Unix philosophy.
 
 Every program has three streams identifying where it reads/writes non-file
 inputs/outputs: @emph{Standard input}, @emph{Standard output}, and
@@ -13509,7 +13511,7 @@ averages the signal it receives over that area, not a mathematical point as
 the Dirac @mymath{\delta} function defines. However, as long as the
 variation in the signal over one detector pixel is not significant, this
 can be a good approximation. Having put this issue to the side, we can now
-try to find the relation between the Fourier transforms of the unsampled
+try to find the relation between the Fourier transforms of the un-sampled
 @mymath{f(l)} and the sampled @mymath{f_s(l)}. For a more clear notation,
 let's define:
 
@@ -13929,8 +13931,9 @@ value.
 @node Invoking astconvolve,  , Convolution kernel, Convolve
 @subsection Invoking Convolve
 
-Convolve an input image with a known kernel or make the kernel necessary to
-match two PSFs. The general template for Convolve is:
+Convolve an input dataset (2D image or 1D spectrum for example) with a
+known kernel, or make the kernel necessary to match two PSFs. The general
+template for Convolve is:
 
 @example
 $ astconvolve [OPTION...] ASTRdata
@@ -13949,21 +13952,38 @@ $ astconvolve observedimg.fits --kernel=psf.fits --domain=spatial
 ## Find the kernel to match sharper and blurry PSF images:
 $ astconvolve --kernel=sharperimage.fits --makekernel=10           \
               blurryimage.fits
+
+## Convolve a Spectrum (column 14 in the FITS table below) with a
+## custom kernel (the kernel will be normalized internally, so only
+## the ratios are important). Sed is used to replace the spaces with
+## new line characters so Convolve sees them as values in one column.
+$ echo "1 3 10 3 1" | sed 's/ /\n/g' | astconvolve spectra.fits -c14
 @end example
 
 The only argument accepted by Convolve is an input image file. Some of the
 options are the same between Convolve and some other Gnuastro
 programs. Therefore, to avoid repetition, they will not be repeated
 here. For the full list of options shared by all Gnuastro programs, please
-see @ref{Common options}. In particular, in the spatial domain convolve
-uses Gnuastro's tessellation, see @ref{Tessellation} and the common options
-related to that in @ref{Processing options}.
+see @ref{Common options}. In particular, in the spatial domain, on a
+multi-dimensional datasets, convolve uses Gnuastro's tessellation to speed
+up the run, see @ref{Tessellation}. Common options related to tessellation
+are described in in @ref{Processing options}.
+
+1-dimensional datasets (for example spectra) are only read as columns
+within a table (see @ref{Tables} for more on how Gnuastro programs read
+tables). Note that currently 1D convolution is only implemented in the
+spatial domain and thus kernel-matching is also not supported.
 
 Here we will only explain the options particular to Convolve. Run Convolve
 with @option{--help} in order to see the full list of options Convolve
 accepts, irrespective of where they are explained in this book.
 
 @table @option
+
+@item --kernelcolumn
+Column containing the 1D kernel. When the input dataset is a 1-dimensional
+column, and the host table has more than one column, use this option to
+specify which column should be used.
 
 @item --nokernelflip
 Do not flip the kernel after reading it the spatial domain
@@ -14080,6 +14100,8 @@ The shifting might move the center of the star by one pixel in any
 direction, so crop the central pixel of the warped image to have a
 clean image for the de-convolution.
 @end itemize
+
+Note that this feature is not yet supported in 1-dimensional datasets.
 
 @item -c
 @itemx --minsharpspec
@@ -16677,7 +16699,7 @@ only one pixel will be used for each tile (see @ref{Processing options}).
 
 @item -s FLT,FLT
 @itemx --sigmaclip=FLT,FLT
-The @mymath{\sigma}-clipping parameters for measuing the initial and final
+The @mymath{\sigma}-clipping parameters for measuring the initial and final
 Sky values from the undetected pixels, see @ref{Sigma clipping}.
 
 This option takes two values which are separated by a comma (@key{,}). Each
@@ -16698,7 +16720,7 @@ undetected regions on the unconvolved image. The background pixels that are
 completely engulfed in a 4-connected foreground region are converted to
 background (holes are filled) and one opening (depth of 1) is applied over
 both the initially detected and undetected regions. The Signal to noise
-ratio of the resulting `psudo-detections' are used to identify true
+ratio of the resulting `pseudo-detections' are used to identify true
 vs. false detections. See Section 3.1.5 and Figure 7 in Akhlaghi and
 Ichikawa (2015) for a very complete explanation.
 
@@ -16715,16 +16737,16 @@ complete dataset and thus not create enough pseudo-detections.
 @item -m INT
 @itemx --snminarea=INT
 The minimum area to calculate the Signal to noise ratio on the
-psudo-detections of both the initially detected and undetected
-regions. When the area in a psudo-detection is too small, the Signal to
+pseudo-detections of both the initially detected and undetected
+regions. When the area in a pseudo-detection is too small, the Signal to
 noise ratio measurements will not be accurate and their distribution will
 be heavily skewed to the positive. So it is best to ignore any
-psudo-detection that is smaller than this area. Use
+pseudo-detection that is smaller than this area. Use
 @option{--detsnhistnbins} to check if this value is reasonable or not.
 
 @item --checksn
 Save the S/N values of the pseudo-detections (and possibly grown detections
-if @option{--cleangrowndet} is called) into seprate tables. If
+if @option{--cleangrowndet} is called) into separate tables. If
 @option{--tableformat} is a FITS table, each table will be written into a
 separate extension of one file suffixed with @file{_detsn.fits}. If it is
 plain text, a separate file will be made for each table (ending in
@@ -16742,7 +16764,7 @@ better understanding of the distribution (for example through a histogram).
 The minimum number of `pseudo-detections' over the undetected regions to
 identify a Signal-to-Noise ratio threshold. The Signal to noise ratio (S/N)
 of false pseudo-detections in each tile is found using the quantile of the
-S/N distribution of the psudo-detections over the undetected pixels in each
+S/N distribution of the pseudo-detections over the undetected pixels in each
 mesh. If the number of S/N measurements is not large enough, the quantile
 will not be accurate (can have large scatter). For example if you set
 @option{--snquant=0.99} (or the top 1 percent), then it is best to have at
@@ -16751,10 +16773,10 @@ least 100 S/N measurements.
 @item -c FLT
 @itemx --snquant=FLT
 The quantile of the Signal to noise ratio distribution of the
-psudo-detections in each mesh to use for filling the large mesh grid. Note
+pseudo-detections in each mesh to use for filling the large mesh grid. Note
 that this is only calculated for the large mesh grids that satisfy the
 minimum fraction of undetected pixels (value of @option{--minbfrac}) and
-minimum number of psudo-detections (value of @option{--minnumfalse}).
+minimum number of pseudo-detections (value of @option{--minnumfalse}).
 
 @item -d FLT
 @itemx --detgrowquant=FLT
@@ -17533,13 +17555,13 @@ this size is set to a small value, the Signal to noise ratio of false
 clumps will not be accurately found. It is recommended that this value be
 larger than the value to NoiseChisel's @option{--snminarea}. Because the
 clumps are found on the convolved (smoothed) image while the
-psudo-detections are found on the input image. You can use
+pseudo-detections are found on the input image. You can use
 @option{--checksn} and @option{--checksegmentation} to see if your chosen
 value is reasonable or not.
 
 @item --checksn
 Save the S/N values of the clumps over the sky and detected regions into
-seprate tables. If @option{--tableformat} is a FITS format, each table will
+separate tables. If @option{--tableformat} is a FITS format, each table will
 be written into a separate extension of one file suffixed with
 @file{_clumpsn.fits}. If it is plain text, a separate file will be made for
 each table (ending in @file{_clumpsn_sky.txt} and
@@ -17859,7 +17881,7 @@ the pixels covering one galaxy in an image, get the same label.
 
 The requested measurements are then done on similarly labeled pixels. The
 final result is a catalog where each row corresponds to the measurements on
-pixels with a specfic label. For example the flux weighted average position
+pixels with a specific label. For example the flux weighted average position
 of all the pixels with a label of 42 will be written into the 42nd row of
 the output catalog/table's central position column@footnote{See
 @ref{Measuring elliptical parameters} for a discussion on this and the
@@ -19481,7 +19503,7 @@ $ astmatch --ccol1=2,3,4 --ccol2=2,3,4 -a0.5/3600,0.5/3600,5e-10 \
 
 Two inputs are necessary for Match to start processing. The inputs can be
 plain text tables or FITS tables, see @ref{Tables}. If only one argument is
-provided, Match will assume look for the first input in Stanard input (see
+provided, Match will assume look for the first input in Standard input (see
 @ref{Standard input}).
 
 Match follows the same basic behavior of all Gnuastro programs as fully
@@ -21302,15 +21324,15 @@ reading right now, run to the nearest bookstore, and buy
 it''@footnote{For students, running to the library might be more
 affordable!}!
 
-@cindex Psudo-random numbers
-@cindex Numbers, psudo-random
-Using only software, we can only produce what is called a psudo-random
+@cindex Psuedo-random numbers
+@cindex Numbers, psuedo-random
+Using only software, we can only produce what is called a psuedo-random
 sequence of numbers. A true random number generator is a hardware (let's
 assume we have made sure it has no systematic biases), for example
 throwing dice or flipping coins (which have remained from the ancient
 times). More modern hardware methods use atmospheric noise, thermal
 noise or other types of external electromagnetic or quantum
-phenomena. All psudo-random number generators (software) require a
+phenomena. All pseudo-random number generators (software) require a
 seed to be the basis of the generation. The advantage of having a seed
 is that if you specify the same seed for multiple runs, you will get
 an identical sequence of random numbers which allows you to reproduce
@@ -21585,7 +21607,7 @@ difficult to visualize (a curved 3D space embedded in 4D).
 To start, let's assume a static (not expanding or shrinking), flat 2D
 surface similar to @ref{flatplane} and that the 2D creature is observing
 its universe from point @mymath{A}. One of the most basic ways to
-parametrize this space is through the Cartesian coordinates (@mymath{x},
+parameterize this space is through the Cartesian coordinates (@mymath{x},
 @mymath{y}). In @ref{flatplane}, the basic axes of these two coordinates
 are plotted. An infinitesimal change in the direction of each axis is
 written as @mymath{dx} and @mymath{dy}. For each point, the infinitesimal
@@ -21777,7 +21799,7 @@ very similar to that of light in vacuum, see
 @url{https://arxiv.org/abs/1710.05834, arXiv:1710.05834}.}) in a
 vacuum. This speed is postulated to be constant@footnote{In @emph{natural
 units}, speed is measured in units of the speed of light in vacuum.} and is
-almost always written as @mymath{c}. We can thus parametrize the change in
+almost always written as @mymath{c}. We can thus parameterize the change in
 distance on an expanding 2D surface as
 
 @dispmath{ds^2=c^2dt^2-a^2(t)ds_s^2 = c^2dt^2-a^2(t)(d\chi^2+r^2d\phi^2).}
@@ -21993,8 +22015,8 @@ option which has the units along with a short description.
 
 @item -G
 @itemx --agenow
-The current age of the universe (given the input parameters) in Giga-years
-(Gyr).
+The current age of the universe (given the input parameters) in Ga (Giga
+annum, or billion years).
 
 @item -C
 @itemx --criticaldensitynow
@@ -22037,14 +22059,14 @@ the apparent magnitude to give the object's absolute magnitude.
 
 @item -g
 @itemx --age
-Age of the universe at given redshift in Giga-years (Gyr).
+Age of the universe at given redshift in Ga (Giga annum, or billion years).
 
 @item -b
 @itemx --lookbacktime
-The look-back time to given redshift in Giga-years (Gyr). The look-back
-time at a given redshift is defined as the current age of the universe
-(@option{--agenow}) subtracted by the age of the universe at the given
-redshift.
+The look-back time to given redshift in Ga (Giga annum, or billion
+years). The look-back time at a given redshift is defined as the current
+age of the universe (@option{--agenow}) subtracted by the age of the
+universe at the given redshift.
 
 @item -c
 @itemx --criticaldensity
@@ -28374,7 +28396,7 @@ above.
 @end deftypefun
 
 
-@deftypefun {gal_data_t *} gal_statistics_outlier_positive (gal_data_t @code{*input}, float @code{sigma}, float @code{sigclip_multip}, float @code{sigclip_param}, int @code{inplace}, int @code{quiet})
+@deftypefun {gal_data_t *} gal_statistics_outlier_positive (gal_data_t @code{*input}, size_t @code{window_size}, float @code{sigma}, float @code{sigclip_multip}, float @code{sigclip_param}, int @code{inplace}, int @code{quiet})
 Find the first positive outlier in the @code{input} distribution. The
 returned dataset contains a single element: the first positive outlier. It
 is one of the dataset's elements, in the same type as the input. If the
@@ -28382,23 +28404,22 @@ process fails for any reason (for example no outlier was found), a
 @code{NULL} pointer will be returned.
 
 All (possibly existing) blank elements are first removed from the input
-dataset, then it is sorted. A sliding window equal to half the width of the
-dataset elements is parsed over the dataset. Starting from the middle of
-the dataset (median) in the direction of increasing values. This window is
-used as a reference. The first element where the distance to the previous
+dataset, then it is sorted. A sliding window of @code{window_size} elements
+is parsed over the dataset. Starting from the @code{window_size}-th element
+of the dataset, in the direction of increasing values. This window is used
+as a reference. The first element where the distance to the previous
 (sorted) element is @code{sigma} units away from the distribution of
 distances in its window is considered an outlier and returned by this
 function.
 
 Formally, if we assume there are @mymath{N} non-blank elements. They are
-first sorted. Searching for the outlier starts on element @mymath{N/2}
-(integer division). Let's take @mymath{v_i} to be the @mymath{i}-th element
-of the sorted input (with no blank values) and @mymath{m} and
-@mymath{\sigma} as the @mymath{\sigma}-clipped median and standard
-deviation from the distances of the previous @mymath{N/2} elements (not
-including @mymath{v_i}). If the value given to @code{sigma} is displayed
-with @mymath{s}, the @mymath{i}-th element is considered as an outlier when
-the condition below is true.
+first sorted. Searching for the outlier starts on element @mymath{W}. Let's
+take @mymath{v_i} to be the @mymath{i}-th element of the sorted input (with
+no blank values) and @mymath{m} and @mymath{\sigma} as the
+@mymath{\sigma}-clipped median and standard deviation from the distances of
+the previous @mymath{W} elements (not including @mymath{v_i}). If the value
+given to @code{sigma} is displayed with @mymath{s}, the @mymath{i}-th
+element is considered as an outlier when the condition below is true.
 
 @dispmath{{(v_i-v_{i-1})-m\over \sigma}>s}
 
@@ -28414,10 +28435,13 @@ done within the input dataset's allocated space. Otherwise, this function
 will internally allocate (and later free) the necessary space to keep the
 intermediate space that this process requires.
 
-If @code{quiet!=0}, this function will report a warning when the moving
-window size is not much smaller than the number of non-blank elements. In
-such cases, the outlier estimation may be wrong: the outlier point may lie
-before the first checked element.
+If @code{quiet!=0}, this function will report the parameters every time it
+moves the window as a separate line with several columns. The first column
+is the value, the second (in square brackets) is the sorted index, the
+third is the distance of this element from the previous one. The Fourth and
+fifth (in parenthesis) are the median and standard deviation of the
+sigma-clipped distribution within the window and the last column is the
+difference between the third and fourth, divided by the fifth.
 
 @end deftypefun
 

@@ -275,8 +275,13 @@ AC_SEARCH_LIBS([gsl_integration_qng], [gsl], [],
 # no problem for Gnuastro either. So there is no need to stop the configure
 # script if libcurl isn't found.
 #
-# For static builds, libcurl depends on linking with zlib. So we'll need to
-# also search for that.
+# For static builds, linking libcurl (also built in static-only mode) will
+# depend on linking with zlib. So we'll need to also search for that
+# also. But if libcurl isn't built in static-only mode, then it will have
+# undefined symbols for many libraries (for example libpsl, libidn2,
+# librtmp, libldap). So if you intend to make Gnuastro statically, then
+# build Libcurl in static-only mode so you won't have to check for all
+# these extra libraries here.
 AC_SEARCH_LIBS([deflateInit_], [z], [], [])
 AC_SEARCH_LIBS([curl_global_init], [curl], [], [])
 AC_SEARCH_LIBS([ffopen], [cfitsio], [],
@@ -341,7 +346,12 @@ AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
 
 
 
-# Check libtiff:
+# Check libtiff: If an LZMA libray (part of the XZ Utils) is present,
+# libtiff has probably been built with it. So we'll also need to link with
+# the LZMA library. But if libtiff hasn't been linked with it and its
+# present, there is no problem, the linker will just pass over it. So we
+# don't need to stop the build if this fails.
+AC_SEARCH_LIBS([lzma_stream_decoder], [lzma], [], [])
 AC_SEARCH_LIBS([TIFFOpen], [tiff],
                [has_libtiff=yes], [has_libtiff=no; missing_optional_lib=yes])
 AS_IF([test "x$has_libtiff" = "xyes"],
