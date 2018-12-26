@@ -404,7 +404,11 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
          index `pind' if we have just finished parsing a slice. */
       if( (num_increment-1)%pp->tile->dsize[1]==0 )
         {
-          if(nproj==0) parr[sind]=pearr[sind]=NAN;
+          /* If there was no measurement, set NaN for the values and their
+             errors (zero is meaningful). */
+          if( nproj      ==0 ) parr[sind]  = pearr[sind]  = NAN;
+          if( narr[sind] ==0 ) sarr[sind]  = searr[sind]  = NAN;
+          if( oarr[sind] ==0 ) osarr[sind] = osearr[sind] = NAN;
 
           nproj=pind=0;
           ++sind;
