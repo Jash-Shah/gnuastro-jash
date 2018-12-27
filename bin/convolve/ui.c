@@ -492,8 +492,8 @@ ui_preparations(struct convolveparams *p)
   ui_read_input(p);
 
 
-  /* Currently Convolve only works on 1D and 2D datasets. */
-  if(p->input->ndim>2)
+  /* Currently Convolve only works on 1D, 2D and 3D datasets. */
+  if(p->input->ndim>3)
     error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions. Currently "
           "Convolve only operates on 1D (table column, spectrum), 2D "
           "(image), and 3D (data cube) datasets", p->filename, cp->hdu,
