@@ -5,7 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2018, Free Software Foundation, Inc.
+Copyright (C) 2015-2019, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -29,6 +29,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 
 #include <gnuastro/fits.h>
+#include <gnuastro-internal/timing.h>
 
 #include <gnuastro-internal/checkset.h>
 
@@ -123,11 +124,63 @@ keywords_rename_keys(struct fitsparams *p, fitsfile **fptr, int *r)
 
 
 
+/* Special write options don't have any value and the value has to be found
+   within the script. */
+static int
+keywords_write_set_value(struct fitsparams *p, fitsfile **fptr,
+                         gal_fits_list_key_t *keyll)
+{
+  int status=0;
+
+  if( !strcasecmp(keyll->keyname,"checksum")
+      || !strcasecmp(keyll->keyname,"datasum") )
+    {
+      /* If a value is given, then just write what the user gave. */
+      if( keyll->value )
+        return 1;
+      else
+        {
+          /* Calculate and write the `CHECKSUM' and `DATASUM' keywords. */
+          if( fits_write_chksum(*fptr, &status) )
+            gal_fits_io_error(status, NULL);
+
+          /* If the user just wanted datasum, remove the checksum
+             keyword. */
+          if( !strcasecmp(keyll->keyname,"datasum") )
+            if( fits_delete_key(*fptr, "CHECKSUM", &status) )
+              gal_fits_io_error(status, NULL);
+
+          /* Inform the caller that everything is done. */
+          return 0;
+        }
+    }
+  else if( keyll->keyname[0]=='/' )
+    {
+      gal_fits_key_write_title_in_ptr(keyll->value, *fptr);
+      return 0;
+    }
+  else
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+          "fix the problem. The `keyname' value `%s' is not "
+          "recognized as one with no value", __func__,
+          PACKAGE_BUGREPORT, keyll->keyname);
+
+  /* Function should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix this "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return 0;
+}
+
+
+
+
+
 static void
 keywords_write_update(struct fitsparams *p, fitsfile **fptr,
                       gal_fits_list_key_t *keyll, int u1w2)
 {
-  int status=0;
+  int status=0, continuewriting=0;
   gal_fits_list_key_t *tmp;
 
   /* Open the FITS file if it hasn't been opened yet. */
@@ -136,54 +189,63 @@ keywords_write_update(struct fitsparams *p, fitsfile **fptr,
   /* Go through each key and write it in the FITS file. */
   while(keyll!=NULL)
     {
+      /* Deal with special keywords. */
+      continuewriting=1;
+      if( keyll->value==NULL || keyll->keyname[0]=='/' )
+        continuewriting=keywords_write_set_value(p, fptr, keyll);
+
       /* Write the information: */
-      if(u1w2==1)
+      if(continuewriting)
         {
-          if(keyll->value)
+          if(u1w2==1)
             {
-              if( fits_update_key(*fptr,
-                                  gal_fits_type_to_datatype(keyll->type),
-                                  keyll->keyname, keyll->value,
-                                  keyll->comment, &status) )
+              if(keyll->value)
+                {
+                  if( fits_update_key(*fptr,
+                                      gal_fits_type_to_datatype(keyll->type),
+                                      keyll->keyname, keyll->value,
+                                      keyll->comment, &status) )
+                    gal_fits_io_error(status, NULL);
+                }
+              else
+                {
+                  if(fits_write_key_null(*fptr, keyll->keyname,
+                                         keyll->comment, &status))
+                    gal_fits_io_error(status, NULL);
+                }
+            }
+          else if (u1w2==2)
+            {
+              if(keyll->value)
+                {
+                  if( fits_write_key(*fptr,
+                                     gal_fits_type_to_datatype(keyll->type),
+                                     keyll->keyname, keyll->value,
+                                     keyll->comment, &status) )
+                    gal_fits_io_error(status, NULL);
+                }
+              else
+                {
+                  if(fits_write_key_null(*fptr, keyll->keyname,
+                                         keyll->comment, &status))
+                    gal_fits_io_error(status, NULL);
+                }
+              if(keyll->unit
+                 && fits_write_key_unit(*fptr, keyll->keyname, keyll->unit,
+                                        &status) )
                 gal_fits_io_error(status, NULL);
             }
           else
-            {
-              if(fits_write_key_null(*fptr, keyll->keyname, keyll->comment,
-                                     &status))
-                gal_fits_io_error(status, NULL);
-            }
-        }
-      else if (u1w2==2)
-        {
-          if(keyll->value)
-            {
-              if( fits_write_key(*fptr,
-                                 gal_fits_type_to_datatype(keyll->type),
-                                 keyll->keyname, keyll->value, keyll->comment,
-                                 &status) )
-                gal_fits_io_error(status, NULL);
-            }
-          else
-            {
-              if(fits_write_key_null(*fptr, keyll->keyname, keyll->comment,
-                                     &status))
-                gal_fits_io_error(status, NULL);
-            }
+            error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at `%s' so "
+                  "we can fix this problem. The value %d is not valid for "
+                  "`u1w2'", __func__, PACKAGE_BUGREPORT, u1w2);
+
+          /* Add the unit (if one was given). */
           if(keyll->unit
              && fits_write_key_unit(*fptr, keyll->keyname, keyll->unit,
                                     &status) )
             gal_fits_io_error(status, NULL);
         }
-      else
-        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at `%s' so we "
-              "can fix this problem. The value %d is not valid for `u1w2'",
-              __func__, PACKAGE_BUGREPORT, u1w2);
-
-      /* Add the unit (if one was given). */
-      if(keyll->unit
-         && fits_write_key_unit(*fptr, keyll->keyname, keyll->unit, &status) )
-        gal_fits_io_error(status, NULL);
 
       /* Free the allocated spaces if necessary: */
       if(keyll->vfree) free(keyll->value);
@@ -237,6 +299,104 @@ keywords_print_all_keys(struct fitsparams *p, fitsfile **fptr)
 
 
 
+static int
+keywords_verify(struct fitsparams *p, fitsfile **fptr)
+{
+  int dataok, hduok, status=0;
+
+  /* Ask CFITSIO to verify the two keywords. */
+  if( fits_verify_chksum(*fptr, &dataok, &hduok, &status) )
+    gal_fits_io_error(status, NULL);
+
+  /* Print some introduction: */
+  if(!p->cp.quiet)
+    printf("%s\n"
+           "Checking integrity of %s (hdu %s)\n"
+           "%s"
+           "--------\n"
+           "Basic info (remove all extra info with `--quiet'):\n"
+           "    - DATASUM: verifies only the data (not keywords).\n"
+           "    - CHECKSUM: verifies data and keywords.\n"
+           "They can be added-to/updated-in an extension/HDU with:\n"
+           "    $ astfits %s -h%s --write=checksum\n"
+           "--------\n", PROGRAM_STRING, p->filename, p->cp.hdu,
+           ctime(&p->rawtime), p->filename, p->cp.hdu);
+
+  /* Print the verification result. */
+  printf("DATASUM:  %s\n",
+         dataok==1 ? "Verified" : (dataok==0 ? "NOT-PRESENT" : "INCORRECT"));
+  printf("CHECKSUM: %s\n",
+         hduok==1  ? "Verified" : (hduok==0  ? "NOT-PRESENT" : "INCORRECT"));
+
+  /* Return failure if any of the keywords are not verified. */
+  return (dataok==-1 || hduok==-1) ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+
+
+
+
+
+static void
+keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
+{
+  size_t i;
+  int status=0;
+  long initial;
+  fitsfile *fptr;
+
+  /* Initial sanity check. Since `numinkeys' includes `END' (counting from
+     1, as we do here), the first keyword must not be larger OR EQUAL to
+     `numinkeys'. */
+  if(p->copykeysrange[0]>=numinkeys)
+    error(EXIT_FAILURE, 0, "%s (hdu %s): first keyword number give to "
+          "`--copykeys' (%ld) is larger than the number of keywords in this "
+          "header (%ld, including the `END' keyword)", p->filename, p->cp.hdu,
+          p->copykeysrange[0], numinkeys);
+
+  /* If the user wanted to count from the end (by giving a negative value),
+     then do that. */
+  if(p->copykeysrange[1]<0)
+    {
+      /* Set the last keyword requested. */
+      initial=p->copykeysrange[1];
+      p->copykeysrange[1] += numinkeys;
+
+      /* Sanity check. */
+      if(p->copykeysrange[0]>=p->copykeysrange[1])
+        error(EXIT_FAILURE, 0, "%s (hdu %s): the last keyword given to "
+              "`--copykeys' (%ld, or %ld after counting from the bottom) "
+              "is earlier than the first (%ld)", p->filename, p->cp.hdu,
+              initial, p->copykeysrange[1], p->copykeysrange[0]);
+    }
+
+  /* Final sanity check (on range limit). */
+  if(p->copykeysrange[1]>=numinkeys)
+    error(EXIT_FAILURE, 0, "%s (hdu %s): second keyword number give to "
+          "`--copykeys' (%ld) is larger than the number of keywords in this "
+          "header (%ld, including the `END' keyword)", p->filename, p->cp.hdu,
+          p->copykeysrange[1], numinkeys);
+
+
+  /* Open the output HDU. */
+  fptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE);
+
+
+  /* Copy the requested headers into the output. */
+  for(i=p->copykeysrange[0]-1; i<=p->copykeysrange[1]-1; ++i)
+    if( fits_write_record(fptr, &inkeys[i*80], &status ) )
+      gal_fits_io_error(status, NULL);
+
+  /* Close the output FITS file. */
+  status=0;
+  if(fits_close_file(fptr, &status))
+    gal_fits_io_error(status, NULL);
+}
+
+
+
+
+
 
 
 
@@ -267,10 +427,11 @@ keywords_print_all_keys(struct fitsparams *p, fitsfile **fptr)
 int
 keywords(struct fitsparams *p)
 {
-  int status=0;
+  char *inkeys=NULL;
   int r=EXIT_SUCCESS;
   fitsfile *fptr=NULL;
   gal_list_str_t *tstll;
+  int status=0, numinkeys;
 
 
   /* Delete the requested keywords. */
@@ -373,10 +534,37 @@ keywords(struct fitsparams *p)
     }
 
 
+  /* Verify the CHECKSUM and DATASUM keys. */
+  if(p->verify)
+    {
+      keywords_open(p, &fptr, READONLY);
+      r=keywords_verify(p, &fptr);
+    }
+
+
+  /* If a range of keywords must be copied, get all the keywords as a
+     single string. */
+  if(p->copykeys)
+    {
+      keywords_open(p, &fptr, READONLY);
+      if( fits_convert_hdr2str(fptr, 0, NULL, 0, &inkeys, &numinkeys,
+                               &status) )
+        gal_fits_io_error(status, NULL);
+      status=0;
+    }
+
+
   /* Close the FITS file */
   if(fits_close_file(fptr, &status))
     gal_fits_io_error(status, NULL);
 
+
+  /* Write desired keywords into output. */
+  if(p->copykeys)
+    {
+      keywords_copykeys(p, inkeys, numinkeys);
+      free(inkeys);
+    }
 
   /* Return. */
   return r;

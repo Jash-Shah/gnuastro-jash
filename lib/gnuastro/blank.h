@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2018, Free Software Foundation, Inc.
+Copyright (C) 2017-2019, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -79,6 +79,14 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 #define GAL_BLANK_SIZE_T     GAL_BLANK_UINT32
 #else
 #define GAL_BLANK_SIZE_T     GAL_BLANK_UINT64
+#endif
+
+#if GAL_CONFIG_SIZEOF_LONG == 4
+#define GAL_BLANK_LONG  GAL_BLANK_INT32
+#define GAL_BLANK_ULONG GAL_BLANK_UINT32
+#elif GAL_CONFIG_SIZEOF_LONG == 8
+#define GAL_BLANK_LONG  GAL_BLANK_INT64
+#define GAL_BLANK_ULONG GAL_BLANK_UINT64
 #endif
 
 

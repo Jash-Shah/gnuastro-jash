@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2018, Free Software Foundation, Inc.
+Copyright (C) 2017-2019, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -509,7 +509,7 @@ gal_convolve_spatial_general(gal_data_t *tiles, gal_data_t *kernel,
     error(EXIT_FAILURE, 0, "%s: the input is a linked list but not a "
           "tessellation (a list of tiles). This function is optimized to "
           "work on a list of tiles. Please (temporarily) set the `next' "
-          "element of the input to `NULL' and call this funciton again",
+          "element of the input to `NULL' and call this function again",
           __func__);
 
 

@@ -12,7 +12,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015-2018, Free Software Foundation, Inc.
+# Copyright (C) 2015-2019, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ AC_CONFIG_MACRO_DIRS([bootstrapped/m4])
 
 # Library version, see the GNU Libtool manual ("Library interface versions"
 # section for the exact definition of each) for
-GAL_CURRENT=6
+GAL_CURRENT=7
 GAL_REVISION=0
 GAL_AGE=0
 GAL_LT_VERSION="${GAL_CURRENT}:${GAL_REVISION}:${GAL_AGE}"

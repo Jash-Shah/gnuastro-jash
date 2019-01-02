@@ -5,7 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2018, Free Software Foundation, Inc.
+Copyright (C) 2016-2019, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -31,7 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Array of acceptable options. */
 struct argp_option program_options[] =
   {
-
+    /* Input options */
     {
       0, 0, 0, 0,
       "HDUs (extensions):",
@@ -202,6 +202,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "verify",
+      UI_KEY_VERIFY,
+      0,
+      0,
+      "Verify the CHECKSUM and DATASUM keywords.",
+      UI_GROUP_KEYWORD,
+      &p->verify,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "printallkeys",
       UI_KEY_PRINTALLKEYS,
       0,
@@ -214,9 +227,42 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "copykeys",
+      UI_KEY_COPYKEYS,
+      "STR",
+      0,
+      "Range of keywords to copy to output HDU.",
+      UI_GROUP_KEYWORD,
+      &p->copykeys,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 
+
+
+    /* Output options. */
+    {
+      "outhdu",
+      UI_KEY_OUTHDU,
+      "STR",
+      0,
+      "HDU/extension in output for --copykeys.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->outhdu,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
+
+    /* Operating mode options. */
     {
       "quitonerror",
       UI_KEY_QUITONERROR,
