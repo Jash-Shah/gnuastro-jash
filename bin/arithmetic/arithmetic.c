@@ -781,19 +781,49 @@ arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
     }
 
 
-  /* We'll also need to correct the size of the reference dataset. We'll
-     use `memcpy' to write the new `dsize' values into the old ones. The
-     dimensions have decreased, so we won't be writing outside of allocated
-     space that `p->refdata.dsize' points to. */
-  p->refdata.ndim -= 1;
-  memcpy( p->refdata.dsize, collapsed->dsize,
-           p->refdata.ndim * (sizeof *p->refdata.dsize) );
+  /* We'll also need to correct the size of the reference dataset if it
+     hasn't been corrected yet. We'll use `memcpy' to write the new `dsize'
+     values into the old ones. The dimensions have decreased, so we won't
+     be writing outside of allocated space that `p->refdata.dsize' points
+     to. */
+  if( p->refdata.ndim != collapsed->ndim )
+    {
+      p->refdata.ndim -= 1;
+      memcpy( p->refdata.dsize, collapsed->dsize,
+              p->refdata.ndim * (sizeof *p->refdata.dsize) );
+    }
 
 
   /* Clean up and add the collapsed dataset to the top of the operands. */
   gal_data_free(input);
   gal_data_free(dimension);
   operands_add(p, NULL, collapsed);
+}
+
+
+
+
+
+void
+arithmetic_tofile(struct arithmeticparams *p, char *token)
+{
+  /* Pop the top dataset. */
+  gal_data_t *popped = operands_pop(p, token);
+  char *filename=&token[ OPERATOR_PREFIX_LENGTH_TOFILE ];
+
+  /* Save it to a file. */
+  popped->wcs=p->refdata.wcs;
+  if(popped->ndim==1 && p->onedasimage==0)
+    gal_table_write(popped, NULL, p->cp.tableformat, filename,
+                    "ARITHMETIC", 0);
+  else
+    gal_fits_img_write(popped, filename, NULL, PROGRAM_NAME);
+  if(!p->cp.quiet)
+    printf(" - Write: %s\n", filename);
+
+  /* Reset the WCS to NULL and put it back on the stack. */
+  popped->wcs=NULL;
+  operands_add(p, NULL, popped);
 }
 
 
@@ -844,17 +874,22 @@ reversepolish(struct arithmeticparams *p)
   /* Go over each input token and do the work. */
   for(token=p->tokens;token!=NULL;token=token->next)
     {
-      /* If we have a name or number, then add it to the operands linked
-         list. Otherwise, pull out two members and do the specified
-         operation on them. */
-      if( gal_array_name_recognized(token->v)
+      /* The `tofile-' operator's string can end in a `.fits', similar to a
+         FITS file input file. So, it needs to be checked before checking
+         for a filename. If we have a name or number, then add it to the
+         operands linked list. Otherwise, pull out two members and do the
+         specified operation on them. */
+      if( !strncmp(OPERATOR_PREFIX_TOFILE, token->v,
+                   OPERATOR_PREFIX_LENGTH_TOFILE) )
+        arithmetic_tofile(p, token->v);
+      else if( !strncmp(token->v, OPERATOR_PREFIX_SET,
+                        OPERATOR_PREFIX_LENGTH_SET) )
+        operands_set_name(p, token->v);
+      else if( gal_array_name_recognized(token->v)
           || operands_is_name(p, token->v) )
         operands_add(p, token->v, NULL);
       else if( (d1=gal_data_copy_string_to_number(token->v)) )
         operands_add(p, NULL, d1);
-      else if( !strncmp(token->v, SET_OPERATOR_PREFIX,
-                        SET_OPERATOR_PREFIX_LENGTH) )
-        operands_set_name(p, token->v);
       else
         {
 
@@ -1146,9 +1181,9 @@ reversepolish(struct arithmeticparams *p)
       filename=p->operands->filename;
       if( gal_fits_name_is_fits(filename) )
         {
+          /* Read the data, note that the WCS has already been set. */
           p->operands->data=gal_array_read_one_ch(filename, hdu, NULL,
                                                   p->cp.minmapsize);
-          p->refdata.wcs=gal_wcs_read(filename, hdu, 0, 0, &p->refdata.nwcs);
           if(!p->cp.quiet) printf(" - %s (hdu %s) is read.\n", filename, hdu);
         }
       else
@@ -1182,7 +1217,7 @@ reversepolish(struct arithmeticparams *p)
       else
         gal_fits_img_write(d1, p->cp.output, NULL, PROGRAM_NAME);
       if(!p->cp.quiet)
-        printf(" - Output written to %s\n", p->cp.output);
+        printf(" - Write (final): %s\n", p->cp.output);
     }
 
 

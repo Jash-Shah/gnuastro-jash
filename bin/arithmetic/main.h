@@ -40,8 +40,10 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 /* Constants: */
 #define NEG_DASH_REPLACE 11 /* Vertical tab (ASCII=11) for negative dash */
-#define SET_OPERATOR_PREFIX        "set-"
-#define SET_OPERATOR_PREFIX_LENGTH strlen(SET_OPERATOR_PREFIX)
+#define OPERATOR_PREFIX_SET               "set-"
+#define OPERATOR_PREFIX_TOFILE            "tofile-"
+#define OPERATOR_PREFIX_LENGTH_SET        strlen(OPERATOR_PREFIX_SET)
+#define OPERATOR_PREFIX_LENGTH_TOFILE     strlen(OPERATOR_PREFIX_TOFILE)
 
 
 
@@ -71,6 +73,8 @@ struct arithmeticparams
   /* Input: */
   gal_list_str_t     *hdus;  /* List of all given HDU strings.          */
   gal_list_str_t   *tokens;  /* List of all arithmetic tokens.          */
+  char            *wcsfile;  /* File to use for output's WCS.           */
+  char             *wcshdu;  /* Extension to use for output's WCS.      */
   size_t        popcounter;  /* The number of FITS images popped.       */
   gal_data_t       refdata;  /* Container for information of the data.  */
   char          *globalhdu;  /* Single HDU for all inputs.              */

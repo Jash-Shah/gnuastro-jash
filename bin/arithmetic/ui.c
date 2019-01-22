@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <string.h>
 
+#include <gnuastro/wcs.h>
 #include <gnuastro/list.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/table.h>
@@ -225,14 +226,35 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
+static void
+ui_read_check_only_options(struct arithmeticparams *p)
+{
+  if(p->wcsfile)
+    {
+      if(gal_fits_name_is_fits(p->wcsfile)==0)
+        error(EXIT_FAILURE, 0, "%s: file given to `--wcsfile' must be in "
+              "FITS format with a recognizable FITS format suffix.",
+              p->wcsfile);
+      if(p->wcshdu==NULL)
+        error(EXIT_FAILURE, 0, "%s: no HDU/extension specified (file given "
+              "to `--wcsfile')! Please use `--wcshdu' to specify a "
+              "HDU/extension to read from", p->wcsfile);
+    }
+}
+
+
+
+
+
 /* Sanity check on options AND arguments. If only option values are to be
    checked, use `ui_read_check_only_options'. */
 static void
 ui_check_options_and_arguments(struct arithmeticparams *p)
 {
+  char *filename;
   int output_checked=0;
-  size_t nummultiext=0, numhdus=0;
   gal_list_str_t *token, *hdu;
+  size_t nummultiext=0, numhdus=0;
 
   /* First, make sure that any tokens are actually given. */
   if(p->tokens==NULL)
@@ -256,33 +278,51 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
      list. */
   for(token=p->tokens; token!=NULL; token=token->next)
     {
-      /* This token is a file, count how many mult-extension files we haev
-         and use the first to set the output filename (if it has not been
-         set). */
-      if( gal_array_name_recognized(token->v) )
-        {
-          /* Increment the counter for FITS files. */
-          if( gal_array_name_recognized_multiext(token->v) )
-            ++nummultiext;
+      /* Strings given to the `tofile' operator are also considered as
+         outputs and we should delete them before starting the parse. */
+      if( strncmp(OPERATOR_PREFIX_TOFILE, token->v,
+                  OPERATOR_PREFIX_LENGTH_TOFILE) )
 
-          /* If the output filename isn't set yet, then set it. */
-          if(output_checked==0)
+        {
+          /* This token is a file, count how many mult-extension files we
+             haev and use the first to set the output filename (if it has
+             not been set). */
+          if( gal_array_name_recognized(token->v) )
             {
-              if(p->cp.output)
-                gal_checkset_writable_remove(p->cp.output, 0,
-                                             p->cp.dontdelete);
-              else
-                p->cp.output=gal_checkset_automatic_output(&p->cp, token->v,
-                                                           "_arith.fits");
-              output_checked=1;
+              /* Increment the counter for FITS files (if they are
+                 input). Recall that the `tofile' operator can also have
+                 `.fits' suffixes (they are the names of the output
+                 files). */
+              if( gal_array_name_recognized_multiext(token->v)  )
+                ++nummultiext;
+
+              /* If the output filename isn't set yet, then set it. */
+              if(output_checked==0)
+                {
+                  if(p->cp.output)
+                    gal_checkset_writable_remove(p->cp.output, 0,
+                                                 p->cp.dontdelete);
+                  else
+                    p->cp.output=gal_checkset_automatic_output(&p->cp,
+                                                               token->v,
+                                                               "_arith.fits");
+                  output_checked=1;
+                }
             }
+
+          /* This token is a number. Check if a negative dash was present that
+             has been temporarily replaced with `NEG_DASH_REPLACE' before
+             option parsing. */
+          else if(token->v[0]==NEG_DASH_REPLACE && isdigit(token->v[1]) )
+            token->v[0]='-';
         }
 
-      /* This token is a number. Check if a negative dash was present that
-         has been temporarily replaced with `NEG_DASH_REPLACE' before
-         option parsing. */
-      else if(token->v[0]==NEG_DASH_REPLACE && isdigit(token->v[1]) )
-        token->v[0]='-';
+      /* We are on the `tofile' operator. */
+      else
+        {
+          filename=&token->v[ OPERATOR_PREFIX_LENGTH_TOFILE ];
+          gal_checkset_writable_remove(filename, 0, p->cp.dontdelete);
+        }
     }
 
   /* Count the number of HDU values (if globalhdu isn't given) and check if
@@ -301,6 +341,30 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
               "the files, you may use `--globalhdu' (`-g') to specify a "
               "single HDU to be used for any number of input files",
               nummultiext, nummultiext);
+    }
+}
+
+
+
+
+
+static void
+ui_preparations(struct arithmeticparams *p)
+{
+  /* In case a file is specified to read the WCS from (and ignore input
+     datasets), read the WCS prior to starting parsing of the arguments. */
+  if(p->wcsfile)
+    {
+      p->refdata.wcs=gal_wcs_read(p->wcsfile, p->wcshdu, 0, 0,
+                                  &p->refdata.nwcs);
+      if(p->refdata.wcs)
+        {
+          if(!p->cp.quiet)
+            printf(" - WCS: %s (hdu %s).\n", p->wcsfile, p->wcshdu);
+        }
+      else
+        fprintf(stderr, "WARNING: %s (hdu %s) didn't contain a "
+                "(readable by WCSLIB) WCS.", p->wcsfile, p->wcshdu);
     }
 }
 
@@ -373,10 +437,18 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct arithmeticparams *p)
   gal_options_print_state(cp);
 
 
+  /* Sanity check only on options. */
+  ui_read_check_only_options(p);
+
+
   /* Check that the options and arguments fit well with each other. Note
      that arguments don't go in a configuration file. So this test should
      be done after (possibly) printing the option values. */
   ui_check_options_and_arguments(p);
+
+
+  /* Initial preparations. */
+  ui_preparations(p);
 }
 
 

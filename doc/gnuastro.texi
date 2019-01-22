@@ -3631,21 +3631,22 @@ columns (see below for why we have requested an aperture of 0.35
 arcseconds, or less than 6 HST pixels).
 
 The @option{--outcols} is a very convenient feature in Match: you can use
-it to specify which columns from the two catalogs you want in the
-output. If the first character is an `@key{a}', the respective matched
-column (number or name, similar to Table above) in the first catalog will
-be written in the output table. When the first character is a `@key{b}',
-the respective column from the second catalog will be written in the
-output. You can use this to mix the desired matched columns from both
-catalogs in the output.
+it to specify which columns from the two catalogs you want in the output
+(merge two input catalogs into one). If the first character is an
+`@key{a}', the respective matched column (number or name, similar to Table
+above) in the first catalog will be written in the output table. When the
+first character is a `@key{b}', the respective column from the second
+catalog will be written in the output. Also, if the first character is
+followed by @code{_all}, then all the columns from the respective catalog
+will be put in the output.
 
 @example
 $ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits         \
            --hdu=CLUMPS                 --hdu2=CLUMPS              \
            --ccol1=RA,DEC               --ccol2=RA,DEC             \
-           --aperture=0.35/3600                                    \
-           --outcols=a1,a2,aRA,aDEC,aMAGNITUDE,aSN,bMAGNITUDE,bSN  \
-           --log --output=cat/xdf-f160w-f105w.fits
+           --aperture=0.35/3600 --log                              \
+           --outcols=a_all,bMAGNITUDE,bSN                          \
+           --output=cat/xdf-f160w-f105w.fits
 @end example
 
 By default (when @option{--quiet} isn't called), the Match program will
@@ -7040,7 +7041,7 @@ your linker to look in this directory. To do so, configure Gnuastro like
 this:
 
 @example
-$ ./configure LDFLAGS="-I/usr/local/lib"
+$ ./configure LDFLAGS="-L/usr/local/lib"
 @end example
 
 If you want to use the libraries for your other programming projects, then
@@ -7699,9 +7700,15 @@ The minimum size (in bytes) to store the contents of each main processing
 array of a program as a file (on the non-volatile HDD/SSD), not in
 RAM. This can be very useful for large datasets which can be very memory
 intensive such that your RAM will not be sufficient to keep/process them. A
-random filename is assigned to the array (in a @file{.gnuastro} directory
-within the running directory) which will keep the contents of the array as
-long as it is necessary.
+random filename is assigned to the array which will keep the contents of
+the array as long as it is necessary.
+
+If the @file{.gnuastro} directory exists and is writable, then the random
+file will be placed there. Otherwise, the @file{.gnuastro_mmap} directory
+will be checked. If @file{.gnuastro_mmap} does not exist, or is not
+writable also, the random file will be directly written in the current
+directory with the @file{.gnuastro_mmap_} prefix (followed by some random
+characters).
 
 When this option has a value of @code{0} (zero), all arrays that use this
 option in a program will actually be in a file (not in RAM). When the value
@@ -7722,8 +7729,8 @@ The random file will be deleted once it is no longer needed by the
 program. The @file{.gnuastro} directory will also be deleted if it has no
 other contents (you may also have configuration files in this directory,
 see @ref{Configuration files}). If you see randomly named files remaining
-in this directory, please send us a bug report so we address the problem,
-see @ref{Report a bug}.
+in this directory when the program finishes normally, please send us a bug
+report so we address the problem, see @ref{Report a bug}.
 
 @item -Z INT[,INT[,...]]
 @itemx --tilesize=[,INT[,...]]
@@ -7917,11 +7924,26 @@ command-line or in the configuration files. In any case, it will be
 immediately read (before parsing the rest of the options on the
 command-line, or lines in a configuration file).
 
-Note that by definition, later calls to a single-valued option on the
-command-line still take precedence over those of any configuration file,
-including the file(s) given to this option. Also see @option{--lastconfig}
-and @option{--onlyversion} for how this option can be used for reproducible
-results.
+Note that by definition, options on the command-line still take precedence
+over those in any configuration file, including the file(s) given to this
+option if they are called before it. Also see @option{--lastconfig} and
+@option{--onlyversion} on how this option can be used for reproducible
+results. You can use @option{--checkconfig} (below) to check/confirm the
+parsing of configuration files.
+
+@item --checkconfig
+Print options and their values, within the command-line or configuration
+files, as they are parsed (see @ref{Configuration file precedence}). If an
+option has already been set, or is ignored by the program, this option will
+also inform you with special values like @code{--ALREADY-SET--}. Only
+options that are parsed after this option are printed, so to see the
+parsing of all input options, it is recommended to put this option
+immediately after the program name before any other options.
+
+@cindex Debug
+This is a very good option to confirm where the value of each option is has
+been defined in scenarios where there are multiple configuration files (for
+debugging).
 
 @item -S
 @itemx --setdirconf
@@ -8257,21 +8279,8 @@ The option values in all the programs of Gnuastro will be filled in the
 following order. If an option only takes one value which is given in an
 earlier step, any value for that option in a later step will be
 ignored. Note that if the @option{lastconfig} option is specified in any
-step below, all later files will be ignored (see @ref{Operating mode
-options}). The basic idea behind setting this progressive state of checking
-for parameter values is that separate users of a computer or separate
-folders in a user's file system might need different values for some
-parameters.
-
-In each step, there can also be a configuration file containing the common
-options in all the programs: @file{gnuastro.conf} (see @ref{Common
-options}). If options specific to one program are specified in this file,
-there will be unrecognized option errors, or unexpected behavior if the
-option has different behavior in another program. On the other hand, there
-is no problem with @file{astprogname.conf} containing common
-options@footnote{As an example, the @option{--setdirconf} and
-@option{--setusrconf} options will also write the common options they have
-read in their produced @file{astprogname.conf}.}.
+step below, no other configuration files will be parsed (see @ref{Operating
+mode options}).
 
 @enumerate
 @item
@@ -8304,6 +8313,29 @@ system-wide installation directory (see @ref{System wide} for
 @file{prefix}).
 
 @end enumerate
+
+The basic idea behind setting this progressive state of checking for
+parameter values is that separate users of a computer or separate folders
+in a user's file system might need different values for some
+parameters.
+
+@cartouche
+@noindent
+@strong{Checking the order:} You can confirm/check the order of parsing
+configuration files using the @option{--checkconfig} option with any
+Gnuastro program, see @ref{Operating mode options}. Just be sure to place
+this option immediately after the program name, before any other option.
+@end cartouche
+
+As you see above, there can also be a configuration file containing the
+common options in all the programs: @file{gnuastro.conf} (see @ref{Common
+options}). If options specific to one program are specified in this file,
+there will be unrecognized option errors, or unexpected behavior if the
+option has different behavior in another program. On the other hand, there
+is no problem with @file{astprogname.conf} containing common
+options@footnote{As an example, the @option{--setdirconf} and
+@option{--setusrconf} options will also write the common options they have
+read in their produced @file{astprogname.conf}.}.
 
 @cartouche
 @noindent
@@ -11052,17 +11084,18 @@ the maximum value. By doing so you will decrease the dynamic range. It can
 be useful if you plan to use those values for other purposes.
 
 @item -A INT
-@itemx --flminbyte=INT
-If the lowest pixel value in the input channels is larger than the value to
-@option{--fluxlow}, then that input value will be redundant. In some
-situations it might be necessary to set the minimum byte value (0) to
-correspond to that flux even if the data do not reach that value. With this
-option you can do this. Note that if the minimum pixel value is smaller
-than @option{--fluxlow}, then this option is redundant.
+@itemx --forcemin=INT
+Enforce the value of @option{--fluxlow} (when its given), even if its
+smaller than the minimum of the dataset and the output is format supporting
+color. This is particularly useful when you are converting a number of
+images to a common image format like JPEG or PDF with a single command and
+want them all to have the same range of colors, independent of the contents
+of the dataset. Note that if the minimum value is smaller than
+@option{--fluxlow}, then this option is redundant.
 
 @item -B INT
-@itemx --fhmaxbyte=INT
-See @option{--flminbyte}.
+@itemx --forcemax=INT
+Similar to @option{--forcemin}, but for the maximum.
 
 
 @item -i
@@ -12697,6 +12730,25 @@ But with this operator you can simply give @file{image.fits} the name
 $ astarithmetic image.fits set-i   i i 5 gt nan where
 @end example
 
+@item tofile-AAA
+Write the top oprand on the operands stack into a file called @code{AAA}
+(can be any FITS file name) without changing the operands stack (no operand
+will be operand).
+
+Any file that is given to this operator is deleted before Arithmetic
+actually starts working on the input datasets. The deletion can be
+deactivated with the @option{--dontdelete} option (as in all Gnuastro
+programs, see @ref{Input output options}). If the same FITS file is given
+to this operator multiple times, it will contain multiple extensions (in
+the same order that it was called.
+
+For example the operator @command{tofile-check.fits} will write the top
+operand to @file{check.fits}. Since it doesn't modify the operands stack,
+this operator is very convenient when you want to debug, or understanding,
+a string of operators and operands given to Arithmetic: simply put
+@command{tofile-AAA} anywhere in the process to see what is happening
+behind the scenes without modifying the overall process.
+
 @end table
 
 @cartouche
@@ -12767,15 +12819,21 @@ $ astarithmetic img1.fits img2.fits img3.fits median                \
                 -h0 -h1 -h2 --out=median.fits
 @end example
 
-If the output is not a single number, and the @option{--output} option is
-not given, automatic output will use the name of the first FITS image
-encountered to generate an output file name, see @ref{Automatic
-output}. Also, output WCS information will be taken from the first input
-image encountered. When the output is a single number, that number will be
-printed in the standard output and no output file will be
-created. Arithmetic's notation for giving operands to operators is
-described in @ref{Reverse polish notation}. To ignore certain pixels, set
-them as blank, see @ref{Blank pixels}, for example with the @command{where}
+The output is last remaining operand on the stack, see @ref{Reverse polish
+notation}. When its a single number, it will be printed on the
+command-line. When the output is an array, it will be stored as a file. The
+name of the file can be specified with the @option{--output} option, but if
+its not given, Arithmetic will use ``automatic output'' on the name of the
+first FITS image encountered to generate an output file name, see
+@ref{Automatic output}.
+
+By default, the world coordinate system (WCS) information will be taken
+from the first input image (that contains a WCS) on the command-line. This
+can be modified with the @option{--wcsfile} option described below.
+
+Arithmetic's notation for giving operands to operators is fully described
+in @ref{Reverse polish notation}. To ignore certain pixels, set them as
+blank, see @ref{Blank pixels}, for example with the @command{where}
 operator (see @ref{Arithmetic operators}). See @ref{Common options} for a
 review of the options in all Gnuastro programs. Arithmetic just redefines
 the @option{--hdu} option as explained below.
@@ -12823,6 +12881,30 @@ option is very convenient when you have many input files and the dataset of
 interest is in the same HDU of all the files. When this option is called,
 any values given to the @option{--hdu} option (explained above) are ignored
 and will not be used.
+
+@item -w STR
+@itemx --wcsfile STR
+FITS Filename containing the WCS structure that must be written to the
+output. The HDU/extension should be specified with @option{--wcshdu}.
+
+When this option is used, the respective WCS will be read before any
+processing is done on the command-line and directly used in the final
+output. If the given file doesn't have any WCS, then the default WCS (first
+file on the command-line with WCS) will be used in the output.
+
+This option will mostly be used when the default file (first of the set of
+inputs) is not the one containing your desired WCS. But with this option,
+you can also use Arithmetic to rewrite/chage the WCS of an existing FITS
+dataset from another file:
+
+@example
+$ astarithmetic data.fits --wcsfile=other.fits -ofinal.fits
+@end example
+
+@item -W STR
+@itemx --wcshdu STR
+HDU/extension to read the WCS within the file given to
+@option{--wcsfile}. For more, see the description of @option{--wcsfile}.
 
 @item -O
 @itemx --onedasimage
@@ -19737,10 +19819,10 @@ default, the output file(s) will be the re-arranged input tables such that
 the rows match each other: both output tables will have the same number of
 rows which are matched with each other. If @option{--outcols} is called,
 the output is a single table with rows chosen from either of the two inputs
-in any order, see the description of @option{--outcols}. If the
-@option{--logasoutput} option is called, the output will be a single table
-with the contents of the log file, see below. If no matches are found, the
-columns of the output table(s) will have zero rows (with proper meta-data).
+in any order. If the @option{--logasoutput} option is called, the output
+will be a single table with the contents of the log file, see below. If no
+matches are found, the columns of the output table(s) will have zero rows
+(with proper meta-data).
 
 If no output file name is given with the @option{--output} option, then
 automatic output @ref{Automatic output} will be used to determine the
@@ -19783,23 +19865,38 @@ FITS file, this option's value is ignored. For the first input, the common
 option @option{--hdu} must be used.
 
 @item --outcols=STR
-Columns from both inputs to write into a single matched table output. The
-value to @code{--outcols} must be a comma-separated list of strings, for
-example @option{--outcols=a1,bRA,bDEC}. The first character of each string
-specifies the input catalog: @option{a} for the first and @option{b} for
-the second. The rest of the characters of the string will be directly used
-to identify the proper column(s) in the respective table. See
-@ref{Selecting table columns} for how columns can be specified in
-Gnuastro. In this example, the output will have three columns: the first
-column of the first input and the @option{RA} and @option{DEC} columns of
-the second input.
+Columns (from both inputs) to write into a single matched table output. The
+value to @code{--outcols} must be a comma-separated list of strings. The
+first character of each string specifies the input catalog: @option{a} for
+the first and @option{b} for the second. The rest of the characters of the
+string will be directly used to identify the proper column(s) in the
+respective table. See @ref{Selecting table columns} for how columns can be
+specified in Gnuastro.
+
+For example the output of @option{--outcols=a1,bRA,bDEC} will have three
+columns: the first column of the first input, along with the @option{RA}
+and @option{DEC} columns of the second input.
+
+If the string after @option{a} or @option{b} is @option{_all}, then all the
+columns of the respective input file will be written in the output. For
+example the command below will print all the input columns from the first
+catalog along with the 5th column from the second:
+
+@example
+$ astmatch a.fits b.fits --outcols=a_all,b5
+@end example
+
+@code{_all} can be used multiple times, possibly on both inputs. Tip: if an
+input's column is called @code{_all} (an unlikely name!) and you don't want
+all the columns from that table the output, use its column number to avoid
+confusion.
 
 Another example is given in the one-line examples above. Compared to the
-default case (where two tables with all their columns) are printed, using
-this option is much faster: it will only read and re-arrange the necessary
-columns and it will write a single output table. Combined with regular
-expressions in large tables, this can be a very powerful and convenient way
-to retrieve your desired information and do the match at the same time.
+default case (where two tables with all their columns) are saved
+separately, using this option is much faster: it will only read and
+re-arrange the necessary columns and it will write a single output
+table. Combined with regular expressions in large tables, this can be a
+very powerful and convenient way to merge various tables into one.
 
 @item -l
 @itemx --logasoutput
@@ -24057,6 +24154,14 @@ input->flags &= ~GAL_DATA_FLAG_BLANK_CH;
 @end example
 @end deftypefun
 
+@deftypefun size_t gal_blank_number (gal_data_t @code{*input}, int @code{updateflag})
+Return the number of blank elements in @code{input}. If
+@code{updateflag!=0}, then the dataset blank keyword flags will be
+updated. See the description of @code{gal_blank_present} (above) for more
+on these flags. If @code{input==NULL}, then this function will return
+@code{GAL_BLANK_SIZE_T}.
+@end deftypefun
+
 
 @deftypefun {gal_data_t *} gal_blank_flag (gal_data_t @code{*input})
 Create a dataset of the the same size as the input, but with an
@@ -24235,10 +24340,11 @@ value of this variable is @code{NULL}, then the contents of @code{array}
 are actually stored in RAM, not in a file on the HDD/SSD. See the
 description of @code{minmapsize} below for more.
 
-If a file is used, it will be kept in the hidden @file{.gnuastro} directory
-with a randomly selected name to allow multiple arrays to be kept there at
-the same time. When @code{gal_data_free} is called the randomly named file
-will be deleted.
+If a file is used, it will be kept in the hidden @file{.gnuastro}, or
+@file{.gnuastro_mmap} directories with a randomly selected name to allow
+multiple arrays to be kept there at the same time, see description of
+@option{--minmapsize} in @ref{Processing options}. When
+@code{gal_data_free} is called the randomly named file will be deleted.
 
 @item size_t minmapsize
 The minimum size of an array (in bytes) to store the contents of
@@ -24406,11 +24512,12 @@ necessary allocations. If they aren't @code{NULL}, all input arrays
 separately copied (allocated) by this function for usage in @code{data}, so
 you can safely use one value to initialize many datasets or use statically
 allocated variables in this function call. Once you are done with the
-dataset, you can clean all the allocated spaces with
+dataset, you can free all the allocated spaces with
 @code{gal_data_free_contents}.
 
 If @code{array} is not @code{NULL}, it will be directly copied into
-@code{data->array} and no new space will be allocated for the array of this
+@code{data->array} (based on the total number of elements calculated from
+@code{dsize}) and no new space will be allocated for the array of this
 dataset, this has many low-level advantages and can be used to work on
 regions of a dataset instead of the whole allocated array (see the
 description under @code{block} in @ref{Generic data container} for one
@@ -25680,7 +25787,7 @@ should be used for the @code{searchin} variables of the functions.
 @end deffn
 
 @deftypefun {gal_data_t *} gal_table_info (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*lines}, size_t @code{*numcols}, size_t @code{*numrows}, int @code{*tableformat})
-Store the information of each column in a table into an array of data
+Store the information of each column of a table into an array of data
 structures with @code{numcols} datasets (one data structure for each
 column). The number of rows is stored in @code{numrows}. The format of the
 table (e.g., ASCII text file, or FITS binary or ASCII table) will be put in
@@ -28674,7 +28781,46 @@ difference between the third and fourth, divided by the fifth.
 
 @end deftypefun
 
+@deftypefun {gal_data_t *} gal_statistics_outlier_flat_cfp (gal_data_t @code{*input}, size_t @code{dist}, float @code{thresh}, float @code{width}, int @code{inplace}, int @code{quiet}, size_t @code{*index})
 
+Return the first element in the given dataset where the cumulative
+frequency plot first becomes flat (below a given threshold on the slope)
+for a sufficient width (percentage of whole dataset's range). The returned
+dataset only has one element (with the same type as the input). If
+@code{index!=NULL}, the index (counting from zero, after sorting dataset
+and removing any blanks) is written in the space that @code{index} points
+to. If no sufficiently flat portion is found, the returned pointer will be
+@code{NULL}.
+
+The operation of this function can be best visualized using the cumulative
+frequency plot (CFP, see @ref{Histogram and Cumulative Frequency
+Plot}). Imagine setting the horizontal axis of the input's CFP to a range
+of 0 to 100, and finding the first part where its slope is
+constantly/contiguously flat for a certain fraction/width of the whole
+dataset's range. Below we'll descibe this in more detail.
+
+This function will first remove all the blank elements and sort the
+remaining elements. If @code{inplace} is non-zero this step will be done in
+place: re-organizing/permuting the input dataset. Using @code{inplace} can
+result in faster processing and less RAM consumption, but only when the
+input dataset is no longer needed in its original permutation.
+
+The input dataset will then be internally scaled from 0 to 100 (so
+@code{thresh} and @code{width} can be in units of percent). For each
+element, this function will then estimate the slope of the cumulative
+distribution function by using the @code{dist} elements before and after
+it. In other words, if @mymath{d} is the value of @code{dist}, then the
+slope over the @mymath{i}'th element (@mymath{a_i}) is estimated using this
+formula: @mymath{1/(a_{i+d}-a_{i-d})}. Therefore, when this slope is larger
+than 1, the distance between the two checked points is smaller than
+@mymath{1\%} of the dataset's range.
+
+All points that have a slope less than @code{thresh} are then marked. The
+first (parsing from the smallest to the largest values) contiguous patch of
+marked elements that is larger than @code{width} wide (in units of
+percentage of the dataset's range) will be considered as the boundary
+region of outliers and the first element in that patch will be returned.
+@end deftypefun
 
 
 @node Binary datasets, Labeled datasets, Statistical operations, Gnuastro library

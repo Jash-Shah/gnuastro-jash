@@ -141,7 +141,7 @@ void
 operands_set_name(struct arithmeticparams *p, char *token)
 {
   gal_data_t *tmp, *tofree;
-  char *varname=&token[ SET_OPERATOR_PREFIX_LENGTH ];
+  char *varname=&token[ OPERATOR_PREFIX_LENGTH_SET ];
 
   /* If a dataset with this name already exists, it will be removed/deleted
      so we can use the name for the newly designated dataset. */
@@ -150,6 +150,12 @@ operands_set_name(struct arithmeticparams *p, char *token)
       {
         tofree=operands_remove_name(p, varname);
         gal_data_free(tofree);
+
+        /* IMPORTANT: we MUST break here! `tmp' does't point to the right
+           place any more. We can define a `prev' node and modify it on
+           every attempt, but since there is only one dataset with a given
+           name, that is redundant and will just make the program slow. */
+        break;
       }
 
   /* Pop the top operand, then add it to the list of named datasets, but
@@ -298,6 +304,15 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
                 gal_checkset_allocate_copy(p->globalhdu, &newnode->hdu);
               else
                 newnode->hdu=gal_list_str_pop(&p->hdus);
+
+              /* If no WCS is set yet, use the WCS of this image. */
+              if(p->refdata.wcs==NULL)
+                {
+                  p->refdata.wcs=gal_wcs_read(filename, newnode->hdu, 0, 0,
+                                              &p->refdata.nwcs);
+                  if(p->refdata.wcs && !p->cp.quiet)
+                    printf(" - WCS: %s (hdu %s).\n", filename, newnode->hdu);
+                }
             }
           else newnode->hdu=NULL;
         }
@@ -343,12 +358,6 @@ operands_pop(struct arithmeticparams *p, char *operator)
          identify variables. */
       if(data->name) { free(data->name); data->name=NULL; }
 
-      /* In case this is the first image that is read, then keep the WCS
-         information in the `refdata' structure.  */
-      if(p->popcounter==0)
-        p->refdata.wcs=gal_wcs_read(filename, hdu, 0, 0,
-                                    &p->refdata.nwcs);
-
       /* When the reference data structure's dimensionality is non-zero, it
          means that this is not the first image read. So, write its basic
          information into the reference data structure for future
@@ -381,7 +390,7 @@ operands_pop(struct arithmeticparams *p, char *operator)
         }
 
       /* Report the read image if desired: */
-      if(!p->cp.quiet) printf(" - %s (hdu %s) is read.\n", filename, hdu);
+      if(!p->cp.quiet) printf(" - Read: %s (hdu %s).\n", filename, hdu);
 
       /* Free the HDU string: */
       if(hdu) free(hdu);
