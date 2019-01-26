@@ -1279,7 +1279,7 @@ columns_define_alloc(struct mkcatalogparams *p)
         case UI_KEY_STD:
           name           = "STD";
           unit           = MKCATALOG_NO_UNIT;
-          ocomment       = "Average of input standard deviation.";
+          ocomment       = "Sky standard deviation under object.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
@@ -1287,7 +1287,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_width     = 10;
           disp_precision = 4;
           oiflag[ OCOL_NUM    ] = ciflag[ CCOL_NUM    ] = 1;
-          oiflag[ OCOL_SUMSTD ] = ciflag[ CCOL_SUMSTD ] = 1;
+          oiflag[ OCOL_SUMVAR ] = ciflag[ CCOL_SUMVAR ] = 1;
           break;
 
         case UI_KEY_SEMIMAJOR:
@@ -2059,7 +2059,8 @@ columns_fill(struct mkcatalog_passparams *pp)
           break;
 
         case UI_KEY_STD:
-          ((float *)colarr)[oind] = MKC_RATIO(oi[OCOL_SUMSTD], oi[OCOL_NUM]);
+          ((float *)colarr)[oind] = sqrt( MKC_RATIO( oi[ OCOL_SUMVAR ],
+                                                     oi[ OCOL_NUM    ]) );
           break;
 
         case UI_KEY_SEMIMAJOR:
@@ -2307,8 +2308,8 @@ columns_fill(struct mkcatalog_passparams *pp)
             break;
 
           case UI_KEY_STD:
-            ((float *)colarr)[cind] = MKC_RATIO( ci[ CCOL_SUMSTD ],
-                                                 ci[ CCOL_NUM ] );
+            ((float *)colarr)[cind] = sqrt( MKC_RATIO( ci[ CCOL_SUMVAR ],
+                                                       ci[ CCOL_NUM    ] ));
             break;
 
           case UI_KEY_SEMIMAJOR:
