@@ -12178,7 +12178,7 @@ output of this operand is in the same type as the input.
 Maximum (non-blank) value of first operand in the same type, similar to
 @command{minvalue}.
 
-@item numvalue
+@item numbervalue
 Number of non-blank elements in first operand in the @code{uint64} type,
 similar to @command{minvalue}.
 
@@ -12218,8 +12218,7 @@ Important notes:
 @itemize
 
 @item
-NaN/blank pixels will be ignored, see @ref{Blank
-pixels}.
+NaN/blank pixels will be ignored, see @ref{Blank pixels}.
 
 @item
 The output will have the same type as the inputs. This is natural for the
@@ -12235,7 +12234,7 @@ conversion will be used.
 Similar to @command{min}, but the pixels of the output will contain
 the maximum of the respective pixels in all operands in the stack.
 
-@item num
+@item number
 Similar to @command{min}, but the pixels of the output will contain the
 number of the respective non-blank pixels in all input operands.
 
@@ -12254,6 +12253,43 @@ standard deviation of the respective pixels in all operands in the stack.
 @item median
 Similar to @command{min}, but the pixels of the output will contain
 the median of the respective pixels in all operands in the stack.
+
+@item sigclip-number
+Combine the specified number of inputs into a single output that contains
+the number of remaining elements after @mymath{\sigma}-clipping on each
+element/pixel (for more on @mymath{\sigma}-clipping, see @ref{Sigma
+clipping}). This operator is very similar to @command{min}, with the
+exception that it expects two operands (paramters for sigma-clipping)
+before the total number of inputs. The first popped operand is the
+termination criteria and the second is the multiple of @mymath{\sigma}.
+
+For example in the command below, the first popped operand (@command{0.2})
+is the sigma clipping termination criteria. If the termination criteria is
+larger than 1 it is interpretted as the number of clips to do. But if it is
+between 0 and 1, then it is the tolerance level on the standard deviation
+(see @ref{Sigma clipping}). The second popped operand (@command{5}) is the
+multiple of sigma to use in sigma-clipping. The third popped operand
+(@command{10}) is number of datasets that will be used (similar to the
+first popped operand to @command{min}).
+
+@example
+astarithmetic a.fits b.fits c.fits 3 5 0.2 sigclip-number
+@end example
+
+@item sigclip-median
+Combine the specified number of inputs into a single output that contains
+the @emph{median} after @mymath{\sigma}-clipping on each element/pixel. For
+more see @command{sigclip-number}.
+
+@item sigclip-mean
+Combine the specified number of inputs into a single output that contains
+the @emph{mean} after @mymath{\sigma}-clipping on each element/pixel. For
+more see @command{sigclip-number}.
+
+@item sigclip-std
+Combine the specified number of inputs into a single output that contains
+the @emph{standard deviation} after @mymath{\sigma}-clipping on each
+element/pixel. For more see @command{sigclip-number}.
 
 @item filter-mean
 Apply mean filtering (or @url{https://en.wikipedia.org/wiki/Moving_average,
@@ -16179,13 +16215,17 @@ discontinuities do not show up in the final Sky values. The smoothing is
 done through convolution (see @ref{Convolution process}) with a flat
 kernel, so the value to this option must be an odd number.
 
-@item --ignoreblankinsky
-Don't set the input's blank pixels to blank in the output Sky and Sky
-standard deviation datasets. This is only applicable when the output has
-the same size as the input, in other words, when @option{--oneelempertile}
-isn't called. By default, blank values in the input (commonly on the edges
-which are outside the survey/field area) will be set to blank in the output
-Sky and Sky standard deviation also.
+@item --ignoreblankintiles
+Don't set the input's blank pixels to blank in the tiled outputs (for
+example Sky and Sky standard deviation extensions of the output). This is
+only applicable when the tiled output has the same size as the input, in
+other words, when @option{--oneelempertile} isn't called.
+
+By default, blank values in the input (commonly on the edges which are
+outside the survey/field area) will be set to blank in the tiled outputs
+also. But in other scenarios this default behavior is not desired: for
+example if you have masked something in the input, but want the tiled
+output under that also.
 
 @item --checksky
 Create a multi-extension FITS file showing the steps that were used to
@@ -16443,6 +16483,17 @@ is now possible to ask for ignoring blank pixels when calculating the
 fraction. This is useful when blank/masked pixels are distributed across
 the image. For more, see the description of this option in @ref{Detection
 options}.
+
+@item
+@option{--holengb}: The connectivity (defined by the number of neighbors)
+to fill holes after applying @option{--dthresh} (above) to find
+pseudo-detections. For more, see the description of this option in
+@ref{Detection options}.
+
+@item
+@option{--pseudoconcomp}: The connectivity (defined by the number of
+neighbors) to find individual pseudo-detections. For more, see the
+description of this option in @ref{Detection options}.
 
 @item
 @option{--detgrowquant}: is used to grow the final true detections until a
@@ -17035,6 +17086,12 @@ walls of the hole are 4-connected. If standard (near Sky level) values are
 given to @option{--dthresh}, setting @option{--holengb=4}, might fill the
 complete dataset and thus not create enough pseudo-detections.
 
+@item --pseudoconcomp=INT
+The connectivity (defined by the number of neighbors) to find individual
+pseudo-detections. If it is a weaker connectivity (4 in a 2D image), then
+pseudo-detections that are connected on the corners will be treated as
+separate.
+
 @item -m INT
 @itemx --snminarea=INT
 The minimum area to calculate the Signal to noise ratio on the
@@ -17235,13 +17292,17 @@ NoiseChisel will abort once its desired extensions have been written. With
 NoiseChisel to continue with the rest of the processing, even after the
 requested check files are complete.
 
-@item --ignoreblankinsky
-Don't set the input's blank pixels to blank in the output Sky and Sky
-standard deviation datasets. This is only applicable when the output has
-the same size as the input, in other words, when @option{--oneelempertile}
-isn't called. By default, blank values in the input (commonly on the edges
-which are outside the survey/field area) will be set to blank in the output
-Sky and Sky standard deviation also.
+@item --ignoreblankintiles
+Don't set the input's blank pixels to blank in the tiled outputs (for
+example Sky and Sky standard deviation extensions of the output). This is
+only applicable when the tiled output has the same size as the input, in
+other words, when @option{--oneelempertile} isn't called.
+
+By default, blank values in the input (commonly on the edges which are
+outside the survey/field area) will be set to blank in the tiled outputs
+also. But in other scenarios this default behavior is not desired: for
+example if you have masked something in the input, but want the tiled
+output under that also.
 
 @item -l
 @itemx --label
@@ -27223,7 +27284,7 @@ type, you can convert the input to a floating point type with
 
 @deffn  Macro GAL_ARITHMETIC_OP_MINVAL
 @deffnx Macro GAL_ARITHMETIC_OP_MAXVAL
-@deffnx Macro GAL_ARITHMETIC_OP_NUMVAL
+@deffnx Macro GAL_ARITHMETIC_OP_NUMBERVAL
 @deffnx Macro GAL_ARITHMETIC_OP_SUMVAL
 @deffnx Macro GAL_ARITHMETIC_OP_MEANVAL
 @deffnx Macro GAL_ARITHMETIC_OP_STDVAL
@@ -27242,7 +27303,7 @@ Unary operand absolute-value operator.
 
 @deffn  Macro GAL_ARITHMETIC_OP_MIN
 @deffnx Macro GAL_ARITHMETIC_OP_MAX
-@deffnx Macro GAL_ARITHMETIC_OP_NUM
+@deffnx Macro GAL_ARITHMETIC_OP_NUMBER
 @deffnx Macro GAL_ARITHMETIC_OP_SUM
 @deffnx Macro GAL_ARITHMETIC_OP_MEAN
 @deffnx Macro GAL_ARITHMETIC_OP_STD
@@ -27253,6 +27314,18 @@ be interpreted as a list of datasets (see @ref{List of gal_data_t}. The
 output will be a single dataset with each of its elements replaced by the
 respective statistical operation on the whole list. See the discussion
 under the @code{min} operator in @ref{Arithmetic operators}.
+@end deffn
+
+@deffn  Macro GAL_ARITHMETIC_OP_SIGCLIP_STD
+@deffnx Macro GAL_ARITHMETIC_OP_SIGCLIP_MEAN
+@deffnx Macro GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN
+@deffnx Macro GAL_ARITHMETIC_OP_SIGCLIP_NUMBER
+Similar to the operands above (including @code{GAL_ARITHMETIC_MIN}), except
+that when @code{gal_arithmetic} is called with these operators, it requires
+two arguments. The first is the list of datasets like before, and the
+second is the 2-element list of sigma-clipping parameters. The first
+element in the parameters list is the multiple of sigma and the second is
+the termination criteria (see @ref{Sigma clipping}).
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_POW
@@ -29252,8 +29325,8 @@ The next major difference with over-segmentation is that when there is only
 one label in growth region(s), it is not mandatory for @code{indexs} to be
 sorted by values. If there are multiple labeled regions in growth
 region(s), then values are important and you can use @code{qsort} with
-@code{gal_qsort_index_float_decreasing} to sort the indexs by values in a
-separate array (see @ref{Qsort functions}).
+@code{gal_qsort_index_single_d} to sort the indexs by values in a separate
+array (see @ref{Qsort functions}).
 
 This function looks for positive-valued neighbors of each pixel in
 @code{indexs} and will label a pixel if it touches one. Therefore, it is

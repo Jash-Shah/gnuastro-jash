@@ -137,13 +137,13 @@ struct argp_option program_options[] =
 
     /* Output options. */
     {
-      "ignoreblankinsky",
-      UI_KEY_IGNOREBLANKINSKY,
+      "ignoreblankintiles",
+      UI_KEY_IGNOREBLANKINTILES,
       0,
       0,
-      "Don't write input's blanks in the Sky output.",
+      "Don't write input's blanks in tiled output.",
       GAL_OPTIONS_GROUP_OUTPUT,
-      &p->ignoreblankinsky,
+      &p->ignoreblankintiles,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -416,6 +416,19 @@ struct argp_option program_options[] =
       "4 or 8 connectivity for filling holes.",
       UI_GROUP_DETECTION,
       &p->holengb,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GT_0,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "pseudoconcomp",
+      UI_KEY_PSEUDOCONCOMP,
+      "INT",
+      0,
+      "4 or 8 neighbors for labeling pseudo-dets.",
+      UI_GROUP_DETECTION,
+      &p->pseudoconcomp,
       GAL_TYPE_SIZE_T,
       GAL_OPTIONS_RANGE_GT_0,
       GAL_OPTIONS_MANDATORY,

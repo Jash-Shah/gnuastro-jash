@@ -241,9 +241,10 @@ ui_read_check_only_options(struct noisechiselparams *p)
           "for it");
 
   /* A general check on the neighbor connectivity values. */
-  ui_ngb_check(p->holengb,    "holengb");
-  ui_ngb_check(p->erodengb,   "erodengb");
+  ui_ngb_check(p->holengb, "holengb");
+  ui_ngb_check(p->erodengb, "erodengb");
   ui_ngb_check(p->openingngb, "openingngb");
+  ui_ngb_check(p->pseudoconcomp, "pseudoconcomp");
 
   /* Make sure that the no-erode-quantile is not smaller or equal to
      qthresh. */

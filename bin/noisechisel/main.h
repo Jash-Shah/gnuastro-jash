@@ -52,7 +52,7 @@ struct noisechiselparams
   char                  *whdu;  /* Wide kernel HDU.                       */
 
   uint8_t  continueaftercheck;  /* Don't abort after the check steps.     */
-  uint8_t    ignoreblankinsky;  /* Ignore input's blank values.           */
+  uint8_t  ignoreblankintiles;  /* Ignore input's blank values.           */
   uint8_t           rawoutput;  /* Only detection & 1 elem/tile output.   */
   uint8_t               label;  /* Label detections that are connected.   */
 
@@ -74,6 +74,7 @@ struct noisechiselparams
   uint8_t         checkdetsky;  /* Check pseudo-detection sky value.      */
   float               dthresh;  /* Sigma threshold for Pseudo-detections. */
   size_t              holengb;  /* Connectivity for defining a hole.      */
+  size_t        pseudoconcomp;  /* Connectivity for connected components. */
   size_t            snminarea;  /* Minimum pseudo-detection area for S/N. */
   uint8_t             checksn;  /* Save pseudo-detection S/N values.      */
   size_t          minnumfalse;  /* Min No. of det/seg for true quantile.  */

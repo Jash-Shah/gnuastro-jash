@@ -17,6 +17,11 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      without changing the state of the operand stack (popping the top
      element). This can greatly help in debugging/understanding an
      Arithmetic command, especially as it gets longer, or more complicated.
+   - Four new operators have beed added to allow coadding multiple datasets
+     into one using sigma-clipping: `sigclip-number', `sigclip-mean',
+     `sigclip-median', and `sigclip-std'. These are very useful when
+     several inputs have strong outliers that affect the median, or the
+     mean is required.
    --wcsfile and --wcshdu: these two options can be used to specify a
      different file for reading the WCS of the output. This is useful when
      the default (theh WCS of the first dataset that is read) is not the
@@ -45,6 +50,13 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      second input. This greatly simplifies the mergining of different table
      columns into one.
 
+  NoiseChisel:
+   --pseudoconcomp: allows setting the connectivity (4 or 8, in a 2D image)
+     to define separate pseudo-detections. If its stronger,
+     pseudo-detections that are touching on the corner will be identified
+     as one. Until this version, this was hard-written into the code and
+     was the weakest connectivity (4-connected in a 2D image).
+
   Library:
     GAL_BLANK_LONG: new macro for the `long' type blank value.
     GAL_BLANK_ULONG: new macro for the `unsigned long' type blank value.
@@ -55,6 +67,10 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 ** Removed features
 
 ** Changed features
+
+  Arithmetic:
+   - `num' operator is renamed to `number'.
+   - `numvalue' operator is renamed to `numbervalue'.
 
   ConvertType:
    --forcemin & --forcemax: until now, `--flminbyte' and `--flmaxbyte' were
@@ -69,6 +85,17 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      for the Sky standard deviation and could be incorrectly used. From now
      on, this option measures the square root of the mean variance, or root
      mean square (the correct definition of the Sky standard deviation).
+
+  NoiseChisel:
+   --ignoreblankintiles: Until now `--ignoreblankinsky', would specify if
+     blank values should also be written into the tiled Sky and Sky
+     standard deviation outputs. But NoiseChisel can optionally produce
+     many more tiled outputs (for example with `--checkqthresh'). So the
+     option was renamed to `--ignoreblankintiles' to highlight that the
+     status of blank elements can be set in all tiled outputs.
+
+  Statistics:
+   --ignoreblankintiles: similar to same option in NoiseChisel.
 
 ** Bugs fixed
   bug #55313: Fits program writing --write values in reverse order

@@ -361,6 +361,7 @@ detection_pseudo_find(struct noisechiselparams *p, gal_data_t *workbin,
   uint8_t *b, *bf;
   gal_data_t *bin;
   struct fho_params fho_prm={0, NULL, workbin, worklab, p};
+  int con=detection_ngb_to_connectivity(p->input->ndim, p->pseudoconcomp);
 
 
   /* Set all the initial detected pixels to blank values. */
@@ -474,7 +475,7 @@ detection_pseudo_find(struct noisechiselparams *p, gal_data_t *workbin,
       do if(*b==GAL_BLANK_UINT8) *b = !s0d1; while(++b<bf);
     }
   */
-  return gal_binary_connected_components(workbin, &worklab, 1);
+  return gal_binary_connected_components(workbin, &worklab, con);
 }
 
 
