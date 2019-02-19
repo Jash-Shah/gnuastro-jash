@@ -115,6 +115,8 @@ ui_initialize_options(struct noisechiselparams *p,
   cp->numthreads         = gal_threads_number();
   cp->coptions           = gal_commonopts_options;
 
+  /* Program specific initialization. */
+  p->snthresh=NAN;
 
   /* Modify common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -244,6 +246,7 @@ ui_read_check_only_options(struct noisechiselparams *p)
   ui_ngb_check(p->holengb, "holengb");
   ui_ngb_check(p->erodengb, "erodengb");
   ui_ngb_check(p->openingngb, "openingngb");
+  ui_ngb_check(p->openingngb, "dopeningngb");
   ui_ngb_check(p->pseudoconcomp, "pseudoconcomp");
 
   /* Make sure that the no-erode-quantile is not smaller or equal to
