@@ -26,6 +26,9 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      different file for reading the WCS of the output. This is useful when
      the default (theh WCS of the first dataset that is read) is not the
      required one.
+   --interpmetric: new option that is necessary with the
+     `interpolate-medianngb' operator. For more, see the description of
+     this option in NoiseChisel.
 
   Fits:
    - Add "title" to group FITS keywords with `--write=/,"title name". This
@@ -49,9 +52,21 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      contain all the columns from the first input and the 5th column of the
      second input. This greatly simplifies the mergining of different table
      columns into one.
+   --coord: manually specify coordinates to match on the
+     command-line. Until now, if you only wanted to make check a specific
+     coordinate's matching with a catalog. It was necessary to make a
+     single-row catalog as a file and feed that into Match. With this
+     option, you can now specify the coordinates to match against another
+     catalog with the command-line.
 
   NoiseChisel:
-
+   --interpmetric: Set the metric to use to identify the nearest neighbors
+     for tile interpolation (quantile threshold, initial Sky, and final
+     Sky). Until now only the manhattan/taxicab metric was available, which
+     is fast, but could cause 45-degree lines in the interpolation. From
+     this version, with this option, its also possible to use the radial
+     distance (which is now the default). Just note that if there are many
+     tiles over the image, the radial distance will be slower.
    --snthresh: Manually set the signal-to-noise ratio of true
      pseudo-detections. With this option, NoiseChisel will not attempt to
      find pseudo-detections over the noisy regions of the dataset, but will
@@ -67,12 +82,17 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      --dopening: The number of openings to do after applying `--dthresh'.
      --dopeningngb: The connectivity (4 or 8) to use for `--dopening'.
 
+  Statistics:
+   --interpmetric: Similar to NoiseChisel.
+
   Library:
     GAL_BLANK_LONG: new macro for the `long' type blank value.
     GAL_BLANK_ULONG: new macro for the `unsigned long' type blank value.
     gal_blank_number: Return the number of blank elements in a dataset.
+    gal_dimension_dist_radial: Radial distance between two coordinates.
     gal_statistics_outlier_cumulative: Uses flatness of the cumulative
        distribution to find outliers.
+    gal_type_is_int: to see if we have an integer (any width, any sign).
 
 ** Removed features
 
@@ -117,6 +137,8 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #55478: Memory mapping crashes when .gnuastro is not writable.
   bug #55491: NoiseChisel crash when no tiles good for quantile thresholding.
   bug #55544: Arithmetic's output WCS with where operator is not as expected.
+  bug #55740: Diamond shapes in nearst-ngb interpolation affecting NoiseChisel.
+  bug #55763: Crop not keeping Blank pixels on unsigned types.
 
 
 

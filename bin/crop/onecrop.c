@@ -642,7 +642,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
 
   /* When CFITSIO creates a FITS extension it adds two comments linking to
      the FITS paper. Since we are mentioning the version of CFITSIO and
-     only use its ruitines to read/write from/to FITS files, this is
+     only use its routines to read/write from/to FITS files, this is
      redundant. If `status!=0', then `gal_fits_io_error' will abort, but in
      case CFITSIO doesn't write the comments, status will become
      non-zero. So we are resetting it to zero after these (because not
@@ -671,7 +671,8 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
   /* Write the blank value as a FITS keyword if necessary. */
   if( type!=GAL_TYPE_FLOAT32 && type!=GAL_TYPE_FLOAT64 )
     if(fits_write_key(ofp, gal_fits_type_to_datatype(crp->p->type), "BLANK",
-                      crp->p->bitnul, "pixels with no data", &status) )
+                      crp->p->blankptrwrite, "Pixels with no data.",
+                      &status) )
       gal_fits_io_error(status, "adding Blank");
   totsize = naxes[0]*naxes[1] * (ndim==3?naxes[2]:1);
   if(fits_write_null_img(ofp, 1, totsize, &status))
@@ -774,7 +775,7 @@ onecrop(struct onecropparams *crp)
       for(i=0;i<ndim;++i) cropsize *= ( lpixel_i[i] - fpixel_i[i] + 1 );
       array=gal_pointer_allocate(p->type, cropsize, 0, __func__, "array");
       if(fits_read_subset(ifp, gal_fits_type_to_datatype(p->type),
-                          fpixel_i, lpixel_i, inc, p->bitnul, array,
+                          fpixel_i, lpixel_i, inc, p->blankptrread, array,
                           &anynul, &status))
         gal_fits_io_error(status, NULL);
 
@@ -928,8 +929,8 @@ onecrop_center_filled(struct onecropparams *crp)
   /* Allocate the array and read in the pixels. */
   array=gal_pointer_allocate(type, size, 0, __func__, "array");
   if( fits_read_subset(ofp, gal_fits_type_to_datatype(type), fpixel, lpixel,
-                       inc, p->bitnul, array, &anynul, &status) )
-     gal_fits_io_error(status, NULL);
+                       inc, p->blankptrread, array, &anynul, &status) )
+    gal_fits_io_error(status, NULL);
   free(array);
 
   /* CFITSIO already checks if there are any blank pixels. If there are,

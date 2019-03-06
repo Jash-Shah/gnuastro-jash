@@ -199,6 +199,20 @@ struct argp_option gal_commonopts_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "interpmetric",
+      GAL_OPTIONS_KEY_INTERPMETRIC,
+      "INT",
+      0,
+      "Interpolation metric (radial, manhattan).",
+      GAL_OPTIONS_GROUP_TESSELLATION,
+      &cp->interpmetric,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_read_interpmetric
+    },
+    {
       "interpnumngb",
       GAL_OPTIONS_KEY_INTERPNUMNGB,
       "INT",
@@ -252,7 +266,7 @@ struct argp_option gal_commonopts_options[] =
       GAL_OPTIONS_KEY_TABLEFORMAT,
       "STR",
       0,
-      "Table format: `fits-ascii', `fits-binary'.",
+      "Table fmt: `fits-ascii', `fits-binary', `txt'.",
       GAL_OPTIONS_GROUP_OUTPUT,
       &cp->tableformat,
       GAL_TYPE_STRING,

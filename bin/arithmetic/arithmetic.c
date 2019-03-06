@@ -728,8 +728,9 @@ arithmetic_interpolate(struct arithmeticparams *p, char *token)
   num_int = *((int32_t *)(num->array));
 
   /* Call the interpolation function. */
-  interpolated=gal_interpolate_close_neighbors(in, NULL, num_int,
-                                               p->cp.numthreads, 1, 0);
+  interpolated=gal_interpolate_close_neighbors(in, NULL, p->cp.interpmetric,
+                                               num_int, p->cp.numthreads,
+                                               1, 0);
 
   /* Clean up and push the interpolated array onto the stack. */
   gal_data_free(in);
@@ -904,9 +905,9 @@ void
 reversepolish(struct arithmeticparams *p)
 {
   int op=0, nop=0;
-  char *filename, *hdu;
   unsigned int numop, i;
   gal_list_str_t *token;
+  char *hdu, *filename, *printnum;
   gal_data_t *d1=NULL, *d2=NULL, *d3=NULL;
   int flags = ( GAL_ARITHMETIC_INPLACE | GAL_ARITHMETIC_FREE
                 | GAL_ARITHMETIC_NUMOK );
@@ -1255,11 +1256,12 @@ reversepolish(struct arithmeticparams *p)
   d1=p->operands->data;
   if(d1->size==1)
     {
-      /* To simplify the printing process, we will first change it to
-         double, then use printf's `%g' to print it, so integers will be
-         printed as an integer.  */
-      d2=gal_data_copy_to_new_type(d1, GAL_TYPE_FLOAT64);
-      printf("%g\n", *(double *)d2->array);
+      /* Make the string to print the number. */
+      printnum=gal_type_to_string(d1->array, d1->type, 0);
+      printf("%s\n", printnum);
+
+      /* Clean up. */
+      free(printnum);
       if(d2!=d1) gal_data_free(d2);
     }
   else

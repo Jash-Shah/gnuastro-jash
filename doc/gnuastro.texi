@@ -7816,6 +7816,22 @@ is desirable).
 When values are to be interpolated, only change the values of the blank
 elements, keep the non-blank elements untouched.
 
+@item --interpmetric=STR
+@cindex Radial metric
+@cindex Taxicab metric
+@cindex Manhattan metric
+@cindex Metric: Manhattan, Taxicab, Radial
+The metric to use for finding nearest neighbors. Currently it only accepts
+the Manhattan (or taxicab) metric with @code{manhattan}, or the radial
+metric with @code{radial}.
+
+The Manhattan distance between two points is defined with
+@mymath{|\Delta{x}|+|\Delta{y}|}. Thus the Manhattan metric has the
+advantage of being fast, but at the expense of being less accurate. The
+radial distance is the standard definition of distance in a Euclidean
+space: @mymath{\sqrt{\Delta{x}^2+\Delta{y}^2}}. It is accurate, but the
+multiplication and square root can slow down the processing.
+
 @item --interpnumngb=INT
 The number of nearby non-blank neighbors to use for interpolation.
 @end table
@@ -12146,18 +12162,17 @@ non-zero decimals) put an @code{f} after it.
 
 @item sqrt
 The square root of the first operand, so ``@command{5 sqrt}'' is equivalent
-to @mymath{\sqrt{5}}. The output type is determined from the input, so the
-output of this example will be @command{2} (since @command{5} doesn't have
-any non-zero decimal digits). If you want @command{2.23607}, run
-@command{5f sqrt} instead, the @command{f} will ensure that a number will
-be read as a floating point number, even if it doesn't have decimal
-digits. If the input image has an integer type, you should explicitly
-convert the image to floating point, for example @command{a.fits float
-sqrt}, see the type conversion operators below.
+to @mymath{\sqrt{5}}. The output will have a floating point type, but its
+precision is determined from the input: if the input is a 64-bit floating
+point, the output will also be 64-bit. Otherwise, the output will be 32-bit
+floating point (see @ref{Numeric data types} for the respective
+precision). Therefore if you require 64-bit precision in estimating the
+square root, convert the input to 64-bit floating point first, for example
+with @code{5 float64 sqrt}.
 
 @item log
 Natural logarithm of first operand, so ``@command{4 log}'' is equivalent to
-@mymath{\ln(4)}. The output type is determined from the input, see the
+@mymath{ln(4)}. The output type is determined from the input, see the
 explanation under @command{sqrt} for more.
 
 @item log10
@@ -19926,10 +19941,14 @@ $ astmatch --ccol1=2,3,4 --ccol2=2,3,4 -a0.5/3600,0.5/3600,5e-10 \
            in1.fits in2.txt
 @end example
 
-Two inputs are necessary for Match to start processing. The inputs can be
-plain text tables or FITS tables, see @ref{Tables}. If only one argument is
-provided, Match will assume look for the first input in Standard input (see
-@ref{Standard input}).
+Match will find the rows that are nearest to each other in two catalogs
+(given some coordinate columns). Therefore two catalogs are necessary for
+input. However, they don't necessarily have to be files: 1) the first
+catalog can also come from the standard input (for example a pipe, see
+@ref{Standard input}); 2) when only one point is needed, you can use the
+@option{--coord} option to avoid creating a file for the second
+catalog. When the inputs are files, they can be plain text tables or FITS
+tables, for more see @ref{Tables}.
 
 Match follows the same basic behavior of all Gnuastro programs as fully
 described in @ref{Common program behavior}. If the first input is a FITS
@@ -20022,6 +20041,15 @@ re-arrange the necessary columns and it will write a single output
 table. Combined with regular expressions in large tables, this can be a
 very powerful and convenient way to merge various tables into one.
 
+When @option{--coord} is given, no second catalog will be read. The second
+catalog will be created internally based on the values given to
+@option{--coord}. So column names aren't defined and you can only request
+integer column numbers that are less than the number of coordinates given
+to @option{--coord}. For example if you want to find the row matching RA of
+1.2345 and Dec of 6.7890, then you should use
+@option{--coord=1.2345,6.7890}. But when using @option{--outcols}, you
+can't give @code{bRA}, or @code{b25}.
+
 @item -l
 @itemx --logasoutput
 The output file will have the contents of the log file: indexes in the two
@@ -20051,8 +20079,27 @@ columns}. See the one-line examples above for some usages of this option.
 The coordinate columns of the second input. See the example in
 @option{--ccol1} for more.
 
-@item -a FLT[,...]
-@itemx --aperture=FLT[,...]
+@item -d FLT[,FLT]
+@itemx --coord=FLT[,FLT]
+Manually specify the coordinates to match against the given catalog. With
+this option, Match will not look for a second input file/table and will
+directly use the coordinates given to this option.
+
+When this option is called, the output changes in the following ways: 1)
+when @option{--outcols} is specified, for the second input, it can only
+accept integer numbers that are less than the number of values given to
+this option, see description of that option for more. 2) By default (when
+@option{--outcols} isn't used), only the matching row of the first table
+will be output (a single file), not two separate files (one for each
+table).
+
+This option is good when you have a (large) catalog and only want to match
+a single coordinate to it (for example to find the nearest catalog entry to
+your desired point). With this option, you can write the coordinates on the
+command-line and thus avoid the need to make a single-row file.
+
+@item -a FLT[,FLT[,FLT]]
+@itemx --aperture=FLT[,FLT[,FLT]]
 Parameters of the aperture for matching. The values given to this option
 can be fractions, for example when the position columns are in units of
 degrees, @option{1/3600} can be used to ask for one arcsecond. The
@@ -23944,6 +23991,10 @@ Note: Do not use the maximum value for a blank value of a general
 @ref{Library blank values} for the definition and usage of blank values.
 @end deftypefun
 
+@deftypefun int gal_type_is_int (uint8_t @code{type})
+Return 1 if the type is an integer (any width and any sign).
+@end deftypefun
+
 @deftypefun int gal_type_is_list (uint8_t @code{type})
 Return 1 if the type is a linked list and zero otherwise.
 @end deftypefun
@@ -24859,6 +24910,11 @@ Return the manhattan distance (see
 @url{https://en.wikipedia.org/wiki/Taxicab_geometry, Wikipedia}) between
 the two coordinates @code{a} and @code{b} (each an array of @code{ndim}
 elements).
+@end deftypefun
+
+@deftypefun float gal_dimension_dist_radial (size_t @code{*a}, size_t @code{*b}, size_t @code{ndim})
+Return the radial distance between the two coordinates @code{a} and
+@code{b} (each an array of @code{ndim} elements).
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_sum (gal_data_t @code{*in}, size_t @code{c_dim}, gal_data_t @code{*weight})
@@ -26265,17 +26321,29 @@ typedef struct gal_fits_list_key_t
 @end deftp
 
 @deftypefun {void *} gal_fits_key_img_blank (uint8_t @code{type})
-Returns a pointer to an allocated space for the FITS @code{BLANK} header
-keyword when the input array has a type of @code{type}.
+Returns a pointer to an allocated space containing the value to the FITS
+@code{BLANK} header keyword, when the input array has a type of
+@code{type}. This is useful when you want to write the @code{BLANK} keyword
+using CFITSIO's @code{fits_write_key} function.
 
 According to the FITS standard: ``If the @code{BSCALE} and @code{BZERO}
 keywords do not have the default values of 1.0 and 0.0, respectively, then
 the value of the @code{BLANK} keyword must equal the actual value in the
 FITS data array that is used to represent an undefined pixel and not the
 corresponding physical value''. Therefore a special @code{BLANK} value is
-needed for datasets containing signed 8-bit integers and unsigned 16-bit,
-32-bit and 64-bit integers (types that are defined with @code{BSCALE} and
-@code{BZERO} in the FITS standard).
+needed for datasets containing signed 8-bit, unsigned 16-bit, unsigned
+32-bit, and unsigned 64-bit integers (types that are defined with
+@code{BSCALE} and @code{BZERO} in the FITS standard).
+
+@cartouche
+@noindent
+@strong{Not usable when reading a dataset:} As quoted from the FITS
+standard above, the value returned by this function can only be generically
+used for the writing of the @code{BLANK} keyword header. It @emph{must not}
+be used as the blank pointer when when reading a FITS array using
+CFITSIO. When reading an array with CFITSIO, you can use
+@code{gal_blank_alloc_write} to generate the necessary pointer.
+@end cartouche
 @end deftypefun
 
 @deftypefun void gal_fits_key_clean_str_value (char @code{*string})
@@ -27336,11 +27404,14 @@ polish notation}).
 @deffnx Macro GAL_ARITHMETIC_OP_LOG10
 Unary operator functions for calculating the square root
 (@mymath{\sqrt{i}}), @mymath{ln(i)} and @mymath{log(i)} mathematic
-operators on each element of the input dataset. The output will have the
-same type as the input, so if your inputs are integer types be careful.
+operators on each element of the input dataset. The returned dataset will
+have a floating point type, but its precision is determined from the input:
+if the input is a 64-bit floating point, the output will also be
+64-bit. Otherwise, the returned dataset will be 32-bit floating point. See
+@ref{Numeric data types} for the respective precision.
 
-If you want your output to be floating point but your input is an integer
-type, you can convert the input to a floating point type with
+If you want your output to be 64-bit floating point but your input is a
+different type, you can convert the input to a floating point type with
 @code{gal_data_copy_to_new_type} or
 @code{gal_data_copy_to_new_type_free}(see @ref{Copying datasets}).
 @end deffn
