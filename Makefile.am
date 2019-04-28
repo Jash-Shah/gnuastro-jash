@@ -118,7 +118,7 @@ SUBDIRS = bootstrapped/lib $(MAYBE_GNULIBCHECK) lib $(MAYBE_ARITHMETIC)    \
   $(MAYBE_COSMICCAL) $(MAYBE_CROP) $(MAYBE_FITS) $(MAYBE_MATCH)            \
   $(MAYBE_MKCATALOG) $(MAYBE_MKNOISE) $(MAYBE_MKPROF) $(MAYBE_NOISECHISEL) \
   $(MAYBE_SEGMENT) $(MAYBE_STATISTICS) $(MAYBE_TABLE) $(MAYBE_TEMPLATE)    \
-  $(MAYBE_WARP) doc tests
+  $(MAYBE_WARP) bin/script doc tests
 
 
 
@@ -142,8 +142,12 @@ dist_sysconf_DATA = bin/gnuastro.conf
 
 ## Files that are only distributed
 ## ===============================
-EXTRA_DIST = genauthors .dir-locals.el .version developer-build     \
-  bootstrapped/README .autom4te.cfg
+##
+## Note that `COPYING' (containing the GNU GPL) is included in the
+## distribution tarball by default in Automake, but not other license
+## files, so we have to manually add `COPYING.FDL'.
+EXTRA_DIST = COPYING.FDL genauthors .dir-locals.el .version \
+             developer-build bootstrapped/README .autom4te.cfg
 
 
 

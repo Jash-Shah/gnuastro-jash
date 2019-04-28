@@ -1,6 +1,9 @@
 GNU Astronomy Utilities Acknowledgments
 =======================================
 
+Copyright (C) 2015-2019 Free Software Foundation, Inc.
+See the end of the file for license conditions.
+
 The following people and institutions who contributed to Gnuastro
 indirectly (not by actually submitting code) are listed here. For the list
 of Gnuastro code/documentation authors (people who have contributed actual
@@ -30,6 +33,7 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Nima Dehdilani                       nimadehdilani@gmail.com
     Antonio Diaz Diaz                    antonio@gnu.org
     Pierre-Alain Duc                     pierre-alain.duc@astro.unistra.fr
+    Elham Eftekhari                      elhamea@iac.es
     Gaspar Galaz                         ggalaz@astro.puc.cl
     Thérèse Godefroy                     godef.th@free.fr
     Madusha Gunawardhana                 gunawardhana@strw.leidenuniv.nl
@@ -39,7 +43,7 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Brandon Invergo                      brandon@gnu.org
     Oryna Ivashtenko                     arinaivashtenko@gmail.com
     Aurélien Jarno                       aurelien.jarno@univ-lyon1.fr
-    Lee Kelvin                           l.s.kelvin@ljmu.ac.uk
+    Lee Kelvin                           lee.s.kelvin@gmail.com
     Brandon Kelly                        b.k.kelly@2017.ljmu.ac.uk
     Mohammad-Reza Khellat                moha.khe@gmail.com
     Johan Knapen                         jhk@iac.es
@@ -92,3 +96,14 @@ Host institutions of Gnuastro's developers.
     University of Salento, Lecce, Italy.
     Centre de Recherche Astrophysique de Lyon (CRAL), Lyon, France.
     Instituto de Astrofisica de Canarias (IAC), Tenerife, Spain.
+
+
+Copyright
+---------
+
+Copyright (C) 2015-2019 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.

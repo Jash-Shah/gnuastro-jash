@@ -72,11 +72,11 @@ convertt_change(struct converttparams *p)
       {
         /* Make a condition array: all pixels with a value equal to
            `change->from' will be set as 1 in this array. */
-        cond=gal_arithmetic(GAL_ARITHMETIC_OP_EQ, GAL_ARITHMETIC_NUMOK,
+        cond=gal_arithmetic(GAL_ARITHMETIC_OP_EQ, 1, GAL_ARITHMETIC_NUMOK,
                             channel, change->from);
 
         /* Now, use the condition array to set the proper values. */
-        channel=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, flags, channel,
+        channel=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, flags, channel,
                                cond, change->to);
 
         /* Clean up, since we set the free flag, all extra arrays have been
@@ -104,11 +104,11 @@ convertt_trunc_function(int operator, gal_data_t *data, gal_data_t *value)
 
   /* Make a condition array: all pixels with a value equal to
      `change->from' will be set as 1 in this array. */
-  cond=gal_arithmetic(operator, GAL_ARITHMETIC_NUMOK, data, value);
+  cond=gal_arithmetic(operator, 1, GAL_ARITHMETIC_NUMOK, data, value);
 
 
   /* Now, use the condition array to set the proper values. */
-  out=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, flags, data, cond, value);
+  out=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, flags, data, cond, value);
 
 
   /* A small sanity check. The process must be in-place so the original
@@ -200,8 +200,8 @@ convertt_scale_to_uchar(struct converttparams *p)
             }
 
           /* Calculate the minimum and maximum. */
-          mind = gal_arithmetic(GAL_ARITHMETIC_OP_MINVAL, 0, channel);
-          maxd = gal_arithmetic(GAL_ARITHMETIC_OP_MAXVAL, 0, channel);
+          mind = gal_arithmetic(GAL_ARITHMETIC_OP_MINVAL, 1, 0, channel);
+          maxd = gal_arithmetic(GAL_ARITHMETIC_OP_MAXVAL, 1, 0, channel);
           tmin = *((float *)(mind->array));
           tmax = *((float *)(maxd->array));
           gal_data_free(mind);
@@ -238,7 +238,6 @@ convertt_scale_to_uchar(struct converttparams *p)
         }
     }
   m=(float)maxbyte/(max-min);
-
 
 
   /* Convert all the non-blank channels to unsigned char. */
@@ -282,7 +281,6 @@ convertt_scale_to_uchar(struct converttparams *p)
 
       /* Set the prev pointer. */
       prev=channel;
-
     }
 }
 
@@ -365,13 +363,14 @@ convertt(struct converttparams *p)
     case OUT_FORMAT_EPS:
       if(!p->colormap) convertt_scale_to_uchar(p);
       gal_eps_write(p->chll, p->cp.output, p->widthincm, p->borderwidth,
-                    p->hex, 0);
+                    p->hex, p->forcemin || p->forcemax, 0);
       break;
 
     /* PDF */
     case OUT_FORMAT_PDF:
       if(!p->colormap) convertt_scale_to_uchar(p);
-      gal_pdf_write(p->chll, p->cp.output, p->widthincm, p->borderwidth);
+      gal_pdf_write(p->chll, p->cp.output, p->widthincm, p->borderwidth,
+                    p->forcemin || p->forcemax);
       break;
 
     /* Not recognized. */

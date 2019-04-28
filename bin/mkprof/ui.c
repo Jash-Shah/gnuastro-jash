@@ -666,7 +666,7 @@ ui_read_cols_2d(struct mkprofparams *p)
     gal_checkset_allocate_copy("standard-input", &p->catname);
 
   /* Set the number of objects. */
-  p->num=cols->size;
+  p->num = cols ? cols->size : 0;
 
   /* Put each column's data in the respective internal array. */
   while(cols!=NULL)
@@ -841,7 +841,7 @@ ui_read_cols_2d(struct mkprofparams *p)
                 "the profile's pixels will have a value of zero and thus "
                 "they will not be identifiable from the zero-valued "
                 "background. If this behavior is intended, this warning "
-                "can be supressed with the `--quiet' (or `-q') option.\n");
+                "can be suppressed with the `--quiet' (or `-q') option.\n");
           break;
         }
 }
@@ -1481,7 +1481,6 @@ ui_prepare_canvas(struct mkprofparams *p)
     }
 
 
-
   /* When individual mode is requested, write the WCS structure to a header
      string to speed up the process: if we don't do it here, this process
      will be necessary on every individual profile's output. So it is much
@@ -1729,8 +1728,10 @@ ui_preparations(struct mkprofparams *p)
   else
     ui_prepare_canvas(p);
 
-  /* Read the (possible) RA/Dec inputs into X and Y for the builder.*/
-  if(p->wcs)
+  /* Read the (possible) RA/Dec inputs into X and Y for the builder.  NOTE:
+     It may happen that there are no input columns, in that case, just
+     ignore this step.*/
+  if(p->wcs && p->num)
     ui_finalize_coordinates(p);
 
   /* Prepare the random number generator. */
@@ -1882,6 +1883,7 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct mkprofparams *p)
 
   /* Read/allocate all the necessary starting arrays. */
   ui_preparations(p);
+
 
   /* Print introductory information. */
   ui_print_intro(p);

@@ -217,19 +217,6 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
-static void
-ui_ngb_check(size_t value, char *optionname)
-{
-  if(value!=4 && value!=8 && value!=6 && value!=18 && value!=26)
-    error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
-          "`--%s'. Acceptable values are 4 or 8 (for 2D inputs) and "
-          "6, 18, or 26 (for 3D inputs)", value, optionname);
-}
-
-
-
-
-
 /* Read and check ONLY the options. When arguments are involved, do the
    check in `ui_check_options_and_arguments'. */
 static void
@@ -242,13 +229,6 @@ ui_read_check_only_options(struct noisechiselparams *p)
           "`--convolved' option is called (to specify a convolved image "
           "and avoid convolution) it is mandatory to also specify a HDU "
           "for it");
-
-  /* A general check on the neighbor connectivity values. */
-  ui_ngb_check(p->holengb, "holengb");
-  ui_ngb_check(p->erodengb, "erodengb");
-  ui_ngb_check(p->openingngb, "openingngb");
-  ui_ngb_check(p->openingngb, "dopeningngb");
-  ui_ngb_check(p->pseudoconcomp, "pseudoconcomp");
 
   /* Make sure that the no-erode-quantile is not smaller or equal to
      qthresh. */
@@ -562,13 +542,40 @@ ui_prepare_tiles(struct noisechiselparams *p)
 
 
 
-/* Read the input image and check the dimensions and neighbors. */
+static void
+ui_ngb_check(size_t value, char *optionname, size_t ndim)
+{
+  switch(ndim)
+    {
+    case 2:
+      if(value!=4 && value!=8)
+        error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
+              "`--%s'. Acceptable values for 2D inputs are 4 or 8",
+              value, optionname);
+      break;
+    case 3:
+      if(value!=6 && value!=18 && value!=26)
+        error(EXIT_FAILURE, 0, "%zu is not an acceptable value for "
+              "`--%s'. Acceptable values for 3D inputs are 6, 18 or 26",
+              value, optionname);
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+            "problem. Dimention value %zu is not recognized.", __func__,
+            PACKAGE_BUGREPORT, ndim);
+    }
+}
+
+
+
+
+
+/* Read the input image and do the basic checks */
 static void
 ui_preparations_read_input(struct noisechiselparams *p)
 {
   float *f;
-  size_t value;
-  char *option_name=NULL, *good_values=NULL;
+  size_t ndim;
 
   /* Read the input as a single precision floating point dataset. */
   p->input = gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
@@ -579,51 +586,13 @@ ui_preparations_read_input(struct noisechiselparams *p)
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
 
-  /* Check dimensionality and neighbors. */
-  switch(p->input->ndim)
-    {
-    case 2:
-      if(p->erodengb!=4 && p->erodengb!=8)
-        {
-          value=p->erodengb;
-          good_values="4 or 8";
-          option_name="erodengb";
-        }
-      else if(p->openingngb!=4 && p->openingngb!=8)
-        {
-          value=p->openingngb;
-          good_values="4 or 8";
-          option_name="openingngb";
-        }
-      break;
-
-    case 3:
-      if(p->erodengb!=6 && p->erodengb!=18 && p->erodengb!=26)
-        {
-          value=p->erodengb;
-          good_values="6, 18, or 26";
-          option_name="erodengb";
-        }
-      else if(p->openingngb!=6 && p->openingngb!=18 && p->openingngb!=26)
-        {
-          value=p->openingngb;
-          good_values="6, 18, or 26";
-          option_name="openingngb";
-        }
-      break;
-
-    default:
-      error(EXIT_FAILURE, 0, "%s (hdu %s) is a %zu-dimensional dataset "
-            "which is currently not supported", p->inputname, p->cp.hdu,
-            p->input->ndim);
-    }
-
-  /* Abort with an error message if necessary. */
-  if(option_name)
-    error(EXIT_FAILURE, 0, "%zu not acceptable for `--%s' for the "
-          "input %zu-dimensional dataset in `%s' (hdu %s). It must be %s "
-          "(specifying the type of connectivity)", value, option_name,
-          p->input->ndim, p->inputname, p->cp.hdu, good_values);
+  /* Check the values of dimention-related options. */
+  ndim=p->input->ndim;
+  ui_ngb_check(p->holengb, "holengb", ndim);
+  ui_ngb_check(p->erodengb, "erodengb", ndim);
+  ui_ngb_check(p->openingngb, "openingngb", ndim);
+  ui_ngb_check(p->dopeningngb, "dopeningngb", ndim);
+  ui_ngb_check(p->pseudoconcomp, "pseudoconcomp", ndim);
 
   /* A small check to see if the edges of the dataset aren't zero valued:
      they should be masked. */

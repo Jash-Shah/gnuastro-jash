@@ -92,6 +92,8 @@ struct argp_option program_options[] =
 
 
 
+
+
     {
       0, 0, 0, 0,
       "Keywords (in one HDU):",
@@ -230,11 +232,24 @@ struct argp_option program_options[] =
     {
       "copykeys",
       UI_KEY_COPYKEYS,
-      "STR",
+      "INT:INT",
       0,
       "Range of keywords to copy to output HDU.",
       UI_GROUP_KEYWORD,
       &p->copykeys,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "datetosec",
+      UI_KEY_DATETOSEC,
+      "STR",
+      0,
+      "FITS date to sec from 1970/01/01T00:00:00",
+      UI_GROUP_KEYWORD,
+      &p->datetosec,
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,

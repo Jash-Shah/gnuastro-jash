@@ -99,6 +99,8 @@ License''.
 * Warp: (gnuastro)Warp. Warp a dataset to a new grid.
 * astwarp: (gnuastro)Invoking astwarp. Options to Warp.
 
+* astscript-sort-by-night: (gnuastro)Invoking astscript-sort-by-night. Options to this script
+
 @end direntry
 
 
@@ -292,6 +294,7 @@ Common program behavior
 * Command-line::                How to use the command-line.
 * Configuration files::         Values for unspecified variables.
 * Getting help::                Getting more information on the go.
+* Installed scripts::           Installed Bash scripts, not compiled programs.
 * Multi-threaded operations::   How threads are managed in Gnuastro.
 * Numeric data types::          Different types and how to specify them.
 * Tables::                      Recognized table formats.
@@ -349,6 +352,7 @@ Recognized table formats
 Data containers
 
 * Fits::                        View and manipulate extensions and keywords.
+* Sort FITS files by night::    Installed script to sort FITS files by obs night.
 * ConvertType::                 Convert data to various formats.
 * Table::                       Read and Write FITS tables to plain text.
 
@@ -360,6 +364,10 @@ Invoking Fits
 
 * HDU manipulation::            Manipulate HDUs within a FITS file.
 * Keyword manipulation::        Manipulate metadata keywords in a HDU
+
+Sort FITS files by night
+
+* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
 
 ConvertType
 
@@ -1734,23 +1742,24 @@ particular in collaboration with Johan Knapen and Ignacio Trujillo.
 In general, we would like to gratefully thank the following people for
 their useful and constructive comments and suggestions (in alphabetical
 order by family name): Valentina Abril-melgarejo, Marjan Akbari, Roland
-Bacon, Karl Berry, Leindert Boogaard, Nicolas Bouch@'e, Fernando Buitrago,
-Adrian Bunk, Rosa Calvi, Nushkia Chamba, Benjamin Clement, Nima Dehdilani,
-Antonio Diaz Diaz, Pierre-Alain Duc, Gaspar Galaz, Th@'er@`ese Godefroy,
-Madusha Gunawardhana, Stephen Hamer, Takashi Ichikawa, Ra@'ul Infante
-Sainz, Brandon Invergo, Oryna Ivashtenko, Aur@'elien Jarno, Lee Kelvin,
-Brandon Kelly, Mohammad-Reza Khellat, Johan Knapen, Geoffry Krouchi,
-Floriane Leclercq, Alan Lefor, Guillaume Mahler, Juan Molina Tobar,
-Francesco Montanari, Dmitrii Oparin, Bertrand Pain, William Pence, Mamta
-Pommier, Bob Proulx, Teymoor Saifollahi, Yahya Sefidbakht, Alejandro
-Serrano Borlaff, Jenny Sorce, Lee Spitler, Richard Stallman, Michael Stein,
-Ole Streicher, Alfred M. Szmidt, Michel Tallon, Juan C. Tello, @'Eric
-Thi@'ebaut, Ignacio Trujillo, David Valls-Gabaud, Aaron Watkins,
-Christopher Willmer, Sara Yousefi Taemeh, Johannes Zabl. The GNU French
-Translation Team is also managing the French version of the top Gnuastro
-webpage which we highly appreciate. Finally we should thank all the
-(sometimes anonymous) people in various online forums which patiently
-answered all our small (but important) technical questions.
+Bacon, Roberto Baena Gall\'e, Karl Berry, Leindert Boogaard, Nicolas
+Bouch@'e, Fernando Buitrago, Adrian Bunk, Rosa Calvi, Nushkia Chamba,
+Benjamin Clement, Nima Dehdilani, Antonio Diaz Diaz, Pierre-Alain Duc,
+Elham Eftekhari, Gaspar Galaz, Th@'er@`ese Godefroy, Madusha Gunawardhana,
+Stephen Hamer, Takashi Ichikawa, Ra@'ul Infante Sainz, Brandon Invergo,
+Oryna Ivashtenko, Aur@'elien Jarno, Lee Kelvin, Brandon Kelly,
+Mohammad-Reza Khellat, Johan Knapen, Geoffry Krouchi, Floriane Leclercq,
+Alan Lefor, Guillaume Mahler, Juan Molina Tobar, Francesco Montanari,
+Dmitrii Oparin, Bertrand Pain, William Pence, Mamta Pommier, Bob Proulx,
+Teymoor Saifollahi, Yahya Sefidbakht, Alejandro Serrano Borlaff, Jenny
+Sorce, Lee Spitler, Richard Stallman, Michael Stein, Ole Streicher, Alfred
+M. Szmidt, Michel Tallon, Juan C. Tello, @'Eric Thi@'ebaut, Ignacio
+Trujillo, David Valls-Gabaud, Aaron Watkins, Christopher Willmer, Sara
+Yousefi Taemeh, Johannes Zabl. The GNU French Translation Team is also
+managing the French version of the top Gnuastro webpage which we highly
+appreciate. Finally we should thank all the (sometimes anonymous) people in
+various online forums which patiently answered all our small (but
+important) technical questions.
 
 All work on Gnuastro has been voluntary, but the authors are most grateful
 to the following institutions (in chronological order) for hosting us in
@@ -7217,6 +7226,7 @@ store some very useful information in the header that is discussed in
 * Command-line::                How to use the command-line.
 * Configuration files::         Values for unspecified variables.
 * Getting help::                Getting more information on the go.
+* Installed scripts::           Installed Bash scripts, not compiled programs.
 * Multi-threaded operations::   How threads are managed in Gnuastro.
 * Numeric data types::          Different types and how to specify them.
 * Tables::                      Recognized table formats.
@@ -8452,7 +8462,12 @@ source by your self as in @ref{Quick start}.
 
 
 
-@node Getting help, Multi-threaded operations, Configuration files, Common program behavior
+
+
+
+
+
+@node Getting help, Installed scripts, Configuration files, Common program behavior
 @section Getting help
 
 @cindex Help
@@ -8766,7 +8781,101 @@ list. We have other mailing lists and tools for those purposes, see
 
 
 
-@node Multi-threaded operations, Numeric data types, Getting help, Common program behavior
+
+
+
+
+
+@node Installed scripts, Multi-threaded operations, Getting help, Common program behavior
+@section Installed scripts
+
+Gnuastro's programs (introduced in previous chapters) are designed to be
+highly modular and thus mainly contain lower-level operations on the
+data. However, in many contexts, higher-level operations (for example a
+sequence of calls to multiple Gnuastro programs, or a special way of
+running a program and using the outputs) are also very similar between
+various projects.
+
+To facilitate data analysis on these higher-level steps also, Gnuastro also
+installs some scripts on your system with the (@code{astscript-}) prefix
+(in contrast to the other programs that only have the @code{ast}
+prefix).
+
+@cindex GNU Bash
+Like all of Gnuastro's source code, these scripts are also heavily
+commented. They are written in GNU Bash, which doesn't need
+compilation. Therefore, if you open the installed scripts in a text editor,
+you can actually read them@footnote{Gnuastro's installed programs (those
+only starting with @code{ast}) aren't human-readable. They are written in C
+and are thus compiled (optimized in binary CPU instructions that will be
+given directly to your CPU). Because they don't need an interpretter like
+Bash on every run, they are much faster and more independent than
+scripts. To read the source code of the programs, look into the
+@file{bin/progname} directory of Gnuastro's source (@ref{Downloading the
+source}). If you would like to read more about why C was chosen for the
+programs, please see @ref{Why C}.}. Bash is the same language that is
+mainly used when typing on the command-line. Because of these factors, Bash
+is much more widely known and used than C (the language of other Gnuastro
+programs). Gnuastro's installed scripts also do higher-level operations, so
+customizing these scripts for a special project will be more common than
+the programs. You can always inspect them (to customize, check, or educate
+your self) with this command (just replace @code{emacs} with your favorite
+text editor):
+
+@example
+$ emacs $(which astscript-NAME)
+@end example
+
+These scripts also accept options and are in many ways similar to the
+programs (see @ref{Common options}) with some minor differences:
+
+@itemize
+@item
+Currently they don't accept configuration files themselves. However, the
+configuration files of the Gnuastro programs they call are indeed parsed
+and used by those programs.
+
+As a result, they don't have the following options: @option{--checkconfig},
+@option{--config}, @option{--lastconfig}, @option{--onlyversion},
+@option{--printparams}, @option{--setdirconf} and @option{--setusrconf}.
+
+@item
+They don't directly allocate any memory, so there is no
+@option{--minmapsize}.
+
+@item
+They don't have an independent @option{--usage} option: when called with
+@option{--usage}, they just recommend running @option{--help}.
+
+@item
+The output of @option{--help} is not configurable like the programs (see
+@ref{--help}).
+
+@item
+@cindex GNU AWK
+@cindex GNU SED
+The scripts will commonly use your installed Bash and other basic
+command-line tools (for example AWK or SED). Different systems have
+different versions and implementations of these basic tools (for example
+GNU/Linux systems use GNU AWK and GNU SED which are far more advanced and
+up to date then the minimalist AWK and SED of most other
+systems). Therefore, unexpected errors in these tools might come up when
+you run these scripts. We will try our best to write these scripts in a
+portable way. However, if you do confront such strange errors, please
+submit a bug report so we fix it (see @ref{Report a bug}).
+
+@end itemize
+
+
+
+
+
+
+
+
+
+
+@node Multi-threaded operations, Numeric data types, Installed scripts, Common program behavior
 @section Multi-threaded operations
 
 @pindex nproc
@@ -9873,6 +9982,7 @@ save them into another plain text or FITS table.
 
 @menu
 * Fits::                        View and manipulate extensions and keywords.
+* Sort FITS files by night::    Installed script to sort FITS files by obs night.
 * ConvertType::                 Convert data to various formats.
 * Table::                       Read and Write FITS tables to plain text.
 @end menu
@@ -9881,7 +9991,7 @@ save them into another plain text or FITS table.
 
 
 
-@node Fits, ConvertType, Data containers, Data containers
+@node Fits, Sort FITS files by night, Data containers, Data containers
 @section Fits
 
 @cindex Vatican library
@@ -10362,7 +10472,7 @@ The reason you need to use @key{/} as the keyword name for setting a title
 is that @key{/} is the first non-white character.
 
 The title(s) is(are) written into the FITS with the same order that
-@option{--write} is called. Therefore in one run of the Fits progarm, you
+@option{--write} is called. Therefore in one run of the Fits program, you
 can specify many different titles (with their own keywords under them). For
 example the command below that builds on the previous example and adds
 another group of keywords named @code{A1} and @code{A2}.
@@ -10452,7 +10562,7 @@ will print @code{NOT-PRESENT}, and if they cannot be verified it will print
 can't be verified), the Fits program will also return with a failure.
 
 By default this function will also print a short description of the
-@code{DATASUM} AND @code{CHECKSUM} keywords. You can supress this extra
+@code{DATASUM} AND @code{CHECKSUM} keywords. You can suppress this extra
 information with @code{--quiet} option.
 
 @item --copykeys=INT:INT
@@ -10485,6 +10595,32 @@ Quit if any of the operations above are not successful. By default if
 an error occurs, Fits will warn the user of the faulty keyword and
 continue with the rest of actions.
 
+@item -s STR
+@itemx --datetosec STR
+@cindex Unix epoch time
+@cindex Time, Unix epoch
+@cindex Epoch, Unix time
+Interpret the value of the given keyword in the FITS date format (most
+generally: @code{YYYY-MM-DDThh:mm:ss.ddd...}) and return the corresponding
+Unix epoch time (number of seconds that have passed since 00:00:00
+Thursday, January 1st, 1970). The @code{Thh:mm:ss.ddd...} section
+(specifying the time of day), and also the @code{.ddd...} (specifying the
+fraction of a second) are optional. The value to this option must be the
+FITS keyword name that contains the requested date, for example
+@option{--datetosec=DATE-OBS}.
+
+@cindex GNU C Library
+This option can also interpret the older FITS date format
+(@code{DD/MM/YYThh:mm:ss.ddd...}) where only two characters are given to
+the year. In this case (following the GNU C Library), this option will make
+the following assumption: values 68 to 99 correspond to the years 1969 to
+1999, and values 0 to 68 as the years 2000 to 2068.
+
+This is a very useful option for operations on the FITS date values, for
+example sorting FITS files by their dates, or finding the time difference
+between two FITS files. The advantage of working with the Unix epoch time
+is that you don't have to worry about calendar details (for example the
+number of days in different months, or leap years, and etc).
 @end table
 
 
@@ -10500,7 +10636,256 @@ continue with the rest of actions.
 
 
 
-@node ConvertType, Table, Fits, Data containers
+
+
+
+
+
+
+@node Sort FITS files by night, ConvertType, Fits, Data containers
+@section Sort FITS files by night
+
+@cindex Calendar
+FITS images usually contain (several) keywords for preserving important
+dates. In particular, for lower-level data, this is usually the observation
+date and time (for example, stored in the @code{DATE-OBS} keyword
+value). When analyzing observed datasets, many calibration steps (like the
+dark, bias or flat-field), are commonly calculated on a per-observing-night
+basis.
+
+However, the FITS standard's date format (@code{YYYY-MM-DDThh:mm:ss.ddd})
+is based on the western (Gregorian) calendar. Dates that are stored in this
+format are complicated for automatic processing: a night starts in the
+final hours of one calendar day, and extends to the early hours of the next
+calendar day. As a result, to identify datasets from one night, we commonly
+need to search for two dates. However calendar peculiarities can make this
+identification very difficult. For example when an observation is done on
+the night separating two months (like the night starting on March 31st and
+going into April 1st), or two years (like the night starting on December
+31st 2018 and going into January 1st, 2019). To account for such
+situations, it is necessary to keep track of how many days are in a month,
+and leap years, and etc.
+
+@cindex Unix epoch time
+@cindex Time, Unix epoch
+@cindex Epoch, Unix time
+Gnuastro's @file{astscript-sort-by-night} script is created to help in such
+important scenarios. It uses @ref{Fits} to convert the FITS date format
+into the Unix epoch time (number of seconds since 00:00:00 of January 1st,
+1970), using the @option{--datetosec} option. The Unix epoch time is a
+single number (integer, if not given in sub-second precision), enabling
+easy comparison and sorting of dates after January 1st, 1970.
+
+You can use this script as a basis for making a much more highly customized
+sorting script. Here are some examples
+
+@itemize
+@item
+If you need to copy the files, but only need a single extension (not the
+whole file), you can add a step just before the making of the symbolic
+links, or copies, and change it to only copy a certain extension of the
+FITS file using the Fits program's @option{--copy} option, see @ref{HDU
+manipulation}.
+
+@item
+If you need to classify the files with finer detail (for example the
+purpose of the dataset), you can add a step just before the making of the
+symbolic links, or copies, to specify a file-name prefix based on other
+certain keyword values in the files. For example when the FITS files have a
+keyword to specify if the dataset is a science, bias, or flat-field
+image. You can read it and to add a @code{sci-}, @code{bias-}, or
+@code{flat-} to the created file (after the @option{--prefix})
+automatically.
+
+For example, let's assume the observing mode is stored in the hypothetical
+@code{MODE} keyword, which can have three values of @code{BIAS-IMAGE},
+@code{SCIENCE-IMAGE} and @code{FLAT-EXP}. With the step below, you can
+generate a mode-prefix, and add it to the generated link/copy names (just
+correct the filename and extension of the first line to the script's
+variables):
+
+@example
+modepref=$(astfits infile.fits -h1 \
+                   | sed -e"s/'/ /g" \
+                   | awk '$1=="MODE"@{ \
+                       if($3=="BIAS-IMAGE") print "bias-"; \
+                       else if($3=="SCIENCE-IMAGE") print "sci-"; \
+                       else if($3==FLAT-EXP) print "flat-"; \
+                       else print $3, "NOT recognized"; exit 1@}')
+@end example
+
+@cindex GNU AWK
+@cindex GNU Sed
+Here is a description of it. We first use @command{astfits} to print all
+the keywords in extension @code{1} of @file{infile.fits}. In the FITS
+standard, string values (that we are assuming here) are placed in single
+quotes (@key{'}) which are annoying in this context/use-case. Therefore, we
+pipe the output of @command{astfits} into @command{sed} to remove all such
+quotes (substituting them with a blank space). The result is then piped to
+AWK for giving us the final mode-prefix: with @code{$1=="MODE"}, we ask AWK
+to only consider the line where the first column is @code{MODE}. There is
+an equal sign between the key name and value, so the value is the third
+column (@code{$3} in AWK). We thus use a simple @code{if-else} structure to
+look into this value and print our custom prefix based on it. The output of
+AWK is then stored in the @code{modepref} shell variable which you can add
+to the link/copy name.
+
+With the solution above, the increment of the file counter for each night
+will be independent of the mode. If you want the counter to be
+mode-dependent, you can add a different counter for each mode and use that
+counter instead of the generic counter for each night (based on the value
+of @code{modepref}). But we'll leave the implementation of this step to you
+as an exercise.
+
+@end itemize
+
+@menu
+* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
+@end menu
+
+@node Invoking astscript-sort-by-night,  , Sort FITS files by night, Sort FITS files by night
+@subsection Invoking astscript-sort-by-night
+
+This installed script will read a FITS date formatted value from the given
+keyword, and classify the input FITS files into individual nights. For more
+on installed scripts please see (see @ref{Installed scripts}). This script
+can be used with the following general template:
+
+@example
+$ astscript-sort-by-night [OPTION...] FITS-files
+@end example
+
+@noindent
+One line examples:
+
+@example
+## Use the DATE-OBS keyword
+$ astscript-sort-by-night --key=DATE-OBS /path/to/data/*.fits
+
+## Make links to the input files with the `img-' prefix
+$ astscript-sort-by-night --link --prefix=img- /path/to/data/*.fits
+@end example
+
+This script will look into a HDU/extension (@option{--hdu}) for a keyword
+(@option{--key}) in the given FITS files and interpret the value as a
+date. The inputs will be separated by "night"s (9:00a.m to next day's
+8:59:59a.m, spanning two calendar days, exact hour can be set with
+@option{--hour}).
+
+The default output is a list of all the input files along with the
+following two columns: night number and file number in that night (sorted
+by time). With @option{--link} a symbolic link will be made (one for each
+input) that contains the night number, and number of file in that night
+(sorted by time), see the description of @option{--link} for more. When
+@option{--copy} is used instead of a link, a copy of the inputs will be
+made instead of symbolic link.
+
+Below you can see one example where all the @file{target-*.fits} files in
+the @file{data} directory should be separated by observing night according
+to the @code{DATE-OBS} keyword value in their second extension (number
+@code{1}, recall that HDU counting starts from 0). You can see the output
+after the @code{ls} command.
+
+@example
+$ astscript-sort-by-night -pimg- -h1 -kDATE-OBS data/target-*.fits
+$ ls
+img-n1-1.fits img-n1-2.fits img-n2-1.fits ...
+@end example
+
+The outputs can be placed in a different (already existing) directory by
+including that directory's name in the @option{--prefix} value, for example
+@option{--prefix=sorted/img-} will put them all under the @file{sorted}
+directory.
+
+This script can be configured like all Gnuastro's programs (through
+command-line options, see @ref{Common options}), with some minor
+differences that are described in @ref{Installed scripts}. The particular
+options to this script are listed below:
+
+@table @option
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension to use in all the given FITS files. All of the given FITS
+files must have this extension.
+
+@item -k STR
+@itemx --key=STR
+The keyword name that contains the FITS date format to classify/sort by.
+
+@item -H FLT
+@itemx --hour=FLT
+The hour that defines the next ``night''. By default, all times before
+9:00a.m are considered to belong to the previous calendar night. If a
+sub-hour value is necessary, it should be given in units of hours, for
+example @option{--hour=9.5} corresponds to 9:30a.m.
+
+@item -l
+@itemx --link
+Create a symbolic link for each input FITS file. This option cannot be used
+with @option{--copy}. The link will have a standard name in the following
+format (variable parts are written in @code{CAPITAL} letters and described
+after it):
+
+@example
+PnN-I.fits
+@end example
+
+@table @code
+@item P
+This is the value given to @option{--prefix}. By default, its value is
+@code{./} (to store the links in the directory this script was run in). See
+the description of @code{--prefix} for more.
+@item N
+This is the night-counter: starting from 1. @code{N} is just incremented by
+1 for the next night, no matter how many nights (without any dataset) there
+are between two subsequent observing nights (its just an identifier for
+each night which you can easily map to different calendar nights).
+@item I
+File counter in that night, sorted by time.
+@end table
+
+@item -c
+@itemx --copy
+Make a copy of each input FITS file with the standard naming convention
+described in @option{--link}. With this option, instead of making a link, a
+copy is made. This option cannot be used with @option{--link}.
+
+@item -p STR
+@itemx --prefix=STR
+Prefix to append before the night-identifier of each newly created link or
+copy. This option is thus only relevant with the @option{--copy} or
+@option{--link} options. See the description of @option{--link} for how its
+used. For example, with @option{--prefix=img-}, all the created file names
+in the current directory will start with @code{img-}, making outputs like
+@file{img-n1-1.fits} or @file{img-n3-42.fits}.
+
+@option{--prefix} can also be used to store the links/copies in another
+directory relative to the directory this script is being run (it must
+already exist). For example @code{--prefix=/path/to/processing/img-} will
+put all the links/copies in the @file{/path/to/processing} directory, and
+the files (in that directory) will all start with @file{img-}.
+@end table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node ConvertType, Table, Sort FITS files by night, Data containers
 @section ConvertType
 
 @cindex Data format conversion
@@ -11109,6 +11494,18 @@ want them all to have the same range of colors, independent of the contents
 of the dataset. Note that if the minimum value is smaller than
 @option{--fluxlow}, then this option is redundant.
 
+@cindex PDF
+@cindex EPS
+@cindex PostScript
+By default, when the dataset only has two values, @emph{and} the output
+format is PDF or EPS, ConvertType will use the PostScript optimization that
+allows setting the pixel values per bit, not byte (@ref{Recognized file
+formats}). This can greatly help reduce the file size. However, when
+@option{--fluxlow} or @option{--fluxhigh} are called, this optimization is
+disabeled: even though there are only two values (is binary), the
+difference between them does not correspond to the full contrast of black
+and white.
+
 @item -B INT
 @itemx --forcemax=INT
 Similar to @option{--forcemin}, but for the maximum.
@@ -11206,8 +11603,18 @@ $ asttable bintab.fits --information
 ## the name starts with "MAG_":
 $ asttable bintab.fits --column=RA --column=DEC --column=/^MAG_/
 
-## Similar to above, but with one call to --column (or -c) and writes
-## the columns to a file (with metadata) instead of the command-line.
+## Similar to the above, but with one call to `--column' (or `-c'),
+## also sort the rows by the input's photometric redshift (`Z_PHOT')
+## column. To confirm the sort, you can add `Z_PHOT' to the columns
+## to print.
+$ asttable bintab.fits -cRA,DEC,/^MAG_/ --sort=Z_PHOT
+
+## Similar to the above, but only print rows that have a photometric
+## redshift between 2 and 3.
+$ asttable bintab.fits -cRA,DEC,/^MAG_/ --range=Z_PHOT,2:3
+
+## Similar to above, but writes the columns to a file (with metadata)
+## instead of the command-line.
 $ asttable bintab.fits -cRA,DEC,/^MAG_/ --output=out.txt
 
 ## Only print the 2nd column, and the third column multiplied by 5:
@@ -11230,13 +11637,18 @@ $ asttable plaintext.txt --output=table.fits --tabletype=fits-binary
 
 Table's input dataset can be given either as a file or from Standard input
 (see @ref{Standard input}). In the absence of selected columns, all the
-input's columns will be written to the output. If the specified output is a
-FITS file, the type of FITS table (binary or ASCII) will be determined from
-the @option{--tabletype} option. If the output is not a FITS file, it will
-be printed as a plain text table (with space characters between the
-columns). When the columns are accompanied by meta-data (like column name,
-units, or comments), this information will also printed in the plain text
-file before the table, as described in @ref{Gnuastro text table format}.
+input's columns and rows will be written to the output. If any output file
+is explicitly requested (with @option{--output}) the output table will be
+written in it. When no output file is explicitly requested the output table
+will be written to the standard output.
+
+If the specified output is a FITS file, the type of FITS table (binary or
+ASCII) will be determined from the @option{--tabletype} option. If the
+output is not a FITS file, it will be printed as a plain text table (with
+space characters between the columns). When the columns are accompanied by
+meta-data (like column name, units, or comments), this information will
+also printed in the plain text file before the table, as described in
+@ref{Gnuastro text table format}.
 
 For the full list of options common to all Gnuastro programs please see
 @ref{Common options}. Options can also be stored in directory, user or
@@ -11287,6 +11699,42 @@ This option is not mandatory, if no specific columns are requested, all the
 input table columns are output. When this option is called multiple times,
 it is possible to output one column more than once.
 
+@item -O
+@itemx --colinfoinstdout
+@cindex Standard output
+Add column metadata when the output is printed in the standard
+output. Usually the standard output is used for a fast visual check or to
+pipe into other program for further processing. So by default meta-data
+aren't included.
+
+@item -r STR,FLT:FLT
+@itemx --range=STR,FLT:FLT
+Only print the output rows that have a value within the given range in the
+@code{STR} column (can be a name or counter). For example with
+@code{--range=sn,5:20} the output's columns will only contain rows that
+have a value between 5 and 20 in the @code{sn} column (not case-sensitive).
+
+This option can be called multiple times (different ranges for different
+columns) in one run of the Table program. This is very useful for selecting
+the final rows from multiple criteria/columns.
+
+The chosen column doesn't have to be in the output columns. This is good
+when you just want to select using one column's values, but don't need that
+column anymore afterwards.
+
+@item -s STR
+@item --sort=STR
+Sort the output rows based on the values in the @code{STR} column (can be a
+column name or number). By default the sort is done in ascending/increasing
+order, to sort in a descending order, use @option{--descending}.
+
+The chosen column doesn't have to be in the output columns. This is good
+when you just want to sort using one column's values, but don't need that
+column anymore afterwards.
+
+@item -d
+@itemx --descending
+When called with @option{--sort}, rows will be sorted in descending order.
 
 @end table
 
@@ -12217,13 +12665,17 @@ to @command{minvalue}.
 @item min
 The first popped operand to this operator must be a positive integer number
 which specifies how many further operands should be popped from the
-stack. The given number of operands must have the same type and size. Each
-pixel of the output of this operator will be set to the minimum value of
-the given number of operands (images) in that pixel.
+stack. All the subsequently popped operands must have the same type and
+size. This operator (and all the variable-operand operators similar to it
+that are discussed below) will work in multi-threaded mode unless
+Arithmetic is called with the @option{--numthreads=1} option, see
+@ref{Multi-threaded operations}.
 
-For example the following command will produce an image with the same size
-and type as the inputs but each output pixel is set to the minimum
-respective pixel value of the three input images.
+Each pixel of the output of the @code{min} operator will be given the
+minimum value of the same pixel from all the popped operands/images. For
+example the following command will produce an image with the same size and
+type as the three inputs, but each output pixel value will be the minimum
+of the same pixel's values in all three input images.
 
 @example
 $ astarithmetic a.fits b.fits c.fits 3 min
@@ -12274,13 +12726,13 @@ Combine the specified number of inputs into a single output that contains
 the number of remaining elements after @mymath{\sigma}-clipping on each
 element/pixel (for more on @mymath{\sigma}-clipping, see @ref{Sigma
 clipping}). This operator is very similar to @command{min}, with the
-exception that it expects two operands (paramters for sigma-clipping)
+exception that it expects two operands (parameters for sigma-clipping)
 before the total number of inputs. The first popped operand is the
 termination criteria and the second is the multiple of @mymath{\sigma}.
 
 For example in the command below, the first popped operand (@command{0.2})
 is the sigma clipping termination criteria. If the termination criteria is
-larger than 1 it is interpretted as the number of clips to do. But if it is
+larger than 1 it is interpreted as the number of clips to do. But if it is
 between 0 and 1, then it is the tolerance level on the standard deviation
 (see @ref{Sigma clipping}). The second popped operand (@command{5}) is the
 multiple of sigma to use in sigma-clipping. The third popped operand
@@ -12782,7 +13234,7 @@ $ astarithmetic image.fits set-i   i i 5 gt nan where
 @end example
 
 @item tofile-AAA
-Write the top oprand on the operands stack into a file called @code{AAA}
+Write the top operand on the operands stack into a file called @code{AAA}
 (can be any FITS file name) without changing the operands stack. If you
 don't need the dataset any more and would like to free it, see the
 @code{tofilefree} operator below.
@@ -12885,7 +13337,7 @@ as a file.
 The name of the final file can be specified with the @option{--output}
 option, but if its not given, Arithmetic will use ``automatic output'' on
 the name of the first FITS image encountered to generate an output file
-name, see @ref{Automatic output}. By default, if the output file aready
+name, see @ref{Automatic output}. By default, if the output file already
 exists, it will be deleted before Arithmetic starts operation. However,
 this can be disabled with the @option{--dontdelete} option (see below). At
 any point during Arithmetic's operation, you can also write the top operand
@@ -12897,7 +13349,7 @@ dataset will be taken from the first input image (that contains a WCS) on
 the command-line. This can be modified with the @option{--wcsfile} and
 @option{--wcshdu} options described below. When the @option{--quiet} option
 isn't given, the name and extension of the dataset used for the output's
-WCS is printed on the commandline.
+WCS is printed on the command-line.
 
 Through operators like those starting with @code{collapse-}, the
 dimensionality of the inputs may not be the same as the outputs. By
@@ -12959,7 +13411,7 @@ file on the command-line with WCS) will be used in the output.
 
 This option will mostly be used when the default file (first of the set of
 inputs) is not the one containing your desired WCS. But with this option,
-you can also use Arithmetic to rewrite/chage the WCS of an existing FITS
+you can also use Arithmetic to rewrite/change the WCS of an existing FITS
 dataset from another file:
 
 @example
@@ -17412,7 +17864,7 @@ identify regions that are connected with each other. For example with this
 command (assuming NoiseChisel's output is called @file{nc.fits}):
 
 @example
-$ astarithmetic nc.fits connected-components -hDETECTIONS
+$ astarithmetic nc.fits 2 connected-components -hDETECTIONS
 @end example
 
 @item --rawoutput
@@ -22577,6 +23029,17 @@ redshift based on the input parameters.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 @node Library, Developing, High-level calculations, Top
 @chapter Library
 
@@ -26032,6 +26495,14 @@ same number of elements as nodes in the @code{cols} list. The number of
 columns that matched each input column will be stored in each element.
 @end deftypefun
 
+@deftypefun {gal_list_sizet_t *} gal_table_list_of_indexs (gal_list_str_t @code{*cols}, gal_data_t @code{*allcols}, size_t @code{numcols}, int @code{searchin}, int @code{ignorecase}, char @code{*filename}, char @code{*hdu}, size_t @code{*colmatch})
+Returns a list of indexs (starting from 0) of the input columns that match
+the names/numbers given to @code{cols}. This is a low-level operation which
+is called by @code{gal_table_read} (described above), see there for more on
+each argument's description. @code{allcols} is the returned array of
+@code{gal_table_info}.
+@end deftypefun
+
 @cindex Git
 @deftypefun void gal_table_comments_add_intro (gal_list_str_t @code{**comments}, char @code{*program_string}, time_t @code{*rawtime})
 Add some basic information to the list of @code{comments}. This basic
@@ -26167,10 +26638,13 @@ suffix doesn't have to start with `@key{.}': this function will return
 
 @deftypefun {char *} gal_fits_name_save_as_string (char @code{*filename}, char @code{*hdu})
 If the name is a FITS name, then put a @code{(hdu: ...)} after it and
-return the string. If it isn't a FITS file, just print the name. Note that
-the space is allocated. This function is useful when you want to report a
-random file to the user which may be FITS or not (for a FITS file, simply
-the filename is not enough, the HDU is also necessary).
+return the string. If it isn't a FITS file, just print the name, if
+@code{filename==NULL}, then return the string @code{stdin}. Note that the
+output string's space is allocated.
+
+This function is useful when you want to report a random file to the user
+which may be FITS or not (for a FITS file, simply the filename is not
+enough, the HDU is also necessary).
 @end deftypefun
 
 
@@ -26355,6 +26829,52 @@ strings it reads are like: @code{'value '}, or
 is commonly necessary to remove the single quotes (and possible extra
 spaces). This function will do this within the allocated space of the
 string.
+@end deftypefun
+
+@deftypefun {char *} gal_fits_key_date_to_struct_tm (char @code{*fitsdate}, struct tm @code{*tp})
+@cindex Date: FITS format
+Parse @code{fitsdate} as a FITS date format string (most generally:
+@code{YYYY-MM-DDThh:mm:ss.ddd...}) into the C library's broken-down time
+structure, or @code{struct tm} (declared in @file{time.h}) and return a
+pointer to the remainder of the string (containing the optional sub-second
+portion of @code{fitsdate}, or the @code{.ddd...} of the format).
+
+The returned @code{char *} points to part of the @code{fitsdate} string, so
+it must not be freed. For example, if @code{fitsdate} contains no
+sub-second portion, then the returned @code{char *} will point to the
+NULL-character of @code{fitsdate}.
+
+Note that the FITS date format mentioned above is the most complete
+representation. The following two formats are also acceptable:
+@code{YYYY-MM-DDThh:mm:ss} and @code{YYYY-MM-DD}. This option can also
+interpret the older FITS date format where only two characters are given to
+the year and the date format is reversed
+(@code{DD/MM/YYThh:mm:ss.ddd...}). In this case (following the GNU C
+Library), this option will make the following assumption: values 68 to 99
+correspond to the years 1969 to 1999, and values 0 to 68 as the years 2000
+to 2068.
+@end deftypefun
+
+@deftypefun size_t gal_fits_key_date_to_seconds (char @code{*fitsdate}, char @code{**subsecstr}, double @code{*subsec})
+@cindex Unix epoch time
+@cindex Epoch time, Unix
+Return the Unix epoch time (number of seconds that have passed since
+00:00:00 Thursday, January 1st, 1970) corresponding to the FITS date format
+string @code{fitsdate} (see description of
+@code{gal_fits_key_date_to_struct_tm} above).
+
+The Unix epoch time is in units of seconds, but the FITS date format allows
+sub-second accuracy. The last two arguments are for the (optional)
+sub-second portion. If @code{fitsdate} contains sub-second accuracy, then
+the starting of the sub-second part is stored in the @code{char *} pointer
+that @code{subsecstr} points to, and @code{subsec} will the corresponding
+numerical value (between 0 and 1, in double precision floating point).
+
+This is a very useful function for operations on the FITS date values, for
+example sorting FITS files by their dates, or finding the time difference
+between two FITS files. The advantage of working with the Unix epoch time
+is that you don't have to worry about calendar details (for example the
+number of days in different months, or leap years, and etc).
 @end deftypefun
 
 @deftypefun void gal_fits_key_read_from_ptr (fitsfile @code{*fptr}, gal_data_t @code{*keysll}, int @code{readcomment}, int @code{readunit})
@@ -27056,7 +27576,7 @@ function). The first element in @code{w_h_in_pt} is the width and the
 second is the height of the image.
 @end deftypefun
 
-@deftypefun {void} gal_eps_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, int @code{hex}, int @code{forpdf})
+@deftypefun {void} gal_eps_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, int @code{hex}, int @code{dontoptimize}, int @code{forpdf})
 Write the @code{in} dataset into an EPS file called
 @code{filename}. @code{in} has to be an unsigned 8-bit character type
 (@code{GAL_TYPE_UINT8}, see @ref{Numeric data types}). The desired width of
@@ -27075,6 +27595,17 @@ encoding. To use Hexadecimal encoding, set @code{hex} to a non-zero
 value. Currently If you don't directly want to import the EPS file into a
 PostScript document but want to later compile it into a PDF file, set the
 @code{forpdf} argument to @code{1}.
+
+@cindex PDF
+@cindex EPS
+@cindex PostScript
+By default, when the dataset only has two values, this function will use
+the PostScript optimization that allows setting the pixel values per bit,
+not byte (@ref{Recognized file formats}). This can greatly help reduce the
+file size. However, when @option{dontoptimize!=0}, this optimization is
+disabeled: even though there are only two values (is binary), the
+difference between them does not correspond to the full contrast of black
+and white.
 @end deftypefun
 
 
@@ -27103,7 +27634,7 @@ Return @code{1} if @code{suffix} is a recognized PDF suffix. The recognized
 suffixes are @code{.pdf} and @code{.PDF}.
 @end deftypefun
 
-@deftypefun {void} gal_pdf_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth})
+@deftypefun {void} gal_pdf_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, int @code{dontoptimize})
 Write the @code{in} dataset into an EPS file called
 @code{filename}. @code{in} has to be an unsigned 8-bit character type
 (@code{GAL_TYPE_UINT8}, see @ref{Numeric data types}). The desired width of
@@ -27119,6 +27650,17 @@ EPS file to a PDF file. Therefore if GhostScript doesn't exist, doesn't have
 the proper version, or fails for any other reason, the EPS file will
 remain. It can be used to find the cause, or use another converter or
 PostScript compiler.
+
+@cindex PDF
+@cindex EPS
+@cindex PostScript
+By default, when the dataset only has two values, this function will use
+the PostScript optimization that allows setting the pixel values per bit,
+not byte (@ref{Recognized file formats}). This can greatly help reduce the
+file size. However, when @option{dontoptimize!=0}, this optimization is
+disabeled: even though there are only two values (is binary), the
+difference between them does not correspond to the full contrast of black
+and white.
 @end deftypefun
 
 
@@ -27235,8 +27777,9 @@ which is better considering floating point errors:
 
 @deftypefun {double *} gal_wcs_pixel_scale (struct wcsprm @code{*wcs})
 Return the pixel scale for each dimension of @code{wcs} in degrees. The
-output is an array of double precision floating point type with one element
-for each dimension.
+output is an allocated array of double precision floating point type with
+one element for each dimension. If its not successful, this function will
+return @code{NULL}.
 @end deftypefun
 
 @deftypefun double gal_wcs_pixel_area_arcsec2 (struct wcsprm @code{*wcs})
@@ -27446,8 +27989,9 @@ Multi-operand statistical operations. When @code{gal_arithmetic} is called
 with any of these operators, it will expect only a single operand that will
 be interpreted as a list of datasets (see @ref{List of gal_data_t}. The
 output will be a single dataset with each of its elements replaced by the
-respective statistical operation on the whole list. See the discussion
-under the @code{min} operator in @ref{Arithmetic operators}.
+respective statistical operation on the whole list. These operators can
+work on multiple threads using the @code{numthreads} argument. See the
+discussion under the @code{min} operator in @ref{Arithmetic operators}.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_SIGCLIP_STD
@@ -27518,11 +28062,15 @@ directly use those functions.
 @end deffn
 
 
-@deftypefun {gal_data_t *} gal_arithmetic (int operator, int flags, ...)
+@deftypefun {gal_data_t *} gal_arithmetic (int @code{operator}, size_t @code{numthreads}, int @code{flags}, ...)
 Do the arithmetic operation of @code{operator} on the given operands (the
-third argument and any further argument). Certain special conditions can
-also be specified with the @code{flag} operator. The acceptable values for
-@code{operator} are defined in the macros above.
+third argument and any further argument). If the operator can work on
+multiple threads, the number of threads can be specified with
+@code{numthreads}. When the operator is single-threaded, @code{numthreads}
+will be ignored. Special conditions can also be specified with the
+@code{flag} operator (a bit-flag with bits described above, for example
+@code{GAL_ARITHMETIC_INPLACE} or @code{GAL_ARITHMETIC_FREE}). The
+acceptable values for @code{operator} are also defined in the macros above.
 
 @code{gal_arithmetic} is a multi-argument function (like C's
 @code{printf}). In other words, the number of necessary arguments is not
@@ -27530,9 +28078,9 @@ fixed and depends on the value to @code{operator}. Here are a few examples
 showing this variability:
 
 @example
-out_1=gal_arithmetic(GAL_ARITHMETIC_OP_LOG,   0, in_1);
-out_2=gal_arithmetic(GAL_ARITHMETIC_OP_PLUS,  0, in_1, in_2);
-out_3=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 0, in_1, in_2, in_3);
+out_1=gal_arithmetic(GAL_ARITHMETIC_OP_LOG,   1, 0, in_1);
+out_2=gal_arithmetic(GAL_ARITHMETIC_OP_PLUS,  1, 0, in_1, in_2);
+out_3=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, 0, in_1, in_2, in_3);
 @end example
 
 The number of necessary operands for each operator (and thus the number of
@@ -28371,13 +28919,14 @@ below.
 @deffn {Global variable} {gal_qsort_index_single}
 @cindex Thread-safety
 @cindex Multi-threaded operation
-Pointer to a floating point array (@code{float *}) to use as a reference in
-@code{gal_qsort_index_single_d} or @code{gal_qsort_index_single_i}, see the
-explanation of these functions for more. Note that if more than one array
-is to be sorted in a multi-threaded operation, the two functions will not
-work as expected. Therefore, if the operation is multi-threaded, but all
-the threads just sort the indexs based on a single array, this global
-variable can safely be used.
+Pointer to an array (for example @code{float *} or @code{int *}) to use as
+a reference in @code{gal_qsort_index_single_TYPE_d} or
+@code{gal_qsort_index_single_TYPE_i}, see the explanation of these
+functions for more. Note that if @emph{more than one} array is to be sorted
+in a multi-threaded operation, these functions will not work as
+expected. However, when all the threads just sort the indexs based on a
+@emph{single array}, this global variable can safely be used in a
+multi-threaded scenario.
 @end deffn
 
 @deftp {Type (C @code{struct})} gal_qsort_index_multi
@@ -28412,12 +28961,14 @@ types}, for example @code{gal_qsort_int32_i}, or
 @code{gal_qsort_float64_i}.
 @end deftypefun
 
-@deftypefun int gal_qsort_index_single_d (const void @code{*a}, const void @code{*b})
+@deftypefun int gal_qsort_index_single_TYPE_d (const void @code{*a}, const void @code{*b})
 When passed to @code{qsort}, this function will sort a @code{size_t} array
-based on decreasing values in the @code{gal_qsort_index_arr} single
-precision floating point array. The floating point array will not be
-changed, it is only read. For example, if we have the following source
-code:
+based on decreasing values in the @code{gal_qsort_index_single}. The global
+@code{gal_qsort_index_single} pointer has a @code{void *} pointer which
+will be cast to the proper type based on this function: for example
+@code{gal_qsort_index_single_uint16_d} will cast the array to an unsigned
+16-bit integer type. The array that @code{gal_qsort_index_single} points to
+will not be changed, it is only read. For example, see this demo program:
 
 @example
 #include <stdio.h>
@@ -28429,8 +28980,8 @@ main (void)
 @{
   size_t s[4]=@{0, 1, 2, 3@};
   float f[4]=@{1.3,0.2,1.8,0.1@};
-  gal_qsort_index_arr=f;
-  qsort(s, 4, sizeof(size_t), gal_qsort_index_single_d);
+  gal_qsort_index_single=f;
+  qsort(s, 4, sizeof(size_t), gal_qsort_index_single_float_d);
   printf("%zu, %zu, %zu, %zu\n", s[0], s[1], s[2], s[3]);
   return EXIT_SUCCESS;
 @}
@@ -28440,9 +28991,10 @@ main (void)
 The output will be: @code{2, 0, 1, 3}.
 @end deftypefun
 
-@deftypefun int gal_qsort_index_single_i (const void @code{*a}, const void @code{*b})
-Similar to @code{gal_qsort_index_single_d}, but will sort the indexes such
-that the values of @code{gal_qsort_index_arr} are in increasing order.
+@deftypefun int gal_qsort_index_single_TYPE_i (const void @code{*a}, const void @code{*b})
+Similar to @code{gal_qsort_index_single_TYPE_d}, but will sort the indexes
+such that the values of @code{gal_qsort_index_single} can be parsed in
+increasing order.
 @end deftypefun
 
 @deftypefun int gal_qsort_index_multi_d (const void @code{*a}, const void @code{*b})
@@ -28772,7 +29324,8 @@ plot (with a maximum of one).
 Return @code{0} if the input is not sorted, if it is sorted, this function
 will return @code{1} and @code{2} if it is increasing or decreasing,
 respectively. This function will abort with an error if @code{input} has
-zero elements. This function will only look into the dataset if the
+zero elements and will return @code{1} (sorted, increasing) when there is
+only one element. This function will only look into the dataset if the
 @code{GAL_DATA_FLAG_SORT_CH} bit of @code{input->flag} is @code{0}, see
 @ref{Generic data container}.
 
@@ -28792,7 +29345,6 @@ there are no other flags, you can simply set the flags to zero (with
 @example
 input->flags &= ~GAL_DATA_FLAG_SORT_CH;
 @end example
-
 @end deftypefun
 
 @deftypefun void gal_statistics_sort_increasing (gal_data_t @code{*input})
@@ -29004,7 +29556,7 @@ frequency plot (CFP, see @ref{Histogram and Cumulative Frequency
 Plot}). Imagine setting the horizontal axis of the input's CFP to a range
 of 0 to 100, and finding the first part where its slope is
 constantly/contiguously flat for a certain fraction/width of the whole
-dataset's range. Below we'll descibe this in more detail.
+dataset's range. Below we'll describe this in more detail.
 
 This function will first remove all the blank elements and sort the
 remaining elements. If @code{inplace} is non-zero this step will be done in
@@ -31908,7 +32460,6 @@ parenthesis. Throughout this book, they are ordered based on their context,
 please see the top-level contents for contextual ordering (based on what
 they do).
 
-
 @table @asis
 
 @item Arithmetic
@@ -31995,7 +32546,19 @@ projective transformation or Homography can be applied to the input images.
 
 @end table
 
+The programs listed above are designed to be highly modular and
+generic. Hence, they are naturally for lower-level operations. In Gnuastro,
+higher-level operations (combining multiple programs, or running a program
+in a special way), are done with installed Bash scripts (all prefixed with
+@code{astscript-}). They can be run just like a program and behave very
+similarly (with minor differences, see @ref{Installed scripts}).
 
+@table @code
+@item astscript-sort-by-night
+(See @ref{Sort FITS files by night}) Given a list of FITS files, and a HDU
+and keyword name (for a date), this script separates the files in the same
+night (possibly over two calendar days).
+@end table
 
 
 

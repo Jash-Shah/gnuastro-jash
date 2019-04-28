@@ -1,7 +1,24 @@
 GNU Astronomy Utilities NEWS                          -*- outline -*-
 
+Copyright (C) 2015-2019 Free Software Foundation, Inc.
+See the end of the file for license conditions.
 
-* Noteworthy changes in release X.X (library X.X.X) (YYYY-MM-DD) [stable]
+* Noteworthy changes in release X.X (library X.X.X) (XXXX-XX-XX) [stable]
+
+** New features
+
+** Removed features
+
+** Changed features
+
+** Bugs fixed
+  bug #56195: astscript-sort-by-night crashing because of AWK.
+
+
+
+
+
+* Noteworthy changes in release 0.9 (library 7.0.0) (2019-04-17) [stable]
 
 ** New features
 
@@ -17,14 +34,18 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      operand into a file. They can be very handy in debugging/understanding
      an Arithmetic command (especially as it gets complicated), or to
      produce multiple files/extensions with a single call to Arithmetic.
-   - Four new operators have beed added to allow coadding multiple datasets
+   - Four new operators have been added to allow coadding multiple datasets
      into one using sigma-clipping: `sigclip-number', `sigclip-mean',
      `sigclip-median', and `sigclip-std'. These are very useful when
      several inputs have strong outliers that affect the median, or the
      mean is required.
+   - Multithreaded operation for the following operators that
+     combine/co-add multiple inputs into one output with same size: `min',
+     `max', `number', `sum', `mean', `std', `median', `sigclip-number',
+     `sigclip-median', `sigclip-mean', `sigclip-std'.
    --wcsfile and --wcshdu: these two options can be used to specify a
      different file for reading the WCS of the output. This is useful when
-     the default (theh WCS of the first dataset that is read) is not the
+     the default (the WCS of the first dataset that is read) is not the
      required one.
    --interpmetric: new option that is necessary with the
      `interpolate-medianngb' operator. For more, see the description of
@@ -32,13 +53,21 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 
   Fits:
    - Add "title" to group FITS keywords with `--write=/,"title name". This
-     "title" is composed of two keyword records: a blank one, followed by
-     another starting with `/' and ending in any string given to this
-     option. Classifying the keywords into contextually similar groups
-     greatly helps in visual inspection and is ecouraged.
+     "title" is composed of two keyword records/lines: a blank one (all
+     whitespace), followed by another starting with `/' and ending in any
+     string given to this option. This visually separates the keywords and
+     acts as a title. Classifying the keywords into contextually similar
+     groups greatly helps in visual inspection and is encouraged.
    - Calculate and write `CHECKSUM' and `DATASUM' integrity keywords into
      the specified header using `--write=checksum' (for both) or
      `--write=datasum' (only for `DATASUM').
+   --datetosec: Convert the FITS date format (old or new) to number of
+     seconds since since the Unix epoch time (1970-01-01,00:00:00). The
+     FITS date format (for example `YYYY-MM-DDThh:mm:ss') is hard to use
+     for automatic processing (requires calendar peculiarities like number
+     of days in each month, or leap years and etc). With this option a
+     single integer is returned that can be used for example to sort FITS
+     files by date keywords without worrying about calendar peculiarities.
    --verify: confirm if the `DATASUM' and `CHECKSUM' keyword values agree
      with the specified HDU's content and/or data.
    --copykeys: Copy several keyword records (in a given range) from one
@@ -50,7 +79,7 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
      any of the columns of the second using the special `_all' name of
      `--outcols'. For example the output of `--outcols=a_all,b5' will
      contain all the columns from the first input and the 5th column of the
-     second input. This greatly simplifies the mergining of different table
+     second input. This greatly simplifies the merging of different table
      columns into one.
    --coord: manually specify coordinates to match on the
      command-line. Until now, if you only wanted to make check a specific
@@ -85,13 +114,42 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Statistics:
    --interpmetric: Similar to NoiseChisel.
 
+  Table:
+   --range: Limit the output rows to those with a value within the given
+     numeric range with this format: `--range=COL,low,high'. This is very
+     useful when only certain rows of the input are required not the
+     output. The advantage over piping to AWK is that you can save the
+     output directly to FITS (preserving the metadata). See the book for
+     more.
+   --sort: Sort the output rows based on the value of the given column in
+     ascending order.
+   --descending: When called with `--sort', will arrange the output rows in
+     descending order.
+
+  Installed scripts:
+   With this release, Gnuastro also installs Bash scripts for common
+   higher-level usage of (possibly multiple) programs. These scripts have a
+   `astscript-*' name, to easily show up on the command-line as Gnuastro
+   executables with the other Gnuastro programs, but are identifiable from
+   them. They support options just like the programs (which can be listed
+   with `--help'). Please see the new "Installed scripts" chapter of the
+   book for more.
+   - astscript-sort-by-night: New Gnuastro executable, using Gnuastro's
+     Fits program to identify files with dates in the same night (possibly
+     spanning two calendar dates).
+
   Library:
     GAL_BLANK_LONG: new macro for the `long' type blank value.
     GAL_BLANK_ULONG: new macro for the `unsigned long' type blank value.
     gal_blank_number: Return the number of blank elements in a dataset.
     gal_dimension_dist_radial: Radial distance between two coordinates.
+    gal_fits_key_date_to_struct_tm: FITS date format to C broken-down time.
+    gal_fits_key_date_to_seconds: FITS date format to Unix epoch time.
+    gal_qsort_index_single_TYPE_i: Set of functions to sort indexs ascending.
+    gal_qsort_index_single_TYPE_d: Set of functions to sort indexs descending.
     gal_statistics_outlier_cumulative: Uses flatness of the cumulative
        distribution to find outliers.
+    gal_table_list_of_indexs: returns the list of indexs matching columns.
     gal_type_is_int: to see if we have an integer (any width, any sign).
 
 ** Removed features
@@ -130,6 +188,16 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   Statistics:
    --ignoreblankintiles: similar to same option in NoiseChisel.
 
+  Table:
+   --colinfoinstdout: now corresponds to the `-O' short option. Until this
+     version, the `-s' short option was used for it. But with the new
+     `--sort' option, `-s' may cause confusion.
+
+  Library
+   gal_arithmetic: new argument: number of threads to use (when relevant).
+   gal_eps_write: new argument: optional bit-optimization with `dontoptimize'.
+   gal_pdf_write: new argument: optional bit-optimization with `dontoptimize'.
+
 ** Bugs fixed
   bug #55313: Fits program writing --write values in reverse order
   bug #55333: Fits program crash when --write or --update have no value.
@@ -139,6 +207,13 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   bug #55544: Arithmetic's output WCS with where operator is not as expected.
   bug #55740: Diamond shapes in nearst-ngb interpolation affecting NoiseChisel.
   bug #55763: Crop not keeping Blank pixels on unsigned types.
+  bug #55844: WCS library (and thus all programs) can't deal with CROTAi values.
+  bug #55845: Crash when necessary column not found from standard input.
+  bug #55988: MakeProfiles segfault when input catalog has no rows.
+  bug #56001: Bad tile sizes with only one tile and small remainder.
+  bug #56048: Crash when WCS cannot be written to FITS file.
+
+
 
 
 
@@ -1485,3 +1560,15 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
   All the build steps now report what was done and suggest the next
   step. This feature can be disabled with the `--disable-guide-message' at
   configure time.
+
+
+
+
+
+* Copyright notice
+Copyright (C) 2015-2019 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.
