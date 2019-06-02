@@ -5,7 +5,7 @@ Table is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2019, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -20,50 +20,41 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef UI_H
-#define UI_H
-
-/* For common options groups. */
-#include <gnuastro-internal/options.h>
+#ifndef ARITHMETIC_H
+#define ARITHMETIC_H
 
 
+#include <gnuastro/arithmetic.h>
 
 
+/* Basic constants. */
+#define ARITHMETIC_CALL "arith "
+#define ARITHMETIC_CALL_LENGTH strlen(ARITHMETIC_CALL)
 
-/* Available letters for short options:
 
-   a b d e f g j k l m n p t u v x y z
-   A B C E G H J L O Q R X Y
-*/
-enum option_keys_enum
+/* Operators used for arithmetic on columns. */
+enum arithmetic_operators
 {
-  /* With short-option version. */
-  UI_KEY_WCSFILE         = 'w',
-  UI_KEY_WCSHDU          = 'W',
-  UI_KEY_COLUMN          = 'c',
-  UI_KEY_INFORMATION     = 'i',
-  UI_KEY_COLINFOINSTDOUT = 'O',
-  UI_KEY_RANGE           = 'r',
-  UI_KEY_SORT            = 's',
-  UI_KEY_DESCENDING      = 'd',
-  UI_KEY_HEAD            = 'H',
-  UI_KEY_TAIL            = 't',
-
-  /* Only with long version (start with a value 1000, the rest will be set
-     automatically). */
+ ARITHMETIC_TABLE_OP_WCSTOIMG = GAL_ARITHMETIC_OP_LAST_CODE,
+ ARITHMETIC_TABLE_OP_IMGTOWCS,
 };
 
 
 
 
 
+
+
+/* Functions */
 void
-ui_read_check_inputs_setup(int argc, char *argv[], struct tableparams *p);
+arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
+                gal_list_str_t **toread, size_t *totcalled, char *expression);
 
 void
-ui_list_range_free(struct list_range *list, int freevalue);
+arithmetic_indexs_final(struct tableparams *p, size_t *colmatch);
 
 void
-ui_free_report(struct tableparams *p);
+arithmetic_operate(struct tableparams *p);
+
 
 #endif

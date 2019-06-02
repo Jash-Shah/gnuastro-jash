@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <string.h>
 
+#include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/table.h>
 #include <gnuastro/pointer.h>
@@ -41,6 +42,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 #include "ui.h"
+#include "arithmetic.h"
 #include "authors-cite.h"
 
 
@@ -114,6 +116,10 @@ ui_initialize_options(struct tableparams *p,
   cp->program_bibtex     = PROGRAM_BIBTEX;
   cp->program_authors    = PROGRAM_AUTHORS;
   cp->coptions           = gal_commonopts_options;
+
+  /* Program-specific initialization. */
+  p->head                = GAL_BLANK_SIZE_T;
+  p->tail                = GAL_BLANK_SIZE_T;
 
   /* Modify common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -240,6 +246,11 @@ ui_read_check_only_options(struct tableparams *p)
           error(EXIT_FAILURE, 0, "first value (%g) given to `--range' must "
                 "be smaller than the second (%g)", darr[0], darr[1]);
       }
+
+  /* Make sure `--head' and `--tail' aren't given together. */
+  if(p->head!=GAL_BLANK_SIZE_T && p->tail!=GAL_BLANK_SIZE_T)
+    error(EXIT_FAILURE, 0, "`--head' and `--tail' options cannot be "
+          "called together");
 }
 
 
@@ -373,6 +384,81 @@ ui_list_range_free(struct list_range *list, int freevalue)
 
 
 
+
+
+/**************************************************************/
+/***************      Packaged columns      *******************/
+/**************************************************************/
+/* Return the last outcols element. */
+static struct column_pack *
+ui_outcols_last(struct column_pack *list)
+{
+  if(list)
+    {
+      while(list->next!=NULL) list=list->next;
+      return list;
+    }
+  else return NULL;
+}
+
+
+
+
+
+/* Allocate a clean `out_columns' structure and put it at the top of the
+   list. */
+static struct column_pack *
+ui_outcols_add_new_to_end(struct column_pack **list)
+{
+  struct column_pack *last, *node;
+
+  /* Allocate a new node. */
+  errno=0;
+  node=malloc(sizeof *node);
+  if(node==NULL)
+    error(EXIT_FAILURE, errno, "%s: couldn't allocate new node (%zu bytes)",
+          __func__, sizeof *node);
+
+  /* Initialize its elements. */
+  node->next=NULL;
+  node->numsimple=0;
+  node->tokens=NULL;
+  node->start=GAL_BLANK_SIZE_T;
+
+  /* If the list already has elements, go to the last node in the list and
+     add this node. */
+  if(*list)
+    {
+      last=ui_outcols_last(*list);
+      last->next=node;
+    }
+  else
+    *list=node;
+
+  /* Return a pointer to this node (to use temporarily). */
+  return node;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**************************************************************/
 /***************       Preparations         *******************/
 /**************************************************************/
@@ -430,10 +516,11 @@ ui_print_info_exit(struct tableparams *p)
 static void
 ui_columns_prepare(struct tableparams *p)
 {
-  size_t i;
   char **strarr;
   gal_data_t *strs;
-  gal_list_str_t *tmp, *new=NULL;
+  size_t i, totcalled=0;
+  struct column_pack *node, *last;
+  gal_list_str_t *tmp, *toread=NULL;
 
   /* Go over the whole original list (where each node may have more than
      one value separated by a comma. */
@@ -444,10 +531,69 @@ ui_columns_prepare(struct tableparams *p)
       strs=gal_options_parse_csv_strings_raw(tmp->v, NULL, 0);
       strarr=strs->array;
 
-      /* Go over all the elements and add them to the `new' list. */
+      /* Go over all the given colum names/numbers. */
       for(i=0;i<strs->size;++i)
         {
-          gal_list_str_add(&new, strarr[i], 0);
+          /* See if this is an arithmetic column to be processed, or the
+             contents should just be printed. */
+          if(!strncmp(strarr[i], ARITHMETIC_CALL, ARITHMETIC_CALL_LENGTH))
+            {
+              /* If this is the first arithmetic operation and the user has
+                 already asked for some columns, we'll need to put all
+                 previously requested simply-printed columns into an
+                 `outcols' structure, then add this arithmetic operation's
+                 `outcols'. */
+              if(p->outcols==NULL && toread)
+                {
+                  /* Allocate an empty structure and set the necessary
+                     pointers. */
+                  node=ui_outcols_add_new_to_end(&p->outcols);
+                  node->start=0;
+                  node->numsimple=gal_list_str_number(toread);
+                  totcalled=node->numsimple;
+                }
+
+              /* Add a new column pack, then read all the tokens (while
+                 specifying which columns it needs). */
+              node=ui_outcols_add_new_to_end(&p->outcols);
+              arithmetic_init(p, &node->tokens, &toread, &totcalled,
+                              strarr[i]+ARITHMETIC_CALL_LENGTH);
+              free(strarr[i]);
+            }
+          /* This is a simple column (no change in values). */
+          else
+            {
+              /* Add this column to the list of columns to read. */
+              gal_list_str_add(&toread, strarr[i], 0);
+
+              /* See if we have packaged the output columns. */
+              if(p->outcols)
+                {
+                  /* If the previous column package was an arithmetic
+                     operation, allocate a new node. */
+                  last=ui_outcols_last(p->outcols);
+                  if(last->tokens)
+                    {
+                      node=ui_outcols_add_new_to_end(&p->outcols);
+                      node->start=totcalled;
+                      node->numsimple=1;
+                    }
+
+                  /* The previous package of columns are simple (we don't
+                     need to change their value), so we can just increment
+                     the number of columns there and don't need to allocate
+                     a new one. */
+                  else
+                    last->numsimple+=1;
+                }
+
+              /* Increment the total number of called columns. */
+              totcalled+=1;
+            }
+
+          /* The pointer allocated string is either being used (and later
+             freed) else, or has already been freed. So its necessary to
+             set it to NULL. */
           strarr[i]=NULL;
         }
 
@@ -455,12 +601,39 @@ ui_columns_prepare(struct tableparams *p)
       gal_data_free(strs);
     }
 
-  /* Delete the old list. */
-  gal_list_str_free(p->columns, 1);
+  /* For a check
+  if(p->outcols)
+    {
+      struct column_pack *tmp;
+      struct arithmetic_token *atmp;
+      for(tmp=p->outcols;tmp!=NULL;tmp=tmp->next)
+        {
+          if(tmp->tokens)
+            for(atmp=tmp->tokens;atmp!=NULL;atmp=atmp->next)
+              {
+                printf("Arithmetic: ");
+                if(atmp->constant) printf("Constant number\n");
+                else if(atmp->index) printf("Called column: %zu\n",
+                                            atmp->index);
+                else if(atmp->operator!=ARITHMETIC_TABLE_OP_INVALID)
+                  printf("Operator: %d\n", atmp->operator);
+                else
+                  error(EXIT_FAILURE, 0, "%s: UNKNOWN SITUATION!",
+                        __func__);
+              }
+          else
+            printf("Simple: start: %zu, num: %zu\n", tmp->start,
+                   tmp->numsimple);
+        }
+    }
+  */
 
-  /* Reverse the new list, then put it into `p->columns'. */
-  gal_list_str_reverse(&new);
-  p->columns=new;
+
+  /* Delete the old list, then reverse the `toread' list, and put it into
+     `p->columns'. */
+  gal_list_str_free(p->columns, 1);
+  gal_list_str_reverse(&toread);
+  p->columns=toread;
 }
 
 
@@ -759,6 +932,7 @@ ui_check_range_sort_after(struct tableparams *p, size_t nrange,
 static void
 ui_preparations(struct tableparams *p)
 {
+  size_t *colmatch;
   gal_list_str_t *lines;
   size_t nrange=0, origoutncols=0;
   struct gal_options_common_params *cp=&p->cp;
@@ -784,10 +958,19 @@ ui_preparations(struct tableparams *p)
                                &rangeindout);
 
 
+  /* If we have any arithmetic operations, we need to make sure how many
+     columns match every given column name. */
+  colmatch = ( p->outcols
+               ? gal_pointer_allocate(GAL_TYPE_SIZE_T,
+                                      gal_list_str_number(p->columns), 1,
+                                      __func__, "colmatch")
+               : NULL);
+
+
   /* Read the necessary columns. */
   p->table=gal_table_read(p->filename, cp->hdu, lines, p->columns,
                           cp->searchin, cp->ignorecase, cp->minmapsize,
-                          NULL);
+                          colmatch);
   if(p->filename==NULL) p->filename="stdin";
   gal_list_str_free(lines, 1);
 
@@ -806,6 +989,11 @@ ui_preparations(struct tableparams *p)
           "non-blank lines)", p->filename);
 
 
+  /* Set the final indexs. */
+  if(p->outcols)
+    arithmetic_indexs_final(p, colmatch);
+
+
   /* Now that the data columns are ready, we can free the string linked
      list. */
   gal_list_str_free(p->columns, 1);
@@ -816,7 +1004,20 @@ ui_preparations(struct tableparams *p)
   gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
 
 
+  /* If the head or tail values are given and are larger than the number of
+     rows, just set them to the number of rows (print the all the final
+     rows). This is how the `head' and `tail' programs of GNU Coreutils
+     operate. */
+  p->head = ( ((p->head!=GAL_BLANK_SIZE_T) && (p->head > p->table->size))
+              ? p->table->size
+              : p->head );
+  p->tail = ( ((p->tail!=GAL_BLANK_SIZE_T) && (p->tail > p->table->size))
+              ? p->table->size
+              : p->tail );
+
+
   /* Clean up. */
+  free(colmatch);
   if(rangeindout) free(rangeindout);
 }
 
@@ -923,4 +1124,5 @@ ui_free_report(struct tableparams *p)
   free(p->cp.hdu);
   free(p->cp.output);
   gal_list_data_free(p->table);
+  if(p->colarray) free(p->colarray);
 }

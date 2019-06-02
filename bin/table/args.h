@@ -44,6 +44,32 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "wcsfile",
+      UI_KEY_WCSFILE,
+      "STR",
+      0,
+      "File with WCS if conversion is requested.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->wcsfile,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "wcshdu",
+      UI_KEY_WCSHDU,
+      "STR",
+      0,
+      "HDU in file with WCS for conversion.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->wcshdu,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 
@@ -113,6 +139,32 @@ struct argp_option program_options[] =
       &p->descending,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "head",
+      UI_KEY_HEAD,
+      "INT",
+      0,
+      "Only output given number of top rows.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->head,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "tail",
+      UI_KEY_TAIL,
+      "INT",
+      0,
+      "Only output given number of bottom rows.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->tail,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },

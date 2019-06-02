@@ -88,9 +88,11 @@ astmatch
 ltmain.sh
 .dirstamp
 configure
+.DS_Store
 .gnuastro
 astmkprof
 astheader
+astscript*
 astsegment
 runtest.sh
 astmknoise

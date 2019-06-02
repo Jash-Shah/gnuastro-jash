@@ -377,6 +377,7 @@ ConvertType
 
 Table
 
+* Column arithmetic::           How to do operations on table columns.
 * Invoking asttable::           Options and arguments to Table.
 
 Data manipulation
@@ -600,6 +601,7 @@ Gnuastro library
 * Convolution functions::       Library functions to do convolution.
 * Interpolation::               Interpolate (over blank values possibly).
 * Git wrappers::                Wrappers for functions in libgit2.
+* Spectral lines library::
 * Cosmology library::           Cosmological calculations.
 
 Multithreaded programming (@file{threads.h})
@@ -1700,10 +1702,10 @@ character, enabling you to use multiple lines to write your commands.
 
 Gnuastro would not have been possible without scholarships and grants from
 several funding institutions. We thus ask that if you used Gnuastro in any
-of your papers/reports, please add the proper citation and acknowledge this
-instrumental support. For details of which papers to cite (may be different
-for different programs) and get the acknowledgment statement to include in
-your paper, please run the relevant programs with the common
+of your papers/reports, please add the proper citation and acknowledge the
+funding agencies/projects. For details of which papers to cite (may be
+different for different programs) and get the acknowledgment statement to
+include in your paper, please run the relevant programs with the common
 @option{--cite} option like the example commands below (for more on
 @option{--cite}, please see @ref{Operating mode options}).
 
@@ -1888,23 +1890,22 @@ use in the example codes through the book, please see @ref{Conventions}.
 @cindex Azophi
 @cindex Abd al-rahman Sufi
 @cindex Sufi, Abd al-rahman
-It is the year 953 A.D.  and Sufi@footnote{Abd al-rahman Sufi (903 --
-986 A.D.), also known in Latin as Azophi was an Iranian
+It is the year 953 A.D. and Abd al-rahman Sufi (903 -- 986
+A.D.)@footnote{In Latin Sufi is known as Azophi. He was an Iranian
 astronomer. His manuscript ``Book of fixed stars'' contains the first
-recorded observations of the Andromeda galaxy, the Large Magellanic
-Cloud and seven other non-stellar or `nebulous' objects.}  is in
-Shiraz as a guest astronomer. He had come there to use the advanced
-123 centimeter astrolabe for his studies on the Ecliptic. However,
-something was bothering him for a long time. While mapping the
-constellations, there were several non-stellar objects that he had
-detected in the sky, one of them was in the Andromeda
-constellation. During a trip he had to Yemen, Sufi had seen another
-such object in the southern skies looking over the Indian ocean. He
-wasn't sure if such cloud-like non-stellar objects (which he was the
-first to call `Sah@={a}bi' in Arabic or `nebulous') were real
-astronomical objects or if they were only the result of some bias in
-his observations. Could such diffuse objects actually be detected at
-all with his detection technique?
+recorded observations of the Andromeda galaxy, the Large Magellanic Cloud
+and seven other non-stellar or `nebulous' objects.}  is in Shiraz as a
+guest astronomer. He had come there to use the advanced 123 centimeter
+astrolabe for his studies on the Ecliptic. However, something was bothering
+him for a long time. While mapping the constellations, there were several
+non-stellar objects that he had detected in the sky, one of them was in the
+Andromeda constellation. During a trip he had to Yemen, Sufi had seen
+another such object in the southern skies looking over the Indian ocean. He
+wasn't sure if such cloud-like non-stellar objects (which he was the first
+to call `Sah@={a}bi' in Arabic or `nebulous') were real astronomical
+objects or if they were only the result of some bias in his
+observations. Could such diffuse objects actually be detected at all with
+his detection technique?
 
 @cindex Almagest
 @cindex Claudius Ptolemy
@@ -2027,10 +2028,11 @@ Using all the information above, he creates the catalog of mock profiles he
 wants in a file named @file{cat.txt} (short for catalog) using his favorite
 text editor and stores it in a directory named @file{simulationtest} in his
 home directory. [The @command{cat} command prints the contents of a file,
-short for concatenation. So please copy-paste the lines after
+short for ``concatenation''. So please copy-paste the lines after
 ``@command{cat cat.txt}'' into @file{cat.txt} when the editor opens in the
 steps above it, note that there are 7 lines, first one starting with
-@key{#}]:
+@key{#}. Also be careful when copying from the PDF format, the Info, web,
+or text formats shouldn't have any problem]:
 
 @example
 $ mkdir ~/simulationtest
@@ -2104,6 +2106,7 @@ Convolve started on Mon Apr  6 16:35:32 953
   - Multiplied in the frequency domain.                0.040659 seconds
   - Converted back to the spatial domain.              3.465344 seconds
   - Padded parts removed.                              0.016767 seconds
+  - Output: cat_convolved.fits
 Convolve finished in:  10.422161 seconds
 
 $ls
@@ -2116,9 +2119,9 @@ and showed the effect of convolution to his student and explained to him
 how a PSF with a larger FWHM would make the points even wider. With the
 convolved image ready, they were prepared to re-sample it to the original
 pixel scale Sufi had planned [from the @command{$ astmkprof -P} command
-above, recall that MakeProfiles had over-sampled the image by 5 times]. Sufi
-explained the basic concepts of warping the image to his student and ran
-Warp with the following command:
+above, recall that MakeProfiles had over-sampled the image by 5
+times]. Sufi explained the basic concepts of warping the image to his
+student and ran Warp with the following command:
 
 @example
 $ astwarp --scale=1/5 --centeroncorner cat_convolved.fits
@@ -2141,12 +2144,12 @@ NAXIS2  =                  526 / length of data axis 2
 @end example
 
 @noindent
-@file{cat_convolved_warped.fits} now has the correct pixel scale. However,
+@file{cat_convolved_scaled.fits} now has the correct pixel scale. However,
 the image is still larger than what we had wanted, it is 526
 (@mymath{500+13+13}) by 526 pixels. The student is slightly confused, so
-Sufi also re-samples the PSF with the same scale and shows him that it is 27
-(@mymath{2\times13+1}) by 27 pixels. Sufi goes on to explain how frequency
-space convolution will dim the edges and that is why he added the
+Sufi also re-samples the PSF with the same scale and shows him that it is
+27 (@mymath{2\times13+1}) by 27 pixels. Sufi goes on to explain how
+frequency space convolution will dim the edges and that is why he added the
 @option{--prepforconv} option to MakeProfiles, see @ref{If convolving
 afterwards}. Now that convolution is done, Sufi can remove those extra
 pixels using Crop with the command below. Crop's @option{--section} option
@@ -2155,7 +2158,7 @@ standard), so the crop's first pixel has to be 14, not 13.
 
 @example
 $ astcrop cat_convolved_scaled.fits --section=14:*-13,14:*-13    \
-          --zeroisnotblank
+          --mode=img --zeroisnotblank
 Crop started on Sat Oct  6 17:03:24 953
   - Read metadata of 1 image.                          0.001304 seconds
   ---- ...nvolved_scaled_cropped.fits created: 1 input.
@@ -2179,7 +2182,7 @@ ran MakeNoise:
 
 @example
 $ astmknoise --zeropoint=18 --background=7 --output=out.fits    \
-             cat_convolved_warped_crop.fits
+             cat_convolved_scaled_crop.fits
 MakeNoise started on Mon Apr  6 17:05:06 953
   - Generator type: mt19937
   - Generator seed: 1428318100
@@ -2250,12 +2253,11 @@ He used this chance to remind the student of the importance of comments in
 code or shell scripts: when writing the code, you have a good mental
 picture of what you are doing, so writing comments might seem superfluous
 and excessive. However, in one month when you want to re-use the script,
-you have lost that mental picture and rebuilding it is can be
-time-consuming and frustrating. The importance of comments is further
-amplified when you want to share the script with a friend/colleague. So it
-is good to accompany any script/code with useful comments while you are
-writing it (have a good mental picture of what/why you are doing
-something).
+you have lost that mental picture and remembering it can be time-consuming
+and frustrating. The importance of comments is further amplified when you
+want to share the script with a friend/colleague. So it is good to
+accompany any script/code with useful comments while you are writing it
+(create a good mental picture of what/why you are doing something).
 
 @cindex Gedit
 @cindex GNU Emacs
@@ -2807,9 +2809,9 @@ main(void)
 @noindent
 To greatly simplify the compilation, linking and running of simple C
 programs like this that use Gnuastro's library, Gnuastro has
-@ref{BuildProgram}. This program designed to manage Gnuastro's
+@ref{BuildProgram}. This program is designed to manage Gnuastro's
 dependencies, compile and link the program and then run the new program. To
-build and run the program above, simply run the following command:
+build, @emph{and run} the program above, use the following command:
 
 @example
 $ astbuildprog myprogram.c
@@ -2827,11 +2829,11 @@ $ ./myprogram
 @end example
 
 The efficiency of @file{myprogram} compared to CosmicCalculator is because
-the requested processing is faster/comparable to the overheads necessary
-for each processing. For other programs that take large input datasets
-(images for example), the overhead is usually negligible compared to the
-processing. In such cases, the libraries are only useful if you want a
-different/new processing compared to the functionalities in Gnuastro's
+in the latter, the requested processing is comparable to the necessary
+overheads. For other programs that take large input datasets and do
+complicated processing on them, the overhead is usually negligible compared
+to the processing. In such cases, the libraries are only useful if you want
+a different/new processing compared to the functionalities in Gnuastro's
 existing programs.
 
 Gnuastro has a large library which is heavily used by all the programs. In
@@ -2853,18 +2855,19 @@ above, it completed its processing and printed results. So where did the
 come from?  The values come from the command-line or a configuration file
 (see @ref{Configuration file precedence}).
 
-CosmicCalculator has a limited set of parameters and doesn't need any
-particular file inputs. Therefore, we'll use it to discuss configuration
-files which are an important part of all Gnuastro's programs (see
-@ref{Configuration files}).
+CosmicCalculator has a small set of parameters/options. Therefore, let's
+use it to discuss configuration files (see @ref{Configuration
+files}). Configuration files are an important part of all Gnuastro's
+programs, especially the ones with a large number of options, so its
+important to understand this part well .
 
 Once you get comfortable with configuration files, you can easily do the
-same for the options of all Gnuastro programs. For example, NoiseChisel has
-the largest number of options in the programs. Therefore configuration
-files will be useful for it when you use different datasets (with different
-noise properties or in different research contexts). The configuration of
-each program (besides its version) is vital for the reproducibility of your
-results, so it is important to manage them properly.
+same for the options of all Gnuastro programs (for example,
+NoiseChisel). Therefore configuration files will be useful for it when you
+use different datasets (with different noise properties or in different
+research contexts). The configuration of each program (besides its version)
+is vital for the reproducibility of your results, so it is important to
+manage them properly.
 
 As we saw above, the full list of the options in all Gnuastro programs can
 be seen with the @option{--help} option. Try calling it with
@@ -3972,18 +3975,16 @@ $ ds9 -mecube seg/xdf-f160w.fits -zscale -zoom to fit    \
 In conclusion, we hope this extended tutorial has been a good starting
 point to help in your exciting research. If this book or any of the
 programs in Gnuastro have been useful for your research, please cite the
-respective papers and share your thoughts and suggestions with us (it can
-be very encouraging). All Gnuastro programs have a @option{--cite} option
-to help you cite the authors' work more easily. Just note that it may be
+respective papers, and acknowledge the funding agencies that made all of
+this possible. All Gnuastro programs have a @option{--cite} option to
+facilitate the citation and acknowledgement. Just note that it may be
 necessary to cite additional papers for different programs, so please try
-it out for any program you used.
+it out on all the programs that you used, for example:
 
 @example
 $ astmkcatalog --cite
 $ astnoisechisel --cite
 @end example
-
-
 
 
 
@@ -4641,12 +4642,12 @@ usage tutorial} and @ref{Segment} for more on using Segment, producing
 catalogs with MakeCatalog and using those catalogs.
 
 Finally, if this book or any of the programs in Gnuastro have been useful
-for your research, please cite the respective papers and share your
-thoughts and suggestions with us (it can be very encouraging). All Gnuastro
-programs have a @option{--cite} option to help you cite the authors' work
-more easily. Just note that it may be necessary to cite additional papers
-for different programs, so please use @option{--cite} with any program that
-has been useful in your work.
+for your research, please cite the respective papers, and acknowledge the
+funding agencies that made all of this possible. All Gnuastro programs have
+a @option{--cite} option to facilitate the citation and
+acknowledgement. Just note that it may be necessary to cite additional
+papers for different programs, so please try it out on all the programs
+that you used, for example:
 
 @example
 $ astmkcatalog --cite
@@ -4678,6 +4679,17 @@ what they actually are. Since they are nebulous or amorphous, they
 can't be modeled (like stars that are always a point) easily. So there
 is no better way to distinguish them than to visually inspect them and
 see if it is possible to classify these nebulae or not.
+
+@cartouche
+@noindent
+@strong{No default dataset in this tutorial:} Unfortunately there is no
+input dataset for this tutorial. We will add a dataset and corresponding
+table to smoothly run this tutorial later. But until then, you can use the
+final catalog that you produced in @ref{General program usage
+tutorial}. The start of this tutorial has some overlaps with the ending of
+@ref{General program usage tutorial}. You can just select some of the
+brighter sources to make it shorter and more managable.
+@end cartouche
 
 Hubble has stored all the FITS images of the objects he wants to visually
 inspect in his @file{/mnt/data/images} directory. He has also stored his
@@ -5087,6 +5099,7 @@ $ ./testprog > testprog.lis
 $ diff testprog.lis testprog.out    # Should have no output
 $ cmp testprog.fit testprog.std     # Should have no output
 $ rm cookbook fitscopy imcopy smem speed testprog
+$ make shared
 $ sudo make install
 @end example
 
@@ -5613,7 +5626,7 @@ found, then configure Gnuastro like the command below (correcting
 @file{/path/to/lib}). For more, see @ref{Known issues} and
 @ref{Installation directory}.
 @example
-$ ./configure LDFLAGS="-I/path/to/lib"
+$ ./configure LDFLAGS="-L/path/to/lib"
 @end example
 @end cartouche
 
@@ -7106,7 +7119,7 @@ sure it is added to the list of directories, add the following line to your
 (non-standard) directories.
 
 @example
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
 @end example
 
 You can also add more directories by using a colon `@code{:}' to separate
@@ -9487,8 +9500,8 @@ table (the first one, with nothing but the column number is redundant):
 
 @example
 # Column 5:
-# Column 1: ID [,i] The Clump ID.
-# Column 3: mag_f160w [AB mag, f] Magnitude from the F160W filter
+# Column 1: ID [,i8] The Clump ID.
+# Column 3: mag_f160w [AB mag, f32] Magnitude from the F160W filter
 @end example
 
 @noindent
@@ -9527,7 +9540,7 @@ manually later. If only one of the leading or trailing white spaces is
 important for your work, you can only use one of the `@key{|}'s.
 
 @example
-# Column 1: ID [label, uc]
+# Column 1: ID [label, u8]
 # Column 2: Notes [no unit, str50]
 1    leading and trailing white space is ignored here    2.3442e10
 2   |         but they will be preserved here        |   8.2964e11
@@ -10819,6 +10832,26 @@ The hour that defines the next ``night''. By default, all times before
 sub-hour value is necessary, it should be given in units of hours, for
 example @option{--hour=9.5} corresponds to 9:30a.m.
 
+@cartouche
+@noindent
+@cindex Time zone
+@cindex UTC (Universal time coordinate)
+@cindex Universal time coordinate (UTC)
+@strong{Dealing with time zones:} the time that is recorded in
+@option{--key} may be in UTC (Universal Time Coordinate). However, the
+organization of the images taken during the night depends on the local
+time. It is possible to take this into account by setting the
+@option{--hour} option to the local time in UTC.
+
+For example, consider a set of images taken in Auckland (New Zeland,
+UTC+12) during different nights. If you want to classify these images by
+night, you have to know at which time (in UTC time) the Sun rises (or any
+other separator/definition of a different night). In this particular
+example, you can use @option{--hour=21}. Because in Auckland, a night
+finishes (roughly) at the local time of 9:00, which corresponds to 21:00
+UTC.
+@end cartouche
+
 @item -l
 @itemx --link
 Create a symbolic link for each input FITS file. This option cannot be used
@@ -10865,8 +10898,6 @@ already exist). For example @code{--prefix=/path/to/processing/img-} will
 put all the links/copies in the @file{/path/to/processing} directory, and
 the files (in that directory) will all start with @file{img-}.
 @end table
-
-
 
 
 
@@ -11576,10 +11607,108 @@ higher-level processing, see the examples in @ref{Invoking asttable} for
 some simple examples.
 
 @menu
+* Column arithmetic::           How to do operations on table columns.
 * Invoking asttable::           Options and arguments to Table.
 @end menu
 
-@node Invoking asttable,  , Table, Table
+@node Column arithmetic, Invoking asttable, Table, Table
+@subsection Column arithmetic
+
+After reading the requested columns from the input table, you can also do
+operations/arithmetic on the columns and save the resulting values as new
+column(s) in the output table (possibly in between other requested
+columns). To enable column arithmetic, the first 6 characters of the value
+to @option{--column} (@code{-c}) should be the arithmetic activation word
+`@option{arith }' (note the space character in the end, after
+`@code{arith}').
+
+After the activation word, you can use the reverse polish notation to
+identify the operators and their operands, see @ref{Reverse polish
+notation}. Just note that white-space characters are used between the
+tokens of the arithmetic expression and that they are meaningful to the
+command-line environment. Therefore the whole expression (including the
+activation word) has to be quoted on the command-line or in a shell script
+(see the examples below).
+
+To identify a column you can directly use its name, or specify its number
+(counting from one, see @ref{Selecting table columns}). When you are giving
+a column number, it is necessary to prefix it with a @code{c} (otherwise it
+is not distinguisable from a constant number to use in the arithmetic
+operation).
+
+For example with the command below, the first two columns of
+@file{table.fits} will be printed along with a third column that is the
+result of multiplying the first column with @mymath{10^{10}} (for example
+to convert wavelength from Meters to Angstroms). Note how without the
+`@key{c}', it is not possible to distinguish between @key{1} as a
+column-counter, or as a constant number to use in the arithmetic operation.
+
+@example
+$ asttable table.fits -c1,2 -c"arith c1 1e10 x"
+@end example
+
+Alternatively, if the columns have meta-data and the first two are
+respectively called @code{AWAV} and @code{SPECTRUM}, the command above is
+equivalent to the command below. Note that the @key{c} is no longer
+necessary in this scenario.
+
+@example
+$ asttable table.fits -cAWAV,SPECTRUM -c"arith AWAV 1e10 x"
+@end example
+
+Comparison of the two commands above clearly shows why it is recommended to
+use column names instead of numbers. When the columns have clear names, the
+command/script actually becomes much more readable, describing the intent
+of the operation. It is also independent of the low-level table structure:
+for the second command, the position of the @code{AWAV} and @code{SPECTRUM}
+columns in @file{table.fits} is irrelevant.
+
+Finally, since the arithmetic expressions are a value to @option{--column},
+it doesn't necessarily have to be a separate option, so the commands above
+are also identical to the command below (note that this only has one
+@option{-c} option). Just be very careful with the quoting!
+
+@example
+$ asttable table.fits -cAWAV,SPECTRUM,"arith AWAV 1e10 x"
+@end example
+
+Almost all the arithmetic operators of @ref{Arithmetic operators} are also
+supported for column arithmetic in Table. In particular, the few that are
+not present in the Gnuastro library aren't yet supported. For a list of the
+Gnuastro library arithmetic operators, please see the macros starting with
+@code{GAL_ARITHMETIC_OP} and ending with the operator name in
+@ref{Arithmetic on datasets}. Besides the operators in @ref{Arithmetic
+operators}, several operators are only available in Table to use on table
+columns.
+
+@cindex WCS: World Coordinate System
+@cindex World Coordinate System (WCS)
+@table @code
+@item wcstoimg
+Convert the given WCS positions to image/dataset coordinates based on the
+number of dimensions in the WCS structure of @option{--wcshdu}
+extension/HDU in @option{--wcsfile}. It will output the same number of
+columns. The first poppoed operand is the last FITS dimension.
+
+For example the two commands below (which have the same output) will
+produce 5 columns. The first three columns are the input table's ID, RA and
+Dec columns. The fourth and fifth columns will be the pixel positions in
+@file{image.fits} that correspond to each RA and Dec.
+
+@example
+$ asttable table.fits -cID,RA,DEC,"arith RA DEC wcstoimg" \
+           --wcsfile=image.fits
+$ asttable table.fits -cID,RA -cDEC \
+           -c"arith RA DEC wcstoimg" --wcsfile=image.fits
+@end example
+
+@item imgtowcs
+Similar to @code{wcstoimg}, except that image/dataset coordinates are
+converted to WCS coordinates.
+@end table
+
+
+@node Invoking asttable,  , Column arithmetic, Table
 @subsection Invoking Table
 
 Table will read/write, select, convert, or show the information of the
@@ -11613,26 +11742,19 @@ $ asttable bintab.fits -cRA,DEC,/^MAG_/ --sort=Z_PHOT
 ## redshift between 2 and 3.
 $ asttable bintab.fits -cRA,DEC,/^MAG_/ --range=Z_PHOT,2:3
 
-## Similar to above, but writes the columns to a file (with metadata)
-## instead of the command-line.
-$ asttable bintab.fits -cRA,DEC,/^MAG_/ --output=out.txt
-
-## Only print the 2nd column, and the third column multiplied by 5:
-$ asttable bintab.fits -c2,5 | awk '@{print $1, 5*$2@}'
-
 ## Only print rows with a value in the 10th column above 100000:
-$ asttable bintab.fits | awk '$10>10e5 @{print@}'
+$ asttable bintab.fits --range=10,10e5,inf
+
+## Only print the 2nd column, and the third column multiplied by 5,
+## Save the resulting two columns in `table.txt'
+$ asttable bintab.fits -c2,"arith c2 5 x" -otable.fits
 
 ## Sort the output columns by the third column, save output:
-$ asttable bintab.fits | 'sort -nk3 > output.txt
+$ asttable bintab.fits --sort=3 -ooutput.txt
 
-## Subtract the first column from the second in `cat.txt' and keep the
-## third and fourth columns. Feed the columns to Table to write as a
-## FITS table.
-$ awk '!/^#/@{print $2-$1, $3, $4@}' cat.txt | asttable -ocat.fits
-
-## Convert a plain text table to a binary FITS table:
-$ asttable plaintext.txt --output=table.fits --tabletype=fits-binary
+## Subtract the first column from the second in `cat.txt' (can also
+## be a FITS table) and keep the third and fourth columns.
+$ awk cat.txt -c"arith c2 c1 -",3,4 -ocat.fits
 @end example
 
 Table's input dataset can be given either as a file or from Standard input
@@ -11685,19 +11807,36 @@ last command with all the previously typed columns present, delete
 @cindex GNU AWK
 @item -c STR/INT
 @itemx --column=STR/INT
-Specify the columns to read, see @ref{Selecting table columns} for a
-thorough explanation on how the value to this option is interpreted. There
-are two ways to specify multiple columns: 1) multiple calls to this option,
-2) using a comma between each column specifier in one call to this
-option. These different solutions may be mixed in one call to Table: for
-example, @option{-cRA,DEC -cMAG}, or @option{-cRA -cDEC -cMAG} are both
-equivalent to @option{-cRA -cDEC -cMAG}. The order of the output columns
-will be the same order given to the option or in the configuration files
-(see @ref{Configuration file precedence}).
+Set the output columns either by specifying the column number, or name. For
+more on selecting columns, see @ref{Selecting table columns}. If a value of
+this option starts with `@code{arith }', this option will do the requested
+operations/arithmetic on the specified columns and output the result in
+that place (among other requested columns). For more on column arithmetic
+see @ref{Column arithmetic}.
+
+To ask for multiple columns this option can be used in two way: 1) multiple
+calls to this option, 2) using a comma between each column specifier in one
+call to this option. These different solutions may be mixed in one call to
+Table: for example, @option{-cRA,DEC -cMAG}, or @option{-cRA -cDEC -cMAG}
+are both equivalent to @option{-cRA -cDEC -cMAG}. The order of the output
+columns will be the same order given to the option or in the configuration
+files (see @ref{Configuration file precedence}).
 
 This option is not mandatory, if no specific columns are requested, all the
 input table columns are output. When this option is called multiple times,
 it is possible to output one column more than once.
+
+@item -w STR
+@itemx --wcsfile=STR
+FITS file that contains the WCS to be used in the @code{wcstoimg} and
+@code{imgtowcs} operators of @option{--column} (see above). The extension
+name/number within the FITS file can be specified with @option{--wcshdu}.
+
+@item -W STR
+@itemx --wcshdu=STR
+FITS extension/HDU that contains the WCS to be used in the @code{wcstoimg}
+and @code{imgtowcs} operators of @option{--column} (see above). The FITS
+file name can be specified with @option{--wcsfile}.
 
 @item -O
 @itemx --colinfoinstdout
@@ -11722,6 +11861,9 @@ The chosen column doesn't have to be in the output columns. This is good
 when you just want to select using one column's values, but don't need that
 column anymore afterwards.
 
+For one example of using this option, see the example under
+@option{--sigclip-median} in @ref{Invoking aststatistics}.
+
 @item -s STR
 @item --sort=STR
 Sort the output rows based on the values in the @code{STR} column (can be a
@@ -11735,6 +11877,25 @@ column anymore afterwards.
 @item -d
 @itemx --descending
 When called with @option{--sort}, rows will be sorted in descending order.
+
+@item -H INT
+@itemx --head=INT
+Only print the given number of rows from the @emph{top} of the final
+table. Note that this option only affects the @emph{output} table. For
+example if you use @option{--sort}, or @option{--range}, the printed rows
+are the first @emph{after} applying the sort sorting, or selecting a range
+of the full input.
+
+@cindex GNU Coreutils
+If the given value to @option{--head} is 0, the output columns won't have
+any rows and if its larger than the number of rows in the input table, all
+the rows are printed (this option is effectively ignored). This behavior is
+taken from the @command{head} program in GNU Coreutils.
+
+@item -t INT
+@itemx --tail=INT
+Only print the given number of rows from the @emph{bottom} of the final
+table. See @option{--head} for more.
 
 @end table
 
@@ -12514,14 +12675,15 @@ The most common notation for arithmetic operations is the
 @url{https://en.wikipedia.org/wiki/Infix_notation, infix notation} where
 the operator goes between the two operands, for example @mymath{4+5}. While
 the infix notation is the preferred way in most programming languages,
-currently Arithmetic does not use it since it will require parenthesis
-which can complicate the implementation of the code. In the near future we
-do plan to adopt this
+currently the Gnuastro's program (in particular Arithmetic and Table, when
+doing column arithmetic) do not use it. This is because it will require
+parenthesis which can complicate the implementation of the code. In the
+near future we do plan to also allow this
 notation@footnote{@url{https://savannah.gnu.org/task/index.php?13867}}, but
-for the time being (due to time constraints on the developers), Arithmetic
-uses the post-fix or
+for the time being (due to time constraints on the developers), arithmetic
+operations can only be done in the post-fix notation (also known as
 @url{https://en.wikipedia.org/wiki/Reverse_Polish_notation, reverse polish
-notation}. The Wikipedia article provides some excellent explanation on
+notation}). The Wikipedia article provides some excellent explanation on
 this notation but here we will give a short summary here for
 self-sufficiency.
 
@@ -12529,22 +12691,24 @@ In the post-fix notation, the operator is placed after the operands, as we
 will see below this removes the need to define parenthesis for most
 ordinary operators. For example, instead of writing @command{5+6}, we write
 @command{5 6 +}. To easily understand how this notation works, you can
-think of each operand as a node in a first-in-first-out stack. Every time
-an operator is confronted, it pops the number of operands it needs from the
-top of the stack (so they don't exist in the stack any more), does its
-operation and pushes the result back on top of the stack. So if you want
-the average of 5 and 6, you would write: @command{5 6 + 2 /}. The
-operations that are done are:
+think of each operand as a node in a ``last-in-first-out'' stack. Every
+time an operator is confronted, the operator pops the number of operands it
+needs from the top of the stack (so they don't exist in the stack any
+more), does its operation and pushes the result back on top of the
+stack. So if you want the average of 5 and 6, you would write: @command{5 6
++ 2 /}. The operations that are done are:
 
 @enumerate
 @item
-@command{5} is an operand, so it is pushed to the top of the stack.
+@command{5} is an operand, so it is pushed to the top of the stack (which
+is initially empty).
 @item
 @command{6} is an operand, so it is pushed to the top of the stack.
 @item
-@command{+} is a binary operator, so pull the top two elements of the stack
-and perform addition on them (the order is @mymath{5+6} in the example
-above). The result is @command{11}, push it on top of the stack.
+@command{+} is a @emph{binary} operator, so it will pop the top two
+elements of the stack out of it, and perform addition on them (the order is
+@mymath{5+6} in the example above). The result is @command{11} which is
+pushed to the top of the stack.
 @item
 @command{2} is an operand so push it onto the top of the stack.
 @item
@@ -12553,14 +12717,17 @@ the stack (top-most is @command{2}, then @command{11}) and divide the
 second one by the first.
 @end enumerate
 
-In the Arithmetic program, the operands can be FITS images or numbers. As
-you can see, very complicated procedures can be created without the need
-for parenthesis or worrying about precedence. Even functions which take an
-arbitrary number of arguments can be defined in this notation. This is a
-very powerful notation and is used in languages like Postscript
+In the Arithmetic program, the operands can be FITS images or numbers (see
+@ref{Invoking astarithmetic}). In Table's column arithmetic, they can be
+any column or a number (see @ref{Column arithmetic}).
+
+With this notation, very complicated procedures can be created without the
+need for parenthesis or worrying about precedence. Even functions which
+take an arbitrary number of arguments can be defined in this notation. This
+is a very powerful notation and is used in languages like Postscript
 @footnote{See the EPS and PDF part of @ref{Recognized file formats} for a
-little more on the Postscript language.}  (the programming language in
-Postscript and compiled into PDF files) uses this notation.
+little more on the Postscript language.} which produces PDF files when
+compiled.
 
 
 
@@ -12663,6 +12830,9 @@ to @command{minvalue}.
 
 @cindex NaN
 @item min
+For each pixel, find the minimum value in all given datasets. The output
+will have the same type as the input.
+
 The first popped operand to this operator must be a positive integer number
 which specifies how many further operands should be popped from the
 stack. All the subsequently popped operands must have the same type and
@@ -12698,37 +12868,50 @@ conversion will be used.
 @end itemize
 
 @item max
-Similar to @command{min}, but the pixels of the output will contain
-the maximum of the respective pixels in all operands in the stack.
+For each pixel, find the maximum value in all given datasets. The output
+will have the same type as the input. This operator is called similar to
+the @command{min} operator, please see there for more.
 
 @item number
-Similar to @command{min}, but the pixels of the output will contain the
-number of the respective non-blank pixels in all input operands.
+For each pixel count the number of non-blank pixels in all given
+datasets. The output will be an unsigned 32-bit integer datatype (see
+@ref{Numeric data types}). This operator is called similar to the
+@command{min} operator, please see there for more.
 
 @item sum
-Similar to @command{min}, but the pixels of the output will contain the sum
-of the respective pixels in all input operands.
+For each pixel, calculate the sum in all given datasets. The output will
+have the a single-precision (32-bit) floating point type. This operator is
+called similar to the @command{min} operator, please see there for more.
 
 @item mean
-Similar to @command{min}, but the pixels of the output will contain the
-mean (average) of the respective pixels in all operands in the stack.
+For each pixel, calculate the mean in all given datasets. The output will
+have the a single-precision (32-bit) floating point type. This operator is
+called similar to the @command{min} operator, please see there for more.
 
 @item std
-Similar to @command{min}, but the pixels of the output will contain the
-standard deviation of the respective pixels in all operands in the stack.
+For each pixel, find the standard deviation in all given datasets. The
+output will have the a single-precision (32-bit) floating point type. This
+operator is called similar to the @command{min} operator, please see there
+for more.
 
 @item median
-Similar to @command{min}, but the pixels of the output will contain
-the median of the respective pixels in all operands in the stack.
+For each pixel, find the median in all given datasets. The output will have
+the a single-precision (32-bit) floating point type. This operator is
+called similar to the @command{min} operator, please see there for more.
 
 @item sigclip-number
-Combine the specified number of inputs into a single output that contains
-the number of remaining elements after @mymath{\sigma}-clipping on each
-element/pixel (for more on @mymath{\sigma}-clipping, see @ref{Sigma
-clipping}). This operator is very similar to @command{min}, with the
-exception that it expects two operands (parameters for sigma-clipping)
-before the total number of inputs. The first popped operand is the
-termination criteria and the second is the multiple of @mymath{\sigma}.
+For each pixel, find the sigma-clipped number (after removing outliers) in
+all given datasets. The output will have the an unsigned 32-bit integer
+type (see @ref{Numeric data types}).
+
+This operator will combine the specified number of inputs into a single
+output that contains the number of remaining elements after
+@mymath{\sigma}-clipping on each element/pixel (for more on
+@mymath{\sigma}-clipping, see @ref{Sigma clipping}). This operator is very
+similar to @command{min}, with the exception that it expects two operands
+(parameters for sigma-clipping) before the total number of inputs. The
+first popped operand is the termination criteria and the second is the
+multiple of @mymath{\sigma}.
 
 For example in the command below, the first popped operand (@command{0.2})
 is the sigma clipping termination criteria. If the termination criteria is
@@ -12744,19 +12927,22 @@ astarithmetic a.fits b.fits c.fits 3 5 0.2 sigclip-number
 @end example
 
 @item sigclip-median
-Combine the specified number of inputs into a single output that contains
-the @emph{median} after @mymath{\sigma}-clipping on each element/pixel. For
-more see @command{sigclip-number}.
+For each pixel, find the sigma-clipped median in all given datasets. The
+output will have the a single-precision (32-bit) floating point type. This
+operator is called similar to the @command{sigclip-number} operator, please
+see there for more.
 
 @item sigclip-mean
-Combine the specified number of inputs into a single output that contains
-the @emph{mean} after @mymath{\sigma}-clipping on each element/pixel. For
-more see @command{sigclip-number}.
+For each pixel, find the sigma-clipped mean in all given datasets. The
+output will have the a single-precision (32-bit) floating point type. This
+operator is called similar to the @command{sigclip-number} operator, please
+see there for more.
 
 @item sigclip-std
-Combine the specified number of inputs into a single output that contains
-the @emph{standard deviation} after @mymath{\sigma}-clipping on each
-element/pixel. For more see @command{sigclip-number}.
+For each pixel, find the sigma-clipped standard deviation in all given
+datasets. The output will have the a single-precision (32-bit) floating
+point type. This operator is called similar to the @command{sigclip-number}
+operator, please see there for more.
 
 @item filter-mean
 Apply mean filtering (or @url{https://en.wikipedia.org/wiki/Moving_average,
@@ -12906,6 +13092,15 @@ pixel along the collapsed dimension.
 Similar to @option{collapse-sum}, but the returned dataset will have the
 same numeric type as the input and will contain the maximum value for each
 pixel along the collapsed dimension.
+
+@item unique
+Remove all duplicate (and blank) elements from the first popped
+operand. The unique elements of the dataset will be stored in a
+single-dimensional dataset.
+
+Recall that by default, single-dimensional datasets are stored as a table
+column in the output. But you can use @option{--onedasimage} to store them
+as a single-dimensional FITS array/image.
 
 @item erode
 @cindex Erosion
@@ -15750,11 +15945,11 @@ iteration:
 @itemize
 @item
 When a certain number of iterations has taken place (second value to the
-@option{--sigclip} option is larger than 1).
+@option{--sclipparams} option is larger than 1).
 @item
 When the new measured standard deviation is within a certain tolerance
-level of the old one (second value to the @option{--sigclip} option is less
-than 1). The tolerance level is defined by:
+level of the old one (second value to the @option{--sclipparams} option is
+less than 1). The tolerance level is defined by:
 
 @dispmath{\sigma_{old}-\sigma_{new} \over \sigma_{new}}
 
@@ -15952,7 +16147,7 @@ the histogram bin-widths. Generally, the mode of a distribution also shifts
 as signal is added. Therefore, even if it is accurately measured, the mode
 is a biased measure for the Sky value.
 
-@cindex sigma-clipping
+@cindex Sigma-clipping
 @item
 Another approach was to iteratively clip the brightest pixels in the image
 (which is known as @mymath{\sigma}-clipping). See @ref{Sigma clipping} for
@@ -16398,6 +16593,86 @@ distributions are no longer symmetric, see @option{--mode} and Appendix C
 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa 2015} for
 more.
 
+@item --sigclip-number
+Number of elements after applying @mymath{\sigma}-clipping (see @ref{Sigma
+clipping}). @mymath{\sigma}-clipping configuration is done with the
+@option{--sigclipparams} option.
+
+@item --sigclip-median
+Median after applying @mymath{\sigma}-clipping (see @ref{Sigma
+clipping}). @mymath{\sigma}-clipping configuration is done with the
+@option{--sigclipparams} option.
+
+@cindex Outlier
+Here is one scenario where this can be useful: assume you have a table and
+you would like to remove the rows that are outliers (not within the
+@mymath{\sigma}-clipping range). Let's assume your table is called
+@file{table.fits} and you only want to keep the rows that have a value in
+@code{COLUMN} within the @mymath{\sigma}-clipped range (to
+@mymath{3\sigma}, with a tolerance of 0.1). This command will return the
+@mymath{\sigma}-clipped median and standard deviation (used to define the
+range later).
+
+@example
+$ aststatistics table.fits -cCOLUMN --sclipparams=3,0.1 \
+                --sigclip-median --sigclip-std
+@end example
+
+@cindex GNU AWK
+You can then use the @option{--range} option of Table (see @ref{Table}) to
+select the proper rows. But for that, you need the actual starting and
+ending values of the range (@mymath{m\pm s\sigma}; where @mymath{m} is the
+median and @mymath{s} is the multiple of sigma to define an
+outlier). Therefore, the raw outputs of Statistics in the command above
+aren't enough.
+
+To get the starting and ending values of the non-outlier range (and put a
+`@key{,}' between them, ready to be used in @option{--range}), pipe the
+result into AWK. But in AWK, we'll also need the multiple of
+@mymath{\sigma}, so we'll define it as a shell variable (@code{s}) before
+calling Statistics (note how @code{$s} is used two times now):
+
+@example
+$ s=3
+$ aststatistics table.fits -cCOLUMN --sclipparams=$s,0.1 \
+                --sigclip-median --sigclip-std           \
+     | awk '@{s='$s'; printf("%f,%f\n", $1-s*$2, $1+s*$2)@}'
+@end example
+
+To pass it onto Table, we'll need to keep the printed output from the
+command above in another shell variable (@code{r}), not print it. In Bash,
+can do this by putting the whole statement within a @code{$()}:
+
+@example
+$ s=3
+$ r=$(aststatistics table.fits -cCOLUMN --sclipparams=$s,0.1 \
+                    --sigclip-median --sigclip-std           \
+        | awk '@{s='$s'; printf("%f,%f\n", $1-s*$2, $1+s*$2)@}')
+$ echo $r      # Just to confirm.
+@end example
+
+Now you can use Table with the @option{--range} option to only print the
+rows that have a value in @code{COLUMN} within the desired range:
+
+@example
+$ asttable table.fits --range=COLUMN,$r
+@end example
+
+To save the resulting table (that is clean of outliers) in another file
+(for example named @file{cleaned.fits}, it can also have a @file{.txt}
+suffix), just add @option{--output=cleaned.fits} to the command above.
+
+
+@item --sigclip-mean
+Mean after applying @mymath{\sigma}-clipping (see @ref{Sigma
+clipping}). @mymath{\sigma}-clipping configuration is done with the
+@option{--sigclipparams} option.
+
+@item --sigclip-std
+Standard deviation after applying @mymath{\sigma}-clipping (see @ref{Sigma
+clipping}). @mymath{\sigma}-clipping configuration is done with the
+@option{--sigclipparams} option.
+
 @end table
 
 The list of options below are for those statistical operations that output
@@ -16684,8 +16959,8 @@ it is interpreted as tolerance and if it is larger than one it is a
 specific number. Hence, in the latter case the value must be an integer.
 
 @item --outliersclip=FLT,FLT
-Sigma-clipping parameters for the outlier rejection of the Sky value
-(similar to @option{--sclipparams}).
+@mymath{\sigma}-clipping parameters for the outlier rejection of the Sky
+value (similar to @option{--sclipparams}).
 
 Outlier rejection is useful when the dataset contains a large and diffuse
 (almost flat within each tile) signal. The flatness of the profile will
@@ -17026,9 +17301,8 @@ results, but it can also increase the NoiseChisel run time (depending on
 the given value and input size).
 
 @item
-@option{--cleangrowndet}: A process to further clean/remove the possibility
-of false detections, see the descriptions under this option in
-@ref{Detection options}.
+@option{--cleangrowndet}: Further clean/remove false detections after
+growth, see the descriptions under this option in @ref{Detection options}.
 
 @end itemize
 
@@ -17384,8 +17658,8 @@ quantile is between 0.49 and 0.51 (recall that the median's quantile is
 0.5) will be used.
 
 @item --outliersclip=FLT,FLT
-Sigma-clipping parameters for the outlier rejection of the quantile
-threshold. The format of the given values is similar to
+@mymath{\sigma}-clipping parameters for the outlier rejection of the
+quantile threshold. The format of the given values is similar to
 @option{--sigmaclip} below. In NoiseChisel, outlier rejection on tiles is
 used when identifying the quantile thresholds (@option{--qthresh},
 @option{--noerodequant}, and @option{detgrowquant}).
@@ -18482,9 +18756,9 @@ options}). Please see the descriptions there for more.
 The quantile of the signal-to-noise ratio distribution of clumps in
 undetected regions, used to define true clumps. After identifying all the
 usable clumps in the undetected regions of the dataset, the given quantile
-of their signal-to-noise ratios is used to define a the signal-to-noise
-ratio of a ``true'' clump. Effectively, this can be seen as an inverse
-p-value measure. See Figure 9 and Section 3.2.1 of
+of their signal-to-noise ratios is used to define the signal-to-noise ratio
+of a ``true'' clump. Effectively, this can be seen as an inverse p-value
+measure. See Figure 9 and Section 3.2.1 of
 @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]} for a
 complete explanation. The full distribution of clump signal-to-noise ratios
 over the undetected areas can be saved into a table with @option{--checksn}
@@ -19143,9 +19417,9 @@ derivations with some added explanations for easier reading.
 
 @cindex Moments
 Let's begin with one dimension for simplicity: Assume we have a set of
-@mymath{N} values @mymath{B_i} (keeping the spatial distribution of
-brightness for example), each at position @mymath{x_i}. The simplest
-parameter we can define is the geometric center of the object
+@mymath{N} values @mymath{B_i} (for example showing the spatial
+distribution of a target's brightness), each at position @mymath{x_i}. The
+simplest parameter we can define is the geometric center of the object
 (@mymath{x_g}) (ignoring the brightness values):
 @mymath{x_g=(\sum_ix_i)/N}. @emph{Moments} are defined to incorporate both
 the value (brightness) and position of the data. The first moment can be
@@ -20077,11 +20351,11 @@ than the minimum, a value of @code{-inf} is reported.
 
 @item --upperlimitskew
 @cindex Skewness
-This column contains the non-parametric skew of the sigma-clipped random
-distribution that was used to estimate the upper-limit magnitude. Taking
-@mymath{\mu} as the mean, @mymath{\nu} as the median and @mymath{\sigma} as
-the standard deviation, the traditional definition of skewness is defined
-as: @mymath{(\mu-\nu)/\sigma}.
+This column contains the non-parametric skew of the @mymath{\sigma}-clipped
+random distribution that was used to estimate the upper-limit
+magnitude. Taking @mymath{\mu} as the mean, @mymath{\nu} as the median and
+@mymath{\sigma} as the standard deviation, the traditional definition of
+skewness is defined as: @mymath{(\mu-\nu)/\sigma}.
 
 This can be a good measure to see how much you can trust the random
 measurements, or in other words, how accurately the regions with signal
@@ -20158,13 +20432,15 @@ projection onto the first two dimensions would be a narrow-band image.
 
 @item -A
 @itemx --semimajor
-The pixel-value weighted semi-major axis of the profile (assuming it is an
-ellipse) in units of pixels. See @ref{Measuring elliptical parameters}.
+The pixel-value weighted root mean square (RMS) along the semi-major axis
+of the profile (assuming it is an ellipse) in units of pixels. See
+@ref{Measuring elliptical parameters}.
 
 @item -B
 @itemx --semiminor
-The pixel-value weighted semi-minor axis of the profile (assuming it is an
-ellipse) in units of pixels. See @ref{Measuring elliptical parameters}.
+The pixel-value weighted root mean square (RMS) along the semi-minor axis
+of the profile (assuming it is an ellipse) in units of pixels. See
+@ref{Measuring elliptical parameters}.
 
 @item --axisratio
 The pixel-value weighted axis ratio (semi-minor/semi-major) of the object
@@ -20176,12 +20452,14 @@ The pixel-value weighted angle of the semi-major axis with the first FITS
 axis in degrees. See @ref{Measuring elliptical parameters}.
 
 @item --geosemimajor
-The geometric (ignoring pixel values) semi-major axis of the profile,
-assuming it is an ellipse.
+The geometric (ignoring pixel values) root mean square (RMS) along the
+semi-major axis of the profile, assuming it is an ellipse, in units of
+pixels.
 
 @item --geosemiminor
-The geometric (ignoring pixel values) semi-minor axis of the profile,
-assuming it is an ellipse.
+The geometric (ignoring pixel values) root mean square (RMS) along the
+semi-minor axis of the profile, assuming it is an ellipse, in units of
+pixels.
 
 @item --geoaxisratio
 The geometric (ignoring pixel values) axis ratio of the profile, assuming
@@ -22823,6 +23101,10 @@ $ astcosmiccal -z2.5
 ## Only print Comoving volume over 4pi stradian to z (Mpc^3):
 $ astcosmiccal --redshift=0.8 --volume
 
+## Print redshift and age of universe when Lyman-alpha line is
+## at 6000 angstrom (another way to specify redshift).
+$ astcosmiccal --obsline=lyalpha,6000 --age
+
 ## Print luminosity distance, angular diameter distance and age
 ## of universe in one row at redshift 0.4
 $ astcosmiccal -z0.4 -LAg
@@ -22861,7 +23143,7 @@ The inputs to CosmicCalculator can be specified with the following options:
 
 @item -z FLT
 @itemx --redshift=FLT
-The redshift of interest.
+The redshift of interest. This cannot be called with @option{--obsline}.
 
 @item -H FLT
 @itemx --H0=FLT
@@ -22881,6 +23163,132 @@ density in the current Universe (@mymath{\Omega_{m,0}}).
 @itemx --oradiation=FLT
 Radiation density divided by the critical density in the current Universe
 (@mymath{\Omega_{r,0}}).
+
+@item -O STR/FLT,FLT
+@itemx --obsline=STR/FLT,FLT
+@cindex Rest-frame wavelength
+@cindex Wavelength, rest-frame
+Find the redshift to use in next steps based on the rest-frame and observed
+wavelengths of a line. Wavelenghts are assumed to be in Angstroms. The
+first argument identifies the line. It can be one of the standard names
+below, or any rest-frame wavelengh in Angestroms. The second argument is
+the observed wavelength of that line. For example
+@option{--obsline=lyalpha,6000} is the same as
+@option{--obsline=1215.64,6000}.
+
+The accepted names are listed below, sorted from red (longer wavelengh) to
+blue (shorter wavelengh).
+
+@table @code
+@item siired
+[6731@AA{}] SII doublet's redder line.
+
+@item sii
+@cindex Doublet: SII
+@cindex SII doublet
+[6724@AA{}] SII doublet's mean center at .
+
+@item siiblue
+[6717@AA{}] SII doublet's bluer line.
+
+@item niired
+[6584@AA{}] NII doublet's redder line.
+
+@item nii
+@cindex Doublet: NII
+@cindex NII doublet
+[6566@AA{}] NII doublet's mean center.
+
+@item halpha
+@cindex H-alpha
+[6562.8@AA{}] H-@mymath{\alpha} line.
+
+@item niiblue
+[6548@AA{}] NII doublet's bluer line.
+
+@item oiiired
+[5007@AA{}] OIII doublet's redder line.
+
+@item oiii
+@cindex Doublet: OIII
+@cindex OIII doublet
+[4983@AA{}] OIII doublet's mean center.
+
+@item oiiiblue
+[4959@AA{}] OIII doublet's bluer line.
+
+@item hbeta
+@cindex H-beta
+[4861.36@AA{}] H-@mymath{\beta} line.
+
+@item heiired
+[4686@AA{}] HeII doublet's redder line.
+
+@item hgamma
+@cindex H-gamma
+[4340.46@AA{}] H-@mymath{\gamma} line.
+
+@item hdelta
+@cindex H-delta
+[4101.74@AA{}] H-@mymath{\delta} line.
+
+@item hepsilon
+@cindex H-epsilon
+[3970.07@AA{}] H-@mymath{\epsilon} line.
+
+@item neiii
+[3869@AA{}] NEIII line.
+
+@item oiired
+[3729@AA{}] OII doublet's redder line.
+
+@item oii
+@cindex Doublet: OII
+@cindex OII doublet
+[3727.5@AA{}] OII doublet's mean center.
+
+@item oiiblue
+[3726@AA{}] OII doublet's bluer line.
+
+@item blimit
+@cindex Balmer limit
+[3646@AA{}] Balmer limit.
+
+@item mgiired
+[2803@AA{}] MgII doublet's redder line.
+
+@item mgii
+@cindex Doublet: MgII
+@cindex MgII doublet
+[2799.5@AA{}] MgII doublet's mean center.
+
+@item mgiiblue
+[2796@AA{}] MgII doublet's bluer line.
+
+@item ciiired
+[1909@AA{}] CIII doublet's redder line.
+
+@item ciii
+@cindex Doublet: CIII
+@cindex CIII doublet
+[1908@AA{}] CIII doublet's mean center.
+
+@item ciiiblue
+[1907@AA{}] CIII doublet's bluer line.
+
+@item heiiblue
+[1640@AA{}] HeII doublet's bluer line.
+
+@item lyalpha
+@cindex Lyman-alpha
+[1215.67@AA{}] Lyman-@mymath{\alpha} line.
+
+@item lylimit
+@cindex Lyman limit
+[912@AA{}] Lyman limit.
+
+@end table
+
 @end table
 
 
@@ -22951,6 +23359,15 @@ below. In case you have forgot the units, you can use the @option{--help}
 option which has the units along with a short description.
 
 @table @option
+
+@item -e
+@itemx --usedredshift
+The redshift that was used in this run. In many cases this is the main
+input parameter to CosmicCalculator, but it is useful in others. For
+example in combination with @option{--obsline} (where you give an observed
+and restframe wavelength and would like to know the redshift), or if you
+want to run CosmicCalculator in a loop while changing the redshift and you
+want to keep the redshift value.
 
 @item -G
 @itemx --agenow
@@ -23965,6 +24382,7 @@ documentation will correspond to your installed version.
 * Convolution functions::       Library functions to do convolution.
 * Interpolation::               Interpolate (over blank values possibly).
 * Git wrappers::                Wrappers for functions in libgit2.
+* Spectral lines library::
 * Cosmology library::           Cosmological calculations.
 @end menu
 
@@ -24510,11 +24928,11 @@ out = gal_type_to_string(&string, GAL_TYPE_STRING, 1);
 @end deftypefun
 
 @deftypefun int gal_type_from_string (void @code{**out}, char @code{*string}, uint8_t @code{type})
-Read a string as a given data type and put a the pointer to it in
+Read a string as a given data type and put a pointer to it in
 @code{*out}. When @code{*out!=NULL}, then it is assumed to be already
-allocated and the value will be simply put the memory. If
-@code{*out==NULL}, then space will be allocated for the given type and the
-string will be read into that type.
+allocated and the value will be simply put there. If @code{*out==NULL},
+then space will be allocated for the given type and the string will be read
+into that type.
 
 Note that when we are dealing with a string type, @code{*out} should be
 interpreted as @code{char **} (one element in an array of pointers to
@@ -24693,6 +25111,16 @@ Blank value for an unsigned, 64-bit integer.
 
 @deffn {Global integer}  GAL_BLANK_INT64
 Blank value for a signed, 64-bit integer.
+@end deffn
+
+@deffn {Global integer}  GAL_BLANK_INT
+Blank value for @code{int} type (@code{int16_t} or @code{int32_t} depending
+on the system.
+@end deffn
+
+@deffn {Global integer}  GAL_BLANK_UINT
+Blank value for @code{int} type (@code{int16_t} or @code{int32_t} depending
+on the system.
 @end deffn
 
 @deffn {Global integer}  GAL_BLANK_LONG
@@ -25630,6 +26058,10 @@ pointer.
 Return the number of nodes in @code{list}.
 @end deftypefun
 
+@deftypefun size_t gal_list_str_last (gal_list_str_t @code{*list})
+Return a pointer to the last node in @code{list}.
+@end deftypefun
+
 @deftypefun void gal_list_str_print (gal_list_str_t @code{*list})
 Print the strings within each node of @code{*list} on the standard output
 in the same order that they are stored. Each string is printed on one
@@ -25704,6 +26136,10 @@ also change @code{list} to point to the next node in the list. If
 
 @deftypefun size_t gal_list_i32_number (gal_list_i32_t @code{*list})
 Return the number of nodes in @code{list}.
+@end deftypefun
+
+@deftypefun size_t gal_list_i32_last (gal_list_i32_t @code{*list})
+Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_i32_print (gal_list_i32_t @code{*list})
@@ -25807,6 +26243,10 @@ also change @code{list} to point to the next node in the list. If
 Return the number of nodes in @code{list}.
 @end deftypefun
 
+@deftypefun size_t gal_list_sizet_last (gal_list_sizet_t @code{*list})
+Return a pointer to the last node in @code{list}.
+@end deftypefun
+
 @deftypefun void gal_list_sizet_print (gal_list_sizet_t @code{*list})
 Print the values within each node of @code{*list} on the standard output in
 the same order that they are stored. Each integer is printed on one
@@ -25890,6 +26330,10 @@ also change @code{list} to point to the next node in the list. If
 
 @deftypefun size_t gal_list_f32_number (gal_list_f32_t @code{*list})
 Return the number of nodes in @code{list}.
+@end deftypefun
+
+@deftypefun size_t gal_list_f32_last (gal_list_f32_t @code{*list})
+Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_f32_print (gal_list_f32_t @code{*list})
@@ -25978,6 +26422,10 @@ also change @code{list} to point to the next node in the list. If
 
 @deftypefun size_t gal_list_f64_number (gal_list_f64_t @code{*list})
 Return the number of nodes in @code{list}.
+@end deftypefun
+
+@deftypefun size_t gal_list_f64_last (gal_list_f64_t @code{*list})
+Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_f64_print (gal_list_f64_t @code{*list})
@@ -26072,6 +26520,10 @@ also change @code{list} to point to the next node in the list. If
 
 @deftypefun size_t gal_list_void_number (gal_list_void_t @code{*list})
 Return the number of nodes in @code{list}.
+@end deftypefun
+
+@deftypefun size_t gal_list_void_last (gal_list_void_t @code{*list})
+Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_void_reverse (gal_list_void_t @code{**list})
@@ -26259,8 +26711,19 @@ Reverse the order of the list such that the top node in the list before
 calling this function becomes the bottom node after it.
 @end deftypefun
 
+@deftypefun {gal_data_t **} gal_list_data_to_array_ptr (gal_data_t @code{*list}, size_t @code{*num})
+Allocate and return an array of @code{gal_data_t *} pointers with the same
+number of elements as the nodes in @code{list}. The pointers will be put in
+the same order that the list is parsed. Hence the N-th element in the array
+will point to the same dataset that the N-th node in the list points to.
+@end deftypefun
+
 @deftypefun size_t gal_list_data_number (gal_data_t @code{*list})
 Return the number of nodes in @code{list}.
+@end deftypefun
+
+@deftypefun size_t gal_list_data_last (gal_data_t @code{*list})
+Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_data_free (gal_data_t @code{*list})
@@ -27987,11 +28450,18 @@ Unary operand absolute-value operator.
 @deffnx Macro GAL_ARITHMETIC_OP_MEDIAN
 Multi-operand statistical operations. When @code{gal_arithmetic} is called
 with any of these operators, it will expect only a single operand that will
-be interpreted as a list of datasets (see @ref{List of gal_data_t}. The
-output will be a single dataset with each of its elements replaced by the
-respective statistical operation on the whole list. These operators can
-work on multiple threads using the @code{numthreads} argument. See the
-discussion under the @code{min} operator in @ref{Arithmetic operators}.
+be interpreted as a list of datasets (see @ref{List of gal_data_t}). These
+operators can work on multiple threads using the @code{numthreads}
+argument. See the discussion under the @code{min} operator in
+@ref{Arithmetic operators}.
+
+The output will be a single dataset with each of its elements replaced by
+the respective statistical operation on the whole list. The type of the
+output is determined from the operator (irrespective of the input type):
+for @code{GAL_ARITHMETIC_OP_MIN} and @code{GAL_ARITHMETIC_OP_MAX}, it will
+be the same type as the input, for @code{GAL_ARITHMETIC_OP_NUMBER}, the
+output will be @code{GAL_TYPE_UINT32} and for the rest, it will be
+@code{GAL_TYPE_FLOAT32}.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_SIGCLIP_STD
@@ -28001,9 +28471,11 @@ discussion under the @code{min} operator in @ref{Arithmetic operators}.
 Similar to the operands above (including @code{GAL_ARITHMETIC_MIN}), except
 that when @code{gal_arithmetic} is called with these operators, it requires
 two arguments. The first is the list of datasets like before, and the
-second is the 2-element list of sigma-clipping parameters. The first
+second is the 2-element list of @mymath{\sigma}-clipping parameters. The first
 element in the parameters list is the multiple of sigma and the second is
-the termination criteria (see @ref{Sigma clipping}).
+the termination criteria (see @ref{Sigma clipping}). The output type of
+@code{GAL_ARITHMETIC_OP_SIGCLIP_NUMBER} will be @code{GAL_TYPE_UINT32} and
+for the rest it will be @code{GAL_TYPE_FLOAT32}.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_POW
@@ -28086,6 +28558,25 @@ out_3=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, 0, in_1, in_2, in_3);
 The number of necessary operands for each operator (and thus the number of
 necessary arguments to @code{gal_arithmetic}) are described above under
 each operator.
+@end deftypefun
+
+@deftypefun int gal_arithmetic_set_operator (char @code{*string}, size_t @code{*num_operands})
+Return the operator macro/code that corresponds to @code{string}. The
+number of operands that it needs are written into the space that
+@code{*num_operands} points to. If the string couldn't be interpretted as
+an operator, this function will return @code{GAL_ARITHMETIC_OP_INVALID}.
+
+This function will check @code{string} with the fixed human-readable names
+(using @code{strcmp}) for the operators and return the two numbers. Note
+that @code{string} must only contain the single operator name and nothing
+else (not even any extra white space).
+@end deftypefun
+
+@deftypefun {char *} gal_arithmetic_operator_string (int @code{operator})
+Return the human-readable standard string that corresponds to the given
+operator. For example when the input is @code{GAL_ARITHMETIC_OP_PLUS} or
+@code{GAL_ARITHMETIC_OP_MEAN}, the strings @code{+} or @code{mean} will be
+returned.
 @end deftypefun
 
 @node Tessellation library, Bounding box, Arithmetic on datasets, Gnuastro library
@@ -28702,7 +29193,7 @@ Free all the allocated arrays within @code{tl}.
 @node Bounding box, Polygons, Tessellation library, Gnuastro library
 @subsection Bounding box (@file{box.h})
 
-Functions related to reporting a the bounding box of certain inputs are
+Functions related to reporting the bounding box of certain inputs are
 declared in @file{gnuastro/box.h}. All coordinates in this header are in
 the FITS format (first axis is the horizontal and the second axis is
 vertical).
@@ -29172,7 +29663,7 @@ container}.
 @deffn  Macro GAL_STATISTICS_SIG_CLIP_MAX_CONVERGE
 The maximum number of clips, when @mymath{\sigma}-clipping should be done
 by convergence. If the clipping does not converge before making this many
-clips, all sigma-clipping outputs will be NaN.
+clips, all @mymath{\sigma}-clipping outputs will be NaN.
 @end deffn
 
 @deffn  Macro GAL_STATISTICS_MODE_GOOD_SYM
@@ -29535,50 +30026,55 @@ moves the window as a separate line with several columns. The first column
 is the value, the second (in square brackets) is the sorted index, the
 third is the distance of this element from the previous one. The Fourth and
 fifth (in parenthesis) are the median and standard deviation of the
-sigma-clipped distribution within the window and the last column is the
-difference between the third and fourth, divided by the fifth.
+@mymath{\sigma}-clipped distribution within the window and the last column
+is the difference between the third and fourth, divided by the fifth.
 
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_statistics_outlier_flat_cfp (gal_data_t @code{*input}, size_t @code{dist}, float @code{thresh}, float @code{width}, int @code{inplace}, int @code{quiet}, size_t @code{*index})
+@deftypefun {gal_data_t *} gal_statistics_outlier_flat_cfp (gal_data_t @code{*input}, size_t @code{numprev}, float @code{sigclip_multip}, float @code{sigclip_param}, float @code{thresh}, size_t @code{numcontig}, int @code{inplace}, int @code{quiet}, size_t @code{*index})
 
 Return the first element in the given dataset where the cumulative
-frequency plot first becomes flat (below a given threshold on the slope)
-for a sufficient width (percentage of whole dataset's range). The returned
-dataset only has one element (with the same type as the input). If
-@code{index!=NULL}, the index (counting from zero, after sorting dataset
-and removing any blanks) is written in the space that @code{index} points
-to. If no sufficiently flat portion is found, the returned pointer will be
-@code{NULL}.
+frequency plot first becomes significantly flat for a sufficient number of
+elements. The returned dataset only has one element (with the same type as
+the input). If @code{index!=NULL}, the index (counting from zero, after
+sorting the dataset and removing any blanks) is written in the space that
+@code{index} points to. If no sufficiently flat portion is found, the
+returned pointer will be @code{NULL}.
 
-The operation of this function can be best visualized using the cumulative
-frequency plot (CFP, see @ref{Histogram and Cumulative Frequency
-Plot}). Imagine setting the horizontal axis of the input's CFP to a range
-of 0 to 100, and finding the first part where its slope is
-constantly/contiguously flat for a certain fraction/width of the whole
-dataset's range. Below we'll describe this in more detail.
+@cindex Sigma-clipping
+The flatness on the cumulative frequency plot is defined like this (see
+@ref{Histogram and Cumulative Frequency Plot}): on the sorted dataset, for
+every point (@mymath{a_i}), we calculate @mymath{d_i=a_{i+2}-a_{i-2}}. This
+done on the first @mymath{N} elements (value of @code{numprev}). After
+element @mymath{a_{N+2}}, we start estimating the flatness as follows: for
+every element we use the @mymath{N}, @mymath{d_i} measurements before it as
+the reference. Let's call this set @mymath{D_i} for element @mymath{i}. The
+@mymath{\sigma}-clipped median (@mymath{m}) and standard deviation
+(@mymath{s}) of @mymath{D_i} are then calculated. The
+@mymath{\sigma}-clipping can be configured with the two
+@code{sigclip_param} and @code{sigclip_multip} arguments.
 
-This function will first remove all the blank elements and sort the
-remaining elements. If @code{inplace} is non-zero this step will be done in
-place: re-organizing/permuting the input dataset. Using @code{inplace} can
-result in faster processing and less RAM consumption, but only when the
-input dataset is no longer needed in its original permutation.
+Taking @mymath{t} as the significance threshold (value to @code{thresh}), a
+point is considered flat when @mymath{a_i>m+t\sigma}. But a single point
+satisfying this condition will probably just be due to noise. To make a
+more robust estimate, this significance/condition has to hold for
+@code{numcontig} contiguous elements after @mymath{a_i}. When this is
+satisfied, @mymath{a_i} is retured as the point where the distribution's
+cumulative frequency plot becomes flat.
 
-The input dataset will then be internally scaled from 0 to 100 (so
-@code{thresh} and @code{width} can be in units of percent). For each
-element, this function will then estimate the slope of the cumulative
-distribution function by using the @code{dist} elements before and after
-it. In other words, if @mymath{d} is the value of @code{dist}, then the
-slope over the @mymath{i}'th element (@mymath{a_i}) is estimated using this
-formula: @mymath{1/(a_{i+d}-a_{i-d})}. Therefore, when this slope is larger
-than 1, the distance between the two checked points is smaller than
-@mymath{1\%} of the dataset's range.
+To get a good estimate of @mymath{m} and @mymath{s}, it is thus recommended
+to set @code{numprev} as large as possible. However, be careful not to set
+it too high: the checks in the paragraph above are not done on the first
+@code{numprev} elements and this function assumes the flatness occures
+after them. Also, be sure that the value to @code{numcontig} is much less
+than @code{numprev}, otherwise @mymath{\sigma}-clipping may not be able to
+remove the immediate outliers in @mymath{D_i} near the boundary of the flat
+region.
 
-All points that have a slope less than @code{thresh} are then marked. The
-first (parsing from the smallest to the largest values) contiguous patch of
-marked elements that is larger than @code{width} wide (in units of
-percentage of the dataset's range) will be considered as the boundary
-region of outliers and the first element in that patch will be returned.
+When @code{quiet==0}, the basic measurements done on each element are
+printed on the command-line (good for finding the best parameters). When
+@code{inplace!=0}, the sorting and removal of blank elements is done on the
+input dataset, so the input may be altered after this function.
 @end deftypefun
 
 
@@ -30317,7 +30813,7 @@ blank. To see if any blank (non-interpolated) elements remain, you can use
 @end deftypefun
 
 
-@node Git wrappers, Cosmology library, Interpolation, Gnuastro library
+@node Git wrappers, Spectral lines library, Interpolation, Gnuastro library
 @subsection Git wrappers (@file{git.h})
 
 @cindex Git
@@ -30353,8 +30849,164 @@ not installed or the program calling this function is not within a version
 controlled directory, then the output will be the @code{NULL} pointer.
 @end deftypefun
 
+@node Spectral lines library, Cosmology library, Git wrappers, Gnuastro library
+@subsection Spectral lines library (@file{speclines.h})
 
-@node Cosmology library,  , Git wrappers, Gnuastro library
+Gnuastro's library has the following macros and functions for dealing with
+spectral lines. All these functions are declared in
+@file{gnuastro/spectra.h}.
+
+@cindex H-alpha
+@cindex H-beta
+@cindex H-gamma
+@cindex H-delta
+@cindex H-epsilon
+@cindex OII doublet
+@cindex SII doublet
+@cindex Lyman-alpha
+@cindex Lyman limit
+@cindex NII doublet
+@cindex Doublet: NII
+@cindex Doublet: OII
+@cindex Doublet: SII
+@cindex OIII doublet
+@cindex MgII doublet
+@cindex CIII doublet
+@cindex Balmer limit
+@cindex Doublet: OIII
+@cindex Doublet: MgII
+@cindex Doublet: CIII
+@deffn  Macro GAL_SPECLINES_INVALID
+@deffnx Macro GAL_SPECLINES_SIIRED
+@deffnx Macro GAL_SPECLINES_SII
+@deffnx Macro GAL_SPECLINES_SIIBLUE
+@deffnx Macro GAL_SPECLINES_NIIRED
+@deffnx Macro GAL_SPECLINES_NII
+@deffnx Macro GAL_SPECLINES_HALPHA
+@deffnx Macro GAL_SPECLINES_NIIBLUE
+@deffnx Macro GAL_SPECLINES_OIIIRED
+@deffnx Macro GAL_SPECLINES_OIII
+@deffnx Macro GAL_SPECLINES_OIIIBLUE
+@deffnx Macro GAL_SPECLINES_HBETA
+@deffnx Macro GAL_SPECLINES_HEIIRED
+@deffnx Macro GAL_SPECLINES_HGAMMA
+@deffnx Macro GAL_SPECLINES_HDELTA
+@deffnx Macro GAL_SPECLINES_HEPSILON
+@deffnx Macro GAL_SPECLINES_NEIII
+@deffnx Macro GAL_SPECLINES_OIIRED
+@deffnx Macro GAL_SPECLINES_OII
+@deffnx Macro GAL_SPECLINES_OIIBLUE
+@deffnx Macro GAL_SPECLINES_BLIMIT
+@deffnx Macro GAL_SPECLINES_MGIIRED
+@deffnx Macro GAL_SPECLINES_MGII
+@deffnx Macro GAL_SPECLINES_MGIIBLUE
+@deffnx Macro GAL_SPECLINES_CIIIRED
+@deffnx Macro GAL_SPECLINES_CIII
+@deffnx Macro GAL_SPECLINES_CIIIBLUE
+@deffnx Macro GAL_SPECLINES_HEIIBLUE
+@deffnx Macro GAL_SPECLINES_LYALPHA
+@deffnx Macro GAL_SPECLINES_LYLIMIT
+Internal values/identifiers for specific spectral lines as is clear from
+their names.
+@end deffn
+
+@deffn  Macro GAL_SPECLINES_ANGSTROM_SIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_SII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_SIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_NIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_NII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HALPHA
+@deffnx Macro GAL_SPECLINES_ANGSTROM_NIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_OIIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_OIII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_OIIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HBETA
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HEIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HGAMMA
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HDELTA
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HEPSILON
+@deffnx Macro GAL_SPECLINES_ANGSTROM_NEIII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_OIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_OII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_OIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_BLIMIT
+@deffnx Macro GAL_SPECLINES_ANGSTROM_MGIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_MGII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_MGIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_CIIIRED
+@deffnx Macro GAL_SPECLINES_ANGSTROM_CIII
+@deffnx Macro GAL_SPECLINES_ANGSTROM_CIIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_HEIIBLUE
+@deffnx Macro GAL_SPECLINES_ANGSTROM_LYALPHA
+@deffnx Macro GAL_SPECLINES_ANGSTROM_LYLIMIT
+Wavelengh (in Angstroms) of the named lines.
+@end deffn
+
+@deffn  Macro GAL_SPECLINES_NAME_SIIRED
+@deffnx Macro GAL_SPECLINES_NAME_SII
+@deffnx Macro GAL_SPECLINES_NAME_SIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_NIIRED
+@deffnx Macro GAL_SPECLINES_NAME_NII
+@deffnx Macro GAL_SPECLINES_NAME_HALPHA
+@deffnx Macro GAL_SPECLINES_NAME_NIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_OIIIRED
+@deffnx Macro GAL_SPECLINES_NAME_OIII
+@deffnx Macro GAL_SPECLINES_NAME_OIIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_HBETA
+@deffnx Macro GAL_SPECLINES_NAME_HEIIRED
+@deffnx Macro GAL_SPECLINES_NAME_HGAMMA
+@deffnx Macro GAL_SPECLINES_NAME_HDELTA
+@deffnx Macro GAL_SPECLINES_NAME_HEPSILON
+@deffnx Macro GAL_SPECLINES_NAME_NEIII
+@deffnx Macro GAL_SPECLINES_NAME_OIIRED
+@deffnx Macro GAL_SPECLINES_NAME_OII
+@deffnx Macro GAL_SPECLINES_NAME_OIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_BLIMIT
+@deffnx Macro GAL_SPECLINES_NAME_MGIIRED
+@deffnx Macro GAL_SPECLINES_NAME_MGII
+@deffnx Macro GAL_SPECLINES_NAME_MGIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_CIIIRED
+@deffnx Macro GAL_SPECLINES_NAME_CIII
+@deffnx Macro GAL_SPECLINES_NAME_CIIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_HEIIBLUE
+@deffnx Macro GAL_SPECLINES_NAME_LYALPHA
+@deffnx Macro GAL_SPECLINES_NAME_LYLIMIT
+Names (as literal stings without any space, all in small-caps) that can be
+used to refer to the lines in your program and converted to and from line
+identifiers using the functions below.
+@end deffn
+
+@deftypefun {char *} gal_speclines_line_name (int @code{linecode})
+Return the literal string of the given spectral line identifier Macro (for
+example @code{GAL_SPECLINES_HALPHA} or @code{GAL_SPECLINES_LYLIMIT}).
+@end deftypefun
+
+@deftypefun int gal_speclines_line_code (char @code{*name})
+Return the spectral line identifier of the given standard name (for example
+@code{GAL_SPECLINES_NAME_HALPHA} or @code{GAL_SPECLINES_NAME_LYLIMIT}).
+@end deftypefun
+
+@deftypefun double gal_speclines_line_angstrom (int @code{linecode})
+Return the wavelengh (in Angstroms) of the given line.
+@end deftypefun
+
+@deftypefun double gal_speclines_line_redshift (double @code{obsline}, double @code{restline})
+@cindex Rest-frame
+Return the redshift where the observed wavelength (@code{obsline}) was
+emitted from (if its restframe wavelength was @code{restline}).
+@end deftypefun
+
+@deftypefun double gal_speclines_line_redshift_code (double @code{obsline}, int @code{linecode})
+Return the redshift where the observed wavelength (@code{obsline}) was
+emitted from (assuming its a specific spectra line, identified with
+@code{linecode}).
+@end deftypefun
+
+
+
+
+
+@node Cosmology library,  , Spectral lines library, Gnuastro library
 @subsection Cosmology library (@file{cosmology.h})
 
 This library does the main cosmological calculations that are commonly

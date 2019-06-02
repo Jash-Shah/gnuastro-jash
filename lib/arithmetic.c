@@ -25,6 +25,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <errno.h>
 #include <error.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -686,8 +687,8 @@ struct multioperandparams
 
 
 #define MULTIOPERAND_MIN(TYPE) {                                        \
-    TYPE t, max;                                                        \
     size_t n, j=0;                                                      \
+    TYPE t, max, *o=p->out->array;                                      \
     gal_type_max(p->list->type, &max);                                  \
                                                                         \
     /* Go over all the pixels assigned to this thread. */               \
@@ -716,8 +717,8 @@ struct multioperandparams
 
 
 #define MULTIOPERAND_MAX(TYPE) {                                        \
-    TYPE t, min;                                                        \
     size_t n, j=0;                                                      \
+    TYPE t, min, *o=p->out->array;                                      \
     gal_type_min(p->list->type, &min);                                  \
                                                                         \
     /* Go over all the pixels assigned to this thread. */               \
@@ -748,6 +749,7 @@ struct multioperandparams
 #define MULTIOPERAND_NUM {                                              \
     int use;                                                            \
     size_t n, j;                                                        \
+    uint32_t *o=p->out->array;                                          \
                                                                         \
     /* Go over all the pixels assigned to this thread. */               \
     for(tind=0; tprm->indexs[tind] != GAL_BLANK_SIZE_T; ++tind)         \
@@ -780,6 +782,7 @@ struct multioperandparams
     int use;                                                            \
     double sum;                                                         \
     size_t n, j;                                                        \
+    float *o=p->out->array;                                             \
                                                                         \
     /* Go over all the pixels assigned to this thread. */               \
     for(tind=0; tprm->indexs[tind] != GAL_BLANK_SIZE_T; ++tind)         \
@@ -813,6 +816,7 @@ struct multioperandparams
     int use;                                                            \
     double sum;                                                         \
     size_t n, j;                                                        \
+    float *o=p->out->array;                                             \
                                                                         \
     /* Go over all the pixels assigned to this thread. */               \
     for(tind=0; tprm->indexs[tind] != GAL_BLANK_SIZE_T; ++tind)         \
@@ -846,6 +850,7 @@ struct multioperandparams
     int use;                                                            \
     size_t n, j;                                                        \
     double sum, sum2;                                                   \
+    float *o=p->out->array;                                             \
                                                                         \
     /* Go over all the pixels assigned to this thread. */               \
     for(tind=0; tprm->indexs[tind] != GAL_BLANK_SIZE_T; ++tind)         \
@@ -883,6 +888,7 @@ struct multioperandparams
 #define MULTIOPERAND_MEDIAN(TYPE, QSORT_F) {                            \
     int use;                                                            \
     size_t n, j;                                                        \
+    float *o=p->out->array;                                             \
     TYPE *pixs=gal_pointer_allocate(p->list->type, p->dnum, 0,          \
                                     __func__, "pixs");                  \
                                                                         \
@@ -926,9 +932,10 @@ struct multioperandparams
 
 
 #define MULTIOPERAND_SIGCLIP(TYPE) {                                    \
-    float *sarr;                                                        \
     size_t n, j;                                                        \
     gal_data_t *sclip;                                                  \
+    uint32_t *N=p->out->array;                                          \
+    float *sarr, *o=p->out->array;                                      \
     TYPE *pixs=gal_pointer_allocate(p->list->type, p->dnum, 0,          \
                                     __func__, "pixs");                  \
     gal_data_t *cont=gal_data_alloc(pixs, p->list->type, 1, &p->dnum,   \
@@ -954,7 +961,7 @@ struct multioperandparams
               case GAL_ARITHMETIC_OP_SIGCLIP_STD:    o[j]=sarr[3]; break;\
               case GAL_ARITHMETIC_OP_SIGCLIP_MEAN:   o[j]=sarr[2]; break;\
               case GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN: o[j]=sarr[1]; break;\
-              case GAL_ARITHMETIC_OP_SIGCLIP_NUMBER: o[j]=sarr[0]; break;\
+              case GAL_ARITHMETIC_OP_SIGCLIP_NUMBER: N[j]=sarr[0]; break;\
               default:                                                  \
                 error(EXIT_FAILURE, 0, "%s: a bug! the code %d is not " \
                       "valid for sigma-clipping results", __func__,     \
@@ -979,9 +986,9 @@ struct multioperandparams
 
 
 #define MULTIOPERAND_TYPE_SET(TYPE, QSORT_F) {                          \
+    TYPE b, **a;                                                        \
     gal_data_t *tmp;                                                    \
     size_t i=0, tind;                                                   \
-    TYPE b, **a, *o=p->out->array;                                      \
                                                                         \
     /* Allocate space to keep the pointers to the arrays of each. */    \
     /* Input data structure. The operators will increment these */      \
@@ -1110,9 +1117,9 @@ static gal_data_t *
 arithmetic_multioperand(int operator, int flags, gal_data_t *list,
                         gal_data_t *params, size_t numthreads)
 {
-  uint8_t *hasblank;
   size_t i=0, dnum=1;
   float p1=NAN, p2=NAN;
+  uint8_t *hasblank, otype;
   struct multioperandparams p;
   gal_data_t *out, *tmp, *ttmp;
 
@@ -1160,11 +1167,31 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
     }
 
 
+  /* Set the output dataset type */
+  switch(operator)
+    {
+    case GAL_ARITHMETIC_OP_MIN:            otype=list->type;       break;
+    case GAL_ARITHMETIC_OP_MAX:            otype=list->type;       break;
+    case GAL_ARITHMETIC_OP_NUMBER:         otype=GAL_TYPE_UINT32;  break;
+    case GAL_ARITHMETIC_OP_SUM:            otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_MEAN:           otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_STD:            otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_MEDIAN:         otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_SIGCLIP_STD:    otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_SIGCLIP_MEAN:   otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN: otype=GAL_TYPE_FLOAT32; break;
+    case GAL_ARITHMETIC_OP_SIGCLIP_NUMBER: otype=GAL_TYPE_UINT32;  break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: operator code %d isn't recognized",
+            __func__, operator);
+    }
+
+
   /* Set the output data structure. */
-  if(flags & GAL_ARITHMETIC_INPLACE)
+  if( (flags & GAL_ARITHMETIC_INPLACE) && otype==list->type)
     out = list;                 /* The top element in the list. */
   else
-    out = gal_data_alloc(NULL, list->type, list->ndim, list->dsize,
+    out = gal_data_alloc(NULL, otype, list->ndim, list->dsize,
                          list->wcs, 0, list->minmapsize, NULL, NULL, NULL);
 
 
@@ -1530,6 +1557,144 @@ arithmetic_binary_function_flt(int operator, int flags, gal_data_t *l,
 /**********************************************************************/
 /****************         High-level functions        *****************/
 /**********************************************************************/
+/* Order is the same as in the manual. */
+int
+gal_arithmetic_set_operator(char *string, size_t *num_operands)
+{
+  int op;
+
+  /* Simple arithmetic operators. */
+  if      (!strcmp(string, "+" ))
+    { op=GAL_ARITHMETIC_OP_PLUS;              *num_operands=2;  }
+  else if (!strcmp(string, "-" ))
+    { op=GAL_ARITHMETIC_OP_MINUS;             *num_operands=2;  }
+  else if (!strcmp(string, "x" ))
+    { op=GAL_ARITHMETIC_OP_MULTIPLY;          *num_operands=2;  }
+  else if (!strcmp(string, "/" ))
+    { op=GAL_ARITHMETIC_OP_DIVIDE;            *num_operands=2;  }
+  else if (!strcmp(string, "%" ))
+    { op=GAL_ARITHMETIC_OP_MODULO;            *num_operands=2;  }
+
+  /* Mathematical Operators. */
+  else if (!strcmp(string, "abs"))
+    { op=GAL_ARITHMETIC_OP_ABS;               *num_operands=1;  }
+  else if (!strcmp(string, "pow"))
+    { op=GAL_ARITHMETIC_OP_POW;               *num_operands=2;  }
+  else if (!strcmp(string, "sqrt"))
+    { op=GAL_ARITHMETIC_OP_SQRT;              *num_operands=1;  }
+  else if (!strcmp(string, "log"))
+    { op=GAL_ARITHMETIC_OP_LOG;               *num_operands=1;  }
+  else if (!strcmp(string, "log10"))
+    { op=GAL_ARITHMETIC_OP_LOG10;             *num_operands=1;  }
+
+  /* Statistical/higher-level operators. */
+  else if (!strcmp(string, "minvalue"))
+    { op=GAL_ARITHMETIC_OP_MINVAL;            *num_operands=1;  }
+  else if (!strcmp(string, "maxvalue"))
+    { op=GAL_ARITHMETIC_OP_MAXVAL;            *num_operands=1;  }
+  else if (!strcmp(string, "numbervalue"))
+    { op=GAL_ARITHMETIC_OP_NUMBERVAL;         *num_operands=1;  }
+  else if (!strcmp(string, "sumvalue"))
+    { op=GAL_ARITHMETIC_OP_SUMVAL;            *num_operands=1;  }
+  else if (!strcmp(string, "meanvalue"))
+    { op=GAL_ARITHMETIC_OP_MEANVAL;           *num_operands=1;  }
+  else if (!strcmp(string, "stdvalue"))
+    { op=GAL_ARITHMETIC_OP_STDVAL;            *num_operands=1;  }
+  else if (!strcmp(string, "medianvalue"))
+    { op=GAL_ARITHMETIC_OP_MEDIANVAL;         *num_operands=1;  }
+  else if (!strcmp(string, "min"))
+    { op=GAL_ARITHMETIC_OP_MIN;               *num_operands=-1; }
+  else if (!strcmp(string, "max"))
+    { op=GAL_ARITHMETIC_OP_MAX;               *num_operands=-1; }
+  else if (!strcmp(string, "number"))
+    { op=GAL_ARITHMETIC_OP_NUMBER;            *num_operands=-1; }
+  else if (!strcmp(string, "sum"))
+    { op=GAL_ARITHMETIC_OP_SUM;               *num_operands=-1; }
+  else if (!strcmp(string, "mean"))
+    { op=GAL_ARITHMETIC_OP_MEAN;              *num_operands=-1; }
+  else if (!strcmp(string, "std"))
+    { op=GAL_ARITHMETIC_OP_STD;               *num_operands=-1; }
+  else if (!strcmp(string, "median"))
+    { op=GAL_ARITHMETIC_OP_MEDIAN;            *num_operands=-1; }
+  else if (!strcmp(string, "sigclip-number"))
+    { op=GAL_ARITHMETIC_OP_SIGCLIP_NUMBER;    *num_operands=-1; }
+  else if (!strcmp(string, "sigclip-mean"))
+    { op=GAL_ARITHMETIC_OP_SIGCLIP_MEAN;      *num_operands=-1; }
+  else if (!strcmp(string, "sigclip-median"))
+    { op=GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN;    *num_operands=-1; }
+  else if (!strcmp(string, "sigclip-std"))
+    { op=GAL_ARITHMETIC_OP_SIGCLIP_STD;       *num_operands=-1; }
+
+  /* Conditional operators. */
+  else if (!strcmp(string, "lt" ))
+    { op=GAL_ARITHMETIC_OP_LT;                *num_operands=2;  }
+  else if (!strcmp(string, "le"))
+    { op=GAL_ARITHMETIC_OP_LE;                *num_operands=2;  }
+  else if (!strcmp(string, "gt" ))
+    { op=GAL_ARITHMETIC_OP_GT;                *num_operands=2;  }
+  else if (!strcmp(string, "ge"))
+    { op=GAL_ARITHMETIC_OP_GE;                *num_operands=2;  }
+  else if (!strcmp(string, "eq"))
+    { op=GAL_ARITHMETIC_OP_EQ;                *num_operands=2;  }
+  else if (!strcmp(string, "ne"))
+    { op=GAL_ARITHMETIC_OP_NE;                *num_operands=2;  }
+  else if (!strcmp(string, "and"))
+    { op=GAL_ARITHMETIC_OP_AND;               *num_operands=2;  }
+  else if (!strcmp(string, "or"))
+    { op=GAL_ARITHMETIC_OP_OR;                *num_operands=2;  }
+  else if (!strcmp(string, "not"))
+    { op=GAL_ARITHMETIC_OP_NOT;               *num_operands=1;  }
+  else if (!strcmp(string, "isblank"))
+    { op=GAL_ARITHMETIC_OP_ISBLANK;           *num_operands=1;  }
+  else if (!strcmp(string, "where"))
+    { op=GAL_ARITHMETIC_OP_WHERE;             *num_operands=3;  }
+
+  /* Bitwise operators. */
+  else if (!strcmp(string, "bitand"))
+    { op=GAL_ARITHMETIC_OP_BITAND;            *num_operands=2;  }
+  else if (!strcmp(string, "bitor"))
+    { op=GAL_ARITHMETIC_OP_BITOR;             *num_operands=2;  }
+  else if (!strcmp(string, "bitxor"))
+    { op=GAL_ARITHMETIC_OP_BITXOR;            *num_operands=2;  }
+  else if (!strcmp(string, "lshift"))
+    { op=GAL_ARITHMETIC_OP_BITLSH;            *num_operands=2;  }
+  else if (!strcmp(string, "rshift"))
+    { op=GAL_ARITHMETIC_OP_BITRSH;            *num_operands=2;  }
+  else if (!strcmp(string, "bitnot"))
+    { op=GAL_ARITHMETIC_OP_BITNOT;            *num_operands=1;  }
+
+  /* Type conversion. */
+  else if (!strcmp(string, "uint8"))
+    { op=GAL_ARITHMETIC_OP_TO_UINT8;          *num_operands=1;  }
+  else if (!strcmp(string, "int8"))
+    { op=GAL_ARITHMETIC_OP_TO_INT8;           *num_operands=1;  }
+  else if (!strcmp(string, "uint16"))
+    { op=GAL_ARITHMETIC_OP_TO_UINT16;         *num_operands=1;  }
+  else if (!strcmp(string, "int16"))
+    { op=GAL_ARITHMETIC_OP_TO_INT16;          *num_operands=1;  }
+  else if (!strcmp(string, "uint32"))
+    { op=GAL_ARITHMETIC_OP_TO_UINT32;         *num_operands=1;  }
+  else if (!strcmp(string, "int32"))
+    { op=GAL_ARITHMETIC_OP_TO_INT32;          *num_operands=1;  }
+  else if (!strcmp(string, "uint64"))
+    { op=GAL_ARITHMETIC_OP_TO_UINT64;         *num_operands=1;  }
+  else if (!strcmp(string, "int64"))
+    { op=GAL_ARITHMETIC_OP_TO_INT64;          *num_operands=1;  }
+  else if (!strcmp(string, "float32"))
+    { op=GAL_ARITHMETIC_OP_TO_FLOAT32;        *num_operands=1;  }
+  else if (!strcmp(string, "float64"))
+    { op=GAL_ARITHMETIC_OP_TO_FLOAT64;        *num_operands=1;  }
+
+  /* Operator not defined. */
+  else
+    { op=GAL_ARITHMETIC_OP_INVALID; *num_operands=GAL_BLANK_INT; }
+  return op;
+}
+
+
+
+
+
 char *
 gal_arithmetic_operator_string(int operator)
 {
@@ -1597,14 +1762,8 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_TO_FLOAT32:      return "float32";
     case GAL_ARITHMETIC_OP_TO_FLOAT64:      return "float64";
 
-    default:
-      error(EXIT_FAILURE, 0, "%s: operator code %d not recognized",
-            __func__, operator);
+    default:                                return NULL;
     }
-
-  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us to fix the problem. "
-        "Control has reached the end of this function. This should not have "
-        "happened", __func__);
   return NULL;
 }
 

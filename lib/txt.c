@@ -153,15 +153,28 @@ txt_trim_space(char *str)
   be before column 7.
 */
 static void
-txt_info_from_comment(char *line, gal_data_t **datall, char *comm_start)
+txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
+                      int inplace)
 {
-  char *tailptr;
   gal_data_t *tmp;
   int index, strw=0;
+  char *line, *aline, *tailptr;
   size_t len=strlen(comm_start);
   int type=GAL_TYPE_FLOAT64;                     /* Default type. */
   char *number=NULL, *name=NULL, *comment=NULL;
   char *inbrackets=NULL, *unit=NULL, *typestr=NULL, *blank=NULL;
+
+  /* Make a copy of the input line if `inplace==0'. */
+  if(inplace) line=aline=in_line;
+  else
+    {
+      /* Because the `line' pointer will change, we need a pointer to the
+         start of the originally allocated lines. This is the purpose of
+         `aline' (allocated-line). */
+      gal_checkset_allocate_copy(in_line, &aline);
+      line=aline;
+    }
+
 
   /* Only read this comment line if it follows the convention: */
   if( !strncmp(line, comm_start, len) )
@@ -276,6 +289,9 @@ txt_info_from_comment(char *line, gal_data_t **datall, char *comm_start)
          final column, we are just collecting information now. */
       gal_tableintern_read_blank(*datall, txt_trim_space(blank));
     }
+
+  /* Clean up. */
+  if(in_line!=aline) free(aline);
 }
 
 
@@ -539,7 +555,7 @@ txt_get_info_line(char *line, gal_data_t **datall, char *comm_start,
     {
       /* Line is a comment, see if it has formatted information. */
     case GAL_TXT_LINESTAT_COMMENT:
-      txt_info_from_comment(line, datall, comm_start);
+      txt_info_from_comment(line, datall, comm_start, inplace);
       break;
 
       /* Line is actual data, use it to fill in the gaps.  */
@@ -808,7 +824,7 @@ txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
 static void
 txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
          gal_data_t *out, size_t rowind, char *filename, size_t lineno,
-         int inplace)
+         int inplace, int format)
 {
   size_t i, n=0;
   gal_data_t *data;
@@ -838,8 +854,10 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
       if(n>maxcolnum) break;
 
       /* Set the pointer to the start of this token/column. See
-         explanations in `txt_info_from_first_row'. */
-      if( info[n-1].type == GAL_TYPE_STRING )
+         explanations in `txt_info_from_first_row'. Note that an image has
+         a single `info' element for the whole array, while a table has one
+         for each column. */
+      if( info[format==TXT_FORMAT_TABLE ? n-1 : 0].type == GAL_TYPE_STRING )
         {
           /* Remove any delimiters and stop at the first non-delimiter. If
              we have reached the end of the line then its an error, because
@@ -1016,7 +1034,7 @@ txt_read(char *filename, gal_list_str_t *lines, size_t *dsize,
           ++lineno;
           if( gal_txt_line_stat(line) == GAL_TXT_LINESTAT_DATAROW )
             txt_fill(line, tokens, maxcolnum, info, out, rowind++,
-                     filename, lineno, 1);
+                     filename, lineno, 1, format);
         }
 
       /* Clean up and close the file. */
@@ -1032,7 +1050,7 @@ txt_read(char *filename, gal_list_str_t *lines, size_t *dsize,
         ++lineno;
         if( gal_txt_line_stat(tmp->v) == GAL_TXT_LINESTAT_DATAROW )
           txt_fill(tmp->v, tokens, maxcolnum, info, out, rowind++,
-                   filename, lineno, 0);
+                   filename, lineno, 0, format);
       }
 
   /* Clean up and return. */

@@ -31,9 +31,11 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gsl/gsl_heapsort.h>
 
+#include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/table.h>
 #include <gnuastro/qsort.h>
+#include <gnuastro/pointer.h>
 #include <gnuastro/arithmetic.h>
 #include <gnuastro/statistics.h>
 #include <gnuastro/permutation.h>
@@ -41,7 +43,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro-internal/checkset.h>
 
 #include "main.h"
+
 #include "ui.h"
+#include "arithmetic.h"
 
 
 
@@ -78,7 +82,7 @@ table_range(struct tableparams *p)
   double *rarr;
   gal_data_t *mask;
   struct list_range *tmp;
-  gal_data_t *ref, *perm, *range;
+  gal_data_t *ref, *perm, *range, *blmask;
   size_t i, g, b, *s, *sf, one=1, ngood=0;
   gal_data_t *min, *max, *ltmin, *gemax, *sum;
 
@@ -107,11 +111,18 @@ table_range(struct tableparams *p)
       /* Set the reference column to read values from. */
       ref=tmp->v;
 
-      /* Find all the bad elements (smaller than the minimum and larger than
-         the maximum) so we can flag them. */
+      /* Find all the bad elements (smaller than the minimum, larger than
+         the maximum or blank) so we can flag them. */
       ltmin=gal_arithmetic(GAL_ARITHMETIC_OP_LT, 1, numok,   ref,   min);
       gemax=gal_arithmetic(GAL_ARITHMETIC_OP_GE, 1, numok,   ref,   max);
+      blmask = ( gal_blank_present(ref, 1)
+                 ? gal_arithmetic(GAL_ARITHMETIC_OP_ISBLANK, 1, 0, ref)
+                 : NULL );
+
+      /* Merge all the flags into one array. */
       ltmin=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, inplace, ltmin, gemax);
+      if(blmask)
+        ltmin=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, inplace, ltmin, blmask);
 
       /* Add these flags to all previous flags. */
       mask=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, inplace, mask, ltmin);
@@ -267,6 +278,54 @@ table_sort(struct tableparams *p)
 
 
 
+static void
+table_head_tail(struct tableparams *p)
+{
+  char **strarr;
+  gal_data_t *col;
+  size_t i, start, end;
+
+  /* Go over all the columns and make the necessary corrections. */
+  for(col=p->table;col!=NULL;col=col->next)
+    {
+      /* If we are dealing with strings, we'll need to free the strings
+         that the columns that will not be used point to (outside the
+         allocated array directly `gal_data_t'). We don't have to worry
+         about the space for the actual pointers (they will be free'd by
+         `free' in any case, since they are in the initially allocated
+         array).*/
+      if(col->type==GAL_TYPE_STRING)
+        {
+          /* Set the start and ending indexs. */
+          start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
+          end   = p->head!=GAL_BLANK_SIZE_T ? p->table->size : p->tail;
+
+          /* Free their allocated spaces. */
+          strarr=col->array;
+          for(i=start; i<end; ++i) { free(strarr[i]); strarr[i]=NULL; }
+        }
+
+      /* For `--tail', we'll need to bring the last columns to the
+         start. Note that we are using `memmove' because we want to be safe
+         with overlap. */
+      if(p->tail!=GAL_BLANK_SIZE_T)
+        memmove(col->array,
+                gal_pointer_increment(col->array, col->size - p->tail,
+                                      col->type),
+                p->tail*gal_type_sizeof(col->type));
+
+      /* In any case (head or tail), the new number of column elements is
+         the given value. */
+      col->size = col->dsize[0] = ( p->head!=GAL_BLANK_SIZE_T
+                                    ? p->head
+                                    : p->tail );
+    }
+}
+
+
+
+
+
 /**************************************************************/
 /***************       Top function         *******************/
 /**************************************************************/
@@ -278,6 +337,14 @@ table(struct tableparams *p)
 
   /* Sort it (if required). */
   if(p->sort) table_sort(p);
+
+  /* If the output number of rows is limited, apply them. */
+  if(p->head!=GAL_BLANK_SIZE_T || p->tail!=GAL_BLANK_SIZE_T)
+    table_head_tail(p);
+
+  /* If any operations are needed, do them. */
+  if(p->outcols)
+    arithmetic_operate(p);
 
   /* Write the output. */
   gal_table_write(p->table, NULL, p->cp.tableformat, p->cp.output,

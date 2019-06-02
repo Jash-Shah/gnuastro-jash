@@ -152,7 +152,7 @@ cosmology_integrand_comoving_volume(double z, void *params)
 
 
 /**************************************************************/
-/************          Final functions            *************/
+/************      Basic cosmology functions      *************/
 /**************************************************************/
 /* Age of the universe (in Gyrs). H0 is in units of (km/sec/Mpc) and the
    fractional densities must add up to 1. */
