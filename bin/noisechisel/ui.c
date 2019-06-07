@@ -586,8 +586,15 @@ ui_preparations_read_input(struct noisechiselparams *p)
   if(p->input->name==NULL)
     gal_checkset_allocate_copy("INPUT", &p->input->name);
 
-  /* Check the values of dimention-related options. */
+  /* Check the dimensions of the input. */
   ndim=p->input->ndim;
+  if(ndim!=2 && ndim!=3)
+    error(EXIT_FAILURE, 0, "%s: is a %zu dimensional dataset, only 2D "
+          "or 3D datasets are currently supported",
+          gal_fits_name_save_as_string(p->inputname, p->cp.hdu), ndim);
+
+  /* Check the neighbor options and if the given values correspond to the
+     input's dimensions. */
   ui_ngb_check(p->holengb, "holengb", ndim);
   ui_ngb_check(p->erodengb, "erodengb", ndim);
   ui_ngb_check(p->openingngb, "openingngb", ndim);
