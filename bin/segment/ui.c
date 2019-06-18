@@ -410,7 +410,7 @@ ui_prepare_inputs(struct segmentparams *p)
   /* Read the input as a single precision floating point dataset. */
   p->input = gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
                                            NULL, GAL_TYPE_FLOAT32,
-                                           p->cp.minmapsize);
+                                           p->cp.minmapsize, p->cp.quietmmap);
   p->input->wcs = gal_wcs_read(p->inputname, p->cp.hdu, 0, 0,
                                &p->input->nwcs);
   p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
@@ -439,7 +439,8 @@ ui_prepare_inputs(struct segmentparams *p)
       /* Read the input convolved image. */
       p->conv = gal_array_read_one_ch_to_type(p->convolvedname, p->chdu,
                                               NULL, GAL_TYPE_FLOAT32,
-                                              p->cp.minmapsize);
+                                              p->cp.minmapsize,
+                                              p->cp.quietmmap);
       p->conv->ndim=gal_dimension_remove_extra(p->conv->ndim,
                                                p->conv->dsize,
                                                p->conv->wcs);
@@ -460,7 +461,8 @@ ui_prepare_inputs(struct segmentparams *p)
     {
       /* Read the dataset into memory. */
       p->olabel = gal_array_read_one_ch(p->useddetectionname, p->dhdu,
-                                        NULL, p->cp.minmapsize);
+                                        NULL, p->cp.minmapsize,
+                                        p->cp.quietmmap);
       p->olabel->ndim=gal_dimension_remove_extra(p->olabel->ndim,
                                                  p->olabel->dsize, NULL);
       if( gal_dimension_is_different(p->input, p->olabel) )
@@ -512,7 +514,8 @@ ui_prepare_inputs(struct segmentparams *p)
       /* Allocate the array. */
       p->olabel=gal_data_alloc(NULL, GAL_TYPE_INT32, p->input->ndim,
                                p->input->dsize, p->input->wcs, 0,
-                               p->cp.minmapsize, NULL, NULL, NULL);
+                               p->cp.minmapsize, p->cp.quietmmap,
+                               NULL, NULL, NULL);
 
       /* Initialize it to 1. */
       ii=(i=p->olabel->array)+p->olabel->size; do *i++=1; while(i<ii);
@@ -545,7 +548,8 @@ ui_prepare_kernel(struct segmentparams *p)
         {
           /* Read the kernel into memory. */
           p->kernel=gal_fits_img_read_kernel(p->kernelname, p->khdu,
-                                             p->cp.minmapsize);
+                                             p->cp.minmapsize,
+                                             p->cp.quietmmap);
           p->kernel->ndim=gal_dimension_remove_extra(p->kernel->ndim,
                                                      p->kernel->dsize,
                                                      NULL);
@@ -565,7 +569,8 @@ ui_prepare_kernel(struct segmentparams *p)
          allocated array. */
       p->kernel=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim,
                                ndim==2 ? kernel_2d_dsize : kernel_3d_dsize,
-                               NULL, 0, p->cp.minmapsize, NULL, NULL, NULL);
+                               NULL, 0, p->cp.minmapsize, p->cp.quietmmap,
+                               NULL, NULL, NULL);
 
       /* Copy the staticly allocated default array into `p->kernel'. */
       k = ndim==2 ? kernel_2d : kernel_3d;
@@ -737,7 +742,7 @@ ui_read_std_and_sky(struct segmentparams *p)
     {
       /* Allocate the dataset to keep the value and write it in. */
       p->std=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0,
-                            -1, NULL, NULL, NULL);
+                            -1, 1, NULL, NULL, NULL);
       *(float *)(p->std->array) = tmpval;
     }
   else
@@ -755,7 +760,7 @@ ui_read_std_and_sky(struct segmentparams *p)
       /* Read the STD image. */
       p->std=gal_array_read_one_ch_to_type(p->usedstdname, p->stdhdu,
                                            NULL, GAL_TYPE_FLOAT32,
-                                           p->cp.minmapsize);
+                                           p->cp.minmapsize, p->cp.quietmmap);
       p->std->ndim=gal_dimension_remove_extra(p->std->ndim,
                                               p->std->dsize, NULL);
 
@@ -798,7 +803,7 @@ ui_read_std_and_sky(struct segmentparams *p)
       if(*tailptr=='\0')
         {
           sky=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0, -1,
-                             NULL, NULL, NULL);
+                             1, NULL, NULL, NULL);
           *(float *)(sky->array) = skyval = tmpval;
         }
       else
@@ -815,7 +820,7 @@ ui_read_std_and_sky(struct segmentparams *p)
           /* Read the Sky dataset. */
           sky=gal_array_read_one_ch_to_type(p->skyname, p->skyhdu,
                                             NULL, GAL_TYPE_FLOAT32,
-                                            p->cp.minmapsize);
+                                            p->cp.minmapsize, p->cp.quietmmap);
           sky->ndim=gal_dimension_remove_extra(sky->ndim, sky->dsize,
                                                NULL);
 

@@ -427,7 +427,8 @@ ui_prepare_kernel(struct noisechiselparams *p)
         {
           /* Read the kernel into memory. */
           p->kernel=gal_fits_img_read_kernel(p->kernelname, p->khdu,
-                                             p->cp.minmapsize);
+                                             p->cp.minmapsize,
+                                             p->cp.quietmmap);
 
           /* Make sure it has the same dimensions as the input. */
           if( p->kernel->ndim != p->input->ndim )
@@ -444,7 +445,8 @@ ui_prepare_kernel(struct noisechiselparams *p)
          allocated array. */
       p->kernel=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim,
                                ndim==2 ? kernel_2d_dsize : kernel_3d_dsize,
-                               NULL, 0, p->cp.minmapsize, NULL, NULL, NULL);
+                               NULL, 0, p->cp.minmapsize, p->cp.quietmmap,
+                               NULL, NULL, NULL);
 
       /* Copy the staticly allocated default array into `p->kernel'. */
       k = ndim==2 ? kernel_2d : kernel_3d;
@@ -456,7 +458,7 @@ ui_prepare_kernel(struct noisechiselparams *p)
      ignore it. */
   if(p->widekernelname)
     p->widekernel=gal_fits_img_read_kernel(p->widekernelname, p->whdu,
-                                           p->cp.minmapsize);
+                                           p->cp.minmapsize, p->cp.quietmmap);
 }
 
 
@@ -561,7 +563,7 @@ ui_ngb_check(size_t value, char *optionname, size_t ndim)
       break;
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
-            "problem. Dimention value %zu is not recognized.", __func__,
+            "problem. Dimension value %zu is not recognized.", __func__,
             PACKAGE_BUGREPORT, ndim);
     }
 }
@@ -582,7 +584,8 @@ ui_preparations_read_input(struct noisechiselparams *p)
      (with a length of 1). */
   p->input = gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
                                            NULL, GAL_TYPE_FLOAT32,
-                                           p->cp.minmapsize);
+                                           p->cp.minmapsize,
+                                           p->cp.quietmmap);
   p->input->wcs = gal_wcs_read(p->inputname, p->cp.hdu, 0, 0,
                                &p->input->nwcs);
   p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
@@ -653,7 +656,8 @@ ui_preparations(struct noisechiselparams *p)
       /* Read the input convolved image. */
       p->conv = gal_array_read_one_ch_to_type(p->convolvedname, p->chdu,
                                               NULL, GAL_TYPE_FLOAT32,
-                                              p->cp.minmapsize);
+                                              p->cp.minmapsize,
+                                              p->cp.quietmmap);
 
       /* Make sure the convolved image is the same size as the input. */
       if( gal_dimension_is_different(p->input, p->conv) )
@@ -674,10 +678,12 @@ ui_preparations(struct noisechiselparams *p)
   /* Allocate space for the over-all necessary arrays. */
   p->binary=gal_data_alloc(NULL, GAL_TYPE_UINT8, p->input->ndim,
                            p->input->dsize, p->input->wcs, 0,
-                           p->cp.minmapsize, NULL, "binary", NULL);
+                           p->cp.minmapsize, p->cp.quietmmap, NULL,
+                           "binary", NULL);
   p->olabel=gal_data_alloc(NULL, GAL_TYPE_INT32, p->input->ndim,
                            p->input->dsize, p->input->wcs, 0,
-                           p->cp.minmapsize, NULL, "labels", NULL);
+                           p->cp.minmapsize, p->cp.quietmmap, NULL,
+                           "labels", NULL);
   p->binary->flag = p->olabel->flag = p->input->flag;
 }
 

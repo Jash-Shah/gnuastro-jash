@@ -142,36 +142,38 @@ parse_spectrum_pepare(struct mkcatalog_passparams *pp, size_t *start_end_inc,
 
   /* Allocate the columns. */
   area  = gal_data_alloc(NULL, GAL_TYPE_UINT32, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "AREA", "counter",
-                         "Area of object in a slice");
+                         p->cp.minmapsize, p->cp.quietmmap, "AREA",
+                         "counter", "Area of object in a slice");
   sum   = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "SUM", p->values->unit,
-                         "Sum of values with this label.");
+                         p->cp.minmapsize, p->cp.quietmmap, "SUM",
+                         p->values->unit, "Sum of values with this label.");
   esum  = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "SUM_ERR", p->values->unit,
-                         "Error in SUM column.");
+                         p->cp.minmapsize, p->cp.quietmmap, "SUM_ERR",
+                         p->values->unit, "Error in SUM column.");
   proj  = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "SUM_PROJECTED", p->values->unit,
-                         "Sum of full projected 2D area on a slice.");
+                         p->cp.minmapsize, p->cp.quietmmap, "SUM_PROJECTED",
+                         p->values->unit, "Sum of full projected 2D area on "
+                         "a slice.");
   eproj = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "SUM_PROJECTED_ERR",
+                         p->cp.minmapsize, p->cp.quietmmap, "SUM_PROJECTED_ERR",
                          p->values->unit, "Error in SUM_PROJECTED column.");
   oarea = gal_data_alloc(NULL, GAL_TYPE_UINT32, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "AREA_OTHER", "counter",
-                         "Area covered by other labels in a slice.");
+                         p->cp.minmapsize, p->cp.quietmmap, "AREA_OTHER",
+                         "counter", "Area covered by other labels in a slice.");
   osum  = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "SUM_OTHER", p->values->unit,
-                         "Sum of values in other labels on a slice.");
+                         p->cp.minmapsize, p->cp.quietmmap, "SUM_OTHER",
+                         p->values->unit, "Sum of values in other labels on "
+                         "a slice.");
   oesum = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 1,
-                         p->cp.minmapsize, "SUM_OTHER_ERR", p->values->unit,
-                         "Error in SUM_OTHER column.");
+                         p->cp.minmapsize, p->cp.quietmmap, "SUM_OTHER_ERR",
+                         p->values->unit, "Error in SUM_OTHER column.");
 
   /* Fill up the contents of the first element (note that the first
      `gal_data_t' is actually in an array, so the skeleton is already
      allocated, we just have to allocate its contents. */
   gal_data_initialize(pp->spectrum, NULL, p->specsliceinfo->type, 1,
-                      &numslices, NULL, 0, p->cp.minmapsize, NULL, NULL,
-                      NULL);
+                      &numslices, NULL, 0, p->cp.minmapsize,
+                      p->cp.quietmmap, NULL, NULL, NULL);
   gal_data_copy_to_allocated(p->specsliceinfo, pp->spectrum);
   pp->spectrum->next=gal_data_copy(p->specsliceinfo->next);
 
@@ -484,7 +486,8 @@ parse_objects(struct mkcatalog_passparams *pp)
       || oif[ OCOL_NUMXY    ] )
     {
       xybin=gal_data_alloc(NULL, GAL_TYPE_UINT8, 2, &tsize[1], NULL,
-                           1, p->cp.minmapsize, NULL, NULL, NULL);
+                           1, p->cp.minmapsize, p->cp.quietmmap,
+                           NULL, NULL, NULL);
       xybinarr=xybin->array;
     }
 
@@ -769,7 +772,8 @@ parse_clumps(struct mkcatalog_passparams *pp)
       xybin=gal_data_array_calloc(pp->clumpsinobj);
       for(i=0;i<pp->clumpsinobj;++i)
         gal_data_initialize(&xybin[i], NULL, GAL_TYPE_UINT8, 2, &tsize[1],
-                            NULL, 1, p->cp.minmapsize, NULL, NULL, NULL);
+                            NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
+                            NULL, NULL, NULL);
     }
 
 
@@ -1038,7 +1042,8 @@ parse_median(struct mkcatalog_passparams *pp)
   size_t *tsize=pp->tile->dsize, ndim=p->objects->ndim;
   size_t counter=0, *ccounter=NULL, tmpsize=pp->oi[OCOL_NUM];
   gal_data_t *objmed=gal_data_alloc(NULL, p->values->type, 1, &tmpsize, NULL,
-                                    0, p->cp.minmapsize, NULL, NULL, NULL);
+                                    0, p->cp.minmapsize, p->cp.quietmmap,
+                                    NULL, NULL, NULL);
 
   /* Allocate space for the clump medians. */
   if(p->clumps)
@@ -1057,8 +1062,8 @@ parse_median(struct mkcatalog_passparams *pp)
         {
           tmpsize=pp->ci[ i * CCOL_NUMCOLS + CCOL_NUM ];
           clumpsmed[i]=gal_data_alloc(NULL, p->values->type, 1, &tmpsize,
-                                      NULL, 0, p->cp.minmapsize, NULL, NULL,
-                                      NULL);
+                                      NULL, 0, p->cp.minmapsize,
+                                      p->cp.quietmmap, NULL, NULL, NULL);
         }
     }
 

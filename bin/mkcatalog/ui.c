@@ -384,7 +384,7 @@ ui_read_check_only_options(struct mkcatalogparams *p)
         {
           /* Allocate the data structure. */
           p->sky=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0, -1,
-                                NULL, NULL, NULL);
+                                1, NULL, NULL, NULL);
 
           /* Write the value inside it. */
           *((float *)(p->sky->array))=tmp;
@@ -399,7 +399,7 @@ ui_read_check_only_options(struct mkcatalogparams *p)
         {
           /* Allocate the data structure. */
           p->std=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0, -1,
-                                NULL, NULL, NULL);
+                                1, NULL, NULL, NULL);
 
           /* Write the value inside it. */
           *((float *)(p->std->array))=tmp;
@@ -536,6 +536,7 @@ static size_t
 ui_num_clumps(struct mkcatalogparams *p)
 {
   char *basename;
+  int keepinputdir;
   size_t i, counter, numclumps=0;
   gal_list_i32_t *tmp, **labsinobj;
   int32_t *o=p->objects->array, *of=o+p->objects->size, *c=p->clumps->array;
@@ -590,11 +591,13 @@ ui_num_clumps(struct mkcatalogparams *p)
   while(++o<of);
 
   /* Write the created file into a file for the user to inspect. */
+  keepinputdir=p->cp.keepinputdir;
+  p->cp.keepinputdir = p->cp.output ? 1 : 0;
   basename = p->cp.output ? p->cp.output : p->objectsfile;
   p->relabclumps=gal_checkset_automatic_output(&p->cp, basename,
                                                "-clumps-relab.fits");
   gal_fits_img_write(p->clumps, p->relabclumps, NULL, PROGRAM_STRING);
-
+  p->cp.keepinputdir=keepinputdir;
 
   /* Clean up. */
   for(i=0;i<p->numobjects;++i)
@@ -618,7 +621,7 @@ ui_read_labels(struct mkcatalogparams *p)
 
   /* Read it into memory. */
   p->objects = gal_array_read_one_ch(p->objectsfile, p->cp.hdu, NULL,
-                                     p->cp.minmapsize);
+                                     p->cp.minmapsize, p->cp.quietmmap);
   p->objects->ndim=gal_dimension_remove_extra(p->objects->ndim,
                                               p->objects->dsize, NULL);
 
@@ -688,7 +691,8 @@ ui_read_labels(struct mkcatalogparams *p)
 
       /* Read the clumps image. */
       p->clumps = gal_array_read_one_ch(p->usedclumpsfile, p->clumpshdu,
-                                        NULL, p->cp.minmapsize);
+                                        NULL, p->cp.minmapsize,
+                                        p->cp.quietmmap);
       p->clumps->ndim=gal_dimension_remove_extra(p->clumps->ndim,
                                                  p->clumps->dsize, NULL);
 
@@ -999,7 +1003,8 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
       /* Read the values dataset. */
       p->values=gal_array_read_one_ch_to_type(p->usedvaluesfile, p->valueshdu,
                                               NULL, GAL_TYPE_FLOAT32,
-                                              p->cp.minmapsize);
+                                              p->cp.minmapsize,
+                                              p->cp.quietmmap);
       p->values->ndim=gal_dimension_remove_extra(p->values->ndim,
                                                  p->values->dsize, NULL);
 
@@ -1048,7 +1053,8 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
           /* Read the Sky dataset. */
           p->sky=gal_array_read_one_ch_to_type(p->usedskyfile, p->skyhdu,
                                                NULL, GAL_TYPE_FLOAT32,
-                                               p->cp.minmapsize);
+                                               p->cp.minmapsize,
+                                               p->cp.quietmmap);
           p->sky->ndim=gal_dimension_remove_extra(p->sky->ndim,
                                                   p->sky->dsize, NULL);
 
@@ -1079,7 +1085,7 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
       /* Read the Sky standard deviation image into memory. */
       p->std=gal_array_read_one_ch_to_type(p->usedstdfile, p->stdhdu,
                                            NULL, GAL_TYPE_FLOAT32,
-                                           p->cp.minmapsize);
+                                           p->cp.minmapsize, p->cp.quietmmap);
       p->std->ndim=gal_dimension_remove_extra(p->std->ndim,
                                               p->std->dsize, NULL);
 
@@ -1114,7 +1120,8 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
 
           /* Read the mask image. */
           p->upmask = gal_array_read_one_ch(p->upmaskfile, p->upmaskhdu,
-                                            NULL, p->cp.minmapsize);
+                                            NULL, p->cp.minmapsize,
+                                            p->cp.quietmmap);
           p->upmask->ndim=gal_dimension_remove_extra(p->upmask->ndim,
                                                      p->upmask->dsize,
                                                      NULL);
@@ -1139,7 +1146,7 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
           /* Convert the mask to a uint8_t: with a 1 for all non-zero
              pixels and 0 for zero pixels. */
           zero=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL, 1, -1,
-                              NULL, NULL, NULL);
+                              1, NULL, NULL, NULL);
           p->upmask=gal_arithmetic(GAL_ARITHMETIC_OP_NE, 1,
                                    ( GAL_ARITHMETIC_INPLACE
                                      | GAL_ARITHMETIC_FREE
@@ -1435,12 +1442,12 @@ ui_preparations_spectrum_wcs(struct mkcatalogparams *p)
      for WCS conversion. Note that the `z' axis is going to be converted to
      WCS later, so we'll just give it the basic information now.*/
   x=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 0,
-                   p->cp.minmapsize, NULL, NULL, NULL);
+                   p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
   y=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 0,
-                   p->cp.minmapsize, NULL, NULL, NULL);
+                   p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
   z=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 0,
-                   p->cp.minmapsize, p->ctype[2], p->objects->wcs->cunit[2],
-                   "Slice WCS coordinates.");
+                   p->cp.minmapsize, p->cp.quietmmap, p->ctype[2],
+                   p->objects->wcs->cunit[2], "Slice WCS coordinates.");
 
   /* Write values into the 3 coordinates. */
   xarr=x->array; yarr=y->array; zarr=z->array;
@@ -1463,7 +1470,8 @@ ui_preparations_spectrum_wcs(struct mkcatalogparams *p)
   /* Allocate the slice counter array (we are doing it again because we
      want it to be in integer type now). */
   p->specsliceinfo=gal_data_alloc(NULL, slicenumtype, 1, &numslices, NULL, 0,
-                                  p->cp.minmapsize, "SLICE", "counter",
+                                  p->cp.minmapsize, p->cp.quietmmap, "SLICE",
+                                  "counter",
                                   "Slice number in cube (counting from 1).");
   if(p->specsliceinfo->type==GAL_TYPE_UINT16)
     for(i=0;i<numslices;++i) ((uint16_t *)(p->specsliceinfo->array))[i]=i+1;
