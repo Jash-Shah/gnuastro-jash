@@ -279,8 +279,9 @@ wcsmode_crop_corners(struct onecropparams *crp)
     {
       /* A small sanity check. */
       if(ndim!=2)
-        error(EXIT_FAILURE, 0, "%s: currently only supports 2D datasets, "
-              "your input dataset has %zu dimensions", __func__, ndim);
+        error(EXIT_FAILURE, 0, "%s: polygon crops are currently only "
+              "supported on 2D datasets, the input dataset is %zuD",
+              __func__, ndim);
 
       /* Find their minimum and maximum values. */
       for(i=0;i<p->nvertices;++i)

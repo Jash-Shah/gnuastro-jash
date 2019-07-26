@@ -340,7 +340,6 @@ has_gsl=yes
 has_libgit2=1
 has_cmath=yes
 has_wcslib=yes
-ldlibpathnew=""
 has_cfitsio=yes
 has_libtiff=yes
 has_libjpeg=yes
@@ -348,18 +347,21 @@ has_gslcblas=yes
 missing_mandatory=no
 missing_optional_lib=no
 
+# Keep the original LIBS to re-set in the end.
+orig_LIBS="$LIBS"
+
 # Order is important here.
 AC_LIB_HAVE_LINKFLAGS([m], [], [#include <math.h>])
 AS_IF([test "x$LIBM" = x],
       [missing_mandatory=yes; has_cmath=no],
-      [LIBS="$LIBM $LIBS"])
+      [LDADD="$LIBM $LDADD"; LIBS="$LIBM $LIBS"])
 
 AC_LIB_HAVE_LINKFLAGS([gsl], [gslcblas], [
 #include <gsl/gsl_rng.h>
 void junk(void) { gsl_rng_env_setup(); } ])
 AS_IF([test "x$LIBGSL" = x],
       [missing_mandatory=yes; has_gsl=no; has_gslcblas=no],
-      [GAL_LIBCHECK([$LIBGSL], [libgsl], [-lgsl -lgslcblas])])
+      [LDADD="$LTLIBGSL $LDADD"; LIBS="$LIBGSL $LIBS"])
 
 
 # Since version 0.42, if `libcurl' is installed, CFITSIO will link with it
@@ -377,14 +379,19 @@ AS_IF([test "x$LIBGSL" = x],
 # these extra libraries here.
 AC_LIB_HAVE_LINKFLAGS([z], [], [#include <zlib.h>])
 AS_IF([test "x$LIBZ" = x], [],
-      [GAL_LIBCHECK([$LIBZ], [libz], [-lz])])
+      [LDADD="$LTLIBZ $LDADD"; LIBS="$LIBZ $LIBS"])
 
 
 AC_LIB_HAVE_LINKFLAGS([curl], [], [#include <curl/curl.h>])
 AS_IF([test "x$LIBCURL" = x], [],
-      [GAL_LIBCHECK([$LIBCURL], [libcurl], [-lcurl])])
+      [LDADD="$LTLIBCURL $LDADD"; LIBS="$LIBCURL $LIBS"])
 
 
+# Older versions of CFITSIO don't install a shared library, only a static
+# one. Eventhough we add `-lm' to LDADD, on some systems, it complains
+# about not finding basic math libraries. Therefore the configure script
+# can't find CFITSIO, eventhough it exists. The solution is to manually add
+# the math-library as a dependency of CFITSIO.
 AC_LIB_HAVE_LINKFLAGS([cfitsio], [], [
 #include <fitsio.h>
 void junk(void) {
@@ -393,7 +400,7 @@ fitsfile *f;
 ffopen(&f, "junk", READONLY, &status);} ])
 AS_IF([test "x$LIBCFITSIO" = x],
       [missing_mandatory=yes; has_cfitsio=no],
-      [GAL_LIBCHECK([$LIBCFITSIO], [libcfitsio], [-lcfitsio])])
+      [LDADD="$LTLIBCFITSIO $LDADD"; LIBS="$LIBCFITSIO $LIBS"])
 
 
 AC_LIB_HAVE_LINKFLAGS([wcs], [], [
@@ -406,7 +413,7 @@ wcspih(header, 1, 0, 0, &nreject, &nwcs, &wcs);
 } ])
 AS_IF([test "x$LIBWCS" = x],
       [missing_mandatory=yes; has_wcslib=no],
-      [GAL_LIBCHECK([$LIBWCS], [libwcs], [-lwcs])])
+      [LDADD="$LTLIBWCS $LDADD"; LIBS="$LIBWCS $LIBS"])
 
 
 AC_LIB_HAVE_LINKFLAGS([jpeg], [], [
@@ -418,11 +425,8 @@ void junk(void) {
   jpeg_create_decompress(&cinfo);
 }  ])
 AS_IF([test "x$LIBJPEG" = x],
-      [missing_optional_lib=yes; has_libjpeg=no],
-      [GAL_LIBCHECK([$LIBJPEG], [libjpeg], [-ljpeg])])
-AS_IF([test "x$has_libjpeg" = "xyes"],
-      [AC_DEFINE([HAVE_LIBJPEG], [], [Has libjpeg])],
-      [anywarnings=yes])
+      [missing_optional_lib=yes; has_libjpeg=no; anywarnings=yes],
+      [LDADD="$LTLIBJPEG $LDADD"; LIBS="$LIBJPEG $LIBS"])
 AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
 
 
@@ -433,18 +437,15 @@ AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
 # don't need to stop the build if this fails.
 AC_LIB_HAVE_LINKFLAGS([lzma], [], [#include <lzma.h>])
 AS_IF([test "x$LIBLZMA" = x], [],
-      [GAL_LIBCHECK([$LIBLZMA], [liblzma], [-llzma])])
+      [LDADD="$LTLIBLZMA $LDADD"; LIBS="$LIBLZMA $LIBS"])
 
 AC_LIB_HAVE_LINKFLAGS([tiff], [], [
 #include <tiffio.h>
 void junk(void) {TIFF *tif=TIFFOpen("junk", "r");}
 ])
 AS_IF([test "x$LIBTIFF" = x],
-      [missing_optional_lib=yes; has_libtiff=no],
-      [GAL_LIBCHECK([$LIBTIFF], [libtiff], [-ltiff])])
-AS_IF([test "x$has_libtiff" = "xyes"],
-      [AC_DEFINE([HAVE_LIBTIFF], [], [Has libtiff])],
-      [anywarnings=yes])
+      [missing_optional_lib=yes; has_libtiff=no; anywarnings=yes],
+      [LDADD="$LTLIBTIFF $LDADD"; LIBS="$LIBTIFF $LIBS"])
 AM_CONDITIONAL([COND_HASLIBTIFF], [test "x$has_libtiff" = "xyes"])
 
 
@@ -456,11 +457,10 @@ void junk(void) {git_libgit2_init();}
 ])
 AS_IF([test "x$LIBGIT2" = x],
       [missing_optional_lib=yes; has_libgit2=0],
-      [GAL_LIBCHECK([$LIBGIT2], [libgit2], [-lgit2])])
+      [LDADD="$LTLIBGIT2 $LDADD"; LIBS="$LIBGIT2 $LIBS"])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_LIBGIT2], [$has_libgit2],
                    [libgit2 is installed on the system])
 AS_IF([test "x$has_libgit2" = "x1"], [], [anywarnings=yes])
-AC_SUBST(HAVE_LIBGIT2, [$has_libgit2])
 
 
 
@@ -471,8 +471,8 @@ AC_SUBST(HAVE_LIBGIT2, [$has_libgit2])
 #
 # Once we know that a library exsits, we need to check if it has some
 # features or not. This must be done _after_ checking the existance of
-# _all_ the libraries, because they may add elements to `LIBS' that causes
-# possibly different versions of the libraries to be read.
+# _all_ the libraries, because they may add elements to `LIBS'/`LDADD' that
+# causes possibly different versions of the libraries to be read.
 
 # GSL's `gsl_interp_steffen' isn't a function. So we'll need to use
 # `AC_LINK_IFELSE'. However, AC_LINK_IFELSE doesn't use `LDADD', so we'll
@@ -940,6 +940,17 @@ AM_CONDITIONAL([COND_WARP],        [test $enable_warp = yes])
 
 
 
+# Reset LIBS to the initial value BEFORE generating the Makefiles (so the
+# modified value doesn't get written into them). Then report the final
+# linking flags and put them in the Makefiles.
+LIBS="$orig_LIBS"
+AC_SUBST(CONFIG_LDADD, [$LDADD])
+AS_ECHO(["linking flags (LDADD) ... $LDADD"])
+
+
+
+
+
 # Tell autoconf what to work on: TEMPLATE cannot be put and then
 # commented here like the cases above, so don't forget to add your new
 # utility name here.
@@ -992,22 +1003,6 @@ AC_SUBST(GUIDEMESSAGE, [$enable_guide_message])
 # portable way of building this directory. We don't want to do it in any of
 # the Makefiles.
 AC_CONFIG_COMMANDS([man page directory], [$MKDIR_P doc/man])
-
-
-
-
-
-# If it was necessary to add run-time linking directories do it. The
-# `ldlibpathnew' variable keeps the directories that have been added to
-# `LD_LIBRARY_PATH' (to inform the user in a message after
-# installation). The updated `LD_LIBRARY_PATH' also has to be sent to the
-# Makefiles for checking specially (when the programs are run).
-AS_IF([test "x$ldlibpathnew" = x], [],
-      [
-        anywarnings=yes
-        AC_SUBST(ldlibpathnew,    [$ldlibpathnew])
-        AC_SUBST(LD_LIBRARY_PATH, [$LD_LIBRARY_PATH])
-      ])
 
 
 
@@ -1104,7 +1099,10 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["  the mandatory and optional dependencies in one command. See the link"])
                AS_ECHO(["  below:"])
                AS_ECHO(["    https://www.gnu.org/s/gnuastro/manual/html_node/Dependencies-from-package-managers.html"])
-               AS_ECHO([])])
+               AS_ECHO([])
+               AS_ECHO(["  All checks related to the warning(s) above will be skipped."])
+               AS_ECHO([])
+              ])
 
         # Notice about PATH: The last two scenarios described below are
         # taken from
@@ -1125,25 +1123,20 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO([]) ])
 
         # Notice about run-time linking.
-        AS_IF([test "x$ldlibpathnew" = x], [],
+        AS_IF([test "x$nldpath" = x], [],
               [AS_ECHO(["  - After installation, to run Gnuastro's programs, your run-time"])
                AS_ECHO(["    link path (LD_LIBRARY_PATH) needs to contain the following "])
                AS_ECHO(["    directory(s):"])
-               AS_ECHO(["        $ldlibpathnew"])
+               AS_ECHO(["        $nldpath"])
                AS_ECHO(["    If there is more than one directory, they are separated with a"])
                AS_ECHO(["    colon (':'). You can check the current value with:"])
                AS_ECHO(["        echo \$LD_LIBRARY_PATH"])
                AS_ECHO(["    If not present, add this line in your shell's startup script"])
                AS_ECHO(["    (for example '~/.bashrc'):"])
-               AS_ECHO(["        export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$ldlibpathnew\""])
+               AS_ECHO(["        export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$nldpath\""])
                AS_ECHO(["    This worning won't cause any problems during the rest of Gnuastro's"])
                AS_ECHO(["    build and installation. But you'll need it later, when you are using"])
                AS_ECHO(["    Gnuastro."])
-               AS_ECHO([]) ])
-
-        # Inform the user on skipped tests.
-        AS_IF([test "x$dependency_notice" = "xyes"],
-              [AS_ECHO(["  All checks related to the warning(s) above will be skipped."])
                AS_ECHO([]) ])
       ]
      )

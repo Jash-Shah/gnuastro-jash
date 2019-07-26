@@ -23,6 +23,13 @@ See the end of the file for license conditions.
      dataset and returns a single-dimension output, containing only the
      unique values in the dataset.
 
+  Crop:
+   - Can also crop 3D datasets (data cubes). A 3D crop has the same syntax
+     as the old 2D mode, only when the dataset is 3D, three coordinates
+     (values, ranges or catalog-columns) should be given to the relevant
+     option. Just note that `--polygon' crops are still not supported in
+     3D.
+
   CosmicCalculator:
    --obsline: alternative way to set the used redshift. With this option
      instead of explicitly giving the redshift, you can give a rest-frame
@@ -126,6 +133,15 @@ See the end of the file for license conditions.
        - gal_tiff_read
        - gal_txt_image_read
 
+  Book:
+   - The two larger tutorials ("General program usage tutorial", and
+     "Detecting large extended targets") have been broken into subsections
+     for easier readability.
+   - The "Hubble visually checks and classifies his catalog" tutorial has
+     been removed because it didn't come with a dataset, so it was hard for
+     people to use. Also, all its operations were already present in the
+     general tutorial.
+
 ** Bugs fixed
   bug #56195: astscript-sort-by-night crashing because of AWK.
   bug #56246: Single-valued measurement must abort with no value in Statistics.
@@ -135,6 +151,10 @@ See the end of the file for license conditions.
   bug #56324: Column metadata not usable when input is from pipe/stdin.
   bug #56424: Warp crashes with empty string given to options.
   bug #56480: Segfault in statistics library's histogram function.
+  bug #56641: MakeProfile's center position changes based on precision.
+  bug #56635: Update tutorial 3 with bug-fixed NoiseChisel.
+  bug #56662: Converting -R to -Wl,-R causes a crash in configure on macOS.
+  bug #56671: Bad sorting with asttable if nan is present.
 
 
 
