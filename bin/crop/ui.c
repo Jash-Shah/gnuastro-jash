@@ -112,6 +112,7 @@ ui_initialize_options(struct cropparams *p,
 
 
   /* Set the necessary common parameters structure. */
+  cp->program_struct     = p;
   cp->program_name       = PROGRAM_NAME;
   cp->program_exec       = PROGRAM_EXEC;
   cp->program_bibtex     = PROGRAM_BIBTEX;
@@ -936,6 +937,7 @@ ui_preparations(struct cropparams *p)
       /* In WCS mode, we need some additional preparations. */
       if(p->mode==IMGCROP_MODE_WCS) wcsmode_check_prepare(p, img);
     }
+
 
   /* Polygon cropping is currently only supported on 2D */
   if(p->imgs->ndim!=2 && p->polygon)

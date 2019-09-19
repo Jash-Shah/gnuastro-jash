@@ -1,21 +1,6 @@
 Alphabetically ordered list to acknowledge in the next release.
 
-Hamed Altafi
-Roberto Baena Gallé
-Zahra Bagheri
-Leindert Boogaard
-Bruno Haible
-Raul Infante-Sainz
-Lee Kelvin
-Elham Saremi
-Zahra Sharbaf
-David Valls-Gabaud
-Michael Wilkinson
-
-
-
-
-
+Raúl Infante Sainz
 
 
 

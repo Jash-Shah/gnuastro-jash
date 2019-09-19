@@ -7,6 +7,45 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Arithmetic:
+   --onedonstdout: when the output is one-dimensional, print the values on
+     the standard output, not into a file.
+
+  CosmicCalculator:
+   --lineatz: return the observed wavelength of a line if it was emitted at
+     the redshift given to CosmicCalculator. You can either use known line
+     names, or directly give a number as any emitted line's wavelength.
+
+  Table:
+   --equal: Output only rows that have a value equal to the given value in
+     the given column. For example `--equal=ID,2,4,5' will select only rows
+     that have a value of 2, 4 and 5 in the `ID' column.
+   --notequal: Output only rows that have a different value compared to the
+     values given to this option in the given column.
+
+** Removed features
+
+** Changed features
+
+** Bugs fixed
+  bug #56736: CosmicCalculator crash when a single value given to --obsline.
+  bug #56747: ConvertType's SLS colormap has black pixels which should be orange.
+  bug #56754: Wrong sigma clipping output when many values are equal.
+
+
+
+
+
+* Noteworthy changes in release 0.10 (library 8.0.0) (2019-08-03) [stable]
+
+** New features
+
+  Installation:
+   - With the the following options at configure time, its possible to
+     build Gnuastro without the optional libraries (even if they are
+     present on the host system): `--without-libjpeg', `--without-libtiff',
+     `--without-libgit2'.
+
   All programs:
    - When an array is memory-mapped to non-volatile space (like the
      HDD/SSD), a warning/message is printed that shows the file name and
@@ -113,25 +152,15 @@ See the end of the file for license conditions.
    - gal_statistics_outlier_flat_cfp: Improved implementation with new API.
    - New `quietmmap' argument added to the following functions (as the
      argument following `minmapsize'). For more, see the description above
-     of the new similarly named option to all programs.
-       - gal_array_read
-       - gal_array_read_to_type
-       - gal_array_read_one_ch
-       - gal_array_read_one_ch_to_type
-       - gal_data_alloc
-       - gal_data_initialize
-       - gal_fits_img_read
-       - gal_fits_img_read_to_type
-       - gal_fits_img_read_kernel
-       - gal_fits_tab_read
-       - gal_jpeg_read
-       - gal_label_indexs
-       - gal_list_data_add_alloc
-       - gal_match_coordinates
-       - gal_pointer_allocate_mmap
-       - gal_table_read
-       - gal_tiff_read
-       - gal_txt_image_read
+     of the new similarly named option to all programs: `gal_array_read'
+     `gal_array_read_to_type', `gal_array_read_one_ch',
+     `gal_array_read_one_ch_to_type', `gal_data_alloc',
+     `gal_data_initialize', `gal_fits_img_read',
+     `gal_fits_img_read_to_type', `gal_fits_img_read_kernel',
+     `gal_fits_tab_read', `gal_jpeg_read', `gal_label_indexs',
+     `gal_list_data_add_alloc', `gal_match_coordinates',
+     `gal_pointer_allocate_mmap', `gal_table_read', `gal_tiff_read' and
+     `gal_txt_image_read'
 
   Book:
    - The two larger tutorials ("General program usage tutorial", and
@@ -155,6 +184,8 @@ See the end of the file for license conditions.
   bug #56635: Update tutorial 3 with bug-fixed NoiseChisel.
   bug #56662: Converting -R to -Wl,-R causes a crash in configure on macOS.
   bug #56671: Bad sorting with asttable if nan is present.
+  bug #56709: Segment crash when input has blanks, but labels don't.
+  bug #56710: NoiseChisel sometimes not including blank values in output.
 
 
 

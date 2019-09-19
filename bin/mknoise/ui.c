@@ -104,6 +104,7 @@ ui_initialize_options(struct mknoiseparams *p,
 
 
   /* Set the necessary common parameters structure. */
+  cp->program_struct     = p;
   cp->program_name       = PROGRAM_NAME;
   cp->program_exec       = PROGRAM_EXEC;
   cp->program_bibtex     = PROGRAM_BIBTEX;
@@ -437,6 +438,7 @@ ui_free_report(struct mknoiseparams *p, struct timeval *t1)
   /* Free the allocated arrays: */
   free(p->cp.hdu);
   free(p->cp.output);
+  gsl_rng_free(p->rng);
   gal_data_free(p->input);
 
   /* Print the final message. */

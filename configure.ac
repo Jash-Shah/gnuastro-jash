@@ -50,7 +50,7 @@ AC_CONFIG_MACRO_DIRS([bootstrapped/m4])
 
 # Library version, see the GNU Libtool manual ("Library interface versions"
 # section for the exact definition of each) for
-GAL_CURRENT=8
+GAL_CURRENT=9
 GAL_REVISION=0
 GAL_AGE=0
 GAL_LT_VERSION="${GAL_CURRENT}:${GAL_REVISION}:${GAL_AGE}"
@@ -251,82 +251,6 @@ AC_MSG_RESULT( $path_warning )
 
 
 
-# GAL_LIBCHECK([$LIBNAME], [libname], [-lname])
-# ---------------------------------------------
-#
-# Custom macro to correct LIBS and LD_LIBRARY_PATH when necessary.
-#   1) LIB<NAME> output of AC_LIB_HAVE_LINKFLAGS (e.g., `LIBGSL').
-#   2) lib<name> of the library (e.g., `libgsl').
-#   3) Full list of libraries to link with (e.g., `-lgsl -lgslcblas').
-#
-# To understand this, have in mind that when the library can be linked in
-# the standard search path without conflict, the output of
-# `AC_LIB_HAVE_LINKFLAGS' is going to be the actual linking command (like
-# `-lgsl -lgslcblas'). Otherwise, it will actually return the absolute
-# shared library address (for example `/some/directory/libgsl.so').
-#
-# So when `AC_LIB_HAVE_LINKFLAGS' returns a string containing `lib<name>',
-# it has found the shared library and we must add its directory to
-# LD_LIBRARY_PATH.
-AC_DEFUN([GAL_LIBCHECK],
-[
-  n=`AS_ECHO([$1]) | grep $2`;
-  AS_IF([test "x$n" = x],
-        [LIBS="$1 $LIBS"],
-        [
-          # Go through all the tokens of `AC_LIB_HAVE_LINKFLAGS'.
-          for token in $1; do
-            d="";
-
-            # See if this token has `lib<name' in it. If it does, then
-            # we'll have to extract the directory.
-            a=`AS_ECHO([$token]) | grep $2`
-            AS_IF([test "x$a" = x], [],
-                  [
-                    # Use `lib<name>' as a delimiter to extract the
-                    # library (the first token will be the library's
-                    # directory).
-                    n=`AS_ECHO([$token]) | sed 's/\/'$2'/ /g'`
-                    for b in $n; do d=$b; break; done
-                  ])
-
-             # If a directory was found, then stop parsing tokens.
-             AS_IF([test "x$d" = x], [], [break])
-          done;
-
-          # Add the necessary linking flags to LIBS with the proper `-L'
-          # (when necessary) to find them.
-          AS_IF( [ test "x$d" = x ],
-                 [LIBS="$3 $LIBS"],
-                 [LIBS="-L$d $3 $LIBS"] )
-
-          # Add the directory to LD_LIBRARY_PATH (if necessary). Go
-          # through all the directories in LD_LIBRARY_PATH and if the
-          # library doesn't exist add it to the end.
-          nldp="";
-          exists=0;
-          for i in `AS_ECHO(["$LD_LIBRARY_PATH"]) | sed "s/:/ /g"`; do
-            AS_IF([test "x$d" = "x$i"],[exists=1])
-            AS_IF([test "x$nldp" = x],[nldp=$i],[nldp="$nldp:$i"])
-          done
-
-          # If the directory doesn't already exist in LD_LIBRARY_PATH, then
-          # add it.
-          AS_IF([test $exists = 0],
-                [
-                  nldp="$nldp:$d"
-                  AS_IF([test "x$ldlibpathnew" = x],
-                        [ldlibpathnew="$d"],
-                        [ldlibpathnew="$ldlibpathnew:$d"])
-                ])
-          LD_LIBRARY_PATH=$nldp
-        ])
-])
-
-
-
-
-
 # Libraries
 # ---------
 #
@@ -416,14 +340,19 @@ AS_IF([test "x$LIBWCS" = x],
       [LDADD="$LTLIBWCS $LDADD"; LIBS="$LIBWCS $LIBS"])
 
 
-AC_LIB_HAVE_LINKFLAGS([jpeg], [], [
+AC_ARG_WITH([libjpeg],
+            [AS_HELP_STRING([--without-libjpeg],
+                            [disable support for libjpeg])],
+            [], [with_libjpeg=yes])
+AS_IF([test "x$with_libjpeg" != xno],
+      [ AC_LIB_HAVE_LINKFLAGS([jpeg], [], [
 #include <stdio.h>
 #include <stdlib.h>
 #include <jpeglib.h>
 void junk(void) {
   struct jpeg_decompress_struct cinfo;
   jpeg_create_decompress(&cinfo);
-}  ])
+} ]) ])
 AS_IF([test "x$LIBJPEG" = x],
       [missing_optional_lib=yes; has_libjpeg=no; anywarnings=yes],
       [LDADD="$LTLIBJPEG $LDADD"; LIBS="$LIBJPEG $LIBS"])
@@ -435,14 +364,18 @@ AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
 # the LZMA library. But if libtiff hasn't been linked with it and its
 # present, there is no problem, the linker will just pass over it. So we
 # don't need to stop the build if this fails.
-AC_LIB_HAVE_LINKFLAGS([lzma], [], [#include <lzma.h>])
+AC_ARG_WITH([libtiff],
+            [AS_HELP_STRING([--without-libtiff],
+                            [disable support for libtiff])],
+            [], [with_libtiff=yes])
+AS_IF([test "x$with_libtiff" != xno],
+      [ AC_LIB_HAVE_LINKFLAGS([lzma], [], [#include <lzma.h>])
+        AC_LIB_HAVE_LINKFLAGS([tiff], [], [
+#include <tiffio.h>
+void junk(void) {TIFF *tif=TIFFOpen("junk", "r");} ])
+      ])
 AS_IF([test "x$LIBLZMA" = x], [],
       [LDADD="$LTLIBLZMA $LDADD"; LIBS="$LIBLZMA $LIBS"])
-
-AC_LIB_HAVE_LINKFLAGS([tiff], [], [
-#include <tiffio.h>
-void junk(void) {TIFF *tif=TIFFOpen("junk", "r");}
-])
 AS_IF([test "x$LIBTIFF" = x],
       [missing_optional_lib=yes; has_libtiff=no; anywarnings=yes],
       [LDADD="$LTLIBTIFF $LDADD"; LIBS="$LIBTIFF $LIBS"])
@@ -451,10 +384,15 @@ AM_CONDITIONAL([COND_HASLIBTIFF], [test "x$has_libtiff" = "xyes"])
 
 # Check libgit2. Note that very old versions of libgit2 don't have the
 # `git_libgit2_init' function.
-AC_LIB_HAVE_LINKFLAGS([git2], [], [
+AC_ARG_WITH([libgit2],
+            [AS_HELP_STRING([--without-libgit2],
+                            [disable support for libgit2])],
+            [], [with_libgit2=yes])
+AS_IF([test "x$with_libgit2" != xno],
+      [ AC_LIB_HAVE_LINKFLAGS([git2], [], [
 #include <git2.h>
-void junk(void) {git_libgit2_init();}
-])
+void junk(void) {git_libgit2_init();} ])
+      ])
 AS_IF([test "x$LIBGIT2" = x],
       [missing_optional_lib=yes; has_libgit2=0],
       [LDADD="$LTLIBGIT2 $LDADD"; LIBS="$LIBGIT2 $LIBS"])
@@ -945,6 +883,7 @@ AM_CONDITIONAL([COND_WARP],        [test $enable_warp = yes])
 # linking flags and put them in the Makefiles.
 LIBS="$orig_LIBS"
 AC_SUBST(CONFIG_LDADD, [$LDADD])
+AM_CONDITIONAL([COND_NORPATH], [test "x$enable_rpath" = "xno"])
 AS_ECHO(["linking flags (LDADD) ... $LDADD"])
 
 
@@ -1042,23 +981,26 @@ AS_IF([test x$enable_guide_message = xyes],
         AS_IF([test "x$has_libjpeg" = "xno"],
               [dependency_notice=yes
                AS_ECHO(["  - libjpeg (http://ijg.org), could not be linked with in your library"])
-               AS_ECHO(["    search path. If JPEG inputs/outputs are requested, the respective"])
-               AS_ECHO(["    tool will inform you and abort with an error."])
+               AS_ECHO(["    search path, or is manually disabled. If JPEG inputs/outputs are"])
+               AS_ECHO(["    requested, the respective tool will inform you and abort with an"])
+               AS_ECHO(["    error."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_libtiff" = "xno"],
               [dependency_notice=yes
                AS_ECHO(["  - libtiff (http://libtiff.maptools.org), could not be linked with in"])
-               AS_ECHO(["    your library search path. If TIFF inputs/outputs are requested, the"])
-               AS_ECHO(["    respective tool will inform you and abort with an error."])
+               AS_ECHO(["    your library search path, or is manually disabled. If TIFF"])
+               AS_ECHO(["    inputs/outputs are requested, the respective tool will inform"])
+               AS_ECHO(["    you and abort with an error."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_libgit2" = "x0"],
               [dependency_notice=yes
                AS_ECHO(["  - libgit2 (https://libgit2.org), could not be linked with in your"])
-               AS_ECHO(["    library search path. When present, Git's describe output will be"])
-               AS_ECHO(["    stored in the output files if Gnuastro's programs were called"])
-               AS_ECHO(["    within a Gitversion controlled directory to help in reproducibility."])
+               AS_ECHO(["    library search path, or is manually disabled. When present, Git's"])
+               AS_ECHO(["    describe output will be stored in the output files if Gnuastro's"])
+               AS_ECHO(["    programs were called within a Gitversion controlled directory to"])
+               AS_ECHO(["    help in reproducibility."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$usable_libtool" = "xno"],
@@ -1120,23 +1062,6 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    a \`./' before it's name. Run the following command after"])
                AS_ECHO(["    installing Gnuastro to learn more about PATH:"])
                AS_ECHO(["        $ info gnuastro \"Installation directory\""])
-               AS_ECHO([]) ])
-
-        # Notice about run-time linking.
-        AS_IF([test "x$nldpath" = x], [],
-              [AS_ECHO(["  - After installation, to run Gnuastro's programs, your run-time"])
-               AS_ECHO(["    link path (LD_LIBRARY_PATH) needs to contain the following "])
-               AS_ECHO(["    directory(s):"])
-               AS_ECHO(["        $nldpath"])
-               AS_ECHO(["    If there is more than one directory, they are separated with a"])
-               AS_ECHO(["    colon (':'). You can check the current value with:"])
-               AS_ECHO(["        echo \$LD_LIBRARY_PATH"])
-               AS_ECHO(["    If not present, add this line in your shell's startup script"])
-               AS_ECHO(["    (for example '~/.bashrc'):"])
-               AS_ECHO(["        export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$nldpath\""])
-               AS_ECHO(["    This worning won't cause any problems during the rest of Gnuastro's"])
-               AS_ECHO(["    build and installation. But you'll need it later, when you are using"])
-               AS_ECHO(["    Gnuastro."])
                AS_ECHO([]) ])
       ]
      )
