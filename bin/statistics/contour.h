@@ -1,6 +1,6 @@
 /*********************************************************************
-Table - View and manipulate a FITS table structures.
-Table is part of GNU Astronomy Utilities (Gnuastro) package.
+Statistics - Statistical analysis on input dataset.
+Statistics is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
@@ -20,42 +20,12 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef ARITHMETIC_H
-#define ARITHMETIC_H
-
-
-#include <gnuastro/arithmetic.h>
-
-
-/* Basic constants. */
-#define ARITHMETIC_CALL "arith "
-#define ARITHMETIC_CALL_LENGTH strlen(ARITHMETIC_CALL)
-
-
-/* Operators used for arithmetic on columns. */
-enum arithmetic_operators
-{
- ARITHMETIC_TABLE_OP_WCSTOIMG = GAL_ARITHMETIC_OP_LAST_CODE,
- ARITHMETIC_TABLE_OP_IMGTOWCS,
- ARITHMETIC_TABLE_OP_ANGULARDISTANCE,
-};
-
-
-
-
-
-
-
-/* Functions */
-void
-arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
-                gal_list_str_t **toread, size_t *totcalled, char *expression);
+#ifndef CONTOUR_H
+#define CONTOUR_H
 
 void
-arithmetic_indexs_final(struct tableparams *p, size_t *colmatch);
+contour(struct statisticsparams *p);
 
-void
-arithmetic_operate(struct tableparams *p);
 
 
 #endif

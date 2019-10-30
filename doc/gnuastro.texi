@@ -1097,7 +1097,8 @@ Please take the time to have a look at the following essays and FAQs for a compl
 @cindex Linux
 @cindex GNU/Linux
 @cindex GNU C library
-@cindex GNU Compiler Collection
+@cindex GCC: GNU Compiler Collection
+@cindex GNU Compiler Collection (GCC)
 In short, the Linux kernel@footnote{In Unix-like operating systems, the kernel connects software and hardware worlds.} is built using the GNU C library (glibc) and GNU compiler collection (gcc).
 The Linux kernel software alone is just a means for other software to access the hardware resources, it is useless alone: to say ``running Linux'', is like saying ``driving your carburetor''.
 
@@ -7728,6 +7729,14 @@ This is because of the unique position the first FITS extension has in the FITS 
 @item --primaryimghdu
 Copy or cut an image HDU to the zero-th HDU/extension a file that doesn't yet exist.
 This option is thus irrelevant if the output file already exists or the copied/cut extension is a FITS table.
+For example with the commands below, first we make sure that @file{out.fits} doesn't exist, then we copy the first extension of @file{in.fits} to the zero-th extension of @file{out.fits}.
+
+@example
+$ rm -f out.fits
+$ astfits in.fits --copy=1 --primaryimghdu --output=out.fits
+@end example
+
+If we hadn't used @option{--primaryimghdu}, then the zero-th extension of @file{out.fits} would have no data, and its second extension would host the copied image (just like any other output of Gnuastro).
 
 @end table
 
@@ -8397,7 +8406,7 @@ To print to the standard output, set the output name to `@file{stdout}'.
 @cindex Image
 @cindex Color
 @cindex Pixels
-@cindex Colorspace
+@cindex Colormap
 @cindex Primary colors
 Color is defined by mixing various measurements/filters.
 In digital monitors or common digital cameras, colors are displayed/stored by mixing the three basic colors of red, green and blue (RGB) with various proportions.
@@ -8417,8 +8426,8 @@ In ConvertType, you can do this by giving each separate single-channel dataset (
 
 @cindex Grayscale
 @cindex Visualization
-@cindex Colorspace, HSV
-@cindex Colorspace, gray-scale
+@cindex Colormap, HSV
+@cindex Colormap, gray-scale
 @cindex HSV: Hue Saturation Value
 As discussed above, color is not defined when a dataset/image contains a single value for each pixel.
 However, we interact with scientific datasets through monitors or printers (which allow multiple values per pixel and produce color with them).
@@ -8474,8 +8483,8 @@ One line examples:
 ## Convert an image in FITS to PDF:
 $ astconvertt image.fits --output=pdf
 
-## Similar to before, but use the SLS color map:
-$ astconvertt image.fits --colormap=sls --output=pdf
+## Similar to before, but use the Viridis color map:
+$ astconvertt image.fits --colormap=viridis --output=pdf
 
 ## Convert an image in JPEG to FITS (with multiple extensions
 ## if its color):
@@ -8605,11 +8614,17 @@ However, you can limit the range of hue (to show only a special color range) by 
 The mapping of a single-channel dataset to HSV is done through the Hue and Value elements: Lower dataset elements have lower ``value'' @emph{and} lower ``hue''.
 This creates darker colors for fainter parts, while also respecting the range of colors.
 
+@item viridis
+@cindex matplotlib
+@cindex Colormap: Viridis
+@cindex Viridis: Colormap
+Viridis is the default colormap of the popular Matplotlib module of Python and available in many other visualization tools like PGFPlots.
+
 @item sls
 @cindex DS9
 @cindex SAO DS9
 @cindex SLS Color
-@cindex Colorspace: SLS
+@cindex Colormap: SLS
 The SLS color range, taken from the commonly used @url{http://ds9.si.edu,SAO DS9}.
 The advantage of this color range is that it ranges from black to dark blue, and finishes with red and white.
 So unlike the HSV color range, it includes black and white and brighter colors (like yellow, red and white) show the larger values.
@@ -8801,6 +8816,35 @@ $ asttable table.fits -cID,RA -cDEC \
 
 @item imgtowcs
 Similar to @code{wcstoimg}, except that image/dataset coordinates are converted to WCS coordinates.
+
+@item angular-distance
+Return the spherical angular distance (along a great circle, in degrees) between the given two points.
+Note that each point needs two coordinates (in degrees), so this operator needs four operands.
+The first and second popped operands are considered to belong to one point and the third and fourth popped operands to the second point.
+
+Each of the input points can be a single coordinate or a full table column (containing many points.
+In other words, the following commands are all valid:
+
+@example
+$ asttable table.fits \
+           -c"arith RA1 DEC1 RA2 DEC2 angular-distance"
+$ asttable table.fits \
+           -c"arith RA DEC 12.345 6.789 angular-distance"
+$ asttable table.fits \
+           -c"arith 12.345 6.789 RA DEC angular-distance"
+@end example
+
+In the first case we are assuming that @file{table.fits} has the following four columns @code{RA1}, @code{DEC1}, @code{RA2}, @code{DEC2}.
+The returned column by this operator would be the difference between two points in each row with coordinates like the following (@code{RA1}, @code{DEC1}) and (@code{RA2}, @code{DEC2}).
+In other words, for each row, the angular distance between different points is calculated.
+
+In the second and third cases (which are identical), it is assumed that @file{table.fits} has the two columns @code{RA} and @code{DEC}.
+The returned column by this operator will be the difference of each row with the fixed point of (12.345, 6.789).
+
+The distance (along a great circle) on a sphere between two points is calculated with the equation below, where @mymath{r_1}, @mymath{r_2}, @mymath{d_1} and @mymath{d_2} are the right ascensions and declinations of points 1 and 2.
+
+@dispmath {\cos(d)=\sin(d_1)\sin(d_2)+\cos(d_1)\cos(d_2)\cos(r_1-r_2)}
+
 @end table
 
 
@@ -9858,6 +9902,25 @@ Similar to @option{collapse-sum}, but the returned dataset will have the same nu
 
 @item collapse-max
 Similar to @option{collapse-sum}, but the returned dataset will have the same numeric type as the input and will contain the maximum value for each pixel along the collapsed dimension.
+
+@item add-dimension
+Build a higher-dimensional dataset from all the input datasets stacked after one another (along the slowest dimension).
+The first popped operand has to be a single number.
+It is used by the operator to know how many operands it should pop from the stack (and the size of the output in the new dimension).
+The rest of the operands must have the same size and numerical data type.
+This operator currently only works for 2D input operands, please contact us if you want inputs to have different dimensions.
+
+The output's WCS (which should have a different dimensionality compared to the inputs) can be read from another file with the @option{--wcsfile} option.
+If no file is specified for the WCS, the first dataset's WCS will be used, you can later add/change the necessary WCS keywords with the FITS keyword modification features of the Fits program (see @ref{Fits}).
+
+If your datasets don't have the same type, you can use the type transformation operators of Arithmetic that are discussed below.
+Just beware of overflow if you are transforming to a smaller type, see @ref{Numeric data types}.
+
+For example if you want to put the three @file{img1.fits}, @file{img2.fits} and @file{img3.fits} images (each a 2D dataset) into one 3D datacube, you can use this command:
+
+@example
+$ astarithmetic img1.fits img2.fits img3.fits 3 add-dimension
+@end example
 
 @item unique
 Remove all duplicate (and blank) elements from the first popped operand.
@@ -12594,6 +12657,19 @@ If the @option{--oneelempertile} option is called, then one element/pixel will b
 Otherwise, the output will have the same size as the input, but each element will have the value corresponding to that tile's value.
 If multiple single valued operations are called, then for each operation there will be one extension in the output FITS file.
 
+@item -R FLT[,FLT[,FLT...]]
+@itemx --contour=FLT[,FLT[,FLT...]]
+@cindex Contour
+@cindex Plot: contour
+Write the contours for the requested levels in a file ending with @file{_contour.txt}.
+It will have three columns: the first two are the coordinates of each point and the third is the level it belongs to (one of the input values).
+Each disconnected contour region will be separated by a blank line.
+This is the requested format for adding contours with PGFPlots in @LaTeX{}.
+If any other format can be useful for your work please let us know so we can add it.
+If the image has World Coordinate System information, the written coordinates will be in RA and Dec, otherwise, they will be in pixel coordinates.
+
+Note that currently, this is a very crude/simple implementation, please let us know if you find problematic situations so we can fix it.
+
 @item -y
 @itemx --sky
 Estimate the Sky value on each tile as fully described in @ref{Quantifying signal in a tile}.
@@ -14013,7 +14089,6 @@ images}.
 
 
 
-
 @node MakeCatalog, Match, Segment, Data analysis
 @section MakeCatalog
 
@@ -15399,7 +15474,6 @@ The first number is the semi-major axis.
 The second and third are the two axis ratios.
 The last three are the three Euler angles in units of degrees in the ZXZ order as fully described in @ref{Defining an ellipse and ellipsoid}.
 @end table
-
 @end table
 @end table
 
@@ -17648,8 +17722,8 @@ When the unified product has a @code{main} function, this function is the produc
 When the product doesn't have a @code{main} function, the linker's product is a library and its exported functions can be linked to other executables (it has many entry points).
 @end enumerate
 
-@cindex GCC
-@cindex GNU Compiler Collection
+@cindex GCC: GNU Compiler Collection
+@cindex GNU Compiler Collection (GCC)
 The GNU Compiler Collection (or GCC for short) will do all three steps.
 So as a first example, from Gnuastro's source, go to @file{tests/lib/}.
 This directory contains the library tests, you can use these as some simple tutorials.
@@ -17743,11 +17817,17 @@ $ astbuildprog --onlybuild myprogram.c
 @end example
 
 If BuildProgram is to run, it needs a C programming language source file as input.
-By default it will compile and link the program to build the a final executable file and run it.
+By default it will compile and link the given source into a final executable program and run it.
 The built executable name can be set with the optional @option{--output} option.
-When no output name is set, BuildProgram will use Gnuastro's @ref{Automatic output}, and remove the suffix of the input and use that as the output name.
+When no output name is set, BuildProgram will use Gnuastro's @ref{Automatic output} system to remove the suffix of the input source file (usually @file{.c}) and use the resulting name as the built program name.
+
 For the full list of options that BuildProgram shares with other Gnuastro programs, see @ref{Common options}.
 You may also use Gnuastro's @ref{Configuration files} to specify other libraries/headers to use for special directories and not have to type them in every time.
+
+The C compiler can be chosen with the @option{--cc} option, or environment variables, please see the description of @option{--cc} for more.
+The two common @code{LDFLAGS} and @code{CPPFLAGS} environment variables are also checked and used in the build by default.
+Using environment variables can be disabled with the @option{--noenv} option.
+Just note that BuildProgram also keeps the important flags in these environment variables in its configuration file, so in many cases, when you needed them to build Gnuastro, you won't need them in BuildProgram.
 
 The first argument is considered to be the C source file that must be compiled and linked.
 Any other arguments (non-option tokens on the command-line) will be passed onto the program when BuildProgram wants to run it.
@@ -17759,6 +17839,19 @@ When the @option{--quiet} option (see @ref{Operating mode options}) is not calle
 Once your program grows and you break it up into multiple files (which are much more easily managed with Make), you can use the linking flags of the non-quiet output in your @code{Makefile}.
 
 @table @option
+@item -c STR
+@itemx --cc=STR
+@cindex C compiler
+@cindex Compiler, C
+@cindex GCC: GNU Compiler Collection
+@cindex GNU Compiler Collection (GCC)
+C compiler to use for the compilation, if not given environment variables will be used as described in the next paragraph.
+If the compiler is in your systems's search path, you can simply give its name, for example @option{--cc=gcc}.
+If its not in your system's search path, you can give its full path, for example @option{--cc=/path/to/your/custom/cc}.
+
+If this option has no value after parsing the command-line and all configuration files (see @ref{Configuration file precedence}), then BuildProgram will look into the following environment variables in the given order @code{CC} and @code{GCC}.
+If they are also not defined, BuildProgram will ultimately default to the @command{gcc} command which is present in many systems (sometimes as a link to other compilers).
+
 @item -I STR
 @itemx --includedir=STR
 @cindex GNU CPP
@@ -17796,7 +17889,8 @@ See @ref{Linking} for a thorough introduction.
 @item -O INT/STR
 @itemx --optimize=INT/STR
 @cindex Optimization
-@cindex GNU Compiler Collection
+@cindex GCC: GNU Compiler Collection
+@cindex GNU Compiler Collection (GCC)
 Compiler optimization level: 0 (for no optimization, good debugging), 1, 2, 3 (for the highest level of optimizations).
 From the GNU Compiler Collection (GCC) manual: ``Without any optimization option, the compiler's goal is to reduce the cost of compilation and to make debugging produce the expected results.
 Statements are independent: if you stop the program with a break point between statements, you can then assign a new value to any variable or change the program counter to any other statement in the function and get exactly the results you expect from the source code.
@@ -17844,6 +17938,15 @@ Use the given @file{.la} file (Libtool control file) instead of the one that was
 The Libtool control file keeps all the necessary information for building and linking a program with a library built by Libtool.
 The default @file{prefix/lib/libgnuastro.la} keeps all the information necessary to build a program using the Gnuastro library gathered during configure time (see @ref{Installation directory} for prefix).
 This option is useful when you prefer to use another Libtool control file.
+
+@item -e
+@itemx --noenv
+@cindex @code{CC}
+@cindex @code{GCC}
+@cindex @code{LDFLAGS}
+@cindex @code{CPPFLAGS}
+Don't use environment variables in the build, just use the values given to the options.
+As described above, environment variables like @code{CC}, @code{GCC}, @code{LDFLAGS},  @code{CPPFLAGS} will be read by default and used in the build if they have been defined.
 @end table
 
 
@@ -23794,6 +23897,12 @@ non-zero pixels in @code{binary} will be considered as foreground (and will
 be labeled). Blank pixels in the input will also be blank in the output.
 @end deftypefun
 
+@deftypefun {gal_data_t *} gal_binary_connected_indexs(gal_data_t @code{*binary}, int @code{connectivity})
+Build a @code{gal_data_t} linked list, where each node of the list contains an array with indexs of the connected regions.
+Therefore the arrays of each node can have a different size.
+Note that the indexs will only be calculated on the pixels with a value of 1 and internally, it will temporarily change the values to 2 (and return them back to 1 in the end).
+@end deftypefun
+
 @deftypefun {gal_data_t *} gal_binary_connected_adjacency_matrix (gal_data_t @code{*adjacency}, size_t @code{*numconnected})
 @cindex Adjacency matrix
 @cindex Matrix, adjacency
@@ -25322,7 +25431,8 @@ functions that don't define too many variables and whose only purpose is to
 run the lower-level functions in a specific order and with checks.
 
 @cindex Optimization flag
-@cindex GNU Compiler Collection
+@cindex GCC: GNU Compiler Collection
+@cindex GNU Compiler Collection (GCC)
 In general you can be very liberal in breaking up the functions into
 smaller parts, the GNU Compiler Collection (GCC) will automatically compile
 the functions as inline functions when the optimizations are turned on. So

@@ -8,13 +8,68 @@ See the end of the file for license conditions.
 ** New features
 
   Arithmetic:
+   - The new `add-dimension' operator will stack the popped operands in a
+     higher-dimensional dataset. For example to build a 3D cube from
+     individual 2D images/slices.
    --onedonstdout: when the output is one-dimensional, print the values on
      the standard output, not into a file.
+
+  BuildProgram:
+   - Will use common environment variables like LDFLAGS, CPPFLAGS and CC to
+     help in customizing the build of your program.
+   --cc: custom C compiler to use. Until now, `gcc' was hard-coded into the
+     source and there was no way to choose a custom C compiler.
+   --noenv: With this option, no environment variables will be read.
+
+  ConvertType:
+   - New `viridis' colormap (value for the `--colormap' option). This is
+     the default colormap of Python's Matplotlib, and is available in many
+     other plotting tools like LaTeX's PGFPlots.
+
+  Convolve:
+   - Spatial domain convolution now possible on 3D data cubes (with a 3D
+     kernel).
 
   CosmicCalculator:
    --lineatz: return the observed wavelength of a line if it was emitted at
      the redshift given to CosmicCalculator. You can either use known line
      names, or directly give a number as any emitted line's wavelength.
+
+  MakeCatalog:
+   - Catalogs from 3D inputs now available, with the following new options,
+     see book for more.
+     --spectrum: label's spectrum (across the third dimension).
+     --z: Flux-weighted position in 3rd dimension.
+     --geoz: Geometric center in third FITS axis.
+     --minz: Minimum third FITS axis position.
+     --maxz: Maximum third FITS axis position.
+     --clumpsz: Flux weighted center of all clumps in object in 3rd dim.
+     --clumpsgeoz: Geometric center of all clumps in object in 3rd dim.
+     --w3: Flux weighted center in third WCS axis.
+     --geow3: Geometric center in third WCS axis.
+     --clumpsw3: Flux wheighted center of all clumps in 3rd dim.
+     --clumpsgeow3: Geometric center of all clumps in 3rd dim.
+     --areaxy: Projected area in first two dimentions.
+     --geoareaxy: Projected geoarea in first two dimensions.
+
+  MakeProfiles:
+   - Can produce mock ellipsoids in a datacube (using X-Z-X Euler angles
+     for 3D orientation), the following options have been added, see the
+     book for more details.
+     --p2col: Second Euler angle (X-Z-X order).
+     --p3col: Third Euler angle (X-Z-X order).
+     --q2col: Axis ratio (major/dim3 in 3D).
+   - The `--kernel' option can build 3D kernels, see the description of
+     this option in the book for examples and details on how to run it.
+
+  Match:
+   - Matching of catalogs now possible using 3 coordinates (on catalogs
+     generated from 3D data cubes), see book for more.
+
+  Statistics:
+   --contour: compute a contour plot which can be directly fed into the
+     PGFPlots package of LaTeX for plotting the contours. Support for more
+     formats will be added based on the need/request.
 
   Table:
    --equal: Output only rows that have a value equal to the given value in
@@ -22,6 +77,16 @@ See the end of the file for license conditions.
      that have a value of 2, 4 and 5 in the `ID' column.
    --notequal: Output only rows that have a different value compared to the
      values given to this option in the given column.
+   - Column Arithmetic operators:
+     - `angular-distance': a new operator to easily find the angular
+       distance (along a great circle) between points in various table
+       columns, or the distances of all the points in the table rows with a
+       fixed point. See the book for examples and better explanation.
+
+  Library:
+   - gal_binary_connected_indexs: store indexs of connected components.
+   - gal_box_bound_ellipsoid_extent: Extent of 3D ellipsoid.
+   - gal_box_bound_ellipsoid: Bounding box for a 3D ellipsoid.
 
 ** Removed features
 
@@ -31,6 +96,9 @@ See the end of the file for license conditions.
   bug #56736: CosmicCalculator crash when a single value given to --obsline.
   bug #56747: ConvertType's SLS colormap has black pixels which should be orange.
   bug #56754: Wrong sigma clipping output when many values are equal.
+  bug #56999: Compilation error on macOS 10.9 not recognizing AT_FDCWD.
+  bug #57057: BuildProgram not using environment LDFLAGS or CPPFLAGS.
+  bug #57101: Crop segmentation fault when no overlap exists in image-mode.
 
 
 

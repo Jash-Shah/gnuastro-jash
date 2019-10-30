@@ -32,6 +32,20 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 struct argp_option program_options[] =
   {
     {
+      "cc",
+      UI_KEY_CC,
+      "STR",
+      0,
+      "Name of C compiler's executable.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->cc,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+    {
       "includedir",
       UI_KEY_INCLUDE,
       "STR",
@@ -96,6 +110,20 @@ struct argp_option program_options[] =
       GAL_OPTIONS_GROUP_INPUT,
       &p->tag,
       GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+    {
+      "noenv",
+      UI_KEY_NOENV,
+      0,
+      0,
+      "No env. (e.g., LDFLAGS or CPPFLAGS) in build.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->noenv,
+      GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET

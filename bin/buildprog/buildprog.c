@@ -75,6 +75,7 @@ buildprog(struct buildprogparams *p)
      rest are arguments to be run later. */
   int retval;
   char *fullla;
+  char *ldflags=NULL, *cppflags=NULL;
   char *command, *optimize=NULL, *warning=NULL;
   char *include   = buildprog_as_one_string("-I", p->include);
   char *linkdir   = buildprog_as_one_string("-L", p->linkdir);
@@ -86,6 +87,13 @@ buildprog(struct buildprogparams *p)
     {
       printf("\nCompiling and linking the program\n");
       printf("---------------------------------\n");
+    }
+
+  /* If environment should be read, read it. */
+  if(p->noenv==0)
+    {
+      ldflags=getenv("LDFLAGS");
+      cppflags=getenv("CPPFLAGS");
     }
 
   /* Compiler options with values: */
@@ -103,17 +111,20 @@ buildprog(struct buildprogparams *p)
       error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
   /* Write the full Libtool command into a string (to run afterwards). */
-  if( asprintf(&command, "%s -c \"%s %s %s%s --mode=link gcc %s %s "
-               "%s %s %s %s %s -I%s %s -o %s\"",
+  if( asprintf(&command, "%s -c \"%s %s %s%s --mode=link %s %s %s "
+               "%s %s %s %s %s %s %s -I%s %s -o %s\"",
                GAL_CONFIG_GNULIBTOOL_SHELL,
                GAL_CONFIG_GNULIBTOOL_EXEC,
                p->cp.quiet ? "--quiet" : "",
-               p->tag      ? "--tag="   : "",
+               p->tag      ? "--tag="  : "",
                p->tag      ? p->tag    : "",
+               p->cc,
                warning     ? warning   : "",
                p->debug    ? "-g"      : "",
                optimize    ? optimize  : "",
+               cppflags    ? cppflags  : "",
                include     ? include   : "",
+               ldflags     ? ldflags   : "",
                linkdir     ? linkdir   : "",
                p->sourceargs->v,
                linklib     ?linklib    : "",

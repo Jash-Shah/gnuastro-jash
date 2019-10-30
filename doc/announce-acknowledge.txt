@@ -1,6 +1,9 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Hamed Altafi
+Alexey Dokuchaev
 Raúl Infante Sainz
+Sebastián Luna Valero
 
 
 
