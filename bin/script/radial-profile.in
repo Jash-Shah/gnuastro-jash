@@ -1,0 +1,335 @@
+#!/bin/sh
+
+# Obtain averaged radial profiles, run with `--help', or see description
+# under `print_help' (below) for more.
+#
+# Original author:
+#   Copyright (C) 2020   Raul Infante-Sainz <infantesainz@gmail.com>
+# Contributing author(s):
+#   Copyright (C) 2020   Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Copyright (C) 2020, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+# Exit the script in the case of failure
+set -e
+
+
+
+
+
+# Default option values (can be changed with options on the
+# command-line).
+hdu=1
+rmin=1
+rmax=10
+mode=img
+x=center
+y=center
+m=median
+Q=0
+p=0
+w=1
+k=1
+quiet=0
+prefix=./
+version=0.11
+scriptname=astscript-radial-profile
+
+# Axis ratio
+# Position angle
+# Circum width
+
+
+
+
+
+# Output of `--usage' and `--help':
+print_usage() {
+    cat <<EOF
+$scriptname: run with '--help' for list of options
+EOF
+}
+
+print_help() {
+    cat <<EOF
+Usage: $scriptname [OPTION] FITS-files
+
+This script is part of GNU Astronomy Utilities $version.
+
+This script will consider the input image for constructing the radial
+profile around a given center with elliptical apertures.
+
+For more information, please run any of the following commands. In
+particular the first contains a very comprehensive explanation of this
+script's invocation: expected input(s), output(s), and a full description
+of all the options.
+
+     Inputs/Outputs and options:           $ info $scriptname
+     Full Gnuastro manual/book:            $ info gnuastro
+
+If you couldn't find your answer in the manual, you can get direct help from
+experienced Gnuastro users and developers. For more information, please run:
+
+     $ info help-gnuastro
+
+$scriptname options:
+ Input:
+  -h, --hdu=STR           HDU/extension of all input FITS files.
+  -O, --mode=STR          Coordinate mode `img' or `wcs'.
+  -x, --xcenter=FLT       Coordinate of the center along the first axis.
+  -y, --ycenter=FLT       Coordinate of the center along the second axis.
+  -r, --rmin=FLT          Minimum radius for the radial profiles (in pixels).
+  -R, --rmax=FLT          Maximum radius for the radial profiles (in pixels).
+  -Q, --qratio=FLT        Axis ratio for ellipse apertures (A/B).
+  -p, --pangle=FLT        Position angle for ellipse apertures.
+  -m, --measure=STR       Operator for measuring the parameter (mean, median, etc.).
+  -a, --cprofiles=STR     Configuration file for astmkprof.
+  -c, --ccatalog=STR      Configuration file for astmkcatalog.
+
+ Output:
+  -k, --keeptemp          Keep temporal/auxiliar files.
+  -k, --keeptemp          Keep temporal/auxiliar files.
+
+ Operating mode:
+  -h, --help              Print this help list.
+      --cite              BibTeX citation for this program.
+  -q, --quiet             Don't print the list.
+  -V, --version           Print program version.
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+GNU Astronomy Utilities home page: http://www.gnu.org/software/gnuastro/
+
+Report bugs to bug-gnuastro@gnu.org.
+EOF
+}
+
+
+
+
+
+# Output of `--version':
+print_version() {
+    cat <<EOF
+$scriptname (GNU Astronomy Utilities) $version
+Copyright (C) 2020, Free Software Foundation, Inc.
+License GPLv3+: GNU General public license version 3 or later.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written/developed by Raul Infante-Sainz
+EOF
+}
+
+
+
+
+
+# Functions to check option values and complain if necessary.
+on_off_option_error() {
+    if [ "x$2" = x ]; then
+        echo "$scriptname: '$1' doesn't take any values."
+    else
+        echo "$scriptname: '$1' (or '$2') doesn't take any values."
+    fi
+    exit 1
+}
+
+check_v() {
+    if [ x"$2" = x ]; then
+        echo "$scriptname: option '$1' requires an argument."
+        echo "Try '$scriptname --help' for more information."
+        exit 1;
+    fi
+}
+
+
+
+
+
+# Separate command-line arguments from options. Then put the option
+# value into the respective variable.
+#
+# OPTIONS WITH A VALUE:
+#
+#   Each option has three lines because we want to all common formats: for
+#   long option names: `--longname value' and `--longname=value'. For short
+#   option names we want `-l value', `-l=value' and `-lvalue' (where `-l'
+#   is the short version of the hypothetical `--longname' option).
+#
+#   The first case (with a space between the name and value) is two
+#   command-line arguments. So, we'll need to shift it two times. The
+#   latter two cases are a single command-line argument, so we just need to
+#   "shift" the counter by one. IMPORTANT NOTE: the ORDER OF THE LATTER TWO
+#   cases matters: `-h*' should be checked only when we are sure that its
+#   not `-h=*').
+#
+# OPTIONS WITH NO VALUE (ON-OFF OPTIONS)
+#
+#   For these, we just want the two forms of `--longname' or `-l'. Nothing
+#   else. So if an equal sign is given we should definitely crash and also,
+#   if a value is appended to the short format it should crash. So in the
+#   second test for these (`-l*') will account for both the case where we
+#   have an equal sign and where we don't.
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        # Input parameters.
+        -h|--hdu)         hdu="$2";                           check_v "$1" "$hdu";  shift;shift;;
+        -h=*|--hdu=*)     hdu="${1#*=}";                      check_v "$1" "$hdu";  shift;;
+        -h*)              hdu=$(echo "$1"  | sed -e's/-h//'); check_v "$1" "$hdu";  shift;;
+        -O|--mode)        mode="$2";                           check_v "$1" "$mode";  shift;shift;;
+        -O=*|--mode=*)    mode="${1#*=}";                      check_v "$1" "$mode";  shift;;
+        -O*)              mode=$(echo "$1"  | sed -e's/-O//'); check_v "$1" "$mode";  shift;;
+        -x|--xcenter)     x="$2";                           check_v "$1" "$x";  shift;shift;;
+        -x=*|--xcenter=*) x="${1#*=}";                      check_v "$1" "$x";  shift;;
+        -x*)              x=$(echo "$1"  | sed -e's/-x//'); check_v "$1" "$x";  shift;;
+        -y|--ycenter)     y="$2";                           check_v "$1" "$y";  shift;shift;;
+        -y=*|--ycenter=*) y="${1#*=}";                      check_v "$1" "$y";  shift;;
+        -y*)              y=$(echo "$1"  | sed -e's/-y//'); check_v "$1" "$y";  shift;;
+        -r|--rmin)        rmin="$2";                           check_v "$1" "$rmin";  shift;shift;;
+        -r=*|--rmin=*)    rmin="${1#*=}";                      check_v "$1" "$rmin";  shift;;
+        -r*)              rmin=$(echo "$1"  | sed -e's/-r//'); check_v "$1" "$rmin";  shift;;
+        -R|--rmax)        rmax="$2";                           check_v "$1" "$rmax";  shift;shift;;
+        -R=*|--rmax=*)    rmax="${1#*=}";                      check_v "$1" "$rmax";  shift;;
+        -R*)              rmax=$(echo "$1"  | sed -e's/-R//'); check_v "$1" "$rmax";  shift;;
+        -Q|--qratio)      Q="$2";                           check_v "$1" "$Q";  shift;shift;;
+        -Q=*|--qratio=*)  Q="${1#*=}";                      check_v "$1" "$Q";  shift;;
+        -Q*)              Q=$(echo "$1"  | sed -e's/-q//'); check_v "$1" "$Q";  shift;;
+        -p|--pangle)      p="$2";                           check_v "$1" "$p";  shift;shift;;
+        -p=*|--pangle=*)  p="${1#*=}";                      check_v "$1" "$p";  shift;;
+        -p*)              p=$(echo "$1"  | sed -e's/-p//'); check_v "$1" "$p";  shift;;
+        -m|--measure)     m="$2";                           check_v "$1" "$m";  shift;shift;;
+        -m=*|--measure=*) m="${1#*=}";                      check_v "$1" "$m";  shift;;
+        -m*)              m=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$m";  shift;;
+        -a|--caper)       a="$2";                           check_v "$1" "$a";  shift;shift;;
+        -a=*|--caper=*)   a="${1#*=}";                      check_v "$1" "$a";  shift;;
+        -a*)              a=$(echo "$1"  | sed -e's/-a//'); check_v "$1" "$a";  shift;;
+        -c|--ccat)        c="$2";                           check_v "$1" "$c";  shift;shift;;
+        -c=*|--ccat=*)    c="${1#*=}";                      check_v "$1" "$c";  shift;;
+        -c*)              c=$(echo "$1"  | sed -e's/-c//'); check_v "$1" "$c";  shift;;
+
+        # Output parameters
+        -k|--keeptemp)    k=0; shift;;
+        -k*|--keeptemp=*) on_off_option_error --keeptemp -k;;
+        -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
+        -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
+        -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
+
+        # Non-operating options.
+        -q|--quiet)       quiet=1; shift;;
+        -q*|--quiet=*)    on_off_option_error --quiet -q;;
+        -?|--help)        print_help; exit 0;;
+        -'?'*|--help=*)   on_off_option_error --help -?;;
+        -V|--version)     print_version; exit 0;;
+        -V*|--version=*)  on_off_option_error --version -V;;
+        --cite)           astfits --cite; exit 0;;
+        --cite=*)         on_off_option_error --cite;;
+
+        # Unrecognized option:
+        -*) echo "$scriptname: unknown option '$1'"; exit 1;;
+
+        # Not an option (not starting with a `-'): assumed to be input FITS
+        # file name.
+        *) inputs="$1 $inputs"; shift;;
+    esac
+done
+
+
+
+
+
+# Basic sanity checks on arguments.
+if [ x"$inputs" = x ]; then
+    echo "$scriptname: no input FITS files."
+    echo "Run with '--help' for more information on how to run."
+    exit 1
+fi
+
+
+
+
+# If the user set the x and y coordinates to be "centre", then compute the
+# centre of the image for constructing the profiles.
+if [ "z$x" = zcenter ] && [ "z$y" = zcenter ]; then
+  xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
+  x=$(echo "$(seq $xpix)" | aststatistics --median)
+  ypix=$(astfits $inputs --hdu=$hdu | grep NAXIS2 | awk '{print $3}')
+  y=$(echo "$(seq $ypix)" | aststatistics --median)
+fi
+
+
+
+
+# If the user set the rmax parameter to "max", then compute the maximum
+# radius possible on the image. Assuming that the object is in one corner of
+# the image, this radius is given by the diagonal of the image
+if [ "x$rmax" = xmax ]; then
+  xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
+  ypix=$(astfits $inputs --hdu=$hdu | grep NAXIS2 | awk '{print $3}')
+  rmax=$(astarithmetic "$xpix"f 2f pow "$ypix"f 2f pow + sqrt --quiet)
+fi
+
+
+
+
+
+# Generate the apertures
+aperturestxt=$(echo $output | sed -e"s|.fits|-apertures.txt|g")
+echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
+
+
+
+
+
+# Generate the profiles
+aperturesfits=$(echo $output | sed -e"s|.fits|-apertures.fits|g")
+astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
+          --mforflatpix --mode=$mode --clearcanvas --type=int16 \
+          --circumwidth=$w --replace --output=$aperturesfits \
+          --config=$a
+
+
+
+
+
+# Construct the catalogue <-> Radial profile
+fprofiles=$(echo $output | sed -e"s|.fits|-profile_"$mode"_$x-$y.fits|g")
+astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$output \
+             --ids --$m --config=$c
+
+
+
+
+# Remove temporal files if the user has specified this option
+if [ $k = 1 ]; then
+  rm $aperturestxt $aperturesfits
+fi
+
+
+
+
+
+#zp=$(astfits $inputs -h$hdu | grep -w ZP | awk '{print $3}')
+#pscale=0.389
+#muprofile=$(echo $inputs | sed -e"s|.fits|-sbprofile_"$mode"_$x-$y.fits|g")
+#asttable $fprofiles \
+#         -c"arith OBJ_ID $pscale x" \
+#         -c"arith MEDIAN log10 -2.5 x $zp + $pscale log10 5 x +" \
+#         -o$output
+
+
