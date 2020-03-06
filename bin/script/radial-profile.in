@@ -41,6 +41,7 @@ y=center
 m=median
 Q=0
 p=0
+b=1
 w=1
 k=1
 quiet=0
@@ -96,11 +97,11 @@ $scriptname options:
   -Q, --qratio=FLT        Axis ratio for ellipse apertures (A/B).
   -p, --pangle=FLT        Position angle for ellipse apertures.
   -m, --measure=STR       Operator for measuring the parameter (mean, median, etc.).
+  -b, --binning=INT       Size of the bin for averaging group of pixels.
   -a, --cprofiles=STR     Configuration file for astmkprof.
   -c, --ccatalog=STR      Configuration file for astmkcatalog.
 
  Output:
-  -k, --keeptemp          Keep temporal/auxiliar files.
   -k, --keeptemp          Keep temporal/auxiliar files.
 
  Operating mode:
@@ -216,6 +217,9 @@ do
         -m|--measure)     m="$2";                           check_v "$1" "$m";  shift;shift;;
         -m=*|--measure=*) m="${1#*=}";                      check_v "$1" "$m";  shift;;
         -m*)              m=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$m";  shift;;
+        -b|--binning)     b="$2";                           check_v "$1" "$b";  shift;shift;;
+        -b=*|--binning=*) b="${1#*=}";                      check_v "$1" "$b";  shift;;
+        -b*)              b=$(echo "$1"  | sed -e's/-b//'); check_v "$1" "$b";  shift;;
         -a|--caper)       a="$2";                           check_v "$1" "$a";  shift;shift;;
         -a=*|--caper=*)   a="${1#*=}";                      check_v "$1" "$a";  shift;;
         -a*)              a=$(echo "$1"  | sed -e's/-a//'); check_v "$1" "$a";  shift;;
@@ -309,21 +313,36 @@ astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
 
 # Construct the catalogue <-> Radial profile
 fprofiles=$(echo $output | sed -e"s|.fits|-profile_"$mode"_$x-$y.fits|g")
-astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$output \
+astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$fprofiles \
              --ids --$m --config=$c
+
+
+
+
+
+# Binning data
+asttable $fprofiles | awk -v b=$b 'BEGIN { N = b }
+     { for (i = 1; i <= NF; i++) sum[i] += $i }
+     NR % N == 0 { for (i = 1; i <= NF; i++)
+                   {
+                       printf("%.6f%s", sum[i]/N, (i == NF) ? "\n" : " ")
+                       sum[i] = 0
+                   }
+                 }' | asttable -o$output
+
 
 
 
 
 # Remove temporal files if the user has specified this option
 if [ $k = 1 ]; then
-  rm $aperturestxt $aperturesfits
+  rm $aperturestxt $aperturesfits $fprofiles
 fi
 
 
 
 
-
+# Additional code for making surface brightness profiles. Not working yet
 #zp=$(astfits $inputs -h$hdu | grep -w ZP | awk '{print $3}')
 #pscale=0.389
 #muprofile=$(echo $inputs | sed -e"s|.fits|-sbprofile_"$mode"_$x-$y.fits|g")
