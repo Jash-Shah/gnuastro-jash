@@ -30,8 +30,7 @@ set -e
 
 
 
-# Default option values (can be changed with options on the
-# command-line).
+# Default option values (can be changed with options on the command-line).
 hdu=1
 rmin=1
 rmax=10
@@ -48,10 +47,6 @@ quiet=0
 prefix=./
 version=0.11
 scriptname=astscript-radial-profile
-
-# Axis ratio
-# Position angle
-# Circum width
 
 
 
@@ -267,8 +262,12 @@ fi
 
 
 
-# If the user set the x and y coordinates to be "centre", then compute the
-# centre of the image for constructing the profiles.
+
+# Calculate the center of the image
+# ---------------------------------
+#
+# If the user set the x and y coordinates to be "center", then compute the
+# center of the image for constructing the profiles.
 if [ "z$x" = zcenter ] && [ "z$y" = zcenter ]; then
   xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
   x=$(echo "$(seq $xpix)" | aststatistics --median)
@@ -279,6 +278,10 @@ fi
 
 
 
+
+# Calculate the maximun radius
+# ----------------------------
+#
 # If the user set the rmax parameter to "max", then compute the maximum
 # radius possible on the image. Assuming that the object is in one corner of
 # the image, this radius is given by the diagonal of the image
@@ -292,7 +295,11 @@ fi
 
 
 
-# Generate the apertures
+# Generate the aperture parameters
+# --------------------------------
+#
+# Here, an ascii file is generated with the parameters that will be feed
+# into MakeProfiles in order to construct the apertures image.
 aperturestxt=$(echo $output | sed -e"s|.fits|-apertures.txt|g")
 echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
 
@@ -300,7 +307,11 @@ echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
 
 
 
-# Generate the profiles
+# Generate the apertures image
+# ----------------------------
+#
+# The apertures image is genrated using MakeProfiles with the parameters
+# previously specified in the ascii file.
 aperturesfits=$(echo $output | sed -e"s|.fits|-apertures.fits|g")
 astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
           --mforflatpix --mode=$mode --clearcanvas --type=int16 \
@@ -311,7 +322,13 @@ astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
 
 
 
-# Construct the catalogue <-> Radial profile
+# Obtain the radial profile
+# -------------------------
+#
+# The radial profile is obtained using Catalog. In practice, what is done is
+# to obtain a catalogue using the segmentation image previously generated
+# (the elliptical apertures) and the original input image for computing the
+# values.
 fprofiles=$(echo $output | sed -e"s|.fits|-profile_"$mode"_$x-$y.fits|g")
 astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$fprofiles \
              --ids --$m --config=$c
@@ -321,22 +338,36 @@ astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$fprofiles \
 
 
 # Binning data
-asttable $fprofiles | awk -v b=$b 'BEGIN { N = b }
-     { for (i = 1; i <= NF; i++) sum[i] += $i }
-     NR % N == 0 { for (i = 1; i <= NF; i++)
-                   {
-                       printf("%.6f%s", sum[i]/N, (i == NF) ? "\n" : " ")
-                       sum[i] = 0
-                   }
-                 }' | asttable -o$output
+# ------------
+#
+# In order to increase the signal-to-noise ratio of the radial profile, it
+# is possible to bin the data. It is done in any case, if the user has not
+# changed the default value, the binning will be equal to 1 so the output
+# binned will be the same as the input. To do the binning of the data, a
+# small Awk script is used.
+asttable $fprofiles --colinfoinstdout \
+         | awk -v b=$b 'BEGIN { N = b }
+               { for (i = 1; i <= NF; i++) sum[i] += $i }
+               NR % N == 0 { for (i = 1; i <= NF; i++)
+                             {
+                               printf("%.6f%s", sum[i]/N, (i == NF) ? "\n" : " ")
+                               sum[i] = 0
+                             }
+                           }' \
+         | asttable -o$output
 
 
 
 
 
-# Remove temporal files if the user has specified this option
+# Remove temporal files
+# ---------------------
+#
+# If the user has specified this option, temporal files will be removed.
 if [ $k = 1 ]; then
-  rm $aperturestxt $aperturesfits $fprofiles
+  rm $fprofiles \
+     $aperturestxt \
+     $aperturesfits
 fi
 
 
