@@ -15414,6 +15414,48 @@ For random measurements on any area, please use the upper-limit columns of MakeC
 
 
 
+
+@section Generate radial profile
+
+@cindex Radial, profile
+@cindex Radial profile
+Sometimes it is necessary to compute a radial profile of an astronomical object.
+For example, imagine you want to study how the light of a galaxy is distributed as a function of the radial distance from the center.
+This is exactly what a radial profile is.
+Gnuastro's @file{astscript-radial-profile} script is created to obtain such radial profiles.
+It uses @ref{MakeProfile} to generate elliptical apertures with the values equal to the distance from the center of the object and @ref{Catalog} for measuring the values over all the different apertures.
+With the default options, the script will generate a circular radial profile up to a radial distance of 10 pixels using the median value and centered at the center of the image.
+In order to have more flexibility, several options are available and the user can play with them in order to obtain the wanted radial profile.
+In this sense, it can be changed the center position, the maximum radius, the axis ratio and the position angle (because elliptical apertures are considered), the operator for obtaining the values, and many other options.
+In addition to this, the user is also able to binning the data and operate both columns for changing them from the original computed values.
+This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+$ astscript-radial-profile [OPTION...] FITS-file
+@end example
+
+@noindent
+One line examples:
+
+@example
+## Generate the radial profile with default options
+$ astscript-radial-profile image.fits
+
+## Generate the radial profile centered at RA=20.53751695, DEC=0.9454292263,
+## up to a radial distance of 88 pixels, axis ratio equal to 0.32 and position
+## angle of 148 deg. Save the ouput as the `radial-profile.fits' table
+$ astscript-radial-profile --xcenter=20.53751695 --ycenter=0.9454292263    \
+                           --mode=wcs --rmax=88 --qratio=0.32 --pangle=148 \
+                           --output=radial-profile.fits
+@end example
+
+
+
+
+
+
 @node Match,  , MakeCatalog, Data analysis
 @section Match
 
