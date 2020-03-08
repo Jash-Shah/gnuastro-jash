@@ -38,7 +38,7 @@ mode=img
 x=center
 y=center
 m=median
-Q=0
+Q=1
 p=0
 b=1
 w=1
@@ -48,6 +48,7 @@ Y="1 x"
 quiet=0
 prefix=./
 version=0.11
+output="default"
 scriptname=astscript-radial-profile
 
 
@@ -98,10 +99,11 @@ $scriptname options:
   -a, --cprofiles=STR     Configuration file for astmkprof.
   -c, --ccatalog=STR      Configuration file for astmkcatalog.
   -X, --xarith=STR        Operation for the first column of radial profile.
-  -Y, --yarith=STR        Operaton for the second column of the radial profile.
+  -Y, --yarith=STR        Operation for the second column of the radial profile.
 
  Output:
   -k, --keeptemp          Keep temporal/auxiliar files.
+  -o, --output            Output table with the radial profile.
 
  Operating mode:
   -h, --help              Print this help list.
@@ -295,10 +297,27 @@ fi
 # If the user set the rmax parameter to "max", then compute the maximum
 # radius possible on the image. Assuming that the object is in one corner of
 # the image, this radius is given by the diagonal of the image
-if [ "x$rmax" = xmax ]; then
+if [ "z$rmax" = zmax ]; then
   xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
   ypix=$(astfits $inputs --hdu=$hdu | grep NAXIS2 | awk '{print $3}')
   rmax=$(astarithmetic "$xpix"f 2f pow "$ypix"f 2f pow + sqrt --quiet)
+fi
+
+
+
+
+
+# Define the final output file
+# ----------------------------
+#
+# Here, it is defined the final output file containing the radial profile.
+# If the user has defined a specific path/name for the output, it will be
+# used for saving the output file. If the user do not specify a output name,
+# then a default value containing the center and mode will be generated.
+if [ z$output = zdefault ]; then
+  bname_ext=$(basename $inputs)
+  bname=$(echo $bname_ext | sed -e"s|.fits|_radial_profile_"$mode"_$x-$y.fits|g")
+  output=$prefix$bname
 fi
 
 
@@ -310,7 +329,7 @@ fi
 #
 # Here, an ascii file is generated with the parameters that will be feed
 # into MakeProfiles in order to construct the apertures image.
-aperturestxt=$(echo $output | sed -e"s|.fits|-apertures.txt|g")
+aperturestxt=$(echo $output | sed -e"s|.fits|_apertures.txt|g")
 echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
 
 
@@ -322,7 +341,7 @@ echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
 #
 # The apertures image is genrated using MakeProfiles with the parameters
 # previously specified in the ascii file.
-aperturesfits=$(echo $output | sed -e"s|.fits|-apertures.fits|g")
+aperturesfits=$(echo $output | sed -e"s|.fits|_apertures.fits|g")
 astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
           --mforflatpix --mode=$mode --clearcanvas --type=int16 \
           --circumwidth=$w --replace --output=$aperturesfits \
@@ -339,9 +358,9 @@ astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
 # to obtain a catalogue using the segmentation image previously generated
 # (the elliptical apertures) and the original input image for computing the
 # values.
-fprofile=$(echo $output | sed -e"s|.fits|-profile_"$mode"_$x-$y.fits|g")
-astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$fprofile \
-             --ids --$m --config=$c
+fprofile=$(echo $output | sed -e"s|.fits|_catalogue.fits|g")
+astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
+             --ids --$m --config=$c -o$fprofile
 
 
 
@@ -357,8 +376,8 @@ astmkcatalog $aperturesfits -h1 --valuesfile=$inputs -o$fprofile \
 # small Awk script is used. Since the Awk script will print the columns as
 # float values, it is necessary to change the headers. To do that, Sed is
 # used to replace all ocurrences of i32 to f32.
-bprofile=$(echo $output | sed -e"s|.fits|-binned-profile_"$mode"_$x-$y.fits|g")
-asttable $fprofile --colinfoinstdout \
+bprofile=$(echo $output | sed -e"s|.fits|_binned.fits|g")
+asttable $fprofile \
          | awk -v b=$b '/^#/{print} \
                BEGIN { N = b }
                { for (i = 1; i <= NF; i++) sum[i] += $i }
@@ -368,7 +387,6 @@ asttable $fprofile --colinfoinstdout \
                                sum[i] = 0
                              }
                            }' \
-         | sed -e"s/i32/f32/g" \
          | asttable -o$bprofile
 
 
@@ -389,9 +407,9 @@ asttable $fprofile --colinfoinstdout \
 # the column names (radius and $m), column units (modified), column type
 # (float32), and comment (here it is said how the columns have been
 # modified.
-aprofile=$(echo $output | sed -e"s|.fits|-arith-profile_"$mode"_$x-$y.fits|g")
-echo "# Column 1: radius [modified,f32,] Modified with $X" > $aprofile
-echo "# Column 2: $m [modified,f32,] Modified with $Y" >> $aprofile
+aprofile=$(echo $output | sed -e"s|.fits|_arith.fits|g")
+echo "# Column 1: radius [modified,f32,] Binned $b and modified with arith $X" > $aprofile
+echo "# Column 2: $m [modified,f32,] Binned $b and modified with arith $Y" >> $aprofile
 
 # Make the appropiate operation over the two columns of the radial profile
 # and add it to the temporal file with the meta-data.
