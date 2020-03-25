@@ -45,6 +45,8 @@ w=1
 k=1
 X="1 x"
 Y="1 x"
+i="radius"
+j="v"
 quiet=0
 prefix=./
 version=0.11
@@ -100,6 +102,8 @@ $scriptname options:
   -c, --ccatalog=STR      Configuration file for astmkcatalog.
   -X, --xarith=STR        Operation for the first column of radial profile.
   -Y, --yarith=STR        Operation for the second column of the radial profile.
+  -i, --iname=STR         Name for the first column of radial profile.
+  -j, --jname=STR         Name for the isecond column of radial profile.
 
  Output:
   -k, --keeptemp          Keep temporal/auxiliar files.
@@ -233,6 +237,12 @@ do
         -Y|--yarith)     Y="$2";                            check_v "$1" "$Y";  shift;shift;;
         -Y=*|--yarith=*) Y="${1#*=}";                       check_v "$1" "$Y";  shift;;
         -Y*)             Y=$(echo "$1"  | sed -e's/-Y//');  check_v "$1" "$Y";  shift;;
+        -i|--iname)      i="$2";                            check_v "$1" "$i";  shift;shift;;
+        -i=*|--iname=*)  i="${1#*=}";                       check_v "$1" "$i";  shift;;
+        -i*)             i=$(echo "$1"  | sed -e's/-i//');  check_v "$1" "$i";  shift;;
+        -j|--jname)      j="$2";                            check_v "$1" "$j";  shift;shift;;
+        -j=*|--jname=*)  j="${1#*=}";                       check_v "$1" "$j";  shift;;
+        -j*)             j=$(echo "$1"  | sed -e's/-j//');  check_v "$1" "$j";  shift;;
 
         # Output parameters
         -k|--keeptemp)    k=0; shift;;
@@ -403,13 +413,33 @@ asttable $fprofile \
 # arcsecs with the --X option. The same happen with the measured column
 # (--Y). They are strings that will be used in the Table program for operate
 # appropiately the different columns. But before this, the necessary
-# metadata information is saved in a temporal file. The metadata consists in
-# the column names (radius and $m), column units (modified), column type
-# (float32), and comment (here it is said how the columns have been
-# modified.
+# metadata information is saved in a temporal file.
+
+# The metadata consists in the column names and comment about the
+# modification by the operation. First column is the radius in pixels, the
+# name of this column is set by the parameter --i (set to radius by
+# default). Second column is the measured values, the name of this column is
+# set by the parameter --j (set to v by default). If the user does not give
+# a name for the second column, the output name will be the combination of
+# the default and the operator used for measuring in the apertures. For
+# example, if the user choose the mean to make the measure (--measure or -m)
+# and do not specify any name for the output column (--jname or -j), the
+# output column name will be: vmean. The reason of adding the character v to
+# the operator is because it may happen that in later step, the user will
+# use the column value with the Table program. If this is the case, the
+# program will crash because it will mix the name of the operator with the
+# name of the column.
+
+# Column names
+xcolname=$i
+ycolname=$j
+if [ z$j = zv ]; then
+  ycolname=$j$m
+fi
+
 aprofile=$(echo $output | sed -e"s|.fits|_arith.fits|g")
-echo "# Column 1: radius [modified,f32,] Binned $b and modified with arith $X" > $aprofile
-echo "# Column 2: $m [modified,f32,] Binned $b and modified with arith $Y" >> $aprofile
+echo "# Column 1: $xcolname [modified,f32,] Binned $b and arith $X" > $aprofile
+echo "# Column 2: $ycolname [modified,f32,] Binned $b and arith $Y" >> $aprofile
 
 # Make the appropiate operation over the two columns of the radial profile
 # and add it to the temporal file with the meta-data.
