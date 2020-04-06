@@ -44,6 +44,7 @@
 *.log
 *.pdf
 *.png
+*.swp
 *.toc
 *.trs
 *.txt
