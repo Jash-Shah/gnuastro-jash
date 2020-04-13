@@ -49,9 +49,9 @@ i="radius"
 j="v"
 quiet=0
 prefix=./
-version=0.11
 output="default"
-scriptname=astscript-radial-profile
+version=@VERSION@
+scriptname=@SCRIPT_NAME@
 
 
 
