@@ -32,7 +32,6 @@ set -e
 
 # Default option values (can be changed with options on the command-line).
 hdu=1
-rmin=1
 rmax=10
 mode=img
 x=center
@@ -89,13 +88,12 @@ experienced Gnuastro users and developers. For more information, please run:
 $scriptname options:
  Input:
   -h, --hdu=STR           HDU/extension of all input FITS files.
-  -O, --mode=STR          Coordinate mode `img' or `wcs'.
+  -O, --mode=STR          Coordinate mode: img or wcs.
   -x, --xcenter=FLT       Coordinate of the center along the first axis.
   -y, --ycenter=FLT       Coordinate of the center along the second axis.
-  -r, --rmin=FLT          Minimum radius for the radial profiles (in pixels).
-  -R, --rmax=FLT          Maximum radius for the radial profiles (in pixels).
-  -Q, --qratio=FLT        Axis ratio for ellipse apertures (A/B).
-  -p, --pangle=FLT        Position angle for ellipse apertures.
+  -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
+  -Q, --qratio=FLT        Axis ratio for ellipse profiles (A/B).
+  -p, --pangle=FLT        Position angle for ellipse profiles.
   -m, --measure=STR       Operator for measuring the parameter (mean, median, etc.).
   -b, --binning=INT       Size of the bin for averaging group of pixels.
   -a, --cprofiles=STR     Configuration file for astmkprof.
@@ -207,9 +205,6 @@ do
         -y|--ycenter)     y="$2";                           check_v "$1" "$y";  shift;shift;;
         -y=*|--ycenter=*) y="${1#*=}";                      check_v "$1" "$y";  shift;;
         -y*)              y=$(echo "$1"  | sed -e's/-y//'); check_v "$1" "$y";  shift;;
-        -r|--rmin)        rmin="$2";                           check_v "$1" "$rmin";  shift;shift;;
-        -r=*|--rmin=*)    rmin="${1#*=}";                      check_v "$1" "$rmin";  shift;;
-        -r*)              rmin=$(echo "$1"  | sed -e's/-r//'); check_v "$1" "$rmin";  shift;;
         -R|--rmax)        rmax="$2";                           check_v "$1" "$rmax";  shift;shift;;
         -R=*|--rmax=*)    rmax="${1#*=}";                      check_v "$1" "$rmax";  shift;;
         -R*)              rmax=$(echo "$1"  | sed -e's/-R//'); check_v "$1" "$rmax";  shift;;
