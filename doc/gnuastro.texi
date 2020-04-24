@@ -15432,8 +15432,6 @@ In addition to this, the user is also able to binning the data and operate both 
 @node Invoking astscript-radial-profile, Radial Profile
 @subsection Invoking astscript-radial-profile
 
-This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
-The output radial profile is a FITS table with two columns: radius and measured values.
 For more on installed scripts please see (see @ref{Installed scripts}).
 This script can be used with the following general template:
 
@@ -15471,6 +15469,58 @@ $ astscript-radial-profile image.fits --mode=wcs   \
 
 @end example
 
+This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
+The output radial profile is a FITS table with two columns: radius and measured values.
+
+@table @option
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension to use.
+
+@item -O STR
+@itemx --mode=STR
+Interpret the center position of center position (@option{--xcenter} and @option{--ycenter}) in image or WCS coordinates.
+This option thus accepts only two values: @option{img} and @option{wcs}.
+By default, it is @option{--mode=img}.
+
+@item -x FLT
+@itemx --xcenter=FLT
+Center coordinate along the first dimension.
+This option will be used for placing the center of the profiles.
+If @option{--mode=img} is considered, then @option{--xcenter} has to be in image coordinates.
+If @option{--mode=wcs} is considered, then @option{--xcenter} has to be in WCS coordinates.
+By default, it is @option{--xcenter=center}, which means that it will put the center of the radial profiles in the center of the image.
+This parameter is used as the @option{--ccol} option for generating the profiles with @command{astmkprof}.
+
+@item -y FLT
+@itemx --ycenter=FLT
+Center coordinate along the second dimension.
+Same than @option{--xcenter} argument, but for the second dimension (see above for details).
+
+@item -R FLT
+@itemx --rmax=FLT
+Maximum radius for the radial profile (in pixels).
+By default, it is @option{--rmax=10}, which means that the radial profile will be computed up to a radial distance from the center of 10 pixels.
+This parameter is used as the options @option{--fcol} and @option{--tcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -Q FLT
+@itemx --qratio=FLT
+The axis ratio of the profiles (minor axis divided by the major axis in a 2D ellipse).
+By default, it is @option{--qratio=1}, which means that the radial profile will be circular.
+This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -p FLT
+@itemx --pangle=FLT
+The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO ds9).
+By default, it is @option{--pangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
+This parameter is used as the option @option{--pcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -m STR
+@itemx --measure=STR
+The operator for measuring the values over each different profile.
+By default, it is @option{--measure=median}, which means that the median of all pixels inside each profile will be computed.
+This parameter is used for computing the measured values with @command{astmkcatalog}.
+As a consequence, all operators like median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
 
 
 
