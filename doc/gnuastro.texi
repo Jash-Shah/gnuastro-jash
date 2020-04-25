@@ -15415,163 +15415,6 @@ For random measurements on any area, please use the upper-limit columns of MakeC
 
 
 
-@section Generate radial profile
-
-@cindex Radial, profile
-@cindex Radial profile
-Sometimes it is necessary to compute a radial profile of an astronomical object.
-For example, imagine you want to study how the light of a galaxy is distributed as a function of the radial distance from the center.
-This is exactly what a radial profile is.
-Gnuastro's @file{astscript-radial-profile} script is created to obtain such radial profiles.
-It uses @command{astmkprof} to generate elliptical apertures with the values equal to the distance from the center of the object and @command{astmkcatalog} for measuring the values over the apertures.
-With the default options, the script will generate a circular radial profile up to a radial distance of 10 pixels using the median value and centered at the center of the image.
-In order to have more flexibility, several options are available and the user can play with them in order to obtain the wanted radial profile.
-In this sense, it can be changed the center position, the maximum radius, the axis ratio and the position angle (because elliptical apertures are considered), the operator for obtaining the values, and some other options.
-In addition to this, the user is also able to binning the data and operate both columns for changing them from the original computed values.
-
-@node Invoking astscript-radial-profile, Radial Profile
-@subsection Invoking astscript-radial-profile
-
-For more on installed scripts please see (see @ref{Installed scripts}).
-This script can be used with the following general template:
-
-@example
-$ astscript-radial-profile [OPTION...] FITS-file
-@end example
-
-@noindent
-Examples:
-
-@example
-## Generate the radial profile with default options
-$ astscript-radial-profile image.fits
-
-## Generate the radial profile centered at x=44 and y=37 (in pixels),
-## up to  a radial distance of 19 pixels, use the mean value, and
-## name the output columns `RADIUS` and `VALUES`.
-$ astscript-radial-profile image.fits      \
-                            --mode=img     \
-                            --xcenter=44   \
-                            --ycenter=37   \
-                            --rmax=19      \
-                            --iname=RADIUS \
-                            --jname=VALUES
-
-## Generate the radial profile centered at RA=20.53751695,
-## DEC=0.9454292263, up to a radial distance of 88 pixels,
-## axis ratio equal to 0.32 and position  angle of 148 deg.
-## Name the output table as `radial-profile.fits'
-$ astscript-radial-profile image.fits --mode=wcs   \
-                           --xcenter=20.53751695   \
-                           --ycenter=0.9454292263  \
-                           --rmax=88 --qratio=0.32 \
-                           --pangle=148 -oradial-profile.fits
-
-@end example
-
-This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
-The output radial profile is a FITS table with two columns: radius and measured values.
-
-@table @option
-@item -h STR
-@itemx --hdu=STR
-The HDU/extension to use.
-
-@item -O STR
-@itemx --mode=STR
-Interpret the center position of center position (@option{--xcenter} and @option{--ycenter}) in image or WCS coordinates.
-This option thus accepts only two values: @option{img} and @option{wcs}.
-By default, it is @option{--mode=img}.
-
-@item -x FLT
-@itemx --xcenter=FLT
-Center coordinate along the first dimension.
-This option will be used for placing the center of the profiles.
-If @option{--mode=img} is considered, then @option{--xcenter} has to be in image coordinates.
-If @option{--mode=wcs} is considered, then @option{--xcenter} has to be in WCS coordinates.
-By default, it is @option{--xcenter=center}, which means that it will put the center of the radial profiles in the center of the image.
-This parameter is used as the @option{--ccol} option for generating the profiles with @command{astmkprof}.
-
-@item -y FLT
-@itemx --ycenter=FLT
-Center coordinate along the second dimension.
-Same than @option{--xcenter} argument, but for the second dimension (see above for details).
-
-@item -R FLT
-@itemx --rmax=FLT
-Maximum radius for the radial profile (in pixels).
-By default, it is @option{--rmax=10}, which means that the radial profile will be computed up to a radial distance of 10 pixels from the centers.
-This parameter is used as the options @option{--fcol} and @option{--tcol} in the generation of the apertures with @command{astmkprof}.
-
-@item -Q FLT
-@itemx --qratio=FLT
-The axis ratio of the profiles (minor axis divided by the major axis in a 2D ellipse).
-By default, it is @option{--qratio=1}, which means that the radial profile will be circular.
-This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
-
-@item -p FLT
-@itemx --pangle=FLT
-The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO ds9).
-By default, it is @option{--pangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
-This parameter is used as the option @option{--pcol} in the generation of the apertures with @command{astmkprof}.
-
-@item -m STR
-@itemx --measure=STR
-The operator for measuring the values over each different profile.
-By default, it is @option{--measure=median}, which means that the median of all pixels inside each profile will be computed.
-This parameter is used for computing the measured values with @command{astmkcatalog}.
-As a consequence, all operators like median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
-
-@item -b INT
-@itemx --binning=INT
-Binning the radial profile by averaging group of pixels.
-By default, it is @option{--binning=1}, which means that no binning of the data will be done.
-For example, by setting @option{--rmax=100} and @option{--binning=4}, the output radial profile will be averaged over group of 4 pixels, so it will have a total number 25 points.
-This option is useful when it is necessary to increase the signal to noise ratio of the radial profile.
-
-@item -a STR
-@itemx --cprofiles=STR
-Configuration file for @command{astmkprof}.
-As this script uses @command{astmkprof} internally for generating the profiles, it may be necessary to use a configuration file for this program.
-
-@item -c STR
-@itemx --ccatalog=STR
-Configuration file for @command{astmkcatalog}.
-As this script uses @command{astmkcatalog} internally for measuring over the profiles, it may be necessary to use a configuration file for this program.
-
-@item -X STR
-@itemx --xarith=STR
-Operation to be done with the first column of the radial profile (radius).
-By default, the first column of the radial profile is the distance from the center (in pixels).
-But it is possible to operate this column with the same column arithmetic as described in @ref{Column arithmetic}.
-For example, if the each pixel is 0.35 arcsec, it is possible to obtain the first column in units of arcsec with  @option{--xarith="0.35 x"}.
-
-@item -Y STR
-@itemx --yarith=STR
-Same option than @option{--xarith} but for the second column of the radial profile (measured values).
-See above for details.
-For example, if the measured values are in units of mJy (mili-Jansky) but it is wanted to have it in Jy and then compute the base-10 logarithm, it is possible to do it with @option{--yarith="1000 / log10"}.
-
-@item -i STR
-@itemx --iname=STR
-Name of the first column of the radial profile.
-By default it is @option{--iname=radius}.
-For example, @option{--iname=DISTANCE} will set the name of the first column to DISTANCE.
-
-@item -j STR
-@itemx --jname=STR
-Name of the second column of the radial profile.
-By default, the name of the second column will be the operator used for making the measurement with the leter "v" at the beginning: (@option{--jname=vmedian}).
-For example, measuring the mean values with @option{--measure=mean} will set the output column name to "vmean" while using if using @option{--measure=std} will set the output column to "vstd".
-In order to thange the name to any other one, for example FLUX, use @option{--jname=FLUX}.
-
-@item -k
-@itemx --keeptemp
-Several intermediate files are generated for obtaining the radial profile.
-But, by default they are all removed.
-With the option @option{--keeptemp} (no argument is required) all of these files will not be removed.
-This option is useful for debugging.
-For example, to check that the profiles generated for obtaining the radial profile have the same shape and orientation than the source.
 
 
 
@@ -15821,6 +15664,170 @@ The last three are the three Euler angles in units of degrees in the ZXZ order a
 
 
 
+
+
+
+
+
+
+
+@section Generate radial profile
+
+@cindex Radial, profile
+@cindex Radial profile
+Sometimes it is necessary to compute a radial profile of an astronomical object.
+For example, imagine you want to study how the light of a galaxy is distributed as a function of the radial distance from the center.
+This is exactly what a radial profile is.
+Gnuastro's @file{astscript-radial-profile} script is created to obtain such radial profiles.
+It uses @command{astmkprof} to generate elliptical apertures with the values equal to the distance from the center of the object and @command{astmkcatalog} for measuring the values over the apertures.
+With the default options, the script will generate a circular radial profile up to a radial distance of 10 pixels using the median value and centered at the center of the image.
+In order to have more flexibility, several options are available and the user can play with them in order to obtain the wanted radial profile.
+In this sense, it can be changed the center position, the maximum radius, the axis ratio and the position angle (because elliptical apertures are considered), the operator for obtaining the values, and some other options.
+In addition to this, the user is also able to binning the data and operate both columns for changing them from the original computed values.
+
+@node Invoking astscript-radial-profile, Radial Profile
+@subsection Invoking astscript-radial-profile
+
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+$ astscript-radial-profile [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Generate the radial profile with default options
+$ astscript-radial-profile image.fits
+
+## Generate the radial profile centered at x=44 and y=37 (in pixels),
+## up to  a radial distance of 19 pixels, use the mean value, and
+## name the output columns `RADIUS` and `VALUES`.
+$ astscript-radial-profile image.fits      \
+                            --mode=img     \
+                            --xcenter=44   \
+                            --ycenter=37   \
+                            --rmax=19      \
+                            --iname=RADIUS \
+                            --jname=VALUES
+
+## Generate the radial profile centered at RA=20.53751695,
+## DEC=0.9454292263, up to a radial distance of 88 pixels,
+## axis ratio equal to 0.32 and position  angle of 148 deg.
+## Name the output table as `radial-profile.fits'
+$ astscript-radial-profile image.fits --mode=wcs   \
+                           --xcenter=20.53751695   \
+                           --ycenter=0.9454292263  \
+                           --rmax=88 --qratio=0.32 \
+                           --pangle=148 -oradial-profile.fits
+
+@end example
+
+This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
+The output radial profile is a FITS table with two columns: radius and measured values.
+
+@table @option
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension to use.
+
+@item -O STR
+@itemx --mode=STR
+Interpret the center position of center position (@option{--xcenter} and @option{--ycenter}) in image or WCS coordinates.
+This option thus accepts only two values: @option{img} and @option{wcs}.
+By default, it is @option{--mode=img}.
+
+@item -x FLT
+@itemx --xcenter=FLT
+Center coordinate along the first dimension.
+This option will be used for placing the center of the profiles.
+If @option{--mode=img} is considered, then @option{--xcenter} has to be in image coordinates.
+If @option{--mode=wcs} is considered, then @option{--xcenter} has to be in WCS coordinates.
+By default, it is @option{--xcenter=center}, which means that it will put the center of the radial profiles in the center of the image.
+This parameter is used as the @option{--ccol} option for generating the profiles with @command{astmkprof}.
+
+@item -y FLT
+@itemx --ycenter=FLT
+Center coordinate along the second dimension.
+Same than @option{--xcenter} argument, but for the second dimension (see above for details).
+
+@item -R FLT
+@itemx --rmax=FLT
+Maximum radius for the radial profile (in pixels).
+By default, it is @option{--rmax=10}, which means that the radial profile will be computed up to a radial distance of 10 pixels from the centers.
+This parameter is used as the options @option{--fcol} and @option{--tcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -Q FLT
+@itemx --qratio=FLT
+The axis ratio of the profiles (minor axis divided by the major axis in a 2D ellipse).
+By default, it is @option{--qratio=1}, which means that the radial profile will be circular.
+This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -p FLT
+@itemx --pangle=FLT
+The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO ds9).
+By default, it is @option{--pangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
+This parameter is used as the option @option{--pcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -m STR
+@itemx --measure=STR
+The operator for measuring the values over each different profile.
+By default, it is @option{--measure=median}, which means that the median of all pixels inside each profile will be computed.
+This parameter is used for computing the measured values with @command{astmkcatalog}.
+As a consequence, all operators like median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
+
+@item -b INT
+@itemx --binning=INT
+Binning the radial profile by averaging group of pixels.
+By default, it is @option{--binning=1}, which means that no binning of the data will be done.
+For example, by setting @option{--rmax=100} and @option{--binning=4}, the output radial profile will be averaged over group of 4 pixels, so it will have a total number 25 points.
+This option is useful when it is necessary to increase the signal to noise ratio of the radial profile.
+
+@item -a STR
+@itemx --cprofiles=STR
+Configuration file for @command{astmkprof}.
+As this script uses @command{astmkprof} internally for generating the profiles, it may be necessary to use a configuration file for this program.
+
+@item -c STR
+@itemx --ccatalog=STR
+Configuration file for @command{astmkcatalog}.
+As this script uses @command{astmkcatalog} internally for measuring over the profiles, it may be necessary to use a configuration file for this program.
+
+@item -X STR
+@itemx --xarith=STR
+Operation to be done with the first column of the radial profile (radius).
+By default, the first column of the radial profile is the distance from the center (in pixels).
+But it is possible to operate this column with the same column arithmetic as described in @ref{Column arithmetic}.
+For example, if the each pixel is 0.35 arcsec, it is possible to obtain the first column in units of arcsec with  @option{--xarith="0.35 x"}.
+
+@item -Y STR
+@itemx --yarith=STR
+Same option than @option{--xarith} but for the second column of the radial profile (measured values).
+See above for details.
+For example, if the measured values are in units of mJy (mili-Jansky) but it is wanted to have it in Jy and then compute the base-10 logarithm, it is possible to do it with @option{--yarith="1000 / log10"}.
+
+@item -i STR
+@itemx --iname=STR
+Name of the first column of the radial profile.
+By default it is @option{--iname=radius}.
+For example, @option{--iname=DISTANCE} will set the name of the first column to DISTANCE.
+
+@item -j STR
+@itemx --jname=STR
+Name of the second column of the radial profile.
+By default, the name of the second column will be the operator used for making the measurement with the leter "v" at the beginning: (@option{--jname=vmedian}).
+For example, measuring the mean values with @option{--measure=mean} will set the output column name to "vmean" while using if using @option{--measure=std} will set the output column to "vstd".
+In order to thange the name to any other one, for example FLUX, use @option{--jname=FLUX}.
+
+@item -k
+@itemx --keeptemp
+Several intermediate files are generated for obtaining the radial profile.
+But, by default they are all removed.
+With the option @option{--keeptemp} (no argument is required) all of these files will not be removed.
+This option is useful for debugging.
+For example, to check that the profiles generated for obtaining the radial profile have the same shape and orientation than the source.
 
 
 
