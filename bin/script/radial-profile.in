@@ -283,8 +283,9 @@ fi
 # Calculate the center of the image
 # ---------------------------------
 #
-# If the user set the x and y coordinates to be "center", then compute the
-# center of the image for constructing the profiles.
+# If the user don't set the x and y coordinates to be "center" (The
+# coordinates of the object), then compute the center of the image for
+# constructing the profiles.
 if [ "z$x" = zcenter ] && [ "z$y" = zcenter ]; then
   xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
   x=$(echo "$(seq $xpix)" | aststatistics --median)
@@ -296,7 +297,7 @@ fi
 
 
 
-# Calculate the maximun radius
+# Calculate the maximum radius
 # ----------------------------
 #
 # If the user set the rmax parameter to "max", then compute the maximum
@@ -460,4 +461,3 @@ if [ $k = 1 ]; then
      $aperturestxt \
      $aperturesfits
 fi
-
