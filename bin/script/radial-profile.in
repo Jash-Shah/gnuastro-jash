@@ -440,8 +440,8 @@ echo "# Column 2: $ycolname [modified,f32,] Binned $b and arith $Y" >> $aprofile
 # Make the appropiate operation over the two columns of the radial profile
 # and add it to the temporal file with the meta-data.
 asttable $bprofile \
-         -c"arith c1 $X" \
-         -c"arith c2 $Y" >> $aprofile
+         -c'arith $1 '"$X" \
+         -c'arith $2 '"$Y" >> $aprofile
 
 # Finally, read the temporal file with the metadata information as well as
 # the radial profile values, and save it as a fits table using Table.
