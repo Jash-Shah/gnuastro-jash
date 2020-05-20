@@ -448,6 +448,14 @@ asttable $bprofile \
 cat $aprofile | asttable -o$output
 
 
+# Calculate the Half-Light Radii
+#
+# The half-light or 'effective' radius as the radius within which half of
+# the object's luminosity is contained.
+halfoflight=$(asttable $output | awk '{if(max<$2){max=$2}}END{print max/2}')
+radius=$(asttable $output \
+           | awk '{if('$(echo $halfoflight)'<=$2){line=$1;light=$2}}END{print line}')
+echo "Half-Light-Radii: $radius pixels from the center of the object"
 
 
 # Remove temporal files
