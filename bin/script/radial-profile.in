@@ -398,23 +398,27 @@ astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
 # ------------
 #
 # In order to increase the signal-to-noise ratio of the radial profile, it
-# is possible to bin the data. It is done in any case, if the user has not
-# changed the default value, the binning will be equal to 1 so the output
-# binned will be the same as the input. To do the binning of the data, a
-# small Awk script is used. Since the Awk script will print the columns as
-# float values, it is necessary to change the headers. To do that, Sed is
-# used to replace all ocurrences of i32 to f32.
+# is possible to bin the data. It is done in any case, if the user set the
+# default value of binning variable($b) except 1, because the binning will
+# be equal to 1 so the output binned will be the same as the input. To do
+# the binning of the data, a small Awk script is used. Since the Awk script
+# will print the columns as float values, it is necessary to change the
+# headers. To do that, Sed is used to replace all ocurrences of i32 to f32.
 bprofile=$(echo $output | sed -e"s|.fits|_binned.fits|g")
-asttable $fprofile \
-         | awk -v b=$b '/^#/{print} BEGIN { N = b }                                                                                                                                    { for (i = 1; i <= 2; i++)                                                                                                                          sum[i] += $i}
-                      { for (i = 3; i == 3; i++) sum[i] = $i ** 2 / $i ** 0.5}
+if [ $b != 1 ]; then
+
+  asttable $fprofile \
+           | awk -v b=$b '/^#/{print} BEGIN { N = b }                                                                                                                              { for (i = 1; i <= 2; i++) sum[i] += $i}
+                                 { for (i = 3; i == 3; i++) sum[i] += $i ** 2}
            NR % N == 0 { for (i = 1; i <= NF; i++)
                           {
                             printf("%.6f%s",sum[i]/N, ( i == NF) ? "\n" : " ")
                             sum[i] = 0
                           }
                         }' | asttable -o$bprofile
-
+else
+  cp $fprofile $bprofile
+fi
 
 
 
