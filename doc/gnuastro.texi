@@ -15679,7 +15679,7 @@ Sometimes it is necessary to compute a radial profile of an astronomical object.
 For example, imagine you want to study how the light of a galaxy is distributed as a function of the radial distance from the center.
 This is exactly what a radial profile is.
 Gnuastro's @file{astscript-radial-profile} script is created to obtain such radial profiles.
-It uses @command{astmkprof} to generate elliptical apertures with the values equal to the distance from the center of the object and @command{astmkcatalog} for measuring the values over the apertures.
+It uses @command{astmkprof} to generate elliptical apertures with the values equal to the distance from the center of the object and @command{astmkcatalog} for measuring the values and signal to noise ratio over the apertures.
 With the default options, the script will generate a circular radial profile up to a radial distance of 10 pixels using the median value and centered at the center of the image.
 In order to have more flexibility, several options are available and the user can play with them in order to obtain the wanted radial profile.
 In this sense, it can be changed the center position, the maximum radius, the axis ratio and the position angle (because elliptical apertures are considered), the operator for obtaining the values, and some other options.
