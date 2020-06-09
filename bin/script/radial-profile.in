@@ -368,8 +368,8 @@ astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
 # Detection signal
 # ----------------
 #
-# To obtain signal to noise ratio for each radial profile; at first we have
-# to detect signal of noise.
+# To obtain signal to noise ratio radial profile it is necessary to have the
+# detection map. For now, it uses the default option of NoiseChisel.
 detection=$(echo $output | sed -e"s|.fits|_detected.fits|g")
 astnoisechisel $inputs -o$detection
 
@@ -380,15 +380,16 @@ astnoisechisel $inputs -o$detection
 # Obtain the radial profile
 # -------------------------
 #
-# The radial profile is obtained using Catalog. In practice, what is done
-# is to obtain a catalogue using the segmentation image previously
-# generated (the elliptical apertures) and the original input image for
-# computing the values. Also using of SKY_STD extinction of noisechisel
-# output for computing signal to noise ratio.
+# The radial profile is obtained using Catalog. In practice, what is done is to
+# obtain a catalogue using the profile image previously generated (the
+# elliptical apertures) and the original input image for computing the values.
+# Also using of SKY_STD extension of NoiseChisel output for computing signal
+# to noise ratio.
 fprofile=$(echo $output | sed -e"s|.fits|_catalogue.fits|g")
 astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
-             --instd=$detection --stdhdu=SKY_STD --ids --$m --sn \
-             --config=$c -o$fprofile
+             --instd=$detection --stdhdu=SKY_STD \
+             --config=$c -o$fprofile \
+             --ids --$m --sn
 
 
 
@@ -397,15 +398,13 @@ astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
 # Binning data
 # ------------
 #
-# In order to increase the signal-to-noise ratio of the radial profile, it
-# is possible to bin the data. It is done in any case, if the user set the
-# default value of binning variable($b) except 1, because the binning will
-# be equal to 1 so the output binned will be the same as the input. To do
-# the binning of the data, a small Awk script is used.Because of the
-# behavior of signal to noise ratio isn't linear. We used the different
-# way to do binning the S/N column. Since the Awk script will print the
-# columns as float values, it is necessary to change the headers. To do
-# that, Sed is used to replace all ocurrences of i32 to f32.
+# In order to increase the signal-to-noise ratio of the radial profile, it is
+# possible to bin the data. If the user specify the binning parameter (`-b' or
+# `--binning') different of 1. To do the binning of the data, a small Awk
+# script is used. Because of the behavior of signal to noise ratio is not
+# linear, a different way of binning the S/N column is used. Since the Awk
+# script will print the columns as float values, it is necessary to change the
+# headers. To do that, Sed is used to replace all ocurrences of i32 to f32.
 bprofile=$(echo $output | sed -e"s|.fits|_binned.fits|g")
 if [ $b != 1 ]; then
 
@@ -430,6 +429,7 @@ if [ $b != 1 ]; then
 else
   cp $fprofile $bprofile
 fi
+
 
 
 
@@ -487,7 +487,11 @@ asttable $bprofile \
 cat $aprofile | asttable -o$output
 
 
+
+
+
 # Calculate the Half-Light Radii
+# ------------------------------
 #
 # The half-light or 'effective' radius as the radius within which half of
 # the object's luminosity is contained.
@@ -495,6 +499,9 @@ halfoflight=$(asttable $output | awk 'NR>=3{if(max<$2){max=$2}}END{print max/2}'
 radius=$(asttable $output \
            | awk '{if('$(echo $halfoflight)'<=$2){line=$1;light=$2}}END{print line}')
 echo "Half-Light-Radii: $radius pixels from the center of the object"
+
+
+
 
 
 # Remove temporal files
