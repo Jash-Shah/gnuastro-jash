@@ -37,6 +37,7 @@ mode=img
 x=center
 y=center
 m=median
+s='3,0.2'
 Q=1
 p=0
 b=1
@@ -96,14 +97,16 @@ $scriptname options:
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -Q, --qratio=FLT        Axis ratio for ellipse profiles (A/B).
   -p, --pangle=FLT        Position angle for ellipse profiles.
-  -m, --measure=STR       Operator for measuring the parameter (mean, median, etc.).
+  -m, --measure=STR       Operator for measuring the value (mean, median, etc.).
+  -s, --sigmaclip=FLT,FLT Parameters for sigma clipping measure operator.
   -b, --binning=INT       Size of the bin for averaging group of pixels.
   -a, --cprofiles=STR     Configuration file for astmkprof.
   -c, --ccatalog=STR      Configuration file for astmkcatalog.
   -X, --xarith=STR        Operation for the first column of radial profile.
   -Y, --yarith=STR        Operation for the second column of the radial profile.
-  -i, --iname=STR         Name for the first column of radial profile.
-  -j, --jname=STR         Name for the isecond column of radial profile.
+  -i, --iname=STR         Name of first column of radial profile (radius).
+  -j, --jname=STR         Name of second column of radial profile (measured value).
+  -l, --lname=STR         Name of third column of radial profile (S/N).
 
  Output:
   -k, --keeptemp          Keep temporal/auxiliar files.
@@ -219,6 +222,9 @@ do
         -m|--measure)     m="$2";                           check_v "$1" "$m";  shift;shift;;
         -m=*|--measure=*) m="${1#*=}";                      check_v "$1" "$m";  shift;;
         -m*)              m=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$m";  shift;;
+        -s|--sigmaclip)      s="$2";                           check_v "$1" "$s";  shift;shift;;
+        -s=*|--sigmaclip=*)  s="${1#*=}";                      check_v "$1" "$s";  shift;;
+        -s*)                 s=$(echo "$1"  | sed -e's/-s//'); check_v "$1" "$s";  shift;;
         -b|--binning)     b="$2";                           check_v "$1" "$b";  shift;shift;;
         -b=*|--binning=*) b="${1#*=}";                      check_v "$1" "$b";  shift;;
         -b*)              b=$(echo "$1"  | sed -e's/-b//'); check_v "$1" "$b";  shift;;
@@ -388,7 +394,7 @@ astnoisechisel $inputs -o$detection
 fprofile=$(echo $output | sed -e"s|.fits|_catalogue.fits|g")
 astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
              --instd=$detection --stdhdu=SKY_STD \
-             --config=$c -o$fprofile \
+             --config=$c -o$fprofile --sigmaclip=$s \
              --ids --$m --sn
 
 

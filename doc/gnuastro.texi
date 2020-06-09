@@ -15778,6 +15778,11 @@ By default, it is @option{--measure=median}, which means that the median of all 
 This parameter is used for computing the measured values with @command{astmkcatalog}.
 As a consequence, all operators like median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
 
+@item -s FLT,FLT
+@itemx --sigmaclip=FLT,FLT
+Sigma clipping parameters if @option{--measure} operator requested is any of the available sigma-clipping operators.
+By default, it is @option{--sigmaclip=3,0.2}, see @ref{Arithmetic operators} for more details.
+
 @item -b INT
 @itemx --binning=INT
 Binning the radial profile by averaging group of pixels.
