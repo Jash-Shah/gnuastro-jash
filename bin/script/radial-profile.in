@@ -7,6 +7,7 @@
 #   Copyright (C) 2020   Raul Infante-Sainz <infantesainz@gmail.com>
 # Contributing author(s):
 #   Copyright (C) 2020   Mohammad Akhlaghi <mohammad@akhlaghi.org>
+#   Copyright (C) 2020   Zahra Sharbaf <zahra.sharbaf2@gmail.com>
 # Copyright (C) 2020, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -32,7 +33,7 @@ set -e
 
 # Default option values (can be changed with options on the command-line).
 hdu=1
-rmax=10
+rmax=max
 mode=img
 x=center
 y=center
@@ -50,6 +51,7 @@ j="v"
 l="S/N"
 quiet=0
 prefix=./
+tmpdir=""
 output="default"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -247,9 +249,12 @@ do
         -l=*|--lname=*)  l="${1#*=}";                       check_v "$1" "$k";  shift;;
         -l*)             l=$(echo "$1"  | sed -e's/-l//');  check_v "$1" "$k";  shift;;
 
+
         # Output parameters
         -k|--keeptemp)    k=0; shift;;
         -k*|--keeptemp=*) on_off_option_error --keeptemp -k;;
+        --tmpdir)         tmpdir="$2";                          check_v "$1" "$tmpdir"; shift;shift;;
+        --tmpdir=*)       tmpdir="${1#*=}";                     check_v "$1" "$tmpdir"; shift;;
         -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
         -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
@@ -287,19 +292,59 @@ fi
 
 
 
+# If one of X or Y are given the other also needs to be given.
+if [ "z$x" = zcenter ]; then
+  if ! [ "z$y" = zcenter ]; then
+    echo "Center position's Y axis value is given, but not X!"
+    exit 1
+  fi
+else
+  if [ "z$y" = zcenter ]; then
+    echo "Center position's X axis value is given, but not Y!"
+    exit 1
+  fi
+fi
 
-# Calculate the center of the image
-# ---------------------------------
+
+
+
+
+# Convert center to image coordinates if necessary
+# ------------------------------------------------
+#
+# If the user gave the central position, and has said its in WCS, then
+# convert them to image mode so we can safely assume image coordianates
+# from now on.
+if ! [ "z$x" = zcenter ]; then
+  if [ $mode = wcs ]; then
+    xy=$(echo "$x $y" \
+             | asttable -c'arith $1 $2 wcstoimg' \
+                        --wcsfile=$inputs --wcshdu=$hdu)
+    x=$(echo $xy | awk '{print $1}');
+    y=$(echo $xy | awk '{print $2}');
+  fi
+fi
+
+
+
+
+
+
+# Set default central position
+# ----------------------------
 #
 # If the user don't set the x and y coordinates to be "center" (The
 # coordinates of the object), then compute the center of the image for
 # constructing the profiles.
-if [ "z$x" = zcenter ] && [ "z$y" = zcenter ]; then
-  xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
-  x=$(echo "$(seq $xpix)" | aststatistics --median)
-  ypix=$(astfits $inputs --hdu=$hdu | grep NAXIS2 | awk '{print $3}')
-  y=$(echo "$(seq $ypix)" | aststatistics --median)
+#
+# In the FITS standard, pixels are counted from 1, and the integers are in
+# the center of the pixel. So after dividing the pixel size of the image by
+# 2, we should add it with 0.5 to be the "center" of the image.
+if [ "z$x" = zcenter ]; then
+  x=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS1/{print $3/2+0.5}')
+  y=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS2/{print $3/2+0.5}')
 fi
+
 
 
 
@@ -309,12 +354,29 @@ fi
 # ----------------------------
 #
 # If the user set the rmax parameter to "max", then compute the maximum
-# radius possible on the image. Assuming that the object is in one corner of
-# the image, this radius is given by the diagonal of the image
+# radius possible on the image.
+#
+# If the user hasn't given any maximum radius, we give the most reliable
+# maximum radius (where the full circumference will be within the
+# image). If the radius goes outside the image, then the measurements and
+# calculations can be biased, so when the user hasn't provided any maximum
+# radius, we should only confine ourselves to a radius where the results
+# are reliable.
+#
+#             Y--------------
+#              |            |       The maximum radius (to ensure the profile
+#            y |........*   |       lies within the image) is the smallest
+#              |        .   |       one of these values:
+#              |        .   |              x, y, X-x, Y-y
+#              --------------
+#              0        x   X
+#
 if [ "z$rmax" = zmax ]; then
-  xpix=$(astfits $inputs --hdu=$hdu | grep NAXIS1 | awk '{print $3}')
-  ypix=$(astfits $inputs --hdu=$hdu | grep NAXIS2 | awk '{print $3}')
-  rmax=$(astarithmetic "$xpix"f 2f pow "$ypix"f 2f pow + sqrt --quiet)
+  rmax=$(astfits $inputs --hdu=$hdu \
+             | awk '/^NAXIS1/{X=$3} /^NAXIS2/{Y=$3} \
+                    END{ x='$x'; y='$y'; \
+                         printf("%s\n%s\n%s\n%s", x, y, X-x, Y-y); }' \
+             | aststatistics --minimum )
 fi
 
 
@@ -328,23 +390,38 @@ fi
 # If the user has defined a specific path/name for the output, it will be
 # used for saving the output file. If the user do not specify a output name,
 # then a default value containing the center and mode will be generated.
-if [ z$output = zdefault ]; then
-  bname_ext=$(basename $inputs)
-  bname=$(echo $bname_ext | sed -e"s|.fits|_radial_profile_"$mode"_$x-$y.fits|g")
-  output=$prefix$bname
-fi
+bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
+defaultname=$(pwd)/"$bname_prefix"_radial_profile_$mode"_$x"_"$y"
+if [ z$tmpdir = z        ]; then tmpdir=$defaultname
+else                             tmpdir=$(realpath $tmpdir); fi
+if ! [ -d $tmpdir ]; then mkdir $tmpdir; fi
+if [ z$output = zdefault ]; then output="$defaultname.fits"; fi
 
 
 
 
 
-# Generate the aperture parameters
-# --------------------------------
+# Crop image
+# ----------
 #
-# Here, an ascii file is generated with the parameters that will be feed
-# into MakeProfiles in order to construct the apertures image.
-aperturestxt=$(echo $output | sed -e"s|.fits|_apertures.txt|g")
-echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
+# Crop the input image around the desired point so we can continue
+# processing only on those pixels (we don't need the other pixels).
+#
+# Crop's output always has the range of pixels from the original image used
+# in the 'ICF1PIX' keyword value. So to find the new center (important if
+# it has sub-pixel positions), we can simply get the first and third value
+# of that string, and convert to the cropped coordinate system. Note that
+# because FITS pixel couting starts from 1, we need to subtract '1'.
+crop=$tmpdir/crop.fits
+cropwidth=$(echo $rmax | awk '{print $1*2}')
+astcrop $inputs --hdu=$hdu --center=$x,$y --mode=img \
+        --width=$cropwidth --output=$crop
+dxy=$(astfits $crop -h1 \
+          | grep ICF1PIX \
+          | sed -e"s/'/ /g" -e's/\:/ /g' -e's/,/ /' \
+          | awk '{print $3-1, $5-1}')
+x=$(echo "$x $dxy" | awk '{print $1-$2}')
+y=$(echo "$y $dxy" | awk '{print $1-$3}')
 
 
 
@@ -355,23 +432,13 @@ echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" > $aperturestxt
 #
 # The apertures image is genrated using MakeProfiles with the parameters
 # previously specified in the ascii file.
-aperturesfits=$(echo $output | sed -e"s|.fits|_apertures.fits|g")
-astmkprof $aperturestxt --background=$inputs --backhdu=$hdu \
-          --mforflatpix --mode=$mode --clearcanvas --type=int16 \
-          --circumwidth=$w --replace --output=$aperturesfits \
-          --config=$a
+apertures=$tmpdir/apertures.fits
+echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" \
+    | astmkprof --background=$crop --backhdu=1 --mforflatpix \
+                --mode=$mode --clearcanvas --type=int16 \
+                --circumwidth=$w --replace --output=$apertures \
+                --config=$a
 
-
-
-
-
-# Detection signal
-# ----------------
-#
-# To obtain signal to noise ratio for each radial profile; at first we have
-# to detect signal of noise.
-detection=$(echo $output | sed -e"s|.fits|_detected.fits|g")
-astnoisechisel $inputs -o$detection
 
 
 
@@ -380,15 +447,41 @@ astnoisechisel $inputs -o$detection
 # Obtain the radial profile
 # -------------------------
 #
-# The radial profile is obtained using Catalog. In practice, what is done
-# is to obtain a catalogue using the segmentation image previously
-# generated (the elliptical apertures) and the original input image for
-# computing the values. Also using of SKY_STD extinction of noisechisel
-# output for computing signal to noise ratio.
-fprofile=$(echo $output | sed -e"s|.fits|_catalogue.fits|g")
-astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
-             --instd=$detection --stdhdu=SKY_STD --ids --$m --sn \
-             --config=$c -o$fprofile
+# The radial profile is obtained using Catalog. In practice, what is done is
+# to obtain a catalogue using the segmentation image previously generated
+# (the elliptical apertures) and the original input image for computing the
+# values.
+if [ $b = 1 ]; then
+    fprofile=$tmpdir/catalog-apertures.fits
+    astmkcatalog $apertures -h1 --valuesfile=$crop --valueshdu=1 \
+                 --ids --$m --config=$c -o$fprofile
+else
+    # Detection signal
+    #
+    # If the user set the default value of binning variable($b) except 1,
+    # we need to have signal to noise ratio column to obtain radial
+    # profile.  To obtain signal to noise ratio for each radial profile; at
+    # first we have to detect signal of noise.
+    detection=$(echo $output | sed -e"s|.fits|_detected.fits|g")
+    astnoisechisel $crop -o$detection
+
+
+
+
+
+    # Obtain the radial profile
+    # -------------------------
+    #
+    # The radial profile is obtained using Catalog. In practice, what is
+    # done is to obtain a catalogue using the segmentation image previously
+    # generated (the elliptical apertures) and the original input image for
+    # computing the values. Also using of SKY_STD extinction of noisechisel
+    # output for computing signal to noise ratio.
+    fprofile=$tmpdir/catalog-apertures.fits
+    astmkcatalog $apertures -h1 --valuesfile=$crop --valueshdu=$hdu \
+                 --instd=$detection --stdhdu=SKY_STD --ids --$m --sn \
+                 --config=$c -o$fprofile
+fi
 
 
 
@@ -406,7 +499,7 @@ astmkcatalog $aperturesfits -h1 --valuesfile=$inputs --valueshdu=$hdu \
 # way to do binning the S/N column. Since the Awk script will print the
 # columns as float values, it is necessary to change the headers. To do
 # that, Sed is used to replace all ocurrences of i32 to f32.
-bprofile=$(echo $output | sed -e"s|.fits|_binned.fits|g")
+bprofile=$tmpdir/catalog-apertures-binned.fits
 if [ $b != 1 ]; then
 
   asttable $fprofile \
@@ -430,6 +523,7 @@ if [ $b != 1 ]; then
 else
   cp $fprofile $bprofile
 fi
+
 
 
 
@@ -470,17 +564,30 @@ if [ z$j = zv ]; then
   ycolname=$j$m
 fi
 
-aprofile=$(echo $output | sed -e"s|.fits|_arith.fits|g")
+aprofile=$tmpdir/catalog-arith.txt
 echo "# Column 1: $xcolname [modified,f32,] Binned $b and arith $X" > $aprofile
 echo "# Column 2: $ycolname [modified,f32,] Binned $b and arith $Y" >> $aprofile
-echo "# Column 3: $zcolname [modified,f32,] Binned $b and arith $Z" >> $aprofile
+#
+if [ $b != 1 ]; then
+    echo "# Column 3: $zcolname [modified,f32,] Binned $b and arith $Z" >> $aprofile
 
-# Make the appropiate operation over the two columns of the radial profile
-# and add it to the temporal file with the meta-data.
-asttable $bprofile \
-         -c'arith $1 '"$X" \
-         -c'arith $2 '"$Y" \
-         -c'arith $3 '"$Z" >> $aprofile
+    # Make the appropiate operation over the two columns of the radial profile
+    # and add it to the temporal file with the meta-data.
+    asttable $bprofile \
+             -c'arith $1 '"$X" \
+             -c'arith $2 '"$Y" \
+             -c'arith $3 '"$Z" >> $aprofile
+else
+    # Make the appropiate operation over the two columns of the radial profile
+    # and add it to the temporal file with the meta-data.
+    asttable $bprofile \
+             -c'arith $1 '"$X" \
+             -c'arith $2 '"$Y" >> $aprofile
+fi
+
+
+
+
 
 # Finally, read the temporal file with the metadata information as well as
 # the radial profile values, and save it as a fits table using Table.
@@ -489,12 +596,20 @@ cat $aprofile | asttable -o$output
 
 # Calculate the Half-Light Radii
 #
+# This parameter can calulate for that time the user set the default value
+# of binning variable($b) except 1.
+#
 # The half-light or 'effective' radius as the radius within which half of
 # the object's luminosity is contained.
-halfoflight=$(asttable $output | awk 'NR>=3{if(max<$2){max=$2}}END{print max/2}')
-radius=$(asttable $output \
-           | awk '{if('$(echo $halfoflight)'<=$2){line=$1;light=$2}}END{print line}')
-echo "Half-Light-Radii: $radius pixels from the center of the object"
+if [ $b != 1 ]; then
+    halfoflight=$(asttable $output | awk 'NR>=3{if(max<$2){max=$2}}END{print max/2}')
+    radius=$(asttable $output \
+                 | awk '{if('$(echo $halfoflight)'<=$2){line=$1;light=$2}}END{print line}')
+    echo "Half-Light-Radii: $radius pixels from the center of the object"
+fi
+
+
+
 
 
 # Remove temporal files
@@ -502,10 +617,11 @@ echo "Half-Light-Radii: $radius pixels from the center of the object"
 #
 # If the user has specified this option, temporal files will be removed.
 if [ $k = 1 ]; then
-  rm $aprofile \
-     $bprofile \
-     $fprofile \
-     $detection \
-     $aperturestxt \
-     $aperturesfits
+    rm $crop \
+       $aprofile \
+       $bprofile \
+       $fprofile \
+       $detection \
+       $apertures
+    rm -df $tmpdir
 fi
