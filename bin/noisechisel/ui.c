@@ -866,6 +866,7 @@ ui_free_report(struct noisechiselparams *p, struct timeval *t1)
   gal_data_free(p->kernel);
   gal_data_free(p->binary);
   gal_data_free(p->olabel);
+  gal_data_free(p->noskytiles);
   gal_data_free(p->widekernel);
   if(p->conv!=p->input) gal_data_free(p->conv);
 

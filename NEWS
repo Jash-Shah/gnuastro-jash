@@ -191,8 +191,10 @@ See the end of the file for license conditions.
      value. Unlike the previous method that used the global distribution of
      tile values to identify outliers, the new algorithm uses a relative
      measure. See the book for more. Since outliers are now rejected more
-     robustly, the default value of 'outliersigma' has been decreased to
-     '5' (previously it was 10).
+     robustly, the default value of '--meanmedqdiff' has been increased to
+     0.01 (was 0.005) and '--outliersigma' has been decreased to '5' (was
+     10). Also 'smoothwidth' has been increased from '3' to '5' to have
+     smoother tessellation values.
 
   Statistics:
    - The '--histogram2d' now takes a string argument: either 'image' or

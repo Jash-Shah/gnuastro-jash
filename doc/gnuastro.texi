@@ -259,6 +259,7 @@ General program usage tutorial
 * NoiseChisel optimization for storage::  Dramatically decrease output's volume.
 * Segmentation and making a catalog::  Finding true peaks and creating a catalog.
 * Working with catalogs estimating colors::  Estimating colors using the catalogs.
+* Column statistics color-magnitude diagram::  Vizualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
 * Finding reddest clumps and visual inspection::  Selecting some targets and inspecting them.
@@ -1974,6 +1975,7 @@ This will help simulate future situations when you are processing your own datas
 * NoiseChisel optimization for storage::  Dramatically decrease output's volume.
 * Segmentation and making a catalog::  Finding true peaks and creating a catalog.
 * Working with catalogs estimating colors::  Estimating colors using the catalogs.
+* Column statistics color-magnitude diagram::  Vizualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
 * Finding reddest clumps and visual inspection::  Selecting some targets and inspecting them.
@@ -2195,8 +2197,37 @@ Gnuastro has the Arithmetic program for such cases, and we'll introduce it later
 @cindex Scales, coordinate
 This is the deepest image we currently have of the sky.
 The first thing that comes to mind may be this: ``How large is this field on the sky?''.
+You can get a fast and crude answer with Gnuastro's Fits program using this command:
+
+@example
+astfits flat-ir/xdf-f160w.fits --skycoverage
+@end example
+
+It will print the sky coverage in two formats (all numbers are in units of degrees for this image): 1) the image's centeral RA and Dec and full width around that center, 2) the range of RA and Dec covered by this image.
+You can use these values in various online query systems.
+You can also use this option to automatically calculate the area covered by this image.
+With the @option{--quiet} option, the printed output of @option{--skycoverage} will not contain human-readable text, making it easier for further processing:
+
+@example
+astfits flat-ir/xdf-f160w.fits --skycoverage --quiet
+@end example
+
+The second row is the coverage range along RA and Dec (compare with the outputs before using @option{--quiet}).
+We can thus simply subtract the second from the first column and multiply it with the difference of the fourth and third columns to calculate the image area.
+We'll also multiply each by 60 to have the area in arc-minutes squared.
+
+@example
+astfits flat-ir/xdf-f160w.fits --skycoverage --quiet \
+        | awk 'NR==2@{print ($2-$1)*60*($4-$3)*60@}'
+@end example
+
+The returned value is @mymath{9.06711} arcmin@mymath{^2}.
+@strong{However, this method ignores the fact many of the image pixels are blank!}
+In other words, the image does cover this area, but there is no data in more than half of the pixels.
+So let's calculate the area coverage over-which we actually have data.
+
 The FITS world coordinate system (WCS) meta data standard contains the key to answering this question.
-Run the following command to see all the FITS keywords (metadata) for one of the images (mostly the same with the other filters because they were are scaled to the same region of Sky):
+Run the following command to see all the FITS keywords (metadata) for one of the images (almost identical with the other images because they were are scaled to the same region of Sky):
 
 @example
 astfits flat-ir/xdf-f160w.fits -h1
@@ -2227,38 +2258,6 @@ The commands are intentionally repetitive in some places to better understand ea
 @strong{Use shell history:} Don't forget to make effective use of your shell's history: you don't have to re-type previous command to add something to them.
 This is especially convenient when you just want to make a small change to your previous command.
 Press the ``up'' key on your keyboard (possibly multiple times) to see your previous command(s) and modify them accordingly.
-@end cartouche
-
-@cartouche
-@noindent
-@cindex Locale
-@cindex @code{LANG}
-@cindex @code{LC_ALL}
-@cindex Decimal separator
-@strong{Your locale doesn't use `.' as decimal separator:} the input/output of some core operating system tools like @command{awk} or @command{seq} depend on the @url{https://en.wikipedia.org/wiki/Locale_(computer_software), system locale}.
-For example in Spanish and some other languages the decimal separator (symbol used to separate the integer and fractional part of a number), is a comma.
-Therefore in systems that have Spanish as their default Locale, @command{seq} will print half of unity as `@code{0,5}' (instead of `@code{0.5}').
-This can cause problems for parsing the printed numbers in other programs.
-You can check your current locale with the @code{locale} command.
-You can test your default decimal separator with this command:
-
-@example
-seq 0.5 1
-@end example
-
-To avoid these kinds of locale-specific problems (for example another program not being able to read `@code{0,5}' as half of unity), you can change the locale by setting the @code{LANG} environment variable (or the lower-level/generic @code{LC_ALL}).
-You can do it only for a single command (the first one below), or all commands within the running session (the second command below):
-
-@example
-## Change the locale to the standard, only for this 'seq' command.
-$ LANG=C seq 0.5 1
-
-## Change the locale to the standard, for all commands after it.
-$ export LANG=C
-@end example
-
-If you want to change it generally for all future sessions, you can put the second command in your shell's startup file.
-For more on startup files, please see @ref{Installation directory}.
 @end cartouche
 
 @example
@@ -2310,6 +2309,14 @@ $ echo $n $r | awk '@{print $1 * ($2*60)^2@}'
 The output of the last command (area of this field) is 4.03817 (or approximately 4.04) arc-minutes squared.
 Just for comparison, this is roughly 175 times smaller than the average moon's angular area (with a diameter of 30arc-minutes or half a degree).
 
+Some FITS writers don't use the @code{CDELT} convention, making it hard to use the steps above.
+In such cases, you can extract the pixel scale with the @option{--pixelscale} option of Gnuastro's Fits program like the command below.
+Like the @option{--skycoverage} option above, you can also use the @option{--quiet} option to allow easy usage of the values in scripts.
+
+@example
+$ astfits flat-ir/xdf-f160w.fits --pixelscale
+@end example
+
 @cindex GNU AWK
 @cartouche
 @noindent
@@ -2318,6 +2325,39 @@ You will see it often in shell scripts.
 GNU AWK (the most common implementation) comes with a free and wonderful @url{https://www.gnu.org/software/gawk/manual/, book} in the same format as this book which will allow you to master it nicely.
 Just like this manual, you can also access GNU AWK's manual on the command-line whenever necessary without taking your hands off the keyboard.
 Just run @code{info awk}.
+@end cartouche
+
+@cartouche
+@noindent
+@cindex Locale
+@cindex @code{LANG}
+@cindex @code{LC_ALL}
+@cindex Decimal separator
+@cindex Language of command-line
+@strong{Your locale doesn't use `.' as decimal separator:} the input/output of some core operating system tools like @command{awk} or @command{seq} depend on the @url{https://en.wikipedia.org/wiki/Locale_(computer_software), system locale}.
+For example in Spanish and some other languages the decimal separator (symbol used to separate the integer and fractional part of a number), is a comma.
+Therefore in systems that have Spanish as their default Locale, @command{seq} will print half of unity as `@code{0,5}' (instead of `@code{0.5}').
+This can cause problems for parsing the printed numbers in other programs.
+You can check your current locale with the @code{locale} command.
+You can test your default decimal separator with this command:
+
+@example
+seq 0.5 1
+@end example
+
+To avoid these kinds of locale-specific problems (for example another program not being able to read `@code{0,5}' as half of unity), you can change the locale by setting the @code{LANG} environment variable (or the lower-level/generic @code{LC_ALL}).
+You can do it only for a single command (the first one below), or all commands within the running session (the second command below):
+
+@example
+## Change the locale to the standard, only for this 'seq' command.
+$ LANG=C seq 0.5 1
+
+## Change the locale to the standard, for all commands after it.
+$ export LANG=C
+@end example
+
+If you want to change it generally for all future sessions, you can put the second command in your shell's startup file.
+For more on startup files, please see @ref{Installation directory}.
 @end cartouche
 
 
@@ -2805,20 +2845,21 @@ $ astarithmetic $in $det not nan where --output=mask-sky.fits
 
 @cindex Correlated noise
 @cindex Noise, correlated
-Look again at the @code{DETECTIONS} extension, in particular the long worm-like structure that has branched out of the galaxy around @footnote{To find a particular coordiante easily in DS9, you can do this: Click on the ``Edit'' menu, and select ``Region''.
+Look again at the @code{DETECTIONS} extension, in particular the long worm-like structure around @footnote{To find a particular coordiante easily in DS9, you can do this: Click on the ``Edit'' menu, and select ``Region''.
 Then click on any random part of the image to see a circle show up in that location (this is the ``region'').
 Double-click on the region and a ``Circle'' window will open.
 If you have celestial coordinates, keep the default ``fk5'' in the scroll-down menu after the ``Center''.
 But if you have pixel/image coordinates, click on the ``fk5'' and select ``Image''.
-Now you can set the ``Center'' coordinates of the region (@code{1450} and @code{1680} in this case)) by manually typing them in the two boxes infront of ``Center''.
+Now you can set the ``Center'' coordinates of the region (@code{1650} and @code{1470} in this case) by manually typing them in the two boxes infront of ``Center''.
 Finally, when everything is ready, click on the ``Apply'' button and your region will go over your requested coordinates.
-You can zoom out (to see the whole image) and visually find it.} pixel 1450 (X) and 1680 (Y).
-This these types of long wiggly structures show that we have dug too deep into the noise, and that we are following correlated noise.
+You can zoom out (to see the whole image) and visually find it.} pixel 1650 (X) and 1470 (Y).
+These types of long wiggly structures show that we have dug too deep into the noise, and are a signature of correlated noise.
 Correlated noise is created when we warp (for example rotate) individual exposures (that are each slightly offset compared to each other) into the same pixel grid before adding them into one deeper image.
 During the warping, nearby pixels are mixed and the effect of this mixing on the noise (which is in every pixel) is called ``correlated noise''.
 Correlated noise is a form of convolution and it slightly smooths the image.
 
 In terms of the number of exposures (and thus correlated noise), the XDF dataset is by no means an ordinary dataset.
+Therefore the default parameters need to be slightly customized.
 It is the result of warping and adding roughly 80 separate exposures which can create strong correlated noise/smoothing.
 In common surveys the number of exposures is usually 10 or less.
 See Figure 2 of @url{https://arxiv.org/abs/1909.11230, Akhlaghi [2019]} and the discussion on @option{--detgrowquant} there for more on how NoiseChisel ``grow''s the detected objects and the patterns caused by correlated noise.
@@ -2858,8 +2899,8 @@ $ ds9 -mecube xdf-f160w_detcheck.fits -zscale -zoom to fit
 In order to understand the parameters and their biases (especially as you are starting to use Gnuastro, or running it a new dataset), it is @emph{strongly} encouraged to play with the different parameters and use the respective check images to see which step is affected by your changes and how, for example see @ref{Detecting large extended targets}.
 
 @cindex FWHM
-The @code{OPENED_AND_LABELED} extension shows the initial detection step of NoiseChisel.
-We see those thin/false connections due to correlated noise between smaller points are already present here (a relatively early stage in the processing).
+Let's focus on one step: the @code{OPENED_AND_LABELED} extension shows the initial detection step of NoiseChisel.
+We see the seeds of that correlated noise structure with many small detections (a relatively early stage in the processing).
 Such connections at the lowest surface brightness limits usually occur when the dataset is too smoothed, the threshold is too low, or the final ``growth'' is too much.
 
 As you see from the 2nd (@code{CONVOLVED}) extension, the first operation that NoiseChisel does on the data is to slightly smooth it.
@@ -2884,14 +2925,14 @@ $ astnoisechisel flat-ir/xdf-f160w.fits --kernel=kernel.fits  \
 @end example
 
 Open the output @file{xdf-f160w_detcheck.fits} as a multi-extension FITS file and go to the last extension (@code{DETECTIONS-FINAL}, it is the same pixels as the final NoiseChisel output without @option{--checkdetections}).
-Look again at that position mentioned above (1450,1680), you see that the long wiggly leg has disappeared.
-This shows we are making progress.
+Look again at that position mentioned above (1650,1470), you see that the long wiggly structure is gone.
+This shows we are making progress :-).
 
 Looking at the new @code{OPENED_AND_LABELED} extension, we see that the thin connections between smaller peaks has now significantly decreased.
 Going two extensions/steps ahead (in the first @code{HOLES-FILLED}), you can see that during the process of finding false pseudo-detections, too many holes have been filled: do you see how the many of the brighter galaxies are connected? At this stage all holes are filled, irrespective of their size.
 
 Try looking two extensions ahead (in the first @code{PSEUDOS-FOR-SN}), you can see that there aren't too many pseudo-detections because of all those extended filled holes.
-If you look closely, you can see the number of pseudo-detections in the result NoiseChisel prints (around 6100).
+If you look closely, you can see the number of pseudo-detections in the printed outputs of NoiseChisel (around 6400).
 This is another side-effect of correlated noise.
 To address it, we should slightly increase the pseudo-detection threshold (before changing @option{--dthresh}, run with @option{-P} to see the default value):
 
@@ -2900,18 +2941,19 @@ $ astnoisechisel flat-ir/xdf-f160w.fits --kernel=kernel.fits \
                  --dthresh=0.1 --checkdetection
 @end example
 
-Before visually inspecting the check image, you can already see the effect of this change in NoiseChisel's command-line output: notice how the number of pseudos has increased to more than 6800.
+Before visually inspecting the check image, you can already see the effect of this small change in NoiseChisel's command-line output: notice how the number of pseudo-detections has increased to more than 7100!
 Open the check image now and have a look, you can see how the pseudo-detections are distributed much more evenly in the blank sky regions of the @code{PSEUDOS-FOR-SN} extension.
 
 @cartouche
 @noindent
-@strong{Maximize the number of pseudo-detections:} For a new noise-pattern (different instrument), play with @code{--dthresh} until you get a maximal number of pseudo-detections (the total number of pseudo-detections is printed on the command-line when you run NoiseChisel).
+@strong{Maximize the number of pseudo-detections:} When using NoiseChisel on datasets with a new noise-pattern (for example going to a Radio astronomy image, or a shallow ground-based image), play with @code{--dthresh} until you get a maximal number of pseudo-detections: the total number of pseudo-detections is printed on the command-line when you run NoiseChisel, you don't even need to open a FITS viewer.
 
-In this particular case, try @option{--dthresh=0.2} and you will see that the total printed number decreases to around 6400 (recall that with @option{--dthresh=0.1}, it was roughly 6100).
-So a @option{--dthresh=0.1} (which gives roughly 6800 is the best value).
+In this particular case, try @option{--dthresh=0.2} and you will see that the total printed number decreases to around 6700 (recall that with @option{--dthresh=0.1}, it was roughly 7100).
+So for this type of very deep HST images, we should set @option{--dthresh=0.1}.
 @end cartouche
 
-The signal-to-noise ratio of pseudo-detections define NoiseChisel's reference for removing false detections, so they are very important to get right.
+As discussed in Section 3.1.5 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}, the signal-to-noise ratio of pseudo-detections are critical to identifying/removing false detections.
+For an optimal detection they are very important to get right (where you want to detect the faintest and smallest objects in the image successfully).
 Let's have a look at their signal-to-noise distribution with @option{--checksn}.
 
 @example
@@ -2919,7 +2961,8 @@ $ astnoisechisel flat-ir/xdf-f160w.fits --kernel=kernel.fits  \
                  --dthresh=0.1 --checkdetection --checksn
 @end example
 
-The output (@file{xdf-f160w_detsn.fits}) contains two extensions for the pseudo-detections over the undetected (@code{SKY_PSEUDODET_SN}) regions and those over detections (@code{DET_PSEUDODET_SN}):
+The output (@file{xdf-f160w_detsn.fits}) contains two extensions for the pseudo-detections containing two-column tables over the undetected (@code{SKY_PSEUDODET_SN}) regions and those over detections (@code{DET_PSEUDODET_SN}).
+With the first command below you can see the HDUs of this file, and with the second you can see the information of the table in the first HDU (which is the default when you don't use @option{--hdu}):
 
 @example
 $ astfits xdf-f160w_detsn.fits
@@ -2927,16 +2970,29 @@ $ asttable xdf-f160w_detsn.fits -i
 @end example
 
 @noindent
-As you see from the output of the commands above, both tables contain two columns.
-The first column is the pseudo-detection label which you can see in the respective @code{PSEUDOS-FOR-SN} extension of the check image (@file{xdf-f160w_detcheck.fits}).
-You can see the table columns with the first command below and get a feeling of the signal-to-noise value distribution with the second command (the two Table and Statistics programs will be discussed later in the tutorial)
+You can see the table columns with the first command below and get a feeling of the signal-to-noise value distribution with the second command (the two Table and Statistics programs will be discussed later in the tutorial):
 
 @example
 $ asttable xdf-f160w_detsn.fits -hSKY_PSEUDODET_SN
 $ aststatistics xdf-f160w_detsn.fits -hSKY_PSEUDODET_SN -c2
+... [output truncated] ...
+Histogram:
+ |           *
+ |          ***
+ |         ******
+ |        *********
+ |        **********
+ |       *************
+ |      *****************
+ |     ********************
+ |    **************************
+ |   ********************************
+ |*******************************************************   * **       *
+ |----------------------------------------------------------------------
 @end example
 
-The correlated noise is again visible in the signal-to-noise distribution of sky pseudo-detections: it is highly skewed.
+The correlated noise is again visible in the signal-to-noise distribution of sky pseudo-detections!
+Do you see how skewed this distribution is?
 In an image with less correlated noise, this distribution would be much more symmetric.
 A small change in the quantile will translate into a big change in the S/N value.
 For example see the difference between the three 0.99, 0.95 and 0.90 quantiles with this command:
@@ -2946,6 +3002,7 @@ $ aststatistics xdf-f160w_detsn.fits -hSKY_PSEUDODET_SN -c2      \
                 --quantile=0.99 --quantile=0.95 --quantile=0.90
 @end example
 
+We get a change of almost 2 units (which is very significant).
 If you run NoiseChisel with @option{-P}, you'll see the default signal-to-noise quantile @option{--snquant} is 0.99.
 In effect with this option you specify the purity level you want (contamination by false detections).
 With the @command{aststatistics} command above, you see that a small number of extra false detections (impurity) in the final result causes a big change in completeness (you can detect more lower signal-to-noise true detections).
@@ -2960,22 +3017,22 @@ $ astarithmetic $in $det nan where --output=mask-det.fits
 @end example
 
 Overall it seems good, but if you play a little with the color-bar and look closer in the noise, you'll see a few very sharp, but faint, objects that have not been detected.
-For example the sharp peak around pixel (2084, 1434).
-This only happens for under-sampled datasets like HST (where the pixel size is larger than the point spread function FWHM).
+For example the object around pixel (456, 1662).
+Despite its high valued pixels, this object was lost because erotion ignores the precise pixel values.
+Loosing small/sharp objects like this only happens for under-sampled datasets like HST (where the pixel size is larger than the point spread function FWHM).
 So this won't happen on ground-based images.
-Because of this, sharp and faint objects will be very small and eroded too easily during NoiseChisel's erosion step.
 
 To address this problem of sharp objects, we can use NoiseChisel's @option{--noerodequant} option.
-All pixels above this quantile will not be eroded, thus allowing us to preserve faint and sharp objects.
+All pixels above this quantile will not be eroded, thus allowing us to preserve small/sharp objects (that cover a small area, but have a lot of signal in it).
 Check its default value, then run NoiseChisel like below and make the mask again.
-You will see many of those sharp objects are now detected.
 
 @example
 $ astnoisechisel flat-ir/xdf-f160w.fits --kernel=kernel.fits     \
                  --noerodequant=0.95 --dthresh=0.1 --snquant=0.95
 @end example
 
-This seems to be fine and we'll stop the configuration here, but please feel free to keep looking into the data to see if you can improve it even more.
+This seems to be fine and the object above is now detected.
+We'll stop the configuration here, but please feel free to keep looking into the data to see if you can improve it even more.
 
 Once you have found the proper customization for the type of images you will be using you don't need to change them any more.
 The same configuration can be used for any dataset that has been similarly produced (and has a similar noise pattern).
@@ -3000,9 +3057,9 @@ We are now ready to finally run NoiseChisel on the three filters and keep the ou
 @example
 $ rm *.fits
 $ mkdir nc
-$ astnoisechisel flat-ir/xdf-f160w.fits --output=nc/xdf-f160w.fits
-$ astnoisechisel flat-ir/xdf-f125w.fits --output=nc/xdf-f125w.fits
-$ astnoisechisel flat-ir/xdf-f105w.fits --output=nc/xdf-f105w.fits
+$ for f in f105w f125w f160w; do \
+    astnoisechisel flat-ir/xdf-$f.fits --output=nc/xdf-$f.fits
+  done
 @end example
 
 
@@ -3069,7 +3126,7 @@ rm nc-for-storage.fits.gz
 @subsection Segmentation and making a catalog
 The main output of NoiseChisel is the binary detection map (@code{DETECTIONS} extension, see @ref{NoiseChisel optimization for detection}).
 which only has two values of 1 or 0.
-This is useful when studying the noise, but hardly of any use when you actually want to study the targets/galaxies in the image, especially in such a deep field where the detection map of almost everything is connected.
+This is useful when studying the noise or background properties, but hardly of any use when you actually want to study the targets/galaxies in the image, especially in such a deep field where almost everything is connected.
 To find the galaxies over the detections, we'll use Gnuastro's @ref{Segment} program:
 
 @example
@@ -3089,10 +3146,12 @@ $ ds9 -mecube seg/xdf-f160w.fits -zscale -zoom to fit
 
 Like NoiseChisel, the first extension is the input.
 The @code{CLUMPS} extension shows the true ``clumps'' with values that are @mymath{\ge1}, and the diffuse regions labeled as @mymath{-1}.
+Please flip between the first extension and the clumps extension and zoom-in on some of the clumps to get a feeling of what they are.
 In the @code{OBJECTS} extension, we see that the large detections of NoiseChisel (that may have contained many galaxies) are now broken up into separate labels.
-See @ref{Segment} for more.
+Play with the color-bar and hover your mouse of the various detections to see their different labels.
+
 The clumps are not affected by the hard-to-deblend and low signal-to-noise diffuse regions, they are more robust for calculating the colors (compared to objects).
-Therefore from this step onward, we'll continue with clumps.
+From this step onward, we'll continue with clumps.
 
 Having localized the regions of interest in the dataset, we are ready to do measurements on them with @ref{MakeCatalog}.
 Besides the IDs, we want to measure (in this order) the Right Ascension (with @option{--ra}), Declination (@option{--dec}), magnitude (@option{--magnitude}), and signal-to-noise ratio (@option{--sn}) of the objects and clumps.
@@ -3126,9 +3185,9 @@ To see the column values, just remove the @option{-i} option.
 In the output of each command below, look at the @code{Number of rows:}, and note that they are different.
 
 @example
-asttable cat/xdf-f105w.fits -hCLUMPS -i
-asttable cat/xdf-f125w.fits -hCLUMPS -i
-asttable cat/xdf-f160w.fits -hCLUMPS -i
+$ asttable cat/xdf-f105w.fits -hCLUMPS -i
+$ asttable cat/xdf-f125w.fits -hCLUMPS -i
+$ asttable cat/xdf-f160w.fits -hCLUMPS -i
 @end example
 
 Matching the catalogs is possible (for example with @ref{Match}).
@@ -3143,7 +3202,7 @@ You can do this with MakeCatalog and is one of the reasons that NoiseChisel or S
 The F160W image is deeper, thus providing better detection/segmentation, and redder, thus observing smaller/older stars and representing more of the mass in the galaxies.
 We will thus use the F160W filter as a reference and use its segment labels to identify which pixels to use for which objects/clumps.
 But we will do the measurements on the sky-subtracted F105W and F125W images (using MakeCatalog's @option{--valuesfile} option) as shown below:
-Notice how the major difference between this call to MakeCatalog and the call to generate the F160W catalog (excluding the zero point and the output name) is the @option{--valuesfile}.
+Notice that the only difference between these calls and the call to generate the raw F160W catalog (excluding the zero point and the output name) is the @option{--valuesfile}.
 
 @example
 $ astmkcatalog seg/xdf-f160w.fits --ids --ra --dec --magnitude --sn \
@@ -3155,14 +3214,15 @@ $ astmkcatalog seg/xdf-f160w.fits --ids --ra --dec --magnitude --sn \
                --clumpscat --output=cat/xdf-f105w-on-f160w-lab.fits
 @end example
 
-Look into what MakeCatalog printed on the command-line after running the commands above.
-You can see that (as requested) the object and clump labels were taken from the respective extensions in @file{seg/xdf-f160w.fits}, while the values and Sky standard deviation were taken from @file{nc/xdf-f105w.fits}.
-Since we used the same labeled image on both filters, the number of rows in both catalogs are now identical:
+After running the commands above, look into what MakeCatalog printed on the command-line.
+You can see that (as requested) the object and clump labels for both were taken from the respective extensions in @file{seg/xdf-f160w.fits}, while the values and Sky standard deviation were taken from @file{nc/xdf-f105w.fits} and @file{nc/xdf-f125w.fits}.
+Since we used the same labeled image on both filters, the number of rows in both catalogs are now identical.
+Let's have a look:
 
 @example
-asttable cat/xdf-f105w-on-f160w-lab.fits -hCLUMPS -i
-asttable cat/xdf-f125w-on-f160w-lab.fits -hCLUMPS -i
-asttable cat/xdf-f160w.fits -hCLUMPS -i
+$ asttable cat/xdf-f105w-on-f160w-lab.fits -hCLUMPS -i
+$ asttable cat/xdf-f125w-on-f160w-lab.fits -hCLUMPS -i
+$ asttable cat/xdf-f160w.fits -hCLUMPS -i
 @end example
 
 Finally, the comments in MakeCatalog's output (@code{COMMENT} keywords in the FITS headers, or lines starting with @code{#} in plain text) contain some important information about the input datasets and other useful info (for example pixel area or per-pixel surface brightness limit).
@@ -3173,10 +3233,10 @@ $ astfits cat/xdf-f160w.fits -h1 | grep COMMENT
 @end example
 
 
-@node Working with catalogs estimating colors, Aperture photometry, Segmentation and making a catalog, General program usage tutorial
+@node Working with catalogs estimating colors, Column statistics color-magnitude diagram, Segmentation and making a catalog, General program usage tutorial
 @subsection Working with catalogs (estimating colors)
-The output of the MakeCatalog command above is a FITS table (see @ref{Segmentation and making a catalog}).
-The two clump and object catalogs are available in the two extensions of the single FITS file@footnote{MakeCatalog can also output plain text tables.
+In the previous step we generated catalogs of objects and clumps over our dataset (see @ref{Segmentation and making a catalog}).
+The catalogs are available in the two extensions of the single FITS file@footnote{MakeCatalog can also output plain text tables.
 However, in the plain text format you can only have one table per file.
 Therefore, if you also request measurements on clumps, two plain text tables will be created (suffixed with @file{_o.txt} and @file{_c.txt}).}.
 Let's see the extensions and their basic properties with the Fits program:
@@ -3185,8 +3245,9 @@ Let's see the extensions and their basic properties with the Fits program:
 $ astfits  cat/xdf-f160w.fits              # Extension information
 @end example
 
-Now, let's inspect the table in each extension with Gnuastro's Table program (see @ref{Table}).
-Note that we could have used @option{-hOBJECTS} and @option{-hCLUMPS} instead of @option{-h1} and @option{-h2} respectively.
+Let's inspect the table in each extension with Gnuastro's Table program (see @ref{Table}).
+We should have used @option{-hOBJECTS} and @option{-hCLUMPS} instead of @option{-h1} and @option{-h2} respectively.
+The numbers are just used here to convey that both names or numbers are possible, in the next commands, we'll just use names.
 
 @example
 $ asttable cat/xdf-f160w.fits -h1 --info   # Objects catalog info.
@@ -3195,27 +3256,49 @@ $ asttable cat/xdf-f160w.fits -h2 -i       # Clumps catalog info.
 $ asttable cat/xdf-f160w.fits -h2          # Clumps catalog columns.
 @end example
 
+@noindent
 As you see above, when given a specific table (file name and extension), Table will print the full contents of all the columns.
 To see the basic metadata about each column (for example name, units and comments), simply append a @option{--info} (or @option{-i}) to the command.
 
-To print the contents of special column(s), just specify the column number(s) (counting from @code{1}) or the column name(s) (if they have one).
-For example, if you just want the magnitude and signal-to-noise ratio of the clumps (in @option{-h2}), you can get it with any of the following commands
+To print the contents of special column(s), just give the column number(s) (counting from @code{1}) or the column name(s) (if they have one) to the @option{--column} (or @option{-c}) option.
+For example, if you just want the magnitude and signal-to-noise ratio of the clumps (in the clumps catalog), you can get it with any of the following commands
 
 @example
-$ asttable cat/xdf-f160w.fits -h2 -c5,6
-$ asttable cat/xdf-f160w.fits -h2 -c5,SN
-$ asttable cat/xdf-f160w.fits -h2 -c5         -c6
-$ asttable cat/xdf-f160w.fits -h2 -cMAGNITUDE -cSN
+$ asttable cat/xdf-f160w.fits -hCLUMPS --column=5,6
+$ asttable cat/xdf-f160w.fits -hCLUMPS -c5,SN
+$ asttable cat/xdf-f160w.fits -hCLUMPS -c5         -c6
+$ asttable cat/xdf-f160w.fits -hCLUMPS -cMAGNITUDE -cSN
 @end example
 
+@noindent
+Similar to HDUs, when the columns have names, always use the name: it is so common to mis-write numbers or forget the order later!
 Using column names instead of numbers has many advantages:
-1) you don't have to worry about the order of columns in the table.
-2) It acts as a documentation in the script.
+@enumerate
+@item
+You don't have to worry about the order of columns in the table.
+@item
+It acts as a documentation in the script.
+@item
 Column meta-data (including a name) aren't just limited to FITS tables and can also be used in plain text tables, see @ref{Gnuastro text table format}.
+@end enumerate
 
-Since @file{cat/xdf-f160w.fits} and @file{cat/xdf-f105w-on-f160w-lab.fits} have exactly the same number of rows, we can use Table to merge the columns of these two tables, to have one table with magnitudes in both filters.
-We do this with the @option{--catcolumnfile} option like below.
-You give this option a file name (which is assumed to be a table that has the same number of rows), and all the table's columns will be concatenated/appended to the main table.
+@noindent
+Table also has tools to limit the displayed rows.
+For example with the first command below only rows with a magnitude in the range of 29 to 30 will be shown.
+With the second command, you can further limit the displayed rows to rows with an S/N larger than 10 (a range between 10 to infinity).
+You can further sort the output rows, only show the top (or bottom) N rows and etc, for more see @ref{Table}.
+
+@example
+$ asttable cat/xdf-f160w.fits -hCLUMPS --range=MAGNITUDE,28:29
+$ asttable cat/xdf-f160w.fits -hCLUMPS \
+           --range=MAGNITUDE,28:29 --range=SN,10:inf
+@end example
+
+Now that you are comfortable in viewing table columns and rows, let's look into merging columns of multiple tables into one table (which is necessary for measuring the color of the clumps).
+Since @file{cat/xdf-f160w.fits} and @file{cat/xdf-f105w-on-f160w-lab.fits} have exactly the same number of rows and the rows correspond to the same clump, let's merge them to have one table with magnitudes in both filters.
+
+We can merge columns with the @option{--catcolumnfile} option like below.
+You give this option a file name (which is assumed to be a table that has the same number of rows as the main input), and all the table's columns will be concatenated/appended to the main table.
 So please try it out with the commands below.
 We'll first look at the metadata of the first table (only the @code{CLUMPS} extension).
 With the second command, we'll concatenate the two tables and write them in, @file{two-in-one.fits} and finally, we'll check the new catalog's metadata.
@@ -3228,8 +3311,8 @@ $ asttable cat/xdf-f160w.fits -hCLUMPS --output=two-in-one.fits \
 $ asttable two-in-one.fits -i
 @end example
 
-Looking at the two metadata outputs (called with @option{-i}), you may have noticed that both tables have the same number of rows.
-But what might have attracted your attention more, is that @file{two-in-one.fits} has double the number of columns (as expected, after all, you merged both tables into one file).
+By comparing the two metadata, we see that both tables have the same number of rows.
+But what might have attracted your attention more, is that @file{two-in-one.fits} has double the number of columns (as expected, after all, you merged both tables into one file, and didn't ask for any specific column).
 In fact you can concatenate any number of other tables in one command, for example:
 
 @example
@@ -3244,13 +3327,14 @@ As you see, to avoid confusion in column names, Table has intentionally appended
 Similarly a @code{-2} has been added for the columns of the second concatenated table.
 
 However, this example clearly shows a problem with this full concatenation: some columns are identical (for example @code{HOST_OBJ_ID} and @code{HOST_OBJ_ID-1}), or not needed (for example @code{RA-1} and @code{DEC-1} which are not necessary here).
-In such cases, you can use @option{--catcolumns} to only concatenate certain columns, not the whole table, for example this command:
+In such cases, you can use @option{--catcolumns} to only concatenate certain columns, not the whole table.
+For example this command:
 
 @example
 $ asttable cat/xdf-f160w.fits -hCLUMPS --output=two-in-one-2.fits \
            --catcolumnfile=cat/xdf-f125w-on-f160w-lab.fits \
            --catcolumnhdu=CLUMPS --catcolumns=MAGNITUDE
-$ asttable three-in-one-2.fits -i
+$ asttable two-in-one-2.fits -i
 @end example
 
 You see that we have now only appended the @code{MAGNITUDE} column of @file{cat/xdf-f125w-on-f160w-lab.fits}.
@@ -3268,14 +3352,18 @@ $ asttable three-in-one-2.fits -i
 @end example
 
 But we aren't finished yet!
-There is a very big problem: its not clear which one of @code{MAGNITUDE}, @code{MAGNITUDE-1} or @code{MAGNITUDE-2} columns belong to which filter!
+There is a very big problem: its not immediately clear which one of @code{MAGNITUDE}, @code{MAGNITUDE-1} or @code{MAGNITUDE-2} columns belong to which filter!
 Right now, you know this because you just ran this command.
-But in one hour, you'll start doubting your self and will be forced to go through your command history, trying to answer this question.
+But in one hour, you'll start doubting your self and will be forced to go through your command history, trying to figure out if you added F105W first, or F125W.
 You should never torture your future-self (or your colleagues) like this!
 So, let's rename these confusing columns in the matched catalog.
 
 Fortunately, with the @option{--colmetadata} option, you can correct the column metadata of the final table (just before it is written).
-It takes four values: 1) the column name or number, 2) the column name, 3) the column unit and 4) the column comments.
+It takes four values:
+1) the original column name or number,
+2) the new column name,
+3) the column unit and
+4) the column comments.
 Since the comments are usually human-friendly sentences and contain space characters, you should put them in double quotations like below.
 For example by adding three calls of this option to the previous command, we write the filter name in the magnitude column name and description.
 
@@ -3291,9 +3379,9 @@ $ asttable cat/xdf-f160w.fits -hCLUMPS --output=three-in-one-3.fits \
 $ asttable three-in-one-3.fits -i
 @end example
 
-We now have both magnitudes in one table and can start doing arithmetic on them (to estimate colors, which are just a subtraction of magnitudes).
+We now have all three magnitudes in one table and can start doing arithmetic on them (to estimate colors, which are just a subtraction of magnitudes).
 To use column arithmetic, simply call the column selection option (@option{--column} or @option{-c}), put the value in single quotations and start the value with @code{arith} (followed by a space) like the example below.
-Column arithmetic uses the same notation as the Arithmetic program (see @ref{Reverse polish notation}), with almost all the same operators (see @ref{Arithmetic operators}), and some column-specific operators (that aren't available for images).
+Column arithmetic uses the same ``reverse polish notation'' as the Arithmetic program (see @ref{Reverse polish notation}), with almost all the same operators (see @ref{Arithmetic operators}), and some column-specific operators (that aren't available for images).
 In column-arithmetic, you can identify columns by number (prefixed with a @code{$}) or name, for more see @ref{Column arithmetic}.
 
 So let's estimate one color from @file{three-in-one-3.fits} using column arithmetic.
@@ -3302,7 +3390,7 @@ Note that column arithmetic can be mixed with other ways to choose output column
 
 @example
 $ asttable three-in-one-3.fits -ocolor-cat.fits \
-           -c1,2,RA,DEC,'arith $5 $7 -'
+           -c1,2,3,4,'arith $5 $7 -'
 
 $ asttable three-in-one-3.fits -ocolor-cat.fits \
            -c1,2,RA,DEC,'arith MAG-F125W MAG-F160W -'
@@ -3311,9 +3399,10 @@ $ asttable three-in-one-3.fits -ocolor-cat.fits -c1,2 \
            -cRA,DEC --column='arith MAG-F105W MAG-F160W -'
 @end example
 
-This example again highlights the important point on column metadata: do you see how clearly understandable the the last two commands are?
-On the contrary, do you feel how cryptic the first one is?
-When you have column names, please use them.
+This example again highlights the important point on using column names: if you don't know the commands before, you have no way of making sense of the first command: what is in column 5 and 7? why not subtract columns 3 and 4 from each other?
+Do you see how cryptic the first one is?
+Then look at the last one: even if you have no idea how this table was created, you immediately understand the desired operation.
+@strong{When you have column names, please use them.}
 If your table doesn't have column names, give them names with the @option{--colmetadata} (described above) as you are creating them.
 But how about the metadata for the column you just created with column arithmetic?
 Have a look at the column metadata of the table produced above:
@@ -3325,17 +3414,18 @@ $ asttable color-cat.fits -i
 The name of the column produced by arithmetic column is @command{ARITH_1}!
 This is natural: Arithmetic has no idea what the modified column is!
 You could have multiplied two columns, or done much more complex transformations with many columns.
-Metadata can't be set automatically.
+@emph{Metadata can't be set automatically, your (the human) input is necessary.}
 To add metadata, you can use @option{--colmetadata} like before:
 
 @example
 $ asttable three-in-one-3.fits -ocolor-cat.fits -c1,2,RA,DEC \
          --column='arith MAG-F105W MAG-F160W -' \
          --colmetadata=ARITH_1,F105W-F160W,log,"Magnitude difference"
+$ asttable color-cat.fits -i
 @end example
 
 We are now ready to make our final table.
-We want it to have the magnitudes in all three filters, as well colors.
+We want it to have the magnitudes in all three filters, as well as the three possible colors.
 Recall that by convention in astronomy colors are defined by subtracting the bluer magnitude from the redder magnitude.
 In this way a larger color value corresponds to a redder object.
 So from the three magnitudes, we can produce three colors (as shown below).
@@ -3356,24 +3446,6 @@ $ asttable cat/mags-with-color.fits -i
 @end example
 
 The table now has all the columns we need and it has the proper metadata to let us safely use it later (without frustrating over column orders!) or passing it to colleagues.
-You can now inspect the distribution of colors with the Statistics program.
-
-@example
-$ aststatistics cat/mags-with-color.fits -cF105W-F125W
-$ aststatistics cat/mags-with-color.fits -cF105W-F160W
-$ aststatistics cat/mags-with-color.fits -cF125W-F160W
-@end example
-
-This tiny and cute ASCII histogram (and the general information printed above it) gives you a crude (but very useful and fast) feeling on the distribution.
-You can later use Gnuastro's Statistics program with the @option{--histogram} option to build a much more fine-grained histogram as a table to feed into your favorite plotting program for a much more accurate/appealing plot (for example with PGFPlots in @LaTeX{}).
-If you just want a specific measure, for example the mean, median and standard deviation, you can ask for them specifically, like below:
-
-@example
-$ aststatistics cat/mags-with-color.fits -cF105W-F160W \
-                --mean --median --std
-@end example
-
-We won't go much deeper into the Statistics program here, but there is so much more you can do with it, please see @ref{Statistics} later.
 
 Let's finish this section of the tutorial with a useful tip on modifying column metadata.
 Above, updating/changing column metadata was done with the @option{--colmetadata} in the same command that produced the newly created Table file.
@@ -3403,14 +3475,156 @@ You can see that the column names have indeed been changed without touching any 
 You can do the same for the column units or comments by modifying the keywords starting with @code{TUNIT} or @code{TCOMM}.
 
 Generally, Gnuastro's table is a very useful program in data analysis and what you have seen so far is just the tip of the iceberg.
-But to keep the tutorial short, we'll stop reviewing the features here, for more, please see @ref{Table}.
-Finally, let's delete all the temporary FITS tables we placed in the top project directory:
+But to avoid making the tutorial even longer, we'll stop reviewing the features here, for more, please see @ref{Table}.
+Before continuing, let's just delete all the temporary FITS tables we placed in the top project directory:
 
 @example
 rm *.fits
 @end example
 
-@node Aperture photometry, Matching catalogs, Working with catalogs estimating colors, General program usage tutorial
+
+
+
+
+@node Column statistics color-magnitude diagram, Aperture photometry, Working with catalogs estimating colors, General program usage tutorial
+@subsection Column statistics (color-magnitude diagram)
+In @ref{Working with catalogs estimating colors} we created a single catalog containing the magnitudes of our desired clumps in all three filters, and their colors.
+To start with, let's inspect the distribution of three colors with the Statistics program.
+
+@example
+$ aststatistics cat/mags-with-color.fits -cF105W-F125W
+$ aststatistics cat/mags-with-color.fits -cF105W-F160W
+$ aststatistics cat/mags-with-color.fits -cF125W-F160W
+@end example
+
+This tiny and cute ASCII histogram (and the general information printed above it) gives you a crude (but very useful and fast) feeling on the distribution.
+You can later use Gnuastro's Statistics program with the @option{--histogram} option to build a much more fine-grained histogram as a table to feed into your favorite plotting program for a much more accurate/appealing plot (for example with PGFPlots in @LaTeX{}).
+If you just want a specific measure, for example the mean, median and standard deviation, you can ask for them specifically, like below:
+
+@example
+$ aststatistics cat/mags-with-color.fits -cF105W-F160W \
+                --mean --median --std
+@end example
+
+@cindex Color-magnitude diagram
+The basic statistics we measured above were just on one column.
+In many scenarios this is fine, but things get much more exciting if you look at the correlation of two columns with each other.
+For example, let's create the color-magnitude diagram for our measured targets.
+
+@cindex Scatter plot
+@cindex 2D histogram
+@cindex Plot, scatter
+@cindex Histogram, 2D
+In many papers, the color-magnitude diagram is usually plotted as a scatter plot.
+However, scatter plots have a major limitation when there are a lot of points and they cluster together in one region of the plot: the possible correlation in that dense region is lost (because the points fall over each other).
+In such cases, its much better to use a 2D histogram.
+In a 2D histogram, the full range in both columns is divided into discrete 2D bins (or pixels!) and we count how many objects fall in that 2D bin.
+
+Since a 2D histogram is a pixelated space, we can simply save it as a FITS image and view it in a FITS viewer.
+Let's do this in the command below.
+As is common with color-magnitude plots, we'll put the redder magnitdue on the horizontal axis and the color on the vertical axis.
+We'll set both dimensions to have 100 bins (with @option{--numbins} for the horizontal and @option{--numbins2} for the vertical).
+Also, to avoid strong outliers in any of the dimensions, we'll manually set the range of each dimension with the @option{--greaterequal}, @option{--greaterequal2}, @option{--lessthan} and @option{--lessthan2} options.
+
+@example
+$ aststatistics cat/mags-with-color.fits -cMAG-F160W,F105W-F160W \
+                --histogram2d=image --manualbinrange \
+                --numbins=100  --greaterequal=22  --lessthan=30 \
+                --numbins2=100 --greaterequal2=-1 --lessthan2=3 \
+                --manualbinrange --output=cmd.fits
+@end example
+
+@noindent
+You can now open this FITS file as a normal FITS image, for example with the command below.
+Try hovering/zooming over the pixels: not only will you see the number of objects in the UVUDF catalog that fall in each bin/pixel, but you also see the @code{F160W} magnitude and color of that pixel also (in the same place you usually see RA and Dec when hovering over an astronomical image).
+
+@example
+$ ds9 cmd.fits -cmap sls -zoom to fit
+@end example
+
+Having a 2D histogram as a FITS image with WCS has many great advantages.
+For example, just like FITS images of the night sky, you can ``match'' many 2D histogams that were created independently.
+You can add two histograms with each other, or you can use advanced features of FITS viewers to find structure in the correlation of your columns.
+
+@noindent
+With the first command below, you can activate the grid feature of DS9 to actually see the coordinate grid, as well as values on each line.
+With the second command, DS9 will even read the labels of the axises and use them to generate an almost publication-ready plot.
+
+@example
+$ ds9 cmd.fits -cmap sls -zoom to fit -grid yes
+$ ds9 cmd.fits -cmap sls -zoom to fit -grid yes -grid type publication
+@end example
+
+If you are happy with the grid and coloring and etc, you can also use ds9 to save this as a JPEG image to directly use in your documents/slides with these extra DS9 options (DS9 will write the image to @file{cmd-2d.jpeg} and quit immediately afterwards):
+
+@example
+$ ds9 cmd.fits -cmap sls -zoom 4 -grid yes -grid type publication \
+      -saveimage cmd-2d.jpeg -quit
+@end example
+
+@cindex PGFPlots (@LaTeX{} package)
+This is good for a fast progress update.
+But for your paper or more official report, you want to show something with higher quality.
+For that, you can use the PGFPlots package in @LaTeX{} to add axises in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points, lines and etc).
+But to load the 2D histogram into PGFPlots first you need to convert the FITS image into a more standard format, for example PDF.
+We'll use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixles with a value of zero to white):
+
+@example
+$ astconvertt cmd.fits --colormap=sls-inverse --borderwidth=0 -ocmd.pdf
+@end example
+
+@noindent
+Below you can see a minimally working example of how to add axis numbers, labels and a grid to the PDF generated above.
+First, let's create a new @file{report} directory to keep the @LaTeX{} outputs, then put the minimal report's source in a file called @file{report.tex}.
+Notice the @code{xmin}, @code{xmax}, @code{ymin}, @code{ymax} values and how they are the same as the range specified above.
+
+@example
+$ mkdir report
+$ mv cmd.pdf report/
+$ cat report/report.tex
+\documentclass@{article@}
+\usepackage@{pgfplots@}
+\dimendef\prevdepth=0
+\begin@{document@}
+
+You can write all you want here...\par
+
+\begin@{tikzpicture@}
+  \begin@{axis@}[
+      enlargelimits=false,
+      grid,
+      axis on top,
+      width=\linewidth,
+      height=\linewidth,
+      xlabel=@{Magnitude (F160W)@},
+      ylabel=@{Color (F105W-F160W)@}]
+
+    \addplot graphics[xmin=22, xmax=30, ymin=-1, ymax=3] @{cmd.pdf@};
+  \end@{axis@}
+\end@{tikzpicture@}
+\end@{document@}
+@end example
+
+@noindent
+Run this command to build your PDF (assuming you have @LaTeX{} and PGFPlots).
+
+@example
+$ cd report
+$ pdflatex report.tex
+@end example
+
+Open the newly created @file{report.pdf} and enjoy the exquisite quality.
+The improved quality, blending in with the text, vector-graphics resolution and other features make this plot pleasing to the eye, and let your readers focus on the main point of your scientific argument.
+PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table} for the necessary changes in the preamble.
+
+We won't go much deeper into the Statistics program here, but there is so much more you can do with it.
+After finishing the tutorial, see @ref{Statistics}.
+
+
+
+
+
+@node Aperture photometry, Matching catalogs, Column statistics color-magnitude diagram, General program usage tutorial
 @subsection Aperture photometry
 The colors we calculated in @ref{Working with catalogs estimating colors} used a different segmentation map for each object.
 This might not satisfy some science cases that need the flux within a fixed area/aperture.
@@ -3425,7 +3639,7 @@ So we'll first read the clump positions from the F160W catalog, then use AWK to 
 
 @example
 $ rm *.fits *.txt
-$ asttable cat/xdf-f160w.fits -hCLUMPS -cRA,DEC                    \
+$ asttable cat/xdf-f160w.fits -hCLUMPS -cRA,DEC \
            | awk '!/^#/@{print NR, $1, $2, 5, 5, 0, 0, 1, NR, 1@}' \
            > apertures.txt
 $ cat apertures.txt
@@ -3437,8 +3651,8 @@ Without it, MakeProfiles would build the profiles such that the @emph{sum} of th
 See @ref{Invoking astmkprof} for details on the options.
 
 @example
-$ astmkprof apertures.txt --background=flat-ir/xdf-f160w.fits     \
-            --clearcanvas --replace --type=int16 --mforflatpix    \
+$ astmkprof apertures.txt --background=flat-ir/xdf-f160w.fits \
+            --clearcanvas --replace --type=int16 --mforflatpix \
             --mode=wcs
 @end example
 
@@ -3490,10 +3704,10 @@ The @option{--ccol1} and @option{--ccol2} options specify the coordinate-columns
 With @option{--aperture} you specify the acceptable error (radius in 2D), in the same units as the columns.
 
 @example
-$ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits         \
-           --hdu=CLUMPS                 --hdu2=CLUMPS              \
-           --ccol1=RA,DEC               --ccol2=RA,DEC             \
-           --aperture=0.5/3600                                     \
+$ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits \
+           --hdu=CLUMPS                 --hdu2=CLUMPS \
+           --ccol1=RA,DEC               --ccol2=RA,DEC \
+           --aperture=0.5/3600 \
            --output=matched.fits
 $ astfits matched.fits
 @end example
@@ -3505,10 +3719,10 @@ You can also see which objects didn't match with the @option{--notmatched}, like
 Note how each extension of  now has a different number of rows.
 
 @example
-$ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits         \
-           --hdu=CLUMPS                 --hdu2=CLUMPS              \
-           --ccol1=RA,DEC               --ccol2=RA,DEC             \
-           --aperture=0.5/3600                                     \
+$ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits \
+           --hdu=CLUMPS                 --hdu2=CLUMPS \
+           --ccol1=RA,DEC               --ccol2=RA,DEC \
+           --aperture=0.5/3600 \
            --output=not-matched.fits    --notmatched
 $ astfits not-matched.fits
 @end example
@@ -3519,11 +3733,11 @@ When the first character is a `@key{b}', the respective column from the second c
 Also, if the first character is followed by @code{_all}, then all the columns from the respective catalog will be put in the output.
 
 @example
-$ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits         \
-           --hdu=CLUMPS                 --hdu2=CLUMPS              \
-           --ccol1=RA,DEC               --ccol2=RA,DEC             \
-           --aperture=0.35/3600                                    \
-           --outcols=a_all,bMAGNITUDE,bSN                          \
+$ astmatch cat/xdf-f160w.fits           cat/xdf-f105w.fits \
+           --hdu=CLUMPS                 --hdu2=CLUMPS \
+           --ccol1=RA,DEC               --ccol2=RA,DEC \
+           --aperture=0.35/3600 \
+           --outcols=a_all,bMAGNITUDE,bSN \
            --output=matched.fits
 $ astfits matched.fits
 @end example
@@ -4035,7 +4249,7 @@ $ topurl=https://dr12.sdss.org/sas/dr12/boss/photoObj/frames
 $ wget $topurl/301/3716/6/frame-r-003716-6-0117.fits.bz2 -Or.fits.bz2
 @end example
 
-When you want to reproduce a previous result (a known analysis, on a known dataset, to get a known result: like the case here!) it is important to verify that the file is correct: input file hasn't changed (on the remote server, or in your own archive), or there was no downloading problem.
+When you want to reproduce a previous result (a known analysis, on a known dataset, to get a known result: like the case here!) it is important to verify that the file is correct: that the input file hasn't changed (on the remote server, or in your own archive), or there was no downloading problem.
 Otherwise, if the data have changed in your server/archive, and you use the same script, you will get a different result, causing a lot of confusion!
 
 @cindex Checksum
@@ -4051,11 +4265,11 @@ $ sha1sum r.fits.bz2
 5fb06a572c6107c72cbc5eb8a9329f536c7e7f65  r.fits.bz2
 @end example
 
-If the output on your computer is different from this, either the file has been incorrectly downloaded (most probable), or it has changed on SDSS servers (very unlikely@footnote{If your checksum is different, try uncompressing the file with the @command{bunzip2} command after this, and open the resulting FITS file.
-If it opens and you see the image of M51, then there was no download problem, and the file has indeed changed.
+If the checksum on your computer is different from this, either the file has been incorrectly downloaded (most probable), or it has changed on SDSS servers (very unlikely@footnote{If your checksum is different, try uncompressing the file with the @command{bunzip2} command after this, and open the resulting FITS file.
+If it opens and you see the image of M51 and NGC5195, then there was no download problem, and the file has indeed changed on the SDSS servers!
 In this case, please contact us at @code{bug-gnuastro@@gnu.org}.}).
 To get a better feeling of checksums open your favorite text editor and make a test file by writing something in it.
-Save it and calculate the new file's SHA-1 checksum with @command{sha1sum}.
+Save it and calculate the text file's SHA-1 checksum with @command{sha1sum}.
 Try renaming that file, and you'll see the checksum hasn't changed (checksums only look into the contents, not the name/location of the file).
 Then open the file with your text editor again, make a change and re-calculate its checksum, you'll see the checksum string has changed.
 
@@ -4103,7 +4317,7 @@ $ astnoisechisel r.fits -h0
 @end example
 
 As described in @ref{NoiseChisel and Multiextension FITS files}, NoiseChisel's default output is a multi-extension FITS file.
-Open the output @file{r_detected.fits} file and have a look at the extensions, the first extension is only meta-data and contains NoiseChisel's configuration parameters.
+Open the output @file{r_detected.fits} file and have a look at the extensions, the 0-th extension is only meta-data and contains NoiseChisel's configuration parameters.
 The rest are the Sky-subtracted input, the detection map, Sky values and Sky standard deviation.
 
 @example
@@ -4157,10 +4371,16 @@ Don't forget that ``@emph{Good statistical analysis is not a purely routine matt
 A good scientist must have a good understanding of her tools to make a meaningful analysis.
 So don't hesitate in playing with the default configuration and reviewing the manual when you have a new dataset (from a new instrument) in front of you.
 Robust data analysis is an art, therefore a good scientist must first be a good artist.
+So let's open the check image as a multi-extension cube:
+
+@example
+$ ds9 -mecube r_qthresh.fits -zscale -cmap sls -zoom to fit
+@end example
 
 The first extension (called @code{CONVOLVED}) of @file{r_qthresh.fits} is the convolved input image where the threshold(s) is(are) defined (and later applied to).
 For more on the effect of convolution and thresholding, see Sections 3.1.1 and 3.1.2 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.
-The second extension (@code{QTHRESH_ERODE}) has a blank value for all the pixels of any tile that was identified as having significant signal.
+The second extension (@code{QTHRESH_ERODE}) has a blank/white value for all the pixels of any tile that was identified as having significant signal.
+The other tiles have the measured threshold over them.
 The next two extensions (@code{QTHRESH_NOERODE} and @code{QTHRESH_EXPAND}) are the other two quantile thresholds that are necessary in NoiseChisel's later steps.
 Every step in this file is repeated on the three thresholds.
 
@@ -4169,8 +4389,17 @@ As one line of attack against discarding too much signal below the threshold, No
 Go forward by three extensions to @code{VALUE1_NO_OUTLIER} and you will see that many of the tiles over the galaxy have been removed in this step.
 For more on the outlier rejection algorithm, see the latter half of @ref{Quantifying signal in a tile}.
 
-However, the default outlier rejection parameters weren't enough, and when you play with the color-bar, you still see a gradient near the outer tidal feature of the galaxy.
-You have two strategies for fixing this problem: 1) Increase the tile size to get more accurate measurements of skewness.
+Even though much of the galaxy's footprint has been rejected as outliers, there are still tiles with signal remaining:
+play with the DS9 color-bar and you still see a gradient near the outer tidal feature of the galaxy.
+Before trying to correct this, let's look at the other extensions of this check image.
+We will use a @code{*} as a wild-card that can be 1, 2 or 3.
+In the @code{THRESH*_INTERP} extensions, you see that all the blank tiles have been interpolated using their nearest neighbors (the relevant option here is @option{--interpnumngb}).
+In the following @code{THRESH*_SMOOTH} extensions, you can see the tile values after smoothing (configured with @option{--smoothwidth} option).
+Finally, in @code{QTHRESH-APPLIED}, you see the thresholded image: pixels with a value of 1 will be eroded later, but pixels with a value of 2 will pass the erosion step un-touched.
+
+Let's get back to the problem of optimizing the result.
+You have two strategies for detecting the outskirts of the merging galaxies:
+1) Increase the tile size to get more accurate measurements of skewness.
 2) Strengthen the outlier rejection parameters to discard more of the tiles with signal.
 Fortunately in this image we have a sufficiently large region on the right of the image that the galaxy doesn't extend to.
 So we can use the more robust first solution.
@@ -4183,25 +4412,31 @@ Therefore when your dataset is large (unlike the one in this test), and you are 
 For more on @option{--convolved}, see @ref{NoiseChisel input}.
 @end cartouche
 
-To identify the skewness caused by the flat NGC 5195 and M51 tidal features on the tiles under it, we thus have to choose a tile size that is larger than the gradient of the signal.
-Let's try a tile size of 100 by 100 pixels:
+To better identify the skewness caused by the flat NGC 5195 and M51 tidal features on the tiles under it, we have to choose a larger tile size.
+Let's try a tile size of 100 by 100 pixels and inspect the check image.
 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --checkqthresh
+$ ds9 -mecube r_qthresh.fits -zscale -cmap sls -zoom to fit
 @end example
 
-You can clearly see the effect of this increased tile size: the tiles are much larger and when you look into @code{VALUE1_NO_OUTLIER}, you see that all the tiles are nicely grouped on the right side of the image (the farthest from M51, where we didn't see any gradient before).
+You can clearly see the effect of this increased tile size: the tiles are much larger and when you look into @code{VALUE1_NO_OUTLIER}, you see that all the tiles are nicely grouped on the right side of the image (the farthest from M51, where we don't see a gradient in @code{QTHRESH_ERODE}).
 Things look good now, so let's remove @option{--checkqthresh} and let NoiseChisel proceed with its detection.
 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100
+$ ds9 -mecube r_detected.fits -zscale -cmap sls -zoom to fit
 @end example
 
-The resulting detected pixels have expanded a little, but not as much as we may had expected from the tiles that were used for the thresholding: there is still a gradient in the @code{SKY} image that is far from the tiles used.
+The detected pixels of the @code{DETECTIONS} extension have expanded a little, but not as much.
+Also, the gradient in the @code{SKY} image is almost fully removed (and doesn't fall over M51 anymore).
+However, on the bottom-right of the m51 detection, we see many holes gradually increasing in size.
+This hints that there is still signal out there.
 Let's check the next series of detection steps by adding the @code{--checkdetection} option this time:
 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --checkdetection
+$ ds9 -mecube r_detcheck.fits -zscale -cmap sls -zoom to fit
 @end example
 
 @cindex Erosion (image processing)
@@ -4218,7 +4453,7 @@ This is good to remove thin connections that are only due to noise.
 Each separate connected group of pixels is also given its unique label here.
 Do you see how just beyond the large M51 detection, there are many smaller detections that get smaller as you go more distant?
 This hints at the solution: the default number of erosions is too much.
-Let's see how many erosions take place by default:
+Let's see how many erosions take place by default (by adding @command{-P | grep erode} to the previous command)
 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 -P | grep erode
@@ -4234,6 +4469,7 @@ So let's see how things change with only one erosion:
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --erode=1 \
                  --checkdetection
+$ ds9 -mecube r_detcheck.fits -zscale -cmap sls -zoom to fit
 @end example
 
 Looking at the @code{OPENED-AND-LABELED} extension again, we see that the main/large detection is now much larger than before.
@@ -4247,16 +4483,15 @@ We see that the main detection has indeed been detected very far out, so let's s
 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --erode=1
+$ ds9 -mecube r_detected.fits -zscale -cmap sls -zoom to fit
 @end example
 
 The @code{DETECTIONS} extension of @code{r_detected.fits} closely follows what the @code{DETECTION-FINAL} of the check image (looks good!).
-But if you go ahead to the @code{SKY} extension, you'll see the footprint of the galaxy again!
-It is MUCH better (weaker) than before, but still visible.
+If you go ahead to the @code{SKY} extension, things still look good.
+But it can still be improved.
 
-This is happening because the outer low surface brightness wings are so diffuse and large.
 Look at the @code{DETECTIONS} again, you will see the right-ward edges of M51's detected pixels have many ``holes'' that are fully surrounded by signal (value of @code{1}) and the signal stretches out in the noise very thinly (the size of the holes increases as we go out).
-This suggests that there is still undetected signal that is causing that bias in the @code{SKY} extension.
-Therefore, we should dig deeper into the noise.
+This suggests that there is still undetected signal and that we can still dig deeper into the noise.
 
 With the @option{--detgrowquant} option, NoiseChisel will ``grow'' the detections in to the noise.
 Its value is the ultimate limit of the growth in units of quantile (between 0 and 1).
@@ -4268,6 +4503,7 @@ For this particularly huge galaxy (with signal that extends very gradually into 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --erode=1 \
                  --detgrowquant=0.75
+$ ds9 -mecube r_detected.fits -zscale -cmap sls -zoom to fit
 @end example
 
 Beyond this level (smaller @option{--detgrowquant} values), you see many of the smaller background galaxies (towards the right side of the image) starting to create thin spider-leg-like features, showing that we are following correlated noise for too much.
@@ -4280,45 +4516,8 @@ In this case, a maximum area/size of 10,000 pixels seems to be good:
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --erode=1 \
                  --detgrowquant=0.75 --detgrowmaxholesize=10000
+$ ds9 -mecube r_detected.fits -zscale -cmap sls -zoom to fit
 @end example
-
-The footprint of the galaxy has almost disappeared and the galaxy footprint no longer has the same shape as the outskirts of the galaxy.
-But it is still present in the @code{SKY} extension.
-Before continuing, let's pause for a moment and calculate the significance of this gradient in the Sky, in units of the image noise.
-Since the gradient is roughly along the horizontal axis, we'll collapse the image along the second (vertical) FITS dimension to have a 1D array (a table column, see its values with the second command).
-
-@example
-$ astarithmetic r_detected.fits 2 collapse-mean -hSKY -ocollapsed.fits
-$ asttable collapsed.fits
-@end example
-
-We can now calculate the minimum and maximum values of this array and define their difference (in units of noise) as the gradient.
-We'll then calculate the mean noise value in the image and divide the gradient by that noise level.
-
-@example
-$ grad=$(astarithmetic r_detected.fits 2 collapse-mean set-i   \
-                       i maxvalue i minvalue - -hSKY -q)
-$ echo $grad
-$ std=$(aststatistics r_detected.fits -hSKY_STD --mean)
-$ echo $std
-$ astarithmetic -q $grad $std /
-@end example
-
-The undetected gradient (@code{grad} above) is thus almost 1/100th of the noise-level (which is great!).
-But don't forget that this is per-pixel: individually its (very!) small, but it extends over millions of pixels, so the total flux may still be relevant for a very precise measurement of the diffuse emission.
-
-@cartouche
-@noindent
-@strong{Advanced Arithmetic:} To derive the significance of the gradient in the commands above, we had to create a temporary file and generally manually press a lot of keys!
-But thanks to Arithmetic's @ref{Reverse polish notation}, you can do all the steps above in the single command that is shown below (which is also faster!).
-The Arithmetic program is a very powerful and unique Gnuastro feature, if you master it, you can do many complex operations very easily and fast (both for you who are typing, and for the computer that is processing!).
-
-@example
-astarithmetic -q r_detected.fits -hSKY 2 collapse-mean set-i \
-              i maxvalue i minvalue - \
-              r_detected.fits -hSKY_STD meanvalue  /
-@end example
-@end cartouche
 
 When looking at the raw input image (which is very ``shallow'': less than a minute exposure!), you don't see anything so far out of the galaxy.
 You might just think to yourself that ``this is all noise, I have just dug too deep and I'm following systematics''! If you feel like this, have a look at the deep images of this system in @url{https://arxiv.org/abs/1501.04599, Watkins et al. [2015]}, or a 12 hour deep image of this system (with a 12-inch telescope): @url{https://i.redd.it/jfqgpqg0hfk11.jpg}@footnote{The image is taken from this Reddit discussion: @url{https://www.reddit.com/r/Astronomy/comments/9d6x0q/12_hours_of_exposure_on_the_whirlpool_galaxy/}}.
@@ -4335,7 +4534,7 @@ For an applied example of setting/using them, see @ref{Option management and con
 
 @cartouche
 @noindent
-@strong{This NoiseChisel configuration is NOT GENERIC:} Don't use the configuration derived above, on another image @emph{blindly}.
+@strong{This NoiseChisel configuration is NOT GENERIC:} Don't use the configuration derived above, on another instrument's image @emph{blindly}.
 If you are unsure, just use the default values.
 As you saw above, the reason we chose this particular configuration for NoiseChisel to detect the wings of the M51 group was strongly influenced by the noise properties of this particular image.
 Remember @ref{NoiseChisel optimization for detection}, where we looked into the very deep XDF image which had strong correlated noise?
@@ -4438,7 +4637,7 @@ Finally, with the @code{meanvalue} operator, we are taking the mean value of all
 $ edge="edge.fits -h1"
 $ skystd="r_detected.fits -hSKY_STD"
 $ skysub="r_detected.fits -hINPUT-NO-SKY"
-$ astarithmetic $skysub $skystd / $edge not nan where       \
+$ astarithmetic $skysub $skystd / $edge not nan where \
                 meanvalue --quiet
 @end example
 
@@ -4458,17 +4657,18 @@ We have thus reached an outer surface brightness of @mymath{25.69} magnitudes/ar
 In interpreting this value, you should just have in mind that NoiseChisel works based on the contiguity of signal in the pixels.
 Therefore the larger the object (with a similarly diffuse emission), the deeper NoiseChisel can carve it out of the noise.
 In other words, this reported depth, is the depth we have reached for this object in this dataset, processed with this particular NoiseChisel configuration.
-If the M51 group in this image was larger/smaller than this, or if the image was from a different instrument, or if we had used a different configuration, we would go deeper/shallower.
+If the M51 group in this image was larger/smaller than this (the field of view was smaller/larger), or if the image was from a different instrument, or if we had used a different configuration, we would go deeper/shallower.
 
 To continue your analysis of such datasets with extended emission, you can use @ref{Segment} to identify all the ``clumps'' over the diffuse regions: background galaxies and foreground stars.
 
 @example
-$ astsegment r_detected.fits
+$ astsegment r_detected.fits --output=r_segmented.fits
+$ ds9 -mecube r_segmented.fits -zscale -cmap sls -zoom to fit
 @end example
 
 @cindex DS9
 @cindex SAO DS9
-Open the output @file{r_detected_segmented.fits} as a multi-extension data cube like before and flip through the first and second extensions to see the detected clumps (all pixels with a value larger than 1).
+Open the output @file{r_segmented.fits} as a multi-extension data cube like before and flip through the first and second extensions to see the detected clumps (all pixels with a value larger than 1).
 To optimize the parameters and make sure you have detected what you wanted, we recommend to visually inspect the detected clumps on the input image.
 
 For visual inspection, you can make a simple shell script like below.
@@ -4530,7 +4730,7 @@ But more importantly, depending on the dataset's world coordinate system, you ha
 Otherwise the circle regions can be too small/large.} output of Segment (when @option{--rawoutput} is @emph{not} used) with a command like this:
 
 @example
-$ ./check-clumps.sh r_detected_segmented -0.1 2
+$ ./check-clumps.sh r_segmented -0.1 2
 @end example
 
 Go ahead and run this command.
@@ -4559,8 +4759,8 @@ You can do this using Arithmetic in a command like below.
 For easy reading of the command, we'll define the shell variable @code{i} for the image name and save the output in @file{masked.fits}.
 
 @example
-$ in="r_detected_segmented.fits -hINPUT"
-$ clumps="r_detected_segmented.fits -hCLUMPS"
+$ in="r_segmented.fits -hINPUT"
+$ clumps="r_segmented.fits -hCLUMPS"
 $ astarithmetic $in $clumps 0 gt nan where -oclumps-masked.fits
 @end example
 
@@ -14451,67 +14651,62 @@ Let's start by clarifying some definitions first: @emph{Data} is defined as the 
 @emph{Signal} is defined as the mean of the noise on each element.
 We'll also assume that the @emph{background} (see @ref{Sky value definition}) is subtracted and is zero.
 
-When a data set doesn't have any signal (only noise), the mean, median and mode of the distribution are equal within statistical errors and approximately equal to the background value.
-Signal always has a positive value and will never become negative, see Figure 1 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
+When a dataset doesn't have any signal (only noise), the mean, median and mode of the distribution are equal within statistical errors and approximately equal to the background value.
+Signal from emitting objects, like astronomical targets, always has a positive value and will never become negative, see Figure 1 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
 Therefore, as more signal is added, the mean, median and mode of the dataset shift to the positive.
 The mean's shift is the largest.
 The median shifts less, since it is defined based on an ordered distribution and so is not affected by a small number of outliers.
 The distribution's mode shifts the least to the positive.
 
-@cindex Mode
+@cindex Mean
 @cindex Median
+@cindex Quantile
 Inverting the argument above gives us a robust method to quantify the significance of signal in a dataset.
 Namely, when the mean and median of a distribution are approximately equal, or the mean's quantile is around 0.5, we can argue that there is no significant signal.
 
-To allow for gradients (which are commonly present in ground-based images), we can consider the image to be made of a grid of tiles (see @ref{Tessellation}@footnote{The options to customize the tessellation are discussed in @ref{Processing options}.}).
+To allow for gradients (which are commonly present in raw exposures, or when there are large forground galaxies in the field), we consider the image to be made of a grid of tiles@footnote{The options to customize the tessellation are discussed in @ref{Processing options}.} (see @ref{Tessellation}).
 Hence, from the difference of the mean and median on each tile, we can estimate the significance of signal in it.
 The median of a distribution is defined to be the value of the distribution's middle point after sorting (or 0.5 quantile).
-Thus, to estimate the presence of signal, we'll compare with the quantile of the mean with 0.5.
-If the absolute difference in a tile is larger than the value given to the @option{--meanmedqdiff} option, that tile will be ignored.
+Thus, to estimate the presence of signal, we just have to estimate the quantile of the mean (@mymath{q_{mean}}).
+If a tile's @mymath{|q_{mean}-0.5|} is larger than the value given to the @option{--meanmedqdiff} option, that tile will be considered to have significant signal and ignored for the next steps.
 You can read this option as ``mean-median-quantile-difference''.
 
-The raw dataset's distribution is noisy, so using the argument above on the raw input will give a noisy result.
-To decrease the noise/error in estimating the mode, we will use convolution (see @ref{Convolution process}).
+The raw dataset's pixel distribution (in each tile) is noisy, to decrease the noise/error in estimating @mymath{q_{mean}}, we convolve the image before tessellation (see @ref{Convolution process}.
 Convolution decreases the range of the dataset and enhances its skewness, See Section 3.1.1 and Figure 4 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
 This enhanced skewness can be interpreted as an increase in the Signal to noise ratio of the objects buried in the noise.
 Therefore, to obtain an even better measure of the presence of signal in a tile, the mean and median discussed above are measured on the convolved image.
-
-Through the difference of the mean and median we have actually `detected' data in the distribution.
-However this ``detection'' was only based on the total distribution of the data in each tile (a much lower resolution).
-This is the main limitation of this technique.
-The best approach is thus to do detection over the dataset, mask all the detected pixels and use the undetected regions to estimate the sky and its standard deviation (possibly over a tessellation).
-This is how NoiseChisel works: it uses the argument above to find tiles that are used to find its thresholds.
-Several higher-level steps are done on the thresholded pixels to define the higher-level detections (see @ref{NoiseChisel}).
 
 @cindex Cosmic rays
 There is one final hurdle: raw astronomical datasets are commonly peppered with Cosmic rays.
 Images of Cosmic rays aren't smoothed by the atmosphere or telescope aperture, so they have sharp boundaries.
 Also, since they don't occupy too many pixels, they don't affect the mode and median calculation.
 But their very high values can greatly bias the calculation of the mean (recall how the mean shifts the fastest in the presence of outliers), for example see Figure 15 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
-
 The effect of outliers like cosmic rays on the mean and standard deviation can be removed through @mymath{\sigma}-clipping, see @ref{Sigma clipping} for a complete explanation.
-Therefore, after asserting that the mode and median are approximately equal in a tile (see @ref{Tessellation}), the final Sky value and its standard deviation are determined after @mymath{\sigma}-clipping with the @option{--sigmaclip} option.
 
-In the end, some of the tiles will pass the mean and median quantile difference test.
+Therefore, after asserting that the mean and median are approximately equal in a tile (see @ref{Tessellation}), the measurements on the tile are determined after @mymath{\sigma}-clipping with the @option{--sigmaclip} option.
+In the end, some of the tiles will pass the mean and median quantile difference test and will be given a value.
+Others (that had signal in them) will just be assigned a NaN (not-a-number) value.
+So we need to use interpolation and assign a value to all the tiles.
+
 However, prior to interpolating over the failed tiles, another point should be considered: large and extended galaxies, or bright stars, have wings which sink into the noise very gradually.
-In some cases, the gradient over these wings can be on scales that is larger than the tiles.
-The mean-median distance test will pass on such tiles and will cause a strong peak in the interpolated tile grid, see @ref{Detecting large extended targets}.
+In some cases, the gradient over these wings can be on scales that is larger than the tiles and mean-median distance test will be successful.
+This will cause a footprint of such objects after the interpolation see @ref{Detecting large extended targets}.
 
-These tiles actually have signal in them and are outliers in the distribution of tiles that passed the mean-median quantile distance test.
-Therefore, the final step of ``quantifying signal in a tile'' is to look at this distribution and remove the outliers.
+These tiles (on the wings of large foreground galaxies for example) actually have signal in them and the mean-median difference isn't enough (due to the ``small'' size of the tiles).
+Therefore, the final step of ``quantifying signal in a tile'' is to look at this distribution of successful tiles and remove the outliers.
 @mymath{\sigma}-clipping is a good solution for removing a few outliers, but the problem with outliers of this kind is that there may be many such tiles (depending on the large/bright stars/galaxies in the image).
+We therefore apply the following local outlier rejection strategy.
 
 For each tile, we find the nearest @mymath{N_{ngb}} tiles that had a usable value (@mymath{N_{ngb}} is the value given to  @option{--interpnumngb}).
 We then sort them and find the difference between the largest and second-to-smallest elements (The minimum isn't used because the scatter can be large).
-Let's call this the tile's @emph{slope}.
-In effect it is a very crude estimate of the slope of the @mymath{N_{ngb}} tiles in the vicinity of that tile.
-All the tiles that are on a region of flat noise will have similar slope values, but if a few tiles fall on the wings of a bright star or galaxy, their slope will be significantly larger than the flat region tiles.
+Let's call this the tile's @emph{slope} (measured from its neighbors).
+All the tiles that are on a region of flat noise will have similar slope values, but if a few tiles fall on the wings of a bright star or large galaxy, their slope will be significantly larger than the tiles with no signal.
 We just have to find the smallest tile slope value that is an outlier compared to the rest and reject all tiles with a slope larger than that.
 
 @cindex Outliers
 @cindex Identifying outliers
 To identify the smallest outlier, we'll use the distribution of distances between sorted elements.
-Let's assume there are @mymath{N} successful tiles in the image.
+Let's assume the total number tiles with a good mean-median quantile difference is @mymath{N}.
 We sort them in increasing order based on their @emph{slope} (defined above).
 So the array of tile slopes can be written as @mymath{@{s[0], s[1], ..., s[N]@}}, where @mymath{s[0]<s[1]} and so on.
 We then start from element @mymath{M} and calculate the distances between all two adjacent values before it: @mymath{@{s[1]-s[0], s[2]-s[1], s[M-1]-s[M-2]@}}.
@@ -14528,8 +14723,13 @@ If the value given to @option{--outliersigma} is displayed with @mymath{s}, the 
 @dispmath{{(v_i-v_{i-1})-m\over \sigma}>s}
 
 Since @mymath{i} begins from the @mymath{N/3}-th element in the sorted array (a quantile of @mymath{1/3=0.33}), the outlier has to be larger than the @mymath{0.33} quantile value of the dataset.
-You can use the check images (for example @option{--checksky} in the Statistics program or @option{--checkqthresh}, @option{--checkdetsky} and @option{--checksky} options in NoiseChisel for any of its steps that uses this outlier rejection) to inspect the steps and see which tiles have been discarded as outliers prior to interpolation.
 
+Once the outlying tiles have been successfully removed we use nearest neighbor interpolation to give a value to all tiles in the image.
+During interpolation, the median of the @mymath{N_{ngb}} nearest neighbors of each tile is found and given to the tile (@mymath{N_{ngb}} is the value given to  @option{--interpnumngb}).
+Once all the tiles are given a value, a smoothing step is implemented to remove the sharp value contrast that can happen between some tiles.
+The size of the smoothing box is set with the @option{--smoothwidth} option.
+
+You can use the check images to inspect the steps and see which tiles have been discarded as outliers prior to interpolation (@option{--checksky} in the Statistics program or @option{--checkqthresh} in NoiseChisel).
 
 
 
@@ -15184,27 +15384,25 @@ If you have used NoiseChisel within your research, please run it with @option{--
 @subsection NoiseChisel changes after publication
 
 NoiseChisel was initially introduced in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]} and updates after the first four years were published in @url{https://arxiv.org/abs/1909.11230, Akhlaghi [2019]}.
-It is thus strongly recommended to read this paper for a good understanding of what it does and how each parameter influences the output.
 To help in understanding how it works, those papers have many figures showing every step on multiple mock and real examples.
+We recommended to read these papers for a good understanding of what it does and how each parameter influences the output.
 
-However, the papers cannot be updated anymore, but NoiseChisel has evolved (and will continue to do so): better algorithms or steps have been found, thus options will be added or removed.
+However, the papers cannot be updated anymore, but NoiseChisel has evolved (and will continue to do so): better algorithms or steps have been found and implemented and some options have been added, removed or changed behavior.
 This book is thus the final and definitive guide to NoiseChisel.
 The aim of this section is to make the transition from the papers above to the installed version on your system, as smooth as possible with the list below.
-For a more detailed list of changes in previous Gnuastro releases/versions, please see the @file{NEWS} file@footnote{The @file{NEWS} file is present in the released Gnuastro tarball, see @ref{Release tarball}.}.
+For a more detailed list of changes in each Gnuastro version, please see the @file{NEWS} file@footnote{The @file{NEWS} file is present in the released Gnuastro tarball, see @ref{Release tarball}.}.
 
 @itemize
 @item
-Outlier rejection is now also applied on the tiles with good Sky value (see below for more on the new outlier rejection algorithm).
+An improved outlier rejection for identifying tiles without any signal has been implemented in the quantile-threshold phase:
+Prior to version 0.14, outliers were defined globally: the distribution of all tiles with an acceptable @option{--meanmedqdiff} was inspected and outliers were found and rejected.
+However, this caused problems when there are strong gradients over the image (for example an image prior to flat-fielding, or in the presence of a large foreground galaxy).
+In these cases, the faint wings of galaxies/stars could be mistakenly identified as Sky (leaving a footprint of the object on the Sky output) and wrongly subtracted.
 
-@item
-Improved outlier rejection for identifying tiles without any signal (improving thresholds and Sky estimation):
-Until version 0.14, outliers were defined globally by finding the first outlier-by-distance using the raw tile values in all the tiles within the image.
-But given its global nature, this method would fail to find the outliers in the vicinity of bright sources easily.
-Therefore the faint wings of galaxies/stars could be mistakenly identified as Sky and in the sky extension the footprint of larger objects became visible.
-
-It was possible to play with the parameters to correct this, but a better way was found and implemented in version 0.14: instead of finding outliers in the raw tile values, we now measure the @emph{slope} of the tile's nearby tiles and find outlier in the slopes.
+It was possible to play with the parameters to correct this for that particular dataset, but that was frustrating.
+Therefore from version 0.14, instead of finding outliers from the full tile distribution, we now measure the @emph{slope} of the tile's nearby tiles and find outliers locally.
 For more on the outlier-by-distance algorithm and the definition of @emph{slope}, see @ref{Quantifying signal in a tile}.
-In our tests, this gave a much improved estimate of the internal thresholds and final Sky values.
+In our tests, this gave a much improved estimate of the quantile thresholds and final Sky values with default values.
 @end itemize
 
 

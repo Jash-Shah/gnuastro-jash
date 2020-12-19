@@ -59,6 +59,7 @@ sky_mean_std_undetected(void *in_prm)
   struct noisechiselparams *p=(struct noisechiselparams *)tprm->params;
 
   int setblank, type=GAL_TYPE_FLOAT32;
+  uint8_t *noskytiles=p->noskytiles->array;
   size_t i, tind, numsky, bdsize=2, ndim=p->sky->ndim;
   size_t refarea, twidth=gal_type_sizeof(GAL_TYPE_FLOAT32);
   gal_data_t *tile, *fusage, *busage, *bintile, *sigmaclip;
@@ -90,71 +91,80 @@ sky_mean_std_undetected(void *in_prm)
       tile = &p->cp.tl.tiles[tind];
       refarea = p->skyfracnoblank ? 0 : tile->size;
 
-      /* Correct the fake binary tile's properties to be the same as this
-         one, then count the number of zero valued elements in it. Note
-         that the 'CHECK_BLANK' flag of 'GAL_TILE_PARSE_OPERATE' is set to
-         1. So blank values in the input array are not counted. */
-      bintile->size=tile->size;
-      bintile->dsize=tile->dsize;
-      bintile->array=gal_tile_block_relative_to_other(tile, p->binary);
-      GAL_TILE_PARSE_OPERATE(tile, bintile, 1, 1, {
-          if(p->skyfracnoblank) ++refarea;
-          if(!*o)               ++numsky;
-        });
-
-      /* Only continue, if the fraction of Sky values is less than the
-         requested fraction. */
-      setblank=0;
-      if( (float)(numsky)/(float)(refarea) > p->minskyfrac)
+      /* If this tile is already known to have signal in it (from the
+         'qthresh' phase) it will have a value of '1' in the 'noskytiles'
+         array and should be set to blank here too. */
+      setblank=noskytiles[tind];
+      if(setblank==0)
         {
-          /* Re-initialize the usage array's size information (will be
-             corrected to this tile's size by
-             'gal_data_copy_to_allocated'). */
-          busage->ndim = fusage->ndim = ndim;
-          busage->size = fusage->size = p->maxtcontig;
-          gal_data_copy_to_allocated(tile,    fusage);
-          gal_data_copy_to_allocated(bintile, busage);
+          /* Correct the fake binary tile's properties to be the same as
+             this one, then count the number of zero valued elements in
+             it. Note that the 'CHECK_BLANK' flag of
+             'GAL_TILE_PARSE_OPERATE' is set to 1. So blank values in the
+             input array are not counted. */
+          bintile->size=tile->size;
+          bintile->dsize=tile->dsize;
+          bintile->array=gal_tile_block_relative_to_other(tile, p->binary);
+          GAL_TILE_PARSE_OPERATE(tile, bintile, 1, 1, {
+              if(p->skyfracnoblank) ++refarea;
+              if(!*o)               ++numsky;
+            });
 
-
-          /* Set all the non-zero pixels in 'busage' to NaN in 'fusage'. */
-          busage->flag = fusage->flag = 0;
-          gal_blank_flag_apply(fusage, busage);
-
-
-          /* Do the sigma-clipping. */
-          sigmaclip=gal_statistics_sigma_clip(fusage, p->sigmaclip[0],
-                                              p->sigmaclip[1], 1, 1);
-
-          /* When there are zero-valued pixels on the edges of the dataset
-             (that have not been set to NaN/blank), given special
-             conditions, the whole zero-valued region can get a binary
-             value of 1 and so the Sky and its standard deviation can
-             become zero. So, we need ignore such tiles. */
-          if( ((float *)(sigmaclip->array))[3]==0.0 )
-            setblank=1;
-          else
+          /* Only continue, if the fraction of Sky values is less than the
+             requested fraction. */
+          if( (float)(numsky)/(float)(refarea) > p->minskyfrac)
             {
-              /* Copy the sigma-clipped mean and STD to their respective
-                 places in the tile arrays. But first, make sure
-                 'sigmaclip' has the same type as the sky and std
-                 arrays. */
-              sigmaclip=gal_data_copy_to_new_type_free(sigmaclip, type);
-              memcpy(gal_pointer_increment(p->sky->array, tind, type),
-                     gal_pointer_increment(sigmaclip->array, 2, type),
-                     twidth);
-              memcpy(gal_pointer_increment(p->std->array, tind, type),
-                     gal_pointer_increment(sigmaclip->array, 3, type),
-                     twidth);
+              /* Re-initialize the usage array's size information (will be
+                 corrected to this tile's size by
+                 'gal_data_copy_to_allocated'). */
+              busage->ndim = fusage->ndim = ndim;
+              busage->size = fusage->size = p->maxtcontig;
+              gal_data_copy_to_allocated(tile,    fusage);
+              gal_data_copy_to_allocated(bintile, busage);
+
+
+              /* Set all the non-zero pixels in 'busage' to NaN in
+                 'fusage'. */
+              busage->flag = fusage->flag = 0;
+              gal_blank_flag_apply(fusage, busage);
+
+
+              /* Do the sigma-clipping. */
+              sigmaclip=gal_statistics_sigma_clip(fusage, p->sigmaclip[0],
+                                                  p->sigmaclip[1], 1, 1);
+
+
+              /* When there are zero-valued pixels on the edges of the
+                 dataset (that have not been set to NaN/blank), given
+                 special conditions, the whole zero-valued region can get a
+                 binary value of 1 and so the Sky and its standard
+                 deviation can become zero. So, we need ignore such
+                 tiles. */
+              if( ((float *)(sigmaclip->array))[3]==0.0 )
+                setblank=1;
+              else
+                {
+                  /* Copy the sigma-clipped mean and STD to their
+                     respective places in the tile arrays. But first, make
+                     sure 'sigmaclip' has the same type as the sky and std
+                     arrays. */
+                  sigmaclip=gal_data_copy_to_new_type_free(sigmaclip, type);
+                  memcpy(gal_pointer_increment(p->sky->array, tind, type),
+                         gal_pointer_increment(sigmaclip->array, 2, type),
+                         twidth);
+                  memcpy(gal_pointer_increment(p->std->array, tind, type),
+                         gal_pointer_increment(sigmaclip->array, 3, type),
+                         twidth);
+                }
+
+              /* Clean up. */
+              gal_data_free(sigmaclip);
             }
-
-          /* Clean up. */
-          gal_data_free(sigmaclip);
+          else
+            setblank=1;
         }
-      else
-        setblank=1;
 
-      /* If the tile is marked as being blank, write blank values into
-         it. */
+      /* If the tile is marked to be blank, write blank values into it. */
       if(setblank==1)
         {
           gal_blank_write(gal_pointer_increment(p->sky->array, tind, type),
@@ -249,14 +259,6 @@ sky_and_std(struct noisechiselparams *p, char *checkname)
      correct it in the S/N calculation. So, we'll calculate the correction
      factor here. */
   p->cpscorr = p->minstd>1 ? 1.0f : p->minstd;
-
-
-  /* Remove outlier tiles */
-  gal_tileinternal_no_outlier_local(p->sky, p->std, NULL, &p->cp.tl,
-                                    p->cp.interpmetric, p->cp.interpnumngb,
-                                    p->cp.numthreads, p->outliersclip,
-                                    p->outliersigma, checkname);
-
 
 
   /* Interpolate and smooth the derived values. */

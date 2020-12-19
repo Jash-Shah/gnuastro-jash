@@ -685,7 +685,7 @@ gal_tileinternal_no_outlier_local(gal_data_t *input, gal_data_t *second,
     gal_permutation_apply_inverse(input, tl->permutation);
 
 
-  /* If the 'other' arrays are given, set all the blank elements here to
+  /* If the other arrays are given, set all the blank elements here to
      blank there too. */
   if(second)
     {

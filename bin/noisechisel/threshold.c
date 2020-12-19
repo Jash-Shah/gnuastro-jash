@@ -677,6 +677,15 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
                                     p->outliersigma, p->qthreshname);
 
 
+  /* Use the no-outlier grid as a basis for later estimating the sky. To
+     see this array on the image, use 'gal_tile_full_values_write'. */
+  p->noskytiles=gal_blank_flag(qprm.erode_th);
+  /* For a check:
+  gal_tile_full_values_write(p->noskytiles, &cp->tl, 1,
+                             "noskytiles.fits", NULL, NULL);
+  */
+
+
   /* Check if the number of acceptable tiles is more than the minimum
      interpolated number. Since this is a common problem for users, it is
      much more useful to do the check here rather than printing multiple
