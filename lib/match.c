@@ -380,7 +380,7 @@ match_coordinates_sif_prepare(gal_data_t *A, gal_data_t *B,
       b[1]=B->next->array;
 
       /* See if the aperture is circular. */
-      if( (*iscircle=(aperture[1]==1)?1:0)==0 )
+      if( ( *iscircle=(aperture[1]==1)?1:0 )==0 )
         {
           /* Using the box that encloses the aperture, calculate the
              distance along each axis. */
@@ -530,7 +530,6 @@ match_coordinates_second_in_first(gal_data_t *A, gal_data_t *B,
   double r, c[3]={NAN, NAN, NAN}, s[3]={NAN, NAN, NAN};
   double dist[3]={NAN, NAN, NAN}, delta[3]={NAN, NAN, NAN};
   double *a[3]={NULL, NULL, NULL}, *b[3]={NULL, NULL, NULL};
-
 
   /* Necessary preperations. */
   match_coordinates_sif_prepare(A, B, aperture,  ndim, a, b, dist, c, s,
@@ -991,6 +990,15 @@ struct match_kdtree_params
   double          *aperture;  /* Acceptable aperture for match.       */
   size_t        kdtree_root;  /* Index (counting from 0) of root.     */
   gal_data_t *coord1_kdtree;  /* k-d tree of first coordinate.        */
+
+  /* Internal parameters for easy aperture checking. For example there is
+     no need to calculate the fixed 'cos()' and 'sin()' functions. So we
+     calculate them once and just use their values. */
+  int              iscircle;  /* If the aperture is circular.         */
+  double              *a[3];  /* Direct pointers to column arrays.    */
+  double              *b[3];  /* Direct pointers to column arrays.    */
+  double               c[3];  /* Fixed cos(), for elliptical dist.    */
+  double               s[3];  /* Fixed sin(), for elliptical dist.    */
 };
 
 
@@ -1006,42 +1014,40 @@ match_kdtree_worker(void *in_prm)
 
   /* High level definitions. */
   gal_data_t *ccol;
-  double *point=NULL, least_dist;
+  double r, delta[3];
   size_t i, j, index, mindex;
+  double *point=NULL, least_dist;
 
-  /* Allocate space for all the matching points (based on the number of
+  /* Allqocate space for all the matching points (based on the number of
      dimensions). */
-  gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0, __func__, "point");
+  point=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0, __func__, "point");
 
-  /* Go over all the actions (pixels in this case) that were assigned to
+  /* Go over all the actions (rows in second catalog) that were assigned to
      this thread. */
   for(i=0; tprm->indexs[i] != GAL_BLANK_SIZE_T; ++i)
     {
       /* Fill the 'point' for this thread. */
       j=0;
       index = tprm->indexs[i];
-      printf("%s: index = %zu point = %g ccol = %g\n", __func__, index, point[0], ((double *)(p->coord2->array))[index]);
       for(ccol=p->coord2; ccol!=NULL; ccol=ccol->next)
-        {
         point[ j++ ] = ((double *)(ccol->array))[index];
-          printf("%s: point: %g\n", __func__, point[j]);
-        }
 
       /* Find the index of the nearest neighbor to this item. */
       mindex=gal_kdtree_nearest_neighbour(p->coord1, p->coord1_kdtree,
                                           p->kdtree_root, point, &least_dist);
 
-      /* Make sure the matched point is within the given aperture.
-         ###############################
-         The '1' check should be fixed to see if the matched point is
-         within the requested aperture (note that the aperture can be
-         elliptical!).
-         ############################### */
-      mindex= 1 ? mindex : GAL_BLANK_SIZE_T;
-
-      /* Put the matched index into the final array for this index. */
-      p->c2match[index]=mindex;
+      /* Make sure the matched point is within the given aperture (which
+         may be elliptical). If it isn't, then the reported index for this
+         element will be 'GAL_BLANK_SIZE_T'. */
+      for(j=0;j<p->ndim;++j)
+        delta[j]=p->b[j][index] - p->a[j][mindex];
+      r=match_coordinates_distance(delta, p->iscircle, p->ndim,
+                                   p->aperture, p->c, p->s);
+      p->c2match[index] = r<p->aperture[0] ? mindex : GAL_BLANK_SIZE_T;
     }
+
+  /* Clean up. */
+  free(point);
 
   /* Wait for all the other threads to finish, then return. */
   if(tprm->b) pthread_barrier_wait(tprm->b);
@@ -1058,8 +1064,10 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
                  double *aperture, size_t numthreads, size_t minmapsize,
                  int quietmmap)
 {
+  size_t i;
   gal_data_t *c2match;
   struct match_kdtree_params p;
+  double dist[3]; /* Just a place-holder in 'sif_prepare'. */
 
   /* Basic sanity checks. */
   p.ndim=gal_list_data_number(coord1);
@@ -1081,7 +1089,9 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
           "'uint32', but it is '%s'", __func__,
           gal_type_name(coord1_kdtree->type, 1));
 
-  /* Allocate the space to keep results. */
+  /* Do the preparations. */
+  match_coordinates_sif_prepare(coord1, coord2, aperture, p.ndim,
+                                p.a, p.b, dist, p.c, p.s, &p.iscircle);
   c2match=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &coord2->size, NULL, 0,
                          minmapsize, quietmmap, NULL, NULL, NULL);
 
@@ -1092,13 +1102,19 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
   p.c2match=c2match->array;
   p.kdtree_root=kdtree_root;
   p.coord1_kdtree=coord1_kdtree;
-  
-  /** NUMBER OF ARGUMENTS IS INCORRECT BUT COMPILER FINDS IT TO BE FINE **/
   gal_threads_spin_off(match_kdtree_worker, &p, coord2->size, numthreads,
                        minmapsize, quietmmap);
 
-  for (int i = 0; i < coord2->size; ++i)
-    printf("%s: size of c2match = %zu", __func__, p.c2match[i]);
+  /* For a check. */
+  {
+    double *c1x=coord1->array, *c1y=coord1->next->array;
+    double *c2x=coord2->array, *c2y=coord2->next->array;
+    for(i=0; i<coord2->size; ++i)
+      printf("%s: cat2's (%g, %g) matches with (%g, %g) of cat1\n",
+             __func__, c2x[i], c2y[i],
+             p.c2match[i]==GAL_BLANK_SIZE_T ? NAN : c1x[p.c2match[i]],
+             p.c2match[i]==GAL_BLANK_SIZE_T ? NAN : c1y[p.c2match[i]]);
+  }
 
   exit(0);
   return c2match;
