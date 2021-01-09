@@ -2788,6 +2788,7 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
 {
   size_t i;
   void *vptr;
+  int vptrfree;
   uint8_t vtype;
   char *name, *doc;
   gal_list_str_t *tmp;
@@ -2803,8 +2804,8 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
               /* 'name' and 'doc' have a 'const' qualifier. */
               gal_checkset_allocate_copy(options[i].name, &name);
               gal_checkset_allocate_copy(options[i].doc,  &doc);
-              gal_fits_key_list_add(keys, GAL_TYPE_STRING, name, 1, tmp->v,
-                                    0, doc, 1, NULL, 0);
+              gal_fits_key_list_add(keys, GAL_TYPE_STRING, name, 1,
+                                    tmp->v, 0, doc, 1, NULL, 0);
             }
         /* Normal types. */
         else
@@ -2812,11 +2813,13 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
             /* If the option is associated with a special function for
                reading and writing, we'll need to write the value as a
                string. */
+            vptrfree=0;
             if(options[i].func)
               {
+                vptrfree=1;
                 vtype=GAL_TYPE_STRING;
-                vptr=options[i].func(&options[i], NULL, NULL, (size_t)(-1),
-                                      cp->program_struct);
+                vptr=options[i].func(&options[i], NULL, NULL,
+                                     (size_t)(-1), cp->program_struct);
               }
             else
               {
@@ -2834,8 +2837,8 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
             else
               {
                 gal_checkset_allocate_copy(options[i].doc,  &doc);
-                gal_fits_key_list_add(keys, vtype, name, 1, vptr, 0, doc, 1,
-                                      NULL, 0);
+                gal_fits_key_list_add(keys, vtype, name, 1, vptr,
+                                      vptrfree, doc, 1, NULL, 0);
               }
           }
       }

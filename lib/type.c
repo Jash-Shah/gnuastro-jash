@@ -502,8 +502,8 @@ gal_type_from_string(void **out, char *string, uint8_t type)
         status=1;
       else
         {
-          if(type==GAL_TYPE_FLOAT32) *(float *) value=d;
-          else                            *(double *) value=d;
+          if(type==GAL_TYPE_FLOAT32) *(float  *) value=d;
+          else                       *(double *) value=d;
         }
       break;
 
@@ -516,10 +516,10 @@ gal_type_from_string(void **out, char *string, uint8_t type)
         switch(type)
           {
           /* The signed values can easily be put in. */
-          case GAL_TYPE_INT8:         *(int8_t *)    value = l; break;
-          case GAL_TYPE_INT16:        *(int16_t *)   value = l; break;
-          case GAL_TYPE_INT32:        *(int32_t *)   value = l; break;
-          case GAL_TYPE_INT64:        *(int64_t *)   value = l; break;
+          case GAL_TYPE_INT8:  *(int8_t  *) value = l; break;
+          case GAL_TYPE_INT16: *(int16_t *) value = l; break;
+          case GAL_TYPE_INT32: *(int32_t *) value = l; break;
+          case GAL_TYPE_INT64: *(int64_t *) value = l; break;
 
           /* For the unsigned types, the value has to be positive, so if
              the input was negative, then just return a status of one and
@@ -530,10 +530,10 @@ gal_type_from_string(void **out, char *string, uint8_t type)
             else
               switch(type)
                 {
-                case GAL_TYPE_UINT8:  *(uint8_t *)   value=l;   break;
-                case GAL_TYPE_UINT16: *(uint16_t *)  value=l;   break;
-                case GAL_TYPE_UINT32: *(uint32_t *)  value=l;   break;
-                case GAL_TYPE_UINT64: *(uint64_t *)  value=l;   break;
+                case GAL_TYPE_UINT8:  *(uint8_t  *) value=l;   break;
+                case GAL_TYPE_UINT16: *(uint16_t *) value=l;   break;
+                case GAL_TYPE_UINT32: *(uint32_t *) value=l;   break;
+                case GAL_TYPE_UINT64: *(uint64_t *) value=l;   break;
                 default:
                   error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
                         __func__, type);

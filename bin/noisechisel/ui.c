@@ -848,12 +848,15 @@ ui_free_report(struct noisechiselparams *p, struct timeval *t1)
   free(p->maxtsize);
   free(p->maxltsize);
   free(p->cp.output);
-  if(p->skyname)          free(p->skyname);
-  if(p->detskyname)       free(p->detskyname);
-  if(p->qthreshname)      free(p->qthreshname);
-  if(p->detsn_s_name)     free(p->detsn_s_name);
-  if(p->detsn_d_name)     free(p->detsn_d_name);
-  if(p->detectionname)    free(p->detectionname);
+  if(p->khdu) free(p->khdu);
+  if(p->whdu) free(p->whdu);
+  if(p->chdu) free(p->chdu);
+  if(p->skyname) free(p->skyname);
+  if(p->detskyname) free(p->detskyname);
+  if(p->qthreshname) free(p->qthreshname);
+  if(p->detsn_s_name) free(p->detsn_s_name);
+  if(p->detsn_d_name) free(p->detsn_d_name);
+  if(p->detectionname) free(p->detectionname);
 
   /* Free the allocated datasets. */
   gal_data_free(p->sky);

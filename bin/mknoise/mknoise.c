@@ -109,11 +109,12 @@ convertsaveoutput(struct mknoiseparams *p)
                             "Random number generator (by GSL) seed.",
                             0, NULL, 0);
 
-  /* Save the output: */
+  /* Save the output: first convert it to the desired type,  */
+  if(p->input->name) { free(p->input->name); p->input->name=NULL; }
   p->input=gal_data_copy_to_new_type_free(p->input, p->cp.type);
   p->input->name="NOISED";
   gal_fits_img_write(p->input, p->cp.output, headers, PROGRAM_NAME);
-  p->input->name=NULL;
+  p->input->name=NULL; /* because we didn't allocate it. */
 
   /* Write the configuration keywords. */
   gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);

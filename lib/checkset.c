@@ -195,9 +195,9 @@ gal_checkset_ram_available(int quietmmap)
 
       /* The file existed but a keyname couldn't be found. In this case we
          should inform the user to be aware that we can't automatically
-         determine the available memory.*/
+         determine the available memory. */
       if(keyfound==0 && quietmmap==0)
-        error(EXIT_FAILURE, 0, "WARNING: %s: didn't contain a '%s' keyword "
+        error(EXIT_SUCCESS, 0, "WARNING: %s: didn't contain a '%s' keyword "
               "hence the amount of available RAM couldn't be determined. "
               "If a large volume of data is provided, the program may "
               "crash. Please contact us at '%s' to fix the problem",
@@ -222,7 +222,7 @@ gal_checkset_need_mmap(size_t bytesize, size_t minmapsize, int quietmmap)
   int needmmap=0;
   size_t availableram;
   size_t minimumtommap=10000000;
-  size_t mustremainfree=750000000;
+  size_t mustremainfree=250000000;
 
   /* In case the given minmapsize is smaller than the default value of
      'minimumtomap', then correct 'minimumtomap' to be the same as
@@ -234,8 +234,8 @@ gal_checkset_need_mmap(size_t bytesize, size_t minmapsize, int quietmmap)
       /* Let the user know that this is not a good choice and can cause
          other problems. */
       if(!quietmmap)
-        error(EXIT_SUCCESS, 0, "it is recommended that minmapsize have "
-              "a value larger than %zu (it is currently %zu), see "
+        error(EXIT_SUCCESS, 0, "WARNING: it is recommended that minmapsize "
+              "have a value larger than %zu (it is currently %zu), see "
               "\"Memory management\" section in the Gnuastro book for "
               "more. To disable this warning, please use the option "
               "'--quiet-mmap'", minimumtommap, minmapsize);

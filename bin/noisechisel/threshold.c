@@ -685,6 +685,7 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
   nval=((size_t *)(num->array))[0];
   if( nval < cp->interpnumngb )
     threshold_good_error(nval, 1, cp->interpnumngb);
+  gal_data_free(num);
 
 
   /* Interpolate and smooth the derived values. */
