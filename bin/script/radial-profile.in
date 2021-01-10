@@ -413,15 +413,19 @@ if [ z$output = zdefault ]; then output="$defaultname.fits"; fi
 # of that string, and convert to the cropped coordinate system. Note that
 # because FITS pixel couting starts from 1, we need to subtract '1'.
 crop=$tmpdir/crop.fits
-cropwidth=$(echo $rmax | awk '{print $1*2}')
+cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$x,$y --mode=img \
         --width=$cropwidth --output=$crop
 dxy=$(astfits $crop -h1 \
           | grep ICF1PIX \
           | sed -e"s/'/ /g" -e's/\:/ /g' -e's/,/ /' \
           | awk '{print $3-1, $5-1}')
-x=$(echo "$x $dxy" | awk '{print $1-$2}')
-y=$(echo "$y $dxy" | awk '{print $1-$3}')
+echo "x:$x"
+echo "y:$y"
+echo "cropwidth: $cropwidth"
+echo "dxy: $dxy"
+x=$(echo "$x $cropwidth $dxy" | awk '{if($1>int($2/2)) print $1-$3; else print int($2/2)+$1-int($1)}')
+y=$(echo "$y $cropwidth $dxy" | awk '{if($1>int($2/2)) print $1-$4; else print int($2/2)+$1-int($1)}')
 
 
 
@@ -433,11 +437,14 @@ y=$(echo "$y $dxy" | awk '{print $1-$3}')
 # The apertures image is genrated using MakeProfiles with the parameters
 # previously specified in the ascii file.
 apertures=$tmpdir/apertures.fits
+echo "x:$x"
+echo "y:$y"
 echo "$rmax $x $y 7 $rmax 1 $p $Q $rmax 1" \
     | astmkprof --background=$crop --backhdu=1 --mforflatpix \
                 --mode=$mode --clearcanvas --type=int16 \
                 --circumwidth=$w --replace --output=$apertures \
                 --config=$a
+
 
 
 
@@ -616,6 +623,7 @@ fi
 # ---------------------
 #
 # If the user has specified this option, temporal files will be removed.
+k=0
 if [ $k = 1 ]; then
     rm $crop \
        $aprofile \
