@@ -47,7 +47,6 @@ query_check_download(struct queryparams *p)
   char *logname;
   fitsfile *fptr;
   gal_data_t *table;
-  unsigned long datasum;
 
   /* Open the FITS file and if the status value is still zero, it means
      everything worked properly. */
@@ -70,25 +69,14 @@ query_check_download(struct queryparams *p)
       remove(p->downloadname);
       free(p->downloadname);
 
-      /* If no output name was specified, calculate the 'datasum' of the
-         table and put that after the file name. */
+      /* If no output name was specified, use the 'processedname'. */
       if(p->cp.output==NULL)
-        {
-          /* Calculate the extension's datasum. */
-          datasum=gal_fits_hdu_datasum(p->processedname, "1");
+        p->cp.output=p->processedname;
 
-          /* Allocate the output name. */
-          if( asprintf(&p->cp.output, "%s-%lu.fits", p->databasestr, datasum)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-
-          /* Make sure the desired output name doesn't exist. */
-          gal_checkset_writable_remove(p->cp.output, p->cp.keep,
-                                       p->cp.dontdelete);
-
-          /* Rename the processed name to the desired output. */
-          rename(p->processedname, p->cp.output);
-          free(p->processedname);
-        }
+      /* Get basic information about the table and free it. */
+      p->outtableinfo[0]=gal_list_data_number(table);
+      p->outtableinfo[1]=table->size;
+      gal_list_data_free(table);
     }
   else
     {
@@ -136,5 +124,9 @@ query(struct queryparams *p)
 
   /* Let the user know that things went well. */
   if(p->cp.quiet==0)
-    printf("Query output written to: %s\n", p->cp.output);
+    {
+      printf("Query resulted in %zu columns and %zu rows.\n",
+             p->outtableinfo[0], p->outtableinfo[1]);
+      printf("Query output written to: %s\n", p->cp.output);
+    }
 }

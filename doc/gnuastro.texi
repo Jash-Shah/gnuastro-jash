@@ -10317,8 +10317,8 @@ One line examples:
 
 @example
 ## Import all the columns of all entries in the Gaia early DR3
-## catalog within 20 arc-minutes of the given coordinate.
-$ astquery --database=gaia --dataset=edr3 --output=my-gaia.fits \
+## catalog (default) within 20 arc-minutes of the given coordinate.
+$ astquery --database=gaia --output=my-gaia.fits \
            --center=113.8729761,31.9027152 --radius=20/60
 
 ## Similar to above, but return all objects within a square box of
@@ -10327,18 +10327,18 @@ $ astquery --database=gaia --dataset=edr3 --output=my-gaia.fits \
            --center=113.8729761,31.9027152 --width=30/60
 
 ## Similar to above, but for objects with magnitude range 10 to 15,
-$ astquery --database=gaia --dataset=edr3 --output=my-gaia.fits \
+$ astquery --database=gaia --output=my-gaia.fits \
            --center=113.8729761,31.9027152 --width=30/60 \
            --range=phot_g_mean_mag,10:15
 
 ## Similar to first example, but only import the ID, RA, Dec and G-band
 ## magnitude of the sources (not all the columns).
-$ astquery --database=gaia --dataset=edr3 --output=my-gaia.fits \
+$ astquery --database=gaia --output=my-gaia.fits \
            --center=113.8729761,31.9027152 --radius=0.1 \
            --column=source_id,ra,dec,phot_g_mean_mag
 
 ## Find the ID, RA and Dec of all Gaia sources within an image.
-$ astquery --database=gaia --dataset=edr3 --overlapwith=image.fits
+$ astquery --database=gaia --overlapwith=image.fits
            -csource_id,ra,dec
 
 ## Use a custom query to extract entries in the Gaia early DR3 catalog.
@@ -10346,27 +10346,31 @@ $ astquery --database=gaia --dataset=edr3 --overlapwith=image.fits
 $ astquery --database=gaia --query="XXXX YYYY" --output=my-gaia.fits
 @end example
 
-Query doesn't take any input argument, because the main goal is to retreive data from external sources.
-The main input to Query is the @option{--database} option which specifies which database should be contacted for submitting the query.
-The name of the downloaded output file can optionally be set with @option{--output} (see below for when @option{--output} is not specified).
+The name of the downloaded output file can be set with @option{--output}.
+The requested output format can any of the @ref{Recognized table formats} (currently @file{.txt} or @file{.fits}).
 Like all Gnuastro programs, if the output is a FITS file, the zero-th/first HDU of the output will contain all the command-line options given to Query.
-
-There are two methods to query the database: 1) with @option{--query} you can directly give a raw query statement that is recognized by the database, 2) with the @option{--center} and @option{--radius}, the low-level query will constructed automatically for the particular database.
-The former is very low level and will require some knowledge of the database's query language, but of course, it is much more powerful.
-The latter is much more limited in terms of capabilities (the only constraint is the location of the objects compared to the given center), but doesn't require any knowledge of the database's query language.
-
-@cindex @code{DATASUM}: FITS keyword
-If @option{--output} is not set, the output name will be in the format of @file{STRING-NUMBER.fits}, where @file{STRING} is the name of the database, and @file{NUMBER} is the @code{DATASUM} of the downloaded table, which will be unique for a given table's data (For more on @code{DATASUM} in the FITS standard, see @ref{Keyword manipulation}, under the @code{checksum} component of @option{--write}).
-With this feature, a second run of @command{astquery} that isn't called with @option{--output}, and downloads the same final table data from the same database will have the same output name.
-However, a query (that is again not called with @option{--output}) which results in a different downloaded table (even differing by a single number) will have a different output name to avoid overriding a previously downloaded dataset.
+If @option{--output} is not set, the output name will be in the format of @file{NAME-STRING.fits}, where @file{NAME} is the name of the database (same value given to @option{--database}), and @file{STRING} is a randomly selected 6-character set of numbers and alphabetic characters.
+With this feature, a second run of @command{astquery} that isn't called with @option{--output} will not over-write an already downloaded one.
 Generally, when calling Query more than once, it is recommended to set an output name for each call based on your project's context.
 
-@cartouche
-@noindent
+Query doesn't take any input argument, because the main goal is to retreive data from external sources.
+The main input to Query is the @option{--database} option which specifies which database should be contacted for submitting the query.
+There are two methods to query the database, each is more fully discussed in its option's description below.
+@itemize
+@item
+With @option{--query} you can directly give a raw query statement that is recognized by the database.
+This is very low level and will require some knowledge of the database's query language, but of course, it is much more powerful.
+If this option is given, the raw string is directly passed to the server and all other constraints/options are ignored.
+@item
+With the @option{--center}, @option{--radius} and other constraining options below, the low-level query will be constructed automatically for the particular database.
+This method is only limited to the generic capabilities that Query provides for all servers.
+So @option{--query} is more powerful, however, in this mode, you don't need any knowledge of the database's query language.
+When query is run, before contacting the server, it will print the full command that it executes which contains the raw server query that is constructed.
+@end itemize
+
 @strong{Under development, request for feedback:} Query is a new member of the Gnuastro family of programs.
 It currently requires that the @command{curl} executable (for the cURL downloading program) to be present on the host and the number of databases it supports is still limited, see the list under the @option{--database} option below.
 More downloader tools, and databases will be added in the near future as it is used more often, so please don't hesitate to suggest any that you may need.
-@end cartouche
 
 @table @option
 
@@ -10391,9 +10395,10 @@ The queries will generally contain space and other meta-characters, so we recomm
 
 @item -s STR
 @itemx --dataset=STR
-The dataset to query within the database for the automatically generated query (not compatible with @option{--query}).
+The dataset to query within the database (not compatible with @option{--query}).
 The reason for this is that many databases have different types of datasets, for example different data releases (DRs), or various high-level calculations on subsets of the database elements.
-For example when @option{--database=gaia}, you can set @option{--dataset=edr3} to only select objects within the early data release 3.
+If not excplicity given, a particular dataset will be internally set as default for each database, and its name will be printed on the command-line.
+The default dataset is highlighted under each database listed below.
 
 You can either use the database's official name of the datasets, for example @code{gaiaedr3.gaia_source} for the early data release 3 the Gaia database, or a simplified version that maps to it (@code{edr3}) for easy typing on the command-line.
 Below is a list of the simplified names for the databases that have them.
@@ -10402,7 +10407,7 @@ Below is a list of the simplified names for the databases that have them.
 @item gaia
 @itemize
 @item
-@code{edr3 --> gaiaedr3.gaia_source}
+@code{edr3 --> gaiaedr3.gaia_source} (the default dataset)
 @item
 @code{dr2 --> gaiadr2.gaia_source}
 @item
@@ -25966,7 +25971,7 @@ The number of rows (or the number of elements in each @code{gal_data_t}) in the 
 All these functions will all be satisfied if you use @code{gal_table_read} to read the two coordinate columns, see @ref{Table input output}.
 
 @cindex Permutation
-The functions below return a simply-linked list of three 1D datasets (see @ref{List of @code{gal_data_t}}), let's call the returned dataset @code{ret}.
+The functions below return a simply-linked list of three 1D datasets (see @ref{List of gal_data_t}), let's call the returned dataset @code{ret}.
 The first two (@code{ret} and @code{ret->next}) are permutaitons.
 In other words, the @code{array} elements of both have a type of @code{size_t}, see @ref{Permutations}.
 The third node (@code{ret->next->next}) is the calculated distance for that match and its array has a type of @code{double}.

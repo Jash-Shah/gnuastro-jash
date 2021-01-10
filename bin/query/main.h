@@ -58,6 +58,7 @@ struct queryparams
   char            *databasestr;  /* Name of input database.            */
   char           *downloadname;  /* Temporary output name.             */
   char          *processedname;  /* Temporary output name.             */
+  size_t       outtableinfo[2];  /* To print in output.                */
 
   /* Output: */
   time_t               rawtime;  /* Starting time of the program.      */

@@ -250,11 +250,12 @@ static void
 ui_read_check_only_options(struct queryparams *p)
 {
   size_t i;
+  char *basename;
   gal_data_t *tmp;
 
   /* See if database has been specified. */
   if(p->databasestr==NULL)
-    error(EXIT_FAILURE, 0, "no input dataset.\n\n"
+    error(EXIT_FAILURE, 0, "no input database.\n\n"
           "Please use the '--database' ('-d') option to specify your "
           "desired database, see manual ('info gnuastro astquery' "
           "command) for the current databases");
@@ -265,7 +266,6 @@ ui_read_check_only_options(struct queryparams *p)
     error(EXIT_FAILURE, 0, "'%s' is not a recognized database.\n\n"
           "For the full list of recognized databases, please see the "
           "documentation (with the command 'info astquery')", p->databasestr);
-
 
   /* Make sure that '--query' and '--center' are not called together. */
   if(p->query && (p->center || p->overlapwith) )
@@ -309,7 +309,7 @@ ui_read_check_only_options(struct queryparams *p)
                 i==1 ? "st" : i==2 ? "nd" : i==3 ? "rd" : "th");
       }
 
-  /* Sanity checks on  width (if we are in the center-mode). */
+  /* Sanity checks on width (if we are in the center-mode). */
   if(p->width && p->center)
     {
       /* Width should have the same number of elements as the center
@@ -337,11 +337,13 @@ ui_read_check_only_options(struct queryparams *p)
   /* Set the name for the downloaded and processed files. These are due to
      an internal low-level processing that will be done on the raw
      downloaded file. */
+  basename=gal_checkset_malloc_cat(p->databasestr, ".fits");
   p->processedname=gal_checkset_make_unique_suffix(p->cp.output
                                                    ? p->cp.output
-                                                   : "query.fits",
+                                                   : basename,
                                                    ".fits");
   p->downloadname=gal_checkset_make_unique_suffix(p->processedname, NULL);
+  free(basename);
 }
 
 

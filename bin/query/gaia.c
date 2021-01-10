@@ -55,10 +55,15 @@ gaia_sanitycheck(struct queryparams *p)
         error(EXIT_FAILURE, 0, "the '--radius' ('-r') or '--width' ('-w') "
               "options are necessary with the '--center' ('-C') option");
 
-      /* Make sure a dataset is also given. */
+      /* If no dataset is explicitly given, then use default one and let
+         the user know. */
       if( p->datasetstr==NULL)
-        error(EXIT_FAILURE, 0, "the '--dataset' ('-s') option is necessary "
-              "with the '--center' ('-C') option");
+        {
+          gal_checkset_allocate_copy("edr3", &p->datasetstr);
+          error(EXIT_SUCCESS, 0, "using '%s' dataset since no dataset "
+                "was explicitly requested (with '--dataset')",
+                p->datasetstr);
+        }
 
       /* Use simpler names for the commonly used datasets. */
       if( !strcmp(p->datasetstr, "edr3") )
@@ -194,7 +199,7 @@ gaia_query(struct queryparams *p)
 
   /* Print the calling command for the user to know. */
   if(p->cp.quiet==0)
-    printf("Running: %s\n", command);
+    error(EXIT_SUCCESS, 0, "running: %s", command);
 
   /* Run the command. */
   if(system(command))
