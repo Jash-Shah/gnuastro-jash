@@ -144,7 +144,7 @@ AM_CONDITIONAL([COND_HASCXX], [test "x$has_cxx" = "xyes"])
 
 # Check for pthreads and add the appropriate compilation flags. AX_PTHREAD
 # comes from the GNU Autoconf Archive's ax_pthread.m4, see there for the
-# documentation. Note that
+# documentation.
 AX_PTHREAD([],[AC_MSG_ERROR([AC_PACKAGE_NAME Needs POSIX Threads (pthread)])])
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
