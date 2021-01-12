@@ -334,16 +334,21 @@ ui_read_check_only_options(struct queryparams *p)
   gal_checkset_writable_remove(p->cp.output, p->cp.keep,
                                p->cp.dontdelete);
 
-  /* Set the name for the downloaded and processed files. These are due to
-     an internal low-level processing that will be done on the raw
+  /* Set the name for the downloaded and final output name. These are due
+     to an internal low-level processing that will be done on the raw
      downloaded file. */
-  basename=gal_checkset_malloc_cat(p->databasestr, ".fits");
-  p->processedname=gal_checkset_make_unique_suffix(p->cp.output
-                                                   ? p->cp.output
-                                                   : basename,
-                                                   ".fits");
-  p->downloadname=gal_checkset_make_unique_suffix(p->processedname, NULL);
-  free(basename);
+  if(p->cp.output==NULL)
+    {
+      basename=gal_checkset_malloc_cat(p->databasestr, ".fits");
+      p->cp.output=gal_checkset_make_unique_suffix(basename, ".fits");
+      free(basename);
+    }
+
+  /* Make sure the output name doesn't exist (and report an error if
+     '--dontdelete' is called. */
+  gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
+  p->downloadname=gal_checkset_automatic_output(&p->cp, p->cp.output,
+                                                "-raw-download.fits");
 }
 
 
@@ -493,4 +498,5 @@ ui_free_report(struct queryparams *p, struct timeval *t1)
   /* Free the allocated arrays: */
   free(p->cp.hdu);
   free(p->cp.output);
+  free(p->downloadname);
 }

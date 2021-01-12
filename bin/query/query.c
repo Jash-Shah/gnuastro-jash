@@ -62,21 +62,16 @@ query_check_download(struct queryparams *p)
                            GAL_TABLE_SEARCH_NAME, 1, p->cp.minmapsize,
                            p->cp.quietmmap, NULL);
       gal_table_write(table, NULL, NULL, p->cp.tableformat,
-                      p->cp.output ? p->cp.output : p->processedname,
+                      p->cp.output ? p->cp.output : p->cp.output,
                       "QUERY", 0);
 
-      /* Delete the raw downloaded file. */
-      remove(p->downloadname);
-      free(p->downloadname);
-
-      /* If no output name was specified, use the 'processedname'. */
-      if(p->cp.output==NULL)
-        p->cp.output=p->processedname;
-
       /* Get basic information about the table and free it. */
-      p->outtableinfo[0]=gal_list_data_number(table);
-      p->outtableinfo[1]=table->size;
+      p->outtableinfo[0]=table->size;
+      p->outtableinfo[1]=gal_list_data_number(table);
       gal_list_data_free(table);
+
+      /* Delete the raw downloaded file if necessary. */
+      if(p->keeprawdownload==0) remove(p->downloadname);
     }
   else
     {
@@ -125,8 +120,10 @@ query(struct queryparams *p)
   /* Let the user know that things went well. */
   if(p->cp.quiet==0)
     {
-      printf("Query resulted in %zu columns and %zu rows.\n",
+      printf("\nQuery resulted in %zu rows and %zu columns.\n",
              p->outtableinfo[0], p->outtableinfo[1]);
-      printf("Query output written to: %s\n", p->cp.output);
+      if(p->keeprawdownload)
+        printf("Query's raw downloaded file: %s\n", p->downloadname);
+      printf("Query's final output: %s\n", p->cp.output);
     }
 }

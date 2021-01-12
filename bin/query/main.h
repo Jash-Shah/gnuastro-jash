@@ -44,6 +44,7 @@ struct queryparams
 {
   /* From command-line */
   struct gal_options_common_params cp; /* Common parameters.           */
+  uint8_t      keeprawdownload;  /* Keep raw downloaded file.          */
   int                 database;  /* ID of database to use.             */
   char             *datasetstr;  /* ID of dataset in database to use.  */
   char            *overlapwith;  /* Image to use instead of center.    */
@@ -57,7 +58,6 @@ struct queryparams
   /* Internal variables. */
   char            *databasestr;  /* Name of input database.            */
   char           *downloadname;  /* Temporary output name.             */
-  char          *processedname;  /* Temporary output name.             */
   size_t       outtableinfo[2];  /* To print in output.                */
 
   /* Output: */

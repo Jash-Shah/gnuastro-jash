@@ -31,6 +31,25 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Array of acceptable options. */
 struct argp_option program_options[] =
   {
+    /* Output related options. */
+    {
+      "keeprawdownload",
+      UI_KEY_KEEPRAWDOWNLOAD,
+      0,
+      0,
+      "Don't delete raw downloaded file.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->keeprawdownload,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
+
+
+
     /* Database and dataset. */
     {
       "database",

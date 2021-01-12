@@ -111,7 +111,6 @@ gaia_query(struct queryparams *p)
   /* Make sure everything is fine. */
   gaia_sanitycheck(p);
 
-
   /* If the raw query has been given, use it. */
   if(p->query)
     querystr=p->query;

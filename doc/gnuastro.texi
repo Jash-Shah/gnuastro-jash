@@ -10346,13 +10346,6 @@ $ astquery --database=gaia --overlapwith=image.fits
 $ astquery --database=gaia --query="XXXX YYYY" --output=my-gaia.fits
 @end example
 
-The name of the downloaded output file can be set with @option{--output}.
-The requested output format can any of the @ref{Recognized table formats} (currently @file{.txt} or @file{.fits}).
-Like all Gnuastro programs, if the output is a FITS file, the zero-th/first HDU of the output will contain all the command-line options given to Query.
-If @option{--output} is not set, the output name will be in the format of @file{NAME-STRING.fits}, where @file{NAME} is the name of the database (same value given to @option{--database}), and @file{STRING} is a randomly selected 6-character set of numbers and alphabetic characters.
-With this feature, a second run of @command{astquery} that isn't called with @option{--output} will not over-write an already downloaded one.
-Generally, when calling Query more than once, it is recommended to set an output name for each call based on your project's context.
-
 Query doesn't take any input argument, because the main goal is to retreive data from external sources.
 The main input to Query is the @option{--database} option which specifies which database should be contacted for submitting the query.
 There are two methods to query the database, each is more fully discussed in its option's description below.
@@ -10368,11 +10361,32 @@ So @option{--query} is more powerful, however, in this mode, you don't need any 
 When query is run, before contacting the server, it will print the full command that it executes which contains the raw server query that is constructed.
 @end itemize
 
+The name of the downloaded output file can be set with @option{--output}.
+The requested output format can any of the @ref{Recognized table formats} (currently @file{.txt} or @file{.fits}).
+Like all Gnuastro programs, if the output is a FITS file, the zero-th/first HDU of the output will contain all the command-line options given to Query.
+If @option{--output} is not set, the output name will be in the format of @file{NAME-STRING.fits}, where @file{NAME} is the name of the database (same value given to @option{--database}), and @file{STRING} is a randomly selected 6-character set of numbers and alphabetic characters.
+With this feature, a second run of @command{astquery} that isn't called with @option{--output} will not over-write an already downloaded one.
+Generally, when calling Query more than once, it is recommended to set an output name for each call based on your project's context.
+
+The outputs of Query will have a common output format, irrespective of the used database.
+To achieve this, Query will ask the databases to provide a FITS table output (for larger tables, FITS can consume much less download volume).
+After downloading is complete, the raw downloaded file will be read into memory once by Query, and written into the file given to @option{--output}.
+The raw downloaded file will be deleted by default, but can be preserved with the @option{--keeprawdownload} option.
+This strategy avoids unnecessary surprises depending on database.
+For example some databases can download a compressed FITS table, even though we ask for FITS.
+But with the strategy above, the final output will be an uncompressed FITS file if requested even be in plain text (@ref{Gnuastro text table format}).
+
 @strong{Under development, request for feedback:} Query is a new member of the Gnuastro family of programs.
 It currently requires that the @command{curl} executable (for the cURL downloading program) to be present on the host and the number of databases it supports is still limited, see the list under the @option{--database} option below.
 More downloader tools, and databases will be added in the near future as it is used more often, so please don't hesitate to suggest any that you may need.
 
 @table @option
+
+@item -k
+@itemx --keeprawdownload
+Don't delete the raw downloaded file from the database.
+The name of the raw download will have a @file{OUTPUT-raw-download.fits} format.
+Where @file{OUTPUT} is either the base-name of the final output file (without a suffix).
 
 @item -d STR
 @itemx --database=STR

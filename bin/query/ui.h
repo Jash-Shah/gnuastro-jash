@@ -42,12 +42,13 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b e f i j k m n p t u x y z
+   a b e f i j m n p t u x y z
    A B E G H J L R W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
+  UI_KEY_KEEPRAWDOWNLOAD = 'k',
   UI_KEY_DATABASE        = 'd',
   UI_KEY_QUERY           = 'Q',
   UI_KEY_DATASET         = 's',
