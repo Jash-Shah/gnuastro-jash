@@ -618,6 +618,9 @@ statistics_output_name(struct statisticsparams *p, char *suf, int *isfits)
   /* See if it is a FITS file. */
   *isfits=strcmp(fix, "fits")==0;
 
+  /* Make sure it doesn't already exist. */
+  gal_checkset_writable_remove(out, 0, p->cp.dontdelete);
+
   /* Clean up and return. */
   if(suffix) free(suffix);
   return out;
@@ -743,6 +746,34 @@ save_hist_and_or_cfp(struct statisticsparams *p)
 
 
 
+/* In the WCS standard, '-' is meaningful, so if a column name contains
+   '-', it should be changed to '_'. */
+static char *
+histogram_2d_set_ctype(char *orig, char *backup)
+{
+  char *c, *out=NULL;
+
+  /* If an original name exists, then check it. Otherwise, just return the
+     backup string so 'CTYPE' isn't left empty. */
+  if(orig)
+    {
+      /* Copy the original name into a newly allocated space because we
+         later want to free it. */
+      gal_checkset_allocate_copy(orig, &out);
+
+      /* Parse the copy and if a dash is present, correct it. */
+      for(c=out; *c!='\0'; ++c) if(*c=='-') *c='_';
+    }
+  else
+    gal_checkset_allocate_copy(backup, &out);
+
+  /* Return the final string. */
+  return out;
+}
+
+
+
+
 
 static void
 histogram_2d(struct statisticsparams *p)
@@ -776,9 +807,11 @@ histogram_2d(struct statisticsparams *p)
      format we have adopted for the tables). */
   if(!strcmp(p->histogram2d,"image"))
     {
-      /* Allocate the 2D image array. */
-      dsize[0]=nb1;
-      dsize[1]=nb2;
+      /* Allocate the 2D image array. Note that 'dsize' is in the order of
+         C, where the first dimension is the slowest. However, in FITS the
+         fastest dimension is the first. */
+      dsize[0]=nb2;
+      dsize[1]=nb1;
       histarr=hist2d->next->next->array;
       img=gal_data_alloc(NULL, GAL_TYPE_INT32, 2, dsize, NULL, 0,
                          p->cp.minmapsize, p->cp.quietmmap,
@@ -786,9 +819,9 @@ histogram_2d(struct statisticsparams *p)
 
       /* Fill the array values. */
       imgarr=img->array;
-      for(i=0;i<nb1;++i)
-        for(j=0;j<nb2;++j)
-          imgarr[i*nb2+j]=histarr[j*nb1+i];
+      for(i=0;i<nb2;++i)
+        for(j=0;j<nb1;++j)
+          imgarr[i*nb1+j]=histarr[j*nb2+i];
 
       /* Set the WCS. */
       d1=bins->array;
@@ -797,8 +830,8 @@ histogram_2d(struct statisticsparams *p)
       crval[0] = d1[0];               crval[1] = d2[0];
       cdelt[0] = d1[1]-d1[0];         cdelt[1] = d2[1]-d2[0];
       cunit[0] = p->input->unit;      cunit[1] = p->input->next->unit;
-      ctype[0] = p->input->name       ? p->input->name : "X";
-      ctype[1] = p->input->next->name ? p->input->next->name : "Y";
+      ctype[0] = histogram_2d_set_ctype(p->input->name, "X");
+      ctype[1] = histogram_2d_set_ctype(p->input->next->name, "Y");
       img->wcs=gal_wcs_create(crpix, crval, cdelt, pc, cunit, ctype, 2);
 
       /* Write the output. */
@@ -809,6 +842,8 @@ histogram_2d(struct statisticsparams *p)
                                 "STATISTICS-CONFIG", output, "0");
 
       /* Clean up and let the user know that the histogram is built. */
+      free(ctype[0]);
+      free(ctype[1]);
       gal_data_free(img);
       if(!p->cp.quiet) printf("%s created.\n", output);
     }
