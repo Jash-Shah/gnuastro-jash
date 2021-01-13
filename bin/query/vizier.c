@@ -1,11 +1,11 @@
 /*********************************************************************
-Gaia Query: retrieve tables from Gaia catalog.
+Access VizieR servers for query.
 Query is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
      Mohammad akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2020-2021, Free Software Foundation, Inc.
+Copyright (C) 2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -38,7 +38,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 void
-gaia_prepare(struct queryparams *p)
+vizier_prepare(struct queryparams *p)
 {
   /* Make sure that atleast one type of constraint is specified. */
   if(p->query==NULL && p->center==NULL && p->overlapwith==NULL)
@@ -54,49 +54,31 @@ gaia_prepare(struct queryparams *p)
         error(EXIT_FAILURE, 0, "the '--radius' ('-r') or '--width' ('-w') "
               "options are necessary with the '--center' ('-C') option");
 
-      /* If no dataset is explicitly given, then use default one and let
-         the user know. */
+      /* If no dataset is explicitly given, let the user know that a
+         catalog reference is necessary. */
       if( p->datasetstr==NULL)
-        {
-          gal_checkset_allocate_copy("edr3", &p->datasetstr);
-          error(EXIT_SUCCESS, 0, "using '%s' dataset since no dataset "
-                "was explicitly requested (with '--dataset')",
-                p->datasetstr);
-        }
-
-      /* Use simpler names for the commonly used datasets. */
-      if( !strcmp(p->datasetstr, "edr3") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("gaiaedr3.gaia_source", &p->datasetstr);
-        }
-      else if( !strcmp(p->datasetstr, "dr2") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("gaiadr2.gaia_source", &p->datasetstr);
-        }
-      else if( !strcmp(p->datasetstr, "dr1") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("gaiadr1.gaia_source", &p->datasetstr);
-        }
-      else if( !strcmp(p->datasetstr, "hipparcos") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("public.hipparcos", &p->datasetstr);
-        }
-      else if( !strcmp(p->datasetstr, "tycho2") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("public.tycho2", &p->datasetstr);
-        }
+        error(EXIT_FAILURE, 0, "no '--dataset' specified. You can "
+              "use the URL below to search existing datasets "
+              "(catalogs):\n\n"
+              "   http://cdsarc.u-strasbg.fr/viz-bin/cat");
     }
 
   /* Set the URLs, note that this is a simply-linked list, so we need to
      reverse it in the end to have the same order here. */
-  gal_list_str_add(&p->urls, "https://gea.esac.esa.int/tap-server/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync", 0);
+
+  /* These don't seem to be working as of January 2021.
+  gal_list_str_add(&p->urls, "https://vizier.cfa.harvard.edu/TAPVizieR/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://vizier.hia.nrc.ca/TAPVizieR/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://vizier.nao.ac.jp/TAPVizieR/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://data.bao.ac.cn/TAPVizieR/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://vizier.ast.cam.ac.uk/TAPVizieR/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://www.ukirt.jach.hawaii.edu/TAPVizieR/tap/sync", 0);
+  gal_list_str_add(&p->urls, "http://vizier.inasan.ru/TAPVizieR/tap/sync", 0);
+  */
+  gal_list_str_reverse(&p->urls);
 
   /* Name of RA Dec columns to use in Gaia. */
-  p->ra_name="ra";
-  p->dec_name="dec";
+  p->ra_name="RAJ2000";
+  p->dec_name="DEJ2000";
 }

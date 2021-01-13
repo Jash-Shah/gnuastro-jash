@@ -10317,16 +10317,18 @@ One line examples:
 
 @example
 ## Import all the columns of all entries in the Gaia early DR3
+## catalog from VizieR (CDS) within 20 arc-minutes of the center.
+$ astquery --database=vizier --dataset=I/350/gaiaedr3 \
+           --center=113.8729761,31.9027152 --radius=20/60 \
+           --output=gaia-on-vizier.fits
+
+## Import all the columns of all entries in the Gaia early DR3
 ## catalog (default) within 20 arc-minutes of the given coordinate.
 $ astquery --database=gaia --output=my-gaia.fits \
            --center=113.8729761,31.9027152 --radius=20/60
 
-## Similar to above, but return all objects within a square box of
-## 30 arcminutes (can also be rectangular, see '--width').
-$ astquery --database=gaia --dataset=edr3 --output=my-gaia.fits \
-           --center=113.8729761,31.9027152 --width=30/60
-
-## Similar to above, but for objects with magnitude range 10 to 15,
+## Similar to above, but for objects with magnitude range 10 to 15.
+## Note that in Vizier, this column is called 'Gmag'.
 $ astquery --database=gaia --output=my-gaia.fits \
            --center=113.8729761,31.9027152 --width=30/60 \
            --range=phot_g_mean_mag,10:15
@@ -10394,9 +10396,20 @@ Identifer for the database for sending the query.
 The current list of databases are listed here:
 
 @table @code
+@item vizier
+@cindex VizieR
+@cindex CDS, VizieR
+@cindex Catalog, Vizier
+@cindex Database, VizieR
+Vizier (@url{https://vizier.u-strasbg.fr}) is arguably the largest catalog database in astronomy: containing more than 20500 catalogs as of mid January 2021.
+Almost all published catalogs in major projects, and even tables in papers are archived and accessible here.
+For example VizieR also has a full copy of the Gaia database mentioned below, with some additional standardized columns (like RA and Dec in J2000).
+Just note that because VizieR curates such a diverse set of data from tens of thousands of projects and aims for interoperability between them, it is forced to rename some columns compared to the original datasets of large projects.
+
 @item gaia
 @cindex Gaia catalog
 @cindex Catalog, Gaia
+@cindex Database, Gaia
 The Gaia project (@url{https://www.cosmos.esa.int/web/gaia}) database which is a large collection of star positions on the celestial sphere, as well as peculiar velocities, paralloxes and magnitudes in some bands among many others.
 Besides scientific studies (like studying resolved stellar populations in the Galaxy and its halo), Gaia is also invaluable for raw data calibrations, like astrometry.
 The query given to this database will be submitted to @code{https://gea.esac.esa.int/tap-server/tap/sync}.
@@ -10411,21 +10424,46 @@ The queries will generally contain space and other meta-characters, so we recomm
 @itemx --dataset=STR
 The dataset to query within the database (not compatible with @option{--query}).
 The reason for this is that many databases have different types of datasets, for example different data releases (DRs), or various high-level calculations on subsets of the database elements.
-If not excplicity given, a particular dataset will be internally set as default for each database, and its name will be printed on the command-line.
-The default dataset is highlighted under each database listed below.
+For smaller databases like Gaia that have a clear ``main'' dataset, this option is not mandatory: in such cases, the default database mentioned below will be used.
+However, for larger databases like VizieR, this option is mandatory.
 
 You can either use the database's official name of the datasets, for example @code{gaiaedr3.gaia_source} for the early data release 3 the Gaia database, or a simplified version that maps to it (@code{edr3}) for easy typing on the command-line.
 Below is a list of the simplified names for the databases that have them.
 
 @table @code
+@item vizier
+As mentioned under @option{--database}, VizieR contains +20000 datasets.
+It is therefore not possible to list them all here!
+The best solutions is to visit its own web-based catalog searching feature:
+
+@itemize
+@item @url{http://cdsarc.u-strasbg.fr/viz-bin/cat}
+@end itemize
+
+For example if you want the VizieR version of Gaia early data release 3, you should use @option{--dataset=I/350/gaiaedr3}.
+
+Alternatively, if you want the 80-row table published in Roman and Trujillo (2017, @url{http://doi.org/10.1093/mnras/stx438}), you should use @option{--dataset=J/MNRAS/468/703/tableb1}.
+Just note that individual paper datasets don't usually cover the whole sky and are focused on a unique sub-set of objects, in one region of the sky.
+
+For example the objects in the paper above are all located around an RA and Dec (in degrees, epoch 2000) of 18.8 and 0.33 (within a radius of less than 3 degrees).
+If you don't want a sub-set of the catalog, but the whole thing, you can use the command below.
+
+@example
+astquery --database=vizier \
+         --dataset=J/MNRAS/468/703/tableb1 \
+         --center=18,0 --radius=3 \
+         --output=abell168-udgs.fits
+@end example
+
 @item gaia
+Gaia is a single major project with only 5 datasets that are provided with a shortcut that you can use.
 @itemize
 @item
 @code{edr3 --> gaiaedr3.gaia_source} (the default dataset)
 @item
 @code{dr2 --> gaiadr2.gaia_source}
 @item
-@code{dr2 --> gaiadr1.gaia_source}
+@code{dr1 --> gaiadr1.gaia_source}
 @item
 @code{tycho2 --> public.tycho2}
 @item

@@ -1,5 +1,5 @@
 /*********************************************************************
-Gaia Query: retrieve tables from Gaia catalog.
+Access VizieR servers for query.
 Query is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
@@ -20,12 +20,12 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef GAIA_H
-#define GAIA_H
+#ifndef VIZIER_H
+#define VIZIER_H
 
 #include "main.h"
 
 void
-gaia_prepare(struct queryparams *p);
+vizier_prepare(struct queryparams *p);
 
 #endif

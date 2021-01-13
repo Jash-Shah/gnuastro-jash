@@ -261,7 +261,8 @@ ui_read_check_only_options(struct queryparams *p)
           "command) for the current databases");
 
   /* Convert the given string into a code. */
-  if( !strcmp(p->databasestr, "gaia") ) p->database=QUERY_DATABASE_GAIA;
+  if(      !strcmp(p->databasestr, "gaia") )   p->database=QUERY_DATABASE_GAIA;
+  else if( !strcmp(p->databasestr, "vizier") ) p->database=QUERY_DATABASE_VIZIER;
   else
     error(EXIT_FAILURE, 0, "'%s' is not a recognized database.\n\n"
           "For the full list of recognized databases, please see the "

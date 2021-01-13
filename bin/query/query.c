@@ -33,8 +33,10 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro-internal/checkset.h>
 
+#include "tap.h"
 #include "gaia.h"
 #include "query.h"
+#include "vizier.h"
 
 
 
@@ -106,12 +108,16 @@ query(struct queryparams *p)
   /* Download the dataset. */
   switch(p->database)
     {
-    case QUERY_DATABASE_GAIA: gaia_query(p); break;
+    case QUERY_DATABASE_GAIA:   gaia_prepare(p);   break;
+    case QUERY_DATABASE_VIZIER: vizier_prepare(p); break;
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address "
             "the problem. '%d' is not a recognized database code", __func__,
             PACKAGE_BUGREPORT, p->database);
     }
+
+  /* Download the requested query. */
+  tap_download(p);
 
   /* Make sure that the result is a readable FITS file, otherwise, abort
      with an error. */
@@ -126,4 +132,7 @@ query(struct queryparams *p)
         printf("Query's raw downloaded file: %s\n", p->downloadname);
       printf("Query's final output: %s\n", p->cp.output);
     }
+
+  /* Clean up. */
+  gal_list_str_free(p->urls, 0);
 }

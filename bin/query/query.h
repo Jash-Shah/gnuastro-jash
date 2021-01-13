@@ -29,6 +29,7 @@ enum query_databases
 {
   QUERY_DATABASE_INVALID,
   QUERY_DATABASE_GAIA,
+  QUERY_DATABASE_VIZIER,
 };
 
 
