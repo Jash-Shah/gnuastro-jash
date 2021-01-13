@@ -38,6 +38,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+
 /*********************************************************************/
 /********************       List operations      *********************/
 /*********************************************************************/
@@ -104,6 +105,18 @@ arithmetic_operator_name(int operator)
   if(out==NULL)
     switch(operator)
       {
+      case ARITHMETIC_TABLE_OP_SIN: out="sin"; break;
+      case ARITHMETIC_TABLE_OP_COS: out="cos"; break;
+      case ARITHMETIC_TABLE_OP_TAN: out="tan"; break;
+      case ARITHMETIC_TABLE_OP_ASIN: out="asin"; break;
+      case ARITHMETIC_TABLE_OP_ACOS: out="acos"; break;
+      case ARITHMETIC_TABLE_OP_ATAN: out="atan"; break;
+      case ARITHMETIC_TABLE_OP_SINH: out="sinh"; break;
+      case ARITHMETIC_TABLE_OP_COSH: out="cosh"; break;
+      case ARITHMETIC_TABLE_OP_TANH: out="tanh"; break;
+      case ARITHMETIC_TABLE_OP_ASINH: out="asinh"; break;
+      case ARITHMETIC_TABLE_OP_ACOSH: out="acosh"; break;
+      case ARITHMETIC_TABLE_OP_ATANH: out="atanh"; break;
       case ARITHMETIC_TABLE_OP_WCSTOIMG: out="wcstoimg"; break;
       case ARITHMETIC_TABLE_OP_IMGTOWCS: out="imgtowcs"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEFLAT: out="distance-flat"; break;
@@ -154,13 +167,37 @@ arithmetic_set_operator(struct tableparams *p, char *string,
   /* Set the operator and number of operands. */
   if( op==GAL_ARITHMETIC_OP_INVALID )
     {
-      if(      !strncmp(string, "wcstoimg", 8))
+      if(      !strcmp(string, "sin"))
+        { op=ARITHMETIC_TABLE_OP_SIN; *num_operands=0; }
+      else if( !strcmp(string, "cos"))
+        { op=ARITHMETIC_TABLE_OP_COS; *num_operands=0; }
+      else if( !strcmp(string, "tan"))
+        { op=ARITHMETIC_TABLE_OP_TAN; *num_operands=0; }
+      else if( !strcmp(string, "asin"))
+        { op=ARITHMETIC_TABLE_OP_ASIN; *num_operands=0; }
+      else if( !strcmp(string, "acos"))
+        { op=ARITHMETIC_TABLE_OP_ACOS; *num_operands=0; }
+      else if( !strcmp(string, "atan"))
+        { op=ARITHMETIC_TABLE_OP_ATAN; *num_operands=0; }
+      else if( !strcmp(string, "sinh"))
+        { op=ARITHMETIC_TABLE_OP_SINH; *num_operands=0; }
+      else if( !strcmp(string, "cosh"))
+        { op=ARITHMETIC_TABLE_OP_COSH; *num_operands=0; }
+      else if( !strcmp(string, "tanh"))
+        { op=ARITHMETIC_TABLE_OP_TANH; *num_operands=0; }
+      else if( !strcmp(string, "asinh"))
+        { op=ARITHMETIC_TABLE_OP_ASINH; *num_operands=0; }
+      else if( !strcmp(string, "acosh"))
+        { op=ARITHMETIC_TABLE_OP_ACOSH; *num_operands=0; }
+      else if( !strcmp(string, "atanh"))
+        { op=ARITHMETIC_TABLE_OP_ATANH; *num_operands=0; }
+      else if( !strcmp(string, "wcstoimg"))
         { op=ARITHMETIC_TABLE_OP_WCSTOIMG; *num_operands=0; }
-      else if (!strncmp(string, "imgtowcs", 8))
+      else if( !strcmp(string, "imgtowcs"))
         { op=ARITHMETIC_TABLE_OP_IMGTOWCS; *num_operands=0; }
-      else if (!strncmp(string, "distance-flat", 13))
+      else if( !strcmp(string, "distance-flat"))
         { op=ARITHMETIC_TABLE_OP_DISTANCEFLAT; *num_operands=0; }
-      else if (!strncmp(string, "distance-on-sphere", 18))
+      else if( !strcmp(string, "distance-on-sphere"))
         { op=ARITHMETIC_TABLE_OP_DISTANCEONSPHERE; *num_operands=0; }
       else
         { op=GAL_ARITHMETIC_OP_INVALID; *num_operands=GAL_BLANK_INT; }
@@ -400,7 +437,6 @@ arithmetic_wcs(struct tableparams *p, gal_data_t **stack, int operator)
   if(coord[1]) coord[0]->next=coord[1];
   if(coord[2]) coord[1]->next=coord[2];
 
-
   /* Final preparations. */
   if(operator==ARITHMETIC_TABLE_OP_WCSTOIMG)
     {
@@ -535,6 +571,54 @@ arithmetic_distance(struct tableparams *p, gal_data_t **stack, int operator)
 
 
 
+static void
+arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
+                      int operator)
+{
+  size_t i;
+  gal_data_t *in;
+  double *d, pi=3.14159265358979323846264338327;
+
+  /* Read the input column as a 'double'. */
+  in=arithmetic_stack_pop(stack, operator, NULL);
+  in=gal_data_copy_to_new_type_free(in, GAL_TYPE_FLOAT64);
+
+  /* Parse the array and do the calculation in place. r=pi*d/180
+
+         d=r*180/pi
+ */
+  d=in->array;
+  for(i=0;i<in->size;++i)
+    switch(operator)
+      {
+      case ARITHMETIC_TABLE_OP_SIN:   d[i]=sin(   pi*d[i]/180.0f ); break;
+      case ARITHMETIC_TABLE_OP_COS:   d[i]=cos(   pi*d[i]/180.0f ); break;
+      case ARITHMETIC_TABLE_OP_TAN:   d[i]=tan(   pi*d[i]/180.0f ); break;
+      case ARITHMETIC_TABLE_OP_ASIN:  d[i]=asin(  d[i] )*180.0f/pi; break;
+      case ARITHMETIC_TABLE_OP_ACOS:  d[i]=acos(  d[i] )*180.0f/pi; break;
+      case ARITHMETIC_TABLE_OP_ATAN:  d[i]=atan(  d[i] )*180.0f/pi; break;
+      case ARITHMETIC_TABLE_OP_SINH:  d[i]=sinh(  d[i] );           break;
+      case ARITHMETIC_TABLE_OP_COSH:  d[i]=cosh(  d[i] );           break;
+      case ARITHMETIC_TABLE_OP_TANH:  d[i]=tanh(  d[i] );           break;
+      case ARITHMETIC_TABLE_OP_ASINH: d[i]=asinh( d[i] );           break;
+      case ARITHMETIC_TABLE_OP_ACOSH: d[i]=acosh( d[i] );           break;
+      case ARITHMETIC_TABLE_OP_ATANH: d[i]=atanh( d[i] );           break;
+      default:
+        error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
+              "the problem. The code %d is not recognized as an operator "
+              "related to this function", __func__, PACKAGE_BUGREPORT,
+              operator);
+      }
+
+  /* Put the resulting calculation back on the stack. */
+  gal_list_data_add(stack, in);
+}
+
+
+
+
+
+
 
 
 
@@ -632,7 +716,7 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
          operator doesn't need three operands, the extra arguments will be
          ignored. */
       gal_list_data_add(stack, gal_arithmetic(operator, p->cp.numthreads,
-                                              flags, d1, d2, d3));
+                                              flags, d1, d2, d3) );
 
       /* Reset the meta-data for the element that was just put on the
          stack. */
@@ -644,6 +728,21 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
     {
       switch(operator)
         {
+        case ARITHMETIC_TABLE_OP_SIN:
+        case ARITHMETIC_TABLE_OP_COS:
+        case ARITHMETIC_TABLE_OP_TAN:
+        case ARITHMETIC_TABLE_OP_ASIN:
+        case ARITHMETIC_TABLE_OP_ACOS:
+        case ARITHMETIC_TABLE_OP_ATAN:
+        case ARITHMETIC_TABLE_OP_SINH:
+        case ARITHMETIC_TABLE_OP_COSH:
+        case ARITHMETIC_TABLE_OP_TANH:
+        case ARITHMETIC_TABLE_OP_ASINH:
+        case ARITHMETIC_TABLE_OP_ACOSH:
+        case ARITHMETIC_TABLE_OP_ATANH:
+          arithmetic_trig_hyper(p, stack, operator);
+          break;
+
         case ARITHMETIC_TABLE_OP_WCSTOIMG:
         case ARITHMETIC_TABLE_OP_IMGTOWCS:
           arithmetic_wcs(p, stack, operator);

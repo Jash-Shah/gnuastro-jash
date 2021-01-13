@@ -18,10 +18,14 @@ See the end of the file for license conditions.
 
   New program:
    - Query ('astquery') is a new program to allow easy submission of
-     queries to external datasets and retrieve the result as a FITS file,
-     directly on the command-line. You can either directly write the
-     database's query statement yourself, or use Query's high-level
-     interface to avoid having to learn it.
+     queries to external datasets on the command-line. The basic spatial
+     query can be managed without knowing the query language of the
+     database. For example with amiliar options (like '--center' or
+     '--width'), or an input image with WCS (the image's sky coverage will
+     be calculated internally). You can also directly write the database's
+     query statement yourself. Currently Query supports these databases:
+     VizieR (containing +20500 datasets, making it the largest database in
+     astronomy), as well as ESA's Gaia.
 
   All programs:
    - Plain text table inputs can have floating point columns that are in
@@ -117,6 +121,12 @@ See the end of the file for license conditions.
      'magnitude' and 'sn' columns, with '--noblank=magnitude,sn', you can
      be sure that all rows with blank values in these columns have been
      removed.
+   - New trigonometric operators for column-arithmetic (inputs in units of
+     degrees): 'sin', 'cos' and 'tan'. Their inverse trigonometric (outputs
+     in units of degrees) have also been added: 'asin', 'acos' and 'atan'.
+   - New hyperbolic operators for column-arithmetic: 'sinh', 'cosh' and
+     'tanh'. Their inverse has also been added: 'asinh', 'acosh' and
+     'atanh'.
 
   Library:
    - GAL_ARITHMETIC_OP_MAKENEW: new 'makenew' operator.

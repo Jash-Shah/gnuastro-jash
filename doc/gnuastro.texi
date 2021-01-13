@@ -9841,6 +9841,32 @@ Besides the operators in @ref{Arithmetic operators}, several operators are only 
 @cindex WCS: World Coordinate System
 @cindex World Coordinate System (WCS)
 @table @code
+@item  sin
+@itemx cos
+@itemx tan
+@cindex Trigonometry
+Basic trigonometric functions.
+They take one operand, in units of degrees.
+
+@item  asin
+@itemx acos
+@itemx atan
+Inverse trigonometric functions.
+They take one operand and the returned values are in units of degrees.
+
+@item  sinh
+@itemx cosh
+@itemx tanh
+@cindex Hyperbolic functions
+Hyperbolic sine, cosine, and tangent.
+These operators take a single operand.
+
+@item  asinh
+@itemx acosh
+@itemx atanh
+Inverse Hyperbolic sine, cosine, and tangent.
+These operators take a single operand.
+
 @item wcstoimg
 Convert the given WCS positions to image/dataset coordinates based on the number of dimensions in the WCS structure of @option{--wcshdu} extension/HDU in @option{--wcsfile}.
 It will output the same number of columns.
