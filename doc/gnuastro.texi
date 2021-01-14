@@ -9854,6 +9854,30 @@ They take one operand, in units of degrees.
 Inverse trigonometric functions.
 They take one operand and the returned values are in units of degrees.
 
+@item atan2
+Inverse tangent (output in units of degrees) which uses the signs of the input coordinates to distinguish between the quadrants.
+This operator therefore needs two operands: the first popped operand is assumed to be the X axis position of the point, and the second popped operand is its Y axis coordinate.
+
+For example see the commands below for four points in the four quadrants (if you want to try them, you don't need to type/copy the parts after @key{#}).
+The first point (2,2) is in the first quadrant, therefore the returned angle is 45 degrees.
+But the second, third and fourth points are in the quadrants of the same order, and the returned angles reflect the quadrant.
+
+@example
+$ echo " 2  2" | asttable -c'arith $2 $1 atan2'   # -->   45
+$ echo " 2 -2" | asttable -c'arith $2 $1 atan2'   # -->  -45
+$ echo "-2 -2" | asttable -c'arith $2 $1 atan2'   # --> -135
+$ echo "-2  2" | asttable -c'arith $2 $1 atan2'   # -->  135
+@end example
+
+However, if you simply use the classic arc-tangent operator (@code{atan}) for the same points, the result will only be in two quadrants as you see below:
+
+@example
+echo " 2  2" | "$utility" -c'arith $2 $1 / atan'  # -->   45
+echo " 2 -2" | "$utility" -c'arith $2 $1 / atan'  # -->  -45
+echo "-2 -2" | "$utility" -c'arith $2 $1 / atan'  # -->   45
+echo "-2  2" | "$utility" -c'arith $2 $1 / atan'  # -->  -45
+@end example
+
 @item  sinh
 @itemx cosh
 @itemx tanh

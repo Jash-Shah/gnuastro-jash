@@ -124,6 +124,8 @@ See the end of the file for license conditions.
    - New trigonometric operators for column-arithmetic (inputs in units of
      degrees): 'sin', 'cos' and 'tan'. Their inverse trigonometric (outputs
      in units of degrees) have also been added: 'asin', 'acos' and 'atan'.
+     The 'atan2' operator (inverse tangent that preserves the quadrant, see
+     its description in the book) is also now available.
    - New hyperbolic operators for column-arithmetic: 'sinh', 'cosh' and
      'tanh'. Their inverse has also been added: 'asinh', 'acosh' and
      'atanh'.

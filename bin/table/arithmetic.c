@@ -117,6 +117,7 @@ arithmetic_operator_name(int operator)
       case ARITHMETIC_TABLE_OP_ASINH: out="asinh"; break;
       case ARITHMETIC_TABLE_OP_ACOSH: out="acosh"; break;
       case ARITHMETIC_TABLE_OP_ATANH: out="atanh"; break;
+      case ARITHMETIC_TABLE_OP_ATAN2: out="atan2"; break;
       case ARITHMETIC_TABLE_OP_WCSTOIMG: out="wcstoimg"; break;
       case ARITHMETIC_TABLE_OP_IMGTOWCS: out="imgtowcs"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEFLAT: out="distance-flat"; break;
@@ -179,6 +180,8 @@ arithmetic_set_operator(struct tableparams *p, char *string,
         { op=ARITHMETIC_TABLE_OP_ACOS; *num_operands=0; }
       else if( !strcmp(string, "atan"))
         { op=ARITHMETIC_TABLE_OP_ATAN; *num_operands=0; }
+      else if( !strcmp(string, "atan2"))
+        { op=ARITHMETIC_TABLE_OP_ATAN2; *num_operands=0; }
       else if( !strcmp(string, "sinh"))
         { op=ARITHMETIC_TABLE_OP_SINH; *num_operands=0; }
       else if( !strcmp(string, "cosh"))
@@ -576,33 +579,46 @@ arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
                       int operator)
 {
   size_t i;
-  gal_data_t *in;
-  double *d, pi=3.14159265358979323846264338327;
+  double *x, *y;
+  gal_data_t *in=NULL, *in2=NULL;
+  double pi=3.14159265358979323846264338327;
 
-  /* Read the input column as a 'double'. */
+  /* Read the input columns as a 'double'. */
   in=arithmetic_stack_pop(stack, operator, NULL);
   in=gal_data_copy_to_new_type_free(in, GAL_TYPE_FLOAT64);
 
-  /* Parse the array and do the calculation in place. r=pi*d/180
+  /* Set the array pointers. */
+  x=in->array;
+  if(operator==ARITHMETIC_TABLE_OP_ATAN2)
+    {
+      in2=arithmetic_stack_pop(stack, operator, NULL);
+      in2=gal_data_copy_to_new_type_free(in2, GAL_TYPE_FLOAT64);
+      y=in2->array;
+    }
 
-         d=r*180/pi
- */
-  d=in->array;
+  /* Parse the array and do the calculation in place. */
   for(i=0;i<in->size;++i)
     switch(operator)
       {
-      case ARITHMETIC_TABLE_OP_SIN:   d[i]=sin(   pi*d[i]/180.0f ); break;
-      case ARITHMETIC_TABLE_OP_COS:   d[i]=cos(   pi*d[i]/180.0f ); break;
-      case ARITHMETIC_TABLE_OP_TAN:   d[i]=tan(   pi*d[i]/180.0f ); break;
-      case ARITHMETIC_TABLE_OP_ASIN:  d[i]=asin(  d[i] )*180.0f/pi; break;
-      case ARITHMETIC_TABLE_OP_ACOS:  d[i]=acos(  d[i] )*180.0f/pi; break;
-      case ARITHMETIC_TABLE_OP_ATAN:  d[i]=atan(  d[i] )*180.0f/pi; break;
-      case ARITHMETIC_TABLE_OP_SINH:  d[i]=sinh(  d[i] );           break;
-      case ARITHMETIC_TABLE_OP_COSH:  d[i]=cosh(  d[i] );           break;
-      case ARITHMETIC_TABLE_OP_TANH:  d[i]=tanh(  d[i] );           break;
-      case ARITHMETIC_TABLE_OP_ASINH: d[i]=asinh( d[i] );           break;
-      case ARITHMETIC_TABLE_OP_ACOSH: d[i]=acosh( d[i] );           break;
-      case ARITHMETIC_TABLE_OP_ATANH: d[i]=atanh( d[i] );           break;
+      /* Single-operand operators. */
+      case ARITHMETIC_TABLE_OP_SIN:   x[i]=sin(   pi*x[i]/180.0f ); break;
+      case ARITHMETIC_TABLE_OP_COS:   x[i]=cos(   pi*x[i]/180.0f ); break;
+      case ARITHMETIC_TABLE_OP_TAN:   x[i]=tan(   pi*x[i]/180.0f ); break;
+      case ARITHMETIC_TABLE_OP_ASIN:  x[i]=asin(  x[i] )*180.0f/pi; break;
+      case ARITHMETIC_TABLE_OP_ACOS:  x[i]=acos(  x[i] )*180.0f/pi; break;
+      case ARITHMETIC_TABLE_OP_ATAN:  x[i]=atan(  x[i] )*180.0f/pi; break;
+      case ARITHMETIC_TABLE_OP_SINH:  x[i]=sinh(  x[i] );           break;
+      case ARITHMETIC_TABLE_OP_COSH:  x[i]=cosh(  x[i] );           break;
+      case ARITHMETIC_TABLE_OP_TANH:  x[i]=tanh(  x[i] );           break;
+      case ARITHMETIC_TABLE_OP_ASINH: x[i]=asinh( x[i] );           break;
+      case ARITHMETIC_TABLE_OP_ACOSH: x[i]=acosh( x[i] );           break;
+      case ARITHMETIC_TABLE_OP_ATANH: x[i]=atanh( x[i] );           break;
+
+      /* Two operand operators. */
+      case ARITHMETIC_TABLE_OP_ATAN2:
+        x[i]=atan2(y[i], x[i])*180.0f/pi; break;
+
+      /* Not recognized (a bug). */
       default:
         error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
               "the problem. The code %d is not recognized as an operator "
@@ -610,7 +626,8 @@ arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
               operator);
       }
 
-  /* Put the resulting calculation back on the stack. */
+  /* Clean up and put the resulting calculation back on the stack. */
+  if(in2) gal_data_free(in2);
   gal_list_data_add(stack, in);
 }
 
@@ -740,6 +757,7 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
         case ARITHMETIC_TABLE_OP_ASINH:
         case ARITHMETIC_TABLE_OP_ACOSH:
         case ARITHMETIC_TABLE_OP_ATANH:
+        case ARITHMETIC_TABLE_OP_ATAN2:
           arithmetic_trig_hyper(p, stack, operator);
           break;
 
