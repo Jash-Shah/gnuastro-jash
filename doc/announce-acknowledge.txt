@@ -1,5 +1,6 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Antonio Diaz Diaz
 Paul Eggert
 Andrés García-Serra Romero
 Bruno Haible

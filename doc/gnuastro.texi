@@ -4966,8 +4966,11 @@ Here are some basic reasons behind this recommendation.
 @enumerate
 
 @item
-Your distribution's pre-built package might not be the most recent
-release.
+Your operating system's pre-built software might not be the most recent release.
+For example, Gnuastro itself is also packaged in some package managers.
+For the list see: @url{https://repology.org/project/gnuastro/versions}.
+You will notice that Gnuastro's version in some operating systems is more than 10 versions old!
+It is the same for all the dependencies of Gnuastro.
 
 @item
 For each package, Gnuastro might preform better (or require) certain configuration options that your distribution's package managers didn't add for you.
@@ -4984,7 +4987,6 @@ By reading their manuals, installing them and staying up to date with changes/bu
 
 Based on your package manager, you can use any of the following commands to install the mandatory and optional dependencies.
 If your package manager isn't included in the list below, please send us the respective command, so we add it.
-Gnuastro itself if also already packaged in some package managers (for example Debian or Homebrew).
 
 As discussed above, we recommend installing the @emph{mandatory} dependencies manually from source (see @ref{Mandatory dependencies}).
 Therefore, in each command below, first the optional dependencies are given.
