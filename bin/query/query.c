@@ -86,6 +86,7 @@ query_check_download(struct queryparams *p)
       /* Rename the output file to the logname file and let the user
          know. */
       rename(p->downloadname, logname);
+      if(p->cp.quiet==0) printf("\n");
       error(EXIT_FAILURE, 0, "the requested dataset could not be retrieved! "
             "For more, please see '%s'", logname);
     }
@@ -131,6 +132,8 @@ query(struct queryparams *p)
       if(p->keeprawdownload)
         printf("Query's raw downloaded file: %s\n", p->downloadname);
       printf("Query's final output: %s\n", p->cp.output);
+      printf("TIP: use the command below for column information:\n"
+             "   asttable %s --info\n", p->cp.output);
     }
 
   /* Clean up. */

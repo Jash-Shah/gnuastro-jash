@@ -898,6 +898,11 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
       /* If the option is already set, just return. */
       if(option->set) return NULL;
 
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Read the values. */
       values=gal_options_parse_csv_strings_raw(arg, filename, lineno);
 
@@ -959,6 +964,11 @@ gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
     {
       /* If the option is already set, just return. */
       if(option->set) return NULL;
+
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
 
       /* Read the values. */
       values=gal_options_parse_list_of_numbers(arg, filename, lineno);
@@ -1041,6 +1051,11 @@ gal_options_parse_csv_float64(struct argp_option *option, char *arg,
     {
       /* If the option is already set, just return. */
       if(option->set) return NULL;
+
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
 
       /* Read the values. */
       values=gal_options_parse_list_of_numbers(arg, filename, lineno);
@@ -1183,6 +1198,11 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
     }
   else
     {
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Parse until the comma or the end of the string.*/
       c=arg; while(*c!='\0' && *c!=',') ++c;
       values = (*c=='\0') ? NULL : c+1;
@@ -1399,6 +1419,11 @@ gal_options_parse_colon_sep_csv(struct argp_option *option, char *arg,
     }
   else
     {
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Parse the desired format and put it in this option's pointer. */
       dataset=options_parse_colon_sep_csv(arg, filename, lineno);
 

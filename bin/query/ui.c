@@ -125,7 +125,6 @@ ui_initialize_options(struct queryparams *p,
         case GAL_OPTIONS_KEY_NUMTHREADS:
         case GAL_OPTIONS_KEY_MINMAPSIZE:
         case GAL_OPTIONS_KEY_STDINTIMEOUT:
-        case GAL_OPTIONS_KEY_KEEPINPUTDIR:
           cp->coptions[i].flags=OPTION_HIDDEN;
           break;
         }
@@ -252,6 +251,7 @@ ui_read_check_only_options(struct queryparams *p)
   size_t i;
   char *basename;
   gal_data_t *tmp;
+  int keepinputdir;
 
   /* See if database has been specified. */
   if(p->databasestr==NULL)
@@ -346,10 +346,15 @@ ui_read_check_only_options(struct queryparams *p)
     }
 
   /* Make sure the output name doesn't exist (and report an error if
-     '--dontdelete' is called. */
+     '--dontdelete' is called. Just note that for the automatic output, we
+     are basing that on the output, not the input. So we are temporarily
+     activating 'keepinputdir'. */
+  keepinputdir=p->cp.keepinputdir;
+  p->cp.keepinputdir=1;
   gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
   p->downloadname=gal_checkset_automatic_output(&p->cp, p->cp.output,
                                                 "-raw-download.fits");
+  p->cp.keepinputdir=keepinputdir;
 }
 
 

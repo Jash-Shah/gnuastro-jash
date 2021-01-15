@@ -164,16 +164,20 @@ tap_download(struct queryparams *p)
          'queryst', we finish the single quotes and switch to double quotes
          because we need the single quotes around 'IRCS'. So here, while we
          started it with a single quote, we finish with double quotes. */
-      if( asprintf(&command, "curl -o%s --form LANG=ADQL "
+      if( asprintf(&command, "curl%s -o%s --form LANG=ADQL "
                    "--form FORMAT=fits --form REQUEST=doQuery "
-                   "--form QUERY='%s\" %s", p->downloadname, querystr,
-                   url->v)<0 )
+                   "--form QUERY='%s\" %s", p->cp.quiet ? " -s" : "",
+                   p->downloadname, querystr, url->v)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation ('command')",
               __func__);
 
       /* Print the calling command for the user to know. */
       if(p->cp.quiet==0)
-        error(EXIT_SUCCESS, 0, "running: %s", command);
+        {
+          printf("\n");
+          error(EXIT_SUCCESS, 0, "running: %s", command);
+          printf("\nDownload status:\n");
+        }
 
       /* Run the command: if it succeeds ('system' returns zero), then stop
          parsing with a break. If it fails, then see if this is the last
