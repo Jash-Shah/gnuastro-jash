@@ -42,13 +42,15 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b e f i j m n p t u x y z
-   A B E G H J L R W X Y
+   a b e f j m n p t u x y z
+   A B E G J R W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
   UI_KEY_KEEPRAWDOWNLOAD = 'k',
+  UI_KEY_INFORMATION     = 'i',
+  UI_KEY_LIMITINFO       = 'L',
   UI_KEY_DATABASE        = 'd',
   UI_KEY_QUERY           = 'Q',
   UI_KEY_DATASET         = 's',
@@ -58,9 +60,11 @@ enum option_keys_enum
   UI_KEY_RANGE           = 'g',
   UI_KEY_COLUMN          = 'c',
   UI_KEY_WIDTH           = 'w',
+  UI_KEY_HEAD            = 'H',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
+  UI_KEY_CCOL            = 1000,
 };
 
 

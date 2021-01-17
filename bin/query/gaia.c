@@ -32,39 +32,42 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 #include "ui.h"
+#include "tap.h"
 
 
 
 
 
-void
-gaia_prepare(struct queryparams *p)
+/* Gaia-specific: use simpler names for the commonly used Gaia
+   datasets. This is relevant anytime that '--dataset' has been called. */
+static void
+gaia_sanity_checks(struct queryparams *p)
 {
-  /* Make sure that atleast one type of constraint is specified. */
-  if(p->query==NULL && p->center==NULL && p->overlapwith==NULL)
-    error(EXIT_FAILURE, 0, "no '--query', '--center' or '--overlapwith' "
-          "specified. At least one of these options are necessary in the "
-          "Gaia dataset");
+  /* FIRST CHECK (BEFORE SETTING DEFAULT DATASET): Gaia datasets are large
+     and it doesn't allow downloading of the full dataset anonymously! You
+     need to contact them for that. So if no constraints are given for the
+     rows, a warning will be printed. */
+  if(p->information==0
+     && p->datasetstr
+     && p->query==NULL
+     && p->center==NULL
+     && p->range==NULL)
+    error(EXIT_FAILURE, 0, "no constraints specified!"
+          "In other words, you are asking for all the rows within this "
+          "dataset! Gaia datasets have billions of rows, therefore it "
+          "has a limit on the number of rows downloaded anonymously. "
+          "For bulk download access, you should contact "
+          "'gaia-helpdesk@cosmos.esa.int'. Alternatively, you can "
+          "constrain your search to a certain spatial region with "
+          "'--center=RA,DEC' (supplemented by '--radius' or '--width' in "
+          "degrees) or use '--overlapwith' to only download rows that "
+          "overlap with the provided image. See the documentation for "
+          "more with this command: 'info astquery' (press 'q' to return "
+          "to the command-line).");
 
-  /* If '--center' is given, '--radius' is also necessary. */
-  if(p->center || p->overlapwith)
+  /* Fix the summarized names. */
+  if(p->datasetstr)
     {
-      /* Make sure the radius is given, and that it isn't zero. */
-      if(p->overlapwith==NULL && p->radius==NULL && p->width==NULL)
-        error(EXIT_FAILURE, 0, "the '--radius' ('-r') or '--width' ('-w') "
-              "options are necessary with the '--center' ('-C') option");
-
-      /* If no dataset is explicitly given, then use default one and let
-         the user know. */
-      if( p->datasetstr==NULL)
-        {
-          gal_checkset_allocate_copy("edr3", &p->datasetstr);
-          error(EXIT_SUCCESS, 0, "using '%s' dataset since no dataset "
-                "was explicitly requested (with '--dataset')",
-                p->datasetstr);
-        }
-
-      /* Use simpler names for the commonly used datasets. */
       if( !strcmp(p->datasetstr, "edr3") )
         {
           free(p->datasetstr);
@@ -91,12 +94,28 @@ gaia_prepare(struct queryparams *p)
           gal_checkset_allocate_copy("public.tycho2", &p->datasetstr);
         }
     }
+}
+
+
+
+
+
+void
+gaia_prepare(struct queryparams *p)
+{
+  /* Gaia-specific settings. */
+  gaia_sanity_checks(p);
 
   /* Set the URLs, note that this is a simply-linked list, so we need to
-     reverse it in the end to have the same order here. */
-  gal_list_str_add(&p->urls, "https://gea.esac.esa.int/tap-server/tap/sync", 0);
+     reverse it in the end (with 'gal_list_str_reverse') to have the same
+     order here. */
+  gal_list_str_add(&p->urls,
+                   "https://gea.esac.esa.int/tap-server/tap/sync", 0);
 
-  /* Name of RA Dec columns to use in Gaia. */
-  p->ra_name="ra";
-  p->dec_name="dec";
+  /* Name of default RA Dec columns. */
+  if(p->ra_name==NULL)  p->ra_name="ra";
+  if(p->dec_name==NULL) p->dec_name="dec";
+
+  /* Basic sanity checks. */
+  tap_sanity_checks(p);
 }

@@ -45,9 +45,13 @@ struct queryparams
   /* From command-line */
   struct gal_options_common_params cp; /* Common parameters.           */
   uint8_t      keeprawdownload;  /* Keep raw downloaded file.          */
+  uint8_t          information;  /* Print information on database.     */
+  char              *limitinfo;  /* Limit retried dataset information. */
   int                 database;  /* ID of database to use.             */
   char             *datasetstr;  /* ID of dataset in database to use.  */
+  size_t                  head;  /* The number of top rows.            */
   char            *overlapwith;  /* Image to use instead of center.    */
+  gal_list_str_t         *ccol;  /* Coordinate column names in dataset.*/
   gal_data_t           *center;  /* Center position of query.          */
   gal_data_t           *radius;  /* Radius around center.              */
   gal_data_t            *range;  /* Range of magnitudes to query.      */
@@ -62,6 +66,7 @@ struct queryparams
   gal_list_str_t         *urls;  /* List of URLs to use.               */
   char                *ra_name;  /* Name of RA column.                 */
   char               *dec_name;  /* Name of Dec columns.               */
+  char           *finalcommand;  /* The final command used.            */
 
   /* Output: */
   time_t               rawtime;  /* Starting time of the program.      */

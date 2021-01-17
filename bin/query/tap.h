@@ -26,6 +26,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 void
+tap_sanity_checks(struct queryparams *p);
+
+void
 tap_download(struct queryparams *p);
 
 #endif

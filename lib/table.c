@@ -90,6 +90,9 @@ gal_table_print_info(gal_data_t *allcols, size_t numcols, size_t numrows)
   int Nw=3, nw=4, uw=5, tw=4;   /* Initial width from label's width */
   char *name, *unit, *comment;
 
+  /* If there aren't any columns, there is no need to print anything. */
+  if(numcols==0) return;
+
   /* Set the widths to print the column information. The width for the
      column number can easily be identified from the logarithm of the
      number of columns. */
@@ -126,12 +129,14 @@ gal_table_print_info(gal_data_t *allcols, size_t numcols, size_t numrows)
       printf("%-*zu%-*s%-*s%-*s%s\n", Nw, i+1,
              nw, name ? name : GAL_BLANK_STRING ,
              uw, unit ? unit : GAL_BLANK_STRING ,
-             tw, gal_type_name(allcols[i].type, 1),
+             tw,
+             allcols[i].type ? gal_type_name(allcols[i].type, 1) : "--",
              comment ? comment : GAL_BLANK_STRING);
     }
 
   /* Print the number of rows. */
-  printf("--------\nNumber of rows: %zu\n--------\n", numrows);
+  if(numrows!=GAL_BLANK_SIZE_T)
+    printf("--------\nNumber of rows: %zu\n--------\n", numrows);
 }
 
 

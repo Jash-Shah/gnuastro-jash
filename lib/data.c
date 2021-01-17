@@ -157,8 +157,10 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
       data->size=1;
       for(i=0;i<ndim;++i)
         {
-          /* Size along a dimension cannot be negative. */
-          if(dsize[i] == 0)
+          /* Size along a dimension cannot be 0 if we are in a
+             multi-dimensional dataset. In a single-dimensional dataset, we
+             can have an empty dataset. */
+          if(ndim>1 && dsize[i] == 0)
             error(EXIT_FAILURE, 0, "%s: dsize[%zu]==0. The size of a "
                   "dimension cannot be zero", __func__, i);
 
@@ -833,32 +835,34 @@ gal_data_copy_to_allocated(gal_data_t *in, gal_data_t *out)
   gal_checkset_allocate_copy(in->comment, &out->comment);
 
   /* Do the copying. */
-  switch(out->type)
-    {
-    case GAL_TYPE_UINT8:   COPY_OT_SET( uint8_t  );      break;
-    case GAL_TYPE_INT8:    COPY_OT_SET( int8_t   );      break;
-    case GAL_TYPE_UINT16:  COPY_OT_SET( uint16_t );      break;
-    case GAL_TYPE_INT16:   COPY_OT_SET( int16_t  );      break;
-    case GAL_TYPE_UINT32:  COPY_OT_SET( uint32_t );      break;
-    case GAL_TYPE_INT32:   COPY_OT_SET( int32_t  );      break;
-    case GAL_TYPE_UINT64:  COPY_OT_SET( uint64_t );      break;
-    case GAL_TYPE_INT64:   COPY_OT_SET( int64_t  );      break;
-    case GAL_TYPE_FLOAT32: COPY_OT_SET( float    );      break;
-    case GAL_TYPE_FLOAT64: COPY_OT_SET( double   );      break;
-    case GAL_TYPE_STRING:  data_copy_to_string(in, out); break;
+  if(in->array)
+    switch(out->type)
+      {
+      case GAL_TYPE_UINT8:   COPY_OT_SET( uint8_t  );      break;
+      case GAL_TYPE_INT8:    COPY_OT_SET( int8_t   );      break;
+      case GAL_TYPE_UINT16:  COPY_OT_SET( uint16_t );      break;
+      case GAL_TYPE_INT16:   COPY_OT_SET( int16_t  );      break;
+      case GAL_TYPE_UINT32:  COPY_OT_SET( uint32_t );      break;
+      case GAL_TYPE_INT32:   COPY_OT_SET( int32_t  );      break;
+      case GAL_TYPE_UINT64:  COPY_OT_SET( uint64_t );      break;
+      case GAL_TYPE_INT64:   COPY_OT_SET( int64_t  );      break;
+      case GAL_TYPE_FLOAT32: COPY_OT_SET( float    );      break;
+      case GAL_TYPE_FLOAT64: COPY_OT_SET( double   );      break;
+      case GAL_TYPE_STRING:  data_copy_to_string(in, out); break;
 
-    case GAL_TYPE_BIT:
-    case GAL_TYPE_STRLL:
-    case GAL_TYPE_COMPLEX32:
-    case GAL_TYPE_COMPLEX64:
-      error(EXIT_FAILURE, 0, "%s: copying to %s type not yet supported",
-            __func__, gal_type_name(out->type, 1));
-      break;
+      case GAL_TYPE_BIT:
+      case GAL_TYPE_STRLL:
+      case GAL_TYPE_COMPLEX32:
+      case GAL_TYPE_COMPLEX64:
+        error(EXIT_FAILURE, 0, "%s: copying to %s type not yet supported",
+              __func__, gal_type_name(out->type, 1));
+        break;
 
-    default:
-      error(EXIT_FAILURE, 0, "%s: type %d not recognized for 'out->type'",
-            __func__, out->type);
-    }
+      default:
+        error(EXIT_FAILURE, 0, "%s: type %d not recognized for 'out->type'",
+              __func__, out->type);
+      }
+  else out->array=NULL;
 
   /* Correct the sizes of the output to be the same as the input. If it is
      equal, there is no problem, if not, the size information will be

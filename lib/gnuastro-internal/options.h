@@ -295,6 +295,9 @@ void *
 gal_options_parse_csv_strings(struct argp_option *option, char *arg,
                               char *filename, size_t lineno, void *junk);
 
+void
+gal_options_merge_list_of_csv(gal_list_str_t **list);
+
 void *
 gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
                                 char *filename, size_t lineno, void *params);

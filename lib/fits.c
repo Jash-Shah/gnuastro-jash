@@ -1359,6 +1359,7 @@ gal_fits_key_list_add(gal_fits_list_key_t **list, uint8_t type,
 
   /* Write the given values into the key structure. */
   newnode->title=NULL;
+  newnode->fullcomment=NULL;
   newnode->type=type;
   newnode->keyname=keyname;
   newnode->value=value;
@@ -1393,6 +1394,7 @@ gal_fits_key_list_add_end(gal_fits_list_key_t **list, uint8_t type,
 
   /* Write the given values into the key structure. */
   newnode->title=NULL;
+  newnode->fullcomment=NULL;
   newnode->type=type;
   newnode->keyname=keyname;
   newnode->value=value;
@@ -1446,6 +1448,7 @@ gal_fits_key_list_title_add(gal_fits_list_key_t **list, char *title, int tfree)
 
 
 
+
 /* Put the title keyword in the end. */
 void
 gal_fits_key_list_title_add_end(gal_fits_list_key_t **list, char *title,
@@ -1463,6 +1466,70 @@ gal_fits_key_list_title_add_end(gal_fits_list_key_t **list, char *title,
   /* Set the arguments. */
   newnode->title=title;
   newnode->tfree=tfree;
+
+  /* Set the next pointer. */
+  if(*list)         /* List is already full, add this node to the end */
+    {
+      /* After this line, tmp points to the last node. */
+      tmp=*list; while(tmp->next!=NULL) tmp=tmp->next;
+      tmp->next=newnode;
+      newnode->next=NULL;
+    }
+  else                 /* List is empty */
+    {
+      newnode->next=*list;
+      *list=newnode;
+    }
+}
+
+
+
+
+
+/* Only set this key to be a full comment */
+void
+gal_fits_key_list_fullcomment_add(gal_fits_list_key_t **list,
+                                  char *fullcomment, int fcfree)
+{
+  gal_fits_list_key_t *newnode;
+
+  /* Allocate space (and initialize to 0/NULL) for the new node and fill it
+     in. */
+  errno=0;
+  newnode=calloc(1, sizeof *newnode);
+  if(newnode==NULL)
+    error(EXIT_FAILURE, errno, "%s: allocating new node", __func__);
+
+  /* Set the arguments. */
+  newnode->fullcomment=fullcomment;
+  newnode->fcfree=fcfree;
+
+  /* Set the next pointer. */
+  newnode->next=*list;
+  *list=newnode;
+}
+
+
+
+
+
+/* Put the title keyword in the end. */
+void
+gal_fits_key_list_fullcomment_add_end(gal_fits_list_key_t **list,
+                                      char *fullcomment, int fcfree)
+{
+  gal_fits_list_key_t *tmp, *newnode;
+
+  /* Allocate space (and initialize to 0/NULL) for the new node and fill it
+     in. */
+  errno=0;
+  newnode=calloc(1, sizeof *newnode);
+  if(newnode==NULL)
+    error(EXIT_FAILURE, errno, "%s: allocating new node", __func__);
+
+  /* Set the arguments. */
+  newnode->fullcomment=fullcomment;
+  newnode->fcfree=fcfree;
 
   /* Set the next pointer. */
   if(*list)         /* List is already full, add this node to the end */
@@ -1721,6 +1788,12 @@ gal_fits_key_write_in_ptr(gal_fits_list_key_t **keylist, fitsfile *fptr)
         {
           gal_fits_key_write_title_in_ptr(tmp->title, fptr);
           if(tmp->tfree) free(tmp->title);
+        }
+      else if (tmp->fullcomment)
+        {
+          if( fits_write_comment(fptr, tmp->fullcomment, &status) )
+            gal_fits_io_error(status, NULL);
+          if(tmp->fcfree) free(tmp->fullcomment);
         }
       else
         {
@@ -3104,9 +3177,9 @@ gal_fits_tab_read(char *filename, char *hdu, size_t numrows,
 
           /* Correct the array and sizes. */
           out->size=0;
+          out->array=NULL;
+          out->dsize[0]=0;
           free(out->array);
-          free(out->dsize);
-          out->dsize=out->array=NULL;
         }
     }
 

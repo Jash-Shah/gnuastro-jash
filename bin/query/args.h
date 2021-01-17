@@ -31,6 +31,25 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Array of acceptable options. */
 struct argp_option program_options[] =
   {
+    /* Input options */
+    {
+      "ccol",
+      UI_KEY_CCOL,
+      "STR,STR",
+      0,
+      "Coordinate (RA, Dec) column names in dataset.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->ccol,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
+
+
+
     /* Output related options. */
     {
       "keeprawdownload",
@@ -45,25 +64,38 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "information",
+      UI_KEY_INFORMATION,
+      0,
+      0,
+      "Print database or dataset information.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->information,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "limitinfo",
+      UI_KEY_LIMITINFO,
+      "STR",
+      0,
+      "Only retrieve dataset info. with this string.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->limitinfo,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 
 
 
     /* Database and dataset. */
-    {
-      "database",
-      UI_KEY_DATABASE,
-      "STR",
-      0,
-      "Name of database (e.g., 'esa').",
-      GAL_OPTIONS_GROUP_INPUT,
-      &p->databasestr,
-      GAL_TYPE_STRING,
-      GAL_OPTIONS_RANGE_ANY,
-      GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET,
-    },
     {
       "query",
       UI_KEY_QUERY,
@@ -182,6 +214,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
+    },
+    {
+      "head",
+      UI_KEY_HEAD,
+      "INT",
+      0,
+      "Only download given number of top rows.",
+      UI_GROUP_BYCENTER,
+      &p->head,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
     },
 
 

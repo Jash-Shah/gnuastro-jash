@@ -415,6 +415,7 @@ Table
 
 Query
 
+* Available databases::         List of available databases to Query.
 * Invoking astquery::           Inputs, outputs and configuration of Query.
 
 Data manipulation
@@ -10342,110 +10343,77 @@ Finally, if you already have a FITS table by other means (for example by downloa
 @node Query,  , Table, Data containers
 @section Query
 
+@cindex IVOA
 @cindex Query
+@cindex TAP (Table Access Protocol)
+@cindex ADQL (Astronomical Data Query Language)
+@cindex Astronomical Data Query Language (ADQL)
 There are many astronomical databases available for downloading astronomical data.
-Each has its own interface, which is usually very well documented in their own webpages.
-However, remembering the exact URLs and interface of each database is not easily possible and using the graphic web interface (which is commonly easier to use), is not an automatic process.
+Most follow the International Virtual Observatory Alliance (IVOA, @url{https://ivoa.net}) standards (and in particular the Table Access Protocol, or TAP@footnote{@url{https://ivoa.net/documents/TAP}}).
+With TAP, it is possible to submit your queries via a command-line downloader (for example @command{curl}) to only get specific tables, targets (rows in a table) or measurements (columns in a table): you don't have to download the full table (which can be very large in some cases)!
+These customizations are done through the Astronomical Data Query Language (ADQL@footnote{@url{https://ivoa.net/documents/ADQL}}).
 
-Gnuastro's Query program is designed to address these problems: it has a common high-level interface for general operations that are common between its recognized databases.
-For example, importing a catalog of objects within a certain distance of a given coordinate.
+Therefore, if you are sufficiently familiar with TAP and ADQL, you can easily custom-download any part of an online dataset.
+However, you also need to keep a record of the URLs of each database and in many cases, the commands will become long and hard/buggy to type on the command-line.
+On the other hand, most astronomers don't know TAP or ADQL at all, and are forced to go to the database's webpage which is slow (it needs to download so many images, and has too much annoying information), requires manual interaction (further making it slow and buggy), and can't be automated.
+
+Gnuastro's Query program is designed to be the middle-man in this process: it provides a simple high-level interface to let you specify your constraints on what you want to download.
+It then internally constructs the command to download the data based on your inputs and runs it to download your desired data.
+Query also prints the full command before it executes it (if not called with @option{--quiet}).
+Also, if you ask for a FITS output table, the full command is written into its 0-th extension along with other input parameters to query (all Gnuastro programs generally keep their input configuration parameters as FITS keywords in the zero-th output).
+
+With the full command used to download the dataset, if you only have a minimal knowledge of ADQL and want to do lower-level customizations on your downloaded dataset, you can simply copy that command and change the parts you want: ADQL is very powerful!
+For example you can ask the server to do mathematic operations on the columns and apply selections after those operations, or combine/match multiple datasets and etc.
+We will try to add high-level interfaces for such capabilities, but generally, don't limit yourself to the high-level operations (that can't cover everything!).
 
 @menu
+* Available databases::         List of available databases to Query.
 * Invoking astquery::           Inputs, outputs and configuration of Query.
 @end menu
 
-@node Invoking astquery,  , Query, Query
-@subsection Invoking Query
+@node Available databases, Invoking astquery, Query, Query
+@subsection Available databases
 
-Query provides a high-level interface to downloading subsets of data from databases.
-The executable name is @file{astquery} with the following general template
+The current list of databases supported by Query are listed at the end of this section.
+To get the list of available datasets within each database, you can use the @option{--information} option.
+For example with the command below you can get a list of the roughly 100 datasets that are available within the ESA Gaia server with their description:
 
 @example
-$ astquery [OPTION...] ...
+$ astquery gaia --information
 @end example
 
 @noindent
-One line examples:
+However, other databases like VizieR host many more datasets (tens of thousands!).
+Therefore it is very inconvenient to get the @emph{full} information everytime you want to find your dataset of interest (the full metadata file VizieR is more than 20Mb).
+In such cases, you can limit the downloaded and displayed information with the @code{--limitinfo} option.
+For example with the first command below, you can get all datasets relating to the MUSE (an instrument on the Very Large Telescope), and those that include Roland Bacon (Principle Investigator of MUSE) as an author (@code{Bacon, R.}).
+Recall that @option{-i} is the short format of @option{--information}.
 
 @example
-## Import all the columns of all entries in the Gaia early DR3
-## catalog from VizieR (CDS) within 20 arc-minutes of the center.
-$ astquery --database=vizier --dataset=I/350/gaiaedr3 \
-           --center=113.8729761,31.9027152 --radius=20/60 \
-           --output=gaia-on-vizier.fits
-
-## Import all the columns of all entries in the Gaia early DR3
-## catalog (default) within 20 arc-minutes of the given coordinate.
-$ astquery --database=gaia --output=my-gaia.fits \
-           --center=113.8729761,31.9027152 --radius=20/60
-
-## Similar to above, but for objects with magnitude range 10 to 15.
-## Note that in Vizier, this column is called 'Gmag'.
-$ astquery --database=gaia --output=my-gaia.fits \
-           --center=113.8729761,31.9027152 --width=30/60 \
-           --range=phot_g_mean_mag,10:15
-
-## Similar to first example, but only import the ID, RA, Dec and G-band
-## magnitude of the sources (not all the columns).
-$ astquery --database=gaia --output=my-gaia.fits \
-           --center=113.8729761,31.9027152 --radius=0.1 \
-           --column=source_id,ra,dec,phot_g_mean_mag
-
-## Find the ID, RA and Dec of all Gaia sources within an image.
-$ astquery --database=gaia --overlapwith=image.fits
-           -csource_id,ra,dec
-
-## Use a custom query to extract entries in the Gaia early DR3 catalog.
-## The 'XXXX YYYY' can be a query of any size on the command-line.
-$ astquery --database=gaia --query="XXXX YYYY" --output=my-gaia.fits
+$ astquery vizier -i --limitinfo=MUSE
+$ astquery vizier -i --limitinfo="Bacon R."
 @end example
 
-Query doesn't take any input argument, because the main goal is to retreive data from external sources.
-The main input to Query is the @option{--database} option which specifies which database should be contacted for submitting the query.
-There are two methods to query the database, each is more fully discussed in its option's description below.
-@itemize
-@item
-With @option{--query} you can directly give a raw query statement that is recognized by the database.
-This is very low level and will require some knowledge of the database's query language, but of course, it is much more powerful.
-If this option is given, the raw string is directly passed to the server and all other constraints/options are ignored.
-@item
-With the @option{--center}, @option{--radius} and other constraining options below, the low-level query will be constructed automatically for the particular database.
-This method is only limited to the generic capabilities that Query provides for all servers.
-So @option{--query} is more powerful, however, in this mode, you don't need any knowledge of the database's query language.
-When query is run, before contacting the server, it will print the full command that it executes which contains the raw server query that is constructed.
-@end itemize
+Once you find the recognized name of your desired dataset, you can see the column information of that dataset with adding the dataset name.
+For example, with the command below you can see the column metadata in the @code{J/A+A/608/A2/udf10} dataset (one of the datasets in the search above) using this command:
 
-The name of the downloaded output file can be set with @option{--output}.
-The requested output format can any of the @ref{Recognized table formats} (currently @file{.txt} or @file{.fits}).
-Like all Gnuastro programs, if the output is a FITS file, the zero-th/first HDU of the output will contain all the command-line options given to Query.
-If @option{--output} is not set, the output name will be in the format of @file{NAME-STRING.fits}, where @file{NAME} is the name of the database (same value given to @option{--database}), and @file{STRING} is a randomly selected 6-character set of numbers and alphabetic characters.
-With this feature, a second run of @command{astquery} that isn't called with @option{--output} will not over-write an already downloaded one.
-Generally, when calling Query more than once, it is recommended to set an output name for each call based on your project's context.
+@example
+$ astquery vizier --dataset=J/A+A/608/A2/udf10 -i
+@end example
 
-The outputs of Query will have a common output format, irrespective of the used database.
-To achieve this, Query will ask the databases to provide a FITS table output (for larger tables, FITS can consume much less download volume).
-After downloading is complete, the raw downloaded file will be read into memory once by Query, and written into the file given to @option{--output}.
-The raw downloaded file will be deleted by default, but can be preserved with the @option{--keeprawdownload} option.
-This strategy avoids unnecessary surprises depending on database.
-For example some databases can download a compressed FITS table, even though we ask for FITS.
-But with the strategy above, the final output will be an uncompressed FITS file if requested even be in plain text (@ref{Gnuastro text table format}).
+For very popular datasets of a database, Query provides an easier-to-remember short name that you can feed to @option{--dataset}.
+This short name will map to the officially recognized name of the dataset on the server.
+For example in the VizieR and Gaia databases, the recognized name for the early data release 3 data is respectively @code{I/350/gaiaedr3} and @code{gaiaedr3.gaia_source}.
+These technical names can be hard to remember.
+Therefore Query provides @code{gaiaedr3} (for VizieR) and @code{edr3} (for ESA's Gaia) shortcuts which you can give to @option{--dataset} instead.
+They will be directly mapped to the fully recognized name by Query.
+In the list below that describes the available databases, the available short names are also listed.
 
-@strong{Under development, request for feedback:} Query is a new member of the Gnuastro family of programs.
-It currently requires that the @command{curl} executable (for the cURL downloading program) to be present on the host and the number of databases it supports is still limited, see the list under the @option{--database} option below.
-More downloader tools, and databases will be added in the near future as it is used more often, so please don't hesitate to suggest any that you may need.
+The list of databases recognized by Query (and their names in Query) is described below.
+Since Query is a new member of the Gnuastro family (first available in Gnuastro 0.14), this list will hopefully grow significantly in the next releases.
+If you have any particular datasets in mind, please let us know by sending an email to @code{bug-gnuastro@@gnu.org}.
+If the dataset supports IVOA's TAP (Table Access Protocol), it should be very easy to add.
 
-@table @option
-
-@item -k
-@itemx --keeprawdownload
-Don't delete the raw downloaded file from the database.
-The name of the raw download will have a @file{OUTPUT-raw-download.fits} format.
-Where @file{OUTPUT} is either the base-name of the final output file (without a suffix).
-
-@item -d STR
-@itemx --database=STR
-Identifer for the database for sending the query.
-The current list of databases are listed here:
 
 @table @code
 @item vizier
@@ -10454,9 +10422,21 @@ The current list of databases are listed here:
 @cindex Catalog, Vizier
 @cindex Database, VizieR
 Vizier (@url{https://vizier.u-strasbg.fr}) is arguably the largest catalog database in astronomy: containing more than 20500 catalogs as of mid January 2021.
-Almost all published catalogs in major projects, and even tables in papers are archived and accessible here.
+Almost all published catalogs in major projects, and even the tables in many papers are archived and accessible here.
 For example VizieR also has a full copy of the Gaia database mentioned below, with some additional standardized columns (like RA and Dec in J2000).
-Just note that because VizieR curates such a diverse set of data from tens of thousands of projects and aims for interoperability between them, it is forced to rename some columns compared to the original datasets of large projects.
+
+The current implementation of @option{--limitinfo} only looks into the description of the datasets, but since VizieR is so large, there is still a lot of room for improvement.
+Until then, if @option{--limitinfo} isn't sufficient, you can use VizieR's own web-based search for your desired dataset: @url{http://cdsarc.u-strasbg.fr/viz-bin/cat}
+
+
+Because VizieR curates such a diverse set of data from tens of thousands of projects and aims for interoperability between them, the column names in VizieR may not be identical to the column names in the surveys' own databases (Gaia in the example above).
+A query to @code{vizier} is submitted to @code{http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync}.
+
+Here is the list of short names for popular datasets within VizieR:
+@itemize
+@item
+@code{gaiaedr3 --> I/350/gaiaedr3}
+@end itemize
 
 @item gaia
 @cindex Gaia catalog
@@ -10464,54 +10444,12 @@ Just note that because VizieR curates such a diverse set of data from tens of th
 @cindex Database, Gaia
 The Gaia project (@url{https://www.cosmos.esa.int/web/gaia}) database which is a large collection of star positions on the celestial sphere, as well as peculiar velocities, paralloxes and magnitudes in some bands among many others.
 Besides scientific studies (like studying resolved stellar populations in the Galaxy and its halo), Gaia is also invaluable for raw data calibrations, like astrometry.
-The query given to this database will be submitted to @code{https://gea.esac.esa.int/tap-server/tap/sync}.
-@end table
+A query to @code{gaia} is submitted to @code{https://gea.esac.esa.int/tap-server/tap/sync}.
 
-@item -Q "STR"
-@itemx --query="STR"
-Directly specify the query to be passed onto the database.
-The queries will generally contain space and other meta-characters, so we recommend placing the query within quotations.
-
-@item -s STR
-@itemx --dataset=STR
-The dataset to query within the database (not compatible with @option{--query}).
-The reason for this is that many databases have different types of datasets, for example different data releases (DRs), or various high-level calculations on subsets of the database elements.
-For smaller databases like Gaia that have a clear ``main'' dataset, this option is not mandatory: in such cases, the default database mentioned below will be used.
-However, for larger databases like VizieR, this option is mandatory.
-
-You can either use the database's official name of the datasets, for example @code{gaiaedr3.gaia_source} for the early data release 3 the Gaia database, or a simplified version that maps to it (@code{edr3}) for easy typing on the command-line.
-Below is a list of the simplified names for the databases that have them.
-
-@table @code
-@item vizier
-As mentioned under @option{--database}, VizieR contains +20000 datasets.
-It is therefore not possible to list them all here!
-The best solutions is to visit its own web-based catalog searching feature:
-
-@itemize
-@item @url{http://cdsarc.u-strasbg.fr/viz-bin/cat}
-@end itemize
-
-For example if you want the VizieR version of Gaia early data release 3, you should use @option{--dataset=I/350/gaiaedr3}.
-
-Alternatively, if you want the 80-row table published in Roman and Trujillo (2017, @url{http://doi.org/10.1093/mnras/stx438}), you should use @option{--dataset=J/MNRAS/468/703/tableb1}.
-Just note that individual paper datasets don't usually cover the whole sky and are focused on a unique sub-set of objects, in one region of the sky.
-
-For example the objects in the paper above are all located around an RA and Dec (in degrees, epoch 2000) of 18.8 and 0.33 (within a radius of less than 3 degrees).
-If you don't want a sub-set of the catalog, but the whole thing, you can use the command below.
-
-@example
-astquery --database=vizier \
-         --dataset=J/MNRAS/468/703/tableb1 \
-         --center=18,0 --radius=3 \
-         --output=abell168-udgs.fits
-@end example
-
-@item gaia
-Gaia is a single major project with only 5 datasets that are provided with a shortcut that you can use.
+Here is the list of short names for popular datasets within Gaia:
 @itemize
 @item
-@code{edr3 --> gaiaedr3.gaia_source} (the default dataset)
+@code{edr3 --> gaiaedr3.gaia_source}
 @item
 @code{dr2 --> gaiadr2.gaia_source}
 @item
@@ -10523,10 +10461,152 @@ Gaia is a single major project with only 5 datasets that are provided with a sho
 @end itemize
 @end table
 
+
+
+
+@node Invoking astquery,  , Available databases, Query
+@subsection Invoking Query
+
+Query provides a high-level interface to downloading subsets of data from databases.
+The executable name is @file{astquery} with the following general template
+
+@example
+$ astquery DATABASE-NAME [OPTION...] ...
+@end example
+
+@noindent
+One line examples:
+
+@example
+
+## Information about all datasets in ESA's GAIA database:
+$ astquery gaia --information
+
+## Only get catalogs in VizieR that have 'MUSE' in their description.
+## The '-i' is short for '--information'.
+$ astquery vizier -i --limitinfo=MUSE
+
+## Get the list of columns in 'J/A+A/608/A2/udf10' (one of the above).
+$ astquery vizier --dataset=J/A+A/608/A2/udf10 -i
+
+## Find the ID, RA and Dec of all Gaia sources within an image.
+$ astquery gaia --dataset=edr3 --overlapwith=image.fits \
+           -csource_id,ra,dec
+
+## Only extract the RA, DEC and spec. redshift columns (all rows).
+$ astquery vizier --dataset=J/A+A/608/A2/udf10 --column=RAJ2000 \
+           --column=DEJ2000,zMUSE
+
+## All columns of all entries in the Gaia eDR3 catalog (hosted at
+## VizieR) within 1 arc-minute of the given coordinate.
+$ astquery vizier --dataset=I/350/gaiaedr3 --output=my-gaia.fits \
+           --center=113.8729761,31.9027152 --radius=1/60 \
+
+## Similar to above, but only ID, RA and Dec columns for objects with
+## magnitude range 10 to 15. In VizieR, this column is called 'Gmag'.
+$ astquery vizier --dataset=I/350/gaiaedr3 --output=my-gaia.fits \
+           --center=113.8729761,31.9027152 --radius=1/60 \
+           --range=Gmag,10:15 -cEDR3Name,RAJ2000,DEJ2000
+@end example
+
+Query takes a single argument which is the name of the database.
+For the full list of available databases and accessing them, see @ref{Available databases}.
+There are two methods to query the databases, each is more fully discussed in its option's description below.
+@itemize
+@item
+@strong{Low-level:}
+With @option{--query} you can directly give a raw query statement that is recognized by the database.
+This is very low level and will require a good knowledge of the database's query language, but of course, it is much more powerful.
+If this option is given, the raw string is directly passed to the server and all other constraints/options (for Query's high-level interface) are ignored.
+@item
+@strong{High-level:}
+With the high-level options (like @option{--column}, @option{--center}, @option{--radius} and other constraining options below), the low-level query will be constructed automatically for the particular database.
+This method is only limited to the generic capabilities that Query provides for all servers.
+So @option{--query} is more powerful, however, in this mode, you don't need any knowledge of the database's query language.
+You can see the interlaly generated query on the terminal (if @option{--quiet} is not used) or in the 0-th extension of the output (if its a FITS file).
+This full command contains the internally generated query.
+@end itemize
+
+The name of the downloaded output file can be set with @option{--output}.
+The requested output format can have any of the @ref{Recognized table formats} (currently @file{.txt} or @file{.fits}).
+Like all Gnuastro programs, if the output is a FITS file, the zero-th/first HDU of the output will contain all the command-line options given to Query as well as the full command used to access the server.
+When @option{--output} is not set, the output name will be in the format of @file{NAME-STRING.fits}, where @file{NAME} is the name of the database and @file{STRING} is a randomly selected 6-character set of numbers and alphabetic characters.
+With this feature, a second run of @command{astquery} that isn't called with @option{--output} will not over-write an already downloaded one.
+Generally, when calling Query more than once, it is recommended to set an output name for each call based on your project's context.
+
+The outputs of Query will have a common output format, irrespective of the used database.
+To achieve this, Query will ask the databases to provide a FITS table output (for larger tables, FITS can consume much less download volume).
+After downloading is complete, the raw downloaded file will be read into memory once by Query, and written into the file given to @option{--output}.
+The raw downloaded file will be deleted by default, but can be preserved with the @option{--keeprawdownload} option.
+This strategy avoids unnecessary surprises depending on database.
+For example some databases can download a compressed FITS table, even though we ask for FITS.
+But with the strategy above, the final output will be an uncompressed FITS file.
+The metadata that is added by Query (including the full download command) is also very useful for future usage of the downloaded data.
+Unfotunately many databases don't write the input queries into their generated tables.
+
+@table @option
+
+@item -k
+@itemx --keeprawdownload
+Don't delete the raw downloaded file from the database.
+The name of the raw download will have a @file{OUTPUT-raw-download.fits} format.
+Where @file{OUTPUT} is either the base-name of the final output file (without a suffix).
+
+@item -i
+@itemx --information
+Print the information of all datasets (tables) within a database or all columns within a database.
+When @option{--dataset} is specified, the latter mode (all column information) is downloaded and printed and when its not defined, all dataset information (within the database) is printed.
+
+Some databases (like VizieR) contain tens of thousands of datasets, so you can limit the downloaded and printed information for available databases with the @option{--limitinfo} option (described below).
+Dataset descriptions are often large and contain a lot of text (unlike column descriptions).
+Therefore when printing the information of all datasets within a database, the information (e.g., database name) will be printed on separate lines before the description.
+However, when printing column information, the output has the same format as a similar option in Table (see @ref{Invoking asttable}).
+
+Important note to consider: the printed order of the datasets or columns is just for displaying in the printed output.
+You cannot ask for datasets or columns based on the printed order, you need to use dataset or column names.
+
+@item -L STR
+@itemx --limitinfo=STR
+Limit the information that is downloaded and displayed (with @option{--information}) to those that have the string given to this option in their description.
+Note that @emph{this is case-sensitive}.
+This option is only relevant when @option{--information} is also called.
+
+Databases may have thousands (or tens of thousands) of datasets.
+Therefore just the metadata (information) to show with @option{--information} can be tens of megabytes (for example the full VizieR metadata file is about 23Mb as of January 2021).
+Once downloaded, it can also be hard to parse manually.
+With @option{--limitinfo}, only the metadata of datasets that contain this string @emph{in their description} will be downloaded and displayed, greatly improving the speed of finding your desired dataset.
+
+@item -Q "STR"
+@itemx --query="STR"
+Directly specify the query to be passed onto the database.
+The queries will generally contain space and other meta-characters, so we recommend placing the query within quotations.
+
+@item -s STR
+@itemx --dataset=STR
+The dataset to query within the database (not compatible with @option{--query}).
+This option is mandatory when @option{--query} or @option{--information} aren't provided.
+You can see the list of available datasets within a database using @option{--information} (possibly supplemented by @option{--limitinfo}).
+The output of @option{--information} will contain the recognized name of the datasets within that database.
+You can pass the recognized name directly to this option.
+For more on finding and using your desired database, see @ref{Available databases}.
+
+@item -c STR
+@itemx --column=STR[,STR[,...]]
+The column name(s) to retrieve from the dataset in the given order (not compatible with @option{--query}).
+If not given, all the dataset's columns for the selected rows will be queried (which can be large!).
+This option can take multiple values in one instance (for example @option{--column=ra,dec,mag}), or in multiple instances (for example @option{-cra -cdec -cmag}), or mixed (for example @option{-cra,dec -cmag}).
+
+In case, you don't know the full list of the dataset's column names a-priori, and you don't want to download all the columns (which can greatly decrease your download speed), you can use the @option{--information} option combined with the @option{--dataset} option, see @ref{Available databases}.
+
+@item -H INT
+@itemx --head=INT
+Only ask for the first @code{INT} rows of the finally selected columns, not all the rows.
+This can be good when your search can result a large dataset, but before downloading the full volume, you want to see the top rows and get a feeling of what the whole dataset looks like.
+
 @item -v STR
 @itemx --overlapwith=STR
-File name containing image (in the HDU given by @option{--hdu}) to use for identifying the region to query in the give database and dataset.
-Based on the image's WCS, the area it covers is estimated and values to the @option{--center}, @option{--width} will be calculated internally.
+File name of FITS file containing an image (in the HDU given by @option{--hdu}) to use for identifying the region to query in the give database and dataset.
+Based on the image's WCS and pixel size, the sky coverage of the image is estimated and values to the @option{--center}, @option{--width} will be calculated internally.
 Hence this option cannot be used with @code{--center}, @code{--width} or @code{--radius}.
 Also, since it internally generates the query, it can't be used with @code{--query}.
 
@@ -10535,9 +10615,16 @@ Therefore the resulting catalog may not overlap, or correspond to a larger/small
 
 @item -C FLT,FLT
 @itemx --center=FLT,FLT
-The center to use for the automatically generated query (not compatible with @option{--query}).
-All objects within a certain distance of the requested center position will be requested from the dataset.
-The distance can be specified with the @option{--radius} option.
+The spatial center position (mostly RA and Dec) to use for the automatically generated query (not compatible with @option{--query}).
+The given values will be compared to two columns in the database to find/return rows within a certain region around this center position will be requested and downloaded.
+Pre-defined RA and Dec column names are defined in Query for every database, however you can use @option{--ccol} to select other columns to use instead.
+The region can either be a circle and the point (configured with @option{--radius}) or a box/rectangle around the point (configured with @option{--width}).
+
+@item --ccol=STR,STR
+The name of the coordinate-columns in the dataset to compare with the values given to @option{--center}.
+Query will use its internal defaults for each dataset (for example @code{RAJ2000} and @code{DEJ2000} for VizieR data).
+But each dataset is treated separately and it isn't guaranteed that these columns exist in all datasets.
+Also, more than one coordinate system/epoch may be present in a dataset and you can use this option to construct your spatial constraint based on the others coordinate systems/epochs.
 
 @item -r FLT
 @itemx --radius=FLT
@@ -10549,33 +10636,18 @@ For example if you want a radius of 20 arc-minutes or 20 arc-seconds, you can us
 @itemx --width=FLT[,FLT]
 The square (or rectangle) side length (width) about the requested center to use for the automatically generated query (not compatible with @option{--query}).
 If only one value is given to @code{--width} the region will be a square, but if two values are given, the widths of the query box along each dimension will be different.
-The value(s) is(are) in units of degrees, but you can use simple division for each value directly on the command-line, see the description of @option{--radius} for more on using division.
+The value(s) is (are) in the same units as the coordinate column (see @option{--ccol}, usually RA and Dec which are degrees).
+You can use simple division for each value directly on the command-line if you want relatively small (and more human-friendly) sizes.
+For example if you want your box to be 1 arc-minutes along the RA and 2 arc-minutes along Dec, you can use @option{--width=1/60,2/60}.
 
 @item -g STR,FLT,FLT
 @itemx --range=STR,FLT,FLT
 The column name and numerical range (inclusive) of acceptable values in that column (not compatible with @option{--query}).
 This option can be called multiple times for applying range limits on many columns in one call (thus greatly reducing the download size).
-For example @code{--range=phot_g_mean_mag,10:15} will only query for rows that have a value between 10 and 15 (inclusive) in the @code{phot_g_mean_mag} column (from the Gaia catalog).
+For example when used on the ESA gaia database, you can use @code{--range=phot_g_mean_mag,10:15} to only get rows that have a value between 10 and 15 (inclusive on both sides) in the @code{phot_g_mean_mag} column.
 
 If you want the interval to not be inclusive on both sides, you can run @code{astquery} once and get the command that it executes.
-Then you can edit it to be non-inclusive on one side.
-
-@item -c STR
-@itemx --column=STR[,STR[,...]]
-The optional column name(s) to retrieve from the dataset in the automatically generated query (not compatible with @option{--query}).
-If not given, all the dataset's columns for the selected rows will be used (which can be large!).
-This option can take multiple values in one instance (for example @option{--column=ra,dec,mag}), or in multiple instances (for example @option{-cra -cdec -cmag}), or mixed (for example @option{-cra,dec -cmag}).
-
-In case, you don't know the full list of the dataset's column names, one solution is to run this program once without any @option{--column} and setting @option{--radius=0} (to have few, or no, rows and download fast).
-You can then inspect the column names with @ref{Table}.
-In case the database doesn't support a search radius of 0, or can't return a table with no rows, you can increase the radius.
-Here is an example on the Gaia DR2 catalog to show the full list of available columns:
-
-@example
-$ astquery --database=gaia --dataset=edr3 --center=0,0 \
-           --radius=0 --output=gaia-edr3-cols.fits
-$ asttable gaia-edr3-cols.fits --info
-@end example
+Then you can edit it to be non-inclusive on your desired side.
 @end table
 
 
@@ -23388,15 +23460,18 @@ for adding elements to the list.
 @example
 typedef struct gal_fits_list_key_t
 @{
-  int                        kfree;   /* ==1, free name.      */
-  int                        vfree;   /* ==1, free value.     */
-  int                        cfree;   /* ==1, free comment.   */
-  uint8_t                     type;   /* Keyword value type.  */
-  char                    *keyname;   /* Keyword Name.        */
-  void                      *value;   /* Keyword value.       */
-  char                    *comment;   /* Keyword comment.     */
-  char                       *unit;   /* Keyword unit.        */
-  struct gal_fits_list_key_t *next;   /* Next keyword.        */
+  int                        tfree;   /* ==1, free title string.   */
+  int                        kfree;   /* ==1, free keyword name.   */
+  int                        vfree;   /* ==1, free keyword value.  */
+  int                        cfree;   /* ==1, free comment.        */
+  int                        ufree;   /* ==1, free unit.           */
+  uint8_t                     type;   /* Keyword value type.       */
+  char                      *title;   /* !=NULL, only print title. */
+  char                    *keyname;   /* Keyword Name.             */
+  void                      *value;   /* Keyword value.            */
+  char                    *comment;   /* Keyword comment.          */
+  char                       *unit;   /* Keyword unit.             */
+  struct gal_fits_list_key_t *next;   /* Pointer next keyword.     */
 @} gal_fits_list_key_t;
 @end example
 @end deftp
@@ -23530,18 +23605,14 @@ strarr = keysll[i].array;
 str    = strarray[0];
 @end example
 
-If CFITSIO is unable to read a keyword for any reason the @code{status}
-element of the respective @code{gal_data_t} will be non-zero. If it is
-zero, then the keyword was found and successfully read. Otherwise, it is a
-CFITSIO status value. You can use CFITSIO's error reporting tools or
-@code{gal_fits_io_error} (see @ref{FITS macros errors filenames}) for
-reporting the reason of the failure. A tip: when the keyword doesn't exist,
-CFITSIO's status value will be @code{KEY_NO_EXIST}.
+If CFITSIO is unable to read a keyword for any reason the @code{status} element of the respective @code{gal_data_t} will be non-zero.
+If it is zero, then the keyword was found and successfully read.
+Otherwise, it is a CFITSIO status value.
+You can use CFITSIO's error reporting tools or @code{gal_fits_io_error} (see @ref{FITS macros errors filenames}) for reporting the reason of the failure.
+A tip: when the keyword doesn't exist, CFITSIO's status value will be @code{KEY_NO_EXIST}.
 
-CFITSIO will start searching for the keywords from the last place in the
-header that it searched for a keyword. So it is much more efficient if the
-order that you ask for keywords is based on the order they are stored in
-the header.
+CFITSIO will start searching for the keywords from the last place in the header that it searched for a keyword.
+So it is much more efficient if the order that you ask for keywords is based on the order they are stored in the header.
 
 @end deftypefun
 
@@ -23574,10 +23645,21 @@ Use this function if you want the keywords to be written in the same order that 
 
 @deftypefun void gal_fits_key_list_title_add (gal_fits_list_key_t @code{**list}, char @code{*title}, int @code{tfree})
 Add a special ``title'' keyword (with the @code{title} string) to the top of the keywords list.
+If @code{cfree} is non-zero, the space allocated for @code{comment} will be freed immediately after writing the keyword (in another function).
 @end deftypefun
 
 @deftypefun void gal_fits_key_list_title_add_end (gal_fits_list_key_t @code{**list}, char @code{*title}, int @code{tfree})
-Add a special ``title'' keyword (with the @code{title} string) to the end/bottom of the keywords list.
+Similar to @code{gal_fits_key_list_title_add}, but put the comments at the end of the list.
+@end deftypefun
+
+@deftypefun void gal_fits_key_list_comment_add (gal_fits_list_key_t @code{**list}, char @code{*comment}, int @code{fcfree})
+Add a @code{COMMENT} keyword to the top of the keywords list.
+If the comment is longer than 70 characters, CFITSIO will automatically break it into multiple @code{COMMENT} keywords.
+If @code{fcfree} is non-zero, the space allocated for @code{comment} will be freed immediately after writing the keyword (in another function).
+@end deftypefun
+
+@deftypefun void gal_fits_key_list_comment_add_end (gal_fits_list_key_t @code{**list}, char @code{*comment}, int @code{fcfree})
+Similar to @code{gal_fits_key_list_comment_add}, but put the comments at the end of the list.
 @end deftypefun
 
 @deftypefun void gal_fits_key_list_reverse (gal_fits_list_key_t @code{**list})

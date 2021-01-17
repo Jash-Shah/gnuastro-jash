@@ -59,7 +59,7 @@ const char *
 argp_program_bug_address = PACKAGE_BUGREPORT;
 
 static char
-args_doc[] = "ASTRdata";
+args_doc[] = "DATABASE";
 
 const char
 doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" is just a place holder "
@@ -111,6 +111,9 @@ ui_initialize_options(struct queryparams *p,
   cp->program_authors    = PROGRAM_AUTHORS;
   cp->coptions           = gal_commonopts_options;
 
+  /* Program-specific initializations. */
+  p->head                = GAL_BLANK_SIZE_T;
+
   /* Modify common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
     {
@@ -144,6 +147,17 @@ ui_initialize_options(struct queryparams *p,
 
 
 
+/* Fixed string */
+#define UI_NODATABASE "Please use the '--database' ('-d') option to "   \
+  "specify your desired database, see manual ('info gnuastro "          \
+  "astquery' command) for the current databases, here is the list "     \
+  "of acceptable values (with their web-based search URLs):\n\n"        \
+  "    vizier     http://vizier.u-strasbg.fr/viz-bin/VizieR\n"           \
+  "    gaia       https://gea.esac.esa.int/archive\n"
+
+
+
+
 /* Parse a single option: */
 error_t
 parse_opt(int key, char *arg, struct argp_state *state)
@@ -171,7 +185,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 
     /* Read the non-option tokens (arguments): */
     case ARGP_KEY_ARG:
-      argp_error(state, "no input arguments are needed");
+      p->databasestr=arg;
       break;
 
 
@@ -255,10 +269,7 @@ ui_read_check_only_options(struct queryparams *p)
 
   /* See if database has been specified. */
   if(p->databasestr==NULL)
-    error(EXIT_FAILURE, 0, "no input database.\n\n"
-          "Please use the '--database' ('-d') option to specify your "
-          "desired database, see manual ('info gnuastro astquery' "
-          "command) for the current databases");
+    error(EXIT_FAILURE, 0, "no input database! " UI_NODATABASE);
 
   /* Convert the given string into a code. */
   if(      !strcmp(p->databasestr, "gaia") )   p->database=QUERY_DATABASE_GAIA;
@@ -267,6 +278,35 @@ ui_read_check_only_options(struct queryparams *p)
     error(EXIT_FAILURE, 0, "'%s' is not a recognized database.\n\n"
           "For the full list of recognized databases, please see the "
           "documentation (with the command 'info astquery')", p->databasestr);
+
+  /* If '--limitinfo' is given, but the string is empty (possibly due to a
+     shell variable that wasn't set), remove it. */
+  if(p->limitinfo && p->limitinfo[0]=='\0')
+    {
+      free(p->limitinfo);
+      p->limitinfo=NULL;
+      for(i=0; !gal_options_is_last(&p->cp.poptions[i]); ++i)
+        if( p->cp.poptions[i].key == UI_KEY_LIMITINFO )
+          p->cp.poptions[i].set=GAL_OPTIONS_NOT_SET;
+    }
+
+  /* If '--ccol' is given, first merge all possible calls to it, confirm
+     that there are only two values and put them into the 'ra_name' and
+     'dec_name' variables. */
+  if(p->ccol)
+    {
+      gal_options_merge_list_of_csv(&p->ccol);
+      if(gal_list_str_number(p->ccol)!=2)
+        error(EXIT_FAILURE, 0, "2 values should be given to '--ccol', "
+              "but you have given %zu values (possibly in multiple calls "
+              "to '--ccols'). Recall that '--ccol' is the coordinate "
+              "column (usually RA and Dec). You can either put them in "
+              "one call (for example '--ccol=ra,dec') or in two (for "
+              "example '--ccol=ra --ccol=dec')",
+              gal_list_str_number(p->ccol));
+      p->ra_name=p->ccol->v;
+      p->dec_name=p->ccol->next->v;
+    }
 
   /* Make sure that '--query' and '--center' are not called together. */
   if(p->query && (p->center || p->overlapwith) )

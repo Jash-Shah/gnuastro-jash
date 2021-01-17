@@ -32,6 +32,37 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 #include "ui.h"
+#include "tap.h"
+
+
+static void
+vizier_sanity_checks(struct queryparams *p)
+{
+  /* VizieR specific: if the user has asked for '--information', but
+     without '--limitinfo', print a notice to introduce 'limitinfo'. */
+  if(p->information && p->limitinfo==NULL)
+    {
+      fprintf(stderr, "\n--------------------\n");
+      error(EXIT_SUCCESS, 0, "WARNING: The full VizieR metadata "
+            "(information) is more than 20Mb, and contains tens of "
+            "thousands entries. You can use '--limitinfo=XXXX' to "
+            "constrain the downloaded and displayed metadata to "
+            "those that have 'XXXX' in the description (for example "
+            "a certain author, or a certain project name). This will "
+            "greatly improve the speed of your search");
+      fprintf(stderr, "--------------------\n");
+    }
+
+  /* Set the summarized names. */
+  if(p->datasetstr)
+    {
+      if( !strcmp(p->datasetstr, "gaiaedr3") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/350/gaiaedr3", &p->datasetstr);
+        }
+    }
+}
 
 
 
@@ -40,45 +71,28 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 void
 vizier_prepare(struct queryparams *p)
 {
-  /* Make sure that atleast one type of constraint is specified. */
-  if(p->query==NULL && p->center==NULL && p->overlapwith==NULL)
-    error(EXIT_FAILURE, 0, "no '--query', '--center' or '--overlapwith' "
-          "specified. At least one of these options are necessary in the "
-          "Gaia dataset");
-
-  /* If '--center' is given, '--radius' is also necessary. */
-  if(p->center || p->overlapwith)
-    {
-      /* Make sure the radius is given, and that it isn't zero. */
-      if(p->overlapwith==NULL && p->radius==NULL && p->width==NULL)
-        error(EXIT_FAILURE, 0, "the '--radius' ('-r') or '--width' ('-w') "
-              "options are necessary with the '--center' ('-C') option");
-
-      /* If no dataset is explicitly given, let the user know that a
-         catalog reference is necessary. */
-      if( p->datasetstr==NULL)
-        error(EXIT_FAILURE, 0, "no '--dataset' specified. You can "
-              "use the URL below to search existing datasets "
-              "(catalogs):\n\n"
-              "   http://cdsarc.u-strasbg.fr/viz-bin/cat");
-    }
+  /* VizieR-specific. */
+  vizier_sanity_checks(p);
 
   /* Set the URLs, note that this is a simply-linked list, so we need to
-     reverse it in the end to have the same order here. */
-  gal_list_str_add(&p->urls, "http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync", 0);
+     reverse it in the end (with 'gal_list_str_reverse') to have the same
+     order here.
 
-  /* These don't seem to be working as of January 2021.
-  gal_list_str_add(&p->urls, "https://vizier.cfa.harvard.edu/TAPVizieR/tap/sync", 0);
-  gal_list_str_add(&p->urls, "http://vizier.hia.nrc.ca/TAPVizieR/tap/sync", 0);
-  gal_list_str_add(&p->urls, "http://vizier.nao.ac.jp/TAPVizieR/tap/sync", 0);
-  gal_list_str_add(&p->urls, "http://data.bao.ac.cn/TAPVizieR/tap/sync", 0);
-  gal_list_str_add(&p->urls, "http://vizier.ast.cam.ac.uk/TAPVizieR/tap/sync", 0);
-  gal_list_str_add(&p->urls, "http://www.ukirt.jach.hawaii.edu/TAPVizieR/tap/sync", 0);
-  gal_list_str_add(&p->urls, "http://vizier.inasan.ru/TAPVizieR/tap/sync", 0);
-  */
-  gal_list_str_reverse(&p->urls);
+     Other possible VizieR TAP servers that don't seem to be working now
+     (extracted from the 'visquery' script):
+        http://vizier.cfa.harvard.edu/TAPVizieR/tap/sync
+        http://vizier.nao.ac.jp/TAPVizieR/tap/sync
+        http://data.bao.ac.cn/TAPVizieR/tap/sync
+        http://vizier.ast.cam.ac.uk/TAPVizieR/tap/sync
+        http://www.ukirt.jach.hawaii.edu/TAPVizieR/tap/sync
+        http://vizier.inasan.ru/TAPVizieR/tap/sync */
+  gal_list_str_add(&p->urls,
+                   "http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync", 0);
 
-  /* Name of RA Dec columns to use in Gaia. */
-  p->ra_name="RAJ2000";
-  p->dec_name="DEJ2000";
+  /* Name of default RA Dec columns. */
+  if(p->ra_name==NULL)  p->ra_name="RAJ2000";
+  if(p->dec_name==NULL) p->dec_name="DEJ2000";
+
+  /* Basic sanity checks. */
+  tap_sanity_checks(p);
 }

@@ -29,34 +29,51 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/wcs.h>
 
+#include <gnuastro-internal/checkset.h>
+
 #include "main.h"
 
 #include "ui.h"
 
 
 
-/* The database string needs to be quoted if it contains a slash. */
-static void
-tap_database_quote_if_necessary(struct queryparams *p)
+
+
+/* Basic sanity checks necessary in all TAP-based databases. */
+void
+tap_sanity_checks(struct queryparams *p)
 {
-  int quote=0;
-  char *c, *new;
-
-  /* Parse the string. */
-  for(c=p->datasetstr; *c!='\0'; ++c)
-    if(*c=='/') { quote=1; break; }
-
-  /* Add quotes around the database string. */
-  if(quote)
+  /* Checks in case a raw query isn't given. */
+  if(p->query==NULL)
     {
-      /* Allocate the new string with quotes. */
-      if( asprintf(&new, "\"%s\"", p->datasetstr)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation ('new')",
-              __func__);
+      /* If '--center' is given, '--radius' is also necessary. */
+      if(p->center || p->overlapwith)
+        {
+          /* Make sure the radius is given, and that it isn't zero. */
+          if(p->center && p->radius==NULL && p->width==NULL)
+            error(EXIT_FAILURE, 0, "the '--radius' ('-r') or "
+                  "'--width' ('-w') options are necessary with "
+                  "the '--center' ('-C') option");
+        }
 
-      /* Free the old one, and replace it. */
-      free(p->datasetstr);
-      p->datasetstr=new;
+      /* If no dataset is explicitly given, let the user know that a
+         catalog reference is necessary. */
+      if( p->information==0 && p->datasetstr==NULL )
+        error(EXIT_FAILURE, 0, "no '--dataset' specified! To get the "
+              "list of available datasets (tables) in this database, "
+              "please run with '--information' (or '-i'). Note that some "
+              "databases (like VizieR) have (tens of) thousands of "
+              "datasets. Hence, for a fast result, its best to limit the "
+              "downloaded and displayed information list by also adding "
+              "--limitinfo=\"SEARCH\" (where 'SEARCH' can be any string "
+              "in the description of the dataset, usually project or "
+              "author names) for example:\n\n"
+              "    astquery %s -i --limitinfo=\"SEARCH_STRING\"\n\n"
+              "For more, see the documentation of 'astquery' and the "
+              "\"Available databases\" section of the book for more:\n\n"
+              "    info astquery\n"
+              "    info gnuastro \"Available databases\"\n",
+              p->databasestr);
     }
 }
 
@@ -64,109 +81,240 @@ tap_database_quote_if_necessary(struct queryparams *p)
 
 
 
+/* The database string needs to be quoted if it contains a slash. */
+static char *
+tap_dataset_quote_if_necessary(struct queryparams *p)
+{
+  int quote=0;
+  char *c, *quoted;
+
+  /* Parse the string for bad characters */
+  for(c=p->datasetstr; *c!='\0'; ++c)
+    if(*c=='/') { quote=1; break; }
+
+  /* Add quotes around the database string. */
+  if(quote)
+    {
+      /* Allocate the new string with quotes. */
+      if( asprintf(&quoted, "\"%s\"", p->datasetstr)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation ('quoted')",
+              __func__);
+    }
+  else quoted=p->datasetstr;
+
+  /* Return the possibly quoted string. */
+  return quoted;
+}
+
+
+
+
+
+/* Construct the query for metadata download. */
+static char *
+tap_query_construct_meta(struct queryparams *p)
+{
+  char *querystr;
+
+  /* If a dataset is given, build the query to download the metadata of
+     that dataset. Otherwise, get the metadata of the full database. */
+  if(p->datasetstr)
+    {
+      if( asprintf(&querystr,  "\"SELECT * FROM TAP_SCHEMA.columns "
+                   "WHERE table_name = '%s'\"", p->datasetstr)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
+              __func__);
+    }
+  else
+    {
+      if(p->limitinfo)
+        {
+          if( asprintf(&querystr,  "\"SELECT * FROM TAP_SCHEMA.tables "
+                       "WHERE description LIKE '%%%s%%'\"", p->limitinfo)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
+                  __func__);
+        }
+      else
+        gal_checkset_allocate_copy("\"SELECT * FROM TAP_SCHEMA.tables\"",
+                                   &querystr);
+    }
+
+  /* Clean up and return. */
+  return querystr;
+}
+
+
+
+
+
+/* Construct the spatial-constraints criteria if necessary. */
+static char *
+tap_query_construct_spatial(struct queryparams *p)
+{
+  size_t ndim;
+  double width2, *center, *darray;
+  char *regionstr, *spatialstr=NULL;
+  double *ocenter=NULL, *owidth=NULL, *omin=NULL, *omax=NULL;
+
+  /* If the user wanted an overlap with an image, then calculate it. */
+  if(p->overlapwith)
+    {
+      /* Calculate the Sky coverage of the overlap dataset. */
+      gal_wcs_coverage(p->overlapwith, p->cp.hdu, &ndim, &ocenter,
+                       &owidth, &omin, &omax);
+
+      /* Make sure a WCS existed in the file. */
+      if(owidth==NULL)
+        error(EXIT_FAILURE, 0, "%s (hdu %s): contains no WCS to "
+              "derive the sky coverage", p->overlapwith, p->cp.hdu);
+    }
+
+  /* For easy reading. */
+  center = p->overlapwith ? ocenter : p->center->array;
+
+  /* Write the region. */
+  if(p->radius)
+    {
+      darray=p->radius->array;
+      if( asprintf(&regionstr, "CIRCLE('ICRS', %.8f, %.8f, %g)",
+                   center[0], center[1], darray[0])<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation ('regionstr')",
+              __func__);
+    }
+  else if(p->width || p->overlapwith)
+    {
+      darray = p->overlapwith ? owidth : p->width->array;
+      width2 = ( (p->overlapwith || p->width->size==2)
+                 ? darray[1] : darray[0] );
+      if( asprintf( &regionstr, "BOX('ICRS', %.8f, %.8f, %.8f, %.8f)",
+                    center[0], center[1], darray[0], width2 )<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation ('regionstr')",
+              __func__);
+    }
+
+  /* Build the final spatial constraint query string. Note on the
+     quotations: the final query is surrounded by single-quotes
+     ('). However, we need the single quotes around 'ICRS' in this command
+     (both in the final string below and the ones above). So just before
+     the first 'ICRS', we end the single-quote and start a double quote and
+     keep it until the end. Finally, we add a single quote again so all
+     other components of the query can assume that the single-quote
+     environment is active.*/
+  if( asprintf(&spatialstr,
+               "WHERE 1=CONTAINS( POINT('\"'ICRS', %s, %s), %s )\"'",
+               p->ra_name, p->dec_name, regionstr)<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
+          __func__);
+
+
+  /* Clean up and return. */
+  free(regionstr);
+  if(p->overlapwith)
+    { free(ocenter); free(owidth); free(omin); free(omax); }
+  return spatialstr;
+}
+
+
+
+
+
+/* Construct the query for data download. */
+static char *
+tap_query_construct_data(struct queryparams *p)
+{
+  double *darray;
+  gal_data_t *tmp;
+  char *headstr=NULL, allcols[]="*";
+  char *datasetstr, *rangestr, *prevrange;
+  char *querystr, *columns, *spatialstr=NULL;
+
+  /* If the dataset has special characters (like a slash) it needs to
+     be quoted. */
+  datasetstr=tap_dataset_quote_if_necessary(p);
+
+  /* If certain columns have been requested use them, otherwise
+     download all existing columns.*/
+  columns = p->columns ? ui_strlist_to_str(p->columns) : allcols;
+
+  /* If the user only wants the top few rows, only return them. */
+  if(p->head!=GAL_BLANK_SIZE_T)
+    if( asprintf(&headstr, "TOP %zu", p->head)<0 )
+      error(EXIT_FAILURE, 0, "%s: asprintf allocation ('head')",
+            __func__);
+
+  /* If the user has asked for a spatial constraint. */
+  if(p->overlapwith || p->center)
+    spatialstr=tap_query_construct_spatial(p);
+
+  /* Set the range criteria on the requested columns. */
+  prevrange=NULL;
+  if(p->range)
+    for(tmp=p->range; tmp!=NULL; tmp=tmp->next)
+      {
+        /* Write 'rangestr'. */
+        darray=tmp->array;
+        if(prevrange)
+          {
+            if( asprintf(&rangestr, "%s AND %s>=%g AND %s<=%g", prevrange,
+                         tmp->name, darray[0], tmp->name, darray[1]) < 0 )
+              error(EXIT_FAILURE, 0, "%s: asprintf allocation ('rangestr')",
+                    __func__);
+            free(prevrange);
+          }
+        else
+          if( asprintf(&rangestr, "%s>=%g AND %s<=%g",
+                       tmp->name, darray[0], tmp->name, darray[1]) < 0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation ('rangestr')",
+                  __func__);
+
+        /* Put the 'rangestr' in previous-range string for the next
+           round.*/
+        prevrange=rangestr;
+      }
+
+  /* Write the automatically generated query string.  */
+  if( asprintf(&querystr,  "'SELECT %s %s FROM %s %s %s %s'",
+               headstr ? headstr : "",
+               columns,
+               datasetstr,
+               spatialstr ? spatialstr : "",
+               ( rangestr && spatialstr
+                 ? "AND"
+                 : rangestr ? "WHERE" : "" ),
+               rangestr ? rangestr : "")<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
+          __func__);
+
+  /* Clean up and return. */
+  if(datasetstr!=p->datasetstr) free(datasetstr);
+  if(columns!=allcols) free(columns);
+  return querystr;
+}
+
+
+
+
 void
 tap_download(struct queryparams *p)
 {
-  size_t ndim;
-  gal_data_t *tmp;
   gal_list_str_t *url;
-  double width2, *center, *darray;
-  char *tmpstr, *regionstr, *rangestr=NULL;
-  char *command, *columns, allcols[]="*", *querystr;
-  double *ocenter=NULL, *owidth=NULL, *omin=NULL, *omax=NULL;
+  char *command, *querystr;
 
   /* If the raw query has been given, use it. */
-  if(p->query)
-    querystr=p->query;
-  else
-    {
-      /* If certain columns have been requested use them, otherwise
-         download all existing columns.*/
-      columns = p->columns ? ui_strlist_to_str(p->columns) : allcols;
-
-      /* If the user wanted an overlap with an image, then calculate it. */
-      if(p->overlapwith)
-        {
-          /* Calculate the Sky coverage of the overlap dataset. */
-          gal_wcs_coverage(p->overlapwith, p->cp.hdu, &ndim, &ocenter,
-                           &owidth, &omin, &omax);
-
-          /* Make sure a WCS existed in the file. */
-          if(owidth==NULL)
-            error(EXIT_FAILURE, 0, "%s (hdu %s): contains no WCS to "
-                  "derive the sky coverage", p->overlapwith, p->cp.hdu);
-        }
-
-      /* For easy reading. */
-      center = p->overlapwith ? ocenter : p->center->array;
-
-      /* Write the region. */
-      if(p->radius)
-        {
-          darray=p->radius->array;
-          if( asprintf(&regionstr, "CIRCLE('ICRS', %.8f, %.8f, %g)",
-                       center[0], center[1], darray[0])<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation ('regionstr')",
-                  __func__);
-        }
-      else if(p->width || p->overlapwith)
-        {
-          darray = p->overlapwith ? owidth : p->width->array;
-          width2 = ( (p->overlapwith || p->width->size==2)
-                     ? darray[1] : darray[0] );
-          if( asprintf( &regionstr, "BOX('ICRS', %.8f, %.8f, %.8f, %.8f)",
-                        center[0], center[1], darray[0], width2 )<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation ('regionstr')",
-                  __func__);
-        }
-
-      /* Set the range criteria on the requested columns. */
-      if(p->range)
-        for(tmp=p->range; tmp!=NULL; tmp=tmp->next)
-          {
-            darray=tmp->array;
-            if( asprintf(&tmpstr, "%s%sAND %s>=%g AND %s<=%g",
-                         rangestr==NULL ? "" : rangestr,
-                         rangestr==NULL ? "" : " ",
-                         tmp->name, darray[0], tmp->name, darray[1]) < 0 )
-              error(EXIT_FAILURE, 0, "%s: asprintf allocation ('tmpstr')",
-                    __func__);
-            free(rangestr);
-            rangestr=tmpstr;
-          }
-
-      /* If the dataset has special characters (like a slash) it needs to
-         be quoted. */
-      tap_database_quote_if_necessary(p);
-
-      /* Write the automatically generated query string. */
-      if( asprintf(&querystr,  "SELECT %s "
-                   "FROM %s "
-                   "WHERE 1=CONTAINS( POINT('\"'ICRS', %s, %s), %s ) %s",
-                   columns, p->datasetstr, p->ra_name, p->dec_name, regionstr,
-                   rangestr ? rangestr : "")<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
-              __func__);
-
-      /* Clean up. */
-      free(regionstr);
-      if(columns!=allcols) free(columns);
-      if(p->overlapwith)
-        {free(ocenter); free(owidth); free(omin); free(omax);}
-    }
+  querystr = ( p->query
+               ? p->query
+               : ( p->information
+                   ? tap_query_construct_meta(p)
+                   : tap_query_construct_data(p) ) );
 
   /* Go over the given URLs for this server. */
   for(url=p->urls; url!=NULL; url=url->next)
     {
-      /* Build the calling command. Note the quotations around the value of
-         QUERY: we start the values with a single quote, because in ADQL,
-         we need double quotes to comment dataset names. However, inside
-         'queryst', we finish the single quotes and switch to double quotes
-         because we need the single quotes around 'IRCS'. So here, while we
-         started it with a single quote, we finish with double quotes. */
+      /* Build the calling command. Note that the query quotes are
+         included by the function building it. */
       if( asprintf(&command, "curl%s -o%s --form LANG=ADQL "
                    "--form FORMAT=fits --form REQUEST=doQuery "
-                   "--form QUERY='%s\" %s", p->cp.quiet ? " -s" : "",
+                   "--form QUERY=%s %s", p->cp.quiet ? " -s" : "",
                    p->downloadname, querystr, url->v)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation ('command')",
               __func__);
@@ -193,6 +341,6 @@ tap_download(struct queryparams *p)
               "if you don't use the option '--quiet', or '-q')");
     }
 
-  /* Clean up. */
-  free(command);
+  /* Keep the executed command (to put in the final file's meta-data). */
+  p->finalcommand=command;
 }

@@ -17,15 +17,16 @@ See the end of the file for license conditions.
      "Arithmetic operators" subsection of the Arithmetic program's section.
 
   New program:
-   - Query ('astquery') is a new program to allow easy submission of
-     queries to external datasets on the command-line. The basic spatial
-     query can be managed without knowing the query language of the
-     database. For example with amiliar options (like '--center' or
-     '--width'), or an input image with WCS (the image's sky coverage will
-     be calculated internally). You can also directly write the database's
-     query statement yourself. Currently Query supports these databases:
-     VizieR (containing +20500 datasets, making it the largest database in
-     astronomy), as well as ESA's Gaia.
+   - Query ('astquery') is a new program to query to external datasets and
+     retrieve the resulting datasets from the command-line. It is possible
+     to get list of datasets or column names from the databases. The basic
+     spatial query (finding objects in the vicinity of a certain point) can
+     be managed without knowing the query language of the database: with
+     basic options (like '--center' with '--radius' or '--width'), or an
+     input image that has WCS. Currently Query supports VizieR (containing
+     +20500 datasets, making it the largest database in astronomy), as well
+     as ESA's Gaia. See the new "Query" section of the book (under the
+     "Data containers" chapter) for more.
 
   All programs:
    - Plain text table inputs can have floating point columns that are in
@@ -140,8 +141,9 @@ See the end of the file for license conditions.
    - gal_fits_hdu_is_healpix: Return 1 if HDU is a HEALpix grid.
    - gal_fits_hdu_datasum: calculate DATASUM of given HDU in given FITS file.
    - gal_fits_hdu_datasum_ptr: calculate DATASUM of opened FITS file pointer.
-   - gal_pointer_allocate_ram_or_mmap: allocate space either in RAM or as a
-     memory-mapped file.
+   - gal_fits_key_list_comment_add: add a COMMENT keyword to the keyword list.
+   - gal_fits_key_list_comment_add_end: add a COMMENT keyword to end of list.
+   - gal_pointer_allocate_ram_or_mmap: allocate in RAM or memory-mapped file.
    - gal_pointer_mmap_free: "free" (actually delete) the memory-mapped file.
    - gal_wcs_create: create WCSLIB-compatible WCS from raw values.
    - gal_wcs_coverage: Return the sky coverage of given image HDU.

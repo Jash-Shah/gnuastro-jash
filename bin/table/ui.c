@@ -556,8 +556,8 @@ ui_print_info_exit(struct tableparams *p)
 static void
 ui_columns_prepare(struct tableparams *p)
 {
-  char *c, **strarr;
   gal_data_t *strs;
+  char *c, **strarr;
   size_t i, totcalled=0;
   struct column_pack *node, *last;
   gal_list_str_t *tmp, *toread=NULL;

@@ -77,17 +77,19 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 /* To create a linked list of headers. */
 typedef struct gal_fits_list_key_t
 {
+  char                      *title;   /* !=NULL, only print title. */
+  char                *fullcomment;   /* Fully COMMENT (no name).  */
+  char                    *keyname;   /* Keyword Name.             */
+  void                      *value;   /* Keyword value.            */
+  uint8_t                     type;   /* Keyword value type.       */
+  char                    *comment;   /* Keyword comment.          */
+  char                       *unit;   /* Keyword unit.             */
   int                        tfree;   /* ==1, free title string.   */
+  int                       fcfree;   /* ==1, free full comment.   */
   int                        kfree;   /* ==1, free keyword name.   */
   int                        vfree;   /* ==1, free keyword value.  */
   int                        cfree;   /* ==1, free comment.        */
   int                        ufree;   /* ==1, free unit.           */
-  uint8_t                     type;   /* Keyword value type.       */
-  char                      *title;   /* !=NULL, only print title. */
-  char                    *keyname;   /* Keyword Name.             */
-  void                      *value;   /* Keyword value.            */
-  char                    *comment;   /* Keyword comment.          */
-  char                       *unit;   /* Keyword unit.             */
   struct gal_fits_list_key_t *next;   /* Pointer next keyword.     */
 } gal_fits_list_key_t;
 
@@ -216,6 +218,14 @@ gal_fits_key_list_title_add(gal_fits_list_key_t **list, char *title,
 void
 gal_fits_key_list_title_add_end(gal_fits_list_key_t **list, char *title,
                                 int tfree);
+
+void
+gal_fits_key_list_fullcomment_add(gal_fits_list_key_t **list,
+                                  char *fullcomment, int fcfree);
+
+void
+gal_fits_key_list_fullcomment_add_end(gal_fits_list_key_t **list,
+                                      char *fullcomment, int fcfree);
 
 void
 gal_fits_key_list_reverse(gal_fits_list_key_t **list);

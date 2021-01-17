@@ -916,6 +916,61 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
 
 
 
+/* Some options can be called multiple times on the command-line, but
+   within the program, all the values must be merged into one. For example
+   '--column=1 --column=2,3 --column=4,5,6'. In this example, the output
+   'gal_list_str_t' will have 3 nodes, but we actually want a list that has
+   6 nodes. */
+void
+gal_options_merge_list_of_csv(gal_list_str_t **list)
+{
+  size_t i;
+  gal_data_t *strs;
+  char *c, **strarr;
+  gal_list_str_t *tmp, *in=*list, *out=NULL;
+
+  /* Go over each input and add it to the list. */
+  for(tmp=in; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Remove any possibly commented new-line where we have a backslash
+         followed by a new-line character (replace the two characters with
+         two single space characters). This can happen with options have
+         have longer scripts and the user is forced to break the line with
+         a '\' followed by newline. */
+      for(c=tmp->v;*c!='\0';++c)
+        if(*c=='\\' && *(c+1)=='\n') { *c=' '; *(++c)=' '; }
+
+      /* Read the different comma-separated strings into an array (within a
+         'gal_data_t'). */
+      strs=gal_options_parse_csv_strings_raw(tmp->v, NULL, 0);
+      strarr=strs->array;
+
+      /* Go through all the items and add the pointers to the output
+         list. We won't re-allocate the string, we'll just set it to NULL
+         in the array. */
+      for(i=0;i<strs->size;++i)
+        {
+          gal_list_str_add(&out, strarr[i], 0);
+          strarr[i]=NULL;
+        }
+
+      /* Clean up. */
+      gal_data_free(strs);
+    }
+
+  /* Free the input list and reverse the output list to be in the same
+     input order. */
+  gal_list_str_free(in, 1);
+  gal_list_str_reverse(&out);
+
+  /* Reset the input pointer. */
+  *list=out;
+}
+
+
+
+
+
 /* Parse the given string into a series of size values (integers, stored as
    an array of size_t). The output array will be stored in the 'value'
    element of the option. The last element of the array is
@@ -2396,6 +2451,8 @@ option_is_printable(struct argp_option *option)
     case GAL_OPTIONS_KEY_LASTCONFIG:
       return 0;
     }
+
+  /* Everything is fine, print the option. */
   return 1;
 }
 
