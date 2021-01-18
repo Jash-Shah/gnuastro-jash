@@ -261,19 +261,44 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
         }
       else
         {
-          /* For a check.
+          /* For a check (we can't use 'wcsprt(wcs)' because this WCS isn't
+             yet initialized).
           printf("flag: %d\n", wcs->flag);
-          printf("naxis: %d\n", wcs->naxis);
-          printf("crpix: %f, %f\n", wcs->crpix[0], wcs->crpix[1]);
-          printf("pc: %f, %f, %f, %f\n", wcs->pc[0], wcs->pc[1], wcs->pc[2],
-                 wcs->pc[3]);
-          printf("cdelt: %f, %f\n", wcs->cdelt[0], wcs->cdelt[1]);
-          printf("crval: %f, %f\n", wcs->crval[0], wcs->crval[1]);
-          printf("cunit: %s, %s\n", wcs->cunit[0], wcs->cunit[1]);
-          printf("ctype: %s, %s\n", wcs->ctype[0], wcs->ctype[1]);
-          printf("lonpole: %f\n", wcs->lonpole);
-          printf("latpole: %f\n", wcs->latpole);
+          printf("NAXIS: %d\n", wcs->naxis);
+          printf("CRPIX: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%g, ", wcs->crpix[i]); } printf("\n");
+          printf("PC: ");
+          for(i=0;i<wcs->naxis*wcs->naxis;++i)
+            { printf("%g, ", wcs->pc[i]); } printf("\n");
+          printf("CDELT: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%g, ", wcs->cdelt[i]);} printf("\n");
+          printf("CD: ");
+          for(i=0;i<wcs->naxis*wcs->naxis;++i)
+            { printf("%g, ", wcs->cd[i]); } printf("\n");
+          printf("CRVAL: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%g, ", wcs->crval[i]); } printf("\n");
+          printf("CUNIT: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%s, ", wcs->cunit[i]); } printf("\n");
+          printf("CTYPE: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%s, ", wcs->ctype[i]); } printf("\n");
+          printf("LONPOLE: %f\n", wcs->lonpole);
+          printf("LATPOLE: %f\n", wcs->latpole);
           */
+
+          /* Some datasets may use 'angstroms' (not case-sensitive) in the
+             third dimension instead of the standard 'angstrom' (note the
+             differing 's'). In this case WCSLIB (atleast until version
+             7.3) will not recognize it. We will therefore manually remove
+             the 's' before feeding the WCS structure to WCSLIB. */
+          if( wcs->naxis==3
+              && strlen(wcs->cunit[2])==9
+              && !strncasecmp(wcs->cunit[2], "angstroms", 9) )
+            wcs->cunit[2][8]='\0';
 
           /* Fix non-standard WCS features. */
           if( wcsfix(fixctrl, fixnaxis, wcs, fixstatus) )
