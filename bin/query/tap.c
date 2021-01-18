@@ -225,8 +225,8 @@ tap_query_construct_data(struct queryparams *p)
   double *darray;
   gal_data_t *tmp;
   char *headstr=NULL, allcols[]="*";
-  char *datasetstr, *rangestr, *prevrange;
   char *querystr, *columns, *spatialstr=NULL;
+  char *datasetstr, *rangestr=NULL, *prevrange;
 
   /* If the dataset has special characters (like a slash) it needs to
      be quoted. */
