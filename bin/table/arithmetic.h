@@ -66,6 +66,9 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
                 gal_list_str_t **toread, size_t *totcalled, char *expression);
 
 void
+arithmetic_token_free(struct arithmetic_token *list);
+
+void
 arithmetic_indexs_final(struct tableparams *p, size_t *colmatch);
 
 void

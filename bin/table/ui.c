@@ -483,6 +483,22 @@ ui_outcols_add_new_to_end(struct column_pack **list)
 
 
 
+static void
+ui_outcols_free(struct column_pack *list)
+{
+  struct column_pack *tmp;
+  while(list!=NULL)
+    {
+      arithmetic_token_free(list->tokens);
+      tmp=list->next;
+      free(list);
+      list=tmp;
+    }
+}
+
+
+
+
 
 
 
@@ -1225,6 +1241,8 @@ ui_free_report(struct tableparams *p)
   /* Free the allocated arrays: */
   free(p->cp.hdu);
   free(p->cp.output);
+  ui_outcols_free(p->outcols);
   gal_list_data_free(p->table);
+  gal_list_data_free(p->colmetadata);
   if(p->colarray) free(p->colarray);
 }

@@ -78,6 +78,20 @@ arithmetic_add_new_to_end(struct arithmetic_token **list)
 
 
 
+void
+arithmetic_token_free(struct arithmetic_token *list)
+{
+  struct arithmetic_token *tmp;
+  while(list!=NULL)
+    {
+      tmp=list->next;
+      free(list);
+      list=tmp;
+    }
+}
+
+
+
 
 
 
@@ -586,9 +600,9 @@ arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
   /* Read the input columns as a 'double'. */
   in=arithmetic_stack_pop(stack, operator, NULL);
   in=gal_data_copy_to_new_type_free(in, GAL_TYPE_FLOAT64);
-  if(in->comment) free(in->comment);
-  if(in->name) free(in->name);
-  if(in->unit) free(in->unit);
+  if(in->comment) { free(in->comment); in->comment=NULL; }
+  if(in->name)    { free(in->name);    in->name=NULL;    }
+  if(in->unit)    { free(in->unit);    in->unit=NULL;    }
   x=in->array;
 
   /* Pop the second operand if necessary. */
@@ -596,118 +610,114 @@ arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
     {
       in2=arithmetic_stack_pop(stack, operator, NULL);
       in2=gal_data_copy_to_new_type_free(in2, GAL_TYPE_FLOAT64);
-      if(in2->comment) free(in2->comment);
-      if(in2->name) free(in2->name);
-      if(in2->unit) free(in2->unit);
       y=in2->array;
     }
 
   /* Parse the array and do the calculation in place. */
-  for(i=0;i<in->size;++i)
-    switch(operator)
-      {
+  switch(operator)
+    {
       /* Single-operand operators. */
-      case ARITHMETIC_TABLE_OP_SIN:
-        x[i]=sin( pi*x[i]/180.0f );
-        gal_checkset_allocate_copy("sin", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Sine of an angle.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_COS:
-        x[i]=cos( pi*x[i]/180.0f );
-        gal_checkset_allocate_copy("cos", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Cosine of an angle.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_TAN:
-        x[i]=tan( pi*x[i]/180.0f );
-        gal_checkset_allocate_copy("tan", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Tangent of an angle.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_ASIN:
-        x[i]=asin(x[i])*180.0f/pi;
-        gal_checkset_allocate_copy("asin", &in->name);
-        gal_checkset_allocate_copy("deg", &in->unit);
-        gal_checkset_allocate_copy("Inverse sine of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_ACOS:
-        x[i]=acos(x[i])*180.0f/pi;
-        gal_checkset_allocate_copy("acos", &in->name);
-        gal_checkset_allocate_copy("deg", &in->unit);
-        gal_checkset_allocate_copy("Inverse cosine of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_ATAN:
-        x[i]=atan(x[i])*180.0f/pi;
-        gal_checkset_allocate_copy("atan", &in->name);
-        gal_checkset_allocate_copy("deg", &in->unit);
-        gal_checkset_allocate_copy("Inverse tangent of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_SINH:
-        x[i]=sinh(x[i]);
-        gal_checkset_allocate_copy("sinh", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Hyperbolic sine of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_COSH:
-        x[i]=cosh(x[i]);
-        gal_checkset_allocate_copy("cosh", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Hyperbolic cosine of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_TANH:
-        x[i]=tanh(x[i]);
-        gal_checkset_allocate_copy("tanh", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Hyperbolic tangent of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_ASINH:
-        x[i]=asinh(x[i]);
-        gal_checkset_allocate_copy("asinh", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Inverse hyperbolic sine of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_ACOSH:
-        x[i]=acosh(x[i]);
-        gal_checkset_allocate_copy("acosh", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Inverse hyperbolic cossine of a value.",
-                                   &in->comment);
-        break;
-      case ARITHMETIC_TABLE_OP_ATANH:
-        x[i]=atanh(x[i]);
-        gal_checkset_allocate_copy("atanh", &in->name);
-        gal_checkset_allocate_copy("ratio", &in->unit);
-        gal_checkset_allocate_copy("Inverse hyperbolic tangent of a value.",
-                                   &in->comment);
-        break;
+    case ARITHMETIC_TABLE_OP_SIN:
+      for(i=0;i<in->size;++i) x[i]=sin( pi*x[i]/180.0f );
+      gal_checkset_allocate_copy("sin", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Sine of an angle.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_COS:
+      for(i=0;i<in->size;++i) x[i]=cos( pi*x[i]/180.0f );
+      gal_checkset_allocate_copy("cos", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Cosine of an angle.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_TAN:
+      for(i=0;i<in->size;++i) x[i]=tan( pi*x[i]/180.0f );
+      gal_checkset_allocate_copy("tan", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Tangent of an angle.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_ASIN:
+      for(i=0;i<in->size;++i) x[i]=asin(x[i])*180.0f/pi;
+      gal_checkset_allocate_copy("asin", &in->name);
+      gal_checkset_allocate_copy("deg", &in->unit);
+      gal_checkset_allocate_copy("Inverse sine of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_ACOS:
+      for(i=0;i<in->size;++i) x[i]=acos(x[i])*180.0f/pi;
+      gal_checkset_allocate_copy("acos", &in->name);
+      gal_checkset_allocate_copy("deg", &in->unit);
+      gal_checkset_allocate_copy("Inverse cosine of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_ATAN:
+      for(i=0;i<in->size;++i) x[i]=atan(x[i])*180.0f/pi;
+      gal_checkset_allocate_copy("atan", &in->name);
+      gal_checkset_allocate_copy("deg", &in->unit);
+      gal_checkset_allocate_copy("Inverse tangent of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_SINH:
+      for(i=0;i<in->size;++i) x[i]=sinh(x[i]);
+      gal_checkset_allocate_copy("sinh", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Hyperbolic sine of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_COSH:
+      for(i=0;i<in->size;++i) x[i]=cosh(x[i]);
+      gal_checkset_allocate_copy("cosh", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Hyperbolic cosine of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_TANH:
+      for(i=0;i<in->size;++i) x[i]=tanh(x[i]);
+      gal_checkset_allocate_copy("tanh", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Hyperbolic tangent of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_ASINH:
+      for(i=0;i<in->size;++i) x[i]=asinh(x[i]);
+      gal_checkset_allocate_copy("asinh", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Inverse hyperbolic sine of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_ACOSH:
+      for(i=0;i<in->size;++i) x[i]=acosh(x[i]);
+      gal_checkset_allocate_copy("acosh", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Inverse hyperbolic cossine of a value.",
+                                 &in->comment);
+      break;
+    case ARITHMETIC_TABLE_OP_ATANH:
+      for(i=0;i<in->size;++i) x[i]=atanh(x[i]);
+      gal_checkset_allocate_copy("atanh", &in->name);
+      gal_checkset_allocate_copy("ratio", &in->unit);
+      gal_checkset_allocate_copy("Inverse hyperbolic tangent of a value.",
+                                 &in->comment);
+      break;
 
-      /* Two operand operators. */
-      case ARITHMETIC_TABLE_OP_ATAN2:
-        x[i]=atan2(y[i], x[i])*180.0f/pi;
-        gal_checkset_allocate_copy("atan2", &in->name);
-        gal_checkset_allocate_copy("deg", &in->unit);
-        gal_checkset_allocate_copy("Inverse tangent of point (preserving "
-                                   "the quadrant)", &in->comment);
-        break;
+    /* Two operand operators. */
+    case ARITHMETIC_TABLE_OP_ATAN2:
+      for(i=0;i<in->size;++i) x[i]=atan2(y[i], x[i])*180.0f/pi;
+      gal_checkset_allocate_copy("atan2", &in->name);
+      gal_checkset_allocate_copy("deg", &in->unit);
+      gal_checkset_allocate_copy("Inverse tangent of point (preserving "
+                                 "the quadrant)", &in->comment);
+      break;
 
-      /* Not recognized (a bug). */
-      default:
-        error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
-              "the problem. The code %d is not recognized as an operator "
-              "related to this function", __func__, PACKAGE_BUGREPORT,
-              operator);
-      }
+    /* Not recognized (a bug). */
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
+            "the problem. The code %d is not recognized as an operator "
+            "related to this function", __func__, PACKAGE_BUGREPORT,
+            operator);
+    }
 
   /* Clean up and put the resulting calculation back on the stack. */
   if(in2) gal_data_free(in2);
