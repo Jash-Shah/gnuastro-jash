@@ -10401,8 +10401,15 @@ For example, with the command below you can see the column metadata in the @code
 $ astquery vizier --dataset=J/A+A/608/A2/udf10 -i
 @end example
 
+@cindex SDSS DR12
 For very popular datasets of a database, Query provides an easier-to-remember short name that you can feed to @option{--dataset}.
 This short name will map to the officially recognized name of the dataset on the server.
+In this mode, Query will also set positional columns accordingly.
+For example most VizieR datasets have an @code{RAJ2000} column (the RA and the epoch of 2000) so it is the default RA column name for coordinate search (using @option{--center} or @option{--overlapwith}).
+However, some datasets don't have this column (for example SDSS DR12).
+So when you use the short name and Query knows about this dataset, it will internally set the coordinate columns that SDSS DR12 has: @code{RA_ICRS} and @code{DEC_ICRS}.
+Recall that you can always change the coordinate columns with @option{--ccol}.
+
 For example in the VizieR and Gaia databases, the recognized name for the early data release 3 data is respectively @code{I/350/gaiaedr3} and @code{gaiaedr3.gaia_source}.
 These technical names can be hard to remember.
 Therefore Query provides @code{gaiaedr3} (for VizieR) and @code{edr3} (for ESA's Gaia) shortcuts which you can give to @option{--dataset} instead.
@@ -10432,10 +10439,59 @@ Until then, if @option{--limitinfo} isn't sufficient, you can use VizieR's own w
 Because VizieR curates such a diverse set of data from tens of thousands of projects and aims for interoperability between them, the column names in VizieR may not be identical to the column names in the surveys' own databases (Gaia in the example above).
 A query to @code{vizier} is submitted to @code{http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync}.
 
-Here is the list of short names for popular datasets within VizieR:
+@cindex 2MASS All-Sky Catalog
+@cindex AKARI/FIS All-Sky Survey
+@cindex AllWISE Data Release
+@cindex AAVSO Photometric All Sky Survey, DR9
+@cindex CatWISE 2020 catalog
+@cindex Dark Energy Survey data release 1
+@cindex GAIA Data Release (2 or 3)
+@cindex All-sky Survey of GALEX DR5
+@cindex Naval Observatory Merged Astrometric Dataset
+@cindex Pan-STARRS Data Release 1
+@cindex SDSS Photometric Catalogue, Release 12
+@cindex Whole-Sky USNO-B1.0 Catalog
+@cindex U.S. Naval Observatory CCD Astrograph Catalog
+@cindex Band-merged unWISE Catalog
+@cindex WISE All-Sky data Release
+Here is the list of short names for popular datasets within VizieR (sorted alphabetically by their short name).
+Please feel free to suggest other major catalogs (covering a wide area or commonly used in your field)..
+For details on each dataset with necessary citations, and links to webpages, look into their details with their ViziR names in @url{https://vizier.u-strasbg.fr/viz-bin/VizieR}.
 @itemize
 @item
-@code{gaiaedr3 --> I/350/gaiaedr3}
+@code{2mass --> II/246/out} (2MASS All-Sky Catalog)
+@item
+@code{akarifis --> II/298/fis} (AKARI/FIS All-Sky Survey)
+@item
+@code{allwise --> II/328/allwise} (AllWISE Data Release)
+@item
+@code{apass9 --> II/336/apass9} (AAVSO Photometric All Sky Survey, DR9)
+@item
+@code{catwise --> II/365/catwise} (CatWISE 2020 catalog)
+@item
+@code{des1 --> II/357/des_dr1} (Dark Energy Survey data release 1)
+@item
+@code{gaiadr2 --> I/345/gaia2} (GAIA Data Release 2)
+@item
+@code{gaiaedr3 --> I/350/gaiaedr3} (GAIA Data Release 3)
+@item
+@code{galex5 --> II/312/ais} (All-sky Survey of GALEX DR5)
+@item
+@code{nomad --> I/297/out} (Naval Observatory Merged Astrometric Dataset)
+@item
+@code{panstarrs1 --> II/349/ps1} (Pan-STARRS Data Release 1).
+@item
+@code{ppmxl --> I/317/sample} (Positions and proper motions on the ICRS)
+@item
+@code{sdss12 --> V/147/sdss12} (SDSS Photometric Catalogue, Release 12)
+@item
+@code{usnob1 --> I/284/out} (Whole-Sky USNO-B1.0 Catalog)
+@item
+@code{ucac5 --> I/340/ucac5} (5th U.S. Naval Obs. CCD Astrograph Catalog)
+@item
+@code{unwise --> II/363/unwise} (Band-merged unWISE Catalog)
+@item
+@code{wise --> II/311/wise} (WISE All-Sky data Release)
 @end itemize
 
 @item gaia
@@ -10482,20 +10538,21 @@ One line examples:
 ## Information about all datasets in ESA's GAIA database:
 $ astquery gaia --information
 
-## Only get catalogs in VizieR that have 'MUSE' in their description.
-## The '-i' is short for '--information'.
+## Only show catalogs in VizieR that have 'MUSE' in their
+## description. The '-i' is short for '--information'.
 $ astquery vizier -i --limitinfo=MUSE
 
-## Get the list of columns in 'J/A+A/608/A2/udf10' (one of the above).
+## List of columns in 'J/A+A/608/A2/udf10' (one of the above).
 $ astquery vizier --dataset=J/A+A/608/A2/udf10 -i
 
-## Find the ID, RA and Dec of all Gaia sources within an image.
+## ID, RA and Dec of all Gaia sources within an image.
 $ astquery gaia --dataset=edr3 --overlapwith=image.fits \
            -csource_id,ra,dec
 
-## Only extract the RA, DEC and spec. redshift columns (all rows).
-$ astquery vizier --dataset=J/A+A/608/A2/udf10 --column=RAJ2000 \
-           --column=DEJ2000,zMUSE
+## RA, Dec and Spectroscopic redshifts of objects in SDSS DR12
+## spectroscopic redshift that overlap with 'image.fits'.
+$ astquery vizier --dataset=sdss12 --overlapwith=image.fits \
+           -cRA_ICRS,DE_ICRS,zsp --range=zsp,1e-10,inf
 
 ## All columns of all entries in the Gaia eDR3 catalog (hosted at
 ## VizieR) within 1 arc-minute of the given coordinate.
@@ -10520,7 +10577,7 @@ This is very low level and will require a good knowledge of the database's query
 If this option is given, the raw string is directly passed to the server and all other constraints/options (for Query's high-level interface) are ignored.
 @item
 @strong{High-level:}
-With the high-level options (like @option{--column}, @option{--center}, @option{--radius} and other constraining options below), the low-level query will be constructed automatically for the particular database.
+With the high-level options (like @option{--column}, @option{--center}, @option{--radius}, @option{--range} and other constraining options below), the low-level query will be constructed automatically for the particular database.
 This method is only limited to the generic capabilities that Query provides for all servers.
 So @option{--query} is more powerful, however, in this mode, you don't need any knowledge of the database's query language.
 You can see the interlaly generated query on the terminal (if @option{--quiet} is not used) or in the 0-th extension of the output (if its a FITS file).
@@ -10645,6 +10702,9 @@ For example if you want your box to be 1 arc-minutes along the RA and 2 arc-minu
 The column name and numerical range (inclusive) of acceptable values in that column (not compatible with @option{--query}).
 This option can be called multiple times for applying range limits on many columns in one call (thus greatly reducing the download size).
 For example when used on the ESA gaia database, you can use @code{--range=phot_g_mean_mag,10:15} to only get rows that have a value between 10 and 15 (inclusive on both sides) in the @code{phot_g_mean_mag} column.
+
+If you want all rows larger, or smaller, than a certain number, you can use @code{inf}, or @code{-inf} as the first or second values respectively.
+For example, if you want objects with SDSS spectroscopic redshifts larger than 2 (from the VizieR @code{sdss12} database), you can use @option{--range=zsp,2,inf}
 
 If you want the interval to not be inclusive on both sides, you can run @code{astquery} once and get the command that it executes.
 Then you can edit it to be non-inclusive on your desired side.

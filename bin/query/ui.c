@@ -263,6 +263,7 @@ static void
 ui_read_check_only_options(struct queryparams *p)
 {
   size_t i;
+  double *darray;
   char *basename;
   gal_data_t *tmp;
   int keepinputdir;
@@ -335,12 +336,16 @@ ui_read_check_only_options(struct queryparams *p)
         error(EXIT_FAILURE, 0, "the '--radius' option value cannot be negative");
     }
 
-  /* If magnitude is given, it should only be two values. */
+  /* Make sure the range values are reasonable. */
   i=0;
   if(p->range)
     for(tmp=p->range; tmp!=NULL; tmp=tmp->next)
       {
+        /* Basic preparations. */
         ++i;
+        darray=tmp->array;
+
+        /* Make sure only two values are given. */
         if(tmp->size!=2)
           error(EXIT_FAILURE, 0, "two values (separated by ',' or ':') "
                 "should be given to '--range'. But %zu values were given "
@@ -348,9 +353,25 @@ ui_read_check_only_options(struct queryparams *p)
                 "value should be the column name in the given dataset)",
                 tmp->size, i,
                 i==1 ? "st" : i==2 ? "nd" : i==3 ? "rd" : "th");
+
+        /* Make sure the first value is large than the second. */
+        if(darray[0]>darray[1])
+          error(EXIT_FAILURE, 0, "the first value of '--range' "
+                "should be smaller than, or equal to, the second, "
+                "but %g>%g", darray[0], darray[1]);
+
+        /* None of the values should be 'nan'. */
+        if( isnan(darray[0]) || isnan(darray[1]) )
+          error(EXIT_FAILURE, 0, "values to '--range' cannot be NaN");
+
+        /* ADQL doesn't recognize 'inf', so if the user gives '-inf' or
+           'inf', change it to the smallest/largest possible floating point
+           number. */
+        if( isinf(darray[0]) == -1 ) darray[0] = -FLT_MAX;
+        if( isinf(darray[1]) ==  1 ) darray[1] =  FLT_MAX;
       }
 
-  /* Sanity checks on width (if we are in the center-mode). */
+  /* Make sure the widths are reasonable. */
   if(p->width && p->center)
     {
       /* Width should have the same number of elements as the center

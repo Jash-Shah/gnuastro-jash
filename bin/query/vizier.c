@@ -40,7 +40,7 @@ vizier_sanity_checks(struct queryparams *p)
 {
   /* VizieR specific: if the user has asked for '--information', but
      without '--limitinfo', print a notice to introduce 'limitinfo'. */
-  if(p->information && p->limitinfo==NULL)
+  if(p->datasetstr==NULL && p->information && p->limitinfo==NULL)
     {
       fprintf(stderr, "\n--------------------\n");
       error(EXIT_SUCCESS, 0, "WARNING: The full VizieR metadata "
@@ -56,10 +56,89 @@ vizier_sanity_checks(struct queryparams *p)
   /* Set the summarized names. */
   if(p->datasetstr)
     {
-      if( !strcmp(p->datasetstr, "gaiaedr3") )
+      if( !strcmp(p->datasetstr, "2mass") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/246/out", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "akarifis") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/298/fis", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "allwise") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/328/allwise", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "apass9") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/336/apass9", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "catwise") )
+        {
+          free(p->datasetstr);
+          if(p->ra_name==NULL) p->ra_name="RA_ICRS";
+          if(p->dec_name==NULL) p->dec_name="DE_ICRS";
+          gal_checkset_allocate_copy("II/365/catwise", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "des1") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/357/des_dr1", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "gaiadr2") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/345/gaia2", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "gaiaedr3") )
         {
           free(p->datasetstr);
           gal_checkset_allocate_copy("I/350/gaiaedr3", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "galex5") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/312/ais", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "nomad") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/297/out", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "panstarrs1") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/349/ps1", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "pmx1") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/317/sample", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "sdss12") )
+        {
+          free(p->datasetstr);
+          if(p->ra_name==NULL) p->ra_name="RA_ICRS";
+          if(p->dec_name==NULL) p->dec_name="DE_ICRS";
+          gal_checkset_allocate_copy("V/147/sdss12", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "usnob1") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/284/out", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "ucac5") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/340/ucac5", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "unwise") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("II/363/unwise", &p->datasetstr);
         }
     }
 }
