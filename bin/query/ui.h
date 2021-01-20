@@ -33,7 +33,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Option groups particular to this program. */
 enum program_args_groups
 {
-  UI_GROUP_BYCENTER = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_GENQUERY = GAL_OPTIONS_GROUP_AFTER_COMMON,
 };
 
 
