@@ -1,5 +1,5 @@
 /*********************************************************************
-Gaia Query: retrieve tables from Gaia catalog.
+Settings for ESA's Gaia.
 Query is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:

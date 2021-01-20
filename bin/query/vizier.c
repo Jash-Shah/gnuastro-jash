@@ -1,5 +1,5 @@
 /*********************************************************************
-Access VizieR servers for query.
+Settings for VizieR.
 Query is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:

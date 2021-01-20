@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro-internal/checkset.h>
 
 #include "tap.h"
+#include "ned.h"
 #include "gaia.h"
 #include "query.h"
 #include "vizier.h"
@@ -348,6 +349,7 @@ query(struct queryparams *p)
   switch(p->database)
     {
     case QUERY_DATABASE_GAIA:   gaia_prepare(p);   break;
+    case QUERY_DATABASE_NED:    ned_prepare(p);    break;
     case QUERY_DATABASE_VIZIER: vizier_prepare(p); break;
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "

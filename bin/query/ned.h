@@ -1,11 +1,11 @@
 /*********************************************************************
-Settings for ESA's Gaia.
+Settings for NED.
 Query is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
      Mohammad akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2020-2021, Free Software Foundation, Inc.
+Copyright (C) 2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -20,12 +20,12 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef GAIA_H
-#define GAIA_H
+#ifndef NED_H
+#define NED_H
 
 #include "main.h"
 
 void
-gaia_prepare(struct queryparams *p);
+ned_prepare(struct queryparams *p);
 
 #endif
