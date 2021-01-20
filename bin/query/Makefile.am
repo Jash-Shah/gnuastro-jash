@@ -41,10 +41,11 @@ bin_PROGRAMS = astquery
 astquery_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la -lgnuastro \
                  $(MAYBE_NORPATH)
 
-astquery_SOURCES = main.c ui.c query.c gaia.c ned.c tap.c vizier.c
+astquery_SOURCES = main.c ui.c query.c astron.c gaia.c ned.c tap.c \
+                   vizier.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h query.h gaia.h ned.h \
-             tap.h vizier.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h query.h astron.h \
+             gaia.h ned.h tap.h vizier.h
 
 
 

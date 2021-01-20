@@ -10423,6 +10423,23 @@ If the dataset supports IVOA's TAP (Table Access Protocol), it should be very ea
 
 
 @table @code
+
+@item astron
+@cindex ASTRON
+@cindex Radio astronomy
+The ASTRON Virtual Observatory service (@url{https://vo.astron.nl}) is a database focused on radio astronomy data and images, primarily those collected by ASTRON itself.
+A query to @code{astron} is submitted to @code{https://vo.astron.nl/__system__/tap/run/tap/sync}.
+
+Here is the list of short names for popular datasets within Gaia:
+@itemize
+@item
+@code{lofartier1 --> lofartier1.main}
+@item
+@code{mvf --> mvf.main}
+@item
+@code{tgssadr --> tgssadr.main}
+@end itemize
+
 @item gaia
 @cindex Gaia catalog
 @cindex Catalog, Gaia
@@ -10445,15 +10462,14 @@ Here is the list of short names for popular datasets within Gaia:
 @code{hipparcos --> public.hipparcos}
 @end itemize
 
-
-
 @item ned
 @cindex NASA/IPAC Extragalactic Database (NED)
 @cindex NED (NASA/IPAC Extragalactic Database)
 The NASA/IPAC Extragalactic Database (NED, @url{http://ned.ipac.caltech.edu}) is a fusion database, integrating the information about extra-galactic sources from many large sky surveys into a single catalog.
 It covers the full spectrum, from Gamma rays to radio frequencies and is updated when new data arrives.
-Currently NED only has a single table for TAP access that is shown below, more will be added in the future.
+A query to @code{ned} is submitted to @code{https://ned.ipac.caltech.edu/tap/sync}.
 
+Currently NED only has a single table for TAP access that is shown below, more will be added in the future and you can use this short name to access it.
 @itemize
 @item
 @code{objdir --> NEDTAP.objdir}

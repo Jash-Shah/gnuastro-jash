@@ -37,6 +37,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "ned.h"
 #include "gaia.h"
 #include "query.h"
+#include "astron.h"
 #include "vizier.h"
 
 
@@ -348,6 +349,7 @@ query(struct queryparams *p)
   /* Download the dataset. */
   switch(p->database)
     {
+    case QUERY_DATABASE_ASTRON: astron_prepare(p); break;
     case QUERY_DATABASE_GAIA:   gaia_prepare(p);   break;
     case QUERY_DATABASE_NED:    ned_prepare(p);    break;
     case QUERY_DATABASE_VIZIER: vizier_prepare(p); break;

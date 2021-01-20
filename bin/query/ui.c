@@ -152,6 +152,7 @@ ui_initialize_options(struct queryparams *p,
   "specify your desired database, see manual ('info gnuastro "          \
   "astquery' command) for the current databases, here is the list "     \
   "of acceptable values (with their web-based search URLs):\n\n"        \
+  "    astron     https://vo.astron.nl/\n"                              \
   "    gaia       https://gea.esac.esa.int/archive\n"                   \
   "    ned        https://ned.ipac.caltech.edu/tap/sync\n"              \
   "    vizier     http://vizier.u-strasbg.fr/viz-bin/VizieR\n"
@@ -274,7 +275,8 @@ ui_read_check_only_options(struct queryparams *p)
     error(EXIT_FAILURE, 0, "no input database! " UI_NODATABASE);
 
   /* Convert the given string into a code. */
-  if(      !strcmp(p->databasestr, "gaia") )   p->database=QUERY_DATABASE_GAIA;
+  if(      !strcmp(p->databasestr, "astron") ) p->database=QUERY_DATABASE_ASTRON;
+  else if( !strcmp(p->databasestr, "gaia") )   p->database=QUERY_DATABASE_GAIA;
   else if( !strcmp(p->databasestr, "ned") )    p->database=QUERY_DATABASE_NED;
   else if( !strcmp(p->databasestr, "vizier") ) p->database=QUERY_DATABASE_VIZIER;
   else
