@@ -42,7 +42,7 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b e f j m n p t u x y z
+   a e f j m n p t u x y z
    A B E G J R W X Y
 */
 enum option_keys_enum
@@ -58,6 +58,7 @@ enum option_keys_enum
   UI_KEY_OVERLAPWITH     = 'v',
   UI_KEY_RADIUS          = 'r',
   UI_KEY_RANGE           = 'g',
+  UI_KEY_NOBLANK         = 'b',
   UI_KEY_COLUMN          = 'c',
   UI_KEY_WIDTH           = 'w',
   UI_KEY_HEAD            = 'H',

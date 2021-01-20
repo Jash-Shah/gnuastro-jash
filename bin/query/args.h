@@ -203,6 +203,33 @@ struct argp_option program_options[] =
       gal_options_parse_name_and_float64s
     },
     {
+      "range",
+      UI_KEY_RANGE,
+      "STR,FLT:FLT",
+      0,
+      "Range of selected targets in given column.",
+      UI_GROUP_BYCENTER,
+      &p->range,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_name_and_float64s
+    },
+    {
+      "noblank",
+      UI_KEY_NOBLANK,
+      "STR[,STR]",
+      0,
+      "Remove rows with blank in given columns.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->noblank,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "column",
       UI_KEY_COLUMN,
       "STR",

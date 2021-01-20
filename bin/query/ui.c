@@ -309,6 +309,11 @@ ui_read_check_only_options(struct queryparams *p)
       p->dec_name=p->ccol->next->v;
     }
 
+  /* If '--noblank' is given (possibly multiple times, each with multiple
+     column names) break it up into individual names. */
+  if(p->noblank)
+    gal_options_merge_list_of_csv(&p->noblank);
+
   /* Make sure that '--query' and '--center' are not called together. */
   if(p->query && (p->center || p->overlapwith) )
     error(EXIT_FAILURE, 0, "the '--query' option cannot be called together "

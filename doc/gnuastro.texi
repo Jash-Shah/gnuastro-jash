@@ -10708,6 +10708,12 @@ For example, if you want objects with SDSS spectroscopic redshifts larger than 2
 
 If you want the interval to not be inclusive on both sides, you can run @code{astquery} once and get the command that it executes.
 Then you can edit it to be non-inclusive on your desired side.
+
+@item -b STR[,STR]
+@item --noblank=STR[,STR]
+Only ask for rows that don't have a blank value in the @code{STR} column.
+This option can be called many times, and each call can have multiple column names (separated by a comma or @key{,}).
+For example if you want the retrieved rows to not have a blank value in columns @code{A}, @code{B}, @code{C} and @code{D}, you can use @command{--noblank=A -bB,C,D}.
 @end table
 
 
