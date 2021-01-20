@@ -201,7 +201,7 @@ tap_query_construct_spatial(struct queryparams *p)
      other components of the query can assume that the single-quote
      environment is active.*/
   if( asprintf(&spatialstr,
-               "WHERE 1=CONTAINS( POINT('\"'ICRS', %s, %s), %s )\"'",
+               "1=CONTAINS( POINT('\"'ICRS', %s, %s), %s )\"'",
                p->ra_name, p->dec_name, regionstr)<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
           __func__);
@@ -324,15 +324,14 @@ tap_query_construct_data(struct queryparams *p)
   if(p->range) tap_query_construct_range(p, &valuelimitstr);
 
   /* Write the automatically generated query string.  */
-  if( asprintf(&querystr,  "'SELECT %s %s FROM %s %s %s %s'",
+  if( asprintf(&querystr,  "'SELECT %s %s FROM %s %s %s %s %s'",
                headstr ? headstr : "",
                columns,
                datasetstr,
-               spatialstr ? spatialstr : "",
-               ( valuelimitstr && spatialstr
-                 ? "AND"
-                 : valuelimitstr ? "WHERE" : "" ),
-               valuelimitstr ? valuelimitstr : "")<0 )
+               ( valuelimitstr || spatialstr ? "WHERE" : ""),
+               valuelimitstr ? valuelimitstr : "",
+               ( valuelimitstr && spatialstr ? "AND"   : "" ),
+               spatialstr ? spatialstr : "")<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
           __func__);
 

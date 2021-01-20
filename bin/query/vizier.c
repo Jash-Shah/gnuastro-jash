@@ -91,6 +91,8 @@ vizier_sanity_checks(struct queryparams *p)
       else if( !strcmp(p->datasetstr, "gaiadr2") )
         {
           free(p->datasetstr);
+          if(p->ra_name==NULL) p->ra_name="ra_epoch2000";
+          if(p->dec_name==NULL) p->dec_name="dec_epoch2000";
           gal_checkset_allocate_copy("I/345/gaia2", &p->datasetstr);
         }
       else if( !strcmp(p->datasetstr, "gaiaedr3") )
