@@ -241,6 +241,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
     },
+    {
+      "sort",
+      UI_KEY_SORT,
+      "STR[,STR]",
+      0,
+      "Sort based on values of given columns.",
+      UI_GROUP_GENQUERY,
+      &p->sort,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

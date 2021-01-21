@@ -56,6 +56,7 @@ struct queryparams
   gal_data_t           *radius;  /* Radius around center.              */
   gal_data_t            *range;  /* Range of magnitudes to query.      */
   gal_list_str_t      *noblank;  /* Return rows that aren't blank.     */
+  gal_list_str_t         *sort;  /* Sort output by given column(s).    */
   gal_data_t            *width;  /* Width of box around center.        */
   char                  *query;  /* Raw query string.                  */
   gal_list_str_t      *columns;  /* Columns to extract from database.  */

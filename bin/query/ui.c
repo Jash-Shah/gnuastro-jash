@@ -313,10 +313,10 @@ ui_read_check_only_options(struct queryparams *p)
       p->dec_name=p->ccol->next->v;
     }
 
-  /* If '--noblank' is given (possibly multiple times, each with multiple
-     column names) break it up into individual names. */
-  if(p->noblank)
-    gal_options_merge_list_of_csv(&p->noblank);
+  /* If '--noblank' or '--sort' are given (possibly multiple times, each
+     with multiple column names) break it up into individual names. */
+  if(p->sort)    gal_options_merge_list_of_csv(&p->sort);
+  if(p->noblank) gal_options_merge_list_of_csv(&p->noblank);
 
   /* Make sure that '--query' and '--center' are not called together. */
   if(p->query && (p->center || p->overlapwith) )

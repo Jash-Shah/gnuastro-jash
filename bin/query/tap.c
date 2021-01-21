@@ -231,14 +231,14 @@ tap_query_construct_noblank(struct queryparams *p, char **outstr)
         {
           if( asprintf(&noblankstr, "%s AND %s IS NOT NULL",
                        prevstr, tmp->v) < 0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation ('rangestr')",
-                  __func__);
+            error(EXIT_FAILURE, 0,
+                  "%s: asprintf allocation ('noblankstr', 1)", __func__);
           free(prevstr);
         }
       else
         if( asprintf(&noblankstr, "%s IS NOT NULL", tmp->v) < 0 )
-          error(EXIT_FAILURE, 0, "%s: asprintf allocation ('rangestr')",
-                __func__);
+          error(EXIT_FAILURE, 0,
+                "%s: asprintf allocation ('noblankstr', 2)", __func__);
 
       /* Put the 'rangestr' in previous-range string for the next
          round.*/
@@ -268,15 +268,15 @@ tap_query_construct_range(struct queryparams *p, char **outstr)
         {
           if( asprintf(&rangestr, "%s AND %s>=%g AND %s<=%g", prevstr,
                        tmp->name, darray[0], tmp->name, darray[1]) < 0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation ('rangestr')",
-                  __func__);
+            error(EXIT_FAILURE, 0,
+                  "%s: asprintf allocation ('rangestr', 1)", __func__);
           free(prevstr);
         }
       else
         if( asprintf(&rangestr, "%s>=%g AND %s<=%g",
                      tmp->name, darray[0], tmp->name, darray[1]) < 0 )
-          error(EXIT_FAILURE, 0, "%s: asprintf allocation ('rangestr')",
-                __func__);
+          error(EXIT_FAILURE, 0,
+                "%s: asprintf allocation ('rangestr', 2)", __func__);
 
       /* Put the 'rangestr' in previous-range string for the next
          round.*/
@@ -291,12 +291,47 @@ tap_query_construct_range(struct queryparams *p, char **outstr)
 
 
 
+static char *
+tap_query_construct_sort(struct queryparams *p)
+{
+  gal_list_str_t *tmp;
+  char *sortstr=NULL, *prevstr=NULL;
+
+  for(tmp=p->sort; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Write 'rangestr'. */
+      if(prevstr)
+        {
+          if( asprintf(&sortstr, "%s,%s", prevstr, tmp->v) < 0 )
+            error(EXIT_FAILURE, 0,
+                  "%s: asprintf allocation ('sortstr', 1)", __func__);
+          free(prevstr);
+        }
+      else
+        if( asprintf(&sortstr, "ORDER BY %s", tmp->v) < 0 )
+          error(EXIT_FAILURE, 0,
+                "%s: asprintf allocation ('sortstr', 2)", __func__);
+
+      /* Put the 'rangestr' in previous-range string for the next
+         round.*/
+      prevstr=sortstr;
+    }
+
+  /* Set the final output pointer. */
+  return sortstr;
+}
+
+
+
+
+
 /* Construct the query for data download. */
 static char *
 tap_query_construct_data(struct queryparams *p)
 {
-  char *datasetstr, *valuelimitstr=NULL;
+  char *sortstr=NULL;
   char *headstr=NULL, allcols[]="*";
+  char *datasetstr, *valuelimitstr=NULL;
   char *querystr, *columns, *spatialstr=NULL;
 
   /* If the dataset has special characters (like a slash) it needs to
@@ -313,25 +348,29 @@ tap_query_construct_data(struct queryparams *p)
       error(EXIT_FAILURE, 0, "%s: asprintf allocation ('head')",
             __func__);
 
-  /* If the user has asked for a spatial constraint. */
-  if(p->overlapwith || p->center)
-    spatialstr=tap_query_construct_spatial(p);
-
   /* Build the 'noblank' and 'range' criteria. No blank goes first because
      it is easier to check (for the server), thus the more time-consuming
      range check can be done on fewer rows. */
   if(p->noblank) tap_query_construct_noblank(p, &valuelimitstr);
   if(p->range) tap_query_construct_range(p, &valuelimitstr);
 
+  /* If the user has asked for a spatial constraint. */
+  if(p->overlapwith || p->center)
+    spatialstr=tap_query_construct_spatial(p);
+
+  /* If the user has asked to sort the columns. */
+  if(p->sort) sortstr=tap_query_construct_sort(p);
+
   /* Write the automatically generated query string.  */
-  if( asprintf(&querystr,  "'SELECT %s %s FROM %s %s %s %s %s'",
+  if( asprintf(&querystr,  "'SELECT %s %s FROM %s %s %s %s %s %s'",
                headstr ? headstr : "",
                columns,
                datasetstr,
                ( valuelimitstr || spatialstr ? "WHERE" : ""),
                valuelimitstr ? valuelimitstr : "",
                ( valuelimitstr && spatialstr ? "AND"   : "" ),
-               spatialstr ? spatialstr : "")<0 )
+               spatialstr ? spatialstr : "",
+               sortstr ? sortstr : "")<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation ('querystr')",
           __func__);
 

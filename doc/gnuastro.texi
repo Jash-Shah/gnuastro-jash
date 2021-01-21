@@ -10744,6 +10744,12 @@ Then you can edit it to be non-inclusive on your desired side.
 Only ask for rows that don't have a blank value in the @code{STR} column.
 This option can be called many times, and each call can have multiple column names (separated by a comma or @key{,}).
 For example if you want the retrieved rows to not have a blank value in columns @code{A}, @code{B}, @code{C} and @code{D}, you can use @command{--noblank=A -bB,C,D}.
+
+@item --sort=STR[,STR]
+Ask for the server to sort the downloaded data based on the given columns.
+For example let's assume your desired catalog has column @code{Z} for redshift and column @code{MAG_R} for magnitude in the R band.
+When you call @option{--sort=Z,MAG_R}, it will primarily sort the columns based on the redshift, but if two objects have the same redshift, they will be sorted by magnitude.
+You can add as many columns as you like for higher-level sorting.
 @end table
 
 
