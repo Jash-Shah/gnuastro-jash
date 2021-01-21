@@ -53,14 +53,14 @@ ned_sanity_checks(struct queryparams *p)
 
   /* Currently NED only has a single table for TAP access, so warn the
      users about this if they ask for any other table. */
-  if( strcmp(p->datasetstr, "NEDTAP.objdir") && p->cp.quiet==0 )
-    {
-      printf("\n\n");
-      error(EXIT_FAILURE, 0, "WARNING: NED currently only supports "
-            "a single dataset called 'NEDTAP.objdir' (which you can "
-            "also call in Query with 'objdir'). TAP access to more "
-            "tables will be provided in the future");
-    }
+  if( p->datasetstr==NULL || strcmp(p->datasetstr, "NEDTAP.objdir") )
+    error(EXIT_FAILURE, 0, "NED currently only supports a single "
+          "dataset with the TAP protocol called 'NEDTAP.objdir' "
+          "(which you can also call in Query with '--dataset=objdir'). "
+          "TAP access to more datasets/tables will be provided in "
+          "the future. To see all the column information and select "
+          "the columns you want for your work, please run this command:\n\n"
+          "    astquery %s --dataset=objdir --info", p->databasestr);
 }
 
 
