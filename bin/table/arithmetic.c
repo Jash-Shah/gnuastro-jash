@@ -593,7 +593,7 @@ arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
                       int operator)
 {
   size_t i;
-  double *x, *y;
+  double *x=NULL, *y=NULL;
   gal_data_t *in=NULL, *in2=NULL;
   double pi=3.14159265358979323846264338327;
 
