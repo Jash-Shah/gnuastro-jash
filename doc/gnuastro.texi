@@ -18120,7 +18120,7 @@ Today, most practitioners agree that the flux of galaxies can be modeled with on
 @cindex de Vaucouleur profile
 @cindex G@'erard de Vaucouleurs
 G@'erard de Vaucouleurs (1918-1995) was first to show in 1948 that this function resembles the galaxy light profiles, with the only difference that he held @mymath{n} fixed to a value of 4.
-20 years later in 1968, J. L. S@'ersic showed that @mymath{n} can have a variety of values and does not necessarily need to be 4.
+Twenty years later in 1968, J. L. S@'ersic showed that @mymath{n} can have a variety of values and does not necessarily need to be 4.
 This profile depends on the effective radius (@mymath{r_e}) which is defined as the radius which contains half of the profile brightness (see @ref{Profile magnitude}).
 @mymath{I_e} is the flux at the effective radius.
 The S@'ersic index @mymath{n} is used to define the concentration of the profile within @mymath{r_e} and @mymath{b_n} is a constant dependent on @mymath{n}.

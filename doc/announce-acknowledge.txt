@@ -3,6 +3,7 @@ Alphabetically ordered list to acknowledge in the next release.
 Antonio Diaz Diaz
 Paul Eggert
 Andrés García-Serra Romero
+Thérèse Godefroy
 Bruno Haible
 Martin Kuemmel
 Javier Licandro
