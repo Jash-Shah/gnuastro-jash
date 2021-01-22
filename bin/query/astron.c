@@ -44,18 +44,7 @@ astron_sanity_checks(struct queryparams *p)
   /* Set the summarized names. */
   if(p->datasetstr)
     {
-      if( !strcmp(p->datasetstr, "lofartier1") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("lofartier1.main",
-                                     &p->datasetstr);
-        }
-      else if( !strcmp(p->datasetstr, "mvf") )
-        {
-          free(p->datasetstr);
-          gal_checkset_allocate_copy("mvf.main", &p->datasetstr);
-        }
-      else if( !strcmp(p->datasetstr, "tgssadr") )
+      if( !strcmp(p->datasetstr, "tgssadr") )
         {
           free(p->datasetstr);
           gal_checkset_allocate_copy("tgssadr.main", &p->datasetstr);

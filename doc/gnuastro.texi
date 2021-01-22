@@ -10361,9 +10361,15 @@ Gnuastro's Query program is designed to be the middle-man in this process: it pr
 It then internally constructs the command to download the data based on your inputs and runs it to download your desired data.
 Query also prints the full command before it executes it (if not called with @option{--quiet}).
 Also, if you ask for a FITS output table, the full command is written into its 0-th extension along with other input parameters to query (all Gnuastro programs generally keep their input configuration parameters as FITS keywords in the zero-th output).
+You can see it with Gnuastro's Fits program, like below:
 
-With the full command used to download the dataset, if you only have a minimal knowledge of ADQL and want to do lower-level customizations on your downloaded dataset, you can simply copy that command and change the parts you want: ADQL is very powerful!
-For example you can ask the server to do mathematic operations on the columns and apply selections after those operations, or combine/match multiple datasets and etc.
+@example
+$ astfits query-output.fits -h0
+@end example
+
+With the full command used to download the dataset, you only need a minimal knowledge of ADQL to do lower-level customizations on your downloaded dataset.
+You can simply copy that command and change the parts of the query string you want: ADQL is very powerful!
+For example you can ask the server to do mathematical operations on the columns and apply selections after those operations, or combine/match multiple datasets and etc.
 We will try to add high-level interfaces for such capabilities, but generally, don't limit yourself to the high-level operations (that can't cover everything!).
 
 @menu
@@ -10416,6 +10422,22 @@ Therefore Query provides @code{gaiaedr3} (for VizieR) and @code{edr3} (for ESA's
 They will be directly mapped to the fully recognized name by Query.
 In the list below that describes the available databases, the available short names are also listed.
 
+@cartouche
+@noindent
+@strong{Not all datasets support TAP:} Large databases like VizieR have TAP access for all their datasets.
+However, smaller databases haven't implemented TAP for all their tables.
+Therefore some datasets that are searchable in their web interface may not be available for a TAP search.
+To see the full list of TAP-ed datasets in a database, use the @option{--information} (or @option{-i}) option with the dataset name like the command below.
+
+@example
+$ astquery astron -i
+@end example
+
+@noindent
+If your desired dataset isn't in this list, but has web-access, contact the database maintainers and ask them to add TAP access for it.
+After they do it, you should see the name added to the output list of the command above.
+@end cartouche
+
 The list of databases recognized by Query (and their names in Query) is described below.
 Since Query is a new member of the Gnuastro family (first available in Gnuastro 0.14), this list will hopefully grow significantly in the next releases.
 If you have any particular datasets in mind, please let us know by sending an email to @code{bug-gnuastro@@gnu.org}.
@@ -10430,12 +10452,8 @@ If the dataset supports IVOA's TAP (Table Access Protocol), it should be very ea
 The ASTRON Virtual Observatory service (@url{https://vo.astron.nl}) is a database focused on radio astronomy data and images, primarily those collected by ASTRON itself.
 A query to @code{astron} is submitted to @code{https://vo.astron.nl/__system__/tap/run/tap/sync}.
 
-Here is the list of short names for popular datasets within Gaia:
+Here is the list of short names for dataset(s) in ASTRON's VO service:
 @itemize
-@item
-@code{lofartier1 --> lofartier1.main}
-@item
-@code{mvf --> mvf.main}
 @item
 @code{tgssadr --> tgssadr.main}
 @end itemize
@@ -10469,7 +10487,7 @@ The NASA/IPAC Extragalactic Database (NED, @url{http://ned.ipac.caltech.edu}) is
 It covers the full spectrum, from Gamma rays to radio frequencies and is updated when new data arrives.
 A query to @code{ned} is submitted to @code{https://ned.ipac.caltech.edu/tap/sync}.
 
-Currently NED only has a single table for TAP access that is shown below, more will be added in the future and you can use this short name to access it.
+Currently NED only has its main dataset for TAP access (shown below), more datasets will be added for TAP access in the future.
 @itemize
 @item
 @code{objdir --> NEDTAP.objdir}
