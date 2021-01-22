@@ -51,8 +51,9 @@ gaia_sanity_checks(struct queryparams *p)
      && p->datasetstr
      && p->query==NULL
      && p->center==NULL
-     && p->range==NULL)
-    error(EXIT_FAILURE, 0, "no constraints specified!"
+     && p->range==NULL
+     && p->overlapwith==NULL )
+    error(EXIT_FAILURE, 0, "no constraints specified! "
           "In other words, you are asking for all the rows within this "
           "dataset! Gaia datasets have billions of rows, therefore it "
           "has a limit on the number of rows downloaded anonymously. "
