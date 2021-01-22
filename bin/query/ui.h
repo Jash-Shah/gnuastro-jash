@@ -67,6 +67,7 @@ enum option_keys_enum
      automatically). */
   UI_KEY_CCOL            = 1000,
   UI_KEY_SORT,
+  UI_KEY_DRYRUN,
 };
 
 

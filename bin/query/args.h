@@ -90,6 +90,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "dry-run",
+      UI_KEY_DRYRUN,
+      0,
+      0,
+      "Only print the download command, don't run it.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->dryrun,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

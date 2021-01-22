@@ -364,10 +364,11 @@ query(struct queryparams *p)
 
   /* Make sure that the result is a readable FITS file, otherwise, abort
      with an error. */
-  query_check_download(p);
+  if(p->dryrun==0)
+    query_check_download(p);
 
   /* Let the user know that things went well. */
-  if(p->cp.quiet==0)
+  if(p->dryrun==0 && p->cp.quiet==0)
     {
       if(p->information==0)
         printf("\nQuery resulted in %zu rows and %zu columns.\n",

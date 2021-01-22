@@ -409,11 +409,12 @@ tap_download(struct queryparams *p)
               __func__);
 
       /* Print the calling command for the user to know. */
-      if(p->cp.quiet==0)
+      if(p->dryrun==1 || p->cp.quiet==0)
         {
-          printf("\n");
-          error(EXIT_SUCCESS, 0, "running: %s", command);
-          printf("\nDownload status:\n");
+          if(p->dryrun==0) printf("\n");
+          error(EXIT_SUCCESS, 0, "%s: %s",
+                p->dryrun ? "would run" : "running", command);
+          if(p->dryrun==0) printf("\nDownload status:\n");
         }
 
       /* Run the command: if it succeeds ('system' returns zero), then stop
@@ -421,13 +422,17 @@ tap_download(struct queryparams *p)
          URL or not. If its the last one ('url->next' is NULL), then exit
          with a failure, otherwise, just let the user know that this
          download failed, but continue with the next URLs. */
-      if(system(command)==EXIT_SUCCESS) break;
+      if(p->dryrun) break;
       else
-        error(url->next ? EXIT_SUCCESS : EXIT_FAILURE, 0,
-              "the query download command %sfailed%s\n",
-              p->cp.quiet==0 ? "printed above " : "",
-              p->cp.quiet==0 ? "" : " (the command can be printed "
-              "if you don't use the option '--quiet', or '-q')");
+        {
+          if(system(command)==EXIT_SUCCESS) break;
+          else
+            error(url->next ? EXIT_SUCCESS : EXIT_FAILURE, 0,
+                  "the query download command %sfailed%s\n",
+                  p->cp.quiet==0 ? "printed above " : "",
+                  p->cp.quiet==0 ? "" : " (the command can be printed "
+                  "if you don't use the option '--quiet', or '-q')");
+        }
     }
 
   /* Keep the executed command (to put in the final file's meta-data). */

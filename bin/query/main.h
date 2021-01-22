@@ -46,6 +46,7 @@ struct queryparams
   struct gal_options_common_params cp; /* Common parameters.           */
   uint8_t      keeprawdownload;  /* Keep raw downloaded file.          */
   uint8_t          information;  /* Print information on database.     */
+  uint8_t               dryrun;  /* Only print command, don't run it.  */
   char              *limitinfo;  /* Limit retried dataset information. */
   int                 database;  /* ID of database to use.             */
   char             *datasetstr;  /* ID of dataset in database to use.  */

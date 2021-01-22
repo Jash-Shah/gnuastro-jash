@@ -10651,6 +10651,11 @@ Unfotunately many databases don't write the input queries into their generated t
 
 @table @option
 
+@item --dry-run
+Only print the final download command to contact the server, don't actually run it.
+This option is good when you want to check the finally constructed query or download options given to the download program.
+You may also want to use the constructed command as a base to do further customizations on it and run it yourself.
+
 @item -k
 @itemx --keeprawdownload
 Don't delete the raw downloaded file from the database.
