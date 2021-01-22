@@ -499,7 +499,7 @@ match_catalog_kdtree_auto(struct matchparams *p)
 /* Wrapper over the k-d tree library to return an output in the same format
    as 'gal_match_coordinates'. */
 static gal_data_t *
-match_catalog_kdtree(struct matchparams *p)
+match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
 {
   size_t root;
   gal_data_t *out=NULL;
@@ -524,7 +524,8 @@ match_catalog_kdtree(struct matchparams *p)
       kdtree = gal_kdtree_create(p->cols1, &root);
       out = gal_match_kdtree(p->cols1, p->cols2, kdtree, root,
                              p->aperture->array, p->cp.numthreads,
-                             p->cp.minmapsize, p->cp.quietmmap);
+                             p->cp.minmapsize, nummatched, 1,
+                             p->cp.quietmmap);
       gal_list_data_free(kdtree);
       break;
 
@@ -551,7 +552,7 @@ match_catalog(struct matchparams *p)
   if(p->kdtreemode!=MATCH_KDTREE_DISABLE)
     {
       /* The main processing function. */
-      mcols=match_catalog_kdtree(p);
+      mcols=match_catalog_kdtree(p, &nummatched);
 
       /* If the user just asked to build a k-d tree, no futher processing
          is necessary. */

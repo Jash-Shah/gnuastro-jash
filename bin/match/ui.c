@@ -217,29 +217,33 @@ parse_opt(int key, char *arg, struct argp_state *state)
 static void
 ui_read_check_only_options(struct matchparams *p)
 {
-  /* Set the k-d tree mode. */
-  if(      !strcmp(p->kdtree,"build")    ) p->kdtreemode=MATCH_KDTREE_BUILD;
-  else if( !strcmp(p->kdtree,"internal") ) p->kdtreemode=MATCH_KDTREE_INTERNAL;
-  else if( !strcmp(p->kdtree,"auto")     ) p->kdtreemode=MATCH_KDTREE_AUTO;
-  else if( !strcmp(p->kdtree,"disable")  ) p->kdtreemode=MATCH_KDTREE_DISABLE;
-  else if( gal_fits_name_is_fits(p->kdtree) ) p->kdtreemode=MATCH_KDTREE_FILE;
-  else
-    error(EXIT_FAILURE, 0, "'%s' is not a valid value for '--kdtree'. The "
-          "following values are accepted: 'build' (to build the k-d tree in "
-          "the file given to '--output'), 'internal' (to force internal "
-          "usage of a k-d tree for the matching), 'auto' (to decide "
-          "automatically if a k-d tree should be used or not), 'disable' "
-          "(to not use a k-d tree at all), a FITS file name (the file to "
-          "read a created k-d tree from)", p->kdtree);
+  /* k-d tree specific sanity checks. */
+  if(p->kdtree)
+  {
+    /* Set the k-d tree mode. */
+    if(      !strcmp(p->kdtree,"build")    ) p->kdtreemode=MATCH_KDTREE_BUILD;
+    else if( !strcmp(p->kdtree,"internal") ) p->kdtreemode=MATCH_KDTREE_INTERNAL;
+    else if( !strcmp(p->kdtree,"auto")     ) p->kdtreemode=MATCH_KDTREE_AUTO;
+    else if( !strcmp(p->kdtree,"disable")  ) p->kdtreemode=MATCH_KDTREE_DISABLE;
+    else if( gal_fits_name_is_fits(p->kdtree) ) p->kdtreemode=MATCH_KDTREE_FILE;
+    else
+      error(EXIT_FAILURE, 0, "'%s' is not valid for '--kdtree'. The "
+            "following values are accepted: 'build' (to build the k-d tree in "
+            "the file given to '--output'), 'internal' (to force internal "
+            "usage of a k-d tree for the matching), 'auto' (to decide "
+            "automatically if a k-d tree should be used or not), 'disable' "
+            "(to not use a k-d tree at all), a FITS file name (the file to "
+            "read a created k-d tree from)", p->kdtree);
 
-  /* Make sure that the k-d tree build mode is not called with
-     '--outcols'. */
-  if( p->kdtreemode==MATCH_KDTREE_BUILD && (p->outcols || p->coord) )
-    error(EXIT_FAILURE, 0, "the '--kdtree=build' option is incompatible "
-          "with the '--outcols' or '--coord' options (because in the k-d "
-          "tree building mode doesn't involve actual matching. It will "
-          "only build k-d tree and write it to a file so it can be used "
-          "in future matches)");
+    /* Make sure that the k-d tree build mode is not called with
+       '--outcols'. */
+    if( p->kdtreemode==MATCH_KDTREE_BUILD && (p->outcols || p->coord) )
+      error(EXIT_FAILURE, 0, "the '--kdtree=build' option is incompatible "
+            "with the '--outcols' or '--coord' options (because in the k-d "
+            "tree building mode doesn't involve actual matching. It will "
+            "only build k-d tree and write it to a file so it can be used "
+            "in future matches)");
+  }
 }
 
 

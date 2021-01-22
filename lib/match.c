@@ -987,9 +987,11 @@ struct match_kdtree_params
   gal_data_t        *coord1;  /* 1st coordinate list of 'gal_data_t's */
   gal_data_t        *coord2;  /* 2nd coordinate list of 'gal_data_t's */
   size_t           *c2match;  /* Matched IDs for the second coords.   */
+  double          *distance;  /* The distance between the matches.    */
   double          *aperture;  /* Acceptable aperture for match.       */
   size_t        kdtree_root;  /* Index (counting from 0) of root.     */
   gal_data_t *coord1_kdtree;  /* k-d tree of first coordinate.        */
+  size_t  *multiple_matches;  /* Multiple match count in 1st coords.  */
 
   /* Internal parameters for easy aperture checking. For example there is
      no need to calculate the fixed 'cos()' and 'sin()' functions. So we
@@ -1014,7 +1016,6 @@ match_kdtree_worker(void *in_prm)
 
   /* High level definitions. */
   gal_data_t *ccol;
-  double r, delta[3];
   size_t i, j, index, mindex;
   double *point=NULL, least_dist;
 
@@ -1036,14 +1037,21 @@ match_kdtree_worker(void *in_prm)
       mindex=gal_kdtree_nearest_neighbour(p->coord1, p->coord1_kdtree,
                                           p->kdtree_root, point, &least_dist);
 
+      /* Store the distance between the matches. */
+      p->distance[index] = least_dist;
+
       /* Make sure the matched point is within the given aperture (which
          may be elliptical). If it isn't, then the reported index for this
          element will be 'GAL_BLANK_SIZE_T'. */
-      for(j=0;j<p->ndim;++j)
-        delta[j]=p->b[j][index] - p->a[j][mindex];
-      r=match_coordinates_distance(delta, p->iscircle, p->ndim,
-                                   p->aperture, p->c, p->s);
-      p->c2match[index] = r<p->aperture[0] ? mindex : GAL_BLANK_SIZE_T;
+      p->c2match[index] = least_dist<p->aperture[0] ? mindex : GAL_BLANK_SIZE_T;
+
+      /* Keep count of the number of matches in the 1st coordinate.
+         Some points in the first catalog can match to multiple points in
+         the second catalog for a given aperture value. To avoid this multiple
+         matching, we keep a track of such points in the first catalog.
+         We use 'multiple_matches' to keep track for the same. */
+      if(p->c2match[index] != GAL_BLANK_SIZE_T)
+        p->multiple_matches[p->c2match[index]]++;
     }
 
   /* Clean up. */
@@ -1059,15 +1067,116 @@ match_kdtree_worker(void *in_prm)
 
 
 gal_data_t *
+gal_match_kdtree_output(gal_data_t *A, gal_data_t *B, size_t *bina,
+                        double* distance, size_t *multiple_matches,
+                        size_t minmapsize, int quietmmap)
+{
+  double *rval;
+  gal_data_t *out;
+  uint8_t *Amatched;
+  size_t ai=0, bi=0, nummatched=0;
+  size_t *aind, *bind, match_i, nomatch_i;
+
+  /* Find how many matches there were in total. */
+  for(ai=0;ai<A->size;++ai) if(multiple_matches[ai]) ++nummatched;
+
+  /* If there aren't any matches, return NULL. */
+  if(nummatched==0) return NULL;
+
+
+  /* Allocate the output list. */
+  out=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &A->size, NULL, 0,
+                     minmapsize, quietmmap, "CAT1_ROW", "counter",
+                     "Row index in first catalog (counting from 0).");
+  out->next=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &B->size, NULL, 0,
+                           minmapsize, quietmmap, "CAT2_ROW", "counter",
+                           "Row index in second catalog (counting "
+                           "from 0).");
+  out->next->next=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &nummatched,
+                                 NULL, 0, minmapsize, quietmmap,
+                                 "MATCH_DIST", NULL,
+                                 "Distance between the match.");
+
+
+  /* Allocate the 'Amatched' array which is a flag for which rows of the
+     first catalog were matched. The columns that had a match will get a
+     value of one while we are parsing them below. */
+  Amatched=gal_pointer_allocate(GAL_TYPE_UINT8, A->size, 1, __func__,
+                                "Amatched");
+
+
+  /* Initialize the indexs. We want the first 'nummatched' indexs in both
+     outputs to be the matching rows. The non-matched rows should start to
+     be indexed after the matched ones. So the first non-matched index is
+     at the index 'nummatched'. */
+  match_i   = 0;
+  nomatch_i = nummatched;
+
+
+  /* Fill in the output arrays. */
+  aind = out->array;
+  bind = out->next->array;
+  rval = out->next->next->array;
+  for(bi=0;bi<B->size;++bi)
+    {
+      /* A match was found. */
+      if(bina[bi] != GAL_BLANK_SIZE_T && multiple_matches[bina[bi]])
+        {
+          multiple_matches[bina[bi]] = 0;
+          /* Note that the permutation keeps the original indexs. */
+          rval[ match_i   ] = distance[bi];
+          aind[ match_i   ] = bina[bi];
+          bind[ match_i++ ] = bi;
+
+          /* Set a '1' for this object in the first catalog. This will
+             later be used to find which rows didn't match to fill in the
+             output. */
+          Amatched[ bina[bi] ] = 1;
+        }
+
+      /* No match found. At this stage, we can only fill the indexs of the
+         second input. The first input needs to be matched afterwards.*/
+      else bind[ nomatch_i++ ] = bi;
+    }
+
+
+  /* Complete the first input's permutation. */
+  nomatch_i=nummatched;
+  for(ai=0;ai<A->size;++ai)
+    if( Amatched[ai] == 0 )
+      aind[ nomatch_i++ ] = ai;
+
+
+  /* For a check
+  printf("\nNumber of matches: %zu\n", nummatched);
+  printf("\nFirst input's permutation:\n");
+  for(ai=0;ai<A->size;++ai)
+    printf("%s%zu\n", ai<nummatched?"  ":"* ", aind[ai]+1);
+  printf("\nSecond input's permutation:\n");
+  for(bi=0;bi<B->size;++bi)
+    printf("%s%zu\n", bi<nummatched?"  ":"* ", bind[bi]+1);
+  exit(0);
+  */
+
+  /* Return the output. */
+  return out;
+}
+
+
+
+
+
+gal_data_t *
 gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
                  gal_data_t *coord1_kdtree, size_t kdtree_root,
                  double *aperture, size_t numthreads, size_t minmapsize,
-                 int quietmmap)
+                 size_t *nummatched, int inplace, int quietmmap)
 {
-  size_t i;
-  gal_data_t *c2match;
+  gal_data_t *out;
   struct match_kdtree_params p;
+  gal_data_t *c2match, *distance, *multiple_matches;
   double dist[3]; /* Just a place-holder in 'sif_prepare'. */
+
 
   /* Basic sanity checks. */
   p.ndim=gal_list_data_number(coord1);
@@ -1089,11 +1198,21 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
           "'uint32', but it is '%s'", __func__,
           gal_type_name(coord1_kdtree->type, 1));
 
+
   /* Do the preparations. */
   match_coordinates_sif_prepare(coord1, coord2, aperture, p.ndim,
                                 p.a, p.b, dist, p.c, p.s, &p.iscircle);
+
+
   c2match=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &coord2->size, NULL, 0,
                          minmapsize, quietmmap, NULL, NULL, NULL);
+  distance=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &coord2->size, NULL, 0,
+                          minmapsize, quietmmap, NULL, NULL, NULL);
+  multiple_matches=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &coord1->size,
+                                  NULL, 0, minmapsize, quietmmap, NULL,
+                                  NULL, NULL);
+
+
 
   /* Set the threading parameters and spin-off the threads. */
   p.coord1=coord1;
@@ -1101,21 +1220,36 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
   p.aperture=aperture;
   p.c2match=c2match->array;
   p.kdtree_root=kdtree_root;
+  p.distance=distance->array;
   p.coord1_kdtree=coord1_kdtree;
+  p.multiple_matches=multiple_matches->array;
   gal_threads_spin_off(match_kdtree_worker, &p, coord2->size, numthreads,
                        minmapsize, quietmmap);
 
-  /* For a check. */
-  {
-    double *c1x=coord1->array, *c1y=coord1->next->array;
-    double *c2x=coord2->array, *c2y=coord2->next->array;
-    for(i=0; i<coord2->size; ++i)
-      printf("%s: cat2's (%g, %g) matches with (%g, %g) of cat1\n",
-             __func__, c2x[i], c2y[i],
-             p.c2match[i]==GAL_BLANK_SIZE_T ? NAN : c1x[p.c2match[i]],
-             p.c2match[i]==GAL_BLANK_SIZE_T ? NAN : c1y[p.c2match[i]]);
-  }
 
-  exit(0);
-  return c2match;
+  /* The match is done, write the output. */
+  out=gal_match_kdtree_output(coord1, coord2, p.c2match, p.distance,
+                              p.multiple_matches, minmapsize, quietmmap);
+
+  /* For a check:
+  double *c1x=coord1->array, *c1y=coord1->next->array;
+  double *c2x=coord2->array, *c2y=coord2->next->array;
+  for(size_t i=0; i<coord2->size; ++i)
+    printf("%s: cat2's (%g, %g) matches with (%g, %g) of cat1\n"
+           "with distance %g c2match %zu\n",
+            __func__, c2x[i], c2y[i],
+            p.c2match[i]==GAL_BLANK_SIZE_T ? NAN : c1x[p.c2match[i]],
+            p.c2match[i]==GAL_BLANK_SIZE_T ? NAN : c1y[p.c2match[i]],
+            p.distance[i], p.c2match[i]);
+  */
+
+  /* Clean up. */
+  gal_data_free(multiple_matches);
+  gal_data_free(distance);
+  gal_data_free(c2match);
+
+
+  /* Set 'nummatched' and return output. */
+  *nummatched = out ?  out->next->next->size : 0;
+  return out;
 }
