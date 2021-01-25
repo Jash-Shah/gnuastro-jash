@@ -24,9 +24,9 @@ See the end of the file for license conditions.
      be managed without knowing the query language of the database: with
      basic options (like '--center' with '--radius' or '--width'), or an
      input image that has WCS. Currently Query supports VizieR (containing
-     +20500 datasets, making it the largest database in astronomy), as well
-     as ESA's Gaia. See the new "Query" section of the book (under the
-     "Data containers" chapter) for more.
+     +20500 datasets, making it the largest database in astronomy), NED, as
+     ESA's Gaia database and ASTRON. See the new "Query" section of the
+     book (under the "Data containers" chapter) for more.
 
   All programs:
    - Plain text table inputs can have floating point columns that are in
@@ -163,6 +163,12 @@ See the end of the file for license conditions.
      (which can dramatically slow down the program). Please see the newly
      added "Memory management" section of the book for a complete
      explanation of Gnuastro's new memory management strategy.
+   - When an array needs to be memory-mapped (read into a file on HDD/SSD,
+     not RAM, usually due to RAM limitations), it is written in a
+     'gnuastro_mmap' directory of the running directory, not the hidden
+     '.gnuastro_mmap' directory. Since the files in this directory are
+     usually large, it is better that the user sees them by default (in
+     case the program crashes and they aren't deleted).
    --interpnumngb: the default value has been increased to 15 (from 9). The
      reason for this is that we now have a more robust outlier removal
      algorithm (see description under "NoiseChisel & Statistics").

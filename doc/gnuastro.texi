@@ -136,7 +136,7 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 @author Mohammad Akhlaghi
 
 @page
-Gnuastro (source code, book and webpage) authors (sorted by number of
+Gnuastro (source code, book and web page) authors (sorted by number of
 commits):
 @quotation
 @include authors.texi
@@ -259,7 +259,7 @@ General program usage tutorial
 * NoiseChisel optimization for storage::  Dramatically decrease output's volume.
 * Segmentation and making a catalog::  Finding true peaks and creating a catalog.
 * Working with catalogs estimating colors::  Estimating colors using the catalogs.
-* Column statistics color-magnitude diagram::  Vizualizing column correlations.
+* Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
 * Finding reddest clumps and visual inspection::  Selecting some targets and inspecting them.
@@ -790,7 +790,7 @@ As discussed in @ref{Science and its tools} this is a founding principle of the 
 The latest official release tarball is always available as @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.gz, @file{gnuastro-latest.tar.gz}}.
 For better compression (faster download), and robust archival features, an @url{http://www.nongnu.org/lzip/lzip.html, Lzip} compressed tarball is also available at @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz, @file{gnuastro-latest.tar.lz}}, see @ref{Release tarball} for more details on the tarball release@footnote{The Gzip library and program are commonly available on most systems.
 However, Gnuastro recommends Lzip as described above and the beta-releases are also only distributed in @file{tar.lz}.
-You can download and install Lzip's source (in @file{.tar.gz} format) from its webpage and follow the same process as below: Lzip has no dependencies, so simply decompress, then run @command{./configure}, @command{make}, @command{sudo make install}.}.
+You can download and install Lzip's source (in @file{.tar.gz} format) from its web page and follow the same process as below: Lzip has no dependencies, so simply decompress, then run @command{./configure}, @command{make}, @command{sudo make install}.}.
 
 Let's assume the downloaded tarball is in the @file{TOPGNUASTRO} directory.
 The first two commands below can be used to decompress the source.
@@ -1278,15 +1278,15 @@ There are generally two ways to inform us of bugs:
 Send a mail to @code{bug-gnuastro@@gnu.org}.
 Any mail you send to this address will be distributed through the bug-gnuastro mailing list@footnote{@url{https://lists.gnu.org/mailman/listinfo/bug-gnuastro}}.
 This is the simplest way to send us bug reports.
-The developers will then register the bug into the project webpage (next choice) for you.
+The developers will then register the bug into the project web page (next choice) for you.
 
 @cindex Gnuastro project page
 @cindex Support request manager
 @cindex Submit new tracker item
 @cindex Anonymous bug submission
 @item
-Use the Gnuastro project webpage at @url{https://savannah.gnu.org/projects/gnuastro/}: There are two ways to get to the submission page as listed below.
-Fill in the form as described below and submit it (see @ref{Gnuastro project webpage} for more on the project webpage).
+Use the Gnuastro project web page at @url{https://savannah.gnu.org/projects/gnuastro/}: There are two ways to get to the submission page as listed below.
+Fill in the form as described below and submit it (see @ref{Gnuastro project webpage} for more on the project web page).
 
 @itemize
 
@@ -1305,7 +1305,7 @@ In the main body of the page, under the ``Communication tools'' section, click o
 @cindex Bug tracker
 @cindex Task tracker
 @cindex Viewing trackers
-Once the items have been registered in the mailing list or webpage, the developers will add it to either the ``Bug Tracker'' or ``Task Manager'' trackers of the Gnuastro project webpage.
+Once the items have been registered in the mailing list or web page, the developers will add it to either the ``Bug Tracker'' or ``Task Manager'' trackers of the Gnuastro project web page.
 These two trackers can only be edited by the Gnuastro project developers, but they can be browsed by anyone, so you can follow the progress on your bug.
 You are most welcome to join us in developing Gnuastro and fixing the bug you have found maybe a good starting point.
 Gnuastro is designed to be easy for anyone to develop (see @ref{Science and its tools}) and there is a full chapter devoted to developing it: @ref{Developing}.
@@ -1318,7 +1318,7 @@ Gnuastro is designed to be easy for anyone to develop (see @ref{Science and its 
 @cindex Additions to Gnuastro
 We would always be happy to hear of suggested new features.
 For every program there are already lists of features that we are planning to add.
-You can see the current list of plans from the Gnuastro project webpage at @url{https://savannah.gnu.org/projects/gnuastro/} and following @clicksequence{``Tasks''@click{}``Browse''} on the horizontal menu at the top of the page immediately under the title, see @ref{Gnuastro project webpage}.
+You can see the current list of plans from the Gnuastro project web page at @url{https://savannah.gnu.org/projects/gnuastro/} and following @clicksequence{``Tasks''@click{}``Browse''} on the horizontal menu at the top of the page immediately under the title, see @ref{Gnuastro project webpage}.
 If you want to request a feature to an existing program, click on the ``Display Criteria'' above the list and under ``Category'', choose that particular program.
 Under ``Category'' you can also see the existing suggestions for new programs or other cases like installation, documentation or libraries.
 Also be sure to set the ``Open/Closed'' value to ``Any''.
@@ -1487,7 +1487,7 @@ Michael H.F. Wilkinson,
 Christopher Willmer,
 Sara Yousefi Taemeh,
 Johannes Zabl.
-The GNU French Translation Team is also managing the French version of the top Gnuastro webpage which we highly appreciate.
+The GNU French Translation Team is also managing the French version of the top Gnuastro web page which we highly appreciate.
 Finally we should thank all the (sometimes anonymous) people in various online forums which patiently answered all our small (but imporant) technical questions.
 
 All work on Gnuastro has been voluntary, but the authors are most grateful to the following institutions (in chronological order) for hosting/supporting us in our research.
@@ -1975,7 +1975,7 @@ This will help simulate future situations when you are processing your own datas
 * NoiseChisel optimization for storage::  Dramatically decrease output's volume.
 * Segmentation and making a catalog::  Finding true peaks and creating a catalog.
 * Working with catalogs estimating colors::  Estimating colors using the catalogs.
-* Column statistics color-magnitude diagram::  Vizualizing column correlations.
+* Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
 * Finding reddest clumps and visual inspection::  Selecting some targets and inspecting them.
@@ -2141,7 +2141,7 @@ Recall that this is a combined/reduced image of many exposures, and the parts th
 In particular, the exposure time of the deep inner region is larger than 4 times of the outer (more shallower) parts.
 
 To simplify the analysis in this tutorial, we'll only be working on the deep field, so let's crop it out of the full dataset.
-Fortunately the XDF survey webpage (above) contains the vertices of the deep flat WFC3-IR field.
+Fortunately the XDF survey web page (above) contains the vertices of the deep flat WFC3-IR field.
 With Gnuastro's Crop program@footnote{To learn more about the crop program see @ref{Crop}.}, you can use those vertices to cutout this deep region from the larger image.
 But before that, to keep things organized, let's make a directory called @file{flat-ir} and keep the flat (single-depth) regions in that directory (with a `@file{xdf-}' suffix for a shorter and easier filename).
 
@@ -2203,7 +2203,7 @@ You can get a fast and crude answer with Gnuastro's Fits program using this comm
 astfits flat-ir/xdf-f160w.fits --skycoverage
 @end example
 
-It will print the sky coverage in two formats (all numbers are in units of degrees for this image): 1) the image's centeral RA and Dec and full width around that center, 2) the range of RA and Dec covered by this image.
+It will print the sky coverage in two formats (all numbers are in units of degrees for this image): 1) the image's central RA and Dec and full width around that center, 2) the range of RA and Dec covered by this image.
 You can use these values in various online query systems.
 You can also use this option to automatically calculate the area covered by this image.
 With the @option{--quiet} option, the printed output of @option{--skycoverage} will not contain human-readable text, making it easier for further processing:
@@ -2238,7 +2238,7 @@ These keywords define how the image relates to the outside world.
 In particular, the @code{CDELT*} keywords (or @code{CDELT1} and @code{CDELT2} in this 2D image) contain the ``Coordinate DELTa'' (or change in coordinate units) with a change in one pixel.
 But what is the units of each ``world'' coordinate?
 The @code{CUNIT*} keywords (for ``Coordinate UNIT'') have the answer.
-In this case, both @code{CUNIT1} and @code{CUNIT1} have a value of @code{deg}, so both ``world'' coordiantes are in units of degrees.
+In this case, both @code{CUNIT1} and @code{CUNIT1} have a value of @code{deg}, so both ``world'' coordinates are in units of degrees.
 We can thus conclude that the value of @code{CDELT*} is in units of degrees-per-pixel@footnote{With the FITS @code{CDELT} convention, rotation (@code{PC} or @code{CD} keywords) and scales (@code{CDELT}) are separated.
 In the FITS standard the @code{CDELT} keywords are optional.
 When @code{CDELT} keywords aren't present, the @code{PC} matrix is assumed to contain @emph{both} the coordinate rotation and scales.
@@ -2850,7 +2850,7 @@ Then click on any random part of the image to see a circle show up in that locat
 Double-click on the region and a ``Circle'' window will open.
 If you have celestial coordinates, keep the default ``fk5'' in the scroll-down menu after the ``Center''.
 But if you have pixel/image coordinates, click on the ``fk5'' and select ``Image''.
-Now you can set the ``Center'' coordinates of the region (@code{1650} and @code{1470} in this case) by manually typing them in the two boxes infront of ``Center''.
+Now you can set the ``Center'' coordinates of the region (@code{1650} and @code{1470} in this case) by manually typing them in the two boxes in front of ``Center''.
 Finally, when everything is ready, click on the ``Apply'' button and your region will go over your requested coordinates.
 You can zoom out (to see the whole image) and visually find it.} pixel 1650 (X) and 1470 (Y).
 These types of long wiggly structures show that we have dug too deep into the noise, and are a signature of correlated noise.
@@ -3018,7 +3018,7 @@ $ astarithmetic $in $det nan where --output=mask-det.fits
 
 Overall it seems good, but if you play a little with the color-bar and look closer in the noise, you'll see a few very sharp, but faint, objects that have not been detected.
 For example the object around pixel (456, 1662).
-Despite its high valued pixels, this object was lost because erotion ignores the precise pixel values.
+Despite its high valued pixels, this object was lost because erosion ignores the precise pixel values.
 Loosing small/sharp objects like this only happens for under-sampled datasets like HST (where the pixel size is larger than the point spread function FWHM).
 So this won't happen on ground-based images.
 
@@ -3167,7 +3167,7 @@ $ astmkcatalog seg/xdf-f160w.fits --ids --ra --dec --magnitude --sn \
 @noindent
 From the printed statements on the command-line, you see that MakeCatalog read all the extensions in Segment's output for the various measurements it needed.
 To calculate colors, we also need magnitude measurements on the other filters.
-So let's repeat the command above on them, just changing the file names and zeropoint (which we got from the XDF survey webpage):
+So let's repeat the command above on them, just changing the file names and zeropoint (which we got from the XDF survey web page):
 
 @example
 $ astmkcatalog seg/xdf-f125w.fits --ids --ra --dec --magnitude --sn \
@@ -3522,7 +3522,7 @@ In a 2D histogram, the full range in both columns is divided into discrete 2D bi
 
 Since a 2D histogram is a pixelated space, we can simply save it as a FITS image and view it in a FITS viewer.
 Let's do this in the command below.
-As is common with color-magnitude plots, we'll put the redder magnitdue on the horizontal axis and the color on the vertical axis.
+As is common with color-magnitude plots, we'll put the redder magnitude on the horizontal axis and the color on the vertical axis.
 We'll set both dimensions to have 100 bins (with @option{--numbins} for the horizontal and @option{--numbins2} for the vertical).
 Also, to avoid strong outliers in any of the dimensions, we'll manually set the range of each dimension with the @option{--greaterequal}, @option{--greaterequal2}, @option{--lessthan} and @option{--lessthan2} options.
 
@@ -3543,7 +3543,7 @@ $ ds9 cmd.fits -cmap sls -zoom to fit
 @end example
 
 Having a 2D histogram as a FITS image with WCS has many great advantages.
-For example, just like FITS images of the night sky, you can ``match'' many 2D histogams that were created independently.
+For example, just like FITS images of the night sky, you can ``match'' many 2D histograms that were created independently.
 You can add two histograms with each other, or you can use advanced features of FITS viewers to find structure in the correlation of your columns.
 
 @noindent
@@ -3567,7 +3567,7 @@ This is good for a fast progress update.
 But for your paper or more official report, you want to show something with higher quality.
 For that, you can use the PGFPlots package in @LaTeX{} to add axises in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points, lines and etc).
 But to load the 2D histogram into PGFPlots first you need to convert the FITS image into a more standard format, for example PDF.
-We'll use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixles with a value of zero to white):
+We'll use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixels with a value of zero to white):
 
 @example
 $ astconvertt cmd.fits --colormap=sls-inverse --borderwidth=0 -ocmd.pdf
@@ -3912,7 +3912,7 @@ But that text file must have two special features:
 @cindex Hashbang
 For the first, Unix-like operating systems define the @emph{shebang} concept (also known as @emph{sha-bang} or @emph{hashbang}).
 In the shebang convention, the first two characters of a file should be `@code{#!}'.
-When confronted with these characters, the script will be interpretted with the program that follows them.
+When confronted with these characters, the script will be interpreted with the program that follows them.
 In this case, we want to write a shell script and the most common shell program is GNU Bash which is installed in @file{/bin/bash}.
 So the first line of your script should be `@code{#!/bin/bash}'@footnote{
 When the script is to be run by the same shell that is calling it (like this script), the shebang is optional.
@@ -4461,7 +4461,7 @@ $ astnoisechisel r.fits -h0 --tilesize=100,100 -P | grep erode
 
 @noindent
 We see that the value of @code{erode} is @code{2}.
-The default NoiseChisel parameters are primarily targetted to processed images (where there is correlated noise due to all the processing that has gone into the warping and stacking of raw images, see @ref{NoiseChisel optimization for detection}).
+The default NoiseChisel parameters are primarily targeted to processed images (where there is correlated noise due to all the processing that has gone into the warping and stacking of raw images, see @ref{NoiseChisel optimization for detection}).
 In those scenarios 2 erosions are commonly necessary.
 But here, we have a single-exposure image where there is no correlated noise (the pixels aren't mixed).
 So let's see how things change with only one erosion:
@@ -4479,7 +4479,7 @@ After the @code{OPENED-AND-LABELED} extension, NoiseChisel goes onto finding fal
 The process is fully described in Section 3.1.5. (Defining and Removing False Detections) of arXiv:@url{https://arxiv.org/pdf/1505.01664.pdf,1505.01664}.
 Please compare the extensions to what you read there and things will be very clear.
 In the last HDU (@code{DETECTION-FINAL}), we have the final detected pixels that will be used to estimate the Sky and its Standard deviation.
-We see that the main detection has indeed been detected very far out, so let's see how the full NoiseChisel will estimate the Sky and its standrad deviation (by removing @code{--checkdetection}):
+We see that the main detection has indeed been detected very far out, so let's see how the full NoiseChisel will estimate the Sky and its standard deviation (by removing @code{--checkdetection}):
 
 @example
 $ astnoisechisel r.fits -h0 --tilesize=100,100 --erode=1
@@ -4643,7 +4643,7 @@ $ astarithmetic $skysub $skystd / $edge not nan where \
 
 @cindex Surface brightness
 We have thus detected the wings of the M51 group down to roughly 1/3rd of the noise level in this image! But the signal-to-noise ratio is a relative measurement.
-Let's also measure the depth of our detection in absolute surface brightness units; or magnitudes per square arcseconds (see @ref{Brightness flux magnitude}).
+Let's also measure the depth of our detection in absolute surface brightness units; or magnitudes per square arc-seconds (see @ref{Brightness flux magnitude}).
 Fortunately Gnuastro's MakeCatalog does this operation easily.
 SDSS image pixel values are calibrated in units of ``nanomaggy'', so the zero point magnitude is 22.5@footnote{From @url{https://www.sdss.org/dr12/algorithms/magnitudes}}.
 
@@ -4999,7 +4999,7 @@ See @ref{Installation directory} for more on @code{PATH}.
 
 GNU Libtool (the binary/executable file) is a low-level program that is probably already present on your system, and if not, is available in your operating system package manager@footnote{Note that we want the binary/executable Libtool program which can be run on the command-line.
 In Debian-based operating systems which separate various parts of a package, you want want @code{libtool-bin}, the @code{libtool} package won't contain the executable program.}.
-If you want to install GNU Libtool's latest version from source, please visit its @url{https://www.gnu.org/software/libtool/, webpage}.
+If you want to install GNU Libtool's latest version from source, please visit its @url{https://www.gnu.org/software/libtool/, web page}.
 
 Gnuastro's tarball is shipped with an internal implementation of GNU Libtool.
 Even if you have GNU Libtool, Gnuastro's internal implementation is used for the building and installation of Gnuastro.
@@ -5124,7 +5124,7 @@ So the @file{./boostrap} script will run @LaTeX{} to build the figures.
 The best way to install @LaTeX{} and all the necessary packages is through @url{https://www.tug.org/texlive/, @TeX{} live} which is a package manager for @TeX{} related tools that is independent of any operating system.
 It is thus preferred to the @TeX{} Live versions distributed by your operating system.
 
-To install @TeX{} Live, go to the webpage and download the appropriate installer by following the ``download'' link.
+To install @TeX{} Live, go to the web page and download the appropriate installer by following the ``download'' link.
 Note that by default the full package repository will be downloaded and installed (around 4 Giga Bytes) which can take @emph{very} long to download and to update later.
 However, most packages are not needed by everyone, it is easier, faster and better to install only the ``Basic scheme'' (consisting of only the most basic @TeX{} and @LaTeX{} packages, which is less than 200 Mega bytes)@footnote{You can also download the DVD iso file at a later time to keep as a backup for when you don't have internet connection if you need a package.}.
 
@@ -5396,7 +5396,7 @@ Gnuastro's official/stable tarball is released with two formats: Gzip (with suff
 The pre-release tarballs (after version 0.3) are released only as an Lzip tarball.
 Gzip is a very well-known and widely used compression program created by GNU and available in most systems.
 However, Lzip provides a better compression ratio and more robust archival capacity.
-For example Gnuastro 0.3's tarball was 2.9MB and 4.3MB with Lzip and Gzip respectively, see the @url{http://www.nongnu.org/lzip/lzip.html, Lzip webpage} for more.
+For example Gnuastro 0.3's tarball was 2.9MB and 4.3MB with Lzip and Gzip respectively, see the @url{http://www.nongnu.org/lzip/lzip.html, Lzip web page} for more.
 Lzip might not be pre-installed in your operating system, if so, installing it from your operating system's package manager or from source is very easy and fast (it is a very small program).
 
 The GNU FTP server is mirrored (has backups) in various locations on the globe (@url{http://www.gnu.org/order/ftp.html}).
@@ -5599,7 +5599,7 @@ If you want to make changes in the code, have a look at @ref{Developing} to get 
 Be sure to commit your changes in a separate branch (keep your @code{master} branch to follow the official repository) and re-run @command{autoreconf -f} after the commit.
 If you intend to send your work to us, you can safely use your commit since it will be ultimately recorded in Gnuastro's official history.
 If not, please upload your separate branch to a public hosting service, for example @url{https://gitlab.com, GitLab}, and link to it in your report/paper.
-Alternatively, run @command{make distcheck} and upload the output @file{gnuastro-X.X.X.XXXX.tar.gz} to a publicly accessible webpage so your results can be considered scientific (reproducible) later.
+Alternatively, run @command{make distcheck} and upload the output @file{gnuastro-X.X.X.XXXX.tar.gz} to a publicly accessible web page so your results can be considered scientific (reproducible) later.
 
 
 
@@ -7399,7 +7399,7 @@ The prefix of @file{/usr/local/} is conventionally used for programs you install
 Probably the first time you read this book, it is either in the PDF or HTML formats.
 These two formats are very convenient for when you are not actually working, but when you are only reading.
 Later on, when you start to use the programs and you are deep in the middle of your work, some of the details will inevitably be forgotten.
-Going to find the PDF file (printed or digital) or the HTML webpage is a major distraction.
+Going to find the PDF file (printed or digital) or the HTML web page is a major distraction.
 
 @cindex Online help
 @cindex Command-line help
@@ -7412,7 +7412,7 @@ With this type of help, you can resume your exciting research without taking you
 Another major advantage of such command-line based help routines is that they are installed with the software in your computer, therefore they are always in sync with the executable you are actually running.
 Three of them are actually part of the executable.
 You don't have to worry about the version of the book or program.
-If you rely on external help (a PDF in your personal print or digital archive or HTML from the official webpage) you have to check to see if their versions fit with your installed program.
+If you rely on external help (a PDF in your personal print or digital archive or HTML from the official web page) you have to check to see if their versions fit with your installed program.
 
 If you only need to remember the short or long names of the options, @option{--usage} is advised.
 If it is what the options do, then @option{--help} is a great tool.
@@ -7993,7 +7993,7 @@ But thanks to that constant supply of power, it can access any random address wi
 Hence, the general/simplistic way that programs deal with memory is the following (this is general to almost all programs, not just Gnuastro's):
 1) Load/copy the input data from the non-volatile memory into RAM.
 2) Use the copy of the data in RAM as input for all the internal processing as well as the intermediate data that is necessary during the processing.
-3) Finally, when the analyis is complete, write the final output data back into non-volatile memory, and free/delete all the used space in the RAM (the initial copy and all the intermediate data).
+3) Finally, when the analysis is complete, write the final output data back into non-volatile memory, and free/delete all the used space in the RAM (the initial copy and all the intermediate data).
 Usually the RAM is most important for the data of the intermediate steps (that you never see as a user of a program!).
 
 When the input dataset(s) to a program are small (compared to the available space in your system's RAM at the moment it is run) Gnuastro's programs and libraries follow the standard series of steps above.
@@ -8014,13 +8014,13 @@ That file will have the exact size (in bytes) of that intermediate dataset.
 Any time the program needs that intermediate dataset, the operating system will directly go to that file, and bypass your RAM.
 As soon as that file is no longer necessary for the analysis, it will be deleted.
 But as mentioned above, non-volatile memory has much slower I/O speed than the RAM.
-Hence in such situations, the programs will become noticably slower (sometimes by factors of 10 times slower, depending on your non-volatile memory speeds).
+Hence in such situations, the programs will become noticeably slower (sometimes by factors of 10 times slower, depending on your non-volatile memory speeds).
 
 Because of the drop in I/O speed (and thus the speed of your running program), the moment that any to-be-allocated dataset is memory-mapped, Gnuastro's programs and libraries will notify you with a descriptive statement like below (can happen in any phase of their analysis).
 It shows the location of the memory-mapped file, its size, complemented with a small description of the cause, a pointer to this section of the book for more information on how to deal with it (if necessary), and what to do to suppress it.
 
 @example
-astarithmetic: ./.gnuastro_mmap/Fu7Dhs: temporary memory-mapped file
+astarithmetic: ./gnuastro_mmap/Fu7Dhs: temporary memory-mapped file
 (XXXXXXXXXXX bytes) created for intermediate data that is not stored
 in RAM (see the "Memory management" section of Gnuastro's manual for
 optimizing your project's memory management, and thus speed). To
@@ -8031,7 +8031,7 @@ disable this warning, please use the option '--quiet-mmap'
 Finally, when the intermediate dataset is no longer necessary, the program will automatically delete it and notify you with a statement like this:
 
 @example
-astarithmetic: ./.gnuastro_mmap/B1QgVf: deleted
+astarithmetic: ./gnuastro_mmap/B1QgVf: deleted
 @end example
 
 @noindent
@@ -8043,16 +8043,16 @@ In the event of a crash, the memory-mapped files will not be deleted and you hav
 
 This brings us to managing the memory-mapped files in your non-volatile memory.
 In other words: knowing where they are saved, or intentionally placing them in different places of your file system, or deleting them when necessary.
-As the examples above show, memory-mapped files are stored in a hidden sub-directory of the the running directory called @file{.gnuastro_mmap}.
+As the examples above show, memory-mapped files are stored in a sub-directory of the the running directory called @file{gnuastro_mmap}.
 If this directory doesn't exist, Gnuastro will automatically create it when memory mapping becomes necessary.
-Alternatively, it may happen that the @file{.gnuastro_mmap} sub-directory exists and isn't writable, or it can't be created.
-In such cases, the memory-mapped file for each dataset will be created in the running directory with a @file{.gnuastro_mmap_} prefix.
+Alternatively, it may happen that the @file{gnuastro_mmap} sub-directory exists and isn't writable, or it can't be created.
+In such cases, the memory-mapped file for each dataset will be created in the running directory with a @file{gnuastro_mmap_} prefix.
 
 Therefore one easy way to delete all memory-mapped files in case of a crash, is to delete everything within the sub-directory (first command below), or all files stating with this prefix:
 
 @example
-rm -f .gnuastro_mmap/*
-rm -f .gnuastro_mmap_*
+rm -f gnuastro_mmap/*
+rm -f gnuastro_mmap_*
 @end example
 
 A much more common issue in dealing with memory-mapped files is their location.
@@ -8061,15 +8061,15 @@ But you also have another partition on an SSD (which has much faster I/O).
 So you want your memory-mapped files to be created in the SSD to speed up your processing.
 In this scenario, you want your project source directory to only contain your plain-text scripts and you want your project's built products (even the temporary memory-mapped files) to be built in a different location because they are large; thus I/O speed becomes important.
 
-To host the memory-mapped files in another location, you can set the hidden subdirectory (@file{.gnuastro_mmap}) to be a symbolic link to the location with fast I/O.
+To host the memory-mapped files in another location (with fast I/O), you can set (@file{gnuastro_mmap}) to be a symbolic link to it.
 For example, let's assume you want your memory-mapped files to be stored in @file{/path/to/dir/for/mmap}.
 All you have to do is to run the following command before your Gnuastro analysis command(s).
 
 @example
-ln -s /path/to/dir/for/mmap .gnuastro_mmap
+ln -s /path/to/dir/for/mmap gnuastro_mmap
 @end example
 
-The programs will delete a memory-mapped file when it is no longer needed, but they won't delete the @file{.gnuastro_mmap} directory that hosts them.
+The programs will delete a memory-mapped file when it is no longer needed, but they won't delete the @file{gnuastro_mmap} directory that hosts them.
 So if your project involves many Gnuastro programs (possibly called in parallel) and you want your memory-mapped files to be in a different location, you just have to make the symbolic link above once at the start, and all the programs will use it if necessary.
 
 Another memory-management scenario that may happen is this: you don't want a Gnuastro program to allocate internal datasets in the RAM at all.
@@ -8091,7 +8091,7 @@ The pre-defined value to this option is an extremely large value in the lowest-l
 This value is larger than the largest possible available RAM.
 You can check by running any Gnuastro program with a @option{-P} option.
 Because no dataset will be larger than this, by default the programs will first attempt to use the RAM for temporary storage.
-But if writing in the RAM fails (for any reason, maily due to lack of available space), then a memory-mapped file will be created.
+But if writing in the RAM fails (for any reason, mainly due to lack of available space), then a memory-mapped file will be created.
 
 
 
@@ -8635,7 +8635,7 @@ In the last few decades it has proved so useful and robust that the Vatican Libr
 @cindex IAU, international astronomical union
 Although the full name of the standard invokes the idea that it is only for images, it also contains complete and robust features for tables.
 It started off in the 1970s and was formally published as a standard in 1981, it was adopted by the International Astronomical Union (IAU) in 1982 and an IAU working group to maintain its future was defined in 1988.
-The FITS 2.0 and 3.0 standards were approved in 2000 and 2008 respectively, and the 4.0 draft has also been released recently, please see the @url{https://fits.gsfc.nasa.gov/fits_standard.html, FITS standard document webpage} for the full text of all versions.
+The FITS 2.0 and 3.0 standards were approved in 2000 and 2008 respectively, and the 4.0 draft has also been released recently, please see the @url{https://fits.gsfc.nasa.gov/fits_standard.html, FITS standard document web page} for the full text of all versions.
 Also see the @url{https://doi.org/10.1051/0004-6361/201015362, FITS 3.0 standard paper} for a nice introduction and history along with the full standard.
 
 @cindex Meta-data
@@ -8792,7 +8792,7 @@ For more, see @ref{Invoking astfits}.
 Print the HDU's pixel-scale (change in world coordinate for one pixel along each dimension) and pixel area or voxel volume.
 Without the @option{--quiet} option, the output of @option{--pixelscale} has multiple lines and explanations, thus being more human-friendly.
 It prints the file/HDU name, number of dimensions, and the units along with the actual pixel scales.
-Also, when any of the units are in degrees, the pixel scales and area/volume are also printed in units of arcsecs.
+Also, when any of the units are in degrees, the pixel scales and area/volume are also printed in units of arc-seconds.
 For 3D datasets, the pixel area (on each 2D slice of the 3D cube) is printed as well as the voxel volume.
 
 However, in scripts (that are to be run automatically), this human-friendly format is annoying, so when called with the @option{--quiet} option, only the pixel-scale value(s) along each dimension is(are) printed in one line.
@@ -10238,7 +10238,7 @@ $ asttable bintab.fits --sort=3 -ooutput.txt
 ## be a text table) and keep the third and fourth columns.
 $ asttable cat.txt -c'arith $2 $1 -',3,4 -ocat.fits
 
-## Convert sexagesimal coordiantes to degrees (same can be done in a
+## Convert sexagesimal coordinates to degrees (same can be done in a
 ## large table given as argument).
 $ echo "7h34m35.5498 31d53m14.352s" | asttable
 
@@ -10555,7 +10555,7 @@ These customizations are done through the Astronomical Data Query Language (ADQL
 
 Therefore, if you are sufficiently familiar with TAP and ADQL, you can easily custom-download any part of an online dataset.
 However, you also need to keep a record of the URLs of each database and in many cases, the commands will become long and hard/buggy to type on the command-line.
-On the other hand, most astronomers don't know TAP or ADQL at all, and are forced to go to the database's webpage which is slow (it needs to download so many images, and has too much annoying information), requires manual interaction (further making it slow and buggy), and can't be automated.
+On the other hand, most astronomers don't know TAP or ADQL at all, and are forced to go to the database's web page which is slow (it needs to download so many images, and has too much annoying information), requires manual interaction (further making it slow and buggy), and can't be automated.
 
 Gnuastro's Query program is designed to be the middle-man in this process: it provides a simple high-level interface to let you specify your constraints on what you want to download.
 It then internally constructs the command to download the data based on your inputs and runs it to download your desired data.
@@ -10590,7 +10590,7 @@ $ astquery gaia --information
 
 @noindent
 However, other databases like VizieR host many more datasets (tens of thousands!).
-Therefore it is very inconvenient to get the @emph{full} information everytime you want to find your dataset of interest (the full metadata file VizieR is more than 20Mb).
+Therefore it is very inconvenient to get the @emph{full} information every time you want to find your dataset of interest (the full metadata file VizieR is more than 20Mb).
 In such cases, you can limit the downloaded and displayed information with the @code{--limitinfo} option.
 For example with the first command below, you can get all datasets relating to the MUSE (an instrument on the Very Large Telescope), and those that include Roland Bacon (Principle Investigator of MUSE) as an author (@code{Bacon, R.}).
 Recall that @option{-i} is the short format of @option{--information}.
@@ -10662,7 +10662,7 @@ Here is the list of short names for dataset(s) in ASTRON's VO service:
 @cindex Gaia catalog
 @cindex Catalog, Gaia
 @cindex Database, Gaia
-The Gaia project (@url{https://www.cosmos.esa.int/web/gaia}) database which is a large collection of star positions on the celestial sphere, as well as peculiar velocities, paralloxes and magnitudes in some bands among many others.
+The Gaia project (@url{https://www.cosmos.esa.int/web/gaia}) database which is a large collection of star positions on the celestial sphere, as well as peculiar velocities, parallaxes and magnitudes in some bands among many others.
 Besides scientific studies (like studying resolved stellar populations in the Galaxy and its halo), Gaia is also invaluable for raw data calibrations, like astrometry.
 A query to @code{gaia} is submitted to @code{https://gea.esac.esa.int/tap-server/tap/sync}.
 
@@ -10726,7 +10726,7 @@ A query to @code{vizier} is submitted to @code{http://tapvizier.u-strasbg.fr/TAP
 @cindex WISE All-Sky data Release
 Here is the list of short names for popular datasets within VizieR (sorted alphabetically by their short name).
 Please feel free to suggest other major catalogs (covering a wide area or commonly used in your field)..
-For details on each dataset with necessary citations, and links to webpages, look into their details with their ViziR names in @url{https://vizier.u-strasbg.fr/viz-bin/VizieR}.
+For details on each dataset with necessary citations, and links to web pages, look into their details with their ViziR names in @url{https://vizier.u-strasbg.fr/viz-bin/VizieR}.
 @itemize
 @item
 @code{2mass --> II/246/out} (2MASS All-Sky Catalog)
@@ -10828,7 +10828,7 @@ If this option is given, the raw string is directly passed to the server and all
 With the high-level options (like @option{--column}, @option{--center}, @option{--radius}, @option{--range} and other constraining options below), the low-level query will be constructed automatically for the particular database.
 This method is only limited to the generic capabilities that Query provides for all servers.
 So @option{--query} is more powerful, however, in this mode, you don't need any knowledge of the database's query language.
-You can see the interlaly generated query on the terminal (if @option{--quiet} is not used) or in the 0-th extension of the output (if its a FITS file).
+You can see the internally generated query on the terminal (if @option{--quiet} is not used) or in the 0-th extension of the output (if its a FITS file).
 This full command contains the internally generated query.
 @end itemize
 
@@ -10847,7 +10847,7 @@ This strategy avoids unnecessary surprises depending on database.
 For example some databases can download a compressed FITS table, even though we ask for FITS.
 But with the strategy above, the final output will be an uncompressed FITS file.
 The metadata that is added by Query (including the full download command) is also very useful for future usage of the downloaded data.
-Unfotunately many databases don't write the input queries into their generated tables.
+Unfortunately many databases don't write the input queries into their generated tables.
 
 @table @option
 
@@ -11350,7 +11350,7 @@ You can define as many vertices as you like.
 If you would like to use space characters between the dimensions and vertices to make them more human-readable, then you have to put the value to this option in double quotation marks.
 
 For example, let's assume you want to work on the deepest part of the WFC3/IR images of Hubble Space Telescope eXtreme Deep Field (HST-XDF).
-@url{https://archive.stsci.edu/prepds/xdf/, According to the webpage}@footnote{@url{https://archive.stsci.edu/prepds/xdf/}} the deepest part is contained within the coordinates:
+@url{https://archive.stsci.edu/prepds/xdf/, According to the web page}@footnote{@url{https://archive.stsci.edu/prepds/xdf/}} the deepest part is contained within the coordinates:
 
 @example
 [ (53.187414,-27.779152), (53.159507,-27.759633),
@@ -12009,7 +12009,7 @@ Interpolate the blank elements of the second popped operand with the median of n
 The number of the nearest non-blank neighbors used to calculate the median is given by the first popped operand.
 
 The distance of the nearest non-blank neighbors is irrelevant in this interpolation.
-The neighbors of each blank pixel will be parsed in expanding circluar rings (for 2D images) or spherical surfaces (for 3D cube) and each non-blank element over them is stored in memory.
+The neighbors of each blank pixel will be parsed in expanding circular rings (for 2D images) or spherical surfaces (for 3D cube) and each non-blank element over them is stored in memory.
 When the requested number of non-blank neighbors have been found, their median is used to replace that blank element.
 For example the line below replaces each blank element with the the median of the nearest 5 pixels.
 
@@ -12143,7 +12143,7 @@ $ astarithmetic image.fits 100 gt -obinary.fits
 $ astarithmetic binary.fits 2 erode -oout.fits
 @end example
 
-Infact, you can merge these operations into one command thanks to the reverse polish notation (see @ref{Reverse polish notation}):
+In fact, you can merge these operations into one command thanks to the reverse polish notation (see @ref{Reverse polish notation}):
 @example
 $ astarithmetic image.fits 100 gt 2 erode -oout.fits
 @end example
@@ -12276,7 +12276,7 @@ Logical OR: returns 1 if either one of the operands is non-zero and 0 only when 
 Both operands have to be the same kind: either both images or both numbers.
 The usage is similar to @code{and}.
 
-For example if you only want to see which pixels in an image have a value @emph{outside of} -100 (greater equal, or inclusive) and 200 (less than, or excuslive), you can use this command:
+For example if you only want to see which pixels in an image have a value @emph{outside of} -100 (greater equal, or inclusive) and 200 (less than, or exclusive), you can use this command:
 @example
 $ astarithmetic image.fits set-i i -100 lt i 200 ge or
 @end example
@@ -14322,10 +14322,10 @@ When called with the @option{--histogram=image} option, Statistics will output a
 If you asked for @option{--numbins=N} and @option{--numbins2=M} the image will have a size of @mymath{N\times M} pixels (one pixel per 2D bin).
 Also, the FITS image will have a linear WCS that is scaled to the 2D bin size along each dimension.
 So when you hover your mouse over any part of the image with a FITS viewer (for example SAO DS9), besides the number of points in each pixel, you can directly also see ``coordinates'' of the pixels along the two axes.
-You can also use the optimized and fast FITS viewer features for many aspects of visually inspecting the distributions (which we won't go into futher here).
+You can also use the optimized and fast FITS viewer features for many aspects of visually inspecting the distributions (which we won't go into further).
 
 @cindex Color-magnitude diagram
-@cindex Diagaram, Color-magnitude
+@cindex Diagram, Color-magnitude
 For example let's assume you want to derive the color-magnitude diagram (CMD) of the @url{http://uvudf.ipac.caltech.edu, UVUDF survey}.
 You can run the first command below to download the table with magnitudes of objects in many filters and run the second command to see general column metadata after it is downloaded.
 
@@ -14387,7 +14387,7 @@ This is good for a fast progress update.
 But for your paper or more official report, you want to show something with higher quality.
 For that, you can use the PGFPlots package in @LaTeX{} to add axises in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points, lines and etc).
 But to load the 2D histogram into PGFPlots first you need to convert the FITS image into a more standard format, for example PDF.
-We'll use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixles with a value of zero to white):
+We'll use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixels with a value of zero to white):
 
 @example
 $ astconvertt cmd-2d-hist.fits --colormap=sls-inverse \
@@ -14664,7 +14664,7 @@ The distribution's mode shifts the least to the positive.
 Inverting the argument above gives us a robust method to quantify the significance of signal in a dataset.
 Namely, when the mean and median of a distribution are approximately equal, or the mean's quantile is around 0.5, we can argue that there is no significant signal.
 
-To allow for gradients (which are commonly present in raw exposures, or when there are large forground galaxies in the field), we consider the image to be made of a grid of tiles@footnote{The options to customize the tessellation are discussed in @ref{Processing options}.} (see @ref{Tessellation}).
+To allow for gradients (which are commonly present in raw exposures, or when there are large foreground galaxies in the field), we consider the image to be made of a grid of tiles@footnote{The options to customize the tessellation are discussed in @ref{Processing options}.} (see @ref{Tessellation}).
 Hence, from the difference of the mean and median on each tile, we can estimate the significance of signal in it.
 The median of a distribution is defined to be the value of the distribution's middle point after sorting (or 0.5 quantile).
 Thus, to estimate the presence of signal, we just have to estimate the quantile of the mean (@mymath{q_{mean}}).
@@ -17530,7 +17530,7 @@ This is the square root of the mean variance under the object, or the root mean 
 The raw area (number of pixels/voxels) in any clump or object independent of what pixel it lies over (if it is NaN/blank or unused for example).
 
 @item --areaarcsec2
-The used (non-blank in values image) area of the labeled region in units of arcsec squared.
+The used (non-blank in values image) area of the labeled region in units of arc-seconds squared.
 This column is just the value of the @option{--area} column, multiplied by the area of each pixel in the input image (in units of arcsec^2).
 Similar to the @option{--ra} or @option{--dec} columns, for this option to work, the objects extension used has to have a WCS structure.
 
@@ -17559,7 +17559,7 @@ The maximum value is estimated from the mean of the top-three pixels with the hi
 The number of pixels that have half the value of that maximum are then found (value in the @option{--halfmaxarea} column) and a radius is estimated from the area.
 See the description under @option{--halfsumradius} for more on converting area to radius along major axis.
 
-Because of its non-parametric nature, this column is most reliable on clumps and should only be used in objects with great causion.
+Because of its non-parametric nature, this column is most reliable on clumps and should only be used in objects with great caution.
 This is because objects can have more than one clump (peak with true signal) and multiple peaks are not treated separately in objects, so the result of this column will be biased.
 
 Also, because of its non-parametric nature, this FWHM it does not account for the PSF, and it will be strongly affected by noise if the object is faint.
@@ -17570,7 +17570,7 @@ For a more reliable value, this fraction should be around 4 (so half the maximum
 
 @item --halfmaxarea
 The number of pixels with values larger than half the maximum flux within the labeled region.
-This option is used to estimate @option{--fwhm}, so please read the notes there for the cavaeats and necessary precautions.
+This option is used to estimate @option{--fwhm}, so please read the notes there for the caveats and necessary precautions.
 
 @item --halfmaxradius
 The radius of region containing half the maximum flux within the labeled region.
@@ -17578,7 +17578,7 @@ This is just half the value reported by @option{--fwhm}.
 
 @item --halfmaxsum
 The sum of the pixel values containing half the maximum flux within the labeled region (or those that are counted in @option{--halfmaxarea}).
-This option uses the pixels within @option{--fwhm}, so please read the notes there for the cavaeats and necessary precautions.
+This option uses the pixels within @option{--fwhm}, so please read the notes there for the caveats and necessary precautions.
 
 @item --halfmaxsb
 The surface brightness (in units of mag/arcsec@mymath{^2}) within the region that contains half the maximum value of the labeled region.
@@ -17603,7 +17603,7 @@ Radius (in units of pixels) derived from the area that contains half the total s
 If the area is @mymath{A_h} and the axis ratio is @mymath{q}, then the value returned in this column is @mymath{\sqrt{A_h/({\pi}q)}}.
 This option is a good measure of the concentration of the @emph{observed} (after PSF convolution and noisy) object or clump,
 But as described below it underestimates the effective radius.
-Also, it should be used in causion with objects, it reliable with clumps, see the note under @option{--halfradiusarea}.
+Also, it should be used in caution with objects, it reliable with clumps, see the note under @option{--halfradiusarea}.
 
 @cindex Ellipse area
 @cindex Area, ellipse
@@ -17614,7 +17614,7 @@ For a circle (where @mymath{q=1}), this simplifies to the familiar @mymath{A={\p
 @cindex Effective radius
 The suffix @code{obs} is added to the option name to avoid confusing this with a profile's effective radius for S@'ersic profiles, commonly written as @mymath{r_e}.
 For more on @mymath{r_e}, please see @ref{Galaxies}.
-Therefore, when @mymath{r_e} is meaningful for the target (the target is elliptically symmetric and can be parametrized as a S@'ersic profile), @mymath{r_e} should be derived from fitting the profile with a S@'ersic function which has been convolved with the PSF.
+Therefore, when @mymath{r_e} is meaningful for the target (the target is elliptically symmetric and can be parameterized as a S@'ersic profile), @mymath{r_e} should be derived from fitting the profile with a S@'ersic function which has been convolved with the PSF.
 But from the equation above, you see that this radius is derived from the raw image's labeled values (after convolution, with no parametric profile), so this column's value will generally be (much) smaller than @mymath{r_e}, depending on the PSF, depth of the dataset, the morphology, or if a fraction of the profile falls on the edge of the image.
 
 @item --fracmaxarea1
@@ -17731,7 +17731,7 @@ the same physical object.
 
 @item --inbetweenints
 Output will contain one row for all integers between 1 and the largest label in the input (irrespective of their existance in the input image).
-By default, MakeCatalog's output will only contain rows with integers that actually corresponded to atleast one pixel in the input dataset.
+By default, MakeCatalog's output will only contain rows with integers that actually corresponded to at least one pixel in the input dataset.
 
 For example if the input's only labeled pixel values are 11 and 13, MakeCatalog's default output will only have two rows.
 If you use this option, it will have 13 rows and all the columns corresponding to integer identifiers that didn't correspond to any pixel will be 0 or NaN (depending on context).
@@ -17789,7 +17789,7 @@ Note that the surface brightness limit is only reported when a standard deviatio
 This value is a per-pixel value, not per object/clump and is not found over an area or aperture, like the common @mymath{5\sigma} values that are commonly reported as a measure of depth or the upper-limit measurements (see @ref{Quantifying measurement limits}).
 
 @item --sfmagarea=FLT
-Area (in arcseconds squared) to convert the per-pixel estimation of @option{--sfmagnsigma} in the comments section of the output tables.
+Area (in arc-seconds squared) to convert the per-pixel estimation of @option{--sfmagnsigma} in the comments section of the output tables.
 Note that the surface brightness limit is only reported when a standard deviation image is read, in other words a column using it is requested (for example @option{--sn}) or @option{--forcereadstd} is called.
 
 Note that this is just a unit conversion using the World Coordinate System (WCS) information in the input's header.
@@ -17847,7 +17847,7 @@ $ astmatch --aperture=2 input1.txt input2.fits                   \
            --outcols=a1,aRA,aDEC,b/^MAG/,bBRG,a10
 
 ## Match the two catalogs within an elliptical aperture of 1 and 2
-## arcseconds along RA and Dec respectively.
+## arc-seconds along RA and Dec respectively.
 $ astmatch --aperture=1/3600,2/3600 in1.fits in2.txt
 
 ## Match the RA and DEC columns of the first input with the RA_D
@@ -17974,7 +17974,7 @@ With this option, you can write the coordinates on the command-line and thus avo
 @item -a FLT[,FLT[,FLT]]
 @itemx --aperture=FLT[,FLT[,FLT]]
 Parameters of the aperture for matching.
-The values given to this option can be fractions, for example when the position columns are in units of degrees, @option{1/3600} can be used to ask for one arcsecond.
+The values given to this option can be fractions, for example when the position columns are in units of degrees, @option{1/3600} can be used to ask for one arc-second.
 The interpretation of the values depends on the requested dimensions (determined from @option{--ccol1} and @code{--ccol2}) and how many values are given to this option.
 
 When multiple objects are found within the aperture, the match is defined
@@ -18481,7 +18481,7 @@ So astronomers have chosen to use a logarithmic scale to talk about the brightne
 
 @cindex Hipparchus of Nicaea
 But the logarithm can only be usable with a dimensionless value that is always positive.
-Fortunately brightness is always positive (atleast in theory@footnote{In practice, for very faint objects, if the background brightness is over-subtracted, we may end up with a negative brightness in a real object.}).
+Fortunately brightness is always positive (at least in theory@footnote{In practice, for very faint objects, if the background brightness is over-subtracted, we may end up with a negative brightness in a real object.}).
 To remove the dimensions, we divide the brightness of the object (@mymath{B}) by a reference brightness (@mymath{B_r}).
 We then define a logarithmic scale as @mymath{magnitude} through the relation below.
 The @mymath{-2.5} factor in the definition of magnitudes is a legacy of the our ancient colleagues and in particular Hipparchus of Nicaea (190-120 BC).
@@ -19955,7 +19955,7 @@ In other contexts (for example in a batch script or during a discussion), you kn
 
 You can use any number of the options described below in any order.
 When any of these options are requested, CosmicCalculator's output will just be a single line with a single space between the (possibly) multiple values.
-In the example below, only the tangential distance along one arcsecond (in kpc), absolute magnitude conversion, and age of the universe at redshift 2 are printed (recall that you can merge short options together, see @ref{Options}).
+In the example below, only the tangential distance along one arc-second (in kpc), absolute magnitude conversion, and age of the universe at redshift 2 are printed (recall that you can merge short options together, see @ref{Options}).
 
 @example
 $ astcosmiccal -z2 -sag
@@ -20025,8 +20025,8 @@ The angular diameter distance to object at given redshift in Megaparsecs (Mpc).
 
 @item -s
 @itemx --arcsectandist
-The tangential distance covered by 1 arcseconds at the given redshift in kiloparsecs (Kpc).
-This can be useful when trying to estimate the resolution or pixel scale of an instrument (usually in units of arcseconds) at a given redshift.
+The tangential distance covered by 1 arc-seconds at the given redshift in kiloparsecs (Kpc).
+This can be useful when trying to estimate the resolution or pixel scale of an instrument (usually in units of arc-seconds) at a given redshift.
 
 @item -L
 @itemx --luminositydist
@@ -21728,7 +21728,7 @@ Remove any row that has at least one blank value in any of the input columns.
 The input @code{columns} is a list of @code{gal_data_t}s (see @ref{List of gal_data_t}).
 After this function, all the elements in @code{columns} will still have the same size as each other, but if any of the searched columns has blank elements, all their sizes will decrease together.
 
-If @code{column_indexs==NULL}, then all the columns (nodes in the list) will be checked for blank elements, and any row that has atleast one blank element will be removed.
+If @code{column_indexs==NULL}, then all the columns (nodes in the list) will be checked for blank elements, and any row that has at least one blank element will be removed.
 When @code{column_indexs!=NULL}, only the columns whose index (counting from zero) is in @code{column_indexs} will be used to check for blank values (see @ref{List of size_t}.
 In any case (no matter which columns are checked for blanks), the selected rows from all columns will be removed.
 @end deftypefun
@@ -21875,61 +21875,47 @@ independent parameter. However, low-level operations with the dataset
 is designed to avoid calculating it every time.
 
 @item int quietmmap
-When this value is zero, and the dataset must not be allocated in RAM (see
-@code{mmapname} and @code{minmapsize}), a warning will be printed to inform
-the user when the file is created and when it is deleted. The warning
-includes the filename, the size in bytes, and the fact that they can toggle
-this behavior through @code{--minmapsize} option in Gnuastro's programs.
+When this value is zero, and the dataset must not be allocated in RAM (see @code{mmapname} and @code{minmapsize}), a warning will be printed to inform the user when the file is created and when it is deleted.
+The warning includes the filename, the size in bytes, and the fact that they can toggle this behavior through @code{--minmapsize} option in Gnuastro's programs.
 
 @item char *mmapname
-Name of file hosting the @code{mmap}'d contents of @code{array}. If the
-value of this variable is @code{NULL}, then the contents of @code{array}
-are actually stored in RAM, not in a file on the HDD/SSD. See the
-description of @code{minmapsize} below for more.
+Name of file hosting the @code{mmap}'d contents of @code{array}.
+If the value of this variable is @code{NULL}, then the contents of @code{array} are actually stored in RAM, not in a file on the HDD/SSD.
+See the description of @code{minmapsize} below for more.
 
-If a file is used, it will be kept in the hidden @file{.gnuastro_mmap} directory.
+If a file is used, it will be kept in the @file{gnuastro_mmap} directory of the running directory.
 Its name is randomly selected to allow multiple arrays at the same time, see description of @option{--minmapsize} in @ref{Processing options}.
 When @code{gal_data_free} is called the randomly named file will be deleted.
 
 @item size_t minmapsize
-The minimum size of an array (in bytes) to store the contents of
-@code{array} as a file (on the non-volatile HDD/SSD), not in RAM. This can
-be very useful for large datasets which can be very memory intensive and
-the user's RAM might not be sufficient to keep/process it. A random
-filename is assigned to the array which is available in the @code{mmapname}
-element of @code{gal_data_t} (above), see there for more. @code{minmapsize}
-is stored in each @code{gal_data_t}, so it can be passed on to
-subsequent/derived datasets.
+The minimum size of an array (in bytes) to store the contents of @code{array} as a file (on the non-volatile HDD/SSD), not in RAM.
+This can be very useful for large datasets which can be very memory intensive and the user's RAM might not be sufficient to keep/process it.
+A random filename is assigned to the array which is available in the @code{mmapname} element of @code{gal_data_t} (above), see there for more.
+@code{minmapsize} is stored in each @code{gal_data_t}, so it can be passed on to subsequent/derived datasets.
 
-See the description of the @option{--minmapsize} option in @ref{Processing
-options} for more on using this value.
+See the description of the @option{--minmapsize} option in @ref{Processing options} for more on using this value.
 
 @item nwcs
 The number of WCS coordinate representations (for WCSLIB).
 
 @item struct wcsprm *wcs
-The main WCSLIB structure keeping all the relevant information necessary
-for WCSLIB to do its processing and convert data-set positions into
-real-world positions. When it is given a @code{NULL} value, all possible
-WCS calculations/measurements will be ignored.
+The main WCSLIB structure keeping all the relevant information necessary for WCSLIB to do its processing and convert data-set positions into real-world positions.
+When it is given a @code{NULL} value, all possible WCS calculations/measurements will be ignored.
 
 @item uint8_t flag
-Bit-wise flags to describe general properties of the dataset. The number of
-bytes available in this flag is stored in the @code{GAL_DATA_FLAG_SIZE}
-macro. Note that you should use bit-wise operators@footnote{See
-@url{https://en.wikipedia.org/wiki/Bitwise_operations_in_C}.} to check
-these flags. The currently recognized bits are stored in these macros:
+Bit-wise flags to describe general properties of the dataset.
+The number of bytes available in this flag is stored in the @code{GAL_DATA_FLAG_SIZE} macro.
+Note that you should use bit-wise operators@footnote{See @url{https://en.wikipedia.org/wiki/Bitwise_operations_in_C}.} to check these flags.
+The currently recognized bits are stored in these macros:
 
 @table @code
 
 @cindex Blank data
 @item GAL_DATA_FLAG_BLANK_CH
-Marking that the dataset has been checked for blank values or not. When a
-dataset doesn't have any blank values, the @code{GAL_DATA_FLAG_HASBLANK}
-bit will be zero. But upon initialization, all bits also get a value of
-zero. Therefore, a checker needs this flag to see if the value in
-@code{GAL_DATA_FLAG_HASBLANK} is reliable (dataset has actually been parsed
-for a blank value) or not.
+Marking that the dataset has been checked for blank values or not.
+When a dataset doesn't have any blank values, the @code{GAL_DATA_FLAG_HASBLANK} bit will be zero.
+But upon initialization, all bits also get a value of zero.
+Therefore, a checker needs this flag to see if the value in @code{GAL_DATA_FLAG_HASBLANK} is reliable (dataset has actually been parsed for a blank value) or not.
 
 Also, if it is necessary to re-check the presence of flags, you just have
 to set this flag to zero and call @code{gal_blank_present} for example to
@@ -22300,7 +22286,7 @@ Return the radial distance between the two coordinates @code{a} and
 
 @deftypefun float gal_dimension_dist_elliptical (double @code{*center}, double @code{*pa_deg}, double @code{*q}, size_t @code{ndim}, double @code{*point})
 @cindex Ellipse
-@cindex Ellipoid
+@cindex Ellipsoid
 @cindex Axis ratio
 @cindex Position angle
 @cindex Elliptical distance
@@ -24856,7 +24842,7 @@ return @code{NULL}.
 @end deftypefun
 
 @deftypefun double gal_wcs_pixel_area_arcsec2 (struct wcsprm @code{*wcs})
-Return the pixel area of @code{wcs} in arcsecond squared. If the input WCS
+Return the pixel area of @code{wcs} in arc-second squared. If the input WCS
 structure is not two dimensional and the units (@code{CUNIT} keywords) are
 not @code{deg} (for degrees), then this function will return a NaN.
 @end deftypefun
@@ -26481,7 +26467,7 @@ All these functions will all be satisfied if you use @code{gal_table_read} to re
 
 @cindex Permutation
 The functions below return a simply-linked list of three 1D datasets (see @ref{List of gal_data_t}), let's call the returned dataset @code{ret}.
-The first two (@code{ret} and @code{ret->next}) are permutaitons.
+The first two (@code{ret} and @code{ret->next}) are permutations.
 In other words, the @code{array} elements of both have a type of @code{size_t}, see @ref{Permutations}.
 The third node (@code{ret->next->next}) is the calculated distance for that match and its array has a type of @code{double}.
 The number of matches will be put in the space pointed by the @code{nummatched} argument.
@@ -28860,7 +28846,7 @@ new to coding (and text editors) and only has a scientific curiosity.
 
 Newcomers to coding and development, who are curious enough to venture into
 the code, will probably not be using (or have any knowledge of) advanced
-text editors. They will see the raw code in the webpage or on a simple text
+text editors. They will see the raw code in the web page or on a simple text
 editor (like Gedit) as plain text. Trying to learn and understand a file
 with dense functions that are all spaced with one or two blank lines can be
 very taunting for a newcomer. But when they scroll through the file and see
@@ -29556,7 +29542,7 @@ in the documentation (also a bug) or a feature request or an enhancement.
 The set of horizontal links on the top of the page (Starting with
 `Main' and `Homepage' and finishing with `News') are the easiest way
 to access these trackers (and other major aspects of the project) from
-any part of the project webpage. Hovering your mouse over them will
+any part of the project web page. Hovering your mouse over them will
 open a drop down menu that will link you to the different things you
 can do on each tracker (for example, `Submit new' or `Browse').  When
 you browse each tracker, you can use the ``Display Criteria'' link
@@ -29725,10 +29711,10 @@ people who have assigned their copyright to the FSF and have thus helped to
 guarantee the freedom and reliability of Gnuastro. The Free Software
 Foundation will also acknowledge your copyright contributions in the Free
 Software Supporter: @url{https://www.fsf.org/free-software-supporter} which
-will circulate to a very large community (104,444 people in April
-2016). See the archives for some examples and subscribe to receive
+will circulate to a very large community (222,882 people in January 2021).
+See the archives for some examples and subscribe to receive
 interesting updates. The very active code contributors (or developers) will
-also be recognized as project members on the Gnuastro project webpage (see
+also be recognized as project members on the Gnuastro project web page (see
 @ref{Gnuastro project webpage}) and can be given a @code{gnu.org} email
 address. So your very valuable contribution and copyright assignment will
 not be forgotten and is highly appreciated by a very large community. If
@@ -29911,13 +29897,13 @@ This is a tutorial on the second suggested method (commonly known as
 forking) that you can submit your modifications in Gnuastro (see
 @ref{Production workflow}).
 
-To start, please create an empty repository on your hosting service webpage
+To start, please create an empty repository on your hosting service web page
 (we recommend GitLab@footnote{See
 @url{https://www.gnu.org/software/repo-criteria-evaluation.html} for an
 evaluation of the major existing repositories. Gnuastro uses GNU Savannah
 (which also has the highest ranking in the evaluation), but for starters,
 GitLab may be easier.}). If this is your first hosted repository on the
-webpage, you also have to upload your public SSH key@footnote{For example
+web page, you also have to upload your public SSH key@footnote{For example
 see this explanation provided by GitLab:
 @url{http://docs.gitlab.com/ce/ssh/README.html}.} for the @command{git
 push} command below to work. Here we'll assume you use the name
@@ -29925,7 +29911,7 @@ push} command below to work. Here we'll assume you use the name
 @file{gnuastro-janedoe} as the name of your Gnuastro fork. Any online
 hosting service will give you an address (similar to the
 `@file{git@@gitlab.com:...}' below) of the empty repository you have created
-using their webpage, use that address in the third line below.
+using their web page, use that address in the third line below.
 
 @example
 $ git clone git://git.sv.gnu.org/gnuastro.git
@@ -30168,7 +30154,7 @@ SAO ds9@footnote{@url{http://ds9.si.edu/}} is not a requirement of
 Gnuastro, it is a FITS image viewer. So to check your inputs and
 outputs, it is one of the best options. Like the other packages, it
 might already be available in your distribution's repositories. It is
-already pre-compiled in the download section of its webpage. Once you
+already pre-compiled in the download section of its web page. Once you
 download it you can unpack and install (move it to a system recognized
 directory) with the following commands (@code{x.x.x} is the version
 number):
@@ -30411,7 +30397,7 @@ WCSLIB. Installing it is a little tricky (mainly because it is so
 old!).
 
 You can download the most recent version from the FTP link in its
-webpage@footnote{@url{http://www.astro.caltech.edu/~tjp/pgplot/}}. You can
+web page@footnote{@url{http://www.astro.caltech.edu/~tjp/pgplot/}}. You can
 unpack it with the @command{tar xf} command. Let's assume the directory you
 have unpacked it to is @file{PGPLOT}, most probably it is:
 @file{/home/username/Downloads/pgplot/}.  open the @file{drivers.list}
