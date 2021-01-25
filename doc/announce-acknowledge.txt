@@ -1,25 +1,5 @@
 Alphabetically ordered list to acknowledge in the next release.
 
-Antonio Diaz Diaz
-Paul Eggert
-Andrés García-Serra Romero
-Thérèse Godefroy
-Bruno Haible
-Martin Kuemmel
-Javier Licandro
-Alireza Molaeinezhad
-Javier Moldon
-Sebastian Luna Valero
-Samane Raji
-Alberto Madrigal
-Carlos Morales Socorro
-Francois Ochsenbein
-Joanna Sakowska
-Zahra Sharbaf
-Sachin Kumar Singh
-Ignacio Trujillo
-Xiuqin Wu
-
 
 
 
