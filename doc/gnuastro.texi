@@ -10753,7 +10753,7 @@ For details on each dataset with necessary citations, and links to web pages, lo
 @item
 @code{gaiadr2 --> I/345/gaia2} (GAIA Data Release 2)
 @item
-@code{gaiaedr3 --> I/350/gaiaedr3} (GAIA Data Release 3)
+@code{gaiaedr3 --> I/350/gaiaedr3} (GAIA early Data Release 3)
 @item
 @code{galex5 --> II/312/ais} (All-sky Survey of GALEX DR5)
 @item
