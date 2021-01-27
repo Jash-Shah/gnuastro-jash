@@ -149,7 +149,7 @@ struct argp_option program_options[] =
     {
       "overlapwith",
       UI_KEY_OVERLAPWITH,
-      "STR",
+      "FITS",
       0,
       "Set query region to overlap with this image.",
       GAL_OPTIONS_GROUP_INPUT,

@@ -195,7 +195,7 @@ struct argp_option program_options[] =
     {
       "catalog",
       UI_KEY_CATALOG,
-      "STR",
+      "FITS/TXT",
       0,
       "Input catalog filename.",
       UI_GROUP_CENTER_CATALOG,

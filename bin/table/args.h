@@ -47,7 +47,7 @@ struct argp_option program_options[] =
     {
       "wcsfile",
       UI_KEY_WCSFILE,
-      "STR",
+      "FITS",
       0,
       "File with WCS if conversion is requested.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -73,7 +73,7 @@ struct argp_option program_options[] =
     {
       "catcolumnfile",
       UI_KEY_CATCOLUMNFILE,
-      "STR",
+      "FITS/TXT",
       0,
       "File(s) to be concatenated by column.",
       GAL_OPTIONS_GROUP_INPUT,

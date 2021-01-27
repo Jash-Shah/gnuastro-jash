@@ -6678,8 +6678,13 @@ There are generally two types, depending on the context.
 If they are for fractions, they will have to be less than or equal to unity.
 
 @item STR
-The value is read as a string of characters (for example a file name)
-or other particular settings like a HDU name, see below.
+The value is read as a string of characters.
+For example column names in a table, or HDU names in a multi-extension FITS file.
+Other examples include human-readable settings by some programs like the @option{--domain} option of the Convolve program that can be either @code{spatial} or @code{frequency} (to specify the type of convolution, see @ref{Convolve}).
+
+@item FITS @r{or} FITS/TXT
+The value should be a file (most commonly FITS).
+In many cases, other formats may also be accepted (for example input tables can be FITS or plain-text, see @ref{Recognized table formats}).
 
 @end vtable
 
@@ -10321,8 +10326,8 @@ The order of the output columns will be the same order given to the option or in
 This option is not mandatory, if no specific columns are requested, all the input table columns are output.
 When this option is called multiple times, it is possible to output one column more than once.
 
-@item -w STR
-@itemx --wcsfile=STR
+@item -w FITS
+@itemx --wcsfile=FITS
 FITS file that contains the WCS to be used in the @code{wcstoimg} and @code{imgtowcs} operators of @option{--column} (see above).
 The extension name/number within the FITS file can be specified with @option{--wcshdu}.
 
@@ -10333,8 +10338,8 @@ If the value to this option is @option{none}, no WCS will be written in the outp
 FITS extension/HDU that contains the WCS to be used in the @code{wcstoimg} and @code{imgtowcs} operators of @option{--column} (see above).
 The FITS file name can be specified with @option{--wcsfile}.
 
-@item -L STR
-@itemx --catcolumnfile=STR
+@item -L FITS/TXT
+@itemx --catcolumnfile=FITS/TXT
 Concatenate (or add, or append) the columns of this option's value (a filename) to the output columns.
 This option may be called multiple times (to add columns from more than one file into the final output), the columns from each file will be added in the same order that this option is called.
 
@@ -10923,8 +10928,8 @@ In case, you don't know the full list of the dataset's column names a-priori, an
 Only ask for the first @code{INT} rows of the finally selected columns, not all the rows.
 This can be good when your search can result a large dataset, but before downloading the full volume, you want to see the top rows and get a feeling of what the whole dataset looks like.
 
-@item -v STR
-@itemx --overlapwith=STR
+@item -v FITS
+@itemx --overlapwith=FITS
 File name of FITS file containing an image (in the HDU given by @option{--hdu}) to use for identifying the region to query in the give database and dataset.
 Based on the image's WCS and pixel size, the sky coverage of the image is estimated and values to the @option{--center}, @option{--width} will be calculated internally.
 Hence this option cannot be used with @code{--center}, @code{--width} or @code{--radius}.
@@ -11431,6 +11436,19 @@ By contrast, a convex polygon is one where an inner angle may be more than 180 d
 @itemx --section=STR
 Section of the input image which you want to be cropped.
 See @ref{Crop section syntax} for a complete explanation on the syntax required for this input.
+
+@item -C FITS/TXT
+@itemx --catalog=FITS/TXT
+File name of catalog for making multiple crops from the input images/cubes.
+The catalog can be in any of Gnuastro's recognized @ref{Recognized table formats}.
+The columns containing the coordinates for the crop centers can be specified with the @option{--coordcol} option (using column names or numbers, see @ref{Selecting table columns}).
+The catalog can also contain the name of each crop, you can specify the column containing the name with the @option{--namecol}.
+
+@item --cathdu=STR/INT
+The HDU (extension) containing the catalog (if the file given to @option{--catalog} is a FITS file).
+This can either be the HDU name (if it has one) or number (counting from 0).
+By default (if this option is not given), the second HDU will be used (equivalent to @option{--cathdu=1}.
+For more on how to specify the HDU, see the explanation of the @option{--hdu} option in @ref{Input output options}.
 
 @item -x STR/INT
 @itemx --coordcol=STR/INT
@@ -12599,8 +12617,8 @@ Use the value to this option as the HDU of all input FITS files.
 This option is very convenient when you have many input files and the dataset of interest is in the same HDU of all the files.
 When this option is called, any values given to the @option{--hdu} option (explained above) are ignored and will not be used.
 
-@item -w STR
-@itemx --wcsfile STR
+@item -w FITS
+@itemx --wcsfile FITS
 FITS Filename containing the WCS structure that must be written to the output.
 The HDU/extension should be specified with @option{--wcshdu}.
 
@@ -13512,8 +13530,8 @@ Only within Convolve, there is an option to disable normalization, see @ref{Invo
 The two options to specify a kernel file name and its extension are shown below.
 These are common between all the programs that will do convolution.
 @table @option
-@item -k STR
-@itemx --kernel=STR
+@item -k FITS
+@itemx --kernel=FITS
 The convolution kernel file name.
 The @code{BITPIX} (data type) value of this file can be any standard type and it does not necessarily have to be normalized.
 Several operations will be done on the kernel image prior to the program's processing:
@@ -15247,8 +15265,8 @@ The parameters for estimating the sky value can be set with the following option
 
 @table @option
 
-@item -k=STR
-@itemx --kernel=STR
+@item -k=FITS
+@itemx --kernel=FITS
 File name of kernel to help in estimating the significance of signal in a
 tile, see @ref{Quantifying signal in a tile}.
 
@@ -15512,8 +15530,8 @@ Recall that you can always see the full list of Gnuastro's options with the @opt
 
 @table @option
 
-@item -k STR
-@itemx --kernel=STR
+@item -k FITS
+@itemx --kernel=FITS
 File name of kernel to smooth the image before applying the threshold, see @ref{Convolution kernel}.
 If no convolution is needed, give this option a value of @option{none}.
 
@@ -15537,7 +15555,7 @@ This can help getting faster results when you are playing/testing the higher-lev
 HDU containing the kernel in the file given to the @option{--kernel}
 option.
 
-@item --convolved=STR
+@item --convolved=FITS
 Use this file as the convolved image and don't do convolution (ignore @option{--kernel}).
 NoiseChisel will just check the size of the given dataset is the same as the input's size.
 If a wrong image (with the same size) is given to this option, the results (errors, bugs, etc) are unpredictable.
@@ -15582,8 +15600,8 @@ $ for g in 60 65 70 75 80 85 90; do                          \
 @item --chdu=STR
 The HDU/extension containing the convolved image in the file given to @option{--convolved}.
 
-@item -w STR
-@itemx --widekernel=STR
+@item -w FITS
+@itemx --widekernel=FITS
 File name of a wider kernel to use in estimating the difference of the mode and median in a tile (this difference is used to identify the significance of signal in that tile, see @ref{Quantifying signal in a tile}).
 As displayed in Figure 4 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}, a wider kernel will help in identifying the skewness caused by data in noise.
 The image that is convolved with this kernel is @emph{only} used for this purpose.
@@ -16191,8 +16209,8 @@ Please see the description of @option{--hdu} in @ref{Input output options} for t
 The input Sky standard deviation value/dataset is actually variance.
 When this option is called, the square root of input Sky standard deviation (see @option{--std}) is used internally, not its raw value(s).
 
-@item -d STR
-@itemx --detection=STR
+@item -d FITS
+@itemx --detection=FITS
 Detection map to use for segmentation.
 If given a value of @option{all}, Segment will assume the whole dataset must be segmented, see below.
 If a detection map is given, the extension can be specified with @option{--dhdu}.
@@ -16217,9 +16235,9 @@ In such cases, is possible to make a detection map that only has the value @code
 The HDU/extension containing the detection map given to @option{--detection}.
 Please see the description of @option{--hdu} in @ref{Input output options} for the different ways you can identify a special extension.
 
-@item -k STR
-@itemx --kernel=STR
-The kernel used to convolve the input image.
+@item -k FITS
+@itemx --kernel=FITS
+The name of file containing kernel that will be used to convolve the input image.
 The usage of this option is identical to NoiseChisel's @option{--kernel} option (@ref{NoiseChisel input}).
 Please see the descriptions there for more.
 To disable convolution, you can give it a value of @option{none}.
@@ -16228,8 +16246,8 @@ To disable convolution, you can give it a value of @option{none}.
 The HDU/extension containing the kernel used for convolution.
 For acceptable values, please see the description of @option{--hdu} in @ref{Input output options}.
 
-@item --convolved
-The convolved image to avoid internal convolution by Segment.
+@item --convolved=FITS
+The convolved image's file name to avoid internal convolution by Segment.
 The usage of this option is identical to NoiseChisel's @option{--convolved} option.
 Please see @ref{NoiseChisel input} for a thorough discussion of the usefulness and best practices of using this option.
 
@@ -17047,9 +17065,9 @@ The full list of input dataset options and general setting options are described
 
 @table @option
 
-@item -l STR
-@itemx --clumpsfile=STR
-The file containing the labeled clumps dataset when @option{--clumpscat} is called (see @ref{MakeCatalog output}).
+@item -l FITS
+@itemx --clumpsfile=FITS
+The FITS file containing the labeled clumps dataset when @option{--clumpscat} is called (see @ref{MakeCatalog output}).
 When @option{--clumpscat} is called, but this option isn't, MakeCatalog will look into the main input file (given as an argument) for the required extension/HDU (value to @option{--clumpshdu}).
 
 @item --clumpshdu=STR
@@ -17058,8 +17076,8 @@ Only pixels with values above zero will be considered.
 The clump labels dataset has to be an integer data type (see @ref{Numeric data types}) and only pixels with a value larger than zero will be used.
 See @ref{Segment output} for a description of the expected format.
 
-@item -v STR
-@itemx --valuesfile=STR
+@item -v FITS
+@itemx --valuesfile=FITS
 The file name of the (sky-subtracted) values dataset.
 When any of the columns need values to associate with the input labels (for example to measure the brightness/magnitude of a galaxy), MakeCatalog will look into a ``values'' for the respective pixel values.
 In most common processing, this is the actual astronomical image that the labels were defined, or detected, over.
@@ -17069,8 +17087,8 @@ If this option is not called, MakeCatalog will look for the given extension in t
 @item --valueshdu=STR/INT
 The name or number (counting from zero) of the extension containing the ``values'' dataset, see the descriptions above and those in @option{--valuesfile} for more.
 
-@item -s STR/FLT
-@itemx --insky=STR/FLT
+@item -s FITS/FLT
+@itemx --insky=FITS/FLT
 Sky value as a single number, or the file name containing a dataset (different values per pixel or tile).
 The Sky dataset is only necessary when @option{--subtractsky} is called or when a column directly related to the Sky value is requested (currently @option{--sky}).
 This dataset may be a tessellation, with one element per tile (see @option{--oneelempertile} of NoiseChisel's @ref{Processing options}).
@@ -17158,7 +17176,7 @@ If your dataset can allow it (it is large enough), it is recommended to use a la
 
 @table @option
 
-@item --upmaskfile=STR
+@item --upmaskfile=FITS
 File name of mask image to use for upper-limit calculation.
 In some cases (especially when doing matched photometry), the object labels specified in the main input and mask image might not be adequate.
 In other words they do not necessarily have to cover @emph{all} detected objects: the user might have selected only a few of the objects in their labeled image.
@@ -18849,7 +18867,7 @@ Particularly in sharper profiles, the flux in the peak pixel is strongly decreas
 Also note that in such cases, besides de-convolution, you will have to set @option{--oversample=1} otherwise after resampling your profile with Warp (see @ref{Warp}), the peak flux will be different.
 @end cartouche
 
-@item --customtable STR
+@item --customtable FITS/TXT
 The filename of the table to use in the custom profiles (see description of @option{--fcol} in @ref{MakeProfiles catalog}.
 This can be a plain-text table, or FITS table, see @ref{Tables}, if its a FITS table, you can use @option{--customtablehdu} to specify which HDU should be used (described below).
 
@@ -18943,8 +18961,8 @@ The options of this section, allow you to configure the output dataset (or the c
 
 @table @option
 
-@item -k STR
-@itemx --background=STR
+@item -k FITS
+@itemx --background=FITS
 A background image FITS file to build the profiles on.
 The extension that contains the image should be specified with the @option{--backhdu} option, see below.
 When a background image is specified, it will be used to derive all the information about the output image.

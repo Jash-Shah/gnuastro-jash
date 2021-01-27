@@ -35,7 +35,7 @@ struct argp_option program_options[] =
     {
       "clumpsfile",
       UI_KEY_CLUMPSFILE,
-      "STR",
+      "FITS",
       0,
       "Dataset containing clump labels.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -61,7 +61,7 @@ struct argp_option program_options[] =
     {
       "valuesfile",
       UI_KEY_VALUESFILE,
-      "STR",
+      "FITS",
       0,
       "Values/brightness dataset.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -87,9 +87,9 @@ struct argp_option program_options[] =
     {
       "insky",
       UI_KEY_INSKY,
-      "STR/FLT",
+      "FITS/FLT",
       0,
-      "Input Sky value or dataset.",
+      "Input Sky value or file.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->skyfile,
       GAL_TYPE_STRING,
@@ -298,7 +298,7 @@ struct argp_option program_options[] =
     {
       "upmaskfile",
       UI_KEY_UPMASKFILE,
-      "STR",
+      "FITS",
       0,
       "Mask image file name only for upper limit.",
       UI_GROUP_UPPERLIMIT,

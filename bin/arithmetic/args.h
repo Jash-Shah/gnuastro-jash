@@ -25,6 +25,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+
+
 /* Definition of program-specific options. */
 struct argp_option program_options[] =
   {
@@ -44,7 +46,7 @@ struct argp_option program_options[] =
     {
       "wcsfile",
       UI_KEY_WCSFILE,
-      "STR",
+      "FITS",
       0,
       "File to use for output's WCS.",
       GAL_OPTIONS_GROUP_INPUT,

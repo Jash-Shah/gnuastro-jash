@@ -33,7 +33,7 @@ struct argp_option program_options[] =
     {
       "background",
       UI_KEY_BACKGROUND,
-      "STR",
+      "FITS",
       0,
       "A background image to make the profiles on.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -86,7 +86,7 @@ struct argp_option program_options[] =
     {
       "customtable",
       UI_KEY_CUSTOMTABLE,
-      "STR",
+      "FITS/TXT",
       0,
       "File for 'custom' profile.",
       GAL_OPTIONS_GROUP_INPUT,

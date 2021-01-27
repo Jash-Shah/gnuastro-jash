@@ -35,7 +35,7 @@ struct argp_option program_options[] =
     {
       "kernel",
       UI_KEY_KERNEL,
-      "STR",
+      "FITS",
       0,
       "File name of kernel for convolution.",
       GAL_OPTIONS_GROUP_INPUT,
