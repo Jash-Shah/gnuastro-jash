@@ -6,20 +6,6 @@
 
 _astcosmiccal_completions(){
 
-    # PATH_TO_COMMAND_BIN, i.e. the directory which the astcosmiccal
-    # command sits in.
-    local PATH_TO_COMMAND_BIN=".";
-
-    # Use "args.h" file to filter out all valid options of the command and
-    # put them all in the variable "commandoptions".
-
-    local commandoptions=$(sed -n -E '/^\s+\"[a-z]+/p' \
-                               "$PATH_TO_COMMAND_BIN/args.h" | \
-                               # remove newline and space characters
-                               tr -d '\n" ' | \
-                               # replace commas with spaces
-                               tr ',' ' ');
-
     # Initialize the completion response with null
     COMPREPLY=();
 
@@ -29,13 +15,16 @@ _astcosmiccal_completions(){
     # Variable "prev" is the word just before the current word
     local prev="${COMP_WORDS[COMP_CWORD-1]}";
 
-    if [ $prev = "lineatz" ]; then
-        # Show options related to "lineatz"
+    if [ $prev = "--lineatz" ]; then
+        # Show all sub options in "lineatz"
         COMPREPLY=($(compgen -W "$(astcosmiccal --listlines | \
                            awk '!/^#/ {print $2}') " \
                            -- "$word"));
     else
-        COMPREPLY=($(compgen -W "$commandoptions" -- "$word"));
+        # Show all options in CosmicCalculator:
+        COMPREPLY=($(compgen -W "$(astcosmiccal --help | \
+                             awk 'match($0, /--[a-z]+/) {print substr($0, RSTART, RLENGTH)}') " \
+                             -- "$word"));
     fi;
 }
 
