@@ -18,8 +18,8 @@ _astcosmiccal_completions(){
     if [ $prev = "--lineatz" ]; then
         # Show all sub options in "lineatz"
         COMPREPLY=($(compgen -W "$(astcosmiccal --listlines | \
-                           awk '!/^#/ {print $2}') " \
-                           -- "$word"));
+                             awk '!/^#/ {print $2}') " \
+                             -- "$word"));
     else
         # Show all options in CosmicCalculator:
         COMPREPLY=($(compgen -W "$(astcosmiccal --help | \
