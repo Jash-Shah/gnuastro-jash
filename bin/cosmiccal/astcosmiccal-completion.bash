@@ -23,7 +23,7 @@ _astcosmiccal_completions(){
     else
         # Show all options in CosmicCalculator:
         COMPREPLY=($(compgen -W "$(astcosmiccal --help | \
-                             awk 'match($0, /--[a-z]+/) {print substr($0, RSTART, RLENGTH)}') " \
+                             awk 'match($0, /--([A-Z]|[a-z]|[0-9])*/) {print substr($0, RSTART, RLENGTH)}') " \
                              -- "$word"));
     fi;
 }
