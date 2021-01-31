@@ -25,10 +25,6 @@ AM_CPPFLAGS = -I\$(top_builddir)/bootstrapped/lib \
               -I\$(top_srcdir)/bootstrapped/lib \
               -I\$(top_srcdir)/lib
 
-if COND_NORPATH
-  MAYBE_NORPATH = $(CONFIG_LDADD)
-endif
-
 
 
 ## Program definition (name, linking, sources and headers)
@@ -36,7 +32,7 @@ bin_PROGRAMS = astarithmetic
 
 ## Reason for linking with 'libgnu' described in 'bin/TEMPLATE/Makefile.am'.
 astarithmetic_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
-                      -lgnuastro $(MAYBE_NORPATH)
+                      -lgnuastro $(CONFIG_LDADD)
 
 astarithmetic_SOURCES = main.c ui.c arithmetic.c operands.c
 

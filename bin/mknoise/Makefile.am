@@ -25,22 +25,18 @@ AM_CPPFLAGS = -I\$(top_builddir)/bootstrapped/lib \
               -I\$(top_srcdir)/bootstrapped/lib \
               -I\$(top_srcdir)/lib
 
-if COND_NORPATH
-  MAYBE_NORPATH = $(CONFIG_LDADD)
-endif
 
 
 ## Program definition (name, linking, sources and headers)
 bin_PROGRAMS = astmknoise
 
 ## Reason for linking with 'libgnu' described in 'bin/TEMPLATE/Makefile.am'.
-astmknoise_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la -lgnuastro \
-                   $(MAYBE_NORPATH)
+astmknoise_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
+                   -lgnuastro $(CONFIG_LDADD)
 
 astmknoise_SOURCES = main.c ui.c mknoise.c
 
 EXTRA_DIST = main.h authors-cite.h args.h ui.h mknoise.h
-
 
 
 
