@@ -404,15 +404,14 @@ keywords_date_to_seconds(struct fitsparams *p, fitsfile *fptr)
   int status=0;
   double subsec;
   size_t seconds;
-  char *subsecstr;
+  char *subsecstr=NULL;
   char fitsdate[FLEN_KEYWORD];
 
   /* Read the requested FITS keyword. */
   if( fits_read_key(fptr, TSTRING, p->datetosec, &fitsdate, NULL, &status) )
     gal_fits_io_error(status, NULL);
 
-  /* Return the number of seconds (and subseconds) that it corresponds
-     to. */
+  /* Return the number of seconds (and subseconds).*/
   seconds=gal_fits_key_date_to_seconds(fitsdate, &subsecstr, &subsec);
   if(seconds==GAL_BLANK_SIZE_T)
     error(EXIT_FAILURE, 0, "the time string couldn't be interpretted");

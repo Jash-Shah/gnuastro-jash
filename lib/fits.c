@@ -1103,25 +1103,31 @@ gal_fits_key_date_to_seconds(char *fitsdate, char **subsecstr,
   char *tmp;
   struct tm tp;
   size_t seconds;
-  void *outptr=subsec;
+  void *subsecptr=subsec;
 
   /* Fill in the 'tp' elements with values read from the string. */
   tmp=gal_fits_key_date_to_struct_tm(fitsdate, &tp);
 
-  /* If the user cared about the remainder (sub-second string), then set it
-     and convert it to a double type. */
-  if(subsecstr && tmp)
+  /* If the user wanted a possible sub-second string/value, then
+     'subsecstr!=NULL'. */
+  if(subsecstr)
     {
-      /* Set the output pointer. */
+      /* Set the output pointer. Note that it may be NULL if there was no
+         sub-second string, but that is fine (and desired because the user
+         can use this to check if there was a sub-string or not). */
       *subsecstr=tmp;
 
-      /* Convert the remainder string to double-precision floating point
-         (if the given pointer isn't NULL). */
-      if(subsec)
-        if( gal_type_from_string(&outptr, tmp, GAL_TYPE_FLOAT64) )
-          error(EXIT_FAILURE, 0, "%s: the sub-second portion of '%s' (or "
-                "'%s') couldn't be read as a number", __func__, fitsdate,
-                tmp);
+      /* If there was a sub-second string, then also read it as a
+         double-precision floating point. */
+      if(tmp)
+        {
+          if(subsec)
+            if( gal_type_from_string(&subsecptr, tmp, GAL_TYPE_FLOAT64) )
+              error(EXIT_FAILURE, 0, "%s: the sub-second portion of '%s' (or "
+                    "'%s') couldn't be read as a number", __func__, fitsdate,
+                    tmp);
+        }
+      else { if(subsec) *subsec=NAN; }
     }
 
   /* Convert the contents of the 'tm' structure to 'time_t' (a positive

@@ -23871,9 +23871,12 @@ Return the Unix epoch time (number of seconds that have passed since 00:00:00 Th
 This function will return @code{GAL_BLANK_SIZE_T} if the broken-down time couldn't be converted to seconds.
 
 The Unix epoch time is in units of seconds, but the FITS date format allows sub-second accuracy.
-The last two arguments are for the (optional) sub-second portion.
-If @code{fitsdate} contains sub-second accuracy, then the starting of the sub-second part's string is stored in @code{subsecstr} (allocated separately), and @code{subsec} will be the corresponding numerical value (between 0 and 1, in double precision floating point).
-So to avoid leaking memory, when @code{subsecstr!=NULL}, it must be freed.
+The last two arguments are for the optional sub-second portion.
+If you don't want sub-second information, just set the second argument to @code{NULL}.
+
+If @code{fitsdate} contains sub-second accuracy and @code{subsecstr!=NULL}, then the starting of the sub-second part's string is stored in @code{subsecstr} (malloc'ed), and @code{subsec} will be the corresponding numerical value (between 0 and 1, in double precision floating point).
+So to avoid leaking memory, if a sub-second string is requested, it must be freed after calling this function.
+When a sub-second string doesn't exist (and it is requested), then a value of @code{NULL} and NaN will be written in @code{*subsecstr} and @code{*subsec} respectively.
 
 This is a very useful function for operations on the FITS date values, for example sorting FITS files by their dates, or finding the time difference between two FITS files.
 The advantage of working with the Unix epoch time is that you don't have to worry about calendar details (for example the number of days in different months, or leap years, etc).
