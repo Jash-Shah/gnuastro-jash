@@ -24027,12 +24027,11 @@ break it into several keywords (breaking up the string on directory
 separators).
 @end deftypefun
 
-@deftypefun void gal_fits_key_write_wcsstr (fitsfile @code{*fptr}, char @code{*wcsstr}, int @code{nkeyrec})
-Write the WCS header string (produced with WCSLIB's @code{wcshdo} function)
-into the CFITSIO @code{fitsfile} pointer. @code{nkeyrec} is the number of
-FITS header keywords in @code{wcsstr}. This function will put a few blank
-keyword lines along with a comment @code{WCS information} before writing
-each keyword record.
+@deftypefun void gal_fits_key_write_wcsstr (fitsfile @code{*fptr}, struct wcsprm @code{wcs}, char @code{*wcsstr}, int @code{nkeyrec})
+
+Write the WCS header string (produced with WCSLIB's @code{wcshdo} function) into the CFITSIO @code{fitsfile} pointer.
+@code{nkeyrec} is the number of FITS header keywords in @code{wcsstr}.
+This function will put a few blank keyword lines along with a comment @code{WCS information} before writing each keyword record.
 @end deftypefun
 
 @deftypefun void gal_fits_key_write (gal_fits_list_key_t @code{**keylist}, char @code{*title}, char @code{*filename}, char @code{*hdu})

@@ -3,6 +3,23 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 Copyright (C) 2015-2021 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
+* Noteworthy changes in release X.X (library X.X.X) (XXXX-XX-XX) [stable]
+
+** New features
+
+** Removed features
+
+** Changed features
+
+  Library:
+   - gal_fits_key_write_wcsstr: also takes WCS structure as argument.
+
+** Bugs fixed
+
+
+
+
+
 * Noteworthy changes in release 0.14 (library 12.0.0) (2021-01-25) [stable]
 
 ** New features

@@ -238,7 +238,8 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
                             gal_fits_list_key_t **list, int top1end0);
 
 void
-gal_fits_key_write_wcsstr(fitsfile *fptr, char *wcsstr, int nkeyrec);
+gal_fits_key_write_wcsstr(fitsfile *fptr, struct wcsprm *wcs,
+                          char *wcsstr, int nkeyrec);
 
 void
 gal_fits_key_write(gal_fits_list_key_t **keylist, char *title,

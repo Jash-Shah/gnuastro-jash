@@ -517,7 +517,7 @@ gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
           "wcshdu ERROR %d: %s", __func__, status, wcs_errmsg[status]);
   else
     {
-      gal_fits_key_write_wcsstr(fptr, wcsstr, nkeyrec);
+      gal_fits_key_write_wcsstr(fptr, wcs, wcsstr, nkeyrec);
       free(wcsstr);
     }
   status=0;

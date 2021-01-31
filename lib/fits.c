@@ -1714,9 +1714,95 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
 
 
 
+/* A bug was found in WCSLIB that has existed since WCSLIB 5.9 (released on
+   2015/07/21) and will be fixed in the version after WCSLIB 7.3.1
+   (released in 2020). However, it will take time for many user package
+   managers to update their WCSLIB version. So we need to check if that bug
+   has occurred here and fix it manually.
+
+   In short the bug was originally seen on a dataset with this input CDELT
+   values:
+
+     CDELT1  =            0.0007778 / [deg]
+     CDELT2  =            0.0007778 / [deg]
+     CDELT3  =        30000.0000000 / [Hz]
+
+   The values are read into the 'wcsprm' structure properly, but upon
+   writing into the keyword string structure, the 'CDELT1' and 'CDELT2'
+   values are printed as 0. Mark Calabretta (creator of WCSLIB) described
+   the issue as follows:
+
+        """wcshdo() tries to find a single sprintf() floating point format
+        to use for groups of keywords, such as CDELTj as a group, or
+        CRPIXi, PCi_j, and CRVALj, each as separate groups.  It aims to
+        present the keyvalues in human-readable form, i.e. with decimal
+        points lined up, no unnecessary trailing zeroes, and avoiding
+        exponential ('E') format where its use is not warranted.
+
+        The problem here arose because of the large range of CDELT values
+        formatted using 'f' format, but not being so large that it would
+        force wcshdo() to revert to 'E' format.  There is also the
+        troubling possibility that in less extreme cases, precision of the
+        CDELT (or other) values could be lost without being noticed."""
+
+   To implement the check we will follow this logic: large dimensional
+   differences will not commonly happen in 2D datasets, so we will only
+   attempt the check in 3D datasets. We'll read each written CDELT value
+   with CFITSIO and if its zero, we'll correct it. */
+static void
+fits_bug_wrapper_cdelt_zero(fitsfile *fptr, struct wcsprm *wcs, char *keystr)
+{
+  size_t dim;
+  char *keyname;
+  double keyvalue;
+  int status=0, datatype=TDOUBLE;
+
+  /* Only do this check when we have more than two dimensions. */
+  if(wcs->naxis>2 && !strncmp(keystr, "CDELT", 5))
+    {
+      /* Find the dimension number and keyword string. This can later be
+         improved/generalized by actually parsing the keyword name to
+         extract the dimension, but I didn't have time to implement it in
+         the first implementation. It will rarely be necessary to go beyond
+         the third dimension, so this has almost no extra burden on the
+         computer's processing. */
+      if(      !strncmp(keystr, "CDELT1", 6) ) { keyname="CDELT1"; dim=0; }
+      else if( !strncmp(keystr, "CDELT2", 6) ) { keyname="CDELT2"; dim=1; }
+      else if( !strncmp(keystr, "CDELT3", 6) ) { keyname="CDELT3"; dim=2; }
+      else if( !strncmp(keystr, "CDELT4", 6) ) { keyname="CDELT4"; dim=3; }
+      else if( !strncmp(keystr, "CDELT5", 6) ) { keyname="CDELT5"; dim=4; }
+      else if( !strncmp(keystr, "CDELT6", 6) ) { keyname="CDELT6"; dim=5; }
+      else if( !strncmp(keystr, "CDELT7", 6) ) { keyname="CDELT7"; dim=6; }
+      else if( !strncmp(keystr, "CDELT8", 6) ) { keyname="CDELT8"; dim=7; }
+      else if( !strncmp(keystr, "CDELT9", 6) ) { keyname="CDELT9"; dim=8; }
+      else
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+              "the problem. There appears to be more than 9 dimensions in "
+              "the input dataset", __func__, PACKAGE_BUGREPORT);
+
+      /* Read the keyword value. */
+      fits_read_key(fptr, datatype, keyname, &keyvalue, NULL, &status);
+      gal_fits_io_error(status, NULL);
+
+      /* If the written value is not the same by more than 10 decimals,
+         re-write the value. */
+      if( fabs( wcs->cdelt[dim] - keyvalue ) > 1e-10  )
+        {
+          fits_update_key(fptr, datatype, keyname, &wcs->cdelt[dim],
+                          NULL, &status);
+          gal_fits_io_error(status, NULL);
+        }
+    }
+}
+
+
+
+
+
 /* Write the WCS header string into a FITS files*/
 void
-gal_fits_key_write_wcsstr(fitsfile *fptr, char *wcsstr, int nkeyrec)
+gal_fits_key_write_wcsstr(fitsfile *fptr, struct wcsprm *wcs,
+                          char *wcsstr, int nkeyrec)
 {
   size_t i;
   int status=0;
@@ -1738,7 +1824,10 @@ gal_fits_key_write_wcsstr(fitsfile *fptr, char *wcsstr, int nkeyrec)
          separate keyword along with all other important software, so it is
          redundant and just makes the keywrods hard to read by eye.*/
       if( keystart[0]!=' ' && strncmp(keystart, "COMMENT", 7) )
-        fits_write_record(fptr, keystart, &status);
+        {
+          fits_write_record(fptr, keystart, &status);
+          if(wcs) fits_bug_wrapper_cdelt_zero(fptr, wcs, keystart);
+        }
     }
   gal_fits_io_error(status, NULL);
 }
@@ -2500,7 +2589,7 @@ gal_fits_img_write_corr_wcs_str(gal_data_t *input, char *filename,
   fptr=gal_fits_img_write_to_ptr(input, filename);
 
   /* Write the WCS headers into the FITS file. */
-  gal_fits_key_write_wcsstr(fptr, wcsstr, nkeyrec);
+  gal_fits_key_write_wcsstr(fptr, NULL, wcsstr, nkeyrec);
 
   /* Update the CRPIX keywords. Note that we don't want to change the
      values in the WCS information of gal_data_t. Because, it often happens
