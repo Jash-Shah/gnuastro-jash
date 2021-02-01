@@ -22,8 +22,9 @@ _gnuastro_autocomplete_list_fits_files(){
     COMPREPLY=($(compgen -f -X "!*.[fF][iI][tT][sS]"));
 }
 
-_gnuastro_autocomplete_column_read(){
-    echo "Pass"
+_gnuastro_autocomplete_list_columns(){
+    #
+    COMPREPLY=($(compgen -W "$($ASTTABLE --information gaia.fits | awk -v regex="^[0-9]+" 'match($0, regex) {print $2}')" -- "$word"))
 }
 
 _gnuastro_autocomplete_expect_number(){
@@ -68,6 +69,7 @@ _gnuastro_asttable_completions(){
 
     case "$prev" in
         -i|--information) _gnuastro_autocomplete_list_fits_files ;;
+        -c|--column) _gnuastro_autocomplete_list_columns ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
         # The default case populates suggestions with all options available
