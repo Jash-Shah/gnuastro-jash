@@ -17,9 +17,9 @@ _gnuastro_autocomplete_fits_hdu_read(){
     COMPREPLY=($("$ASTFITS --quiet $1" | awk '{print $2}'))
 }
 
-_gnuastro_autocomplete_fits_list_files(){
+_gnuastro_autocomplete_list_fits_files(){
     # Suggest all 'FITS' files in current directory. Case insensitive.
-    COMPREPLY+=($(compgen -f -X "!*.[fF][iI][tT][sS]"));
+    COMPREPLY=($(compgen -f -X "!*.[fF][iI][tT][sS]"));
 }
 
 _gnuastro_autocomplete_column_read(){
@@ -45,7 +45,9 @@ _gnuastro_file_last_occurance(){
 # astconvolve --help | awk -v pattern="^ *-([a-z]|[A-Z])" 'match($0, pattern) {print $0}'
 
 _gnuastro_autocomplete_list_all_options(){
-    COMPREPLY=($($1 --help | awk -v regex=" --+([a-z]|[A-Z]|[0-9])*" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}'))
+    # The regex variable in the awk program contains the regular expression
+    # pattern that matches all options provided in corresponding program
+    COMPREPLY=($(compgen -W "$($1 --help | awk -v regex=" --+([a-z]|[A-Z]|[0-9])*" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')" -- "$word"))
 }
 
 _gnuastro_asttable_completions(){
@@ -65,12 +67,10 @@ _gnuastro_asttable_completions(){
     local prev="${COMP_WORDS[COMP_CWORD-1]}";
 
     case "$word" in
-        -i|--information)
-            _gnuastro_autocomplete_fits_list_files
-        ;;
+        -i|--information) _gnuastro_autocomplete_list_fits_files ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
-        # default case
+        # The default case populates suggestions with all options available
         *) _gnuastro_autocomplete_list_all_options $PROG_NAME ;;
     esac
 
