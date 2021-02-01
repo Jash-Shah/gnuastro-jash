@@ -44,12 +44,16 @@ _gnuastro_file_last_occurance(){
 # just find the short commands
 # astconvolve --help | awk -v pattern="^ *-([a-z]|[A-Z])" 'match($0, pattern) {print $0}'
 
+_gnuastro_autocomplete_list_all_options(){
+    COMPREPLY=($($1 --help | awk -v regex=" --+([a-z]|[A-Z]|[0-9])*" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}'))
+}
+
 _gnuastro_asttable_completions(){
 
     # TODO: @@
-    PROG_NAME="asttable";
+    local PROG_NAME="asttable";
 
-    PROG_ADDRESS="$PREFIX/$PROG_NAME";
+    local PROG_ADDRESS="$PREFIX/$PROG_NAME";
 
     # Initialize the completion response with null
     COMPREPLY=();
@@ -60,14 +64,16 @@ _gnuastro_asttable_completions(){
     # Variable "prev" is the word just before the current word
     local prev="${COMP_WORDS[COMP_CWORD-1]}";
 
-    case "$1" in
+    case "$word" in
         -i|--information)
             _gnuastro_autocomplete_fits_list_files
         ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
         # default case
-        *) ;;
+        *) _gnuastro_autocomplete_list_all_options $PROG_NAME ;;
     esac
 
-complete -F _asttable_completions asttable
+}
+
+complete -F _gnuastro_asttable_completions asttable
