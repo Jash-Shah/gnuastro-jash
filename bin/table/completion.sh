@@ -13,33 +13,38 @@ ASTTABLE="$PREFIX/asttable";
 #  astquery gaia --dataset=edr3 --center=24,25 --radius=0.1 --output=gaia.fits --column=ra,dec,parallax --quiet -i | awk '/[0-9]+/ {print $2}'
 
 _gnuastro_autocomplete_fits_hdu_read(){
-    $("$ASTFITS --quiet $1" | awk '{print $2}')
+    # Accepts a fits filename as input and suggests its headers
+    COMPREPLY=($("$ASTFITS --quiet $1" | awk '{print $2}'))
 }
 
-_gnuastro_autocomplete_fits_list(){
-
+_gnuastro_autocomplete_fits_list_files(){
+    # Suggest all 'FITS' files in current directory. Case insensitive.
+    COMPREPLY+=($(compgen -f -X "!*.[fF][iI][tT][sS]"));
 }
 
 _gnuastro_autocomplete_column_read(){
-
+    echo "Pass"
 }
 
 _gnuastro_autocomplete_expect_number(){
     # Prompt the user that this option only accepts a number
+    echo "Pass"
 }
 
 _gnuastro_fits_last_occurance(){
     # The last FITS file in COMP_LINE
-
+    echo "Pass"
 }
 
 _gnuastro_file_last_occurance(){
     # The last file name (.txt/.fits) in COMP_LINE
+    echo "Pass"
 }
 
+# just find the short commands
+# astconvolve --help | awk -v pattern="^ *-([a-z]|[A-Z])" 'match($0, pattern) {print $0}'
+
 _gnuastro_asttable_completions(){
-
-
 
     # TODO: @@
     PROG_NAME="asttable";
@@ -55,36 +60,14 @@ _gnuastro_asttable_completions(){
     # Variable "prev" is the word just before the current word
     local prev="${COMP_WORDS[COMP_CWORD-1]}";
 
-    # Create the array of options that need a fits file as input
-    local infits=($($PROG_ADDRESS --help | \
-                                   awk 'match($0, /--([A-Z]|[a-z]|[0-9])*=FITS/) {print substr($0, RSTART, RLENGTH-4)}'));
-
-#    case "$1" in
-#        -h|--hdu)
-#        # default case
-#        *) ;;
-#    esac
-
-    # Add completion suggestions for special options
-    if [ $prev = "--lineatz" ]; then
-        # Show all sub options in "lineatz"
-        COMPREPLY+=($(compgen -W "$($PREFIX/$PROG_NAME --listlines | \
-                             awk '!/^#/ {print $2}') " \
-                              -- "$word"));
-    fi
-
-    # Add completion suggestions for general options
-    if [[ "${infits[@]}" =~ "$prev" ]]; then
-
-        # Check if the previous word exists in the "infits" array
-        # Look into 'gal_fits_name_is_fits' function for acceptable suffixes
-        COMPREPLY+=($(compgen -f -X "!*.[fF][iI][tT][sS]"));
-    else
-        # Show all options in CosmicCalculator:
-        COMPREPLY+=($(compgen -W "$(astcosmiccal --help | \
-                             awk 'match($0, /--([A-Z]|[a-z]|[0-9])*/) {print substr($0, RSTART, RLENGTH)}') " \
-                             -- "$word"));
-    fi;
-}
+    case "$1" in
+        -i|--information)
+            _gnuastro_autocomplete_fits_list_files
+        ;;
+        -b|--noblank) ;;
+        -h|--hdu) ;;
+        # default case
+        *) ;;
+    esac
 
 complete -F _asttable_completions asttable
