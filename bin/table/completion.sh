@@ -19,12 +19,13 @@ _gnuastro_autocomplete_fits_hdu_read(){
 
 _gnuastro_autocomplete_list_fits_files(){
     # Suggest all 'FITS' files in current directory. Case insensitive.
-    COMPREPLY=($(compgen -f -X "!*.[fF][iI][tT][sS]"));
+    COMPREPLY=($(compgen -f -X "!*.[fF][iI][tT][sS]" -- $word));
 }
 
 _gnuastro_autocomplete_list_columns(){
     #
-    COMPREPLY=($(compgen -W "$($ASTTABLE --information gaia.fits | awk -v regex="^[0-9]+" 'match($0, regex) {print $2}')" -- "$word"))
+    local fits_file="$("${COMP_WORDS[@]}" | awk -v regex="([a-z]|[A-Z])*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    COMPREPLY=($(compgen -W "$($ASTTABLE --information $fits_file | awk -v regex="^[0-9]+" 'match($0, regex) {print $2}')" -- "$word"))
 }
 
 _gnuastro_autocomplete_expect_number(){
