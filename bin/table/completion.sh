@@ -66,7 +66,7 @@ _gnuastro_asttable_completions(){
     # Variable "prev" is the word just before the current word
     local prev="${COMP_WORDS[COMP_CWORD-1]}";
 
-    case "$word" in
+    case "$prev" in
         -i|--information) _gnuastro_autocomplete_list_fits_files ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
