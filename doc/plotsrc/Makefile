@@ -27,11 +27,16 @@ all: all.pdf
 
 
 
-# Make all the plots and convert all the figures
-all.pdf: all.tex ./tex/*.tex ./conversions.sh
+# Directory to keep TiKZ products.
+tikz:
+	mkdir $@
 
-#       Make the tikz directory if it doesn't exist:
-	mkdir -p tikz
+
+
+
+
+# Make all the plots and convert all the figures
+all.pdf: all.tex ./tex/*.tex ./conversions.sh | tikz
 
 #       Run the LaTeX script:
 	latex -shell-escape all.tex
