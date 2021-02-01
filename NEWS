@@ -7,6 +7,13 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Table:
+   - When given a value of '_all', the '--noblank' option (that will remove
+     all rows with a blank value in the given columns) will check all
+     columns of the final output table. This is handy when you want a
+     "clean" (no NaN values in any column) table, but the table has many
+     columns.
+
 ** Removed features
 
 ** Changed features

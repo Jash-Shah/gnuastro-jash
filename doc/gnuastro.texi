@@ -10496,10 +10496,15 @@ See @option{--head} for more.
 @itemx --noblank=STR[,STR[,STR]]
 Remove all rows in the given @emph{output} columns that have a blank value.
 Like above, the columns can be specified by their name or number (counting from 1).
-@code{--noblank} is applied just before writing the final table (after @option{--colmetadata} has finished).
-So in case you changed the column metadata, or added new columns, you can use the new names, or the newly defined column numbers.
-
 For example if @file{table.fits} has blank values (NaN in floating point types) in the @code{magnitude} and @code{sn} columns, with @code{--noblank=magnitude,sn}, the output will not contain any rows with blank values in these columns.
+
+If you want @emph{all} columns to be checked, simply set the value to @code{_all} (in other words: @option{--noblank=_all}).
+This mode is useful when there are many columns in the table and you want a ``clean'' output table (with no blank values in any column): entering their name or number one-by-one can be buggy and frustrating.
+In this mode, no other column name should be given.
+For example if you give @option{--noblank=_all,magnitude}, then Table will assume that your table actually has a column named @code{_all} and @code{magnitude}, and if it doesn't, it will abort with an error.
+
+This option is applied just before writing the final table (after @option{--colmetadata} has finished).
+So in case you changed the column metadata, or added new columns, you can use the new names, or the newly defined column numbers.
 
 @item -m STR/INT,STR[,STR[,STR]]
 @itemx --colmetadata=STR/INT,STR[,STR[,STR]]

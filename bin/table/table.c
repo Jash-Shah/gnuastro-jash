@@ -756,65 +756,73 @@ table_noblank(struct tableparams *p)
   char **strarr=p->noblank->array;
   gal_list_sizet_t *column_indexs=NULL;
 
-  /* Go over the given list of given columns. */
-  for(i=0;i<p->noblank->size;++i)
+  /* See if all columns should be checked, or just a select few. */
+  if( p->noblank->size==1 && !strcmp(strarr[0],"_all") )
     {
-      /* First go through the column names and if they match, add
-         them. Note that we don't want to stop once a name is found, in
-         this scenario, if multiple columns have the same name, we should
-         use all.*/
-      j=0;
-      found=0;
-      for(tcol=p->table; tcol!=NULL; tcol=tcol->next)
-        {
-          if( tcol->name && !strcmp(tcol->name, strarr[i]) )
-            {
-              found=1;
-              gal_list_sizet_add(&column_indexs, j);
-            }
-          ++j;
-        }
-
-      /* If the given string didn't match any column name, it must be a
-         number, so parse it as a number and use that number. */
-      if(found==0)
-        {
-          /* Parse the given index. */
-          index=NULL;
-          if( gal_type_from_string((void **)(&index), strarr[i],
-                                   GAL_TYPE_SIZE_T) )
-            error(EXIT_FAILURE, 0, "column '%s' didn't match any of the "
-                  "final column names and can't be parsed as a column "
-                  "counter (starting from 1) either", strarr[i]);
-
-          /* Make sure its not zero (the user counts from 1). */
-          if(*index==0)
-            error(EXIT_FAILURE, 0, "the column number (given to the "
-                  "'--noblank' option) should start from 1, but you have "
-                  "given 0.");
-
-          /* Make sure that the index falls within the number (note that it
-             still counts from 1).  */
-          if(*index > gal_list_data_number(p->table))
-            error(EXIT_FAILURE, 0, "the final output table only has %zu "
-                  "columns, but you have given column %zu to '--noblank'. "
-                  "Recall that '--noblank' operates on the output columns "
-                  "and that you can also use output column names (if they "
-                  "have any)",
-                  gal_list_data_number(p->table), *index);
-
-          /* Everything is fine, add the index to the list of columns to
-             check. */
-          gal_list_sizet_add(&column_indexs, *index-1);
-
-          /* Clean up. */
-          free(index);
-        }
-
-      /* For a check.
-      printf("%zu\n", column_indexs->v);
-      */
+      for(i=0;i<gal_list_data_number(p->table);++i)
+        gal_list_sizet_add(&column_indexs, i);
     }
+
+  /* Only certain columns should be checked, so find/add their index. */
+  else
+    for(i=0;i<p->noblank->size;++i)
+      {
+        /* First go through the column names and if they match, add
+           them. Note that we don't want to stop once a name is found, in
+           this scenario, if multiple columns have the same name, we should
+           use all.*/
+        j=0;
+        found=0;
+        for(tcol=p->table; tcol!=NULL; tcol=tcol->next)
+          {
+            if( tcol->name && !strcmp(tcol->name, strarr[i]) )
+              {
+                found=1;
+                gal_list_sizet_add(&column_indexs, j);
+              }
+            ++j;
+          }
+
+        /* If the given string didn't match any column name, it must be a
+           number, so parse it as a number and use that number. */
+        if(found==0)
+          {
+            /* Parse the given index. */
+            index=NULL;
+            if( gal_type_from_string((void **)(&index), strarr[i],
+                                     GAL_TYPE_SIZE_T) )
+              error(EXIT_FAILURE, 0, "column '%s' didn't match any of the "
+                    "final column names and can't be parsed as a column "
+                    "counter (starting from 1) either", strarr[i]);
+
+            /* Make sure its not zero (the user counts from 1). */
+            if(*index==0)
+              error(EXIT_FAILURE, 0, "the column number (given to the "
+                    "'--noblank' option) should start from 1, but you have "
+                    "given 0.");
+
+            /* Make sure that the index falls within the number (note that
+               it still counts from 1).  */
+            if(*index > gal_list_data_number(p->table))
+              error(EXIT_FAILURE, 0, "the final output table only has %zu "
+                    "columns, but you have given column %zu to '--noblank'. "
+                    "Recall that '--noblank' operates on the output columns "
+                    "and that you can also use output column names (if they "
+                    "have any)",
+                    gal_list_data_number(p->table), *index);
+
+            /* Everything is fine, add the index to the list of columns to
+               check. */
+            gal_list_sizet_add(&column_indexs, *index-1);
+
+            /* Clean up. */
+            free(index);
+          }
+
+        /* For a check.
+           printf("%zu\n", column_indexs->v);
+        */
+      }
 
   /* Remove all blank rows from the output table, note that we don't need
      the flags of the removed columns here. So we can just free it up. */
