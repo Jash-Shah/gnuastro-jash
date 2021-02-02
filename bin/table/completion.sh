@@ -1,5 +1,11 @@
 #/usr/bin/env bash
 
+# TODO: GNU Copyright ...
+# Original Author:
+# Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+# Contributing authors:
+# Mohammad Akhlaghi <mohammad@akhlaghi.org>
+
 # TIP: Run the command below to initialize the bash completion feature for
 # this specific program (i.e. astcosmiccal):
 # $ source astcosmiccal-completion.bash
@@ -21,7 +27,7 @@ _gnuastro_autocomplete_fits_hdu_read(){
     COMPREPLY=($("$ASTFITS --quiet $1" | awk '{print $2}'))
 }
 
-_gnuastro_autocomplete_list_fits_files(){
+_gnuastro_autocomplete_list_fits_names(){
     # Suggest all 'FITS' files in current directory. Case insensitive.
     COMPREPLY=($(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word"))
 }
@@ -31,10 +37,10 @@ _gnuastro_autocomplete_expect_number(){
     echo "Pass"
 }
 
-_gnuastro_autocomplete_get_fits_file(){
+_gnuastro_autocomplete_get_fits_name(){
     # Get the first fits file among the command line
     # TODO: Add all other fits file extensions
-    comp_fits_file="$(echo ${COMP_WORDS[@]} | \
+    comp_fits_name="$(echo ${COMP_WORDS[@]} | \
                            awk -v regex="([a-z]|[A-Z])*.[fF][iI][tT][sS]" \
                            'match($0, regex) \
                            {print substr($0, RSTART, RLENGTH)}')"
@@ -43,12 +49,12 @@ _gnuastro_autocomplete_get_fits_file(){
 _gnuastro_autocomplete_list_fits_columns(){
     # Get the fits file name in current command line, put into
     # the $comp_fits_file variable
-    _gnuastro_autocomplete_get_fits_file
+    _gnuastro_autocomplete_get_fits_name
     # If the fits file does exist, fetch its column names
-    if [[ -f "$comp_fits_file" ]]; then
+    if [[ -f "$comp_fits_name" ]]; then
         # Set a global array named comp_fits_columns that contains all columns
         # inside the fits file specified in the first argument: $1.
-        comp_fits_columns=("$($ASTTABLE --information $comp_fits_file | \
+        comp_fits_columns=("$($ASTTABLE --information $comp_fits_name | \
                                         awk -v regex="^[0-9]+" \
                                         'match($0, regex) \
                                         {print $2}')")
@@ -64,7 +70,7 @@ _gnuastro_autocomplete_get_file(){
 # just find the short commands
 # astconvolve --help | awk -v pattern="^ *-([a-z]|[A-Z])" 'match($0, pattern) {print $0}'
 
-_gnuastro_autocomplete_list_all_options(){
+_gnuastro_autocomplete_list_options(){
     # The regex variable in the awk program contains the regular expression
     # pattern that matches all options provided in corresponding program
     COMPREPLY=($(compgen -W "$($1 --help | \
@@ -92,11 +98,12 @@ _gnuastro_asttable_completions(){
 
     # TODO: Prettify the code syntax, shorter ones on top
     case "$prev" in
-        -i|--information) _gnuastro_autocomplete_list_fits_files ;;
+        -i|--information) _gnuastro_autocomplete_list_fits_names ;;
         -c|--column) _gnuastro_autocomplete_list_fits_columns ;;
+        -w|--wcsfile) _gnuastro_autocomplete_list_fits_names ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
-        *) _gnuastro_autocomplete_list_all_options $PROG_NAME ;;
+        *) _gnuastro_autocomplete_list_options $PROG_NAME ;;
     esac
 }
 
