@@ -1758,9 +1758,9 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
 static void
 fits_bug_wrapper_cdelt_zero(fitsfile *fptr, struct wcsprm *wcs, char *keystr)
 {
-  size_t dim;
   char *keyname;
   double keyvalue;
+  size_t dim=GAL_BLANK_SIZE_T;
   int status=0, datatype=TDOUBLE;
 
   /* Only do this check when we have more than two dimensions. */
