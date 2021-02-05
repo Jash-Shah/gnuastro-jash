@@ -26,7 +26,7 @@ _gnuastro_autocomplete_list_fits_hdu(){
     # Accepts a fits filename as input and suggests its headers
     if [[ -f "$1"  ]]; then
         local list="$($ASTFITS --quiet $1 | awk '{print $2}')"
-        COMPREPLY=($(compgen -W "$list" -- "$word"))
+        COMPREPLY=($(compgen -W "$list"))
     fi
 }
 
@@ -132,7 +132,10 @@ _gnuastro_asttable_completions(){
             # something is going wrong.
             _gnuastro_autocomplete_list_fits_columns "$fits_name"
             ;;
-        -W|--wcshdu) _gnuastro_autocomplete_list_fits_hdu "$fits_name" ;;
+        -W|--wcshdu)
+            # Description is same as the '--column' option.
+            _gnuastro_autocomplete_list_fits_hdu "$fits_name"
+            ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
         *) _gnuastro_autocomplete_list_options $PROG_NAME ;;
