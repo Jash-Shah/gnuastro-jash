@@ -6,6 +6,12 @@
 # Contributing authors:
 # Mohammad Akhlaghi <mohammad@akhlaghi.org>
 
+# A thought on short options. I thing they should not be covered by the
+# autocompletion. Because only the advanced users may use them. And it is
+# possible to mix them up. So, only those will use the short options who
+# know what they are doing. Hence, they will not need the autocompletion
+# feature binded to the short options.
+
 # TIP: Run the command below to initialize the bash completion feature for
 # this specific program (i.e. astcosmiccal):
 # $ source astcosmiccal-completion.bash
