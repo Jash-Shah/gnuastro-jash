@@ -10,7 +10,8 @@
 # autocompletion. Because only the advanced users may use them. And it is
 # possible to mix them up. So, only those will use the short options who
 # know what they are doing. Hence, they will not need the autocompletion
-# feature binded to the short options.
+# feature binded to the short options.  However, the short options are
+# taken into consideration for suggesting the upcoming commands.
 
 # TIP: Run the command below to initialize the bash completion feature for
 # this specific program (i.e. astcosmiccal):
@@ -52,7 +53,7 @@ _gnuastro_autocomplete_get_fits_name(){
     # Get the first fits file among the command line and put it into the
     # $comp_fits_name variable
     # TODO: How about all other fits file extensions?
-    local file_name="$(echo ${COMP_WORDS[@]} | awk -v regex="[a-zA-Z]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    local file_name="$(echo ${COMP_WORDS[@]} | awk -v regex=".[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
     if [ -f "$file_name" ]; then
         # Check if file_name is actually an existing fits file. This
         # prevents other functions from failing and producing obscure error
