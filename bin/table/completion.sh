@@ -69,7 +69,7 @@ _gnuastro_autocomplete_list_fits_columns(){
     # its column names
     if [ -f "$1" ]; then
         local list="$(_gnuastro_autocomplete_get_fits_columns $1)"
-        COMPREPLY=($(compgen -W "$list" -- "$word"))
+        COMPREPLY=($(compgen -W "$list"))
     fi
 }
 
@@ -84,7 +84,7 @@ _gnuastro_autocomplete_get_file(){
 _gnuastro_autocomplete_list_options(){
     # Accept the command name and its absolute path, run the --help option
     # and print all long options available.
-    local list="$($1 --help | awk -v regex=" --+[a-zA-Z0-9]*" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    local list="$($1 --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
     COMPREPLY=($(compgen -W "$list" -- "$word"))
 }
 
@@ -104,14 +104,6 @@ _gnuastro_asttable_completions(){
     # Variable "prev" is the word just before the current word
     local prev="${COMP_WORDS[COMP_CWORD-1]}";
 
-    # In case the option contains an equal sign '=' complexities arise.
-    # This is because bash considers '=' as a wordbreak. The WORDBREAK
-    # variable can be altered but it is discouraged. Instead, we will treat
-    # each case carefully.
-    #
-    if [ "$prev" == "=" ]; then prev="${COMP_WORDS[COMP_CWORD-2]}"; fi
-    if [ "$word" == "=" ]; then word="$prev"; fi
-
     # A quick check to see if there is already a fits file name invoked in
     # the current commandline. This means the order of commands does matter
     # in this bash completion. If we do not want this, we should implement
@@ -121,15 +113,16 @@ _gnuastro_asttable_completions(){
     # TODO: Prettify the code syntax, shorter ones on top
     case "$prev" in
         -i|--information) _gnuastro_autocomplete_list_fits_names ;;
-        -c|--column)
-        # echo "fits_name: $fits_name"
-        # _gnuastro_autocomplete_list_fits_columns "$fits_name"
-            local fits_columns="$(_gnuastro_autocomplete_get_fits_columns '$fits_name')"
-            printf "\n*** DEBUG ***\n>>> prev: $prev\n>>> word: $word\n>>> line: ${COMP_LINE[@]}"
-        ;;
-            -w|--wcsfile) _gnuastro_autocomplete_list_fits_names ;;
-            -W|--wcshdu) _gnuastro_autocomplete_list_fits_hdu "$fits_name"
-            ;; -b|--noblank) ;; -h|--hdu) ;; *)
-            _gnuastro_autocomplete_list_options $PROG_NAME ;; esac }
+        -c|--column) _gnuastro_autocomplete_list_fits_columns "$fits_name" ;;
+        -w|--wcsfile) _gnuastro_autocomplete_list_fits_names ;;
+        -W|--wcshdu) _gnuastro_autocomplete_list_fits_hdu "$fits_name" ;;
+        -b|--noblank) ;;
+        -h|--hdu) ;;
+        *) _gnuastro_autocomplete_list_options $PROG_NAME ;;
+    esac
 
-complete -F _gnuastro_asttable_completions asttable
+    # Debugging purpose:
+    # printf "\n*** DEBUG ***\n>>> prev: $prev \t \$3: $3\n>>> word: $word \t \$2: $2\n>>> line: ${COMP_LINE[@]}"
+}
+
+complete -F _gnuastro_asttable_completions -o nospace asttable
