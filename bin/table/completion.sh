@@ -112,9 +112,26 @@ _gnuastro_asttable_completions(){
 
     # TODO: Prettify the code syntax, shorter ones on top
     case "$prev" in
-        -i|--information) _gnuastro_autocomplete_list_fits_names ;;
-        -c|--column) _gnuastro_autocomplete_list_fits_columns "$fits_name" ;;
-        -w|--wcsfile) _gnuastro_autocomplete_list_fits_names ;;
+        asttable) _gnuastro_autocomplete_list_fits_names ;;
+        -i|--information|-w|--wcsfile)
+            if [ -z _gnuastro_autocomplete_get_fits_name ]; then
+                # Check if the user has already specified a fits file. If
+                # the _gnuastro_autocomplete_get_file_name echoes an empty
+                # response, it means no fits files were specified.
+                _gnuastro_autocomplete_list_fits_names
+            else
+                # The user has entered a valid fits file name. So keep on
+                # with suggesting all other options at hand.
+                _gnuastro_autocomplete_list_options $PROG_NAME
+            fi
+            ;;
+        -c|--column)
+            # The function below, checks if the user has specified a fits
+            # file in the current commandline. If not, there will be no
+            # response from autocompletion. This might alert the user that
+            # something is going wrong.
+            _gnuastro_autocomplete_list_fits_columns "$fits_name"
+            ;;
         -W|--wcshdu) _gnuastro_autocomplete_list_fits_hdu "$fits_name" ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
