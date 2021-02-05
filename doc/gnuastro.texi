@@ -8002,7 +8002,7 @@ Thus relying on this type of memory alone would create a bad bottleneck in the i
 The first step to decrease this bottleneck is to have a faster storage space, but with a much limited storage volume.
 For this type of storage, computers have a Random Access Memory (or RAM).
 RAM is classified as a @emph{volatile memory} because it needs a constant flow of electricity to keep the information.
-In other words, the moment power is cut-off, all the stored information in your RAM is gone (hence the 'volatile' name).
+In other words, the moment power is cut-off, all the stored information in your RAM is gone (hence the ``volatile'' name).
 But thanks to that constant supply of power, it can access any random address with equal (and very high!) speed.
 
 Hence, the general/simplistic way that programs deal with memory is the following (this is general to almost all programs, not just Gnuastro's):
@@ -8017,7 +8017,7 @@ As soon as an intermediate dataset is no longer necessary for the next internal 
 This allows Gnuastro programs to minimize their usage of your system's RAM over the full running time.
 
 The situation gets complicated when the datasets are large (compared to your available RAM when the program is run).
-For example if a dataset if half the size of your system's available RAM, and the program's internal analysis needs three or more intermediately processed copies of it at one moment in its analysis.
+For example if a dataset is half the size of your system's available RAM, and the program's internal analysis needs three or more intermediately processed copies of it at one moment in its analysis.
 There won't be enough RAM to keep those higher-level intermediate data.
 In such cases, programs that don't do any memory management will crash.
 But fortunately Gnuastro's programs do have a memory management plans for such situations.
@@ -8029,7 +8029,7 @@ That file will have the exact size (in bytes) of that intermediate dataset.
 Any time the program needs that intermediate dataset, the operating system will directly go to that file, and bypass your RAM.
 As soon as that file is no longer necessary for the analysis, it will be deleted.
 But as mentioned above, non-volatile memory has much slower I/O speed than the RAM.
-Hence in such situations, the programs will become noticeably slower (sometimes by factors of 10 times slower, depending on your non-volatile memory speeds).
+Hence in such situations, the programs will become noticeably slower (sometimes by factors of 10 times slower, depending on your non-volatile memory speed).
 
 Because of the drop in I/O speed (and thus the speed of your running program), the moment that any to-be-allocated dataset is memory-mapped, Gnuastro's programs and libraries will notify you with a descriptive statement like below (can happen in any phase of their analysis).
 It shows the location of the memory-mapped file, its size, complemented with a small description of the cause, a pointer to this section of the book for more information on how to deal with it (if necessary), and what to do to suppress it.
@@ -8046,7 +8046,7 @@ disable this warning, please use the option '--quiet-mmap'
 Finally, when the intermediate dataset is no longer necessary, the program will automatically delete it and notify you with a statement like this:
 
 @example
-astarithmetic: ./gnuastro_mmap/B1QgVf: deleted
+astarithmetic: ./gnuastro_mmap/Fu7Dhs: deleted
 @end example
 
 @noindent
@@ -8070,8 +8070,8 @@ rm -f gnuastro_mmap/*
 rm -f gnuastro_mmap_*
 @end example
 
-A much more common issue in dealing with memory-mapped files is their location.
-For example you may be running a program in a partition that is hosted by an HDD.
+A much more common issue when dealing with memory-mapped files is their location.
+For example, you may be running a program in a partition that is hosted by an HDD.
 But you also have another partition on an SSD (which has much faster I/O).
 So you want your memory-mapped files to be created in the SSD to speed up your processing.
 In this scenario, you want your project source directory to only contain your plain-text scripts and you want your project's built products (even the temporary memory-mapped files) to be built in a different location because they are large; thus I/O speed becomes important.
