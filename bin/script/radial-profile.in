@@ -209,13 +209,15 @@ do
         -m*)                measure=$(echo "$1"  | sed -e's/-m//');    check_v "$1" "$measure";  shift;;
         -s|--sigmaclip)     sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*) sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
-        -s*)                 sigmaclip=$(echo "$1"  | sed -e's/-s//'); check_v "$1" "$sigmaclip";  shift;;
+        -s*)                sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
+
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
         -k*|--keeptmp=*)  on_off_option_error --keeptmp -k;;
-        --tmpdir)         tmpdir="$2";                          check_v "$1" "$tmpdir"; shift;shift;;
-        --tmpdir=*)       tmpdir="${1#*=}";                     check_v "$1" "$tmpdir"; shift;;
+        -t|--tmpdir)      tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
+        -t=*|--tmpdir=*)  tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
+        -t*)              tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
         -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
         -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
@@ -354,13 +356,13 @@ bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 defaultname=$(pwd)/"$bname_prefix"_rprofile_$mode"_$xcenter"_"$ycenter"
 if [ z$output = zdefault ]; then output="$defaultname.fits"; fi
 
-# Construct the temporal directory. There, necessary temporal files will be
-# kept during the execution of the script. If the user wants to keep this
-# directory (--keeptmp option), it will not be deleted.
+# Construct the temporal directory. If the user does not specify any directory,
+# then a default one with the base name of the input image will be constructed.
+# If the user set the directory, then make it. This directory will be deleted
+# at the end of the script if the user does not want to keep it (with the
+# `--keeptmp' option).
 if [ z$tmpdir = z        ]; then tmpdir=$defaultname
-else                             tmpdir=$(realpath $tmpdir); fi
-if ! [ -d $tmpdir ]; then mkdir $tmpdir; fi
-
+else                             mkdir -p $tmpdir; fi
 
 
 
