@@ -31,6 +31,7 @@ PREFIX="/usr/local/bin";
 ASTFITS="$PREFIX/astfits";
 ASTTABLE="$PREFIX/asttable";
 db=0 # Set 0 for printing debug messages, else set to 1
+
 # Use extended globs in the case statements if needed
 # https://mywiki.wooledge.org/BashGuide/Patterns#Extended_Globs
 # shopt -s extglob
