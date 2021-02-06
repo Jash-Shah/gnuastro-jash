@@ -78,6 +78,56 @@ table_apply_permutation(gal_data_t *table, size_t *permutation,
 
 
 
+static void
+table_bring_to_top(gal_data_t *table, gal_data_t *rowids)
+{
+  char **strarr;
+  gal_data_t *col;
+  size_t i, *ids=rowids->array;
+
+  /* Make sure the rowids are sorted by increasing index. */
+  gal_statistics_sort_increasing(rowids);
+
+  /* Go over each column and move the desired rows to the top. */
+  for(col=table;col!=NULL;col=col->next)
+    {
+      /* For easy operation if the column is a string. */
+      strarr = col->type==GAL_TYPE_STRING ? col->array : NULL;
+
+      /* Move the desired rows up to the top. */
+      for(i=0;i<rowids->size;++i)
+        if( i != ids[i] )
+          {
+            /* Copy the contents. For strings, its just about freeing and
+               copying pointers. */
+            if(col->type==GAL_TYPE_STRING)
+              {
+                free(strarr[i]);
+                strarr[i]=strarr[ ids[i] ];
+                strarr[ ids[i] ]=NULL;
+              }
+            else
+              memcpy(gal_pointer_increment(col->array, i,      col->type),
+                     gal_pointer_increment(col->array, ids[i], col->type),
+                     gal_type_sizeof(col->type));
+          }
+
+      /* For string arrays, free the pointers of the remaining rows. */
+      if(col->type==GAL_TYPE_STRING)
+        for(i=rowids->size;i<col->size;++i)
+          if(strarr[i]) free(strarr[i]);
+
+      /* Correct the size (this should be after freeing of the string
+         pointers. */
+      col->size = col->dsize[0] = rowids->size;
+    }
+
+}
+
+
+
+
+
 static gal_data_t *
 table_selection_range(struct tableparams *p, gal_data_t *col)
 {
@@ -341,16 +391,14 @@ table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
 static void
 table_select_by_value(struct tableparams *p)
 {
-  uint8_t *u;
+  gal_data_t *rowids;
   struct list_select *tmp;
-  gal_data_t *mask, *addmask=NULL;
-  gal_data_t *sum, *perm, *blmask;
-  size_t i, g, b, *s, *sf, ngood=0;
+  uint8_t *u, *uf, *ustart;
+  size_t i, *s, ngood=0;
   int inplace=GAL_ARITHMETIC_INPLACE;
+  gal_data_t *mask, *blmask, *addmask=NULL;
 
   /* Allocate datasets for the necessary numbers and write them in. */
-  perm=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, p->table->dsize, NULL, 0,
-                      p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
   mask=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, p->table->dsize, NULL, 1,
                       p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
 
@@ -417,49 +465,37 @@ table_select_by_value(struct tableparams *p)
       gal_data_free(addmask);
     }
 
-  /* Find the final number of elements to print. */
-  sum=gal_statistics_sum(mask);
-  ngood = p->table->size - ((double *)(sum->array))[0];
+  /* Find the final number of elements to print and allocate the array to
+     keep them. */
+  uf=(u=mask->array)+mask->size;
+  ngood=0; do if(*u==0) ++ngood; while(++u<uf);
+  rowids=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &ngood, NULL, 0,
+                        p->cp.minmapsize, p->cp.quietmmap, NULL,
+                        NULL, NULL);
 
-  /* Define the permutation: elements within range remain on the top of
-     the list, while the ones outside of will be placed after them
-     (starting from the index after the last good one). */
-  g=0;          /* Good indexs (starting from 0). */
-  b=ngood;      /* Bad indexs (starting from total number of good). */
-  u=mask->array;
-  sf=(s=perm->array)+perm->size;
-  do *s = *u++ ? b++ : g++; while(++s<sf);
+  /* Fill-in the finally desired row-IDs. */
+  s=rowids->array;
+  ustart=mask->array;
+  uf=(u=mask->array)+mask->size;
+  do if(*u==0) *s++ = u-ustart; while(++u<uf);
 
-  /* For a check
-  {
-    size_t i;
-    double *v=ref->array;
-    uint8_t *a=mask->array;
-    printf("ref->type: %s\n", gal_type_name(ref->type, 1));
-    for(i=0;i<ref->size;++i) printf("%u, %g\n", a[i], v[i]);
-    gal_permutation_check(perm->array, perm->size);
-  }
-  */
-
-  /* Apply the final permutation to the whole table. */
-  table_apply_permutation(p->table, perm->array, ngood, 1);
+  /* Move the desired rows to the top of the table. */
+  table_bring_to_top(p->table, rowids);
 
   /* If the sort column is not in the table (the proper range has already
      been applied to it), and we need to sort the resulting columns
      afterwards, we should also apply the permutation on the sort
      column. */
-  if(p->sortcol && p->sortin==0)
-    table_apply_permutation(p->sortcol, perm->array, ngood, 1);
+  if(p->sortcol && p->sortin==0) table_bring_to_top(p->sortcol, rowids);
 
   /* Clean up. */
   i=0;
   for(tmp=p->selectcol;tmp!=NULL;tmp=tmp->next)
     { if(p->freeselect[i]) {gal_data_free(tmp->col); tmp->col=NULL;} ++i; }
   ui_list_select_free(p->selectcol, 0);
-  gal_data_free(mask);
-  gal_data_free(perm);
   free(p->freeselect);
-  gal_data_free(sum);
+  gal_data_free(mask);
+  gal_data_free(rowids);
 }
 
 
@@ -568,25 +604,19 @@ table_random_rows(gal_data_t *table, gsl_rng *rng, size_t numrandom,
                   size_t minmapsize, int quietmmap)
 {
   int bad;
-  uint8_t *marr, *u, *uf;
-  gal_data_t *mask, *perm;
-  size_t i, b, g, *s, *sf, ind;
+  gal_data_t *rowids;
+  size_t i, j, *ids, ind;
 
   /* Sanity check. */
   if(numrandom>table->size)
     return EXIT_FAILURE;
 
-  /* Allocate space for the permutation array and the mask
-     array. Initialize the mask array to 1 (so we later set the rows we
-     want to 0). */
-  mask=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, table->dsize, NULL, 0,
-                      minmapsize, quietmmap, NULL, NULL, NULL);
-  perm=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, table->dsize, NULL, 0,
-                      minmapsize, quietmmap, NULL, NULL, NULL);
-  uf=(u=mask->array)+mask->size; do *u++ = 1; while(u<uf);
+  /* Allocate space for the list of rows to use. */
+  rowids=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &numrandom, NULL, 0,
+                        minmapsize, quietmmap, NULL, NULL, NULL);
 
   /* Select the row numbers. */
-  marr=mask->array;
+  ids=rowids->array;
   for(i=0;i<numrandom;++i)
     {
       /* Select a random index and make sure its new. */
@@ -594,24 +624,17 @@ table_random_rows(gal_data_t *table, gsl_rng *rng, size_t numrandom,
       while(bad)
         {
           ind = gsl_rng_uniform(rng) * table->size;
-          if(marr[ind]) bad=0;
+          for(j=0;j<i;++j) if(ids[j]==ind) break;
+          if(i==j) bad=0;
         }
-      marr[ind]=0;
+      ids[i]=ind;
     }
 
-  /* Fill up the rest of the permutation array. */
-  g=0;          /* Good indexs (starting from 0). */
-  b=numrandom;  /* Bad indexs (starting from total number of good). */
-  u=mask->array;
-  sf=(s=perm->array)+perm->size;
-  do *s = *u++ ? b++ : g++; while(++s<sf);
-
-  /* Apply the final permutation to the whole table. */
-  table_apply_permutation(table, perm->array, numrandom, 1);
+  /* Move the desired rows to the top. */
+  table_bring_to_top(table, rowids);
 
   /* Clean up and return. */
-  gal_data_free(mask);
-  gal_data_free(perm);
+  gal_data_free(rowids);
   return EXIT_SUCCESS;
 }
 
