@@ -29,6 +29,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <gsl/gsl_rng.h>
 #include <gsl/gsl_heapsort.h>
 
 #include <gnuastro/txt.h>
@@ -338,7 +339,7 @@ table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
 
 
 static void
-table_selection(struct tableparams *p)
+table_select_by_value(struct tableparams *p)
 {
   uint8_t *u;
   struct list_select *tmp;
@@ -559,47 +560,159 @@ table_sort(struct tableparams *p)
 
 
 
+/* Apply random row selection. If the returned value is 'EXIT_SUCCESS',
+   then, it was successful. Otherwise, it will return 'EXIT_FAILURE' and
+   the input won't be touched. */
+static int
+table_random_rows(gal_data_t *table, gsl_rng *rng, size_t numrandom,
+                  size_t minmapsize, int quietmmap)
+{
+  int bad;
+  uint8_t *marr, *u, *uf;
+  gal_data_t *mask, *perm;
+  size_t i, b, g, *s, *sf, ind;
+
+  /* Sanity check. */
+  if(numrandom>table->size)
+    return EXIT_FAILURE;
+
+  /* Allocate space for the permutation array and the mask
+     array. Initialize the mask array to 1 (so we later set the rows we
+     want to 0). */
+  mask=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, table->dsize, NULL, 0,
+                      minmapsize, quietmmap, NULL, NULL, NULL);
+  perm=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, table->dsize, NULL, 0,
+                      minmapsize, quietmmap, NULL, NULL, NULL);
+  uf=(u=mask->array)+mask->size; do *u++ = 1; while(u<uf);
+
+  /* Select the row numbers. */
+  marr=mask->array;
+  for(i=0;i<numrandom;++i)
+    {
+      /* Select a random index and make sure its new. */
+      bad=1;
+      while(bad)
+        {
+          ind = gsl_rng_uniform(rng) * table->size;
+          if(marr[ind]) bad=0;
+        }
+      marr[ind]=0;
+    }
+
+  /* Fill up the rest of the permutation array. */
+  g=0;          /* Good indexs (starting from 0). */
+  b=numrandom;  /* Bad indexs (starting from total number of good). */
+  u=mask->array;
+  sf=(s=perm->array)+perm->size;
+  do *s = *u++ ? b++ : g++; while(++s<sf);
+
+  /* Apply the final permutation to the whole table. */
+  table_apply_permutation(table, perm->array, numrandom, 1);
+
+  /* Clean up and return. */
+  gal_data_free(mask);
+  gal_data_free(perm);
+  return EXIT_SUCCESS;
+}
+
+
+
+
+
 static void
-table_head_tail(struct tableparams *p)
+table_select_by_position(struct tableparams *p)
 {
   char **strarr;
   gal_data_t *col;
   size_t i, start, end;
+  double *darr = p->rowlimit ? p->rowlimit->array : NULL;
+
+  /* Random row selection (by position, not value). This step is
+     independent of the other operations of this function, so as soon as
+     its finished return. */
+  if(p->rowrandom)
+    {
+      if( table_random_rows(p->table, p->rng, p->rowrandom,
+                            p->cp.minmapsize, p->cp.quietmmap)
+          == EXIT_FAILURE && p->cp.quiet==0 )
+        error(EXIT_SUCCESS, 0, "'--rowrandom' not activated because "
+              "the number of rows in the table at this stage (%zu) "
+              "is smaller than the number of requested random rows "
+              "(%zu). You can supress this message with '--quiet'",
+              p->table->size, p->rowrandom);
+      return;
+    }
+
+  /* Sanity check  */
+  if(p->rowlimit)
+    {
+      if(darr[0]>=p->table->size)
+        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) "
+              "is larger than the number of rows (%zu)",
+              darr[0]+1, p->table->size);
+      else if( darr[1]>=p->table->size )
+        error(EXIT_FAILURE, 0, "the second value to '--rowlimit' (%g) "
+              "is larger than the number of rows (%zu)",
+              darr[1]+1, p->table->size);
+    }
 
   /* Go over all the columns and make the necessary corrections. */
   for(col=p->table;col!=NULL;col=col->next)
     {
-      /* If we are dealing with strings, we'll need to free the strings
-         that the columns that will not be used point to (outside the
-         allocated array directly 'gal_data_t'). We don't have to worry
-         about the space for the actual pointers (they will be free'd by
-         'free' in any case, since they are in the initially allocated
-         array).*/
+      /* FOR STRING: we'll need to free the individual strings that will
+         not be used (outside the allocated array directly
+         'gal_data_t'). We don't have to worry about the space for the
+         actual pointers (they will be free'd by 'free' in any case, since
+         they are in the initially allocated array).*/
       if(col->type==GAL_TYPE_STRING)
         {
-          /* Set the start and ending indexs. */
-          start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
-          end   = p->head!=GAL_BLANK_SIZE_T ? p->table->size : p->tail;
-
-          /* Free their allocated spaces. */
+          /* Parse the rows and free extra pointers. */
           strarr=col->array;
-          for(i=start; i<end; ++i) { free(strarr[i]); strarr[i]=NULL; }
+          if(p->rowlimit)
+            {
+              /* Note that the given values to '--rowlimit' started from 1,
+                 but in 'ui.c' we subtracted one from it (so at this stage,
+                 it starts from 0). */
+              start = darr[0];
+              end   = darr[1];
+              for(i=0;i<p->table->size;++i)
+                if(i<start || i>end) { free(strarr[i]); strarr[i]=NULL; }
+            }
+          else
+            {
+              /* Free their allocated spaces. */
+              start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
+              end   = p->head!=GAL_BLANK_SIZE_T ? p->table->size : p->tail;
+              for(i=start; i<end; ++i) { free(strarr[i]); strarr[i]=NULL; }
+            }
         }
 
-      /* For '--tail', we'll need to bring the last columns to the
-         start. Note that we are using 'memmove' because we want to be safe
-         with overlap. */
-      if(p->tail!=GAL_BLANK_SIZE_T)
-        memmove(col->array,
-                gal_pointer_increment(col->array, col->size - p->tail,
-                                      col->type),
-                p->tail*gal_type_sizeof(col->type));
+      /* Make the final adjustment. */
+      if(p->rowlimit)
+        {
+          /* Move the values up to the top and correct the size. */
+          col->size=darr[1]-darr[0]+1;
+          memmove(col->array,
+                  gal_pointer_increment(col->array, darr[0], col->type),
+                  (darr[1]-darr[0]+1)*gal_type_sizeof(col->type));
+        }
+      else
+        {
+          /* For '--tail', we'll need to bring the last columns to the
+             start. Note that we are using 'memmove' because we want to be
+             safe with overlap. */
+          if(p->tail!=GAL_BLANK_SIZE_T)
+            memmove(col->array,
+                    gal_pointer_increment(col->array, col->size - p->tail,
+                                          col->type),
+                    p->tail*gal_type_sizeof(col->type));
 
-      /* In any case (head or tail), the new number of column elements is
-         the given value. */
-      col->size = col->dsize[0] = ( p->head!=GAL_BLANK_SIZE_T
-                                    ? p->head
-                                    : p->tail );
+          /* In any case (head or tail), the new number of column elements
+             is the given value. */
+          col->size = col->dsize[0] = ( p->head!=GAL_BLANK_SIZE_T
+                                        ? p->head
+                                        : p->tail );
+        }
     }
 }
 
@@ -853,15 +966,18 @@ table_noblank(struct tableparams *p)
 void
 table(struct tableparams *p)
 {
-  /* Apply a certain range (if required) to the output sample. */
-  if(p->selection) table_selection(p);
+  /* Apply ranges based on row values (if required). */
+  if(p->selection) table_select_by_value(p);
 
   /* Sort it (if required). */
   if(p->sort) table_sort(p);
 
   /* If the output number of rows is limited, apply them. */
-  if(p->head!=GAL_BLANK_SIZE_T || p->tail!=GAL_BLANK_SIZE_T)
-    table_head_tail(p);
+  if( p->rowlimit
+      || p->rowrandom
+      || p->head!=GAL_BLANK_SIZE_T
+      || p->tail!=GAL_BLANK_SIZE_T )
+    table_select_by_position(p);
 
   /* If any operations are needed, do them. */
   if(p->outcols)

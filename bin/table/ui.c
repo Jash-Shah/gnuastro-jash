@@ -271,11 +271,15 @@ ui_read_check_only_options(struct tableparams *p)
               "v1x,v1y:v2x,v2y:v3x,v3y:...");
     }
 
-
-  /* Make sure '--head' and '--tail' aren't given together. */
-  if(p->head!=GAL_BLANK_SIZE_T && p->tail!=GAL_BLANK_SIZE_T)
-    error(EXIT_FAILURE, 0, "'--head' and '--tail' options cannot be "
-          "called together");
+  /* Make sure only one of the positional row selection operations is
+     called in this run.*/
+  if(p->rowlimit
+     && p->rowrandom
+     && p->head!=GAL_BLANK_SIZE_T
+     && p->tail!=GAL_BLANK_SIZE_T)
+    error(EXIT_FAILURE, 0, "only one of the following options can be "
+          "called in one run: '--head', '--tail', '--rowlimit' and "
+          "'--rowrandom'");
 
   /* If '--colmetadata' is given, make sure none of the given options have
      more than three values. */
@@ -1042,7 +1046,8 @@ ui_check_select_sort_after(struct tableparams *p, size_t nselect,
 static void
 ui_preparations(struct tableparams *p)
 {
-  size_t *colmatch;
+  double *darr;
+  size_t i, *colmatch;
   gal_list_str_t *lines;
   size_t nselect=0, origoutncols=0;
   size_t sortindout=GAL_BLANK_SIZE_T;
@@ -1132,6 +1137,51 @@ ui_preparations(struct tableparams *p)
               ? p->table->size
               : p->tail );
 
+  /* If rows are given, do some sanity checks and make sure that they are
+     within the table's limits. */
+  if(p->rowlimit)
+    {
+      /* There should only be two values. */
+      if(p->rowlimit->size!=2)
+        error(EXIT_FAILURE, 0, "only two should be given to "
+              "'--rowlimit' (the top and bottom row numbers specifying "
+              "your desired range)");
+
+      /* Do individual checks. */
+      darr=p->rowlimit->array;
+      for(i=0;i<p->rowlimit->size;++i)
+        {
+          /* Make sure it isn't 0 or negative. */
+          if( darr[i]<=0 )
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') "
+                  "is smaller than, or equal to, zero! This option's "
+                  "values are row-counters (starting from 1), so they "
+                  "must be positive integers", darr[i]);
+
+          /* Make sure its an integer. */
+          if( darr[i] != (size_t)(darr[i]) )
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') is "
+                  "not an integer! This option's values are row-counters "
+                  "so they must be integers.", darr[i]);
+
+          /* Subtract 1 from the value, so it counts from 0. */
+          --darr[i];
+        }
+
+      /* Make sure that the first value is smaller than the second. */
+      if( darr[0] > darr[1] )
+        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) is "
+              "larger than the second (%g). This option's values defines "
+              "a row-counter interval, assuming the first value is the top "
+              "of the desired interval (smaller row counter) and the second "
+              "value is the bottom of the desired interval (larger row "
+              "counter)", darr[0], darr[1]);
+    }
+
+  /* If random rows are desired, we need to define a GSL random number
+     generator structure. */
+  if(p->rowrandom)
+    p->rng=gal_checkset_gsl_rng(p->envseed, &p->rng_name, &p->rng_seed);
 
   /* Clean up. */
   free(colmatch);
@@ -1211,6 +1261,19 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct tableparams *p)
 
   /* Read/allocate all the necessary starting arrays. */
   ui_preparations(p);
+
+  /* Let the user know basic information if necessary (for example when a
+     random number generator has been used). */
+  if(p->rng && !p->cp.quiet)
+    {
+      /* Write the information. */
+      printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s",
+             ctime(&p->rawtime));
+      printf("Parameters used for '--randomrows':\n");
+      printf("  - Random number generator name: %s\n", p->rng_name);
+      printf("  - Random number generator seed: %lu\n", p->rng_seed);
+      printf("(use '--quiet' to supress this starting message)\n");
+    }
 }
 
 
@@ -1245,4 +1308,8 @@ ui_free_report(struct tableparams *p)
   gal_list_data_free(p->table);
   gal_list_data_free(p->colmetadata);
   if(p->colarray) free(p->colarray);
+
+  /* If a random number generator was allocated, free it. */
+  if(p->rng) gsl_rng_free(p->rng);
+
 }

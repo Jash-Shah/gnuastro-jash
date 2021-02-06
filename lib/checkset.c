@@ -49,7 +49,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /**************************************************************/
 /* The GSL random number generator (RNG) reads values from the
    environment. This function is designed to make the job easier for any
-   program using GSL's RNG. If the user doesn't want to set the */
+   Gnuastro program using GSL's RNG functions. */
 gsl_rng *
 gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
                      unsigned long int *seed)

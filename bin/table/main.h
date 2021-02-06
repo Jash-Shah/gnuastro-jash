@@ -24,6 +24,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define MAIN_H
 
 /* Include necessary headers */
+#include <gsl/gsl_rng.h>
 #include <gnuastro/data.h>
 
 #include <gnuastro-internal/options.h>
@@ -100,6 +101,9 @@ struct tableparams
   uint8_t          descending;  /* Sort columns in descending order.    */
   size_t                 head;  /* Output only the no. of top rows.     */
   size_t                 tail;  /* Output only the no. of bottom rows.  */
+  gal_data_t        *rowlimit;  /* Output rows in row-counter range.    */
+  size_t            rowrandom;  /* Number of rows to show randomly.     */
+  uint8_t             envseed;  /* Use the environment for random seed. */
   gal_data_t         *noblank;  /* Remove rows that have blank.         */
   gal_list_str_t *catcolumnfile; /* Filename to concat column wise.     */
   gal_list_str_t *catcolumnhdu;  /* HDU/extension for the catcolumn.    */
@@ -123,6 +127,9 @@ struct tableparams
   time_t              rawtime;  /* Starting time of the program.        */
   gal_data_t       **colarray;  /* Array of columns, with arithmetic.   */
   size_t          numcolarray;  /* Number of elements in 'colarray'.    */
+  gsl_rng                *rng;  /* Main random number generator.        */
+  const char        *rng_name;  /* Name of random number generator.     */
+  unsigned long int  rng_seed;  /* Random number generator seed.        */
 
   /* For arithmetic operators. */
   gal_list_str_t  *wcstoimg_p;  /* Pointer to the node.                 */

@@ -68,6 +68,9 @@ enum option_keys_enum
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
   UI_KEY_POLYGON         = 1000,
+  UI_KEY_ENVSEED,
+  UI_KEY_ROWLIMIT,
+  UI_KEY_ROWRANDOM,
   UI_KEY_INPOLYGON,
   UI_KEY_OUTPOLYGON,
   UI_KEY_CATCOLUMNRAWNAME,

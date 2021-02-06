@@ -13,6 +13,14 @@ See the end of the file for license conditions.
      columns of the final output table. This is handy when you want a
      "clean" (no NaN values in any column) table, but the table has many
      columns.
+   --rowlimit: new option to specify the positional interval of rows to
+     show. Until now the '--head' or '--tail' options would just allow
+     seeing the first or last few rows. You can use this to view a
+     contiguous set of rows in the middle of the table.
+   --rowrandom: Make a random selection of the rows. This option is useful
+     when you have a large dataset and just want to see a random sub-set of
+     the rows. It takes an integer, selects that many rows from the input
+     randomly.
 
 ** Removed features
 
