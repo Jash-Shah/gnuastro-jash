@@ -330,7 +330,7 @@ struct argp_option program_options[] =
       gal_options_parse_csv_float64
     },
     {
-      "randomrows",
+      "rowrandom",
       UI_KEY_ROWRANDOM,
       "INT",
       0,
@@ -347,7 +347,7 @@ struct argp_option program_options[] =
       UI_KEY_ENVSEED,
       0,
       0,
-      "Use GSL_RNG_SEED env. for '--randomrows'.",
+      "Use GSL_RNG_SEED env. for '--rowrandom'.",
       UI_GROUP_OUTROWS,
       &p->envseed,
       GAL_OPTIONS_NO_ARG_TYPE,
