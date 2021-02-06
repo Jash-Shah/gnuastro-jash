@@ -30,7 +30,7 @@
 PREFIX="/usr/local/bin";
 ASTFITS="$PREFIX/astfits";
 ASTTABLE="$PREFIX/asttable";
-db=1 # Set 0 for printing debug messages, else set to 1
+db=0 # Set 0 for printing debug messages, else set to 1
 # Use extended globs in the case statements if needed
 # https://mywiki.wooledge.org/BashGuide/Patterns#Extended_Globs
 # shopt -s extglob
@@ -188,6 +188,12 @@ _gnuastro_asttable_completions(){
         -h|--hdu) ;;
         *) _gnuastro_autocomplete_list_options $PROG_ADDRESS ;;
     esac
+
+    if [[ ! "${COMPREPLY[@]}" =~ "=" ]]; then
+        # '[[' and 'compopt' work for bash 4+
+        # TODO: Find workaround for older bash
+        compopt +o nospace
+    fi
 
     # Debugging purpose:
     if [ $db -eq 0 ]; then
