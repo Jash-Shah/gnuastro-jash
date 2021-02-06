@@ -18002,10 +18002,9 @@ But when using @option{--outcols}, you can't give @code{bRA}, or @code{b25}.
 
 @item -l
 @itemx --logasoutput
-The output file will have the contents of the log file: indexes in the two catalogs that match with each other along with their distance.
-See description above.
-When this option is called, a log file called @file{astmatch.txt} will not be created.
-With this option, the default output behavior (two tables containing the re-arranged inputs) will be
+The output file will have the contents of the log file: indexes in the two catalogs that match with each other along with their distance, see description of the log file above.
+
+When this option is called, a separate log file will not be created and the output will not contain any of the input columns (either as two tables containing the re-arranged columns of each input, or a single table mixing columns), only their indexs in the log format.
 
 @item --notmatched
 Write the non-matching rows into the outputs, not the matched ones.
