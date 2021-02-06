@@ -13,6 +13,14 @@
 # feature binded to the short options.  However, the short options are
 # taken into consideration for suggesting the upcoming commands.
 
+# A though on reporing errors, e.g. invalid filenames. The autocompletion
+# feature should not suggest anything in case there is an error in the
+# commandline. No errors or messages should be shown as the program in
+# charge will handle that. This autocompletion feature is only here to help
+# with preventing unintentional mistakes. So, in case there is an invalid
+# command on the current commandline, there should be no completion
+# suggestions.
+
 # TIP: Run the command below to initialize the bash completion feature for
 # this specific program (i.e. astcosmiccal):
 # $ source astcosmiccal-completion.bash
@@ -22,26 +30,43 @@
 PREFIX="/usr/local/bin";
 ASTFITS="$PREFIX/astfits";
 ASTTABLE="$PREFIX/asttable";
-
+db=1 # Set 0 for printing debug messages, else set to 1
 # Use extended globs in the case statements if needed
 # https://mywiki.wooledge.org/BashGuide/Patterns#Extended_Globs
 # shopt -s extglob
 
 #  astquery gaia --dataset=edr3 --center=24,25 --radius=0.1 --output=gaia.fits --column=ra,dec,parallax --quiet -i | awk '/[0-9]+/ {print $2}'
 
+_gnuastro_autocomplete_get_fits_hdu(){
+    # Accepts a fits filename as input and echoes its headers
+    if [ -f "$1" ]; then
+        echo "$($ASTFITS --quiet $1 | awk '{print $2}')"
+    fi
+}
+
 _gnuastro_autocomplete_list_fits_hdu(){
-    # Accepts a fits filename as input and suggests its headers
-    if [[ -f "$1"  ]]; then
-        local list="$($ASTFITS --quiet $1 | awk '{print $2}')"
-        COMPREPLY=($(compgen -W "$list"))
+    # Checks for the current fits file and puts its headers into
+    # completion suggestions
+    if [ -f "$1"  ]; then
+        local list="$(_gnuastro_autocomplete_get_fits_hdu $1)"
+        COMPREPLY=($(compgen -W "${list[@]}"))
     fi
 }
 
 _gnuastro_autocomplete_list_fits_names(){
-    # Suggest all 'FITS' files in current directory. Case insensitive.  The
-    # -X option and its filter pattern are explained on bash programmable
-    # completion info page:  $ info bash programmable
-    COMPREPLY=($(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word"))
+    # 'Append' all 'FITS' files in current directory to suggestions. Case
+    # insensitive.  The -X option and its filter pattern are explained on
+    # bash programmable completion info page: $ info bash programmable
+    # 'Appending' seems a good idea because the program might accept
+    # multiple input types.
+
+    # For example the 'asttable' program can either accept a fits file or
+    # various short/long options as its first argument. In this case,
+    # autocompletion suggests both.
+
+    # The completion can not suggest filenames that contain white space in
+    # them for the time being.
+    COMPREPLY+=($(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word"))
 }
 
 _gnuastro_autocomplete_expect_number(){
@@ -53,27 +78,36 @@ _gnuastro_autocomplete_get_fits_name(){
     # Get the first fits file among the command line and put it into the
     # $comp_fits_name variable
     # TODO: How about all other fits file extensions?
-    local file_name="$(echo ${COMP_WORDS[@]} | awk -v regex=".[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    local file_name="$(echo ${COMP_WORDS[@]} | awk -v regex="[a-zA-Z0-9]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
     if [ -f "$file_name" ]; then
         # Check if file_name is actually an existing fits file. This
         # prevents other functions from failing and producing obscure error
         # messages
         echo "$file_name"
+        # Note that should not be an 'else' statement with 'exit' error
+        # code. Because this function is checking the presence of a fits
+        # file everytime bash completion is provoked. Then it will return
+        # error if there is no fits name and break functionality.
     fi
 }
 
 _gnuastro_autocomplete_get_fits_columns(){
     # Checks if the argument contains a valid file. Does not check for its
     # extension. Then, reads the column names using the asttable program
-    # and assigns the result to the $comp_fits_columns array.
+    # and echoes the resulting STR.
     if [ -f "$1" ]; then
-        echo "$($ASTTABLE --information $1 | awk -v regex="^[0-9]+" 'match($0, regex) {print $2}')"
+        # Force 'awk' to read after the second line of 'asttable' output,
+        # because the second line contains the filename. The filename might
+        # start with numbers. If so, there will be an unwanted '(hdu:'
+        # printed in the results. Here, 'awk' will print the second column
+        # in lines that start with a number.
+        echo "$($ASTTABLE --information $1 | awk 'NR>2' | awk '/^[0-9]/ {print $2}')"
     fi
 }
 
 _gnuastro_autocomplete_list_fits_columns(){
     # Accept a fits file name as the first argument ($1). Read and suggest
-    # its column names
+    # its column names. If the file does not exist, pass.
     if [ -f "$1" ]; then
         local list="$(_gnuastro_autocomplete_get_fits_columns $1)"
         COMPREPLY=($(compgen -W "$list"))
@@ -90,9 +124,13 @@ _gnuastro_autocomplete_get_file(){
 
 _gnuastro_autocomplete_list_options(){
     # Accept the command name and its absolute path, run the --help option
-    # and print all long options available.
-    local list="$($1 --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
-    COMPREPLY=($(compgen -W "$list" -- "$word"))
+    # and 'append' all long options to the current suggestions. 'Appending'
+    # seems a good idea because the program might accept multiple input
+    # types. For example the 'asttable' program can either accept a fits
+    # file or various short/long options as its first argument. In this
+    # case, autocompletion suggests both.
+    local list=$("$1" --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')
+    COMPREPLY+=($(compgen -W "$list" -- "$word"))
 }
 
 _gnuastro_asttable_completions(){
@@ -119,20 +157,23 @@ _gnuastro_asttable_completions(){
 
     # TODO: Prettify the code syntax, shorter ones on top
     case "$prev" in
-        asttable) _gnuastro_autocomplete_list_fits_names ;;
+        asttable)
+            _gnuastro_autocomplete_list_fits_names
+            _gnuastro_autocomplete_list_options $PROG_ADDRESS
+            ;;
         -i|--information|-w|--wcsfile)
-            if [ -z _gnuastro_autocomplete_get_fits_name ]; then
+            if [ -f "$fits_name" ]; then
+                # The user has entered a valid fits file name. So keep on
+                # with suggesting all other options at hand.
+                _gnuastro_autocomplete_list_options $PROG_ADDRESS
+            else
                 # Check if the user has already specified a fits file. If
                 # the _gnuastro_autocomplete_get_file_name echoes an empty
                 # response, it means no fits files were specified.
                 _gnuastro_autocomplete_list_fits_names
-            else
-                # The user has entered a valid fits file name. So keep on
-                # with suggesting all other options at hand.
-                _gnuastro_autocomplete_list_options $PROG_NAME
             fi
             ;;
-        -c|--column)
+        -c|--column|-r|--range|-s|--sort)
             # The function below, checks if the user has specified a fits
             # file in the current commandline. If not, there will be no
             # response from autocompletion. This might alert the user that
@@ -145,11 +186,21 @@ _gnuastro_asttable_completions(){
             ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
-        *) _gnuastro_autocomplete_list_options $PROG_NAME ;;
+        *) _gnuastro_autocomplete_list_options $PROG_ADDRESS ;;
     esac
 
     # Debugging purpose:
-    # printf "\n*** DEBUG ***\n>>> prev: $prev \t \$3: $3\n>>> word: $word \t \$2: $2\n>>> line: ${COMP_LINE[@]}"
+    if [ $db -eq 0 ]; then
+        cat <<EOF
+
+*** DEBUG ***
+>>> prev: '$prev' -- \$3: '$3'
+>>> word: '$word' -- \$2: '$2'
+>>> fits_name: '$fits_name'
+EOF
+        printf ">>> line: ${COMP_LINE[@]}"
+    fi
+
 }
 
 complete -F _gnuastro_asttable_completions -o nospace asttable
