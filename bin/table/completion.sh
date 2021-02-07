@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 # TODO: GNU Copyright ...
 # Original Author:
@@ -21,6 +21,15 @@
 # command on the current commandline, there should be no completion
 # suggestions.
 
+# A thought on portability and obeying POSIX standards. This autocomplete
+# script should be compatible to bash 3.0 (2004) and newer. That is because
+# the MacOS standard is still around bash 3.2. Some commands such as
+# '[[ =~', 'complete', arrays, etc. are not POSIX compatible. But they are bash
+# built-in.
+
+# TODO: There should be some way to keep autocomplete from crashing in
+# older systems.
+
 # TIP: Run the command below to initialize the bash completion feature for
 # this specific program (i.e. astcosmiccal):
 # $ source astcosmiccal-completion.bash
@@ -41,7 +50,7 @@ db=0 # Set 0 for printing debug messages, else set to 1
 _gnuastro_autocomplete_get_fits_hdu(){
     # Accepts a fits filename as input and echoes its headers
     if [ -f "$1" ]; then
-        echo "$($ASTFITS --quiet $1 | awk '{print $2}')"
+        $ASTFITS --quiet "$1" | awk '{print $2}'
     fi
 }
 
@@ -49,8 +58,8 @@ _gnuastro_autocomplete_list_fits_hdu(){
     # Checks for the current fits file and puts its headers into
     # completion suggestions
     if [ -f "$1"  ]; then
-        local list="$(_gnuastro_autocomplete_get_fits_hdu $1)"
-        COMPREPLY=($(compgen -W "${list[@]}"))
+        list=$(_gnuastro_autocomplete_get_fits_hdu "$1")
+        COMPREPLY=($(compgen -W "$list"))
     fi
 }
 
@@ -79,7 +88,7 @@ _gnuastro_autocomplete_get_fits_name(){
     # Get the first fits file among the command line and put it into the
     # $comp_fits_name variable
     # TODO: How about all other fits file extensions?
-    local file_name="$(echo ${COMP_WORDS[@]} | awk -v regex="[a-zA-Z0-9]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    file_name="$(echo ${COMP_WORDS[@]} | awk -v regex="[a-zA-Z0-9]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
     if [ -f "$file_name" ]; then
         # Check if file_name is actually an existing fits file. This
         # prevents other functions from failing and producing obscure error
@@ -102,7 +111,7 @@ _gnuastro_autocomplete_get_fits_columns(){
         # start with numbers. If so, there will be an unwanted '(hdu:'
         # printed in the results. Here, 'awk' will print the second column
         # in lines that start with a number.
-        echo "$($ASTTABLE --information $1 | awk 'NR>2' | awk '/^[0-9]/ {print $2}')"
+        $ASTTABLE --information "$1" | awk 'NR>2' | awk '/^[0-9]/ {print $2}'
     fi
 }
 
@@ -110,7 +119,7 @@ _gnuastro_autocomplete_list_fits_columns(){
     # Accept a fits file name as the first argument ($1). Read and suggest
     # its column names. If the file does not exist, pass.
     if [ -f "$1" ]; then
-        local list="$(_gnuastro_autocomplete_get_fits_columns $1)"
+        list=$(_gnuastro_autocomplete_get_fits_columns "$1")
         COMPREPLY=($(compgen -W "$list"))
     fi
 }
@@ -130,31 +139,31 @@ _gnuastro_autocomplete_list_options(){
     # types. For example the 'asttable' program can either accept a fits
     # file or various short/long options as its first argument. In this
     # case, autocompletion suggests both.
-    local list=$("$1" --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')
+    list=$("$1" --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')
     COMPREPLY+=($(compgen -W "$list" -- "$word"))
 }
 
 _gnuastro_asttable_completions(){
 
     # TODO: @@
-    local PROG_NAME="asttable";
+    PROG_NAME="asttable";
 
-    local PROG_ADDRESS="$PREFIX/$PROG_NAME";
+    PROG_ADDRESS="$PREFIX/$PROG_NAME";
 
     # Initialize the completion response with null
     COMPREPLY=();
 
     # Variable "word", is the current word being completed
-    local word="${COMP_WORDS[COMP_CWORD]}";
+    word="${COMP_WORDS[COMP_CWORD]}";
 
     # Variable "prev" is the word just before the current word
-    local prev="${COMP_WORDS[COMP_CWORD-1]}";
+    prev="${COMP_WORDS[COMP_CWORD-1]}";
 
     # A quick check to see if there is already a fits file name invoked in
     # the current commandline. This means the order of commands does matter
     # in this bash completion. If we do not want this, we should implement
     # another method for suggesting completions.
-    local fits_name="$(_gnuastro_autocomplete_get_fits_name)"
+    fits_name="$(_gnuastro_autocomplete_get_fits_name)"
 
     # TODO: Prettify the code syntax, shorter ones on top
     case "$prev" in
@@ -191,8 +200,9 @@ _gnuastro_asttable_completions(){
     esac
 
     if [[ ! "${COMPREPLY[@]}" =~ "=" ]]; then
-        # '[[' and 'compopt' work for bash 4+
-        # TODO: Find workaround for older bash
+        # '[[' and 'compopt' work for bash 3+ so it should be portable to
+        # systems younger than 2004.
+        # https://mywiki.wooledge.org/BashFAQ/061
         compopt +o nospace
     fi
 
@@ -205,7 +215,7 @@ _gnuastro_asttable_completions(){
 >>> word: '$word' -- \$2: '$2'
 >>> fits_name: '$fits_name'
 EOF
-        printf ">>> line: ${COMP_LINE[@]}"
+        printf ">>> line: %s" "$COMP_LINE"
     fi
 
 }
