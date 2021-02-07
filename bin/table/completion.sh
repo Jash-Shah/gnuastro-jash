@@ -208,10 +208,8 @@ _gnuastro_asttable_completions(){
         prev="${COMP_WORDS[COMP_CWORD-2]}"
     fi
 
-    # A quick check to see if there is already a fits file name invoked in
-    # the current commandline. This means the order of commands does matter
-    # in this bash completion. If we do not want this, we should implement
-    # another method for suggesting completions.
+    # Return the last fits file specified in the commandline. If none,
+    # $fits_name will be a null string, i.e. "".
     fits_name="$(_gnuastro_autocomplete_get_fits_name)"
 
     # TODO: Prettify the code syntax, shorter ones on top
@@ -236,22 +234,22 @@ _gnuastro_asttable_completions(){
             # Only suggest a fits filename
             _gnuastro_autocomplete_list_fits_names
             ;;
-        -c|--column|-r|--range|-s|--sort|-C|--catcolumns)
+        -c|--column|-r|--range|-s|--sort|-C|--catcolumns| \
+            -m|--colmetadata|--inpolygon|--outpolygon| \
+            -e|--equal|-n|--notequal|-b|--noblank)
             # The function below returns the columns inside the last fits
             # file specified in the commandline. If no fits files were
             # detected, there will be no response from autocompletion. This
             # might alert the user that something is going wrong.
             _gnuastro_autocomplete_list_fits_columns "$fits_name"
             ;;
-        -W|--wcshdu)
+        -W|--wcshdu|-u|--catcolumnhdu|-h|--hdu)
             # Description is same as the '--column' option.
             _gnuastro_autocomplete_list_fits_hdu "$fits_name"
             ;;
-        -o|--output)
+        -o|--output|--polygon|-H|--head|-t|--tail)
             # Do not suggest anything.
             ;;
-        -b|--noblank) ;;
-        -h|--hdu) ;;
         *) _gnuastro_autocomplete_list_options $PROG_ADDRESS ;;
     esac
 
