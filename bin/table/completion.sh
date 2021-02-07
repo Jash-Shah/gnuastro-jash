@@ -109,10 +109,15 @@ _gnuastro_autocomplete_expect_number(){
 }
 
 _gnuastro_autocomplete_get_fits_name(){
-    # Get the first fits file among the command line and put it into the
-    # $comp_fits_name variable
+    # Iterate and echo the last fits file among the command line
     # TODO: How about all other fits file extensions?
-    file_name="$(echo "${COMP_WORDS[@]}" | awk -v regex="[a-zA-Z0-9]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    for w in "${COMP_WORDS[@]}"
+    do
+        temp_name="$(echo "$w" | awk '/[.][fF][iI][tT][sS]$/')"
+        [ -f "$temp_name" ] && file_name="$temp_name"
+    done
+    unset temp_name
+
     if [ -f "$file_name" ]; then
         # Check if file_name is actually an existing fits file. This
         # prevents other functions from failing and producing obscure error
@@ -123,6 +128,7 @@ _gnuastro_autocomplete_get_fits_name(){
         # file everytime bash completion is provoked. Then it will return
         # error if there is no fits name and break functionality.
     fi
+    unset file_name
 }
 
 _gnuastro_autocomplete_get_fits_columns(){
@@ -214,7 +220,7 @@ _gnuastro_asttable_completions(){
             _gnuastro_autocomplete_list_fits_names
             _gnuastro_autocomplete_list_options $PROG_ADDRESS
             ;;
-        -i|--information|-w|--wcsfile)
+        -i|--information)
             if [ -f "$fits_name" ]; then
                 # The user has entered a valid fits file name. So keep on
                 # with suggesting all other options at hand.
@@ -226,16 +232,23 @@ _gnuastro_asttable_completions(){
                 _gnuastro_autocomplete_list_fits_names
             fi
             ;;
-        -c|--column|-r|--range|-s|--sort)
-            # The function below, checks if the user has specified a fits
-            # file in the current commandline. If not, there will be no
-            # response from autocompletion. This might alert the user that
-            # something is going wrong.
+        -L|--catcolumnfile|-w|--wcsfile)
+            # Only suggest a fits filename
+            _gnuastro_autocomplete_list_fits_names
+            ;;
+        -c|--column|-r|--range|-s|--sort|-C|--catcolumns)
+            # The function below returns the columns inside the last fits
+            # file specified in the commandline. If no fits files were
+            # detected, there will be no response from autocompletion. This
+            # might alert the user that something is going wrong.
             _gnuastro_autocomplete_list_fits_columns "$fits_name"
             ;;
         -W|--wcshdu)
             # Description is same as the '--column' option.
             _gnuastro_autocomplete_list_fits_hdu "$fits_name"
+            ;;
+        -o|--output)
+            # Do not suggest anything.
             ;;
         -b|--noblank) ;;
         -h|--hdu) ;;
@@ -257,10 +270,13 @@ _gnuastro_asttable_completions(){
 >>> prev: '$prev' -- \$3: '$3'
 >>> word: '$word' -- \$2: '$2'
 >>> fits_name: '$fits_name'
+>>> COMP_WORDS: '${COMP_WORDS[@]}'
 >>> COMPREPLY: '${COMPREPLY[@]}'
 *******************************
->>> Line: "$COMP_LINE"
 EOF
+        # Printf should stay outside the 'heredoc' to prevent an extra
+        # newline. As a result, the cursor stays on the same line.
+        printf ">>> Line: %s" "$COMP_LINE"
     fi
 
 }
