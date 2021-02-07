@@ -55,25 +55,34 @@ _gnuastro_autocomplete_get_fits_hdu(){
 }
 
 _gnuastro_autocomplete_compgen(){
-    # Accept either an array or a string split by normal bash conventions,
-    # check if the current word being completed is present in the
-    # suggestions, if so, put it in suggestions, continue otherwise.
+    # Accept either an array or a string '$1' split by normal bash
+    # conventions, check if second argument '$2' is present in the
+    # suggestions, if so, put it in suggestions, continue otherwise. Note,
+    # in case the second agument is not passed, no filteration will be
+    # applied.
     for w in $1
     do
-        [[ "$w" =~ $word ]] && COMPREPLY+=( "$w" )
+        # The right-hand side of '[[ ... =~ ... ]]' is considered a regex
+        # and should not be quoted or it will be taken as a literal.
+        # TODO: Let 'sed' or 'awk' do the regex matching if it screws up
+        # the portability.
+        [[ "$w" =~ $2 ]] && COMPREPLY+=( "$w" )
     done
+
+    # Uncomment if you want to accept user's current word as a completion
+    # [[ -z "${COMPREPLY[*]}" ]] && COMPREPLY+=( "$2" )
 }
 
 _gnuastro_autocomplete_list_fits_hdu(){
     # Checks for the current fits file and puts its headers into
     # completion suggestions
     if [ -f "$1"  ]; then
-        list=("$(_gnuastro_autocomplete_get_fits_hdu $1)")
+        list=("$(_gnuastro_autocomplete_get_fits_hdu "$1")")
         # A custom enhancement for the 'compgen' command. This version will
         # have no problem with the dash sign '-'. Because sometimes the
         # 'hdu' names might contain dash symbols in them. This ensures that
         # all of them are suggested.
-        _gnuastro_autocomplete_compgen "${list[@]}"
+        _gnuastro_autocomplete_compgen "${list[@]}" "$word"
         unset list
     fi
 }
@@ -103,7 +112,7 @@ _gnuastro_autocomplete_get_fits_name(){
     # Get the first fits file among the command line and put it into the
     # $comp_fits_name variable
     # TODO: How about all other fits file extensions?
-    file_name="$(echo ${COMP_WORDS[@]} | awk -v regex="[a-zA-Z0-9]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
+    file_name="$(echo "${COMP_WORDS[@]}" | awk -v regex="[a-zA-Z0-9]*.[fF][iI][tT][sS]" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')"
     if [ -f "$file_name" ]; then
         # Check if file_name is actually an existing fits file. This
         # prevents other functions from failing and producing obscure error
@@ -126,7 +135,7 @@ _gnuastro_autocomplete_get_fits_columns(){
         # start with numbers. If so, there will be an unwanted '(hdu:'
         # printed in the results. Here, 'awk' will print the second column
         # in lines that start with a number.
-        $ASTTABLE --information "$1" | awk 'NR>2' | awk '/^[0-9]/ {print $2}'
+        "$ASTTABLE" --information "$1" | awk 'NR>2' | awk '/^[0-9]/ {print $2}'
     fi
 }
 
@@ -134,8 +143,8 @@ _gnuastro_autocomplete_list_fits_columns(){
     # Accept a fits file name as the first argument ($1). Read and suggest
     # its column names. If the file does not exist, pass.
     if [ -f "$1" ]; then
-        list=$(_gnuastro_autocomplete_get_fits_columns "$1")
-        COMPREPLY=($(compgen -W "${list[@]}"))
+        list=("$(_gnuastro_autocomplete_get_fits_columns "$1")")
+        _gnuastro_autocomplete_compgen "${list[@]}"
         unset list
     fi
 }
@@ -155,8 +164,8 @@ _gnuastro_autocomplete_list_options(){
     # types. For example the 'asttable' program can either accept a fits
     # file or various short/long options as its first argument. In this
     # case, autocompletion suggests both.
-    list=("$($1 --help | awk -v regex=' --+[a-zA-Z0-9]*=?' 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')")
-    _gnuastro_autocomplete_compgen "${list[@]}"
+    list=("$("$1" --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')")
+    _gnuastro_autocomplete_compgen "${list[@]}" "$word"
     unset list
 }
 
@@ -244,13 +253,14 @@ _gnuastro_asttable_completions(){
     if [ $db -eq 0 ]; then
         cat <<EOF
 
-*** DEBUG ***
+************ DEBUG ************
 >>> prev: '$prev' -- \$3: '$3'
 >>> word: '$word' -- \$2: '$2'
 >>> fits_name: '$fits_name'
 >>> COMPREPLY: '${COMPREPLY[@]}'
+*******************************
+>>> Line: "$COMP_LINE"
 EOF
-        printf ">>> line: %s" "$COMP_LINE"
     fi
 
 }
