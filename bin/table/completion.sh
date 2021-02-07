@@ -236,7 +236,7 @@ _gnuastro_asttable_completions(){
             ;;
         -c|--column|-r|--range|-s|--sort|-C|--catcolumns| \
             -m|--colmetadata|--inpolygon|--outpolygon| \
-            -e|--equal|-n|--notequal|-b|--noblank)
+            -e|--equal|-n|--notequal|-b|--noblank|--searchin)
             # The function below returns the columns inside the last fits
             # file specified in the commandline. If no fits files were
             # detected, there will be no response from autocompletion. This
@@ -247,8 +247,13 @@ _gnuastro_asttable_completions(){
             # Description is same as the '--column' option.
             _gnuastro_autocomplete_list_fits_hdu "$fits_name"
             ;;
-        -o|--output|--polygon|-H|--head|-t|--tail)
+        -o|--output|--polygon|-H|--head|-t|--tail| \
+            --onlyversion|-N|--numthreads|--minmapsize)
             # Do not suggest anything.
+            ;;
+        --config)
+            # Suggest config files
+            COMPREPLY=($(compgen -f -X "!*.[cC][oO][nN][fF]" -- "$word"))
             ;;
         *) _gnuastro_autocomplete_list_options $PROG_ADDRESS ;;
     esac
