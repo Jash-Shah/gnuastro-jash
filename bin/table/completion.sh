@@ -54,12 +54,27 @@ _gnuastro_autocomplete_get_fits_hdu(){
     fi
 }
 
+_gnuastro_autocomplete_compgen(){
+    # Accept either an array or a string split by normal bash conventions,
+    # check if the current word being completed is present in the
+    # suggestions, if so, put it in suggestions, continue otherwise.
+    for w in $1
+    do
+        [[ "$w" =~ $word ]] && COMPREPLY+=( "$w" )
+    done
+}
+
 _gnuastro_autocomplete_list_fits_hdu(){
     # Checks for the current fits file and puts its headers into
     # completion suggestions
     if [ -f "$1"  ]; then
-        list=$(_gnuastro_autocomplete_get_fits_hdu "$1")
-        COMPREPLY=($(compgen -W "$list"))
+        list=("$(_gnuastro_autocomplete_get_fits_hdu $1)")
+        # A custom enhancement for the 'compgen' command. This version will
+        # have no problem with the dash sign '-'. Because sometimes the
+        # 'hdu' names might contain dash symbols in them. This ensures that
+        # all of them are suggested.
+        _gnuastro_autocomplete_compgen "${list[@]}"
+        unset list
     fi
 }
 
@@ -120,7 +135,8 @@ _gnuastro_autocomplete_list_fits_columns(){
     # its column names. If the file does not exist, pass.
     if [ -f "$1" ]; then
         list=$(_gnuastro_autocomplete_get_fits_columns "$1")
-        COMPREPLY=($(compgen -W "$list"))
+        COMPREPLY=($(compgen -W "${list[@]}"))
+        unset list
     fi
 }
 
@@ -139,8 +155,9 @@ _gnuastro_autocomplete_list_options(){
     # types. For example the 'asttable' program can either accept a fits
     # file or various short/long options as its first argument. In this
     # case, autocompletion suggests both.
-    list=$("$1" --help | awk -v regex=" --+[a-zA-Z0-9]*=?" 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')
-    COMPREPLY+=($(compgen -W "$list" -- "$word"))
+    list=("$($1 --help | awk -v regex=' --+[a-zA-Z0-9]*=?' 'match($0, regex) {print substr($0, RSTART, RLENGTH)}')")
+    _gnuastro_autocomplete_compgen "${list[@]}"
+    unset list
 }
 
 _gnuastro_asttable_completions(){
@@ -153,11 +170,28 @@ _gnuastro_asttable_completions(){
     # Initialize the completion response with null
     COMPREPLY=();
 
-    # Variable "word", is the current word being completed
-    word="${COMP_WORDS[COMP_CWORD]}";
+    # Variable "word", is the current word being completed. "$2" is the
+    # default value for the current word in completion scripts. But we are
+    # using the longer form: "${COMP_WORDS[COMP_CWORD]}" for clarity.
+    word="${COMP_WORDS[COMP_CWORD]}"
+    if [ "$word" = "=" ]; then
+        # The equal sign '=' raises complexities when filling suggestions
+        # for long options. Things will work out fine when they are simply
+        # ignored.
+        word=""
+    fi
 
-    # Variable "prev" is the word just before the current word
-    prev="${COMP_WORDS[COMP_CWORD-1]}";
+    # Variable "prev", is one word before the one being completed. By
+    # default, this is set as "$3" in completion scripts. But we are using
+    # the longer form: "${COMP_WORDS[COMP_CWORD-1]}" for clarity.
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    if [ "$prev" = "=" ]; then
+        # While a user is writing a long option's argument, the previous
+        # word will be the equal sign '='. This is not helpful at all. But
+        # looking at a word just before '=' helps us understand which long
+        # option is being called upon.
+        prev="${COMP_WORDS[COMP_CWORD-2]}"
+    fi
 
     # A quick check to see if there is already a fits file name invoked in
     # the current commandline. This means the order of commands does matter
@@ -214,6 +248,7 @@ _gnuastro_asttable_completions(){
 >>> prev: '$prev' -- \$3: '$3'
 >>> word: '$word' -- \$2: '$2'
 >>> fits_name: '$fits_name'
+>>> COMPREPLY: '${COMPREPLY[@]}'
 EOF
         printf ">>> line: %s" "$COMP_LINE"
     fi
