@@ -28,10 +28,10 @@ SHELL=/bin/sh
 
 
 # Built files that should be treated as sources for the main job.
-# img_representative: This is just one of the images that is used in the
+# imgrepresentative: This is just one of the images that is used in the
 # book as a representative for all of them because they are all built with
 # one script.
-imgrepresentative = $(top_srcdir)/doc/gnuastro-figures/flatplane.txt
+imgrepresentative = $(top_srcdir)/doc/gnuastro-figures/done.txt
 BUILT_SOURCES = $(srcdir)/authors.texi $(imgrepresentative)
 
 
