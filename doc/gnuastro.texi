@@ -28203,7 +28203,7 @@ $ grep -r gal_threads_spin_off ./
 
 @noindent
 The code of this demonstration program is shown below.
-This program was also built and run when you ran @code{make check} during the building of Gnuastro (@code{tests/lib/multithread.c}, so it is already tested for your system and you can safely use it as a guide.
+This program was also built and run when you ran @code{make check} during the building of Gnuastro (@code{tests/lib/multithread.c}), so it is already tested for your system and you can safely use it as a guide.
 
 @example
 #include <stdio.h>
@@ -28500,17 +28500,19 @@ development and get involved in @ref{Gnuastro project webpage},
 @section Why C programming language?
 @cindex C programming language
 @cindex C++ programming language
+@cindex Java programming language
 @cindex Python programming language
-Currently the programming language that is most commonly used in scientific
-applications is C++@footnote{@url{https://isocpp.org/}},
+Currently the programming languages that are commonly used in scientific
+applications are C++@footnote{@url{https://isocpp.org/}},
+Java@footnote{@url{https://en.wikipedia.org/wiki/Java_(programming_language)}};
 Python@footnote{@url{https://www.python.org/}}, and
 Julia@footnote{@url{https://julialang.org/}} (which is a newcomer but
-swiftly gaining ground). One of the main reasons behind this choice is
+swiftly gaining ground). One of the main reasons behind choosing these is
 their high-level abstractions. However, GNU Astronomy Utilities is fully
 written in the C programming
 language@footnote{@url{https://en.wikipedia.org/wiki/C_(programming_language)}}. The
 reasons can be summarized with simplicity, portability and
-efficiency/speed. All three are very important in a scientific software and
+efficiency/speed. All four are very important in a scientific software and
 we will discuss them below.
 
 @cindex ANSI C
@@ -28535,7 +28537,7 @@ be able to readily read the code of a program at their will with minimum
 requirements.
 
 @cindex Object oriented programming
-In C++, inheriting objects in the object oriented programming paradigm and
+In C++ or Java, inheritance in the object oriented programming paradigm and
 their internal functions make the code very easy to write for a programmer
 who is deeply invested in those objects and understands all their relations
 well. But it simultaneously makes reading the program for a first time
@@ -28576,20 +28578,38 @@ future versions any more. Some converters are available, but since they are
 automatic, lots of complications might arise in the conversion@footnote{For
 example see @url{https://arxiv.org/abs/1712.00461, Jenness (2017)} which
 describes how LSST is managing the transition.}.
-
 If a research project begins using Python 3.x today, there is no telling
 how compatible their investments will be when Python 4.x or 5.x will come
-out. This stems from the core principles of Python, which are very useful
-when you look in the `on the go' basis as described before and not future
-usage. Reproducibility (ability to run the code in the future) is a core
-principal of any scientific result, or the software that produced that
-result. Rebuilding all the dependencies of a software in an obsolete
-language is not easy. Future-proof code (as long as current operating
-systems will be used) is written in C.
+out.
 
-The portability of C is best demonstrated by the fact that both C++ and
+@cindex JVM: Java virtual machine
+@cindex Java Virtual Machine (JVM)
+Java is also fully object-oriented, but uses a different paradigm: its
+compilation generates a hardware-independent @emph{bytecode}, and a
+@emph{Java Virtual Machine} (JVM) is required for the actual execution of
+this bytecode on a computer. Java also evolved with time, and tried to
+remain backward compatible, but inevitably some evolutions required
+discontinuities and replacements of a few Java components which were first
+declared as becoming @emph{deprecated}, and removed from later versions.
+
+@cindex Reproducibility
+This stems from the core principles of high-level languages like Python of
+Java: that they evolve significantly on the scale of roughly 5 to 10
+years. They are therefore useful when you want to solve a short-term
+problem and you are ready to pay the high cost of keeping your software up
+to date with all the changes in the language. This is fine for private
+companies, but usually too expensive for scientific projects that have
+limited funding for a fixed period. As a result, the reproducibility of the
+result (ability to regenerate the result in the future, which is a core
+principal of any scientific result) and re-usability of all the investments
+that went into the science software will be lost to future generations!
+Rebuilding all the dependencies of a software in an obsolete language is
+not easy, or even not possible. Future-proof code (as long as current
+operating systems will be used) is therefore written in C.
+
+The portability of C is best demonstrated by the fact that C++, Java and
 Python are part of the C-family of programming languages which also include
-Julia, Java, Perl, and many other languages. C libraries can be immediately
+Julia, Perl, and many other languages. C libraries can be immediately
 included in C++, and it is easy to write wrappers for them in all C-family
 programming languages. This will allow other scientists to benefit from C
 libraries using any C-family language that they prefer. As a result,
@@ -28602,16 +28622,19 @@ higher-level languages like Python, Julia and Java.
 The final reason was speed. This is another very important aspect of C
 which is not independent of simplicity (first reason discussed above). The
 abstractions provided by the higher-level languages (which also makes
-learning them harder for a newcomer) comes at the cost of speed. Since C is
+learning them harder for a newcomer) come at the cost of speed. Since C is
 a low-level language@footnote{Low-level languages are those that directly
 operate the hardware like assembly languages. So C is actually a high-level
 language, but it can be considered one of the lowest-level languages among
-all high-level languages.} (closer to the hardware), it is much less
-complex for both the human reader @emph{and} the computer. The benefits of
-simplicity for a human were discussed above. Simplicity for the computer
-translates into more efficient (faster) programs. This creates a much
-closer relation between the scientist/programmer (or their program) and the
-actual data and processing. The GNU coding
+all high-level languages.} (closer to the hardware), it has a direct access
+to the CPU@footnote{for instance the @emph{long double} numbers with at
+least 64-bit mantissa are not accessible in Python or Java.}, is generally
+considered as being faster in its execution, and is much less complex for
+both the human reader @emph{and} the computer. The benefits of simplicity
+for a human were discussed above. Simplicity for the computer translates
+into more efficient (faster) programs. This creates a much closer relation
+between the scientist/programmer (or their program) and the actual data and
+processing. The GNU coding
 standards@footnote{@url{http://www.gnu.org/prep/standards/}} also encourage
 the use of C over all other languages when generality of usage and ``high
 speed'' is desired.

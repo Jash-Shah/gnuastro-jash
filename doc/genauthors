@@ -57,8 +57,12 @@ if [ -d $1/.git ]; then
     # (in particular "make -jN" with N > 1), so authors.texi needs to be
     # recreated anyway.
     git --git-dir=$1/.git shortlog --numbered --summary --email --no-merges \
-        | sed -e 's/</ /' -e 's/>/ /' -e 's/@/@@/' \
-              -e "s/è/@\`e/" -e "s/é/@\'e/" \
+        | sed -e 's/</ /' \
+              -e 's/>/ /' \
+              -e 's/@/@@/' \
+              -e "s/è/@\`e/" \
+              -e "s/é/@\'e/" \
+              -e "s/ç/@,{c}/" \
         | awk '{for(i=2;i<NF;++i) printf("%s ", $i); \
                 printf("(%s, %s)@*\n", $NF, $1)}' \
         > $1/doc/authors.texi
