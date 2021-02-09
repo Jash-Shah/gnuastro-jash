@@ -4,6 +4,52 @@ Gnuastro release checklist
 Copyright (C) 2015-2021, Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
+
+
+Creating animated SVG for demo
+==============================
+
+To help in visualizing the new features of every release, we show the
+features in a recorded terminal.
+
+ - Prerequisites;
+     - termtosvg (BSD: https://github.com/nbedos/termtosvg)
+     - NOT WORKING (as of February 9th, 2021, 'svg-term' has problems with
+       converting 'asciinema', complaining about the format)
+       - asciinema (GPL v3: https://asciinema.org/docs/installation).
+       - svg-term (MIT license: https://github.com/marionebl/svg-term-cli).
+
+ - Change your terminal prompt to be general by putting the line below
+   inside your user's '.bashrc' (just change 'XX' to the version of
+   Gnuastro that you want to display). Asciinema creates a new shell, so
+   you can't temporarily set it before calling asciinema.
+
+      export PS1="[\[\033[01;35m\]Gnuastro XX\[\033[32m\]\[\033[00m\]]$ "
+
+ - Make a clean empty directory (to avoid mixing existing files), and copy
+   any necessary dataset into it.
+
+      $ mkdir feature-demo
+      $ cd feature-demo
+      $ cp XXXXXXXX ./
+
+ - Start "recording". To help in writing, its good to reset the
+   screen.
+
+      $ rm ./*
+      $ reset
+      $ termtosvg ../feature.svg --screen-geometry 100x20
+
+ - When the recording is finished, put an entry in the "Comming soon" page
+   with a small description, remove the extra line and your
+
+
+
+
+
+Tarball release on gnu.org
+==========================
+
 This file is primarily intended for the Gnuastro maintainer and lists the
 set of operations to do for making each release. This should be done after
 all the commits needed for this release have been completed.
