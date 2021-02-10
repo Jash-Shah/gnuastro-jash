@@ -1,10 +1,27 @@
-#!/usr/bin/env bash
+#!/usr/bin bash
 
-# TODO: GNU Copyright ...
-# Original Author:
-# Pedram Ashofteh Ardakani <pedramardakani@pm.me>
-# Contributing authors:
-# Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Add bash autocompletion to Gnuastro. This shell script is intended to
+# load itself automatically from the '~/.bashrc' file, modified during
+# installation. For more details, see the 'autocomplete feature' under the
+# 'developing' section of Gnuastro's manual and the comments below.
+#
+# Original author:
+#     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+# Contributing author(s):
+# Copyright (C) 2019-2021, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 # A thought on short options. I thing they should not be covered by the
 # autocompletion. Because only the advanced users may use them. And it is
@@ -26,9 +43,6 @@
 # the MacOS standard is still around bash 3.2. Some commands such as
 # '[[ =~', 'complete', arrays, etc. are not POSIX compatible. But they are bash
 # built-in.
-
-# TODO: There should be some way to keep autocomplete from crashing in
-# older systems.
 
 # TIP: Run the command below to initialize the bash completion feature for
 # this specific program (i.e. astcosmiccal):
@@ -160,9 +174,6 @@ _gnuastro_autocomplete_get_file(){
     echo "Pass"
 }
 
-# just find the short commands
-# astconvolve --help | awk -v pattern="^ *-([a-z]|[A-Z])" 'match($0, pattern) {print $0}'
-
 _gnuastro_autocomplete_list_options(){
     # Accept the command name and its absolute path, run the --help option
     # and 'append' all long options to the current suggestions. 'Appending'
@@ -176,7 +187,6 @@ _gnuastro_autocomplete_list_options(){
 }
 
 _gnuastro_asttable_completions(){
-
     # TODO: @@
     PROG_NAME="asttable";
 
@@ -259,13 +269,13 @@ _gnuastro_asttable_completions(){
     esac
 
     if [[ ! "${COMPREPLY[@]}" =~ "=" ]]; then
-        # '[[' and 'compopt' work for bash 3+ so it should be portable to
-        # systems younger than 2004.
-        # https://mywiki.wooledge.org/BashFAQ/061
+        # Do not append 'space' character to the end of line in case there
+        # is a long option present in the suggestions. Please note that
+        # long options always have a '=' suffix.
         compopt +o nospace
     fi
 
-    # Debugging purpose:
+    # Be verbose in debugging mode, where $db is set to '0'.
     if [ $db -eq 0 ]; then
         cat <<EOF
 
@@ -277,8 +287,8 @@ _gnuastro_asttable_completions(){
 >>> COMPREPLY: '${COMPREPLY[@]}'
 *******************************
 EOF
-        # Printf should stay outside the 'heredoc' to prevent an extra
-        # newline. As a result, the cursor stays on the same line.
+        # Printf should stay outside the 'heredoc' above to prevent an
+        # extra newline. As a result, the cursor stays on the same line.
         printf ">>> Line: %s" "$COMP_LINE"
     fi
 
