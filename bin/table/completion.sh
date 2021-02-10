@@ -1,4 +1,4 @@
-#!/usr/bin bash
+#!/bin/sh
 
 # Add bash autocompletion to Gnuastro. This shell script is intended to
 # load itself automatically from the '~/.bashrc' file, modified during
@@ -23,43 +23,32 @@
 # You should have received a copy of the GNU General Public License along
 # with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
-# A thought on short options. I thing they should not be covered by the
-# autocompletion. Because only the advanced users may use them. And it is
-# possible to mix them up. So, only those will use the short options who
-# know what they are doing. Hence, they will not need the autocompletion
-# feature binded to the short options.  However, the short options are
-# taken into consideration for suggesting the upcoming commands.
 
-# A though on reporing errors, e.g. invalid filenames. The autocompletion
-# feature should not suggest anything in case there is an error in the
-# commandline. No errors or messages should be shown as the program in
-# charge will handle that. This autocompletion feature is only here to help
-# with preventing unintentional mistakes. So, in case there is an invalid
-# command on the current commandline, there should be no completion
-# suggestions.
 
-# A thought on portability and obeying POSIX standards. This autocomplete
-# script should be compatible to bash 3.0 (2004) and newer. That is because
-# the MacOS standard is still around bash 3.2. Some commands such as
-# '[[ =~', 'complete', arrays, etc. are not POSIX compatible. But they are bash
-# built-in.
 
-# TIP: Run the command below to initialize the bash completion feature for
-# this specific program (i.e. astcosmiccal):
-# $ source astcosmiccal-completion.bash
+
+
+
+# In the developing phase, call the command below to try autocompletion in
+# action:
+#
+# $ source completion.sh
+
+
+
+
+
 
 # GLOBAL VARIABLES
-
+db=1
 PREFIX="/usr/local/bin";
 ASTFITS="$PREFIX/astfits";
 ASTTABLE="$PREFIX/asttable";
 db=0 # Set 0 for printing debug messages, else set to 1
 
-# Use extended globs in the case statements if needed
-# https://mywiki.wooledge.org/BashGuide/Patterns#Extended_Globs
-# shopt -s extglob
 
-#  astquery gaia --dataset=edr3 --center=24,25 --radius=0.1 --output=gaia.fits --column=ra,dec,parallax --quiet -i | awk '/[0-9]+/ {print $2}'
+
+
 
 _gnuastro_autocomplete_get_fits_hdu(){
     # Accepts a fits filename as input and echoes its headers
@@ -67,6 +56,10 @@ _gnuastro_autocomplete_get_fits_hdu(){
         $ASTFITS --quiet "$1" | awk '{print $2}'
     fi
 }
+
+
+
+
 
 _gnuastro_autocomplete_compgen(){
     # Accept either an array or a string '$1' split by normal bash
@@ -87,6 +80,10 @@ _gnuastro_autocomplete_compgen(){
     # [[ -z "${COMPREPLY[*]}" ]] && COMPREPLY+=( "$2" )
 }
 
+
+
+
+
 _gnuastro_autocomplete_list_fits_hdu(){
     # Checks for the current fits file and puts its headers into
     # completion suggestions
@@ -100,6 +97,10 @@ _gnuastro_autocomplete_list_fits_hdu(){
         unset list
     fi
 }
+
+
+
+
 
 _gnuastro_autocomplete_list_fits_names(){
     # 'Append' all 'FITS' files in current directory to suggestions. Case
@@ -117,10 +118,18 @@ _gnuastro_autocomplete_list_fits_names(){
     COMPREPLY+=($(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word"))
 }
 
+
+
+
+
 _gnuastro_autocomplete_expect_number(){
     # Prompt the user that this option only accepts a number
     echo "Pass"
 }
+
+
+
+
 
 _gnuastro_autocomplete_get_fits_name(){
     # Iterate and echo the last fits file among the command line
@@ -145,6 +154,10 @@ _gnuastro_autocomplete_get_fits_name(){
     unset file_name
 }
 
+
+
+
+
 _gnuastro_autocomplete_get_fits_columns(){
     # Checks if the argument contains a valid file. Does not check for its
     # extension. Then, reads the column names using the asttable program
@@ -159,6 +172,10 @@ _gnuastro_autocomplete_get_fits_columns(){
     fi
 }
 
+
+
+
+
 _gnuastro_autocomplete_list_fits_columns(){
     # Accept a fits file name as the first argument ($1). Read and suggest
     # its column names. If the file does not exist, pass.
@@ -169,10 +186,18 @@ _gnuastro_autocomplete_list_fits_columns(){
     fi
 }
 
+
+
+
+
 _gnuastro_autocomplete_get_file(){
     # The last file name (.txt/.fits) in COMP_LINE
     echo "Pass"
 }
+
+
+
+
 
 _gnuastro_autocomplete_list_options(){
     # Accept the command name and its absolute path, run the --help option
@@ -185,6 +210,10 @@ _gnuastro_autocomplete_list_options(){
     _gnuastro_autocomplete_compgen "${list[@]}" "$word"
     unset list
 }
+
+
+
+
 
 _gnuastro_asttable_completions(){
     # TODO: @@
@@ -294,4 +323,40 @@ EOF
 
 }
 
+
+
+
+
 complete -F _gnuastro_asttable_completions -o nospace asttable
+
+
+
+
+# A thought on short options. I thing they should not be covered by the
+# autocompletion. Because only the advanced users may use them. And it is
+# possible to mix them up. So, only those will use the short options who
+# know what they are doing. Hence, they will not need the autocompletion
+# feature binded to the short options.  However, the short options are
+# taken into consideration for suggesting the upcoming commands.
+
+
+
+
+
+# A though on reporing errors, e.g. invalid filenames. The autocompletion
+# feature should not suggest anything in case there is an error in the
+# commandline. No errors or messages should be shown as the program in
+# charge will handle that. This autocompletion feature is only here to help
+# with preventing unintentional mistakes. So, in case there is an invalid
+# command on the current commandline, there should be no completion
+# suggestions.
+
+
+
+
+
+# Use extended globs in the case statements if needed
+# https://mywiki.wooledge.org/BashGuide/Patterns#Extended_Globs
+# shopt -s extglob
+
+#  astquery gaia --dataset=edr3 --center=24,25 --radius=0.1 --output=gaia.fits --column=ra,dec,parallax --quiet -i | awk '/[0-9]+/ {print $2}'
