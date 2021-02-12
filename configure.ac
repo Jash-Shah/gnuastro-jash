@@ -65,6 +65,8 @@ AC_SUBST(GAL_LT_VERSION)
 : ${CXXFLAGS=""}
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_AWK
+AC_PROG_SED
 gl_EARLY
 AM_PROG_AR
 LT_INIT
@@ -161,7 +163,8 @@ CC="$PTHREAD_CC"
 # bug #52490, it can happen that sometimes, the C++ compiler doesn't
 # recognize it. So we need to do a separate check for C++.
 cxxflags_tmp=
-for flg in $CXXFLAGS; do
+for flg in $CXXFLAGS
+do
   AS_IF([test "$flg" = \-Qunused-arguments],
         [ AC_LANG(C++)
           AX_CHECK_COMPILE_FLAG([-Qunused-arguments],
@@ -274,18 +277,21 @@ missing_optional_lib=no
 # Keep the original LIBS to re-set in the end.
 orig_LIBS="$LIBS"
 
-# Order is important here.
-AC_LIB_HAVE_LINKFLAGS([m], [], [#include <math.h>])
-AS_IF([test "x$LIBM" = x],
-      [missing_mandatory=yes; has_cmath=no],
-      [LDADD="$LIBM $LDADD"; LIBS="$LIBM $LIBS"])
 
+
+
+
+# Start of library linking list
+# -----------------------------
+#
+# Note that 'AC_LIB_HAVE_LINKFLAGS' automatically links with the math
+# library ('-lm').
 AC_LIB_HAVE_LINKFLAGS([gsl], [gslcblas], [
 #include <gsl/gsl_rng.h>
 void junk(void) { gsl_rng_env_setup(); } ])
 AS_IF([test "x$LIBGSL" = x],
       [missing_mandatory=yes; has_gsl=no; has_gslcblas=no],
-      [LDADD="$LTLIBGSL $LDADD"; LIBS="$LIBGSL $LIBS"])
+      [LDADD="$LIBGSL $LDADD"; LIBS="$LIBGSL $LIBS"])
 
 
 # Since version 0.42, if 'libcurl' is installed, CFITSIO will link with it
@@ -301,21 +307,24 @@ AS_IF([test "x$LIBGSL" = x],
 # librtmp, libldap). So if you intend to make Gnuastro statically, then
 # build Libcurl in static-only mode so you won't have to check for all
 # these extra libraries here.
+#
+# Similarly, if the Bzip2 library was activated when building CFITSIO, it
+# will be necessary in a static build to CFITSIO.
 AC_LIB_HAVE_LINKFLAGS([z], [], [#include <zlib.h>])
 AS_IF([test "x$LIBZ" = x], [],
-      [LDADD="$LTLIBZ $LDADD"; LIBS="$LIBZ $LIBS"])
+      [LDADD="$LIBZ $LDADD"; LIBS="$LIBZ $LIBS"])
+
+
+AC_LIB_HAVE_LINKFLAGS([bz2], [], [#include <bzlib.h>])
+AS_IF([test "x$LIBBZ2" = x], [],
+      [LDADD="$LIBBZ2 $LDADD"; LIBS="$LIBBZ2 $LIBS"])
 
 
 AC_LIB_HAVE_LINKFLAGS([curl], [], [#include <curl/curl.h>])
 AS_IF([test "x$LIBCURL" = x], [],
-      [LDADD="$LTLIBCURL $LDADD"; LIBS="$LIBCURL $LIBS"])
+      [LDADD="$LIBCURL $LDADD"; LIBS="$LIBCURL $LIBS"])
 
 
-# Older versions of CFITSIO don't install a shared library, only a static
-# one. Eventhough we add '-lm' to LDADD, on some systems, it complains
-# about not finding basic math libraries. Therefore the configure script
-# can't find CFITSIO, eventhough it exists. The solution is to manually add
-# the math-library as a dependency of CFITSIO.
 AC_LIB_HAVE_LINKFLAGS([cfitsio], [], [
 #include <fitsio.h>
 void junk(void) {
@@ -324,7 +333,7 @@ fitsfile *f;
 ffopen(&f, "junk", READONLY, &status);} ])
 AS_IF([test "x$LIBCFITSIO" = x],
       [missing_mandatory=yes; has_cfitsio=no],
-      [LDADD="$LTLIBCFITSIO $LDADD"; LIBS="$LIBCFITSIO $LIBS"])
+      [LDADD="$LIBCFITSIO $LDADD"; LIBS="$LIBCFITSIO $LIBS"])
 
 
 AC_LIB_HAVE_LINKFLAGS([wcs], [], [
@@ -337,7 +346,7 @@ wcspih(header, 1, 0, 0, &nreject, &nwcs, &wcs);
 } ])
 AS_IF([test "x$LIBWCS" = x],
       [missing_mandatory=yes; has_wcslib=no],
-      [LDADD="$LTLIBWCS $LDADD"; LIBS="$LIBWCS $LIBS"])
+      [LDADD="$LIBWCS $LDADD"; LIBS="$LIBWCS $LIBS"])
 
 
 AC_ARG_WITH([libjpeg],
@@ -355,35 +364,26 @@ void junk(void) {
 } ]) ])
 AS_IF([test "x$LIBJPEG" = x],
       [missing_optional_lib=yes; has_libjpeg=no; anywarnings=yes],
-      [LDADD="$LTLIBJPEG $LDADD"; LIBS="$LIBJPEG $LIBS"])
+      [LDADD="$LIBJPEG $LDADD"; LIBS="$LIBJPEG $LIBS"])
 AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
 
 
-# Check libtiff: If an LZMA libray (part of the XZ Utils) is present,
-# libtiff has probably been built with it. So we'll also need to link with
-# the LZMA library. But if libtiff hasn't been linked with it and its
-# present, there is no problem, the linker will just pass over it. So we
-# don't need to stop the build if this fails.
 AC_ARG_WITH([libtiff],
             [AS_HELP_STRING([--without-libtiff],
                             [disable support for libtiff])],
             [], [with_libtiff=yes])
 AS_IF([test "x$with_libtiff" != xno],
-      [ AC_LIB_HAVE_LINKFLAGS([lzma], [], [#include <lzma.h>])
-        AC_LIB_HAVE_LINKFLAGS([tiff], [], [
+      [ AC_LIB_HAVE_LINKFLAGS([tiff], [], [
 #include <tiffio.h>
 void junk(void) {TIFF *tif=TIFFOpen("junk", "r");} ])
       ])
-AS_IF([test "x$LIBLZMA" = x], [],
-      [LDADD="$LTLIBLZMA $LDADD"; LIBS="$LIBLZMA $LIBS"])
 AS_IF([test "x$LIBTIFF" = x],
       [missing_optional_lib=yes; has_libtiff=no; anywarnings=yes],
-      [LDADD="$LTLIBTIFF $LDADD"; LIBS="$LIBTIFF $LIBS"])
+      [LDADD="$LIBTIFF $LDADD"; LIBS="$LIBTIFF $LIBS"])
 AM_CONDITIONAL([COND_HASLIBTIFF], [test "x$has_libtiff" = "xyes"])
 
 
-# Check libgit2. Note that very old versions of libgit2 don't have the
-# 'git_libgit2_init' function.
+# libgit2 (very old versions of libgit2 don't have the 'git_libgit2_init').
 AC_ARG_WITH([libgit2],
             [AS_HELP_STRING([--without-libgit2],
                             [disable support for libgit2])],
@@ -395,10 +395,26 @@ void junk(void) {git_libgit2_init();} ])
       ])
 AS_IF([test "x$LIBGIT2" = x],
       [missing_optional_lib=yes; has_libgit2=0],
-      [LDADD="$LTLIBGIT2 $LDADD"; LIBS="$LIBGIT2 $LIBS"])
+      [LDADD="$LIBGIT2 $LDADD"; LIBS="$LIBGIT2 $LIBS"])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_LIBGIT2], [$has_libgit2],
                    [libgit2 is installed on the system])
 AS_IF([test "x$has_libgit2" = "x1"], [], [anywarnings=yes])
+
+
+# End of library linking list
+# ---------------------------
+#
+# If we are in static mode, convert any string ending in 'libpthread.a' to
+# '-lpthread' (because pthread is part of the C library and atleast in
+# Gnuastro's usage so far, can't be statically linked (gives errors on
+# undefined symbols like '_dl_pagesize' or '_dl_init_static_tls').
+AS_IF([test "x$enable_shared" = "xno"],
+      [ LDADD=$(AS_ECHO(["$LDADD"]) \
+           | $AWK '{for(i=1; i<=NF; ++i) { \
+                      if( $i ~ /libpthread.a/ ) \
+                        $i="-lpthread" } \
+                    print $0}')
+      ])
 
 
 
@@ -923,6 +939,7 @@ AM_CONDITIONAL([COND_WARP],        [test $enable_warp = yes])
 # linking flags and put them in the Makefiles.
 LIBS="$orig_LIBS"
 AC_SUBST(CONFIG_LDADD, [$LDADD])
+AC_SUBST(ENABLE_SHARED, [$enable_shared])
 AS_ECHO(["linking flags (LDADD) ... $LDADD"])
 
 

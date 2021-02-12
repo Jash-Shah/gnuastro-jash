@@ -170,7 +170,20 @@ EXTRA_DIST = COPYING.FDL genauthors .dir-locals.el .version \
 ## set MAKECMDGOALS to blank if there are no arguments, however, the way
 ## Automake works, its value is set to "all-am".
 all-local:
-	@if [ x$(MAKECMDGOALS) = x"all-am" ] && [ x$(GUIDEMESSAGE) = xyes ]; then    \
+
+        # If we are in static linking mode, correct the 'lib_dependencies'
+        # variable of 'libgnuastro.la'. Because by default it will not
+        # include static libraries!
+	@if [ "X$(MAKECMDGOALS)" = "Xall-am" ] && [ "X$(ENABLE_SHARED)" = "Xno" ]; then \
+	  $(AWK) '/^dependency_libs/{print "dependency_libs='\''$(CONFIG_LDADD)'\''"} \
+	          !/^dependency_libs/{print}' $(top_builddir)/lib/libgnuastro.la \
+	         > $(top_builddir)/lib/libgnuastro_tmp.la; \
+	  mv $(top_builddir)/lib/libgnuastro_tmp.la \
+	     $(top_builddir)/lib/libgnuastro.la; \
+	fi
+
+        # Print a message if requested.
+	@if [ "X$(MAKECMDGOALS)" = "Xall-am" ] && [ x$(GUIDEMESSAGE) = xyes ]; then    \
 	 echo;                                                                       \
 	 echo "==================================================================="; \
 	 echo "==================================================================="; \
