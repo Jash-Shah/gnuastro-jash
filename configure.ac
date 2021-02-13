@@ -284,8 +284,15 @@ orig_LIBS="$LIBS"
 # Start of library linking list
 # -----------------------------
 #
-# Note that 'AC_LIB_HAVE_LINKFLAGS' automatically links with the math
-# library ('-lm').
+# We'll start with the C math library (for things like 'log'). Even though
+# '-lm' is also found for GSL below, on some systems (reported on Ubuntu),
+# if we don't add it explicitly here, the build will crash because of a
+# failure to link with the math functions.
+AC_LIB_HAVE_LINKFLAGS([m], [], [#include <math.h>])
+AS_IF([test "x$LIBM" = x], [],
+      [LDADD="$LIBM $LDADD"; LIBS="$LIBM $LIBS"])
+
+
 AC_LIB_HAVE_LINKFLAGS([gsl], [gslcblas], [
 #include <gsl/gsl_rng.h>
 void junk(void) { gsl_rng_env_setup(); } ])
