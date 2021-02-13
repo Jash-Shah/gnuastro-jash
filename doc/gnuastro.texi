@@ -734,6 +734,7 @@ Developing
 * Documentation::               Documentation is an integral part of Gnuastro.
 * Building and debugging::      Build and possibly debug during development.
 * Test scripts::                Understanding the test scripts.
+* Shell programmable completion::    Suggest completions for a better user experience.
 * Developer's checklist::       Checklist to finalize your changes.
 * Gnuastro project webpage::    Central hub for Gnuastro activities.
 * Developing mailing lists::    Stay up to date with Gnuastro's development.
@@ -29780,6 +29781,7 @@ development and get involved in @ref{Gnuastro project webpage},
 * Documentation::               Documentation is an integral part of Gnuastro.
 * Building and debugging::      Build and possibly debug during development.
 * Test scripts::                Understanding the test scripts.
+* Shell programmable completion::    Suggest completions for a better user experience.
 * Developer's checklist::       Checklist to finalize your changes.
 * Gnuastro project webpage::    Central hub for Gnuastro activities.
 * Developing mailing lists::    Stay up to date with Gnuastro's development.
@@ -30810,6 +30812,44 @@ be prefixed with that variable. This is also true for images or files that
 were produced by other tests.
 
 
+@node Shell programmable completion
+@section Shell programmable completion
+@c Should we use the @cindex for `Shell programmable completion` to prevent redundant reference to its web page?
+Shell programmable completion@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}}, also known as bash completion, auto-complete, or word completion, is a bash built-in feature that helps increase workflow efficiency.
+You can attempt for word completion by pressing the @code{<TAB>} key while typing a command.
+This will prompt shell to print relevant suggestions if there are any available.
+See @ref{Calling Gnuastro's programs}.
+
+Gnuastro uses the shell programmable completion feature not only helps users type less code, but also speeds up the process by suggesting possible arguments inside all Gnuastro subprograms, starting with @code{ast}.
+@c Please revise and use proper technical terms.
+Imagine a scenario where we need to download three columns containing the right ascension, declination, and parallax from the GAIA EDR3 dataset.
+We have to make sure how these columns are abbreviated or spelled.
+So we can call the command below, and store the column names in a file such as: gaia-edr3-columns.txt
+
+@example
+$ astquery gaia --information > gaia-edr3-columns.txt
+@end example
+
+Then, we should specify an output file name, memorize or copy and paste the column names into the command below:
+
+@example
+$ astquery gaia --dataset=edr3 --column=ra,dec,parallax --output=gaia.fits
+@end example
+
+However, this could have been much easier if we used the auto-completion feature.
+
+@example
+$ astquery gaia --dataset=edr3 --column=<TAB>
+@end example
+
+After pressing the @code{<TAB>} key, a full list of gaia edr3 dataset column names will be show up.
+Now, use @code{<TAB>} while typing to let the auto-completion feature fill-out the rest of the word for you.
+
+@subsection The auto-completion workflow
+Shell will inspect the command line to find a @command{compspec} for the invoked command.
+If available, the @command{compsec} will generate a list of possible suggestions to complete the current word.
+
+
 @node Developer's checklist, Gnuastro project webpage, Test scripts, Developing
 @section Developer's checklist
 This is a checklist of things to do after applying your changes/additions
@@ -30821,6 +30861,9 @@ in Gnuastro:
 If the change is non-trivial, write test(s) in the @file{tests/progname/}
 directory to test the change(s)/addition(s) you have made. Then add their
 file names to @file{tests/Makefile.am}.
+
+@item
+Optionally, create or update the 'completion.sh' file described under the @ref{Shell programmable completion} section.
 
 @item
 Run @command{$ make check} to make sure everything is working correctly.
