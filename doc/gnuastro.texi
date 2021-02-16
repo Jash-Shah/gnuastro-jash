@@ -15710,7 +15710,7 @@ $ astscript-radial-profile image.fits     \
 
 ## Generate the radial profile centered at x=44 and y=37 (in pixels),
 ## up to a radial distance of 100 pixels, compute sigma clipped
-## mean and standard deviation (sigclip-mean, sigclip-std) using
+## mean and standard deviation (sigclip-mean and sigclip-std) using
 ## 3 sigma and 10 iterations.
 $ astscript-radial-profile image.fits       \
                            --xcenter=44     \
@@ -15781,7 +15781,7 @@ This parameter is used as the option @option{--pcol} in the generation of the ap
 @itemx --measure="STR"
 The operator for measuring the values over each different aperture.
 By default, it is @option{--measure="--mean"}, which means that the mean of all pixels inside each aperture will be computed.
-This parameter is used for computing the measured values with @command{astmkcatalog}.
+This parameter is used for measuring the values with @command{astmkcatalog}.
 As a consequence, all operators like median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
 Multiple operators can be specified at once.
 For example, by setting @option{--measure="--mean --median"} the mean and median values will be computed.

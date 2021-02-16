@@ -8,6 +8,7 @@
 # Contributing author(s):
 #   Copyright (C) 2020   Mohammad Akhlaghi <mohammad@akhlaghi.org>
 #   Copyright (C) 2020   Zahra Sharbaf <zahra.sharbaf2@gmail.com>
+#   Copyright (C) 2021   Carlos Morales-Socorro <cmorsoc@gmail.com>
 # Copyright (C) 2020, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -90,11 +91,11 @@ $scriptname options:
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -Q, --qratio=FLT        Axis ratio for ellipse profiles (A/B).
   -p, --pangle=FLT        Position angle for ellipse profiles.
-  -m, --measure=STR       Operators for measuring the value (mean, median, etc.).
+  -m, --measure="STR"     Operators for measuring the values ("--mean", "--median", etc.).
   -s, --sigmaclip=FLT,FLT Parameters for sigma clipping measure operators.
 
  Output:
-  -k, --keeptmp          Keep temporal/auxiliar files.
+  -k, --keeptmp           Keep temporal/auxiliar files.
   -o, --output            Output table with the radial profile.
 
  Operating mode:
@@ -361,8 +362,8 @@ if [ z$output = zdefault ]; then output="$defaultname.fits"; fi
 # If the user set the directory, then make it. This directory will be deleted
 # at the end of the script if the user does not want to keep it (with the
 # `--keeptmp' option).
-if [ z$tmpdir = z        ]; then tmpdir=$defaultname
-else                             mkdir -p $tmpdir; fi
+if [ z$tmpdir = z        ]; then tmpdir=$defaultname; fi
+mkdir -p $tmpdir
 
 
 
