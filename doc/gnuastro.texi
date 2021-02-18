@@ -8978,6 +8978,15 @@ image-b.fits
 Note that @option{--colinfoinstdout} is necessary to use column names in the subsequent @command{asttable} command.
 Also, with the @option{-cFILENAME} option, we are asking Table to only print the final file names (we don't need the sizes any more).
 
+The commands with multiple files above used @file{*.fits}, which is only useful when all your FITS files are in the same directory.
+However, in many cases, your FITS files will be scattered in multiple sub-directories of a certain top-level directory, or you may only want those with more particular file name patterns.
+A more powerful way to list the input files to @option{--keyvalue} is to use the @command{find} program in Unix-like operating systems.
+For example, with the command below you can search all the FITS files in all the sub-directories of @file{/TOP/DIR}.
+
+@example
+astfits $(find /TOP/DIR/ -name "*.fits") --keyvalue=NAXIS2
+@end example
+
 @item -O
 @itemx --colinfoinstdout
 Print column information (or metadata) above the column values when writing keyword values to standard output with @option{--keyvalue}.
