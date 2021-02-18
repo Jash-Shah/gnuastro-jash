@@ -281,16 +281,52 @@ orig_LIBS="$LIBS"
 
 
 
-# Start of library linking list
-# -----------------------------
+# Basics of the library linking checks
+# ------------------------------------
 #
-# We'll start with the C math library (for things like 'log'). Even though
-# '-lm' is also found for GSL below, on some systems (reported on Ubuntu),
-# if we don't add it explicitly here, the build will crash because of a
-# failure to link with the math functions.
+# Outputs of 'AC_LIB_HAVE_LINKFLAGS' (which checks for libraries):
+#
+#   - LIB<NAME>: contains the raw 'libNAME.so' or 'libNAME.a' file for some
+#     libraries. This is necessary for static libraries, but is problematic
+#     for shared libraries (they will not be linked to the produced
+#     library: when you run 'ldd libgnuastro.so', you don't see those that
+#     were linked with a '.so' file here).
+#
+#     To make things worse, when linking Gnuastro's programs with
+#     Gnuastro's library, libtool will put raw files ('.a' or '.so' files,
+#     not '-lNAME') before 'libgnuastro.la' (which depends on them). As a
+#     result, building shared programs with Gnuastro's library will
+#     fail. But this is desired for static libraries.
+#
+#   - LTLIB<NAME>: has '-lNAME', along with any necessary RPATH flags for
+#     the local operating system.
+#
+# Major environment variables:
+#
+#   - LIBS: is primarily used in the compilation checks of the configure
+#     script where the host's compiler has full control.
+#
+#   - LDADD: is passed to the rules that build Gnuastro's library and
+#     programs through the 'CONFIG_LDADD' variable.
+#
+# Since nothing complex is built during the configure script, we'll just
+# populate 'LIBS' with 'LTLIB<NAME>'. However, building the programs and
+# library is very complex and we have an even more complex BuildProgram in
+# Gnaustro. So we fill 'LDADD' conditionally: 1) for building static
+# library/programs, we'll use 'LIB<NAME>'. 2) for building shared
+# libraries, we'll use 'LTLIB<NAME>'.
+
+
+# Why C math library (for things like 'log')? Even though '-lm' is also
+# found for GSL below, on some systems (reported on Ubuntu), if we don't
+# add it explicitly here, the build will crash because of a failure to link
+# with the math functions.
 AC_LIB_HAVE_LINKFLAGS([m], [], [#include <math.h>])
 AS_IF([test "x$LIBM" = x], [],
-      [LDADD="$LIBM $LDADD"; LIBS="$LIBM $LIBS"])
+      [LIBS="$LIBM $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBM   $LDADD"],
+             [LDADD="$LTLIBM $LDADD"]) ])
 
 
 AC_LIB_HAVE_LINKFLAGS([gsl], [gslcblas], [
@@ -298,7 +334,10 @@ AC_LIB_HAVE_LINKFLAGS([gsl], [gslcblas], [
 void junk(void) { gsl_rng_env_setup(); } ])
 AS_IF([test "x$LIBGSL" = x],
       [missing_mandatory=yes; has_gsl=no; has_gslcblas=no],
-      [LDADD="$LIBGSL $LDADD"; LIBS="$LIBGSL $LIBS"])
+      [LIBS="$LIBGSL $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBGSL   $LDADD"],
+             [LDADD="$LTLIBGSL $LDADD"]) ])
 
 
 # Since version 0.42, if 'libcurl' is installed, CFITSIO will link with it
@@ -319,17 +358,26 @@ AS_IF([test "x$LIBGSL" = x],
 # will be necessary in a static build to CFITSIO.
 AC_LIB_HAVE_LINKFLAGS([z], [], [#include <zlib.h>])
 AS_IF([test "x$LIBZ" = x], [],
-      [LDADD="$LIBZ $LDADD"; LIBS="$LIBZ $LIBS"])
+      [LIBS="$LIBZ $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBZ   $LDADD"],
+             [LDADD="$LTLIBZ $LDADD"]) ])
 
 
 AC_LIB_HAVE_LINKFLAGS([bz2], [], [#include <bzlib.h>])
 AS_IF([test "x$LIBBZ2" = x], [],
-      [LDADD="$LIBBZ2 $LDADD"; LIBS="$LIBBZ2 $LIBS"])
+      [LIBS="$LIBBZ2 $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBBZ2   $LDADD"],
+             [LDADD="$LTLIBBZ2 $LDADD"]) ])
 
 
 AC_LIB_HAVE_LINKFLAGS([curl], [], [#include <curl/curl.h>])
 AS_IF([test "x$LIBCURL" = x], [],
-      [LDADD="$LIBCURL $LDADD"; LIBS="$LIBCURL $LIBS"])
+      [LIBS="$LIBCURL $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBCURL   $LDADD"],
+             [LDADD="$LTLIBCURL $LDADD"]) ])
 
 
 AC_LIB_HAVE_LINKFLAGS([cfitsio], [], [
@@ -340,7 +388,10 @@ fitsfile *f;
 ffopen(&f, "junk", READONLY, &status);} ])
 AS_IF([test "x$LIBCFITSIO" = x],
       [missing_mandatory=yes; has_cfitsio=no],
-      [LDADD="$LIBCFITSIO $LDADD"; LIBS="$LIBCFITSIO $LIBS"])
+      [LIBS="$LIBCFITSIO $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBCFITSIO   $LDADD"],
+             [LDADD="$LTLIBCFITSIO $LDADD"]) ])
 
 
 AC_LIB_HAVE_LINKFLAGS([wcs], [], [
@@ -353,7 +404,10 @@ wcspih(header, 1, 0, 0, &nreject, &nwcs, &wcs);
 } ])
 AS_IF([test "x$LIBWCS" = x],
       [missing_mandatory=yes; has_wcslib=no],
-      [LDADD="$LIBWCS $LDADD"; LIBS="$LIBWCS $LIBS"])
+      [LIBS="$LIBWCS $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBWCS   $LDADD"],
+             [LDADD="$LTLIBWCS $LDADD"]) ])
 
 
 AC_ARG_WITH([libjpeg],
@@ -371,7 +425,10 @@ void junk(void) {
 } ]) ])
 AS_IF([test "x$LIBJPEG" = x],
       [missing_optional_lib=yes; has_libjpeg=no; anywarnings=yes],
-      [LDADD="$LIBJPEG $LDADD"; LIBS="$LIBJPEG $LIBS"])
+      [LIBS="$LIBJPEG $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBJPEG   $LDADD"],
+             [LDADD="$LTLIBJPEG $LDADD"]) ])
 AM_CONDITIONAL([COND_HASLIBJPEG], [test "x$has_libjpeg" = "xyes"])
 
 
@@ -380,13 +437,17 @@ AC_ARG_WITH([libtiff],
                             [disable support for libtiff])],
             [], [with_libtiff=yes])
 AS_IF([test "x$with_libtiff" != xno],
-      [ AC_LIB_HAVE_LINKFLAGS([tiff], [], [
+      [ AC_LIB_HAVE_LINKFLAGS([lzma], [], [#include <lzma.h>])
+        AC_LIB_HAVE_LINKFLAGS([tiff], [], [
 #include <tiffio.h>
 void junk(void) {TIFF *tif=TIFFOpen("junk", "r");} ])
       ])
 AS_IF([test "x$LIBTIFF" = x],
       [missing_optional_lib=yes; has_libtiff=no; anywarnings=yes],
-      [LDADD="$LIBTIFF $LDADD"; LIBS="$LIBTIFF $LIBS"])
+      [LIBS="$LIBTIFF $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBTIFF   $LDADD"],
+             [LDADD="$LTLIBTIFF $LDADD"]) ])
 AM_CONDITIONAL([COND_HASLIBTIFF], [test "x$has_libtiff" = "xyes"])
 
 
@@ -402,7 +463,10 @@ void junk(void) {git_libgit2_init();} ])
       ])
 AS_IF([test "x$LIBGIT2" = x],
       [missing_optional_lib=yes; has_libgit2=0],
-      [LDADD="$LIBGIT2 $LDADD"; LIBS="$LIBGIT2 $LIBS"])
+      [LIBS="$LIBGIT2 $LIBS"
+       AS_IF([ test "x$enable_shared" = "xno" ],
+             [LDADD="$LIBGIT2   $LDADD"],
+             [LDADD="$LTLIBGIT2 $LDADD"]) ])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_LIBGIT2], [$has_libgit2],
                    [libgit2 is installed on the system])
 AS_IF([test "x$has_libgit2" = "x1"], [], [anywarnings=yes])
