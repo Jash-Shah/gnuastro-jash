@@ -29,6 +29,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 
 #include <gnuastro/wcs.h>
+#include <gnuastro/type.h>
 
 #include <gnuastro-internal/checkset.h>
 
@@ -134,6 +135,7 @@ arithmetic_operator_name(int operator)
       case ARITHMETIC_TABLE_OP_ATAN2: out="atan2"; break;
       case ARITHMETIC_TABLE_OP_WCSTOIMG: out="wcstoimg"; break;
       case ARITHMETIC_TABLE_OP_IMGTOWCS: out="imgtowcs"; break;
+      case ARITHMETIC_TABLE_OP_DATETOSEC: out="date-to-sec"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEFLAT: out="distance-flat"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEONSPHERE: out="distance-on-sphere"; break;
       default:
@@ -212,6 +214,8 @@ arithmetic_set_operator(struct tableparams *p, char *string,
         { op=ARITHMETIC_TABLE_OP_WCSTOIMG; *num_operands=0; }
       else if( !strcmp(string, "imgtowcs"))
         { op=ARITHMETIC_TABLE_OP_IMGTOWCS; *num_operands=0; }
+      else if( !strcmp(string, "date-to-sec"))
+        { op=ARITHMETIC_TABLE_OP_DATETOSEC; *num_operands=0; }
       else if( !strcmp(string, "distance-flat"))
         { op=ARITHMETIC_TABLE_OP_DISTANCEFLAT; *num_operands=0; }
       else if( !strcmp(string, "distance-on-sphere"))
@@ -728,6 +732,82 @@ arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
 
 
 
+/* Convert the ISO date format to seconds since Unix time. */
+static void
+arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
+                     int operator)
+{
+  size_t i, v;
+  int64_t *iarr;
+  gal_data_t *out;
+  char *subsecstr=NULL;
+  double *darr, subsec=NAN;
+
+  /* Input dataset. */
+  gal_data_t *in=arithmetic_stack_pop(stack, operator, NULL);
+  char **strarr=in->array;
+
+  /* Output metadata. */
+  char *unit="sec";
+  char *name="UNIXSEC";
+  char *comment="Unix seconds (from 00:00:00 UTC, 1 January 1970)";
+
+  /* Make sure the input has a 'string' type. */
+  if(in->type!=GAL_TYPE_STRING)
+    error(EXIT_FAILURE, 0, "the operand given to 'date-to-sec' "
+          "should have a string type, but it is '%s'",
+          gal_type_name(in->type, 1));
+
+  /* Allocate the output dataset. */
+  out=gal_data_alloc(NULL, GAL_TYPE_INT64, 1, &in->size, NULL, 1,
+                     p->cp.minmapsize, p->cp.quietmmap, name, unit,
+                     comment);
+
+  /* Convert each input string (first try as an integer, assuming no
+     sub-second, or floating point precision).  */
+  iarr=out->array;
+  for(i=0; i<in->size; ++i)
+    {
+      v=gal_fits_key_date_to_seconds(strarr[i], &subsecstr,
+                                     &subsec);
+      iarr[i] = v==GAL_BLANK_SIZE_T ? GAL_BLANK_INT64 : v;
+      if(subsecstr) break;
+    }
+
+  /* If a sub-second string was present, then save the output as double
+     precision floating point. */
+  if(subsecstr)
+    {
+      /* Free the initially allocated output (as an integer). */
+      free(subsecstr);
+      gal_data_free(out);
+
+      /* Allocate a double-precision output. */
+      out=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &in->size, NULL, 1,
+                         p->cp.minmapsize, p->cp.quietmmap, name, unit,
+                         comment);
+
+      /* Convert the date. */
+      darr=out->array;
+      for(i=0; i<in->size; ++i)
+        {
+          subsecstr=NULL;
+          v=gal_fits_key_date_to_seconds(strarr[i], &subsecstr,
+                                               &subsec);
+          darr[i] = v==GAL_BLANK_SIZE_T ? NAN : v;
+          if(subsecstr) { darr[i]+=subsec; free(subsecstr); }
+        }
+    }
+
+  /* Clean up and put the resulting calculation back on the stack. */
+  if(in) gal_data_free(in);
+  gal_list_data_add(stack, out);
+}
+
+
+
+
+
 
 
 
@@ -857,6 +937,10 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
         case ARITHMETIC_TABLE_OP_WCSTOIMG:
         case ARITHMETIC_TABLE_OP_IMGTOWCS:
           arithmetic_wcs(p, stack, operator);
+          break;
+
+        case ARITHMETIC_TABLE_OP_DATETOSEC:
+          arithmetic_datetosec(p, stack, operator);
           break;
 
         case ARITHMETIC_TABLE_OP_DISTANCEFLAT:

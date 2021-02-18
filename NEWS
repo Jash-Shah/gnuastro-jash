@@ -21,6 +21,19 @@ See the end of the file for license conditions.
      when you have a large dataset and just want to see a random sub-set of
      the rows. It takes an integer, selects that many rows from the input
      randomly.
+   - New column arithmetic operators:
+     - 'date-to-sec' Convert FITS date format ('YYYY-MM-DDThh:mm:ss') into
+       seconds from the Unix epoch (1970-01-01,00:00:00 UTC). This can be
+       very useful in combination with the new '--keyvalue' option of the
+       Fits program to sort your FITS images based on observation time.
+
+  Fits:
+   --keyvalue: Print only the values of the FITS keywords given to this
+     option in separate columns. This option can take multiple values and
+     many FITS files. Thus generating a table of keyword values (with one
+     row per file). Its output can thus either be piped to the Table
+     program for selecting a certain sub-set of your FITS files, or sorting
+     them for example.
 
 ** Removed features
 
@@ -28,6 +41,10 @@ See the end of the file for license conditions.
 
   Library:
    - gal_fits_key_write_wcsstr: also takes WCS structure as argument.
+   - gal_fits_key_read_from_ptr: providing a numerical datatype for the
+     desired keyword's value is no longer mandatory. When not given, the
+     smallest numeric datatype that can keep the value will be found and
+     used.
 
 ** Bugs fixed
 

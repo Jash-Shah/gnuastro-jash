@@ -164,9 +164,22 @@ struct argp_option program_options[] =
       UI_KEY_ASIS,
       "STR",
       0,
-      "Write the argument string as is into the header.",
+      "Write value as-is (may corrupt FITS file).",
       UI_GROUP_KEYWORD,
       &p->asis,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "keyvalue",
+      UI_KEY_KEYVALUE,
+      "STR[,STR,...]",
+      0,
+      "Only print the value of requested keyword(s).",
+      UI_GROUP_KEYWORD,
+      &p->keyvalue,
       GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -347,6 +360,21 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "colinfoinstdout",
+      UI_KEY_COLINFOINSTDOUT,
+      0,
+      0,
+      "Column info/metadata when printing to stdout.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->colinfoinstdout,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
 
 
 

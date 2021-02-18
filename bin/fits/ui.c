@@ -120,7 +120,6 @@ ui_initialize_options(struct fitsparams *p,
         case GAL_OPTIONS_KEY_SEARCHIN:
         case GAL_OPTIONS_KEY_IGNORECASE:
         case GAL_OPTIONS_KEY_TYPE:
-        case GAL_OPTIONS_KEY_TABLEFORMAT:
         case GAL_OPTIONS_KEY_DONTDELETE:
         case GAL_OPTIONS_KEY_LOG:
         case GAL_OPTIONS_KEY_NUMTHREADS:
@@ -177,12 +176,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
     case ARGP_KEY_ARG:
       /* Only FITS files are acceptable. */
       if( gal_fits_name_is_fits(arg) )
-        {
-          if(p->filename)
-            argp_error(state, "only one input file should be given");
-          else
-            p->filename=arg;
-        }
+        gal_list_str_add(&p->input, arg, 1);
       else
         argp_error(state, "%s is not a recognized FITS file", arg);
       break;
@@ -322,13 +316,15 @@ ui_check_copykeys(struct fitsparams *p)
 static void
 ui_read_check_only_options(struct fitsparams *p)
 {
+  int checkkeys;
   uint8_t stdoutcheck=0;
 
   /* If any of the keyword manipulation options are requested, then set the
      mode flag to keyword-mode. */
-  if( p->date || p->comment || p->history || p->asis || p->delete
-      || p->rename || p->update || p->write || p->verify || p->printallkeys
-      || p->copykeys || p->datetosec || p->wcsdistortion )
+  if( p->date || p->comment || p->history || p->asis || p->keyvalue
+      || p->delete || p->rename || p->update || p->write || p->verify
+      || p->printallkeys || p->copykeys || p->datetosec
+      || p->wcsdistortion )
     {
       /* Check if a HDU is given. */
       if(p->cp.hdu==NULL)
@@ -340,16 +336,18 @@ ui_read_check_only_options(struct fitsparams *p)
       if(p->copykeys)
         ui_check_copykeys(p);
 
-      /* Currently 'datetosec' must be called alone. */
-      if( (p->datetosec || p->wcsdistortion)
-          && ( (p->datetosec && p->wcsdistortion)
-               || p->date || p->comment || p->history || p->asis || p->delete
-               || p->rename || p->update || p->write || p->verify
-               || p->printallkeys || p->copykeys
-               )
-          )
-        error(EXIT_FAILURE, 0, "'--datetosec' and '--wcsdistortion' cannot "
-              "currently be called with any other option");
+      /* Keyword-related options that must be called alone. */
+      checkkeys = ( (p->keyvalue!=NULL)
+                    + (p->datetosec!=NULL)
+                    + (p->wcsdistortion!=NULL) );
+      if( ( checkkeys
+            && ( p->date || p->comment || p->history || p->asis
+                 || p->delete || p->rename || p->update || p->write
+                 || p->verify || p->printallkeys || p->copykeys ) )
+          || checkkeys>1 )
+        error(EXIT_FAILURE, 0, "'--keyvalue', '--datetosec' and "
+              "'--wcsdistortion' cannot currently be called with "
+              "any other option");
 
       /* Identify the requested distortion. Note that this also acts as a
          sanity check because it will crash with an error if the given
@@ -400,7 +398,7 @@ ui_read_check_only_options(struct fitsparams *p)
           if(p->cp.output)
             gal_checkset_writable_remove(p->cp.output, 1, p->cp.dontdelete);
           else
-            p->cp.output=gal_checkset_automatic_output(&p->cp, p->filename,
+            p->cp.output=gal_checkset_automatic_output(&p->cp, p->input->v,
                                                        "_ext.fits");
         }
 
@@ -431,8 +429,15 @@ ui_check_options_and_arguments(struct fitsparams *p)
 {
   /* Make sure an input file name was given and if it was a FITS file, that
      a HDU is also given. */
-  if(p->filename==NULL)
+  if(p->input==NULL)
     error(EXIT_FAILURE, 0, "no input file is specified");
+  gal_list_str_reverse(&p->input);
+
+  /* More than one input is currently only acceptable with the '--keyvalue'
+     option. */
+  if( gal_list_str_number(p->input) > 1 && p->keyvalue==NULL)
+    error(EXIT_FAILURE, 0, "one input file is expected but %zu input "
+          "files are given", gal_list_str_number(p->input));
 }
 
 

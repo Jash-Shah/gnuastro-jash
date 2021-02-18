@@ -397,7 +397,7 @@ Fits
 Invoking Fits
 
 * HDU information and manipulation::  Learn about the HDUs and move them.
-* Keyword manipulation::        Manipulate metadata keywords in a HDU
+* Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU
 
 Sort FITS files by night
 
@@ -8771,19 +8771,19 @@ Therefore as described in the paragraphs above, when no explicit call to the @op
 The operating mode and input/output options to Fits are similar to the other programs and fully described in @ref{Common options}.
 The options particular to Fits can be divided into two groups:
 1) those related to modifying HDUs or extensions (see @ref{HDU information and manipulation}), and
-2) those related to viewing/modifying meta-data keywords (see @ref{Keyword manipulation}).
+2) those related to viewing/modifying meta-data keywords (see @ref{Keyword inspection and manipulation}).
 These two classes of options cannot be called together in one run: you can either work on the extensions or meta-data keywords in any instance of Fits.
 
 @menu
 * HDU information and manipulation::  Learn about the HDUs and move them.
-* Keyword manipulation::        Manipulate metadata keywords in a HDU
+* Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU
 @end menu
 
 
 
 
 
-@node HDU information and manipulation, Keyword manipulation, Invoking astfits, Invoking astfits
+@node HDU information and manipulation, Keyword inspection and manipulation, Invoking astfits, Invoking astfits
 @subsubsection HDU information and manipulation
 Each FITS file header data unit, or HDU (also known as an extension) is an independent dataset (data + meta-data).
 Multiple HDUs can be stored in one FITS file, see @ref{Fits}.
@@ -8800,7 +8800,7 @@ Print the number of extensions/HDUs in the given file.
 Note that this option must be called alone and will only print a single number.
 It is thus useful in scripts, for example when you need to do check the number of extensions in a FITS file.
 
-For a complete list of basic meta-data on the extensions in a FITS file, don't use any of the options in this section or in @ref{Keyword manipulation}.
+For a complete list of basic meta-data on the extensions in a FITS file, don't use any of the options in this section or in @ref{Keyword inspection and manipulation}.
 For more, see @ref{Invoking astfits}.
 
 @item --pixelscale
@@ -8859,7 +8859,7 @@ Calculate and print the given HDU's "datasum" to stdout.
 The given HDU is specified with the @option{--hdu} (or @option{-h}) option.
 This number is calculated by parsing all the bytes of the given HDU's data records (excluding keywords).
 This option ignores any possibly existing @code{DATASUM} keyword in the HDU.
-For more on @code{DATASUM} in the FITS standard, see @ref{Keyword manipulation} (under the @code{checksum} component of @option{--write}).
+For more on @code{DATASUM} in the FITS standard, see @ref{Keyword inspection and manipulation} (under the @code{checksum} component of @option{--write}).
 
 You can use this option to confirm that the data in two different HDUs (possibly with different keywords) is identical.
 Its advantage over @option{--write=datasum} (which writes the @code{DATASUM} keyword into the given HDU) is that it doesn't require write permissions.
@@ -8911,15 +8911,84 @@ If we hadn't used @option{--primaryimghdu}, then the zero-th extension of @file{
 @end table
 
 
-@node Keyword manipulation,  , HDU information and manipulation, Invoking astfits
-@subsubsection Keyword manipulation
+@node Keyword inspection and manipulation,  , HDU information and manipulation, Invoking astfits
+@subsubsection Keyword inspection and manipulation
 The meta-data in each header data unit, or HDU (also known as extension, see @ref{Fits}) is stored as ``keyword''s.
 Each keyword consists of a name, value, unit, and comments.
 The Fits program (see @ref{Fits}) options related to viewing and manipulating keywords in a FITS HDU are described below.
 
+First, let's review the @option{--keyvalue} option which should be called separately from the rest of the options described in this section.
+Also, unlike the rest of the options in this section, with @option{--keyvalue}, you can give more than one input file.
+
+@table @option
+@item -l STR[,STR[,...]
+@itemx --keyvalue=STR[,STR[,...]
+Only print the value of the requested keyword(s): the @code{STR}s.
+@option{--keyvalue} can be called multiple times, and each call can contain multiple comma-separated values.
+If more than one file is given, this option uses the same HDU/extension for all of them (value to @option{--hdu}).
+For example, you can get the number of dimensions of the three FITS files in the running directory, as well as the length along each dimension, with this command:
+
+@example
+$ astfits *.fits --keyvalue=NAXIS,NAXIS1 --keyvalue=NAXIS2
+image-a.fits 2      774    672
+image-b.fits 2      774    672
+image-c.fits 2      387    336
+@end example
+
+If a single dataset is given, its name is not printed on the first column, only the values of the requested keywords.
+
+@example
+$ astfits image-a.fits --keyvalue=NAXIS,NAXIS1 \
+          --keyvalue=NAXIS2
+2      774    672
+@end example
+
+The output is internally stored (and finally printed) as a table (with one column per keyword).
+Therefore just like the Table program, you can use @option{--colinfoinstdout} to print the metadata like the example below (also see @ref{Invoking asttable}).
+The keyword metadata (comments and units) are extracted from the comments and units of the keyword in the input files (first file that has a comment or unit).
+Hence if the keyword doesn't have units or comments in any of the input files, they will be empty.
+For more on Gnuastro's plain-text metadata format, see @ref{Gnuastro text table format}.
+
+@example
+$ astfits *.fits --keyvalue=NAXIS,NAXIS1,NAXIS2 \
+          --colinfoinstdout
+# Column 1: FILENAME [name,str10,] Name of input file.
+# Column 2: NAXIS    [    ,u8   ,] number of data axes
+# Column 3: NAXIS1   [    ,u16  ,] length of data axis 1
+# Column 4: NAXIS2   [    ,u16  ,] length of data axis 2
+image-a.fits 2      774    672
+image-b.fits 2      774    672
+image-c.fits 2      387    336
+@end example
+
+Another advantage of a table output is that you can directly write the the table to a file.
+For example if you add @option{--output=fileinfo.fits}, the information above will be printed into a FITS table.
+You can also pipe it into @ref{Table} to select files based on certain properties, to sort them based on another property, or any other operation that can be done with Table (including @ref{Column arithmetic}).
+For example with the command below, you can select all the files that have a size larger than 500 pixels in both dimensions.
+
+@example
+$ astfits *.fits --keyvalue=NAXIS,NAXIS1,NAXIS2 \
+          --colinfoinstdout \
+          | asttable --range=NAXIS1,500,inf \
+                     --range=NAXIS2,500,inf -cFILENAME
+image-a.fits
+image-b.fits
+@end example
+
+Note that @option{--colinfoinstdout} is necessary to use column names in the subsequent @command{asttable} command.
+Also, with the @option{-cFILENAME} option, we are asking Table to only print the final file names (we don't need the sizes any more).
+
+@item -O
+@itemx --colinfoinstdout
+Print column information (or metadata) above the column values when writing keyword values to standard output with @option{--keyvalue}.
+You can read this option as column-information-in-standard-output.
+@end table
+
+Below we will discuss the options that can be used to manipulate keywords.
 To see the full list of keywords in a FITS HDU, you can use the @option{--printallkeys} option.
-If any of the keywords are to be modified, the headers of the input file will be changed.
-If you want to keep the original FITS file or HDU, it is easiest to create a copy first and then run Fits on that.
+If any of the keyword modification options below are requested (for example @option{--update}), the headers of the input file will be changed first, then printed.
+Keyword modification is done within the input file.
+Therefore, if you want to keep the original FITS file or HDU intact, it is easiest to create a copy of the file/HDU first and then run Fits on that (for copying a HDU to another file, see @ref{HDU information and manipulation}.
 In the FITS standard, keywords are always uppercase.
 So case does not matter in the input or output keyword names you specify.
 
@@ -10204,6 +10273,29 @@ If it is plain-text, the string column will be written following the standards d
 @cindex Declination
 Convert degrees (a column with a single floating point number) to the Declination, Dec, string (in the format of @code{_d_m_s}).
 See the @option{degree-to-ra} for more on the format of the output.
+
+@item date-to-sec
+@cindex Unix epoch time
+@cindex Time, Unix epoch
+@cindex Epoch, Unix time
+The popped operand should be a string column in the FITS date format (most generally: @code{YYYY-MM-DDThh:mm:ss.ddd...}).
+This operator will return the corresponding Unix epoch time (number of seconds that have passed since 00:00:00 Thursday, January 1st, 1970).
+The returned operand will be named @code{UNIXSEC} (short for Unix-seconds).
+If any of the times have sub-second precision, the numeric datatype of the column will be 64-bit floating point type.
+Otherwise it will be a 64-bit, signed integer, see @ref{Numeric data types}.
+
+For example, in the example below we are using this operator, in combination with the @option{--keyvalue} option of the Fits program, to sort your desired FITS files by observation date (value in the @code{DATE-OBS} keyword in example below):
+
+@example
+$ astfits *.fits --keyvalue=DATE-OBS --colinfoinstdout \
+          | asttable -cFILENAME,'arith DATE-OBS date-to-sec' \
+                     --colinfoinstdout \
+          | asttable --sort=UNIXSEC
+@end example
+
+If you don't need to see the Unix-seconds any more, you can add a @option{-cFILENAME} (short for @option{--column=FILENAME}) at the end.
+For more on @option{--keyvalue}, see @ref{Keyword inspection and manipulation}.
+
 @end table
 
 
@@ -10571,7 +10663,7 @@ If your table is large and generated by a script, you can first do all your oper
 Then, look into that file's metadata (with @command{asttable temp.fits -i}) to see the exact column positions and possible names, then add the necessary calls to this option to your previous call to @command{asttable}, so it writes proper metadata in the same run (for example in a script or Makefile).
 Recall that when a name is given, this option will update the metadata of the first column that matches, so if you have multiple columns with the same name, you can call this options multiple times with the same first argument to change them all to different names.
 
-Finally, if you already have a FITS table by other means (for example by downloading) and you merely want to update the column metadata and leave the data intact, it is much more efficient to directly modify the respective FITS header keywords with @code{astfits}, using the keyword manipulation features described in @ref{Keyword manipulation}.
+Finally, if you already have a FITS table by other means (for example by downloading) and you merely want to update the column metadata and leave the data intact, it is much more efficient to directly modify the respective FITS header keywords with @code{astfits}, using the keyword manipulation features described in @ref{Keyword inspection and manipulation}.
 @option{--colmetadata} is mainly intended for scenarios where you want to edit the data so it will always load the full/partial dataset into memory, then write out the resulting datasets with updated/corrected metadata.
 @end table
 
@@ -22130,11 +22222,10 @@ not have any zero values (a dimension of length zero is not defined).
 @end deftypefun
 
 @deftypefun void gal_data_free_contents (gal_data_t @code{*data})
-Free all the non-@code{NULL} pointers in @code{gal_data_t} except for
-@code{next} and @code{block}. If @code{data} is actually a tile
-(@code{data->block!=NULL}, see @ref{Tessellation library}), then
-@code{data->array} is not freed. For a complete description of
-@code{gal_data_t} and its contents, see @ref{Generic data container}.
+Free all the non-@code{NULL} pointers in @code{gal_data_t} except for @code{next} and @code{block}.
+All freed arrays are set to @code{NULL}.
+If @code{data} is actually a tile (@code{data->block!=NULL}, see @ref{Tessellation library}), then @code{data->array} is not freed.
+For a complete description of @code{gal_data_t} and its contents, see @ref{Generic data container}.
 @end deftypefun
 
 @deftypefun void gal_data_free (gal_data_t @code{*data})
@@ -23755,13 +23846,13 @@ Return the number of HDUs/extensions in @file{filename}.
 @deftypefun {unsigned long} gal_fits_hdu_datasum (char @code{*filename}, char @code{*hdu})
 @cindex @code{DATASUM}: FITS keyword
 Return the @code{DATASUM} of the given HDU in the given FITS file.
-For more on @code{DATASUM} in the FITS standard, see @ref{Keyword manipulation} (under the @code{checksum} component of @option{--write}).
+For more on @code{DATASUM} in the FITS standard, see @ref{Keyword inspection and manipulation} (under the @code{checksum} component of @option{--write}).
 @end deftypefun
 
 @deftypefun {unsigned long} gal_fits_hdu_datasum_ptr (fitsfile @code{*fptr})
 @cindex @code{DATASUM}: FITS keyword
 Return the @code{DATASUM} of the already opened HDU in @code{fptr}.
-For more on @code{DATASUM} in the FITS standard, see @ref{Keyword manipulation} (under the @code{checksum} component of @option{--write}).
+For more on @code{DATASUM} in the FITS standard, see @ref{Keyword inspection and manipulation} (under the @code{checksum} component of @option{--write}).
 @end deftypefun
 
 @deftypefun int gal_fits_hdu_format (char @code{*filename}, char @code{*hdu})
@@ -23922,15 +24013,13 @@ The advantage of working with the Unix epoch time is that you don't have to worr
 
 @deftypefun void gal_fits_key_read_from_ptr (fitsfile @code{*fptr}, gal_data_t @code{*keysll}, int @code{readcomment}, int @code{readunit})
 
-Read the list of keyword values from a FITS pointer. The input should be a
-linked list of Gnuastro's generic data container
-(@code{gal_data_t}). Before calling this function, you just have to set the
-@code{name} and desired @code{type} values of each node in the list to the
-keyword you want it to keep the value of. The given @code{name} value will
-be directly passed to CFITSIO to read the desired keyword name. This
-function will allocate space to keep the value. If @code{readcomment} and
-@code{readunit} are non-zero, this function will also try to read the
-possible comments and units of the keyword.
+Read the list of keyword values from a FITS pointer.
+The input should be a linked list of Gnuastro's generic data container (@code{gal_data_t}).
+Before calling this function, you just have to set the @code{name}, and optinally, the desired @code{type} of the value of each keyword.
+The given @code{name} value will be directly passed to CFITSIO to read the desired keyword name.
+This function will allocate space to keep the value.
+If no pre-defined type is requested for a certain keyword's value, the smallest possible type to host the value will be found and used.
+If @code{readcomment} and @code{readunit} are non-zero, this function will also try to read the possible comments and units of the keyword.
 
 Here is one example of using this function:
 
@@ -23939,7 +24028,7 @@ Here is one example of using this function:
 gal_data_t *keysll=gal_data_array_calloc(N);
 
 /* Make the array usable as a list too (by setting `next'). */
-for(i=0;i<N-1;++i) keysll[i].next=keysll[i+1];
+for(i=0;i<N-1;++i) keysll[i].next=&keysll[i+1];
 
 /* Fill the datasets with a `name' and a `type'. */
 keysll[0].name="NAME1";     keysll[0].type=GAL_TYPE_INT32;
@@ -23959,23 +24048,15 @@ for(i=0;i<N;++i) keysll[i].name=NULL;
 gal_data_array_free(keysll, N, 1);
 @end example
 
-If the @code{array} pointer of each keyword's dataset is not @code{NULL},
-then it is assumed that the space to keep the value has already been
-allocated. If it is @code{NULL}, space will be allocated for the value by
-this function.
+If the @code{array} pointer of each keyword's dataset is not @code{NULL}, then it is assumed that the space to keep the value has already been allocated.
+If it is @code{NULL}, space will be allocated for the value by this function.
 
-Strings need special consideration: the reason is that generally,
-@code{gal_data_t} needs to also allow for array of strings (as it supports
-arrays of integers for example). Hence when reading a string value, two
-allocations may be done by this function (one if
-@code{array!=NULL}).
+Strings need special consideration: the reason is that generally, @code{gal_data_t} needs to also allow for array of strings (as it supports arrays of integers for example).
+Hence when reading a string value, two allocations may be done by this function (one if @code{array!=NULL}).
 
-Therefore, when using the values of strings after this function,
-@code{keysll[i].array} must be interpreted as @code{char **}: one
-allocation for the pointer, one for the actual characters. If you use
-something like the example, above you don't have to worry about the
-freeing, @code{gal_data_array_free} will free both allocations. So to read
-a string, one easy way would be the following:
+Therefore, when using the values of strings after this function, @code{keysll[i].array} must be interpreted as @code{char **}: one allocation for the pointer, one for the actual characters.
+If you use something like the example, above you don't have to worry about the freeing, @code{gal_data_array_free} will free both allocations.
+So to read a string, one easy way would be the following:
 
 @example
 char *str, **strarray;
@@ -24045,12 +24126,10 @@ Reverse the input list of keywords.
 @end deftypefun
 
 @deftypefun void gal_fits_key_write_title_in_ptr (char @code{*title}, fitsfile @code{*fptr})
-Add two lines of ``title'' keywords to the given CFITSIO @code{fptr}
-pointer. The first line will be blank and the second will have the string
-in @code{title} roughly in the middle of the line (a fixed distance from
-the start of the keyword line). A title in the list of keywords helps in
-classifying the keywords into groups and inspecting them by eye. If
-@code{title==NULL}, this function won't do anything.
+Add two lines of ``title'' keywords to the given CFITSIO @code{fptr} pointer.
+The first line will be blank and the second will have the string in @code{title} roughly in the middle of the line (a fixed distance from the start of the keyword line).
+A title in the list of keywords helps in classifying the keywords into groups and inspecting them by eye.
+If @code{title==NULL}, this function won't do anything.
 @end deftypefun
 
 @deftypefun void gal_fits_key_write_filename (char @code{*keynamebase}, char @code{*filename}, gal_fits_list_key_t @code{**list}, int @code{top1end0})

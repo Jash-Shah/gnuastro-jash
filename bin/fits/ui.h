@@ -44,29 +44,30 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   b e f g i j l m x y z
-   A B E G J L O W X Y
+   b e f g i j m x y z
+   A B E G J L W X Y
  */
 enum option_keys_enum
 {
   /* With short-option version. */
-  UI_KEY_REMOVE       = 'R',
-  UI_KEY_COPY         = 'C',
-  UI_KEY_CUT          = 'k',
-  UI_KEY_NUMHDUS      = 'n',
-  UI_KEY_PRINTALLKEYS = 'p',
-  UI_KEY_ASIS         = 'a',
-  UI_KEY_DELETE       = 'd',
-  UI_KEY_RENAME       = 'r',
-  UI_KEY_UPDATE       = 'u',
-  UI_KEY_WRITE        = 'w',
-  UI_KEY_COMMENT      = 'c',
-  UI_KEY_HISTORY      = 'H',
-  UI_KEY_DATE         = 't',
-  UI_KEY_VERIFY       = 'v',
-  UI_KEY_QUITONERROR  = 'Q',
-  UI_KEY_DATETOSEC    = 's',
-
+  UI_KEY_REMOVE          = 'R',
+  UI_KEY_COPY            = 'C',
+  UI_KEY_CUT             = 'k',
+  UI_KEY_NUMHDUS         = 'n',
+  UI_KEY_PRINTALLKEYS    = 'p',
+  UI_KEY_ASIS            = 'a',
+  UI_KEY_KEYVALUE        = 'l',
+  UI_KEY_DELETE          = 'd',
+  UI_KEY_RENAME          = 'r',
+  UI_KEY_UPDATE          = 'u',
+  UI_KEY_WRITE           = 'w',
+  UI_KEY_COMMENT         = 'c',
+  UI_KEY_HISTORY         = 'H',
+  UI_KEY_DATE            = 't',
+  UI_KEY_VERIFY          = 'v',
+  UI_KEY_QUITONERROR     = 'Q',
+  UI_KEY_DATETOSEC       = 's',
+  UI_KEY_COLINFOINSTDOUT = 'O',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */

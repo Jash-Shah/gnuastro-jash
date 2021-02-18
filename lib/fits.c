@@ -1105,6 +1105,14 @@ gal_fits_key_date_to_seconds(char *fitsdate, char **subsecstr,
   size_t seconds;
   void *subsecptr=subsec;
 
+  /* If the string is blank, return a blank value. */
+  if( strcmp(fitsdate, GAL_BLANK_STRING)==0 )
+    {
+      if(subsec) *subsec=NAN;
+      if(subsecstr) *subsecstr=NULL;
+      return GAL_BLANK_SIZE_T;
+    }
+
   /* Fill in the 'tp' elements with values read from the string. */
   tmp=gal_fits_key_date_to_struct_tm(fitsdate, &tp);
 
@@ -1208,9 +1216,11 @@ void
 gal_fits_key_read_from_ptr(fitsfile *fptr, gal_data_t *keysll,
                            int readcomment, int readunit)
 {
-  void *valueptr;
-  char **strarray;
+  uint8_t numtype;
   gal_data_t *tmp;
+  char **strarray;
+  int typewasinvalid;
+  void *numptr, *valueptr;
 
   /* Get the desired keywords. */
   for(tmp=keysll;tmp!=NULL;tmp=tmp->next)
@@ -1226,6 +1236,15 @@ gal_fits_key_read_from_ptr(fitsfile *fptr, gal_data_t *keysll,
           tmp->dsize=gal_pointer_allocate(GAL_TYPE_SIZE_T, 1, 0, __func__,
                                           "tmp->dsize");
         tmp->ndim=tmp->size=tmp->dsize[0]=1;
+
+        /* If no type has been given, temporarily set it to a string, we
+           will then deduce the type afterwards. */
+        typewasinvalid=0;
+        if(tmp->type==GAL_TYPE_INVALID)
+          {
+            typewasinvalid=1;
+            tmp->type=GAL_TYPE_STRING;
+          }
 
         /* When the type is a string, 'tmp->array' is an array of pointers
            to a separately allocated piece of memory. So we have to
@@ -1292,12 +1311,26 @@ gal_fits_key_read_from_ptr(fitsfile *fptr, gal_data_t *keysll,
         fits_read_key(fptr, gal_fits_type_to_datatype(tmp->type),
                       tmp->name, valueptr, tmp->comment, &tmp->status);
 
-        /* If the comment was empty, free the space and set it to zero. */
+        /* Correct the type if no type was requested and the key has been
+           successfully read. */
+        if(tmp->status==0 && typewasinvalid)
+          {
+            /* If the string can be parsed as a number, then number will be
+               allocated and placed in 'numptr', otherwise, 'numptr' will
+               be NULL. */
+            numptr=gal_type_string_to_number(valueptr, &numtype);
+            if(numptr)
+              {
+                free(valueptr);
+                free(tmp->array);
+                tmp->array=numptr;
+                tmp->type=numtype;
+              }
+          }
+
+        /* If the comment was empty, free the space and set it to NULL. */
         if(tmp->comment && tmp->comment[0]=='\0')
           {free(tmp->comment); tmp->comment=NULL;}
-
-        /* Strings need to be cleaned (CFITSIO puts ''' around them with
-           some (possiblly) extra space on the two ends of the string. */
       }
 }
 

@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/pointer.h>
 #include <gnuastro-internal/timing.h>
 
 #include <gnuastro-internal/checkset.h>
@@ -52,7 +53,7 @@ static void
 keywords_open(struct fitsparams *p, fitsfile **fptr, int iomode)
 {
   if(*fptr==NULL)
-    *fptr=gal_fits_hdu_open(p->filename, p->cp.hdu, iomode);
+    *fptr=gal_fits_hdu_open(p->input->v, p->cp.hdu, iomode);
 }
 
 
@@ -320,8 +321,8 @@ keywords_verify(struct fitsparams *p, fitsfile **fptr)
            "    - CHECKSUM: verifies data and keywords.\n"
            "They can be added-to/updated-in an extension/HDU with:\n"
            "    $ astfits %s -h%s --write=checksum\n"
-           "--------\n", PROGRAM_STRING, p->filename, p->cp.hdu,
-           ctime(&p->rawtime), p->filename, p->cp.hdu);
+           "--------\n", PROGRAM_STRING, p->input->v, p->cp.hdu,
+           ctime(&p->rawtime), p->input->v, p->cp.hdu);
 
   /* Print the verification result. */
   printf("DATASUM:  %s\n",
@@ -352,7 +353,7 @@ keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
   if(p->copykeysrange[0]>=numinkeys)
     error(EXIT_FAILURE, 0, "%s (hdu %s): first keyword number give to "
           "'--copykeys' (%ld) is larger than the number of keywords in this "
-          "header (%zu, including the 'END' keyword)", p->filename, p->cp.hdu,
+          "header (%zu, including the 'END' keyword)", p->input->v, p->cp.hdu,
           p->copykeysrange[0], numinkeys);
 
   /* If the user wanted to count from the end (by giving a negative value),
@@ -367,7 +368,7 @@ keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
       if(p->copykeysrange[0]>=p->copykeysrange[1])
         error(EXIT_FAILURE, 0, "%s (hdu %s): the last keyword given to "
               "'--copykeys' (%ld, or %ld after counting from the bottom) "
-              "is earlier than the first (%ld)", p->filename, p->cp.hdu,
+              "is earlier than the first (%ld)", p->input->v, p->cp.hdu,
               initial, p->copykeysrange[1], p->copykeysrange[0]);
     }
 
@@ -375,7 +376,7 @@ keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
   if(p->copykeysrange[1]>=numinkeys)
     error(EXIT_FAILURE, 0, "%s (hdu %s): second keyword number give to "
           "'--copykeys' (%ld) is larger than the number of keywords in this "
-          "header (%zu, including the 'END' keyword)", p->filename, p->cp.hdu,
+          "header (%zu, including the 'END' keyword)", p->input->v, p->cp.hdu,
           p->copykeysrange[1], numinkeys);
 
 
@@ -419,7 +420,7 @@ keywords_date_to_seconds(struct fitsparams *p, fitsfile *fptr)
   /* Print the result (for the sub-seconds, print everything after the */
   if( !p->cp.quiet )
     {
-      printf("%s (hdu %s), key '%s': %s\n", p->filename, p->cp.hdu,
+      printf("%s (hdu %s), key '%s': %s\n", p->input->v, p->cp.hdu,
              p->datetosec, fitsdate);
       printf("Seconds since 1970/01/01 (00:00:00): %zu%s\n\n", seconds,
              subsecstr?subsecstr:"");
@@ -448,25 +449,25 @@ keywords_distortion_wcs(struct fitsparams *p)
 
   /* If the extension has any data, read it, otherwise just make an empty
      array. */
-  if(gal_fits_hdu_format(p->filename, p->cp.hdu)==IMAGE_HDU)
+  if(gal_fits_hdu_format(p->input->v, p->cp.hdu)==IMAGE_HDU)
     {
       /* Read the size of the dataset (we don't need the actual size!). */
-      insize=gal_fits_img_info_dim(p->filename, p->cp.hdu, &ndim);
+      insize=gal_fits_img_info_dim(p->input->v, p->cp.hdu, &ndim);
       free(insize);
 
       /* If the number of dimensions is two, then read the dataset,
          otherwise, ignore it. */
       if(ndim==2)
-        data=gal_fits_img_read(p->filename, p->cp.hdu, p->cp.minmapsize,
+        data=gal_fits_img_read(p->input->v, p->cp.hdu, p->cp.minmapsize,
                                p->cp.quietmmap);
     }
 
   /* Read the input's WCS and make sure one exists. */
-  inwcs=gal_wcs_read(p->filename, p->cp.hdu, 0, 0, &nwcs);
+  inwcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
   if(inwcs==NULL)
     error(EXIT_FAILURE, 0, "%s (hdu %s): doesn't have any WCS structure "
           "for converting its distortion",
-          p->filename, p->cp.hdu);
+          p->input->v, p->cp.hdu);
 
   /* In case there is no dataset and the conversion is between TPV to SIP,
      we need to set a default size and use that for the conversion, but we
@@ -499,7 +500,7 @@ keywords_distortion_wcs(struct fitsparams *p)
     {
       if( asprintf(&suffix, "-%s.fits", p->wcsdistortion)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      output=gal_checkset_automatic_output(&p->cp, p->filename, suffix);
+      output=gal_checkset_automatic_output(&p->cp, p->input->v, suffix);
     }
   gal_checkset_writable_remove(output, 0, p->cp.dontdelete);
 
@@ -523,6 +524,330 @@ keywords_distortion_wcs(struct fitsparams *p)
   wcsfree(outwcs);
   if(output!=p->cp.output) free(output);
 }
+
+
+
+
+
+static void
+keywords_value_in_output_copy(gal_data_t *write, gal_data_t *key,
+                              size_t in_counter)
+{
+  char **strarrk, **strarrw;
+
+  /* Small sanity check. */
+  if(write->type != key->type)
+    error(EXIT_FAILURE, 0, "%s: the input datasets must have "
+          "the same data type. The 'write' and 'key' arguments "
+          "are respectively '%s' and '%s'", __func__,
+          gal_type_name(write->type, 1),
+          gal_type_name(key->type, 1));
+
+  /* Copy the value. */
+  if(key->type==GAL_TYPE_STRING)
+    {
+      strarrk=key->array;
+      strarrw=write->array;
+      strarrw[ in_counter ] = strarrk[0];
+      strarrk[0]=NULL;
+    }
+  else
+    memcpy(gal_pointer_increment(write->array, in_counter,
+                                 write->type),
+           key->array, gal_type_sizeof(write->type));
+}
+
+
+
+
+
+/* Write the value in the first row. The first row is unique here: if there
+   is only one input dataset, the dataset name will not be in the
+   output. But when there is more than one dataset, we include a column for
+   the name of the dataset. */
+static gal_data_t *
+keywords_value_in_output_first(struct fitsparams *p, gal_data_t *topout,
+                               char *filename, gal_data_t *keysll,
+                               size_t ninput)
+{
+  char **strarr;
+  gal_data_t *out=NULL;
+  gal_data_t *write, *key;
+  size_t in_counter=0; /* This function is only for the first row. */
+
+  /* If a name column is necessary. */
+  if(topout)
+    {
+      /* Small sanity check. */
+      if(topout->next)
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+              "fix the problem. The 'next' pointer of 'topout' should "
+              "be NULL", __func__, PACKAGE_BUGREPORT);
+
+      /* The size of the output should be the same as 'ninput'. */
+      if(topout->size!=ninput)
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+              "fix the problem. The number of elements in 'topout' "
+              "(%zu) is different from 'ninput' (%zu)", __func__,
+              PACKAGE_BUGREPORT, out->size, ninput);
+
+      /* Write the filename. */
+      strarr=topout->array;
+      gal_checkset_allocate_copy(filename, &strarr[in_counter]);
+    }
+
+  /* Add the new columns into the raw output (only keyword values). */
+  for(key=keysll; key!=NULL; key=key->next)
+    {
+      /* If the keyword couldn't be read for any reason then 'key->status'
+         will be non-zero. In this case, return a string type and put a
+         blank string value. */
+      if( key->status )
+        {
+          key->type=GAL_TYPE_STRING;
+          if(p->cp.quiet==0)
+            error(EXIT_SUCCESS, 0, "%s (hdu %s): does not contain a "
+                  "keyword '%s'", filename, p->cp.hdu, key->name);
+        }
+
+      /* Allocate the full column for this key and add it to the end of
+         the existing output list of columns: IMPORTANT NOTE: it is
+         necessary to initialize the values because we may need to
+         change the types before fully writing values within it. */
+      write=gal_data_alloc(NULL, key->type, 1, &ninput, NULL,
+                           1, p->cp.minmapsize, p->cp.quietmmap,
+                           key->name, key->unit, key->comment);
+
+      /* Copy the value of this key into the output. Note that for strings,
+         the arrays are initialized to NULL. */
+      if( key->status )
+        {
+          strarr=write->array;
+          gal_checkset_allocate_copy(GAL_BLANK_STRING,
+                                     &strarr[in_counter]);
+        }
+      else
+        keywords_value_in_output_copy(write, key, in_counter);
+
+      /* Put the allocated column into the output list. */
+      gal_list_data_add(&out, write);
+    }
+
+  /* Reverse the list (to be the same order as the user's request). */
+  gal_list_data_reverse(&out);
+
+  /* If a first row (containing the filename) is given, then add the
+     allocated datasets to its end */
+  if(topout) { topout->next=out; out=topout; }
+
+  /* Return the output. */
+  return out;
+}
+
+
+
+
+
+static void
+keywords_value_in_output_rest_replace(gal_data_t *list, gal_data_t *old,
+                                      gal_data_t *new)
+{
+  gal_data_t *parse;
+  new->next=old->next;
+  for(parse=list; parse!=NULL; parse=parse->next)
+    if(parse->next==old)
+      {
+        gal_data_free(old);
+        parse->next=new;
+        break;
+      }
+}
+
+
+
+
+
+/* This function is for the case that we have more than one row. In this
+   case, we always want the input file's name to be printed. */
+static void
+keywords_value_in_output_rest(struct fitsparams *p, gal_data_t *out,
+                              char *filename, gal_data_t *keysll,
+                              size_t in_counter)
+{
+  int goodtype;
+  char **strarr;
+  gal_data_t *write, *key;
+  gal_data_t *goodkey, *goodwrite;
+
+  /* Write the file name in the first column. */
+  strarr=out->array;
+  gal_checkset_allocate_copy(filename, &strarr[in_counter]);
+
+  /* Go over all the keys are write them in. */
+  write=out;
+  for(key=keysll; key!=NULL; key=key->next)
+    {
+      /* Increment the write column also. */
+      write=write->next;
+
+      /* If the status is non-zero then the keyword couldn't be read. In
+         this case, put a blank value in this row. */
+      if(key->status)
+        {
+          gal_blank_write(gal_pointer_increment(write->array, in_counter,
+                                                write->type),
+                          write->type);
+          if(p->cp.quiet==0)
+            error(EXIT_SUCCESS, 0, "%s (hdu %s): does not contain a "
+                  "keyword '%s'", filename, p->cp.hdu, key->name);
+          continue;
+        }
+
+      /* This key is good and the type is string (which is the type for a
+         key that doesn't exist in the previous file(s)). In this case,
+         check if all the previous rows are blank. If they are all blank
+         then this keyword didn't exist in any of the previous files and
+         this is the first one that has the keyword. So change the type of
+         the column to the final type. */
+      else
+        {
+          if( write->type==GAL_TYPE_STRING
+              && write->type!=key->type
+              && gal_blank_number(write, 1)==write->size )
+            {
+              goodwrite=gal_data_alloc(NULL, key->type, 1, out->dsize,
+                                       NULL, 0, p->cp.minmapsize,
+                                       p->cp.quietmmap, key->name,
+                                       key->unit, key->comment);
+              gal_blank_initialize(goodwrite);
+              keywords_value_in_output_rest_replace(out, write,
+                                                    goodwrite);
+              write=goodwrite;
+            }
+        }
+
+      /* If the previous files didn't have metadata for this keyword but
+         this file does, use the metadata here. */
+      if(write->unit==NULL && key->unit)
+        { write->unit=key->unit; key->unit=NULL; }
+      if(write->comment==NULL && key->comment)
+        { write->comment=key->comment; key->comment=NULL; }
+
+      /* If the column types are the same, then put them in. */
+      if(key->type==write->type)
+        keywords_value_in_output_copy(write, key, in_counter);
+      else
+        {
+          /* Find the most inclusive type. */
+          goodtype=gal_type_out(key->type, write->type);
+
+          /* Convert each of the two into the same type. */
+          goodkey = ( key->type==goodtype
+                      ? key
+                      : gal_data_copy_to_new_type(key, goodtype) );
+          goodwrite = ( write->type==goodtype
+                        ? key
+                        : gal_data_copy_to_new_type(write, goodtype) );
+
+          /* Copy the row into the output. */
+          keywords_value_in_output_copy(goodwrite, goodkey, in_counter);
+
+          /* If the "good" writing dataset has been changed, then
+             replace it in the output (correct its 'next' pointer, and
+             set the previous column to point to it. */
+          if(goodwrite!=write)
+            {
+              keywords_value_in_output_rest_replace(out, write,
+                                                    goodwrite);
+              write=goodwrite;
+            }
+
+          /* If a different key has been used, clean it. */
+          if(goodkey!=key) gal_data_free(goodkey);
+        }
+    }
+}
+
+
+
+
+
+static void
+keywords_value(struct fitsparams *p)
+{
+  int status;
+  fitsfile *fptr=NULL;
+  gal_list_str_t *input, *tmp;
+  size_t i, ii=0, ninput, nkeys;
+  gal_data_t *out=NULL, *keysll=NULL;
+
+  /* Count how many inputs there are and allocate the first column with the
+     name. */
+  ninput=gal_list_str_number(p->input);
+  if(ninput>1)
+    out=gal_data_alloc(NULL, GAL_TYPE_STRING, 1, &ninput, NULL, 0,
+                       p->cp.minmapsize, p->cp.quietmmap, "FILENAME",
+                       "name", "Name of input file.");
+
+  /* Allocate the structure to host the desired keywords read from each
+     FITS file and their values. But first convert the list of strings (for
+     keyword names), (where each string can be a comma-separated list) into
+     a list with a single value per string. */
+  gal_options_merge_list_of_csv(&p->keyvalue);
+  nkeys=gal_list_str_number(p->keyvalue);
+
+  /* Parse each input file, read the keywords and put them in the output
+     list. */
+  for(input=p->input; input!=NULL; input=input->next)
+    {
+      /* Open the input FITS file. */
+      fptr=gal_fits_hdu_open(input->v, p->cp.hdu, READONLY);
+
+      /* Allocate the array to keep the keys. */
+      i=0;
+      keysll=gal_data_array_calloc(nkeys);
+      for(tmp=p->keyvalue; tmp!=NULL; tmp=tmp->next)
+        {
+          if(tmp->next) keysll[i].next=&keysll[i+1];
+          keysll[i].name=tmp->v;
+          ++i;
+        }
+
+      /* Read the keys. Note that we only need the comments and units if
+         '--colinfoinstdout' is called. */
+      gal_fits_key_read_from_ptr(fptr, keysll, p->colinfoinstdout,
+                                 p->colinfoinstdout);
+
+      /* Close the input FITS file. */
+      status=0;
+      if(fits_close_file(fptr, &status))
+        gal_fits_io_error(status, NULL);
+
+      /* Write the values of this column into the final output. */
+      if(ii==0)
+        {
+          ++ii;
+          out=keywords_value_in_output_first(p, out, input->v,
+                                             keysll, ninput);
+        }
+      else
+        keywords_value_in_output_rest(p, out, input->v, keysll,
+                                      ii++);
+
+      /* Clean up. */
+      for(i=0;i<nkeys;++i) keysll[i].name=NULL;
+      gal_data_array_free(keysll, nkeys, 1);
+    }
+
+  /* Write the values. */
+  gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
+  gal_table_write(out, NULL, NULL, p->cp.tableformat,
+                  p->cp.output, "KEY-VALUES", p->colinfoinstdout);
+
+  /* Clean up. */
+  gal_list_str_free(p->keyvalue, 0);
+}
+
 
 
 
@@ -562,6 +887,11 @@ keywords(struct fitsparams *p)
   fitsfile *fptr=NULL;
   gal_list_str_t *tstll;
   int status=0, numinkeys;
+
+  /* Print the requested keywords. Note that this option isn't called with
+     the rest. It is independent of them. */
+  if(p->keyvalue)
+    keywords_value(p);
 
   /* Delete the requested keywords. */
   if(p->delete)

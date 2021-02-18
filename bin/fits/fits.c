@@ -99,7 +99,7 @@ fits_print_extension_info(struct fitsparams *p)
   /* Open the FITS file and read the first extension type, upon moving to
      the next extension, we will read its type, so for the first we will
      need to do it explicitly. */
-  fptr=gal_fits_hdu_open(p->filename, "0", READONLY);
+  fptr=gal_fits_hdu_open(p->input->v, "0", READONLY);
   if (fits_get_hdu_type(fptr, &hdutype, &status) )
     gal_fits_io_error(status, "reading first extension");
 
@@ -257,7 +257,7 @@ fits_print_extension_info(struct fitsparams *p)
   if(!p->cp.quiet)
     {
       printf("%s\nRun on %s-----\n", PROGRAM_STRING, ctime(&p->rawtime));
-      printf("HDU (extension) information: '%s'.\n", p->filename);
+      printf("HDU (extension) information: '%s'.\n", p->input->v);
       printf(" Column 1: Index (counting from 0, usable with '--hdu').\n");
       printf(" Column 2: Name ('EXTNAME' in FITS standard, usable with "
              "'--hdu').\n");
@@ -287,7 +287,7 @@ fits_hdu_number(struct fitsparams *p)
   int numhdu, status=0;
 
   /* Read the first extension (necessary for reading the rest). */
-  fptr=gal_fits_hdu_open(p->filename, "0", READONLY);
+  fptr=gal_fits_hdu_open(p->input->v, "0", READONLY);
 
   /* Get the number of HDUs. */
   if( fits_get_num_hdus(fptr, &numhdu, &status) )
@@ -307,7 +307,7 @@ fits_hdu_number(struct fitsparams *p)
 static void
 fits_datasum(struct fitsparams *p)
 {
-  printf("%ld\n", gal_fits_hdu_datasum(p->filename, p->cp.hdu));
+  printf("%ld\n", gal_fits_hdu_datasum(p->input->v, p->cp.hdu));
 }
 
 
@@ -323,14 +323,14 @@ fits_pixelscale(struct fitsparams *p)
   double multip, *pixelscale;
 
   /* Read the desired WCS. */
-  wcs=gal_wcs_read(p->filename, p->cp.hdu, 0, 0, &nwcs);
+  wcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
 
   /* If a WCS doesn't exist, let the user know and return. */
   if(wcs)
     ndim=wcs->naxis;
   else
     error(EXIT_FAILURE, 0, "%s (hdu %s): no WCS could be read by WCSLIB, "
-          "hence the pixel-scale cannot be determined", p->filename,
+          "hence the pixel-scale cannot be determined", p->input->v,
           p->cp.hdu);
 
   /* Calculate the pixel-scale in each dimension. */
@@ -343,7 +343,7 @@ fits_pixelscale(struct fitsparams *p)
     {
       printf("Basic information for --pixelscale (remove extra info "
              "with '--quiet' or '-q')\n");
-      printf("  Input: %s (hdu %s) has %zu dimensions.\n", p->filename,
+      printf("  Input: %s (hdu %s) has %zu dimensions.\n", p->input->v,
              p->cp.hdu, ndim);
       printf("  Pixel scale in each FITS dimension:\n");
       for(i=0;i<ndim;++i)
@@ -433,11 +433,11 @@ fits_skycoverage(struct fitsparams *p)
   double *center, *width, *min, *max;
 
   /* Find the coverage. */
-  if( gal_wcs_coverage(p->filename, p->cp.hdu, &ndim,
+  if( gal_wcs_coverage(p->input->v, p->cp.hdu, &ndim,
                        &center, &width, &min, &max)==0 )
     error(EXIT_FAILURE, 0, "%s (hdu %s): is not usable for finding "
           "sky coverage (either doesn't have a WCS, or isn't an image "
-          "or cube HDU with 2 or 3 dimensions", p->filename, p->cp.hdu);
+          "or cube HDU with 2 or 3 dimensions", p->input->v, p->cp.hdu);
 
   /* Inform the user. */
   if(p->cp.quiet)
@@ -453,7 +453,7 @@ fits_skycoverage(struct fitsparams *p)
     }
   else
     {
-      printf("Input file: %s (hdu: %s)\n", p->filename, p->cp.hdu);
+      printf("Input file: %s (hdu: %s)\n", p->input->v, p->cp.hdu);
       printf("\nSky coverage by center and (full) width:\n");
       switch(ndim)
         {
@@ -474,7 +474,7 @@ fits_skycoverage(struct fitsparams *p)
         }
 
       /* For the range type of coverage. */
-      wcs=gal_wcs_read(p->filename, p->cp.hdu, 0, 0, &nwcs);
+      wcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
       printf("\nSky coverage by range along dimensions:\n");
       for(i=0;i<ndim;++i)
         printf("  %-8s %-15.10g%-15.10g\n", gal_wcs_dimension_name(wcs, i),
@@ -506,7 +506,7 @@ fits_hdu_remove(struct fitsparams *p, int *r)
       hdu=gal_list_str_pop(&p->remove);
 
       /* Open the FITS file at the specified HDU. */
-      fptr=gal_fits_hdu_open(p->filename, hdu, READWRITE);
+      fptr=gal_fits_hdu_open(p->input->v, hdu, READWRITE);
 
       /* Delete the extension. */
       if( fits_delete_hdu(fptr, &hdutype, &status) )
@@ -568,12 +568,12 @@ fits_hdu_copy(struct fitsparams *p, int cut1_copy0, int *r)
       hdu=gal_list_str_pop(&list);
 
       /* Open the FITS file at the specified HDU. */
-      in=gal_fits_hdu_open(p->filename, hdu,
+      in=gal_fits_hdu_open(p->input->v, hdu,
                            cut1_copy0 ? READWRITE : READONLY);
 
       /* If the output isn't opened yet, open it.  */
       if(out==NULL)
-        out = ( ( gal_fits_hdu_format(p->filename, hdu)==IMAGE_HDU
+        out = ( ( gal_fits_hdu_format(p->input->v, hdu)==IMAGE_HDU
                   && p->primaryimghdu )
                 ? fits_open_to_write_no_blank(p->cp.output)
                 : gal_fits_open_to_write(p->cp.output) );

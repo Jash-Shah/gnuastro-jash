@@ -445,7 +445,9 @@ gal_blank_present(gal_data_t *input, int updateflag)
         error(EXIT_FAILURE, 0, "%s: tile mode is currently not supported for "
               "strings", __func__);
       strf = (str=input->array) + input->size;
-      do if(!strcmp(*str,GAL_BLANK_STRING)) return 1; while(++str<strf);
+      do
+        if(*str==NULL || !strcmp(*str,GAL_BLANK_STRING)) return 1;
+      while(++str<strf);
       break;
 
     /* Complex types */
@@ -486,17 +488,34 @@ gal_blank_present(gal_data_t *input, int updateflag)
 size_t
 gal_blank_number(gal_data_t *input, int updateflag)
 {
+  size_t nblank;
+  char **strarr;
   gal_data_t *number;
-  size_t num_not_blank;
+  size_t i, num_not_blank;
 
   if(input)
     {
       if( gal_blank_present(input, updateflag) )
         {
-          number=gal_statistics_number(input);
-          num_not_blank=((size_t *)(number->array))[0];
-          gal_data_free(number);
-          return input->size - num_not_blank;
+          if(input->type==GAL_TYPE_STRING)
+            {
+              nblank=0;
+              strarr=input->array;
+              for(i=0;i<input->size;++i)
+                {
+                  if( strarr[i]==NULL
+                      || strcmp(strarr[i], GAL_BLANK_STRING)==0 )
+                    ++nblank;
+                }
+              return nblank;
+            }
+          else
+            {
+              number=gal_statistics_number(input);
+              num_not_blank=((size_t *)(number->array))[0];
+              gal_data_free(number);
+              return input->size - num_not_blank;
+            }
         }
       else
         return 0;

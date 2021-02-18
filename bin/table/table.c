@@ -1002,7 +1002,7 @@ table(struct tableparams *p)
       || p->tail!=GAL_BLANK_SIZE_T )
     table_select_by_position(p);
 
-  /* If any operations are needed, do them. */
+  /* If any arithmetic operations are needed, do them. */
   if(p->outcols)
     arithmetic_operate(p);
 
