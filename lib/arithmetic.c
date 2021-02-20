@@ -1512,14 +1512,18 @@ arithmetic_binary_out_type(int operator, gal_data_t *l, gal_data_t *r)
 {
   switch(operator)
     {
-    case GAL_ARITHMETIC_OP_PLUS:
-    case GAL_ARITHMETIC_OP_MINUS:
-    case GAL_ARITHMETIC_OP_MULTIPLY:
-    case GAL_ARITHMETIC_OP_DIVIDE:
-      return gal_type_out(l->type, r->type);
+    case GAL_ARITHMETIC_OP_LT:
+    case GAL_ARITHMETIC_OP_LE:
+    case GAL_ARITHMETIC_OP_GT:
+    case GAL_ARITHMETIC_OP_GE:
+    case GAL_ARITHMETIC_OP_EQ:
+    case GAL_ARITHMETIC_OP_NE:
+    case GAL_ARITHMETIC_OP_AND:
+    case GAL_ARITHMETIC_OP_OR:
+      return GAL_TYPE_UINT8;
 
     default:
-      return GAL_TYPE_UINT8;
+      return gal_type_out(l->type, r->type);
     }
   return -1;
 }
@@ -2033,12 +2037,12 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_DIVIDE:          return "/";
     case GAL_ARITHMETIC_OP_MODULO:          return "%";
 
-    case GAL_ARITHMETIC_OP_LT:              return "<";
-    case GAL_ARITHMETIC_OP_LE:              return "<=";
-    case GAL_ARITHMETIC_OP_GT:              return ">";
-    case GAL_ARITHMETIC_OP_GE:              return ">=";
-    case GAL_ARITHMETIC_OP_EQ:              return "==";
-    case GAL_ARITHMETIC_OP_NE:              return "!=";
+    case GAL_ARITHMETIC_OP_LT:              return "lt";
+    case GAL_ARITHMETIC_OP_LE:              return "le";
+    case GAL_ARITHMETIC_OP_GT:              return "gt";
+    case GAL_ARITHMETIC_OP_GE:              return "ge";
+    case GAL_ARITHMETIC_OP_EQ:              return "eq";
+    case GAL_ARITHMETIC_OP_NE:              return "ne";
     case GAL_ARITHMETIC_OP_AND:             return "and";
     case GAL_ARITHMETIC_OP_OR:              return "or";
     case GAL_ARITHMETIC_OP_NOT:             return "not";

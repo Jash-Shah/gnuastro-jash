@@ -51,6 +51,7 @@ See the end of the file for license conditions.
      used.
 
 ** Bugs fixed
+  bug #60082: Arithmetic library crash for integer operators like modulo
 
 
 
