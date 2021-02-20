@@ -30846,7 +30846,7 @@ $ astquery gaia --dataset=edr3 --output=gaia.fits --column=@key{[TAB]}
 After pressing @key{[TAB]}, a full list of gaia edr3 dataset column names will be show up.
 Again, use @key{[TAB]} while typing and auto-completion will fill-out the rest of the word for you.
 
-@subsection The auto-completion workflow
+@subsection Basic auto-completion example
 Gnuastro's completion script is based on shell programmable completion and follows the same procedure.
 When a user presses the @key{[TAB]} key while typing commands, shell will inspect the input to find a relevant @command{compspec}.
 If available, the @command{compsec} will generate a list of possible suggestions to complete the current word.
@@ -30972,6 +30972,89 @@ COMPREPLY=( $(compgen -W "hello huge world" -- "$2") )
 @noindent
 Here, the @samp{--} instructs @command{compgen} to only reply with a list of words that match @command{$2}, i.e. the current word being completed.
 That is why when you type the letter @samp{h}, @command{complete} will reply only with its matches: @samp{hello} and @samp{huge}, not @samp{world}.
+
+@subsection Auto-completion for Gnuastro developers
+Now that we have a basic understanding of how shell programmable completion works, we can develop smarter completions for our programs.
+If you have followed the Gnuastro conventions for designing your program, then you have already designed a @command{--help} option for it.
+Since this option will tell users all the options available, we are going to reuse this command to our advantage.
+
+Let's use @command{asttable} as an example.
+The goal is to suggest all options that this program has to offer.
+You can print all of them already using:
+
+@example
+$ asttable --help
+@end example
+
+@noindent
+So let's write an @command{awk} script that prints all of the long options.
+We are not interested in short options because if a user knows about the short options, s/he already has things covered.
+One way to catch them might be using the @samp{--} at the beginning of every long option.
+For more information about @command{awk} syntax and @i{regular expressions} or @i{regex} in short, please refer to relevant manuals@footnote{Such as: @url{https://www.gnu.org/software/gawk/manual/html_node/Regexp.html}}.
+
+@verbatim
+$ asttable --help | \
+  awk -v regex=" --+[a-zA-Z0-9]*=?" \
+      'match($0, regex) {print substr($0, RSTART, RLENGTH)}'
+@end verbatim
+
+Now if we wanted to show all the options to the user, we could feed all these options to @command{compgen} and @command{COMPREPLY} subsequently.
+But, we need smarter completions.
+That means, we want to offer suggestions based on the previous option already typed in.
+For that, the @command{case} function can be pretty useful.
+
+Beware!
+Sometimes the program might not be acting as you expected.
+In that case, using @b{debug messages} can clear things up.
+You can add a @command{printf} command before the completion function ends, and check all current variables.
+This can save a lot of headaches, since things can get complex.
+
+Take the option @code{--wcsfile=} for example.
+This option accepts a FITS file.
+Usually, the user is trying to feed a FITS file from the current directory.
+So it would be nice if we could help them and print only a list of FITS files sitting in the current directory -- or whatever directory they have typed-in so far.
+
+But there's a catch.
+Bash will consider @samp{=} a separate word.
+To avoid getting caught in changing the @command{IFS} or @command{WORDBREAKS} values, we will simply check for @samp{=} and act accordingly.
+That is, if the previous word is a @samp{=}, just ignore it and take the word before that as the previous word.
+Also, if the current word is a @samp{=}, ignore it completely.
+Taking all of that into consideration, the code below might serve well:
+
+@verbatim
+_asttable(){
+    if [ "$2" = "=" ]; then
+      word=""
+    else
+      word="$2"
+    fi
+
+    if [ "$3" = "=" ]; then
+      prev="${COMP_WORDS[COMP_CWORD-2]}"
+    else
+      prev="${COMP_WORDS[COMP_CWORD-1]}"
+    fi
+
+    case "$prev" in
+      -w|--wcsfile)
+        COMPREPLY=( $(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word") )
+      ;;
+    esac
+}
+complete -o nospace -F _asttable asttable
+@end verbatim
+
+The code above checks if the @b{previous} word matches any of the upcoming patterns.
+As you can see, we also took the short option @code{-w} into account.
+We do not show the short options as suggestions, but we @b{do} recognize them as valid options.
+
+The @code{-f} option in @command{compgen} indicates we're looking for a file.
+The @code{-X} option filters out the filenames that match the next @i{regex} pattern.
+The @samp{!} in @i{regex} negates the whole pattern.
+Now this means only show filenames that @b{match} the current pattern instead of excluding them.
+The @samp{-- "$word"} collects only filenames that match the current word being typed.
+And last but not least, the @samp{-o nospace} option in the @command{complete} command instructs the completion script to @b{not} append a white space after each suggestion.
+That is important because the long option and its argument must stick together only with a @samp{=} sign.
 
 
 @node Developer's checklist, Gnuastro project webpage, Test scripts, Developing
