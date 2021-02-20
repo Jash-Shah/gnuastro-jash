@@ -129,19 +129,6 @@ arithmetic_operator_name(int operator)
     switch(operator)
       {
       case ARITHMETIC_TABLE_OP_SET: out="set"; break;
-      case ARITHMETIC_TABLE_OP_SIN: out="sin"; break;
-      case ARITHMETIC_TABLE_OP_COS: out="cos"; break;
-      case ARITHMETIC_TABLE_OP_TAN: out="tan"; break;
-      case ARITHMETIC_TABLE_OP_ASIN: out="asin"; break;
-      case ARITHMETIC_TABLE_OP_ACOS: out="acos"; break;
-      case ARITHMETIC_TABLE_OP_ATAN: out="atan"; break;
-      case ARITHMETIC_TABLE_OP_SINH: out="sinh"; break;
-      case ARITHMETIC_TABLE_OP_COSH: out="cosh"; break;
-      case ARITHMETIC_TABLE_OP_TANH: out="tanh"; break;
-      case ARITHMETIC_TABLE_OP_ASINH: out="asinh"; break;
-      case ARITHMETIC_TABLE_OP_ACOSH: out="acosh"; break;
-      case ARITHMETIC_TABLE_OP_ATANH: out="atanh"; break;
-      case ARITHMETIC_TABLE_OP_ATAN2: out="atan2"; break;
       case ARITHMETIC_TABLE_OP_WCSTOIMG: out="wcstoimg"; break;
       case ARITHMETIC_TABLE_OP_IMGTOWCS: out="imgtowcs"; break;
       case ARITHMETIC_TABLE_OP_DATETOSEC: out="date-to-sec"; break;
@@ -194,33 +181,7 @@ arithmetic_set_operator(struct tableparams *p, char *string,
   if( op==GAL_ARITHMETIC_OP_INVALID )
     {
       /* Simple operators. */
-      if(      !strcmp(string, "sin"))
-        { op=ARITHMETIC_TABLE_OP_SIN; *num_operands=0; }
-      else if( !strcmp(string, "cos"))
-        { op=ARITHMETIC_TABLE_OP_COS; *num_operands=0; }
-      else if( !strcmp(string, "tan"))
-        { op=ARITHMETIC_TABLE_OP_TAN; *num_operands=0; }
-      else if( !strcmp(string, "asin"))
-        { op=ARITHMETIC_TABLE_OP_ASIN; *num_operands=0; }
-      else if( !strcmp(string, "acos"))
-        { op=ARITHMETIC_TABLE_OP_ACOS; *num_operands=0; }
-      else if( !strcmp(string, "atan"))
-        { op=ARITHMETIC_TABLE_OP_ATAN; *num_operands=0; }
-      else if( !strcmp(string, "atan2"))
-        { op=ARITHMETIC_TABLE_OP_ATAN2; *num_operands=0; }
-      else if( !strcmp(string, "sinh"))
-        { op=ARITHMETIC_TABLE_OP_SINH; *num_operands=0; }
-      else if( !strcmp(string, "cosh"))
-        { op=ARITHMETIC_TABLE_OP_COSH; *num_operands=0; }
-      else if( !strcmp(string, "tanh"))
-        { op=ARITHMETIC_TABLE_OP_TANH; *num_operands=0; }
-      else if( !strcmp(string, "asinh"))
-        { op=ARITHMETIC_TABLE_OP_ASINH; *num_operands=0; }
-      else if( !strcmp(string, "acosh"))
-        { op=ARITHMETIC_TABLE_OP_ACOSH; *num_operands=0; }
-      else if( !strcmp(string, "atanh"))
-        { op=ARITHMETIC_TABLE_OP_ATANH; *num_operands=0; }
-      else if( !strcmp(string, "wcstoimg"))
+      if(      !strcmp(string, "wcstoimg"))
         { op=ARITHMETIC_TABLE_OP_WCSTOIMG; *num_operands=0; }
       else if( !strcmp(string, "imgtowcs"))
         { op=ARITHMETIC_TABLE_OP_IMGTOWCS; *num_operands=0; }
@@ -679,146 +640,6 @@ arithmetic_distance(struct tableparams *p, gal_data_t **stack, int operator)
 
 
 
-static void
-arithmetic_trig_hyper(struct tableparams *p, gal_data_t **stack,
-                      int operator)
-{
-  size_t i;
-  double *x=NULL, *y=NULL;
-  gal_data_t *in=NULL, *in2=NULL;
-  double pi=3.14159265358979323846264338327;
-
-  /* Read the input columns as a 'double'. */
-  in=arithmetic_stack_pop(stack, operator, NULL);
-  in=gal_data_copy_to_new_type_free(in, GAL_TYPE_FLOAT64);
-  if(in->comment) { free(in->comment); in->comment=NULL; }
-  if(in->name)    { free(in->name);    in->name=NULL;    }
-  if(in->unit)    { free(in->unit);    in->unit=NULL;    }
-  x=in->array;
-
-  /* Pop the second operand if necessary. */
-  if(operator==ARITHMETIC_TABLE_OP_ATAN2)
-    {
-      in2=arithmetic_stack_pop(stack, operator, NULL);
-      in2=gal_data_copy_to_new_type_free(in2, GAL_TYPE_FLOAT64);
-      y=in2->array;
-    }
-
-  /* Parse the array and do the calculation in place. */
-  switch(operator)
-    {
-      /* Single-operand operators. */
-    case ARITHMETIC_TABLE_OP_SIN:
-      for(i=0;i<in->size;++i) x[i]=sin( pi*x[i]/180.0f );
-      gal_checkset_allocate_copy("sin", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Sine of an angle.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_COS:
-      for(i=0;i<in->size;++i) x[i]=cos( pi*x[i]/180.0f );
-      gal_checkset_allocate_copy("cos", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Cosine of an angle.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_TAN:
-      for(i=0;i<in->size;++i) x[i]=tan( pi*x[i]/180.0f );
-      gal_checkset_allocate_copy("tan", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Tangent of an angle.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_ASIN:
-      for(i=0;i<in->size;++i) x[i]=asin(x[i])*180.0f/pi;
-      gal_checkset_allocate_copy("asin", &in->name);
-      gal_checkset_allocate_copy("deg", &in->unit);
-      gal_checkset_allocate_copy("Inverse sine of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_ACOS:
-      for(i=0;i<in->size;++i) x[i]=acos(x[i])*180.0f/pi;
-      gal_checkset_allocate_copy("acos", &in->name);
-      gal_checkset_allocate_copy("deg", &in->unit);
-      gal_checkset_allocate_copy("Inverse cosine of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_ATAN:
-      for(i=0;i<in->size;++i) x[i]=atan(x[i])*180.0f/pi;
-      gal_checkset_allocate_copy("atan", &in->name);
-      gal_checkset_allocate_copy("deg", &in->unit);
-      gal_checkset_allocate_copy("Inverse tangent of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_SINH:
-      for(i=0;i<in->size;++i) x[i]=sinh(x[i]);
-      gal_checkset_allocate_copy("sinh", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Hyperbolic sine of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_COSH:
-      for(i=0;i<in->size;++i) x[i]=cosh(x[i]);
-      gal_checkset_allocate_copy("cosh", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Hyperbolic cosine of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_TANH:
-      for(i=0;i<in->size;++i) x[i]=tanh(x[i]);
-      gal_checkset_allocate_copy("tanh", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Hyperbolic tangent of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_ASINH:
-      for(i=0;i<in->size;++i) x[i]=asinh(x[i]);
-      gal_checkset_allocate_copy("asinh", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Inverse hyperbolic sine of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_ACOSH:
-      for(i=0;i<in->size;++i) x[i]=acosh(x[i]);
-      gal_checkset_allocate_copy("acosh", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Inverse hyperbolic cossine of a value.",
-                                 &in->comment);
-      break;
-    case ARITHMETIC_TABLE_OP_ATANH:
-      for(i=0;i<in->size;++i) x[i]=atanh(x[i]);
-      gal_checkset_allocate_copy("atanh", &in->name);
-      gal_checkset_allocate_copy("ratio", &in->unit);
-      gal_checkset_allocate_copy("Inverse hyperbolic tangent of a value.",
-                                 &in->comment);
-      break;
-
-    /* Two operand operators. */
-    case ARITHMETIC_TABLE_OP_ATAN2:
-      for(i=0;i<in->size;++i) x[i]=atan2(y[i], x[i])*180.0f/pi;
-      gal_checkset_allocate_copy("atan2", &in->name);
-      gal_checkset_allocate_copy("deg", &in->unit);
-      gal_checkset_allocate_copy("Inverse tangent of point (preserving "
-                                 "the quadrant)", &in->comment);
-      break;
-
-    /* Not recognized (a bug). */
-    default:
-      error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
-            "the problem. The code %d is not recognized as an operator "
-            "related to this function", __func__, PACKAGE_BUGREPORT,
-            operator);
-    }
-
-  /* Clean up and put the resulting calculation back on the stack. */
-  if(in2) gal_data_free(in2);
-  gal_list_data_add(stack, in);
-}
-
-
-
-
-
 /* Convert the ISO date format to seconds since Unix time. */
 static void
 arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
@@ -1008,22 +829,6 @@ arithmetic_operator_run(struct tableparams *p,
     {
       switch(token->operator)
         {
-        case ARITHMETIC_TABLE_OP_SIN:
-        case ARITHMETIC_TABLE_OP_COS:
-        case ARITHMETIC_TABLE_OP_TAN:
-        case ARITHMETIC_TABLE_OP_ASIN:
-        case ARITHMETIC_TABLE_OP_ACOS:
-        case ARITHMETIC_TABLE_OP_ATAN:
-        case ARITHMETIC_TABLE_OP_SINH:
-        case ARITHMETIC_TABLE_OP_COSH:
-        case ARITHMETIC_TABLE_OP_TANH:
-        case ARITHMETIC_TABLE_OP_ASINH:
-        case ARITHMETIC_TABLE_OP_ACOSH:
-        case ARITHMETIC_TABLE_OP_ATANH:
-        case ARITHMETIC_TABLE_OP_ATAN2:
-          arithmetic_trig_hyper(p, stack, token->operator);
-          break;
-
         case ARITHMETIC_TABLE_OP_WCSTOIMG:
         case ARITHMETIC_TABLE_OP_IMGTOWCS:
           arithmetic_wcs(p, stack, token->operator);

@@ -362,120 +362,120 @@ static char *
 arithmetic_units_degree_to_dec(double decimal)
 { return gal_units_degree_to_dec(decimal, 0); }
 
-#define UNIFUNC_RUN_FUNCTION_ON_ELEMENT(OT, IT, OP){                    \
+#define UNIFUNC_RUN_FUNCTION_ON_ELEMENT(OT, IT, OP, BEFORE, AFTER){     \
     OT *oa=o->array;                                                    \
     IT *ia=in->array, *iaf=ia + in->size;                               \
-    do *oa++ = OP(*ia++); while(ia<iaf);                                \
+    do *oa++ = OP( *ia++ BEFORE ) AFTER; while(ia<iaf);                 \
   }
 
-#define UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(IT, OP)                   \
+#define UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(IT, OP, BEFORE, AFTER)    \
   switch(o->type)                                                       \
     {                                                                   \
     case GAL_TYPE_UINT8:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint8_t,  IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint8_t,  IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_INT8:                                                 \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int8_t,   IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int8_t,   IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_UINT16:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint16_t, IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint16_t, IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_INT16:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int16_t,  IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int16_t,  IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_UINT32:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint32_t, IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint32_t, IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_INT32:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int32_t,  IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int32_t,  IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_UINT64:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint64_t, IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(uint64_t, IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_INT64:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int64_t,  IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(int64_t,  IT, OP, BEFORE, AFTER)  \
         break;                                                          \
     case GAL_TYPE_FLOAT32:                                              \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(float,    IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(float,    IT, OP, BEFORE, AFTER)  \
       break;                                                            \
     case GAL_TYPE_FLOAT64:                                              \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(double,   IT, OP)                 \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(double,   IT, OP, BEFORE, AFTER)  \
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: type code %d not recognized",         \
             "UNIARY_FUNCTION_ON_ELEMENT", in->type);                    \
     }
 
-#define UNIARY_FUNCTION_ON_ELEMENT_OUTPUT_STRING(OP)                    \
+#define UNIARY_FUNCTION_ON_ELEMENT_OUTPUT_STRING(OP)     \
   switch(in->type)                                                      \
     {                                                                   \
     case GAL_TYPE_UINT8:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint8_t,  OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint8_t,  OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_INT8:                                                 \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int8_t,   OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int8_t,   OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_UINT16:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint16_t, OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint16_t, OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_INT16:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int16_t,  OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int16_t,  OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_UINT32:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint32_t, OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint32_t, OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_INT32:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int32_t,  OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int32_t,  OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_UINT64:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint64_t, OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, uint64_t, OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_INT64:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int64_t,  OP)             \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, int64_t,  OP, +0, +0)     \
         break;                                                          \
     case GAL_TYPE_FLOAT32:                                              \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, float,    OP)             \
-      break;                                                            \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, float,    OP, +0, +0)     \
+        break;                                                          \
     case GAL_TYPE_FLOAT64:                                              \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, double,   OP)             \
-      break;                                                            \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT(char *, double,   OP, +0, +0)     \
+        break;                                                          \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: type code %d not recognized",         \
             "UNIARY_FUNCTION_ON_ELEMENT_OUTPUT_STRING", in->type);      \
     }
 
-#define UNIARY_FUNCTION_ON_ELEMENT(OP)                                  \
+#define UNIARY_FUNCTION_ON_ELEMENT(OP, BEFORE, AFTER)                   \
   switch(in->type)                                                      \
     {                                                                   \
     case GAL_TYPE_UINT8:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint8_t,  OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint8_t,  OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_INT8:                                                 \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int8_t,   OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int8_t,   OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_UINT16:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint16_t, OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint16_t, OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_INT16:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int16_t,  OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int16_t,  OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_UINT32:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint32_t, OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint32_t, OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_INT32:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int32_t,  OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int32_t,  OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_UINT64:                                               \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint64_t, OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(uint64_t, OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_INT64:                                                \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int64_t,  OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(int64_t,  OP, BEFORE, AFTER) \
         break;                                                          \
     case GAL_TYPE_FLOAT32:                                              \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(float,    OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(float,    OP, BEFORE, AFTER) \
       break;                                                            \
     case GAL_TYPE_FLOAT64:                                              \
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(double,   OP)               \
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_INSET(double,   OP, BEFORE, AFTER) \
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: type code %d not recognized",         \
@@ -490,24 +490,26 @@ arithmetic_units_degree_to_dec(double decimal)
 }
 
 static gal_data_t *
-arithmetic_unary_function(int operator, int flags, gal_data_t *in)
+arithmetic_function_unary(int operator, int flags, gal_data_t *in)
 {
   uint8_t otype;
   int inplace=0;
   gal_data_t *o;
+  double pi=3.14159265358979323846264338327;
 
-  /* See if the operation should be done in place. Note that so far, the
-     output of these operators is defined in the real space (floating
-     point). So even if the user requested inplace opereation, if its not a
-     floating point type, its not useful.*/
+  /* See if the operation should be done in place. The output of these
+     operators is defined in the floating point space. So even if the input
+     is integer type and user requested inplace opereation, if its not a
+     floating point type, it will not be in-place. */
   if( (flags & GAL_ARITHMETIC_INPLACE)
-      && (in->type==GAL_TYPE_FLOAT32 || in->type==GAL_TYPE_FLOAT64)
-      && (operator != GAL_ARITHMETIC_OP_RA_TO_DEGREE
-      &&  operator != GAL_ARITHMETIC_OP_DEC_TO_DEGREE
-      &&  operator != GAL_ARITHMETIC_OP_DEGREE_TO_RA
-      &&  operator != GAL_ARITHMETIC_OP_DEGREE_TO_DEC ) )
+      && ( in->type==GAL_TYPE_FLOAT32 || in->type==GAL_TYPE_FLOAT64 )
+      && ( operator != GAL_ARITHMETIC_OP_RA_TO_DEGREE
+      &&   operator != GAL_ARITHMETIC_OP_DEC_TO_DEGREE
+      &&   operator != GAL_ARITHMETIC_OP_DEGREE_TO_RA
+      &&   operator != GAL_ARITHMETIC_OP_DEGREE_TO_DEC ) )
     inplace=1;
 
+  /* Set the output pointer. */
   if(inplace)
     {
       o = in;
@@ -515,19 +517,19 @@ arithmetic_unary_function(int operator, int flags, gal_data_t *in)
     }
   else
     {
-      otype = ( in->type==GAL_TYPE_FLOAT64
-                ? GAL_TYPE_FLOAT64
-                : GAL_TYPE_FLOAT32 );
-
       /* Check for operators which have fixed output types */
-      if ( operator == GAL_ARITHMETIC_OP_RA_TO_DEGREE ||
-           operator == GAL_ARITHMETIC_OP_DEC_TO_DEGREE )
+      if(         operator == GAL_ARITHMETIC_OP_RA_TO_DEGREE
+               || operator == GAL_ARITHMETIC_OP_DEC_TO_DEGREE )
         otype = GAL_TYPE_FLOAT64;
-
-      if (operator == GAL_ARITHMETIC_OP_DEGREE_TO_RA ||
-          operator == GAL_ARITHMETIC_OP_DEGREE_TO_DEC)
+      else if(    operator == GAL_ARITHMETIC_OP_DEGREE_TO_RA
+               || operator == GAL_ARITHMETIC_OP_DEGREE_TO_DEC )
         otype = GAL_TYPE_STRING;
+      else
+        otype = ( in->type==GAL_TYPE_FLOAT64
+                  ? GAL_TYPE_FLOAT64
+                  : GAL_TYPE_FLOAT32 );
 
+      /* Set the final output type. */
       o = gal_data_alloc(NULL, otype, in->ndim, in->dsize, in->wcs,
                          0, in->minmapsize, in->quietmmap,
                          NULL, NULL, NULL);
@@ -537,38 +539,51 @@ arithmetic_unary_function(int operator, int flags, gal_data_t *in)
   switch(operator)
     {
     case GAL_ARITHMETIC_OP_SQRT:
-      UNIARY_FUNCTION_ON_ELEMENT( sqrt );
-      break;
-
+      UNIARY_FUNCTION_ON_ELEMENT( sqrt,  +0, +0);         break;
     case GAL_ARITHMETIC_OP_LOG:
-      UNIARY_FUNCTION_ON_ELEMENT( log );
-      break;
-
+      UNIARY_FUNCTION_ON_ELEMENT( log,   +0, +0);         break;
     case GAL_ARITHMETIC_OP_LOG10:
-      UNIARY_FUNCTION_ON_ELEMENT( log10 );
-      break;
-
+      UNIARY_FUNCTION_ON_ELEMENT( log10, +0, +0);         break;
+    case GAL_ARITHMETIC_OP_SIN:
+      UNIARY_FUNCTION_ON_ELEMENT( sin,   *pi/180.0f, +0); break;
+    case GAL_ARITHMETIC_OP_COS:
+      UNIARY_FUNCTION_ON_ELEMENT( cos,   *pi/180.0f, +0); break;
+    case GAL_ARITHMETIC_OP_TAN:
+      UNIARY_FUNCTION_ON_ELEMENT( tan,   *pi/180.0f, +0); break;
+    case GAL_ARITHMETIC_OP_ASIN:
+      UNIARY_FUNCTION_ON_ELEMENT( asin,  +0, *180.0f/pi); break;
+    case GAL_ARITHMETIC_OP_ACOS:
+      UNIARY_FUNCTION_ON_ELEMENT( acos,  +0, *180.0f/pi); break;
+    case GAL_ARITHMETIC_OP_ATAN:
+      UNIARY_FUNCTION_ON_ELEMENT( atan,  +0, *180.0f/pi); break;
+    case GAL_ARITHMETIC_OP_SINH:
+      UNIARY_FUNCTION_ON_ELEMENT( sinh,  +0, +0);         break;
+    case GAL_ARITHMETIC_OP_COSH:
+      UNIARY_FUNCTION_ON_ELEMENT( cosh,  +0, +0);         break;
+    case GAL_ARITHMETIC_OP_TANH:
+      UNIARY_FUNCTION_ON_ELEMENT( tanh,  +0, +0);         break;
+    case GAL_ARITHMETIC_OP_ASINH:
+      UNIARY_FUNCTION_ON_ELEMENT( asinh, +0, +0);         break;
+    case GAL_ARITHMETIC_OP_ACOSH:
+      UNIARY_FUNCTION_ON_ELEMENT( acosh, +0, +0);         break;
+    case GAL_ARITHMETIC_OP_ATANH:
+      UNIARY_FUNCTION_ON_ELEMENT( atanh, +0, +0);         break;
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:
       UNIFUNC_RUN_FUNCTION_ON_ELEMENT_STRING(double, gal_units_ra_to_degree);
       break;
-
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:
       UNIFUNC_RUN_FUNCTION_ON_ELEMENT_STRING(double, gal_units_dec_to_degree);
       break;
-
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:
       UNIARY_FUNCTION_ON_ELEMENT_OUTPUT_STRING(arithmetic_units_degree_to_ra);
       break;
-
     case GAL_ARITHMETIC_OP_DEGREE_TO_DEC:
       UNIARY_FUNCTION_ON_ELEMENT_OUTPUT_STRING(arithmetic_units_degree_to_dec);
       break;
-
     default:
       error(EXIT_FAILURE, 0, "%s: operator code %d not recognized",
             __func__, operator);
     }
-
 
   /* Clean up. Note that if the input arrays can be freed, and any of right
      or left arrays needed conversion, 'UNIFUNC_CONVERT_TO_COMPILED_TYPE'
@@ -1639,24 +1654,24 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
 
 
 
-#define BINFUNC_RUN_FUNCTION(OT, RT, LT, OP){                           \
+#define BINFUNC_RUN_FUNCTION(OT, RT, LT, OP, AFTER){                    \
     LT *la=l->array;                                                    \
     RT *ra=r->array;                                                    \
     OT *oa=o->array, *of=oa + o->size;                                  \
-    if(l->size==r->size) do *oa = OP(*la++, *ra++); while(++oa<of);     \
-    else if(l->size==1)  do *oa = OP(*la,   *ra++); while(++oa<of);     \
-    else                 do *oa = OP(*la++, *ra  ); while(++oa<of);     \
+    if(l->size==r->size) do *oa = OP(*la++, *ra++) AFTER; while(++oa<of); \
+    else if(l->size==1)  do *oa = OP(*la,   *ra++) AFTER; while(++oa<of); \
+    else                 do *oa = OP(*la++, *ra  ) AFTER; while(++oa<of); \
   }
 
 
-#define BINFUNC_F_OPERATOR_LEFT_RIGHT_SET(RT, LT, OP)                   \
+#define BINFUNC_F_OPERATOR_LEFT_RIGHT_SET(RT, LT, OP, AFTER)            \
   switch(o->type)                                                       \
     {                                                                   \
     case GAL_TYPE_FLOAT32:                                              \
-      BINFUNC_RUN_FUNCTION(float, RT, LT, OP);                          \
+      BINFUNC_RUN_FUNCTION(float, RT, LT, OP, AFTER);                   \
       break;                                                            \
     case GAL_TYPE_FLOAT64:                                              \
-      BINFUNC_RUN_FUNCTION(double, RT, LT, OP);                         \
+      BINFUNC_RUN_FUNCTION(double, RT, LT, OP, AFTER);                  \
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: type %d not recognized for o->type ", \
@@ -1664,14 +1679,14 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
     }
 
 
-#define BINFUNC_F_OPERATOR_LEFT_SET(LT, OP)                             \
+#define BINFUNC_F_OPERATOR_LEFT_SET(LT, OP, AFTER)                      \
   switch(r->type)                                                       \
     {                                                                   \
     case GAL_TYPE_FLOAT32:                                              \
-      BINFUNC_F_OPERATOR_LEFT_RIGHT_SET(float, LT, OP);                 \
+      BINFUNC_F_OPERATOR_LEFT_RIGHT_SET(float, LT, OP, AFTER);          \
       break;                                                            \
     case GAL_TYPE_FLOAT64:                                              \
-      BINFUNC_F_OPERATOR_LEFT_RIGHT_SET(double, LT, OP);                \
+      BINFUNC_F_OPERATOR_LEFT_RIGHT_SET(double, LT, OP, AFTER);         \
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: type %d not recognized for r->type",  \
@@ -1679,14 +1694,14 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
     }
 
 
-#define BINFUNC_F_OPERATOR_SET(OP)                                      \
+#define BINFUNC_F_OPERATOR_SET(OP, AFTER)                               \
   switch(l->type)                                                       \
     {                                                                   \
     case GAL_TYPE_FLOAT32:                                              \
-      BINFUNC_F_OPERATOR_LEFT_SET(float, OP);                           \
+      BINFUNC_F_OPERATOR_LEFT_SET(float, OP, AFTER);                    \
       break;                                                            \
     case GAL_TYPE_FLOAT64:                                              \
-      BINFUNC_F_OPERATOR_LEFT_SET(double, OP);                          \
+      BINFUNC_F_OPERATOR_LEFT_SET(double, OP, AFTER);                   \
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: type %d not recognized for l->type",  \
@@ -1695,12 +1710,13 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
 
 
 static gal_data_t *
-arithmetic_binary_function_flt(int operator, int flags, gal_data_t *il,
+arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
                                gal_data_t *ir)
 {
   int final_otype;
   size_t out_size, minmapsize;
   gal_data_t *l, *r, *o=NULL;
+  double pi=3.14159265358979323846264338327;
   int quietmmap=il->quietmmap && ir->quietmmap;
 
   /* Simple sanity check on the input sizes */
@@ -1709,6 +1725,7 @@ arithmetic_binary_function_flt(int operator, int flags, gal_data_t *il,
     error(EXIT_FAILURE, 0, "%s: the input datasets don't have the same "
           "dimension/size", __func__);
 
+
   /* Convert the values to double precision floating point if they are
      integer. */
   l = ( (il->type==GAL_TYPE_FLOAT32 || il->type==GAL_TYPE_FLOAT64)
@@ -1716,12 +1733,15 @@ arithmetic_binary_function_flt(int operator, int flags, gal_data_t *il,
   r = ( (ir->type==GAL_TYPE_FLOAT32 || ir->type==GAL_TYPE_FLOAT64)
          ? ir : gal_data_copy_to_new_type(ir, GAL_TYPE_FLOAT64) );
 
+
   /* Set the output type. */
   final_otype = gal_type_out(l->type, r->type);
 
+
   /* Set the output sizes. */
   minmapsize = ( l->minmapsize < r->minmapsize
-                 ? l->minmapsize : r->minmapsize );
+                 ? l->minmapsize
+                 : r->minmapsize );
   out_size = l->size > r->size ? l->size : r->size;
 
 
@@ -1751,7 +1771,10 @@ arithmetic_binary_function_flt(int operator, int flags, gal_data_t *il,
   /* Start setting the operator and operands. */
   switch(operator)
     {
-    case GAL_ARITHMETIC_OP_POW:  BINFUNC_F_OPERATOR_SET( pow ); break;
+    case GAL_ARITHMETIC_OP_POW:
+      BINFUNC_F_OPERATOR_SET( pow,   +0 );         break;
+    case GAL_ARITHMETIC_OP_ATAN2:
+      BINFUNC_F_OPERATOR_SET( atan2, *180.0f/pi ); break;
     default:
       error(EXIT_FAILURE, 0, "%s: operator code %d not recognized",
             __func__, operator);
@@ -1898,15 +1921,43 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "log10"))
     { op=GAL_ARITHMETIC_OP_LOG10;             *num_operands=1;  }
 
+  /* Trigonometric functions. */
+  else if( !strcmp(string, "sin"))
+    { op=GAL_ARITHMETIC_OP_SIN;               *num_operands=1; }
+  else if( !strcmp(string, "cos"))
+    { op=GAL_ARITHMETIC_OP_COS;               *num_operands=1; }
+  else if( !strcmp(string, "tan"))
+    { op=GAL_ARITHMETIC_OP_TAN;               *num_operands=1; }
+  else if( !strcmp(string, "asin"))
+    { op=GAL_ARITHMETIC_OP_ASIN;              *num_operands=1; }
+  else if( !strcmp(string, "acos"))
+    { op=GAL_ARITHMETIC_OP_ACOS;              *num_operands=1; }
+  else if( !strcmp(string, "atan"))
+    { op=GAL_ARITHMETIC_OP_ATAN;              *num_operands=1; }
+  else if( !strcmp(string, "atan2"))
+    { op=GAL_ARITHMETIC_OP_ATAN2;             *num_operands=2; }
+  else if( !strcmp(string, "sinh"))
+    { op=GAL_ARITHMETIC_OP_SINH;              *num_operands=1; }
+  else if( !strcmp(string, "cosh"))
+    { op=GAL_ARITHMETIC_OP_COSH;              *num_operands=1; }
+  else if( !strcmp(string, "tanh"))
+    { op=GAL_ARITHMETIC_OP_TANH;              *num_operands=1; }
+  else if( !strcmp(string, "asinh"))
+    { op=GAL_ARITHMETIC_OP_ASINH;             *num_operands=1; }
+  else if( !strcmp(string, "acosh"))
+    { op=GAL_ARITHMETIC_OP_ACOSH;             *num_operands=1; }
+  else if( !strcmp(string, "atanh"))
+    { op=GAL_ARITHMETIC_OP_ATANH;             *num_operands=1; }
+
   /* Units conversion functions */
   else if (!strcmp(string, "ra-to-degree"))
-    { op=GAL_ARITHMETIC_OP_RA_TO_DEGREE;   *num_operands=1;  }
+    { op=GAL_ARITHMETIC_OP_RA_TO_DEGREE;      *num_operands=1;  }
   else if (!strcmp(string, "dec-to-degree"))
-    { op=GAL_ARITHMETIC_OP_DEC_TO_DEGREE;  *num_operands=1;  }
+    { op=GAL_ARITHMETIC_OP_DEC_TO_DEGREE;     *num_operands=1;  }
   else if (!strcmp(string, "degree-to-ra"))
-    { op=GAL_ARITHMETIC_OP_DEGREE_TO_RA;   *num_operands=1;  }
+    { op=GAL_ARITHMETIC_OP_DEGREE_TO_RA;      *num_operands=1;  }
   else if (!strcmp(string, "degree-to-dec"))
-    { op=GAL_ARITHMETIC_OP_DEGREE_TO_DEC;  *num_operands=1;  }
+    { op=GAL_ARITHMETIC_OP_DEGREE_TO_DEC;     *num_operands=1;  }
 
   /* Statistical/higher-level operators. */
   else if (!strcmp(string, "minvalue"))
@@ -2062,6 +2113,20 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_LOG:             return "log";
     case GAL_ARITHMETIC_OP_LOG10:           return "log10";
 
+    case GAL_ARITHMETIC_OP_SIN:             return "sin";
+    case GAL_ARITHMETIC_OP_COS:             return "cos";
+    case GAL_ARITHMETIC_OP_TAN:             return "tan";
+    case GAL_ARITHMETIC_OP_ASIN:            return "asin";
+    case GAL_ARITHMETIC_OP_ACOS:            return "acos";
+    case GAL_ARITHMETIC_OP_ATAN:            return "atan";
+    case GAL_ARITHMETIC_OP_SINH:            return "sinh";
+    case GAL_ARITHMETIC_OP_COSH:            return "cosh";
+    case GAL_ARITHMETIC_OP_TANH:            return "tanh";
+    case GAL_ARITHMETIC_OP_ASINH:           return "asinh";
+    case GAL_ARITHMETIC_OP_ACOSH:           return "acosh";
+    case GAL_ARITHMETIC_OP_ATANH:           return "atanh";
+    case GAL_ARITHMETIC_OP_ATAN2:           return "atan2";
+
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:    return "ra-to-degree";
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:   return "dec-to-degree";
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:    return "degree-to-ra";
@@ -2161,17 +2226,36 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       out=d1;
       break;
 
-
     /* Unary function operators. */
     case GAL_ARITHMETIC_OP_SQRT:
     case GAL_ARITHMETIC_OP_LOG:
     case GAL_ARITHMETIC_OP_LOG10:
+    case GAL_ARITHMETIC_OP_SIN:
+    case GAL_ARITHMETIC_OP_COS:
+    case GAL_ARITHMETIC_OP_TAN:
+    case GAL_ARITHMETIC_OP_ASIN:
+    case GAL_ARITHMETIC_OP_ACOS:
+    case GAL_ARITHMETIC_OP_ATAN:
+    case GAL_ARITHMETIC_OP_SINH:
+    case GAL_ARITHMETIC_OP_COSH:
+    case GAL_ARITHMETIC_OP_TANH:
+    case GAL_ARITHMETIC_OP_ASINH:
+    case GAL_ARITHMETIC_OP_ACOSH:
+    case GAL_ARITHMETIC_OP_ATANH:
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:
     case GAL_ARITHMETIC_OP_DEGREE_TO_DEC:
       d1 = va_arg(va, gal_data_t *);
-      out=arithmetic_unary_function(operator, flags, d1);
+      out=arithmetic_function_unary(operator, flags, d1);
+      break;
+
+    /* Binary function operators. */
+    case GAL_ARITHMETIC_OP_POW:
+    case GAL_ARITHMETIC_OP_ATAN2:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      out=arithmetic_function_binary_flt(operator, flags, d1, d2);
       break;
 
     /* Statistical operators that return one value. */
@@ -2209,15 +2293,6 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       d2 = va_arg(va, gal_data_t *);
       out=arithmetic_multioperand(operator, flags, d1, d2, numthreads);
       break;
-
-
-    /* Binary function operators. */
-    case GAL_ARITHMETIC_OP_POW:
-      d1 = va_arg(va, gal_data_t *);
-      d2 = va_arg(va, gal_data_t *);
-      out=arithmetic_binary_function_flt(operator, flags, d1, d2);
-      break;
-
 
     /* Binary operators that only work on integer types. */
     case GAL_ARITHMETIC_OP_BITAND:

@@ -7,6 +7,24 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Arithmetic:
+   - New operators (the trigonometric/hyperbolic functions were previously
+     only avaialble in Table's column arithmetic, but they have been moved
+     into the Gnuastro library and are thus now available on images within
+     Arithmetic also):
+     - sin: Trigonometric sine (input in degrees).
+     - cos: Trigonometric cosine (input in degrees).
+     - tan: Trigonometric tangent (input in degrees).
+     - asin: Inverse of trigonometric sine (output in degrees).
+     - acos: Inverse of trigonometric cosine (output in degrees).
+     - atab: Inverse of trigonometric tangent (output in degrees).
+     - sinh: Hyperbolic sine.
+     - cosh: Hyperbolic cosine.
+     - tanh: Hyperbolic tangent.
+     - asinh: Inverse of hyperbolic sine.
+     - acosh: Inverse of hyperbolic cosine.
+     - atabh: Inverse of hyperbolic tangent.
+
   Table:
    - When given a value of '_all', the '--noblank' option (that will remove
      all rows with a blank value in the given columns) will check all

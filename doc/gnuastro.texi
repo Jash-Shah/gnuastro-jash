@@ -10137,56 +10137,6 @@ Besides the operators in @ref{Arithmetic operators}, several operators are only 
 @cindex WCS: World Coordinate System
 @cindex World Coordinate System (WCS)
 @table @code
-@item  sin
-@itemx cos
-@itemx tan
-@cindex Trigonometry
-Basic trigonometric functions.
-They take one operand, in units of degrees.
-
-@item  asin
-@itemx acos
-@itemx atan
-Inverse trigonometric functions.
-They take one operand and the returned values are in units of degrees.
-
-@item atan2
-Inverse tangent (output in units of degrees) which uses the signs of the input coordinates to distinguish between the quadrants.
-This operator therefore needs two operands: the first popped operand is assumed to be the X axis position of the point, and the second popped operand is its Y axis coordinate.
-
-For example see the commands below for four points in the four quadrants (if you want to try them, you don't need to type/copy the parts after @key{#}).
-The first point (2,2) is in the first quadrant, therefore the returned angle is 45 degrees.
-But the second, third and fourth points are in the quadrants of the same order, and the returned angles reflect the quadrant.
-
-@example
-$ echo " 2  2" | asttable -c'arith $2 $1 atan2'   # -->   45
-$ echo " 2 -2" | asttable -c'arith $2 $1 atan2'   # -->  -45
-$ echo "-2 -2" | asttable -c'arith $2 $1 atan2'   # --> -135
-$ echo "-2  2" | asttable -c'arith $2 $1 atan2'   # -->  135
-@end example
-
-However, if you simply use the classic arc-tangent operator (@code{atan}) for the same points, the result will only be in two quadrants as you see below:
-
-@example
-echo " 2  2" | "$utility" -c'arith $2 $1 / atan'  # -->   45
-echo " 2 -2" | "$utility" -c'arith $2 $1 / atan'  # -->  -45
-echo "-2 -2" | "$utility" -c'arith $2 $1 / atan'  # -->   45
-echo "-2  2" | "$utility" -c'arith $2 $1 / atan'  # -->  -45
-@end example
-
-@item  sinh
-@itemx cosh
-@itemx tanh
-@cindex Hyperbolic functions
-Hyperbolic sine, cosine, and tangent.
-These operators take a single operand.
-
-@item  asinh
-@itemx acosh
-@itemx atanh
-Inverse Hyperbolic sine, cosine, and tangent.
-These operators take a single operand.
-
 @item wcstoimg
 Convert the given WCS positions to image/dataset coordinates based on the number of dimensions in the WCS structure of @option{--wcshdu} extension/HDU in @option{--wcsfile}.
 It will output the same number of columns.
@@ -11909,6 +11859,58 @@ For example the command below will take the base-10 logarithm of every pixel in 
 @example
 $ astarithmetic image.fits log10
 @end example
+
+@item  sin
+@itemx cos
+@itemx tan
+@cindex Trigonometry
+Basic trigonometric functions.
+They take one operand, in units of degrees.
+
+@item  asin
+@itemx acos
+@itemx atan
+Inverse trigonometric functions.
+They take one operand and the returned values are in units of degrees.
+
+@item atan2
+Inverse tangent (output in units of degrees) that uses the signs of the input coordinates to distinguish between the quadrants.
+This operator therefore needs two operands: the first popped operand is assumed to be the X axis position of the point, and the second popped operand is its Y axis coordinate.
+
+For example see the commands below.
+To be more clear, we are using Table's @ref{Column arithmetic} which uses exactly the same internal library function as the Arithmetic program for images.
+We are showing the results for four points in the four quadrants of the 2D space (if you want to try running them, you don't need to type/copy the parts after @key{#}).
+The first point (2,2) is in the first quadrant, therefore the returned angle is 45 degrees.
+But the second, third and fourth points are in the quadrants of the same order, and the returned angles reflect the quadrant.
+
+@example
+$ echo " 2  2" | asttable -c'arith $2 $1 atan2'   # -->   45
+$ echo " 2 -2" | asttable -c'arith $2 $1 atan2'   # -->  -45
+$ echo "-2 -2" | asttable -c'arith $2 $1 atan2'   # --> -135
+$ echo "-2  2" | asttable -c'arith $2 $1 atan2'   # -->  135
+@end example
+
+However, if you simply use the classic arc-tangent operator (@code{atan}) for the same points, the result will only be in two quadrants as you see below:
+
+@example
+$ echo " 2  2" | asttable -c'arith $2 $1 / atan'  # -->   45
+$ echo " 2 -2" | asttable -c'arith $2 $1 / atan'  # -->  -45
+$ echo "-2 -2" | asttable -c'arith $2 $1 / atan'  # -->   45
+$ echo "-2  2" | asttable -c'arith $2 $1 / atan'  # -->  -45
+@end example
+
+@item  sinh
+@itemx cosh
+@itemx tanh
+@cindex Hyperbolic functions
+Hyperbolic sine, cosine, and tangent.
+These operators take a single operand.
+
+@item  asinh
+@itemx acosh
+@itemx atanh
+Inverse Hyperbolic sine, cosine, and tangent.
+These operators take a single operand.
 
 @item minvalue
 Minimum value in the first popped operand, so ``@command{a.fits minvalue}'' will push the minimum pixel value in this image onto the stack.
@@ -25177,6 +25179,26 @@ If you want your output to be 64-bit floating point but your input is a
 different type, you can convert the input to a floating point type with
 @code{gal_data_copy_to_new_type} or
 @code{gal_data_copy_to_new_type_free}(see @ref{Copying datasets}).
+@end deffn
+
+@deffn  Macro GAL_ARITHMETIC_OP_SIN
+@deffnx Macro GAL_ARITHMETIC_OP_COS
+@deffnx Macro GAL_ARITHMETIC_OP_TAN
+@deffnx Macro GAL_ARITHMETIC_OP_ASIN
+@deffnx Macro GAL_ARITHMETIC_OP_ACOS
+@deffnx Macro GAL_ARITHMETIC_OP_ATAN
+@deffnx Macro GAL_ARITHMETIC_OP_ATAN2
+Trigonometric functions (and their inverse).
+All the angles, either inputs or outputs, are in units of degrees.
+@end deffn
+
+@deffn  Macro GAL_ARITHMETIC_OP_SINH
+@deffnx Macro GAL_ARITHMETIC_OP_COSH
+@deffnx Macro GAL_ARITHMETIC_OP_TANH
+@deffnx Macro GAL_ARITHMETIC_OP_ASINH
+@deffnx Macro GAL_ARITHMETIC_OP_ACOSH
+@deffnx Macro GAL_ARITHMETIC_OP_ATANH
+Hyperbolic functions (and their inverse).
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_RA_TO_DEGREE

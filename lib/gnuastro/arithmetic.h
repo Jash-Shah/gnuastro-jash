@@ -77,7 +77,7 @@ enum gal_arithmetic_operators
 
   GAL_ARITHMETIC_OP_PLUS,         /*   +     */
   GAL_ARITHMETIC_OP_MINUS,        /*   -     */
-  GAL_ARITHMETIC_OP_MULTIPLY,     /*   *     */
+  GAL_ARITHMETIC_OP_MULTIPLY,     /*   x     */
   GAL_ARITHMETIC_OP_DIVIDE,       /*   /     */
   GAL_ARITHMETIC_OP_MODULO,       /*   %     */
 
@@ -105,6 +105,20 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_SQRT,         /* sqrt()  */
   GAL_ARITHMETIC_OP_LOG,          /* log()   */
   GAL_ARITHMETIC_OP_LOG10,        /* log10() */
+
+  GAL_ARITHMETIC_OP_SIN,          /* sine    */
+  GAL_ARITHMETIC_OP_COS,          /* cosine  */
+  GAL_ARITHMETIC_OP_TAN,          /* tangent */
+  GAL_ARITHMETIC_OP_ASIN,         /* Inverse sine */
+  GAL_ARITHMETIC_OP_ACOS,         /* Inverse cosine */
+  GAL_ARITHMETIC_OP_ATAN,         /* Inverse tangent */
+  GAL_ARITHMETIC_OP_ATAN2,        /* Inverse tangent (with two inputs). */
+  GAL_ARITHMETIC_OP_SINH,         /* Hyperbolic sine. */
+  GAL_ARITHMETIC_OP_COSH,         /* Hyperbolic cosine. */
+  GAL_ARITHMETIC_OP_TANH,         /* Hyperbolic tangent. */
+  GAL_ARITHMETIC_OP_ASINH,        /* Inverse hyperbolic sine. */
+  GAL_ARITHMETIC_OP_ACOSH,        /* Inverse hyperbolic cosine. */
+  GAL_ARITHMETIC_OP_ATANH,        /* Inverse hyperbolic tangent. */
 
   GAL_ARITHMETIC_OP_RA_TO_DEGREE, /* right ascension to decimal      */
   GAL_ARITHMETIC_OP_DEC_TO_DEGREE,/* declination to decimal          */
