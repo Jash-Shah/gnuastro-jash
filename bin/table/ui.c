@@ -465,8 +465,8 @@ ui_outcols_add_new_to_end(struct column_pack **list)
 
   /* Initialize its elements. */
   node->next=NULL;
+  node->arith=NULL;
   node->numsimple=0;
-  node->tokens=NULL;
   node->start=GAL_BLANK_SIZE_T;
 
   /* If the list already has elements, go to the last node in the list and
@@ -493,7 +493,7 @@ ui_outcols_free(struct column_pack *list)
   struct column_pack *tmp;
   while(list!=NULL)
     {
-      arithmetic_token_free(list->tokens);
+      arithmetic_token_free(list->arith);
       tmp=list->next;
       free(list);
       list=tmp;
@@ -624,7 +624,7 @@ ui_columns_prepare(struct tableparams *p)
               /* Add a new column pack, then read all the tokens (while
                  specifying which columns it needs). */
               node=ui_outcols_add_new_to_end(&p->outcols);
-              arithmetic_init(p, &node->tokens, &toread, &totcalled,
+              arithmetic_init(p, &node->arith, &toread, &totcalled,
                               strarr[i]+ARITHMETIC_CALL_LENGTH);
               free(strarr[i]);
             }
@@ -640,7 +640,7 @@ ui_columns_prepare(struct tableparams *p)
                   /* If the previous column package was an arithmetic
                      operation, allocate a new node. */
                   last=ui_outcols_last(p->outcols);
-                  if(last->tokens)
+                  if(last->arith)
                     {
                       node=ui_outcols_add_new_to_end(&p->outcols);
                       node->start=totcalled;
@@ -675,27 +675,28 @@ ui_columns_prepare(struct tableparams *p)
       struct column_pack *tmp;
       struct arithmetic_token *atmp;
       for(tmp=p->outcols;tmp!=NULL;tmp=tmp->next)
-        {
-          if(tmp->tokens)
-            for(atmp=tmp->tokens;atmp!=NULL;atmp=atmp->next)
+        if(tmp->arith)
+          {
+            printf("Arithmetic: \n");
+            for(atmp=tmp->arith;atmp!=NULL;atmp=atmp->next)
               {
-                printf("Arithmetic: ");
-                if(atmp->constant) printf("Constant number\n");
-                else if(atmp->index) printf("Called column: %zu\n",
-                                            atmp->index);
-                else if(atmp->operator!=ARITHMETIC_TABLE_OP_INVALID)
-                  printf("Operator: %d\n", atmp->operator);
-                else
-                  error(EXIT_FAILURE, 0, "%s: UNKNOWN SITUATION!",
-                        __func__);
+                if(atmp->operator!=GAL_ARITHMETIC_OP_INVALID)
+                  {
+                    printf("\tOperator: %d\n", atmp->operator);
+                    if(atmp->name_def)
+                      printf("\t\t(Name definition: %s)\n", atmp->name_def);
+                  }
+                else if(atmp->constant) printf("\tConstant number\n");
+                else if(atmp->name_use) printf("\tName usage: %s\n",
+                                               atmp->name_use);
+                else printf("\tCalled column: %zu\n", atmp->index);
               }
-          else
-            printf("Simple: start: %zu, num: %zu\n", tmp->start,
-                   tmp->numsimple);
-        }
+          }
+        else
+          printf("Simple: start: %zu, num: %zu\n", tmp->start,
+                 tmp->numsimple);
     }
   */
-
 
   /* Delete the old list, then reverse the 'toread' list, and put it into
      'p->columns'. */

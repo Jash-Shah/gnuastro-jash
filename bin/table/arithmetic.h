@@ -35,7 +35,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Operators used for arithmetic on columns. */
 enum arithmetic_operators
 {
-  ARITHMETIC_TABLE_OP_SIN = GAL_ARITHMETIC_OP_LAST_CODE,
+  ARITHMETIC_TABLE_OP_SET = GAL_ARITHMETIC_OP_LAST_CODE,
+  ARITHMETIC_TABLE_OP_SIN,
   ARITHMETIC_TABLE_OP_COS,
   ARITHMETIC_TABLE_OP_TAN,
   ARITHMETIC_TABLE_OP_ASIN,

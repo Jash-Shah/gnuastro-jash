@@ -746,7 +746,7 @@ keywords_value_in_output_rest(struct fitsparams *p, gal_data_t *out,
                       ? key
                       : gal_data_copy_to_new_type(key, goodtype) );
           goodwrite = ( write->type==goodtype
-                        ? key
+                        ? write
                         : gal_data_copy_to_new_type(write, goodtype) );
 
           /* Copy the row into the output. */

@@ -32,6 +32,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/type.h>
 
 #include <gnuastro-internal/checkset.h>
+#include <gnuastro-internal/arithmetic-set.h>
 
 #include "main.h"
 #include "arithmetic.h"
@@ -57,6 +58,8 @@ arithmetic_add_new_to_end(struct arithmetic_token **list)
 
   /* Initialize its elements. */
   node->next=NULL;
+  node->name_def=NULL;
+  node->name_use=NULL;
   node->constant=NULL;
   node->index=GAL_BLANK_SIZE_T;
   node->operator=GAL_ARITHMETIC_OP_INVALID;
@@ -85,6 +88,11 @@ arithmetic_token_free(struct arithmetic_token *list)
   struct arithmetic_token *tmp;
   while(list!=NULL)
     {
+      /* Free allocated elements first. */
+      if(list->name_def) free(list->name_def);
+      if(list->name_use) free(list->name_use);
+
+      /* Set the next list node, and free this one. */
       tmp=list->next;
       free(list);
       list=tmp;
@@ -120,6 +128,7 @@ arithmetic_operator_name(int operator)
   if(out==NULL)
     switch(operator)
       {
+      case ARITHMETIC_TABLE_OP_SET: out="set"; break;
       case ARITHMETIC_TABLE_OP_SIN: out="sin"; break;
       case ARITHMETIC_TABLE_OP_COS: out="cos"; break;
       case ARITHMETIC_TABLE_OP_TAN: out="tan"; break;
@@ -184,6 +193,7 @@ arithmetic_set_operator(struct tableparams *p, char *string,
   /* Set the operator and number of operands. */
   if( op==GAL_ARITHMETIC_OP_INVALID )
     {
+      /* Simple operators. */
       if(      !strcmp(string, "sin"))
         { op=ARITHMETIC_TABLE_OP_SIN; *num_operands=0; }
       else if( !strcmp(string, "cos"))
@@ -250,7 +260,7 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
   size_t one=1;
   uint8_t ntype;
   char *str, *delimiter=" \t";
-  struct arithmetic_token *node=NULL;
+  struct arithmetic_token *atmp, *node=NULL;
   char *token=NULL, *lasttoken=NULL, *saveptr;
 
   /* Parse all the given tokens. */
@@ -267,18 +277,40 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
         {
           /* Token is a single number.*/
           if( (num=gal_type_string_to_number(token, &ntype)) )
-            node->constant=gal_data_alloc(num, ntype, 1, &one, NULL, 0, -1, 1,
-                                          NULL, NULL, NULL);
+            node->constant=gal_data_alloc(num, ntype, 1, &one, NULL, 0,
+                                          -1, 1, NULL, NULL, NULL);
 
-          /* Token is a column operand (column number or name). */
+          /* This is a 'set-' operator. */
+          else if( !strncmp(token, GAL_ARITHMETIC_SET_PREFIX,
+                            GAL_ARITHMETIC_SET_PREFIX_LENGTH) )
+            {
+              node->num_operands=0;
+              node->operator=ARITHMETIC_TABLE_OP_SET;
+              gal_checkset_allocate_copy(token, &node->name_def);
+            }
+
+          /* Non-pre-defined situation.*/
           else
             {
-              str = ( (token[0]=='$' && isdigit(token[1]))
-                      ? &token[1]   /* Column number (starting with '$'). */
-                      : token );    /* Column name, just add it.          */
-              gal_list_str_add(toread, str, 1);
-              node->index=*totcalled;
-              *totcalled+=1;
+              /* See if this is an already defined name. */
+              for(atmp=*arith; atmp!=NULL; atmp=atmp->next)
+                if( atmp->name_def
+                    && strcmp(token,
+                              ( atmp->name_def
+                                + GAL_ARITHMETIC_SET_PREFIX_LENGTH) )==0 )
+                  gal_checkset_allocate_copy(token, &node->name_use);
+
+              /* If it wasn't found to be a pre-defined name, then its a
+                 column operand (column number or name). */
+              if(node->name_use==NULL)
+                {
+                  str = ( (token[0]=='$' && isdigit(token[1]))
+                          ? &token[1]   /* Column number (starting with '$'). */
+                          : token );    /* Column name, just add it.          */
+                  gal_list_str_add(toread, str, 1);
+                  node->index=*totcalled;
+                  *totcalled+=1;
+                }
             }
         }
 
@@ -314,9 +346,9 @@ arithmetic_indexs_final(struct tableparams *p, size_t *colmatch)
   for(tmp=p->outcols;tmp!=NULL;tmp=tmp->next)
     {
       /* If we are on an arithmetic operation. */
-      if(tmp->tokens)
+      if(tmp->arith)
         {
-          for(atmp=tmp->tokens;atmp!=NULL;atmp=atmp->next)
+          for(atmp=tmp->arith;atmp!=NULL;atmp=atmp->next)
             if(atmp->index!=GAL_BLANK_SIZE_T)
               {
                 /* Small sanity check. */
@@ -384,9 +416,64 @@ arithmetic_stack_pop(gal_data_t **stack, int operator, char *errormsg)
     error(EXIT_FAILURE, 0, "not enough operands for '%s'%s",
           arithmetic_operator_name(operator), errormsg?errormsg:"");
 
+  /* Arithmetic changes the contents of a dataset, so the old name (in the
+     FITS 'EXTNAME' keyword) must not be used beyond this
+     point. Furthermore, in Arithmetic, the 'name' element is used to
+     identify variables (with the 'set-' operator). */
+  if(out->name)    { free(out->name);    out->name=NULL;    }
+  if(out->unit)    { free(out->unit);    out->unit=NULL;    }
+  if(out->comment) { free(out->comment); out->comment=NULL; }
+
   /* Remove the 'next' element to break from the stack and return. */
   out->next=NULL;
   return out;
+}
+
+
+
+
+
+/* Wrapper function to pop operands within the 'set-' operator. */
+static gal_data_t *
+arithmetic_stack_pop_wrapper_set(void *in)
+{
+  struct gal_arithmetic_set_params *tprm
+    = (struct gal_arithmetic_set_params *)in;
+  gal_data_t **stack=(gal_data_t **)tprm->params;
+  return arithmetic_stack_pop(stack, ARITHMETIC_TABLE_OP_SET, NULL);
+}
+
+
+
+
+
+/* For the 'set-' operator. */
+static int
+arithmetic_set_name_used_later(void *in, char *name)
+{
+  struct gal_arithmetic_set_params *p=(struct gal_arithmetic_set_params *)in;
+  struct arithmetic_token *tokens = (struct arithmetic_token *)(p->tokens);
+  struct arithmetic_token *token;
+
+  size_t counter=0;
+
+  /* If the name exists after the current token, then return 1. Note that
+     we have already separated the usage of names set with 'set-' in the
+     'name_use' element of the 'token' structure. */
+  for(token=tokens;token!=NULL;token=token->next)
+    {
+      if( token->name_use
+          && counter > p->tokencounter
+          && strcmp(token->name_use, name)==0 )
+        return 1;
+
+      /* Increment the counter (has to be after the check above because it
+         may not always get to the 'counter' variable). */
+      ++counter;
+    }
+
+  /* If we get to this point, it means that the name doesn't exist. */
+  return 0;
 }
 
 
@@ -855,36 +942,38 @@ arithmetic_placeholder_name(gal_data_t *col)
 
 
 static void
-arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
-                        int operator, size_t num_operands)
+arithmetic_operator_run(struct tableparams *p,
+                        struct arithmetic_token *token,
+                        struct gal_arithmetic_set_params *setprm,
+                        gal_data_t **stack)
 {
   gal_data_t *d1=NULL, *d2=NULL, *d3=NULL;
   int flags = ( GAL_ARITHMETIC_INPLACE | GAL_ARITHMETIC_FREE
                 | GAL_ARITHMETIC_NUMOK );
 
   /* When 'num_operands!=0', the operator is in the library. */
-  if(num_operands)
+  if(token->num_operands)
     {
       /* Pop the necessary number of operators. Note that the
          operators are poped from a linked list (which is
          last-in-first-out). So for the operators which need a
          specific order, the first poped operand is actally the
          last (right most, in in-fix notation) input operand.*/
-      switch(num_operands)
+      switch(token->num_operands)
         {
         case 1:
-          d1=arithmetic_stack_pop(stack, operator, NULL);
+          d1=arithmetic_stack_pop(stack, token->operator, NULL);
           break;
 
         case 2:
-          d2=arithmetic_stack_pop(stack, operator, NULL);
-          d1=arithmetic_stack_pop(stack, operator, NULL);
+          d2=arithmetic_stack_pop(stack, token->operator, NULL);
+          d1=arithmetic_stack_pop(stack, token->operator, NULL);
           break;
 
         case 3:
-          d3=arithmetic_stack_pop(stack, operator, NULL);
-          d2=arithmetic_stack_pop(stack, operator, NULL);
-          d1=arithmetic_stack_pop(stack, operator, NULL);
+          d3=arithmetic_stack_pop(stack, token->operator, NULL);
+          d2=arithmetic_stack_pop(stack, token->operator, NULL);
+          d1=arithmetic_stack_pop(stack, token->operator, NULL);
           break;
 
         case -1:
@@ -897,7 +986,8 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
                 "the problem. '%zu' is not recognized as an operand "
                 "counter (with '%s')", __func__, PACKAGE_BUGREPORT,
-                num_operands, arithmetic_operator_name(operator));
+                token->num_operands,
+                arithmetic_operator_name(token->operator));
         }
 
       /* Run the arithmetic operation. Note that 'gal_arithmetic' is a
@@ -905,7 +995,7 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
          arguments it uses depend on the operator. In other words, when the
          operator doesn't need three operands, the extra arguments will be
          ignored. */
-      gal_list_data_add(stack, gal_arithmetic(operator, p->cp.numthreads,
+      gal_list_data_add(stack, gal_arithmetic(token->operator, p->cp.numthreads,
                                               flags, d1, d2, d3) );
 
       /* Reset the meta-data for the element that was just put on the
@@ -916,7 +1006,7 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
   /* This operator is specific to this program (Table). */
   else
     {
-      switch(operator)
+      switch(token->operator)
         {
         case ARITHMETIC_TABLE_OP_SIN:
         case ARITHMETIC_TABLE_OP_COS:
@@ -931,27 +1021,31 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
         case ARITHMETIC_TABLE_OP_ACOSH:
         case ARITHMETIC_TABLE_OP_ATANH:
         case ARITHMETIC_TABLE_OP_ATAN2:
-          arithmetic_trig_hyper(p, stack, operator);
+          arithmetic_trig_hyper(p, stack, token->operator);
           break;
 
         case ARITHMETIC_TABLE_OP_WCSTOIMG:
         case ARITHMETIC_TABLE_OP_IMGTOWCS:
-          arithmetic_wcs(p, stack, operator);
+          arithmetic_wcs(p, stack, token->operator);
           break;
 
         case ARITHMETIC_TABLE_OP_DATETOSEC:
-          arithmetic_datetosec(p, stack, operator);
+          arithmetic_datetosec(p, stack, token->operator);
           break;
 
         case ARITHMETIC_TABLE_OP_DISTANCEFLAT:
         case ARITHMETIC_TABLE_OP_DISTANCEONSPHERE:
-          arithmetic_distance(p, stack, operator);
+          arithmetic_distance(p, stack, token->operator);
+          break;
+
+        case ARITHMETIC_TABLE_OP_SET:
+          gal_arithmetic_set_name(setprm, token->name_def);
           break;
 
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
                 "fix the problem. The operator code %d is not recognized",
-                __func__, PACKAGE_BUGREPORT, operator);
+                __func__, PACKAGE_BUGREPORT, token->operator);
         }
     }
 }
@@ -964,16 +1058,28 @@ arithmetic_operator_run(struct tableparams *p, gal_data_t **stack,
 static void
 arithmetic_reverse_polish(struct tableparams *p, struct column_pack *outpack)
 {
-  gal_data_t *single, *stack=NULL;
   struct arithmetic_token *token;
+  gal_data_t *single, *stack=NULL;
+  struct gal_arithmetic_set_params setprm={0};
+
+  /* Initialize the arithmetic functions/pointers. */
+  setprm.params=&stack;
+  setprm.tokens=outpack->arith;
+  setprm.pop=arithmetic_stack_pop_wrapper_set;
+  setprm.used_later=arithmetic_set_name_used_later;
 
   /* Go through all the tokens given to this element. */
-  for(token=outpack->tokens;token!=NULL;token=token->next)
+  for(token=outpack->arith;token!=NULL;token=token->next)
     {
       /* We are on an operator. */
       if(token->operator!=GAL_ARITHMETIC_OP_INVALID)
-        arithmetic_operator_run(p, &stack, token->operator,
-                                token->num_operands);
+        arithmetic_operator_run(p, token, &setprm, &stack);
+
+      /* We are on a named variable. */
+      else if( token->name_use )
+        gal_list_data_add(&stack,
+                          gal_arithmetic_set_copy_named(&setprm,
+                                                        token->name_use));
 
       /* Constant number: just put it ontop of the stack. */
       else if(token->constant)
@@ -991,6 +1097,9 @@ arithmetic_reverse_polish(struct tableparams *p, struct column_pack *outpack)
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
               "fix the problem. The token can't be identified as an "
               "operator, constant or column", __func__, PACKAGE_BUGREPORT);
+
+      /* Increment the token counter. */
+      ++setprm.tokencounter;
     }
 
   /* Put everything that remains in the stack (reversed) into the final
@@ -1049,16 +1158,16 @@ arithmetic_operate(struct tableparams *p)
   /* From now on, we will be looking for columns from the index in
      'colarray', so to keep things clean, we'll set all the 'next' elements
      to NULL. */
-  for(i=0;i<p->numcolarray;++i) p->colarray[i]->next=NULL;
+  for(i=0; i<p->numcolarray; ++i) p->colarray[i]->next=NULL;
 
   /* We'll also reset the output table pointer, to fill it in as we
      progress. */
   p->table=NULL;
 
   /* Go over each package of columns. */
-  for(outpack=p->outcols;outpack!=NULL;outpack=outpack->next)
+  for(outpack=p->outcols; outpack!=NULL; outpack=outpack->next)
     {
-      if(outpack->tokens)
+      if(outpack->arith)
         arithmetic_reverse_polish(p, outpack);
       else
         {

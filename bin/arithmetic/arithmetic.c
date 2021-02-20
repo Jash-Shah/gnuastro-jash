@@ -1344,6 +1344,28 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
 
 
 
+/* Used by the 'set-' operator. */
+static int
+arithmetic_set_name_used_later(void *in, char *name)
+{
+  struct gal_arithmetic_set_params *p=(struct gal_arithmetic_set_params *)in;
+  gal_list_str_t *token, *tokens = (gal_list_str_t *)(p->tokens);
+
+  size_t counter=0;
+
+  /* If the name exists after the current token, then return 1. */
+  for(token=tokens;token!=NULL;token=token->next)
+    if( counter++ > p->tokencounter && !strcmp(token->v, name) )
+      return 1;
+
+  /* If we get to this point, it means that the name doesn't exist. */
+  return 0;
+}
+
+
+
+
+
 /* This function implements the reverse polish algorithm as explained
    in the Wikipedia page.
 
@@ -1358,11 +1380,14 @@ reversepolish(struct arithmeticparams *p)
   char *hdu, *filename, *printnum;
   int operator=GAL_ARITHMETIC_OP_INVALID;
 
-
   /* Prepare the processing: */
-  p->operands=NULL;
   p->popcounter=0;
-
+  p->operands=NULL;
+  p->setprm.params=p;
+  p->setprm.tokencounter=0;
+  p->setprm.tokens=p->tokens;
+  p->setprm.pop=operands_pop_wrapper_set;
+  p->setprm.used_later=arithmetic_set_name_used_later;
 
   /* Go over each input token and do the work. */
   for(token=p->tokens;token!=NULL;token=token->next)
@@ -1379,11 +1404,11 @@ reversepolish(struct arithmeticparams *p)
       else if( !strncmp(OPERATOR_PREFIX_TOFILEFREE, token->v,
                    OPERATOR_PREFIX_LENGTH_TOFILE) )
         arithmetic_tofile(p, token->v, 1);
-      else if( !strncmp(token->v, OPERATOR_PREFIX_SET,
-                        OPERATOR_PREFIX_LENGTH_SET) )
-        operands_set_name(p, token->v);
-      else if( gal_array_name_recognized(token->v)
-          || operands_is_name(p, token->v) )
+      else if( !strncmp(token->v, GAL_ARITHMETIC_SET_PREFIX,
+                        GAL_ARITHMETIC_SET_PREFIX_LENGTH) )
+        gal_arithmetic_set_name(&p->setprm, token->v);
+      else if(    gal_array_name_recognized(token->v)
+               || gal_arithmetic_set_is_name(p->setprm.named, token->v) )
         operands_add(p, token->v, NULL);
       else if( (data=gal_data_copy_string_to_number(token->v)) )
         {
@@ -1403,7 +1428,7 @@ reversepolish(struct arithmeticparams *p)
         }
 
       /* Increment the token counter. */
-      ++p->tokencounter;
+      ++p->setprm.tokencounter;
     }
 
 
@@ -1480,7 +1505,7 @@ reversepolish(struct arithmeticparams *p)
      into 'data', so it is freed when freeing 'data'. */
   gal_data_free(data);
   free(p->refdata.dsize);
-  gal_list_data_free(p->named);
+  gal_list_data_free(p->setprm.named);
 
 
   /* Clean up. Note that the tokens were taken from the command-line

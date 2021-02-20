@@ -1386,13 +1386,13 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
 
       /* Check the types. */
       if(tmp->type!=list->type)
-        error(EXIT_FAILURE, 0, "%s: the types of all operands to the %s "
+        error(EXIT_FAILURE, 0, "%s: the types of all operands to the '%s' "
               "operator must be same", __func__,
               gal_arithmetic_operator_string(operator));
 
       /* Check the sizes. */
       if( gal_dimension_is_different(list, tmp) )
-        error(EXIT_FAILURE, 0, "%s: the sizes of all operands to the %s "
+        error(EXIT_FAILURE, 0, "%s: the sizes of all operands to the '%s' "
               "operator must be same", __func__,
               gal_arithmetic_operator_string(operator));
     }
@@ -1543,8 +1543,8 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
   /* Simple sanity check on the input sizes */
   if( !( (flags & GAL_ARITHMETIC_NUMOK) && (l->size==1 || r->size==1))
       && gal_dimension_is_different(l, r) )
-    error(EXIT_FAILURE, 0, "%s: the non-number inputs to %s don't have the "
-          "same dimension/size", __func__,
+    error(EXIT_FAILURE, 0, "%s: the non-number inputs to '%s' don't "
+          "have the same dimension/size", __func__,
           gal_arithmetic_operator_string(operator));
 
 
@@ -2029,7 +2029,7 @@ gal_arithmetic_operator_string(int operator)
     {
     case GAL_ARITHMETIC_OP_PLUS:            return "+";
     case GAL_ARITHMETIC_OP_MINUS:           return "-";
-    case GAL_ARITHMETIC_OP_MULTIPLY:        return "*";
+    case GAL_ARITHMETIC_OP_MULTIPLY:        return "x";
     case GAL_ARITHMETIC_OP_DIVIDE:          return "/";
     case GAL_ARITHMETIC_OP_MODULO:          return "%";
 

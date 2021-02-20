@@ -11847,7 +11847,7 @@ $ astarithmetic a.fits b.fits / -g1 –output=div.fits
 @end example
 
 @item %
-Modulo (remainder), so ``@command{3 2 %}'' is equivalent to @mymath{1}.
+Modulo (remainder), so ``@command{3 2 %}'' will return @mymath{1}.
 Note that the modulo operator only works on integer types (see @ref{Numeric data types}).
 This operator is therefore not defined for most processed astronomical astronomical images that have floating-point value.
 However it is useful in labeled images, for example @ref{Segment output}).

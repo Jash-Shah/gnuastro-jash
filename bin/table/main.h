@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/data.h>
 
 #include <gnuastro-internal/options.h>
+#include <gnuastro-internal/arithmetic-set.h>
 
 /* Progarm names.  */
 #define PROGRAM_NAME   "Table"         /* Program full name.       */
@@ -65,6 +66,8 @@ struct arithmetic_token
   size_t     num_operands;  /* OPERATOR: Number of required operands.     */
   size_t            index;  /* OPERAND: Index in requested columns.       */
   gal_data_t    *constant;  /* OPERAND: a constant/single number.         */
+  char          *name_def;  /* Name given to the 'set-' operator.         */
+  char          *name_use;  /* If this a usage of a name.                 */
   struct arithmetic_token *next;  /* Pointer to next token.               */
 };
 
@@ -72,7 +75,7 @@ struct column_pack
 {
   size_t                    start; /* Starting ind. in requested columns. */
   size_t                numsimple; /* Number of simple columns.           */
-  struct arithmetic_token *tokens; /* Arithmetic tokens to use.           */
+  struct arithmetic_token  *arith; /* Arithmetic tokens to use.           */
   struct column_pack        *next; /* Next output column.                 */
 };
 

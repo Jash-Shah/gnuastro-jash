@@ -68,11 +68,12 @@ libgnuastro_la_SOURCES = $(MAYBE_WCSDISTORTION) arithmetic.c \
   arithmetic-bitor.c arithmetic-bitrsh.c arithmetic-bitxor.c \
   arithmetic-divide.c arithmetic-eq.c arithmetic-ge.c arithmetic-gt.c \
   arithmetic-le.c arithmetic-lt.c arithmetic-minus.c arithmetic-modulo.c \
-  arithmetic-multiply.c arithmetic-ne.c arithmetic-or.c arithmetic-plus.c \
-  array.c binary.c blank.c box.c checkset.c convolve.c cosmology.c data.c \
-  eps.c fits.c git.c interpolate.c jpeg.c kdtree.c label.c list.c match.c \
-  options.c pdf.c permutation.c pointer.c polygon.c qsort.c dimension.c \
-  speclines.c statistics.c table.c tableintern.c threads.c tiff.c tile.c \
+  arithmetic-multiply.c arithmetic-ne.c arithmetic-or.c \
+  arithmetic-plus.c arithmetic-set.c array.c binary.c blank.c box.c \
+  checkset.c convolve.c cosmology.c data.c eps.c fits.c git.c \
+  interpolate.c jpeg.c kdtree.c label.c list.c match.c options.c pdf.c \
+  permutation.c pointer.c polygon.c qsort.c dimension.c speclines.c \
+  statistics.c table.c tableintern.c threads.c tiff.c tile.c \
   tile-internal.c timing.c txt.c type.c units.c wcs.c
 
 
@@ -117,11 +118,11 @@ EXTRA_DIST = gnuastro.pc.in $(headersdir)/README $(internaldir)/README \
   $(internaldir)/arithmetic-minus.h $(internaldir)/arithmetic-modulo.h \
   $(internaldir)/arithmetic-multiply.h $(internaldir)/arithmetic-ne.h \
   $(internaldir)/arithmetic-or.h $(internaldir)/arithmetic-plus.h \
-  $(internaldir)/checkset.h $(internaldir)/commonopts.h \
-  $(internaldir)/config.h.in $(internaldir)/fixedstringmacros.h \
-  $(internaldir)/options.h $(internaldir)/tableintern.h \
-  $(internaldir)/tile-internal.h $(internaldir)/timing.h \
-  $(internaldir)/wcsdistortion.h
+  $(internaldir)/arithmetic-set.h $(internaldir)/checkset.h \
+  $(internaldir)/commonopts.h $(internaldir)/config.h.in \
+  $(internaldir)/fixedstringmacros.h $(internaldir)/options.h \
+  $(internaldir)/tableintern.h $(internaldir)/tile-internal.h \
+  $(internaldir)/timing.h $(internaldir)/wcsdistortion.h
 
 
 
