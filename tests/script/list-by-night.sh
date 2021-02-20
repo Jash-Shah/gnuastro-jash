@@ -30,7 +30,9 @@
 # tested on a larger image.
 prog=sort-by-night
 dep1=fits
+dep2=table
 dep1name=../bin/$dep1/ast$dep1
+dep2name=../bin/$dep2/ast$dep2
 execname=../bin/script/astscript-$prog
 
 
@@ -47,6 +49,7 @@ execname=../bin/script/astscript-$prog
 #   - The programs it use weren't made.
 if [ ! -f $execname ]; then echo "$execname doesn't exist."; exit 77; fi
 if [ ! -f $dep1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+if [ ! -f $dep2name ]; then echo "$dep2name doesn't exist."; exit 77; fi
 
 
 
@@ -55,6 +58,9 @@ if [ ! -f $dep1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
 # Put a link of Gnuastro program(s) used into current directory. Note that
 # other script tests may have already brought it.
 ln -sf $dep1name ast$dep1
+ln -sf $dep2name ast$dep2
+
+
 
 
 

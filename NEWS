@@ -43,6 +43,15 @@ See the end of the file for license conditions.
 
 ** Changed features
 
+  astscript-sort-by-night:
+   - Thanks to the new features in the Fits and Table programs (described
+     above), the efficiency of this script has improved dramatically (from
+     19 seconds to 0.42 seconds for about 650 FITS files used in the
+     test!).
+   - The default end to a "night" is set to 11:00a.m. Until now it was
+     9:00a.m. But in some cases, calibration images may be taken after
+     that. So to be safer in general it was incremented by 2 hours.
+
   Library:
    - gal_fits_key_write_wcsstr: also takes WCS structure as argument.
    - gal_fits_key_read_from_ptr: providing a numerical datatype for the

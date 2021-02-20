@@ -32,9 +32,9 @@ set -e
 # Default option values (can be changed with options on the
 # command-line).
 hdu=1
-hour=9
 copy=0
 link=0
+hour=11
 quiet=0
 key=DATE
 prefix=./
@@ -242,12 +242,30 @@ fi
 #
 # To do this, we'll convert the date into Unix epoch time (seconds
 # since 1970-01-01,00:00:00) and keep that with the filename.
-list=$(for f in $inputs; do
-           astfits $f --datetosec=$key --hdu=$hdu -q \
-               | awk '{h='$hour'; d=int($1/86400); \
-                       if(int($1)%86400<(h*3600)) n=d-1; else n=d; \
-                       print "'$f'", $1, n }'
-       done)
+#
+# A simple AWK expression for what we are doing here inside of Table
+# (where the first input column is the filename and the second is the
+# date in seconds):
+#
+# awk '{h='$hour'; d=int($2/86400); \
+#       if(int($2)%86400<(h*3600)) n=d-1; else n=d; \
+#       print $1, $2, n }'
+#
+# Finally, we are sorting all the images with the unix-second column
+# to make sure that they are ordered in observation order later.
+list=$(astfits --keyvalue=$key --hdu=$hdu $inputs --colinfoinstdout \
+               | asttable -cFILENAME \
+                          -c'arith '$key' date-to-sec' \
+                          -c'arith '$key' date-to-sec set-sec \
+                                   sec 86400 / int32 set-day \
+                                   day \
+                                     sec int32 86400 % '$hour' 3600  x lt \
+                                     day 1 - \
+                                   where' \
+                          --colmetadata=ARITH_8,NIGHT,counter,"Observing night." \
+                          --colinfoinstdout \
+               | asttable --sort=UNIXSEC --colinfoinstdout)
+
 
 
 
@@ -263,44 +281,42 @@ list=$(for f in $inputs; do
 
 
 
-# Get the uniqe nights from the previous step.
-unique=$(echo "$list" | awk '{print $3}' | sort | uniq | cat -n)
-
+# Get the uniqe nights from the previous step and give each night a
+# counter starting from 1. The output of this step will be two
+# columns: a counter, and the night number.
+#
+# We are using 'asttable' here to avoid issues with spaces in
+# directory names in the first line.
+unique=$(echo "$list" | asttable -cNIGHT | sort | uniq | cat -n)
+#echo "check: $unique"; exit 1
 
 
 
 
 # Find the FITS files of every unique day and sort them by observing
 # time within that day. We'll also initialize the night-counter to 1.
-counter=1
 echo "$unique" | while read l; do
 
     # Find all input files (and their Unix epoch time).
-    daynum_to=$(echo $l | awk '{print $1}')
-    daynum_from=$(echo $l | awk '{print $2}')
-    in_this_day=$(echo "$list" \
-                       | awk '$3=='$daynum_from' {print $1, $2}' \
-                       | sort -nk2 \
-                       | cat -n \
-                       | awk '{print $2,'$counter',$1}')
+    night_to=$(echo $l | awk '{print $1}')
+    night_from=$(echo $l | awk '{print $2}')
+    in_this_night=$(echo "$list" \
+                         | asttable -cFILENAME --equal=NIGHT,$night_from)
 
-    # Now that we know this night's files, we can take the proper action.
-    echo "$in_this_day" | while read L; do
-
-        # Set the necessary numbers.
-        infile=$(echo $L | awk '{print $1}')
-        night_num=$(echo $L | awk '{print $2}')
-        exposure_num=$(echo $L | awk '{print $3}')
+    # Now that we know this night's files, sorted by time, we can take
+    # the proper action (simply list, or copy or make links).
+    exposure_num=1
+    echo "$in_this_night" | while read infile; do
 
         # Make the outputs
-        outfile=$prefix"n"$night_num-$exposure_num.fits
-        if   [ $copy = 1 ]; then   cp $infile $outfile
+        outfile=$prefix"n"$night_to-$exposure_num.fits
+        if   [ $copy = 1 ]; then   cp     $infile $outfile
         elif [ $link = 1 ]; then   ln -fs $infile $outfile
-        else                       echo "$infile $night_num $exposure_num"
+        else                       echo "$infile $night_to $exposure_num"
         fi
 
-    done
+        # Increment the exposure number
+        exposure_num=$((exposure_num+1))
 
-    # Increment the night-counter.
-    counter=$((counter+1))
+    done
 done

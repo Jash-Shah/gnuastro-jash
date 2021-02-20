@@ -9434,7 +9434,7 @@ $ astscript-sort-by-night --link --prefix=img- /path/to/data/*.fits
 @end example
 
 This script will look into a HDU/extension (@option{--hdu}) for a keyword (@option{--key}) in the given FITS files and interpret the value as a date.
-The inputs will be separated by "night"s (9:00a.m to next day's 8:59:59a.m, spanning two calendar days, exact hour can be set with @option{--hour}).
+The inputs will be separated by "night"s (11:00a.m to next day's 10:59:59a.m, spanning two calendar days, exact hour can be set with @option{--hour}).
 
 The default output is a list of all the input files along with the following two columns: night number and file number in that night (sorted by time).
 With @option{--link} a symbolic link will be made (one for each input) that contains the night number, and number of file in that night (sorted by time), see the description of @option{--link} for more.
@@ -9467,7 +9467,7 @@ The keyword name that contains the FITS date format to classify/sort by.
 @item -H FLT
 @itemx --hour=FLT
 The hour that defines the next ``night''.
-By default, all times before 9:00a.m are considered to belong to the previous calendar night.
+By default, all times before 11:00a.m are considered to belong to the previous calendar night.
 If a sub-hour value is necessary, it should be given in units of hours, for example @option{--hour=9.5} corresponds to 9:30a.m.
 
 @cartouche
@@ -9482,8 +9482,8 @@ It is possible to take this into account by setting the @option{--hour} option t
 
 For example, consider a set of images taken in Auckland (New Zealand, UTC+12) during different nights.
 If you want to classify these images by night, you have to know at which time (in UTC time) the Sun rises (or any other separator/definition of a different night).
-In this particular example, you can use @option{--hour=21}.
-Because in Auckland, a night finishes (roughly) at the local time of 9:00, which corresponds to 21:00 UTC.
+For example if your observing night finishes before 9:00a.m in Auckland, you can use @option{--hour=21}.
+Because in Auckland the local time of 9:00 corresponds to 21:00 UTC.
 @end cartouche
 
 @item -l
