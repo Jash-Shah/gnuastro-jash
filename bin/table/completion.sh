@@ -297,11 +297,11 @@ _gnuastro_asttable_completions(){
         *) _gnuastro_autocomplete_list_options $PROG_ADDRESS ;;
     esac
 
-    if [[ ! "${COMPREPLY[@]}" =~ "=" ]]; then
+    if [[ "${COMPREPLY[@]}" =~ "=" ]]; then
         # Do not append 'space' character to the end of line in case there
         # is a long option present in the suggestions. Please note that
         # long options always have a '=' suffix.
-        compopt +o nospace
+        compopt -o nospace
     fi
 
     # Be verbose in debugging mode, where $db is set to '0'.
@@ -327,7 +327,7 @@ EOF
 
 
 
-complete -F _gnuastro_asttable_completions -o nospace asttable
+complete -F _gnuastro_asttable_completions asttable
 
 
 
