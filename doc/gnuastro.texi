@@ -18668,12 +18668,35 @@ Using the zero point magnitude (@mymath{Z}), we can write the magnitude relation
 
 @dispmath{m = -2.5\log_{10}(B) + Z}
 
+@cindex Janskys (Jy)
+@cindex AB magnitude
+@cindex Magnitude, AB
+Having the zero point of an image, you can convert its pixel values to physical units of microJanskys (or @mymath{\mu{}Jy}) to enable direct pixel-based comparisons with images from other instruments (just note that this assumes instrument and observation signatures are corrected, things like the flat-field or the Sky).
+This conversion can be done with the fact that in the AB magnitude standard@footnote{@url{https://en.wikipedia.org/wiki/AB_magnitude}}, @mymath{3631Jy} corresponds to the zero-th magnitude, therefore @mymath{B\equiv3631\times10^{6}\mu{Jy}} and @mymath{m\equiv0}.
+We can therefore estimate the brightness (@mymath{B_z}, in @mymath{\mu{Jy}}) corresponding to the image zero point (@mymath{Z}) using this equation:
+
+@dispmath{m - Z = -2.5\log_{10}(B/B_z)}
+@dispmath{0 - Z = -2.5\log_{10}({3631\times10^{6}\over B_z})}
+@dispmath{B_z = 3631\times10^{\left(6 - {Z \over 2.5} \right)} \mu{Jy}}
+
+@cindex SDSS
+Because the image zero point corresponds to a pixel value of @mymath{1}, the @mymath{B_z} value calculated above also corresponds to a pixel value of @mymath{1}.
+Therefore you simply have to multiply your image by @mymath{B_z} to convert it to @mymath{\mu{Jy}}.
+Don't forget that this only applies when your zero point was also estimated in the AB magnitude system.
+On the command-line, you can easily estimate this value for a certain zero point with AWK, then multiply it to all the pixels in the image with @ref{Arithmetic}.
+For example let's assume you are using an SDSS image with a zero point of 22.5:
+
+@example
+bz=$(echo 22.5 | awk '@{print 3631 * 10^(6-$1/2.5)@}')
+astarithmetic sdss.fits $bz x --output=sdss-in-muJy.fits
+@end example
+
 @cindex Steradian
 @cindex Angular coverage
 @cindex Celestial sphere
 @cindex Surface brightness
 @cindex SI (International System of Units)
-Another important concept is the distribution of brightness over its area.
+Another important concept is the distribution of an object's brightness over its area.
 For this, we define the @emph{surface brightness} to be the magnitude of an object's brightness divided by its solid angle over the celestial sphere (or coverage in the sky, commonly in units of arcsec@mymath{^2}).
 The solid angle is expressed in units of arcsec@mymath{^2} because astronomical targets are usually much smaller than one steradian.
 Recall that the steradian is the dimension-less SI unit of a solid angle and 1 steradian covers @mymath{1/4\pi} (almost @mymath{8\%}) of the full celestial sphere.
