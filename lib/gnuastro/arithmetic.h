@@ -106,13 +106,13 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_LOG,          /* log()   */
   GAL_ARITHMETIC_OP_LOG10,        /* log10() */
 
-  GAL_ARITHMETIC_OP_SIN,          /* sine    */
-  GAL_ARITHMETIC_OP_COS,          /* cosine  */
-  GAL_ARITHMETIC_OP_TAN,          /* tangent */
-  GAL_ARITHMETIC_OP_ASIN,         /* Inverse sine */
-  GAL_ARITHMETIC_OP_ACOS,         /* Inverse cosine */
-  GAL_ARITHMETIC_OP_ATAN,         /* Inverse tangent */
-  GAL_ARITHMETIC_OP_ATAN2,        /* Inverse tangent (with two inputs). */
+  GAL_ARITHMETIC_OP_SIN,          /* sine (input in deg).    */
+  GAL_ARITHMETIC_OP_COS,          /* cosine (input in deg).  */
+  GAL_ARITHMETIC_OP_TAN,          /* tangent (input in deg). */
+  GAL_ARITHMETIC_OP_ASIN,         /* Inverse sine (output in deg). */
+  GAL_ARITHMETIC_OP_ACOS,         /* Inverse cosine (output in deg). */
+  GAL_ARITHMETIC_OP_ATAN,         /* Inverse tangent (output in deg). */
+  GAL_ARITHMETIC_OP_ATAN2,        /* Inv. atan (preserves quad, out in deg). */
   GAL_ARITHMETIC_OP_SINH,         /* Hyperbolic sine. */
   GAL_ARITHMETIC_OP_COSH,         /* Hyperbolic cosine. */
   GAL_ARITHMETIC_OP_TANH,         /* Hyperbolic tangent. */

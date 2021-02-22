@@ -57,6 +57,22 @@ See the end of the file for license conditions.
      program for selecting a certain sub-set of your FITS files, or sorting
      them for example.
 
+  Library:
+   - New arithmetic operator macros (for the 'gal_arithmetic' function):
+     - GAL_ARITHMETIC_OP_SIN: sine (input in deg).
+     - GAL_ARITHMETIC_OP_COS: cosine (input in deg).
+     - GAL_ARITHMETIC_OP_TAN: tangent (input in deg).
+     - GAL_ARITHMETIC_OP_ASIN: Inverse sine (output in deg).
+     - GAL_ARITHMETIC_OP_ACOS: Inverse cosine (output in deg).
+     - GAL_ARITHMETIC_OP_ATAN: Inverse tangent (output in deg)
+     - GAL_ARITHMETIC_OP_ATAN2: Inverse tangent (with two inputs, out deg).
+     - GAL_ARITHMETIC_OP_SINH: Hyperbolic sine.
+     - GAL_ARITHMETIC_OP_COSH: Hyperbolic cosine.
+     - GAL_ARITHMETIC_OP_TANH: Hyperbolic tangent.
+     - GAL_ARITHMETIC_OP_ASINH: Inverse hyperbolic sine.
+     - GAL_ARITHMETIC_OP_ACOSH: Inverse hyperbolic cosine.
+     - GAL_ARITHMETIC_OP_ATANH: Inverse hyperbolic tangent.
+
 ** Removed features
 
 ** Changed features
