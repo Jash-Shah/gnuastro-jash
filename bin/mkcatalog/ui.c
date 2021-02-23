@@ -5,7 +5,7 @@ MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -126,6 +126,9 @@ ui_initialize_options(struct mkcatalogparams *p,
   p->sfmagarea      = NAN;
   p->upnsigma       = NAN;
   p->zeropoint      = NAN;
+  p->sigmaclip[0]   = NAN;
+  p->sigmaclip[1]   = NAN;
+  p->pixelarcsecsq  = NAN;
   p->upsigmaclip[0] = NAN;
   p->upsigmaclip[1] = NAN;
   p->checkuplim[0]  = GAL_BLANK_INT32;
@@ -166,18 +169,18 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct mkcatalogparams *p = state->input;
 
-  /* Pass `gal_options_common_params' into the child parser.  */
+  /* Pass 'gal_options_common_params' into the child parser.  */
   state->child_inputs[0] = &p->cp;
 
   /* In case the user incorrectly uses the equal sign (for example
-     with a short format or with space in the long format, then `arg`
+     with a short format or with space in the long format, then 'arg'
      start with (if the short version was called) or be (if the long
      version was called with a space) the equal sign. So, here we
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign (`=`). For short "
-               "options, `=` should not be used and for long options, "
+    argp_error(state, "incorrect use of the equal sign ('='). For short "
+               "options, '=' should not be used and for long options, "
                "there should be no space between the option, equal sign "
                "and value");
 
@@ -207,7 +210,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 
 
 /* Read the user's desired columns. Because the types of these options are
-   `GAL_TYPE_INVALID', this function will not be called when printing the
+   'GAL_TYPE_INVALID', this function will not be called when printing the
    full list of parameters and their values. */
 void *
 ui_column_codes_ll(struct argp_option *option, char *arg,
@@ -222,17 +225,17 @@ ui_column_codes_ll(struct argp_option *option, char *arg,
     {
       if( arg[0]=='0' && arg[1]=='\0' ) return NULL;
       else if ( !(arg[0]=='1' && arg[1]=='\0')  )
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' is not a "
-                      "valid value to the `%s' option: (\"%s\").\n\n`%s' is "
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' is not a "
+                      "valid value to the '%s' option: ('%s').\n\n'%s' is "
                       "an on/off option specifying if you want this column "
                       "in the output catalog, it doesn't take any "
                       "arguments. In a configuration file, it can only take "
-                      "a value of `0' (to be ignored) or `1'", arg,
+                      "a value of '0' (to be ignored) or '1'", arg,
                       option->name, option->doc, option->name);
     }
 
 
-  /* The user wants this column, so add it to the list. Note that the `ids'
+  /* The user wants this column, so add it to the list. Note that the 'ids'
      column means three columns. */
   if(option->key==UI_KEY_IDS)
     {
@@ -287,8 +290,8 @@ ui_check_upperlimit(struct argp_option *option, char *arg,
 
       /* Make sure there is at most only two numbers given. */
       if(raw->size>2)
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' (value to "
-                      "`--%s') contains %zu numbers, but only one or two "
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value to "
+                      "'--%s') contains %zu numbers, but only one or two "
                       "are acceptable.\n\n"
                       "With this option MakeCatalog will write all the "
                       "positions and values of the random distribution for "
@@ -309,13 +312,13 @@ ui_check_upperlimit(struct argp_option *option, char *arg,
         {
           if( ceil(d[i]) != d[i])
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "%g (value "
-                          "number %zu given to `--%s') is not an "
+                          "number %zu given to '--%s') is not an "
                           "integer. The value(s) to this option are "
                           "object/clump labels/identifiers, so they must be "
                           "integers", d[i], i+1, option->name);
           if( d[i]<=0 )
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "%g (value "
-                          "number %zu given to `--%s') is not positive. "
+                          "number %zu given to '--%s') is not positive. "
                           "The value(s) to this option are object/clump "
                           "labels/identifiers, so they must be positive "
                           "integers", d[i], i+1, option->name);
@@ -354,29 +357,31 @@ ui_check_upperlimit(struct argp_option *option, char *arg,
 /***************       Sanity Check         *******************/
 /**************************************************************/
 /* Read and check ONLY the options. When arguments are involved, do the
-   check in `ui_check_options_and_arguments'. */
+   check in 'ui_check_options_and_arguments'. */
 static void
 ui_read_check_only_options(struct mkcatalogparams *p)
 {
   float tmp;
-  size_t one=1;
+  double *darr;
   char *tailptr;
+  size_t i, one=1;
+  gal_list_i32_t *colcode;
 
   /* If an upper-limit check table is requested with a specific clump, but
      no clump catalog has been requested, then abort and inform the
      user. */
   if( p->checkuplim[1]!=GAL_BLANK_INT32 && p->clumpscat==0 )
     error(EXIT_FAILURE, 0, "no clumps catalog is requested, hence "
-          "`--checkuplim' is only available for objects (one value "
+          "'--checkuplim' is only available for objects (one value "
           "must be given to it).\n\n"
-          "To ask for a clumps catalog, please append `--clumpscat' to the "
+          "To ask for a clumps catalog, please append '--clumpscat' to the "
           "command calling MakeCatalog.\n\n"
           "If you want the upperlimit check table for an object, only give "
-          "one value (the object's label) to `--checkuplim'.");
+          "one value (the object's label) to '--checkuplim'.");
 
-  /* See if `--skyin' is a filename or a value. When the string is ONLY a
-     number (and nothing else), `tailptr' will point to the end of the
-     string (`\0'). */
+  /* See if '--skyin' is a filename or a value. When the string is ONLY a
+     number (and nothing else), 'tailptr' will point to the end of the
+     string ('\0'). */
   if(p->skyfile)
     {
       tmp=strtod(p->skyfile, &tailptr);
@@ -405,6 +410,38 @@ ui_read_check_only_options(struct mkcatalogparams *p)
           *((float *)(p->std->array))=tmp;
         }
     }
+
+  /* Make sure that '--fracmax' is given if necessary and that the fracsum
+     values are less than one. */
+  for(colcode=p->columnids; colcode!=NULL; colcode=colcode->next)
+    if( (colcode->v==UI_KEY_FRACMAXAREA1 || colcode->v==UI_KEY_FRACMAXAREA2)
+        && p->fracmax==NULL )
+      error(EXIT_FAILURE, 0, "please specify your required fractions for "
+            "'--fracmaxarea' using the '--fracmax' option (for example "
+            "'--fracmax=0.25,0.75' for two columns)");
+  if(p->fracmax)
+    {
+      /* Currently only 2 fracsums are accepted. */
+      if(p->fracmax->size>2)
+        error(EXIT_FAILURE, 0, "%zu values given to '--fracmax', only two "
+              "values are currently supported", p->fracmax->size);
+
+      /* Check the values. */
+      darr=p->fracmax->array;
+      for(i=0;i<p->fracmax->size;++i)
+        if(darr[i]<=0.0f || darr[i]>=1.0f)
+          error(EXIT_FAILURE, 0, "%g is not acceptable for '--fracmax', "
+                "values should be larger than 0 and less than 1", darr[i]);
+
+      /* If a second fracum column is necessary, make sure two values are
+         given to --fracmax. */
+      for(colcode=p->columnids; colcode!=NULL; colcode=colcode->next)
+        if(colcode->v==UI_KEY_FRACMAXAREA2 && p->fracmax->size==1)
+          error(EXIT_FAILURE, 0, "only one value given to '--fracmax', "
+                "but '--fracmaxarea2' was requested! You need to give "
+                "the requested fraction as a second value to '--fracmax', "
+                "separated by a comma (,)");
+    }
 }
 
 
@@ -419,8 +456,8 @@ ui_check_options_and_arguments(struct mkcatalogparams *p)
     {
       if( gal_fits_name_is_fits(p->objectsfile) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified. When the input is a FITS "
-              "file, a HDU must also be specified, you can use the `--hdu' "
-              "(`-h') option and give it the HDU number (starting from "
+              "file, a HDU must also be specified, you can use the '--hdu' "
+              "('-h') option and give it the HDU number (starting from "
               "zero), extension name, or anything acceptable by CFITSIO");
 
     }
@@ -511,13 +548,13 @@ ui_wcs_info(struct mkcatalogparams *p)
       errno=0;
       p->ctype=malloc(p->objects->ndim * sizeof *p->ctype);
       if(p->ctype==NULL)
-        error(EXIT_FAILURE, 0, "%s: %zu bytes for `p->ctype'", __func__,
+        error(EXIT_FAILURE, 0, "%s: %zu bytes for 'p->ctype'", __func__,
               p->objects->ndim * sizeof *p->ctype);
 
       /* Fill in the values. */
       for(i=0;i<p->objects->ndim;++i)
         {
-          /* CTYPE might contain `-' characters, we just want the first
+          /* CTYPE might contain '-' characters, we just want the first
              non-dash characters. The loop will either stop either at the end
              or where there is a dash. So we can just replace it with an
              end-of-string character. */
@@ -535,6 +572,7 @@ ui_wcs_info(struct mkcatalogparams *p)
 static size_t
 ui_num_clumps(struct mkcatalogparams *p)
 {
+  int32_t olab;
   char *basename;
   int keepinputdir;
   size_t i, counter, numclumps=0;
@@ -546,7 +584,7 @@ ui_num_clumps(struct mkcatalogparams *p)
   labsinobj=calloc(p->numobjects+1, sizeof *labsinobj);
   if(labsinobj==NULL)
     error(EXIT_FAILURE, 0, "%s: couldn't allocate %zu bytes for "
-          "`labsinobj'", __func__, p->numobjects * sizeof *labsinobj);
+          "'labsinobj'", __func__, p->numobjects * sizeof *labsinobj);
 
   /* Go over each pixel and find the unique clump labels within each
      object. */
@@ -556,13 +594,14 @@ ui_num_clumps(struct mkcatalogparams *p)
       if(*o>0 && *c>0)
         {
           /* See if the label has already been found. */
-          for(tmp=labsinobj[*o];tmp!=NULL;tmp=tmp->next) if(tmp->v==*c) break;
+          olab = p->outlabsinv ? p->outlabsinv[*o] : *o;
+          for(tmp=labsinobj[olab];tmp!=NULL;tmp=tmp->next) if(tmp->v==*c) break;
 
-          /* When it wasn't found, `tmp==NULL'. */
+          /* When it wasn't found, 'tmp==NULL'. */
           if(tmp==NULL)
             {
               ++numclumps;
-              gal_list_i32_add(&labsinobj[*o], *c);
+              gal_list_i32_add(&labsinobj[olab], *c);
             }
         }
 
@@ -581,7 +620,8 @@ ui_num_clumps(struct mkcatalogparams *p)
       if(*o>0 && *c>0)
         {
           counter=0;
-          for(tmp=labsinobj[*o];tmp!=NULL;tmp=tmp->next)
+          olab = p->outlabsinv ? p->outlabsinv[*o] : *o;
+          for(tmp=labsinobj[olab];tmp!=NULL;tmp=tmp->next)
             { counter++; if(tmp->v==*c) {*c=counter; break;} }
         }
 
@@ -612,6 +652,160 @@ ui_num_clumps(struct mkcatalogparams *p)
 
 
 
+/* To make the catalog processing more scalable (and later allow for
+   over-lappping regions), we will define a tile for each object. */
+static void
+ui_one_tile_per_object_correct_numobjects(struct mkcatalogparams *p)
+{
+  size_t ndim=p->objects->ndim;
+
+  uint8_t *rarray=NULL;
+  int32_t *l, *lf, *start;
+  gal_data_t *rowsremove=NULL;
+  size_t i, j, d, no, *min, *max, exists, width=2*ndim;
+  size_t *minmax=gal_pointer_allocate(GAL_TYPE_SIZE_T,
+                                      width*p->numobjects, 0, __func__,
+                                      "minmax");
+  size_t *coord=gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__,
+                                      "coord");
+
+  /* Initialize the minimum and maximum position for each tile/object. So,
+     we'll initialize the minimum coordinates to the maximum possible
+     'size_t' value (in 'GAL_BLANK_SIZE_T') and the maximums to zero. */
+  for(i=0;i<p->numobjects;++i)
+    for(d=0;d<ndim;++d)
+      {
+        minmax[ i * width +        d ] = GAL_BLANK_SIZE_T; /* Minimum. */
+        minmax[ i * width + ndim + d ] = 0;                /* Maximum. */
+      }
+
+  /* Go over the objects label image and correct the minimum and maximum
+     coordinates. */
+  start=p->objects->array;
+  lf=(l=p->objects->array)+p->objects->size;
+  do
+    if(*l>0)
+      {
+        /* Get the coordinates of this pixel. */
+        gal_dimension_index_to_coord(l-start, ndim, p->objects->dsize,
+                                     coord);
+
+        /* Check to see this coordinate is the smallest/largest found so
+           far for this label. Note that labels start from 1, while indexs
+           here start from zero. */
+        min = &minmax[ (*l-1) * width        ];
+        max = &minmax[ (*l-1) * width + ndim ];
+        for(d=0;d<ndim;++d)
+          {
+            if( coord[d] < min[d] ) min[d] = coord[d];
+            if( coord[d] > max[d] ) max[d] = coord[d];
+          }
+      }
+  while(++l<lf);
+
+  /* If a label doesn't exist in the image, then write over it and define
+     the unique labels to use for the next steps. To over-write, we have
+     two counters: 'i' (for the position in the input array) and 'no' (or
+     'num-objects' for the counter in the output table). In the end, 'no'
+     counts the total number of unique labels in the input. */
+  no=0;
+  for(i=0;i<p->numobjects;++i)
+    {
+      /* Make sure a pixel with this label exists in all dimensions. */
+      exists=0;
+      for(d=0;d<ndim;++d)
+        if ( minmax[ i * width + d ] == GAL_BLANK_SIZE_T
+             && minmax[ i * width + ndim + d ] == 0 )
+          {
+            /* When the object doesn't exist, but the user wants a row
+               anyway, make all the minimums and maximums of all
+               coordinates 0, note that the maximum is already zero. */
+            if(p->inbetweenints)
+              minmax[ i * width + d ] = 0;
+          }
+        else
+          {
+            /* Write over the blank elements when necessary
+               (i!=j). When i==j, then these statements are
+               redundant. */
+            minmax[no*width+d]=minmax[i*width+d];
+            minmax[no*width+ndim+d]=minmax[i*width+ndim+d];
+
+            /* Set the checked flag. */
+            exists=1;
+          }
+
+      /* If it does (or if the user wants to keep all integers), then
+         increment the output counter.*/
+      if(p->inbetweenints || exists) ++no;
+      else
+        {
+          /* If 'rarray' isn't defined yet, define it. */
+          if(rarray==NULL)
+            {
+              /* Note that by initializing with zeros, all (the possibly
+                 existing) previous rows that shouldn't be removed are
+                 flagged as zero in this array. */
+              rowsremove=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1,
+                                        &p->numobjects, NULL, 1,
+                                        p->cp.minmapsize, p->cp.quietmmap,
+                                        NULL, NULL, NULL);
+              rarray=rowsremove->array;
+            }
+          rarray[i]=1;
+        }
+    }
+
+  /* If 'rarray!=NULL', then there are elements to remove and we need to
+     make some modifications/corrections. */
+  if(rarray)
+    {
+      /* Build an array to keep the real ID of each tile. */
+      j=0;
+      p->outlabs=gal_pointer_allocate(GAL_TYPE_INT32, no, 0, __func__,
+                                      "p->outlabs");
+      for(i=0;i<p->numobjects;++i) if(rarray[i]==0) p->outlabs[j++]=i+1;
+
+      /* Allocate an array for easy finding of the proper label and fill it
+         with the new labels. This array should have an element for each of
+         the original labels (that are not contiguous). */
+      if(p->clumpscat)
+        {
+          p->outlabsinv=gal_pointer_allocate(GAL_TYPE_UINT32,
+                                             p->numobjects+1, 1,
+                                             __func__, "p->outlabsinv");
+          for(i=0;i<no;++i) p->outlabsinv[ p->outlabs[i] ] = i;
+        }
+
+      /* Correct numobjects and clean up. */
+      p->numobjects=no;
+      gal_data_free(rowsremove);
+
+      /* For a check:
+      for(i=0;i<p->numobjects;++i)
+        printf("outlabs[%zu]: %d\n", i, p->outlabs[i]);
+      */
+    }
+
+  /* For a check.
+  for(i=0;i<p->numobjects;++i)
+    printf("%zu: (%zu, %zu) --> (%zu, %zu)\n",
+           p->outlabs ? p->outlabs[i] : i+1, minmax[i*width],
+           minmax[i*width+1], minmax[i*width+2], minmax[i*width+3]);
+  */
+
+  /* Make the tiles. */
+  p->tiles=gal_tile_series_from_minmax(p->objects, minmax, p->numobjects);
+
+  /* Clean up. */
+  free(coord);
+  free(minmax);
+}
+
+
+
+
+
 /* The only mandatory input is the objects image, so first read that and
    make sure its type is correct. */
 static void
@@ -630,7 +824,7 @@ ui_read_labels(struct mkcatalogparams *p)
   ui_check_type_int(p->objectsfile, p->cp.hdu, p->objects->type);
 
 
-  /* Convert it to `int32' type (if it already isn't). */
+  /* Convert it to 'int32' type (if it already isn't). */
   p->objects=gal_data_copy_to_new_type_free(p->objects, GAL_TYPE_INT32);
 
 
@@ -640,11 +834,12 @@ ui_read_labels(struct mkcatalogparams *p)
           "currently only supports 2D or 3D datasets", p->objectsfile,
           p->cp.hdu, p->objects->ndim);
 
-  /* Make sure the `--spectrum' option is not given on a 2D image.  */
+  /* Make sure the '--spectrum' option is not given on a 2D image.  */
   if(p->spectrum && p->objects->ndim!=3)
-    error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions, but `--spectrum' "
+    error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions, but '--spectrum' "
           "is currently only defined on 3D datasets", p->objectsfile,
           p->cp.hdu, p->objects->ndim);
+
 
   /* See if the total number of objects is given in the header keywords. */
   keys[0].name="NUMLABS";
@@ -657,6 +852,7 @@ ui_read_labels(struct mkcatalogparams *p)
       p->numobjects=*((int32_t *)(tmp->array)); /*numobjects is in int32_t.*/
       gal_data_free(tmp);
     }
+
 
   /* If there were no objects in the input, then inform the user with an
      error (it is pointless to build a catalog). */
@@ -675,17 +871,22 @@ ui_read_labels(struct mkcatalogparams *p)
   ui_wcs_info(p);
 
 
+  /* Make the tiles that cover each object and also correct the total
+     number of objects based on the parsing of the image. */
+  ui_one_tile_per_object_correct_numobjects(p);
+
+
   /* Read the clumps array if necessary. */
   if(p->clumpscat)
     {
       /* Make sure the HDU is also given. */
       if(p->clumpshdu==NULL)
         error(EXIT_FAILURE, 0, "%s: no HDU/extension provided for the "
-              "CLUMPS dataset. Please use the `--clumpshdu' option to "
+              "CLUMPS dataset. Please use the '--clumpshdu' option to "
               "give a specific HDU using its number (counting from zero) "
               "or name. If the dataset is in another file, please use "
-              "`--clumpsfile' to give the filename. If you don't want any "
-              "clumps catalog output, remove the `--clumpscat' option from "
+              "'--clumpsfile' to give the filename. If you don't want any "
+              "clumps catalog output, remove the '--clumpscat' option from "
               "the command-line or give it a value of zero in a "
               "configuration file", p->usedclumpsfile);
 
@@ -698,7 +899,7 @@ ui_read_labels(struct mkcatalogparams *p)
 
       /* Check its size. */
       if( gal_dimension_is_different(p->objects, p->clumps) )
-        error(EXIT_FAILURE, 0, "`%s' (hdu: %s) and `%s' (hdu: %s) have a"
+        error(EXIT_FAILURE, 0, "'%s' (hdu: %s) and '%s' (hdu: %s) have a"
               "different dimension/size", p->usedclumpsfile, p->clumpshdu,
               p->objectsfile, p->cp.hdu);
 
@@ -722,14 +923,14 @@ ui_read_labels(struct mkcatalogparams *p)
       if(p->numclumps==0)
         {
           /* Just as a sanity check, see if there are any clumps (positive
-             valued pixels) in the array. If there are, then `NUMCLUMPS'
+             valued pixels) in the array. If there are, then 'NUMCLUMPS'
              wasn't set properly and we should abort with an error. */
           tmp=gal_statistics_maximum(p->clumps);
           if( *((int32_t *)(p->clumps->array))>0 )
-            error(EXIT_FAILURE, 0, "%s (hdu: %s): the `NUMCLUMPS' header "
+            error(EXIT_FAILURE, 0, "%s (hdu: %s): the 'NUMCLUMPS' header "
                   "keyword has a value of zero, but there are positive "
                   "pixels in the array, showing that there are clumps in "
-                  "image. This is a wrong usage of the `NUMCLUMPS' keyword."
+                  "image. This is a wrong usage of the 'NUMCLUMPS' keyword."
                   "It must contain the total number of clumps (irrespective "
                   "of how many objects there are). Please correct this issue "
                   "and run MakeCatalog again", p->usedclumpsfile,
@@ -747,7 +948,6 @@ ui_read_labels(struct mkcatalogparams *p)
         }
     }
 
-
   /* Clean up. */
   keys[0].name=keys[1].name=NULL;
   keys[0].array=keys[1].array=NULL;
@@ -761,19 +961,21 @@ ui_read_labels(struct mkcatalogparams *p)
 /* See which inputs are necessary. Ultimate, there are only three extra
    inputs: a values image, a sky image and a sky standard deviation
    image. However, there are many raw column measurements. So to keep
-   things clean, we'll just put a value of `1' in the three `values', `sky'
-   and `std' pointers everytime a necessary input is found. */
+   things clean, we'll just put a value of '1' in the three 'values', 'sky'
+   and 'std' pointers everytime a necessary input is found. */
 static void
 ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
                     int *std)
 {
   size_t i;
 
+  /* Set necessary inputs based on options. */
+  if(p->forcereadstd) *std=1;
   if(p->upperlimit) *values=1;
-  if(p->spectrum)   *values=*std=1;
+  if(p->spectrum) *values=*std=1;
 
   /* Go over all the object columns. Note that the objects and clumps (if
-     the `--clumpcat' option is given) inputs are mandatory and it is not
+     the '--clumpcat' option is given) inputs are mandatory and it is not
      necessary to specify it here. */
   for(i=0; i<OCOL_NUMCOLS; ++i)
     if(p->oiflag[i])
@@ -786,12 +988,25 @@ ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
         case OCOL_SUM:                *values        = 1;          break;
         case OCOL_SUM_VAR:            *values = *std = 1;          break;
         case OCOL_MEDIAN:             *values        = 1;          break;
+        case OCOL_MAXIMUM:            *values        = 1;          break;
+        case OCOL_SIGCLIPNUM:         *values        = 1;          break;
+        case OCOL_SIGCLIPMEDIAN:      *values        = 1;          break;
+        case OCOL_SIGCLIPMEAN:        *values        = 1;          break;
+        case OCOL_SIGCLIPSTD:         *values        = 1;          break;
         case OCOL_VX:                 *values        = 1;          break;
         case OCOL_VY:                 *values        = 1;          break;
         case OCOL_VZ:                 *values        = 1;          break;
         case OCOL_VXX:                *values        = 1;          break;
         case OCOL_VYY:                *values        = 1;          break;
         case OCOL_VXY:                *values        = 1;          break;
+        case OCOL_MINVX:              *values        = 1;          break;
+        case OCOL_MAXVX:              *values        = 1;          break;
+        case OCOL_MINVY:              *values        = 1;          break;
+        case OCOL_MAXVY:              *values        = 1;          break;
+        case OCOL_MINVZ:              *values        = 1;          break;
+        case OCOL_MAXVZ:              *values        = 1;          break;
+        case OCOL_MINVNUM:            *values        = 1;          break;
+        case OCOL_MAXVNUM:            *values        = 1;          break;
         case OCOL_SUMSKY:             *sky           = 1;          break;
         case OCOL_SUMVAR:             *std           = 1;          break;
         case OCOL_SUMWHT:             *values        = 1;          break;
@@ -806,6 +1021,13 @@ ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
         case OCOL_UPPERLIMIT_S:       *values        = 1;          break;
         case OCOL_UPPERLIMIT_Q:       *values        = 1;          break;
         case OCOL_UPPERLIMIT_SKEW:    *values        = 1;          break;
+        case OCOL_HALFMAXNUM:         *values        = 1;          break;
+        case OCOL_HALFMAXSUM:         *values        = 1;          break;
+        case OCOL_HALFSUMNUM:         *values        = 1;          break;
+        case OCOL_FRACMAX1NUM:        *values        = 1;          break;
+        case OCOL_FRACMAX1SUM:        *values        = 1;          break;
+        case OCOL_FRACMAX2NUM:        *values        = 1;          break;
+        case OCOL_FRACMAX2SUM:        *values        = 1;          break;
         case OCOL_C_NUMALL:           /* Only clump labels.  */    break;
         case OCOL_C_NUM:              *values        = 1;          break;
         case OCOL_C_SUM:              *values        = 1;          break;
@@ -837,6 +1059,11 @@ ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
           case CCOL_SUM:              *values        = 1;          break;
           case CCOL_SUM_VAR:          *values = *std = 1;          break;
           case CCOL_MEDIAN:           *values        = 1;          break;
+          case CCOL_MAXIMUM:          *values        = 1;          break;
+          case CCOL_SIGCLIPNUM:       *values        = 1;          break;
+          case CCOL_SIGCLIPMEDIAN:    *values        = 1;          break;
+          case CCOL_SIGCLIPMEAN:      *values        = 1;          break;
+          case CCOL_SIGCLIPSTD:       *values        = 1;          break;
           case CCOL_RIV_NUM:          /* Only clump labels. */     break;
           case CCOL_RIV_SUM:          *values        = 1;          break;
           case CCOL_RIV_SUM_VAR:      *values = *std = 1;          break;
@@ -846,6 +1073,14 @@ ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
           case CCOL_VXX:              *values        = 1;          break;
           case CCOL_VYY:              *values        = 1;          break;
           case CCOL_VXY:              *values        = 1;          break;
+          case CCOL_MINVX:            *values        = 1;          break;
+          case CCOL_MINVY:            *values        = 1;          break;
+          case CCOL_MINVZ:            *values        = 1;          break;
+          case CCOL_MAXVX:            *values        = 1;          break;
+          case CCOL_MAXVY:            *values        = 1;          break;
+          case CCOL_MAXVZ:            *values        = 1;          break;
+          case CCOL_MINVNUM:          *values        = 1;          break;
+          case CCOL_MAXVNUM:          *values        = 1;          break;
           case CCOL_SUMSKY:           *sky           = 1;          break;
           case CCOL_SUMVAR:           *std           = 1;          break;
           case CCOL_SUMWHT:           *values        = 1;          break;
@@ -866,6 +1101,13 @@ ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
           case CCOL_UPPERLIMIT_S:     *values        = 1;          break;
           case CCOL_UPPERLIMIT_Q:     *values        = 1;          break;
           case CCOL_UPPERLIMIT_SKEW:  *values        = 1;          break;
+          case CCOL_HALFMAXNUM:       *values        = 1;          break;
+          case CCOL_HALFMAXSUM:       *values        = 1;          break;
+          case CCOL_HALFSUMNUM:       *values        = 1;          break;
+          case CCOL_FRACMAX1NUM:      *values        = 1;          break;
+          case CCOL_FRACMAX1SUM:      *values        = 1;          break;
+          case CCOL_FRACMAX2NUM:      *values        = 1;          break;
+          case CCOL_FRACMAX2SUM:      *values        = 1;          break;
           default:
             error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
                   "fix the problem. The code %zu is not a recognized "
@@ -890,8 +1132,8 @@ ui_preparation_check_size_read_tiles(struct mkcatalogparams *p,
   /* See if we should treat this dataset as tile values or not. */
   if( gal_dimension_is_different(p->objects, in) )
     {
-      /* The `tl' structure is initialized here. But this function may be
-         called multiple times. So, first check if the `tl' structure has
+      /* The 'tl' structure is initialized here. But this function may be
+         called multiple times. So, first check if the 'tl' structure has
          already been initialized and if so, don't repeat it. */
       if(tl->ndim==0)
         {
@@ -901,20 +1143,20 @@ ui_preparation_check_size_read_tiles(struct mkcatalogparams *p,
           gal_tile_full_permutation(tl);
         }
 
-      /* See if the size of the `in' dataset corresponds to the
+      /* See if the size of the 'in' dataset corresponds to the
          tessellation. */
       if(in->size!=tl->tottiles)
         error(EXIT_FAILURE, 0, "%s (hdu: %s): doesn't have the right "
               "size (%zu elements or pixels).\n\n"
-              "It must either be the same size as `%s' (hdu: `%s'), or "
+              "It must either be the same size as '%s' (hdu: '%s'), or "
               "it must have the same number of elements as the total "
               "number of tiles in the tessellation (%zu). In the latter "
               "case, each pixel is assumed to be a fixed value for a "
               "complete tile.\n\n"
-              "Run with `-P' to see the (tessellation) options/settings "
+              "Run with '-P' to see the (tessellation) options/settings "
               "and their values). For more information on tessellation in "
               "Gnuastro, please run the following command (use the arrow "
-              "keys for up and down and press `q' to return to the "
+              "keys for up and down and press 'q' to return to the "
               "command-line):\n\n"
               "    $ info gnuastro tessellation",
               filename, hdu, in->size, p->objectsfile, p->cp.hdu,
@@ -926,7 +1168,7 @@ ui_preparation_check_size_read_tiles(struct mkcatalogparams *p,
 
 
 
-/* Subtract `sky' from the input dataset depending on its size (it may be
+/* Subtract 'sky' from the input dataset depending on its size (it may be
    the whole array or a tile-values array).. */
 static void
 ui_subtract_sky(struct mkcatalogparams *p)
@@ -955,7 +1197,7 @@ ui_subtract_sky(struct mkcatalogparams *p)
           tile=&tl->tiles[tid];
 
           /* Subtract the Sky value from the input image. */
-          GAL_TILE_PARSE_OPERATE(tile, NULL, 0, 0, {*i-=skyarr[tid];});
+          GAL_TILE_PARSE_OPERATE(tile, p->values, 1, 0, {*o-=skyarr[tid];});
         }
     }
 
@@ -965,10 +1207,6 @@ ui_subtract_sky(struct mkcatalogparams *p)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
           "the problem. For some reason, the size doesn't match", __func__,
           PACKAGE_BUGREPORT);
-
-  /* Inform the user that this operation is done (if necessary). */
-  if(!p->cp.quiet)
-    printf("  - Sky subtracted from input values.\n");
 }
 
 
@@ -995,9 +1233,9 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
       if(p->valueshdu==NULL)
         error(EXIT_FAILURE, 0, "%s: no HDU/extension provided for the "
               "VALUES dataset. Atleast one column needs this dataset. "
-              "Please use the `--valueshdu' option to give a specific HDU "
+              "Please use the '--valueshdu' option to give a specific HDU "
               "using its number (counting from zero) or name. If the "
-              "dataset is in another file, please use `--valuesfile' to "
+              "dataset is in another file, please use '--valuesfile' to "
               "give the filename", p->usedvaluesfile);
 
       /* Read the values dataset. */
@@ -1010,14 +1248,14 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
 
       /* Make sure it has the correct size. */
       if( gal_dimension_is_different(p->objects, p->values) )
-        error(EXIT_FAILURE, 0, "`%s' (hdu: %s) and `%s' (hdu: %s) have a"
+        error(EXIT_FAILURE, 0, "'%s' (hdu: %s) and '%s' (hdu: %s) have a"
               "different dimension/size", p->usedvaluesfile, p->valueshdu,
               p->objectsfile, p->cp.hdu);
 
-      /* Initially, `p->hasblank' was set based on the objects image, but
+      /* Initially, 'p->hasblank' was set based on the objects image, but
          it may happen that the objects image only has zero values for
          blank pixels, so we'll also do a check on the input image. */
-      p->hasblank = gal_blank_present(p->objects, 1);
+      p->hasblank = gal_blank_present(p->values, 1);
 
       /* Reset the units of the value-based columns if the input dataset
          has defined units. */
@@ -1025,10 +1263,12 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
         {
           for(column=p->objectcols; column!=NULL; column=column->next)
             if( !strcmp(column->unit, MKCATALOG_NO_UNIT) )
-              { free(column->unit); column->unit=p->values->unit; }
+              { free(column->unit);
+                gal_checkset_allocate_copy(p->values->unit, &column->unit); }
           for(column=p->clumpcols; column!=NULL; column=column->next)
             if( !strcmp(column->unit, MKCATALOG_NO_UNIT) )
-              { free(column->unit); column->unit=p->values->unit; }
+              { free(column->unit);
+                gal_checkset_allocate_copy(p->values->unit, &column->unit); }
         }
     }
 
@@ -1045,9 +1285,9 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
             error(EXIT_FAILURE, 0, "%s: no HDU/extension provided for the "
                   "SKY dataset. Atleast one column needs this dataset, or "
                   "you have asked to subtract the Sky from the values.\n\n"
-                  "Please use the `--skyhdu' option to give a specific HDU "
+                  "Please use the '--skyhdu' option to give a specific HDU "
                   "using its number (counting from zero) or name. If the "
-                  "dataset is in another file, please use `--skyin' to "
+                  "dataset is in another file, please use '--skyin' to "
                   "give the filename", p->usedskyfile);
 
           /* Read the Sky dataset. */
@@ -1077,9 +1317,9 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
         error(EXIT_FAILURE, 0, "%s: no HDU/extension provided for the "
               "SKY STANDARD DEVIATION dataset.\n\n"
               "Atleast one column needs this dataset. Please use the "
-              "`--stdhdu' option to give a specific HDU using its number "
+              "'--stdhdu' option to give a specific HDU using its number "
               "(counting from zero) or name. If the dataset is in another "
-              "file, please use `--stdin' to give the filename",
+              "file, please use '--stdin' to give the filename",
               p->usedstdfile);
 
       /* Read the Sky standard deviation image into memory. */
@@ -1104,7 +1344,7 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
       if(p->checkuplim[0] != GAL_BLANK_INT32
          && p->checkuplim[0] > p->numobjects)
         error(EXIT_FAILURE, 0, "%d (object identifier for the "
-              "`--checkuplim' option) is larger than the number of "
+              "'--checkuplim' option) is larger than the number of "
               "objects in the input labels (%zu)", p->checkuplim[0],
               p->numobjects);
 
@@ -1114,7 +1354,7 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
           /* Make sure the HDU for the mask image is given. */
           if(p->upmaskhdu==NULL)
             error(EXIT_FAILURE, 0, "%s: no HDU/extension provided, please "
-                  "use the `--upmaskhdu' option to specify a specific HDU "
+                  "use the '--upmaskhdu' option to specify a specific HDU "
                   "using its number (counting from zero) or name",
                   p->upmaskfile);
 
@@ -1128,7 +1368,7 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
 
           /* Check its size. */
           if( gal_dimension_is_different(p->objects, p->upmask) )
-            error(EXIT_FAILURE, 0, "`%s' (hdu: %s) and `%s' (hdu: %s) have a"
+            error(EXIT_FAILURE, 0, "'%s' (hdu: %s) and '%s' (hdu: %s) have a"
                   "different dimension/size", p->upmaskfile, p->upmaskhdu,
                   p->objectsfile, p->cp.hdu);
 
@@ -1166,41 +1406,49 @@ ui_preparations_read_inputs(struct mkcatalogparams *p)
 static void
 ui_preparations_read_keywords(struct mkcatalogparams *p)
 {
-  float minstd;
   gal_data_t *tmp;
+  float std, minstd;
   gal_data_t *keys=NULL;
 
-  /* When a Sky standard deviation dataset (not number) is given. */
-  if(p->std && p->std->size>1)
+  /* Set the counts-per-second correction. */
+  if(p->std)
     {
-      /* Read the keywords from the standard deviation image. */
-      keys=gal_data_array_calloc(2);
-      keys[0].next=&keys[1];
-      keys[0].name="MINSTD";              keys[1].name="MEDSTD";
-      keys[0].type=GAL_TYPE_FLOAT32;      keys[1].type=GAL_TYPE_FLOAT32;
-      keys[0].array=&minstd;              keys[1].array=&p->medstd;
-      gal_fits_key_read(p->usedstdfile, p->stdhdu, keys, 0, 0);
-
-      /* If the two keywords couldn't be read. We don't want to slow down
-         the user for the median (which needs sorting). So we'll just
-         calculate the minimum which is necessary for the `p->cpscorr'. */
-      if(keys[1].status) p->medstd=NAN;
-      if(keys[0].status)
+      if(p->std->size>1)
         {
-          /* Calculate the minimum STD. */
-          tmp=gal_statistics_minimum(p->std);
-          minstd=*((float *)(tmp->array));
-          gal_data_free(tmp);
+          /* Read the keywords from the standard deviation image. */
+          keys=gal_data_array_calloc(2);
+          keys[0].next=&keys[1];
+          keys[0].name="MINSTD";              keys[1].name="MEDSTD";
+          keys[0].type=GAL_TYPE_FLOAT32;      keys[1].type=GAL_TYPE_FLOAT32;
+          keys[0].array=&minstd;              keys[1].array=&p->medstd;
+          gal_fits_key_read(p->usedstdfile, p->stdhdu, keys, 0, 0);
 
-          /* If the units are in variance, then take the square root. */
-          if(p->variance) minstd=sqrt(minstd);
+          /* If the two keywords couldn't be read. We don't want to slow down
+             the user for the median (which needs sorting). So we'll just
+             calculate the minimum which is necessary for the 'p->cpscorr'. */
+          if(keys[1].status) p->medstd=NAN;
+          if(keys[0].status)
+            {
+              /* Calculate the minimum STD. */
+              tmp=gal_statistics_minimum(p->std);
+              minstd=*((float *)(tmp->array));
+              gal_data_free(tmp);
+
+              /* If the units are in variance, then take the square root. */
+              if(p->variance) minstd=sqrt(minstd);
+            }
+          p->cpscorr = minstd>1 ? 1.0f : minstd;
+
+          /* Clean up. */
+          keys[0].name=keys[1].name=NULL;
+          keys[0].array=keys[1].array=NULL;
+          gal_data_array_free(keys, 2, 1);
         }
-      p->cpscorr = minstd>1 ? 1.0f : minstd;
-
-      /* Clean up. */
-      keys[0].name=keys[1].name=NULL;
-      keys[0].array=keys[1].array=NULL;
-      gal_data_array_free(keys, 2, 1);
+      else
+        {
+          std=((float *)(p->std->array))[0];
+          p->cpscorr=std>1 ? 1.0f : std;
+        }
     }
 }
 
@@ -1223,7 +1471,7 @@ ui_preparations_both_names(struct mkcatalogparams *p)
     {
       /* When the user has specified a name, any possible directories in
          that name must be respected. So we have kept the actual
-         `keepinputdir' value in a temporary variable above and set it to 1
+         'keepinputdir' value in a temporary variable above and set it to 1
          only for this operation. Later we set it back to what it was. */
       p->cp.keepinputdir=1;
 
@@ -1234,8 +1482,8 @@ ui_preparations_both_names(struct mkcatalogparams *p)
       if( gal_fits_name_is_fits(p->cp.output) )
         {
           /* The output file name that the user has given supersedes the
-             `tableformat' argument. In this case, the filename is a FITS
-             file, so if `tableformat' is a text file, we will change it to
+             'tableformat' argument. In this case, the filename is a FITS
+             file, so if 'tableformat' is a text file, we will change it to
              a default binary FITS table. */
           if( p->cp.tableformat==GAL_TABLE_FORMAT_TXT )
             p->cp.tableformat=GAL_TABLE_FORMAT_BFITS;
@@ -1264,7 +1512,7 @@ ui_preparations_both_names(struct mkcatalogparams *p)
       p->clumpsout=p->objectsout;
     }
 
-  /* Revert `keepinputdir' to what it was. */
+  /* Revert 'keepinputdir' to what it was. */
   p->cp.keepinputdir=keepinputdir;
 }
 
@@ -1283,9 +1531,9 @@ ui_preparations_outnames(struct mkcatalogparams *p)
   if(p->cp.output)
     {
       /* If the output name is a FITS file, then
-         `gal_tableintern_check_fits_format' will see if the tableformat
+         'gal_tableintern_check_fits_format' will see if the tableformat
          corresponds to a FITS table or not. If the output name isn't a
-         FITS file then the current value of `p->cp.tableformat' is
+         FITS file then the current value of 'p->cp.tableformat' is
          irrelevant and it must be set to text. We use this value in the
          end to determine specific features. */
       if( gal_fits_name_is_fits(p->cp.output) )
@@ -1333,81 +1581,14 @@ ui_preparations_outnames(struct mkcatalogparams *p)
                                                     : p->objectsfile),
                                                   suffix);
 
-      /* Set `keepinputdir' to what it was before. */
+      /* Set 'keepinputdir' to what it was before. */
       p->cp.keepinputdir=keepinputdir;
     }
 
-  /* Just to avoid bugs (`p->cp.output' must no longer be used), we'll free
+  /* Just to avoid bugs ('p->cp.output' must no longer be used), we'll free
      it and set it to NULL.*/
   free(p->cp.output);
   p->cp.output=NULL;
-}
-
-
-
-
-
-/* To make the catalog processing more scalable (and later allow for
-   over-lappping regions), we will define a tile for each object. */
-void
-ui_one_tile_per_object(struct mkcatalogparams *p)
-{
-  size_t ndim=p->objects->ndim;
-
-  int32_t *l, *lf, *start;
-  size_t i, d, *min, *max, width=2*ndim;
-  size_t *minmax=gal_pointer_allocate(GAL_TYPE_SIZE_T,
-                                      width*p->numobjects, 0, __func__,
-                                      "minmax");
-  size_t *coord=gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__,
-                                      "coord");
-
-
-  /* Initialize the minimum and maximum position for each tile/object. So,
-     we'll initialize the minimum coordinates to the maximum possible
-     `size_t' value (in `GAL_BLANK_SIZE_T') and the maximums to zero. */
-  for(i=0;i<p->numobjects;++i)
-    for(d=0;d<ndim;++d)
-      {
-        minmax[ i * width +        d ] = GAL_BLANK_SIZE_T; /* Minimum. */
-        minmax[ i * width + ndim + d ] = 0;                /* Maximum. */
-      }
-
-  /* Go over the objects label image and correct the minimum and maximum
-     coordinates. */
-  start=p->objects->array;
-  lf=(l=p->objects->array)+p->objects->size;
-  do
-    if(*l>0)
-      {
-        /* Get the coordinates of this pixel. */
-        gal_dimension_index_to_coord(l-start, ndim, p->objects->dsize, coord);
-
-        /* Check to see this coordinate is the smallest/largest found so
-           far for this label. Note that labels start from 1, while indexs
-           here start from zero. */
-        min = &minmax[ (*l-1) * width        ];
-        max = &minmax[ (*l-1) * width + ndim ];
-        for(d=0;d<ndim;++d)
-          {
-            if( coord[d] < min[d] ) min[d] = coord[d];
-            if( coord[d] > max[d] ) max[d] = coord[d];
-          }
-      }
-  while(++l<lf);
-
-  /* For a check.
-  for(i=0;i<p->numobjects;++i)
-    printf("%zu: (%zu, %zu) --> (%zu, %zu)\n", i+1, minmax[i*width],
-           minmax[i*width+1], minmax[i*width+2], minmax[i*width+3]);
-  */
-
-  /* Make the tiles. */
-  p->tiles=gal_tile_series_from_minmax(p->objects, minmax, p->numobjects);
-
-  /* Clean up. */
-  free(coord);
-  free(minmax);
 }
 
 
@@ -1434,12 +1615,12 @@ ui_preparations_spectrum_wcs(struct mkcatalogparams *p)
 
   /* A small sanity check. */
   if(p->objects->ndim!=3)
-    error(EXIT_FAILURE, 0, "%s (hdu %s) is a %zuD dataset, but `--spectrum' "
+    error(EXIT_FAILURE, 0, "%s (hdu %s) is a %zuD dataset, but '--spectrum' "
           "is currently only defined on 3D datasets", p->objectsfile,
           p->cp.hdu, p->objects->ndim);
 
   /* Allocate space for the slice number as well as the X and Y positions
-     for WCS conversion. Note that the `z' axis is going to be converted to
+     for WCS conversion. Note that the 'z' axis is going to be converted to
      WCS later, so we'll just give it the basic information now.*/
   x=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numslices, NULL, 0,
                    p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
@@ -1478,15 +1659,15 @@ ui_preparations_spectrum_wcs(struct mkcatalogparams *p)
   else
     for(i=0;i<numslices;++i) ((uint32_t *)(p->specsliceinfo->array))[i]=i+1;
 
-  /* Set the slice WCS column information. Note that `z' is now the WCS
+  /* Set the slice WCS column information. Note that 'z' is now the WCS
      coordinate value of the third dimension, and to avoid wasting extra
      space (this column is repeated one very object's spectrum), we'll
      convert it to a 32-bit floating point dataset. */
   p->specsliceinfo->next=gal_data_copy_to_new_type(z, GAL_TYPE_FLOAT32);
 
   /* For a final check.
-  gal_table_write(p->specsliceinfo, NULL, GAL_TABLE_FORMAT_BFITS,
-                  "specsliceinfo.fits", "test-debug",0);
+  gal_table_write(p->specsliceinfo, NULL, NULL, GAL_TABLE_FORMAT_BFITS,
+                  "specsliceinfo.fits", "test-debug", 0);
   */
 
   /* Clean up. */
@@ -1511,19 +1692,19 @@ ui_preparations_upperlimit(struct mkcatalogparams *p)
     {
       for(i=0;p->uprange[i]!=-1;++i) ++c;
       if(c!=p->objects->ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to `--uprange', but input "
+        error(EXIT_FAILURE, 0, "%zu values given to '--uprange', but input "
               "has %zu dimensions", c, p->objects->ndim);
     }
 
   /* Check the number of random samples. */
   if( p->upnum < MKCATALOG_UPPERLIMIT_MINIMUM_NUM )
-    error(EXIT_FAILURE, 0, "%zu not acceptable as `--upnum'. The minimum "
+    error(EXIT_FAILURE, 0, "%zu not acceptable as '--upnum'. The minimum "
           "acceptable number of random samples for the upper limit "
           "magnitude is %d", p->upnum, MKCATALOG_UPPERLIMIT_MINIMUM_NUM);
 
   /* Check if sigma-clipping parameters have been given. */
   if( isnan(p->upsigmaclip[0]) )
-    error(EXIT_FAILURE, 0, "`--upsigmaclip' is mandatory for measuring "
+    error(EXIT_FAILURE, 0, "'--upsigmaclip' is mandatory for measuring "
           "the upper-limit magnitude. It takes two numbers separated by "
           "a comma. The first is the multiple of sigma and the second is "
           "the aborting criteria: <1: tolerance level, >1: number of "
@@ -1531,7 +1712,7 @@ ui_preparations_upperlimit(struct mkcatalogparams *p)
 
   /* Check if the sigma multiple is given. */
   if( isnan(p->upnsigma) )
-    error(EXIT_FAILURE, 0, "`--upnsigma' is mandatory for measuring the "
+    error(EXIT_FAILURE, 0, "'--upnsigma' is mandatory for measuring the "
           "upperlimit magnitude. Its value is the multiple of final sigma "
           "that is reported as the upper-limit");
 
@@ -1557,7 +1738,7 @@ ui_preparations(struct mkcatalogparams *p)
   /* If no columns are requested, then inform the user. */
   if(p->columnids==NULL && p->spectrum==0)
     error(EXIT_FAILURE, 0, "no measurements requested! Please run again "
-          "with `--help' for the possible list of measurements");
+          "with '--help' for the possible list of measurements");
 
 
   /* Set the actual filenames to use. */
@@ -1585,10 +1766,6 @@ ui_preparations(struct mkcatalogparams *p)
   ui_preparations_outnames(p);
 
 
-  /* Make the tiles that cover each object. */
-  ui_one_tile_per_object(p);
-
-
   /* If a spectrum is requested, generate the two WCS columns. */
   if(p->spectrum)
     {
@@ -1599,7 +1776,7 @@ ui_preparations(struct mkcatalogparams *p)
 
   /* Allocate the reference random number generator and seed values. It
      will be cloned once for every thread. If the user hasn't called
-     `envseed', then we want it to be different for every run, so we need
+     'envseed', then we want it to be different for every run, so we need
      to re-set the seed. */
   if(p->upperlimit) ui_preparations_upperlimit(p);
 
@@ -1612,7 +1789,7 @@ ui_preparations(struct mkcatalogparams *p)
      separately (and not using the actual output columns that have the same
      values), because playing with the output columns can cause bad
      bugs. If the user wants performance, they are encouraged to run
-     MakeCatalog with `--noclumpsort' and avoid the whole process all
+     MakeCatalog with '--noclumpsort' and avoid the whole process all
      together. */
   if(p->clumps && !p->noclumpsort && p->cp.numthreads>1)
     {
@@ -1654,9 +1831,9 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct mkcatalogparams *p)
   struct gal_options_common_params *cp=&p->cp;
 
 
-  /* Include the parameters necessary for argp from this program (`args.h')
-     and for the common options to all Gnuastro (`commonopts.h'). We want
-     to directly put the pointers to the fields in `p' and `cp', so we are
+  /* Include the parameters necessary for argp from this program ('args.h')
+     and for the common options to all Gnuastro ('commonopts.h'). We want
+     to directly put the pointers to the fields in 'p' and 'cp', so we are
      simply including the header here to not have to use long macros in
      those headers which make them hard to read and modify. This also helps
      in having a clean environment: everything in those headers is only
@@ -1728,16 +1905,20 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct mkcatalogparams *p)
       if(p->subtractsky || p->sky)
         {
           if(p->sky->size==1)
-            printf("  - Sky: %g\n", *((float *)(p->sky->array)) );
+            printf("  - Sky: %g (single value for all pixels)\n",
+                   *((float *)(p->sky->array)) );
           else
             printf("  - Sky: %s (hdu: %s)\n", p->usedskyfile, p->skyhdu);
+          if(p->subtractsky)
+            printf("    - Sky has been subtracted from values internally.\n");
         }
 
       if(p->std)
         {
           tmp = p->variance ? "VAR" : "STD";
           if(p->std->size==1)
-            printf("  - Sky %s: %g\n", tmp, *((float *)(p->std->array)) );
+            printf("  - Sky %s: %g (single value for all pixels)\n", tmp,
+                   *((float *)(p->std->array)) );
           else
             printf("  - Sky %s: %s (hdu: %s)\n", tmp, p->usedstdfile,
                    p->stdhdu);
@@ -1825,7 +2006,11 @@ ui_free_report(struct mkcatalogparams *p, struct timeval *t1)
   gal_data_free(p->upmask);
   gal_data_free(p->clumps);
   gal_data_free(p->objects);
+  if(p->outlabs) free(p->outlabs);
+  gal_list_data_free(p->clumpcols);
+  gal_list_data_free(p->objectcols);
   gal_list_data_free(p->specsliceinfo);
+  if(p->outlabsinv) free(p->outlabsinv);
   if(p->upcheckout) free(p->upcheckout);
   gal_data_array_free(p->tiles, p->numobjects, 0);
 
@@ -1834,7 +2019,7 @@ ui_free_report(struct mkcatalogparams *p, struct timeval *t1)
     {
       /* Note that each element of the array is the first node in a list of
          datasets. So we can't free the first one with
-         `gal_list_data_free', we'll delete all the nodes after it in the
+         'gal_list_data_free', we'll delete all the nodes after it in the
          loop. */
       for(i=0;i<p->numobjects;++i)
         {
@@ -1847,7 +2032,7 @@ ui_free_report(struct mkcatalogparams *p, struct timeval *t1)
 
   /* If the Sky or its STD image were given in tiles, then we defined a
      tile structure to deal with them. The initialization of the tile
-     structure is checked with its `ndim' element. */
+     structure is checked with its 'ndim' element. */
   if(p->cp.tl.ndim) gal_tile_full_free_contents(&p->cp.tl);
 
   /* If an upper limit range warning is necessary, print it here. */
@@ -1861,7 +2046,7 @@ ui_free_report(struct mkcatalogparams *p, struct timeval *t1)
             "input is less than double their length. If the input is taken "
             "from a larger dataset, this issue can be solved by using a "
             "larger part of it. You can also run MakeCatalog with "
-            "`--checkuplim' to see the distribution for a special "
+            "'--checkuplim' to see the distribution for a special "
             "object or clump as a table and personally inspect its "
             "reliability. \n\n");
 

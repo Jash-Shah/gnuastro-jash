@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -59,10 +59,17 @@ gal_pointer_allocate(uint8_t type, size_t size, int clear,
                      const char *funcname, const char *varname);
 
 void *
-gal_pointer_allocate_mmap(uint8_t type, size_t size, int clear,
+gal_pointer_mmap_allocate(uint8_t type, size_t size, int clear,
                           char **filename, int quiet);
 
+void
+gal_pointer_mmap_free(char **mmapname, int quietmmap);
 
+void *
+gal_pointer_allocate_ram_or_mmap(uint8_t type, size_t size, int clear,
+                                 size_t minmapsize, char **mmapname,
+                                 int quietmmap, const char *funcname,
+                                 const char *varname);
 
 
 

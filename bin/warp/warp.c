@@ -5,7 +5,7 @@ Warp is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -31,6 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/polygon.h>
+#include <gnuastro/pointer.h>
 
 #include "main.h"
 #include "warp.h"
@@ -74,7 +75,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* Similar to `nearestint_halflower' but:
+/* Similar to 'nearestint_halflower' but:
 
    nearestint_halflower(0.5f) --> 0.0f;
  */
@@ -297,6 +298,7 @@ warp_preparations(struct warpparams *p)
   double is0=p->input->dsize[0], is1=p->input->dsize[1];
 
   double output[8], forarea[8];
+  double *matrix=p->matrix->array;
   double icrn[8]={0,0,0,0,0,0,0,0};
   size_t i, *extinds=p->extinds, dsize[2];
   double xmin=DBL_MAX, xmax=-DBL_MAX, ymin=DBL_MAX, ymax=-DBL_MAX;
@@ -304,17 +306,18 @@ warp_preparations(struct warpparams *p)
   double input[8]={ 0.5f, 0.5f,         is1+0.5f, 0.5f,
                     0.5f, is0+0.5f,     is1+0.5f, is0+0.5f };
 
-  /* Find the range of pixels of the input image. All the input
-     positions are moved to the negative by half a pixel since the
-     center of the pixel is an integer value.*/
+  /* Find the range of pixels of the input image. All the input positions
+     are moved to the negative by half a pixel since the center of the
+     pixel is an integer value.*/
   for(i=0;i<4;++i)
     {
-      mappoint(&input[i*2], (double *)(p->matrix->array), &output[i*2]);
+      mappoint(&input[i*2], matrix, &output[i*2]);
       if(output[i*2]<xmin)     xmin = output[i*2];
       if(output[i*2]>xmax)     xmax = output[i*2];
       if(output[i*2+1]<ymin)   ymin = output[i*2+1];
       if(output[i*2+1]>ymax)   ymax = output[i*2+1];
     }
+
   /* For a check:
   for(i=0;i<4;++i)
       printf("(%.3f, %.3f) --> (%.3f, %.3f)\n",
@@ -324,15 +327,26 @@ warp_preparations(struct warpparams *p)
          xmin, xmax, ymin, ymax);
   */
 
-  /* Set the final size of the image. The X axis is horizontal. The
-     reason we are using the halflower variation of `nearestint' for
-     the maximums is that these points are the farthest extremes of
-     the input image. If they are half a pixel value, they should
-     point to the pixel before. */
+  /* Set the final size of the image. The X axis is horizontal. The reason
+     we are using the halflower variation of 'nearestint' for the maximums
+     is that these points are the farthest extremes of the input image. If
+     they are half a pixel value, they should point to the pixel before. */
   dsize[1]=nearestint_halflower(xmax)-nearestint_halfhigher(xmin)+1;
   dsize[0]=nearestint_halflower(ymax)-nearestint_halfhigher(ymin)+1;
   p->outfpixval[0]=nearestint_halfhigher(xmin);
   p->outfpixval[1]=nearestint_halfhigher(ymin);
+
+  /* If we have translation, the 'dsize's and 'outfpixval's should be
+     corrected. Note that centeroncorner is also a translation operation,
+     but in that scenario, we don't want this feature! */
+  if( p->centeroncorner==0 && (matrix[2]!=0.0f || matrix[5]!=0.0f) )
+    {
+      dsize[1] += abs( (int)(matrix[2]) )+1; /* (int): avoid warnings. */
+      dsize[0] += abs( (int)(matrix[5]) )+1;
+      if(xmin>0) p->outfpixval[0]=0;
+      if(ymin>0) p->outfpixval[1]=0;
+    }
+
   /* For a check:
   printf("Wrapped:\n");
   printf("dsize [C]: (%zu, %zu)\n", dsize[0], dsize[1]);
@@ -362,7 +376,7 @@ warp_preparations(struct warpparams *p)
 
 
   /* Order the transformed output pixel. */
-  gal_polygon_ordered_corners(icrn, 4, p->ordinds);
+  gal_polygon_vertices_sort_convex(icrn, 4, p->ordinds);
 
 
   /* Find the area of the output pixel in units of the input pixel,
@@ -416,7 +430,7 @@ correct_wcs_save_output(struct warpparams *p)
   gal_fits_list_key_t *headers=NULL;
   double *crpix=wcs?wcs->crpix:NULL, *w=p->inwcsmatrix;
 
-  /* `tinv' is the 2 by 2 inverse matrix. Recall that `p->inverse' is 3 by
+  /* 'tinv' is the 2 by 2 inverse matrix. Recall that 'p->inverse' is 3 by
      3 to account for homogeneous coordinates. */
   double tinv[4]={p->inverse[0]/p->inverse[8], p->inverse[1]/p->inverse[8],
                   p->inverse[3]/p->inverse[8], p->inverse[4]/p->inverse[8]};
@@ -450,7 +464,7 @@ correct_wcs_save_output(struct warpparams *p)
 
       /* Due to floating point errors extremely small values of PC matrix
          can be set to zero and extremely small differences between PC1_1
-         and PC2_2 can be ignored. The reason for all the `fabs' functions
+         and PC2_2 can be ignored. The reason for all the 'fabs' functions
          is because the signs are usually different.*/
       if( fabs(wcs->pc[1])<ABSOLUTEFLTERROR ) wcs->pc[1]=0.0f;
       if( fabs(wcs->pc[2])<ABSOLUTEFLTERROR ) wcs->pc[2]=0.0f;
@@ -466,7 +480,7 @@ correct_wcs_save_output(struct warpparams *p)
       sprintf(&keyword[i*FLEN_KEYWORD], "WMTX%zu_%zu", i/3+1, i%3+1);
       gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64,
                                 &keyword[i*FLEN_KEYWORD], 0, &m[i], 0,
-                                "Warp matrix element value", 0, NULL);
+                                "Warp matrix element value", 0, NULL, 0);
     }
 
   /* Save the output into the proper type and write it. */
@@ -507,6 +521,7 @@ warp(struct warpparams *p)
 {
   int err;
   pthread_t t;          /* All thread ids saved in this, not used. */
+  char *mmapname;
   pthread_attr_t attr;
   pthread_barrier_t b;
   struct iwpparams *iwp;
@@ -527,7 +542,9 @@ warp(struct warpparams *p)
 
 
   /* Distribute the output pixels into the threads: */
-  gal_threads_dist_in_threads(p->output->size, nt, &indexs, &thrdcols);
+  mmapname=gal_threads_dist_in_threads(p->output->size, nt,
+                                       p->cp.minmapsize, p->cp.quietmmap,
+                                       &indexs, &thrdcols);
 
 
   /* Start the warp. */
@@ -569,10 +586,13 @@ warp(struct warpparams *p)
 
   /* Save the output. */
   correct_wcs_save_output(p);
+  if(!p->cp.quiet)
+    printf(" Output: %s\n", p->cp.output);
 
 
-  /* Free the allocated spaces: */
+  /* Free the allocated spaces, note that 'indexs' may be memory-mapped. */
   free(iwp);
-  free(indexs);
   gal_data_free(p->output);
+  if(mmapname) gal_pointer_mmap_free(&mmapname, p->cp.quietmmap);
+  else         free(indexs);
 }

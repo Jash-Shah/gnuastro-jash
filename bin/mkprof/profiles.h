@@ -5,7 +5,7 @@ MakeProfiles is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -25,6 +25,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 double
 profiles_radial_distance(struct mkonthread *mkp);
+
+double
+profiles_custom_table(struct mkonthread *mkp);
 
 double
 profiles_gaussian_total(double q);

@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -40,7 +40,11 @@ enum arithmetic_prog_operators
   ARITHMETIC_OP_CONNECTED_COMPONENTS,
   ARITHMETIC_OP_FILL_HOLES,
   ARITHMETIC_OP_INVERT,
+  ARITHMETIC_OP_INTERPOLATE_MINNGB,
+  ARITHMETIC_OP_INTERPOLATE_MAXNGB,
   ARITHMETIC_OP_INTERPOLATE_MEDIANNGB,
+  ARITHMETIC_OP_INTERPOLATE_MINOFREGION,
+  ARITHMETIC_OP_INTERPOLATE_MAXOFREGION,
   ARITHMETIC_OP_COLLAPSE_SUM,
   ARITHMETIC_OP_COLLAPSE_MIN,
   ARITHMETIC_OP_COLLAPSE_MAX,

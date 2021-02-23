@@ -5,7 +5,7 @@ MakeNoise is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -47,12 +47,12 @@ struct mknoiseparams
   double           sigma;    /* Total noise sigma (ignoring others).     */
   double    instrumental;    /* Standard deviation constants.            */
   double       zeropoint;    /* Zeropoint magnitude of image.            */
-  double  background_mag;    /* Background in magnitudes.                */
+  double      background;    /* Background in magnitudes.                */
+  uint8_t bgisbrightness;    /* Background is brightness, not magnitude. */
   uint8_t        envseed;    /* ==1, generate a random seed.             */
 
   /* Internal */
   gal_data_t      *input;    /* Input image data in double precision.    */
-  double      background;    /* Background in units of brightness.       */
   gsl_rng           *rng;    /* Main instance of random number generator.*/
   const char   *rng_name;    /* The type/name of the Random number gen.  */
   unsigned long rng_seed;    /* Seed of Random number generator.         */

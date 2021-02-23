@@ -5,7 +5,7 @@ MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -70,21 +70,36 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
    the FITS standard (fastest dimension is first). */
 enum objectcols
   {
-    OCOL_NUMALL,         /* Number of all pixels with this label.     */
-    OCOL_NUMALLXY,       /* Number of all pixels in first two dims.   */
-    OCOL_NUM,            /* Number of values used in this object.     */
+    OCOL_NUMALL,         /* Area/number of all pixels with this label.*/
+    OCOL_NUMALLXY,       /* Area/Number in first two dimensions.      */
+    OCOL_NUM,            /* Area/Number of values used in this object.*/
     OCOL_NUMXY,          /* Number of values in the first two dims.   */
     OCOL_SUM,            /* Sum of (value-sky) in object.             */
-    OCOL_SUM_VAR,        /* Varience of sum (for brightness error).   */
-    OCOL_MEDIAN,         /* Median of value in object.                */
+    OCOL_SUM_VAR,        /* Variance including values (not just sky). */
+    OCOL_MEDIAN,         /* Median of values in object.               */
+    OCOL_MAXIMUM,        /* Maximum value in object.                  */
+    OCOL_SIGCLIPNUM,     /* Sigma-clipped mean of this object.        */
+    OCOL_SIGCLIPSTD,     /* Sigma-clipped mean of this object.        */
+    OCOL_SIGCLIPMEAN,    /* Sigma-clipped mean of this object.        */
+    OCOL_SIGCLIPMEDIAN,  /* Sigma-clipped mean of this object.        */
     OCOL_VX,             /* Sum of (value-sky) * x.                   */
     OCOL_VY,             /* Sum of (value-sky) * y.                   */
     OCOL_VZ,             /* Sum of (value-sky) * z.                   */
     OCOL_VXX,            /* Sum of (value-sky) * x * x.               */
     OCOL_VYY,            /* Sum of (value-sky) * y * y.               */
     OCOL_VXY,            /* Sum of (value-sky) * x * y.               */
+    OCOL_MINVX,          /* X of minimum pixel in values file.        */
+    OCOL_MAXVX,          /* X of maximum pixel in values file.        */
+    OCOL_MINVY,          /* Y of minimum pixel in values file.        */
+    OCOL_MAXVY,          /* Y of maximum pixel in values file.        */
+    OCOL_MINVZ,          /* Z of minimum pixel in values file.        */
+    OCOL_MAXVZ,          /* Z of maximum pixel in values file.        */
+    OCOL_MINVNUM,        /* Number of pixels with minimum value.      */
+    OCOL_MAXVNUM,        /* Number of pixels with maximum value.      */
     OCOL_SUMSKY,         /* Sum of sky value on this object.          */
+    OCOL_NUMSKY,         /* Number of sky value on this object.       */
     OCOL_SUMVAR,         /* Sum of sky variance value on this object. */
+    OCOL_NUMVAR,         /* Number of sky value on this object.       */
     OCOL_SUMWHT,         /* Sum of positive image pixels.             */
     OCOL_NUMWHT,         /* Number of positive pixels used for wht.   */
     OCOL_GX,             /* Geometric center of object in X.          */
@@ -97,6 +112,13 @@ enum objectcols
     OCOL_UPPERLIMIT_S,   /* Upper limit one-sigma value.              */
     OCOL_UPPERLIMIT_Q,   /* Quantile of object in random distribution.*/
     OCOL_UPPERLIMIT_SKEW,/* (Mean-Median)/STD of random distribution. */
+    OCOL_HALFMAXNUM,     /* Area/Number of pixels above half of max.  */
+    OCOL_HALFMAXSUM,     /* Sum of pixels above half of max.          */
+    OCOL_HALFSUMNUM,     /* Area/Number containing half of total sum. */
+    OCOL_FRACMAX1NUM,    /* Area/Number containing frac of maximum.   */
+    OCOL_FRACMAX1SUM,    /* Sum containing frac of maximum.           */
+    OCOL_FRACMAX2NUM,    /* Area/Number containing frac of maximum.   */
+    OCOL_FRACMAX2SUM,    /* Sum containing frac of maximum.           */
     OCOL_C_NUMALL,       /* Value independent no. of pixels in clumps.*/
     OCOL_C_NUM,          /* Area of clumps in this object.            */
     OCOL_C_SUM,          /* Brightness in object clumps.              */
@@ -119,8 +141,13 @@ enum clumpcols
     CCOL_NUM,            /* Number of values used in clump.           */
     CCOL_NUMXY,          /* Number of values only in first two dims.  */
     CCOL_SUM,            /* River subtracted brightness.              */
-    CCOL_SUM_VAR,        /* Variance of sum (for brightness error).   */
+    CCOL_SUM_VAR,        /* Variance including values (not just sky). */
     CCOL_MEDIAN,         /* Median of values in clump.                */
+    CCOL_MAXIMUM,        /* Maximum value in clump.                   */
+    CCOL_SIGCLIPNUM,     /* Sigma-clipped mean of this clump.         */
+    CCOL_SIGCLIPSTD,     /* Sigma-clipped mean of this clump.         */
+    CCOL_SIGCLIPMEAN,    /* Sigma-clipped mean of this clump.         */
+    CCOL_SIGCLIPMEDIAN,  /* Sigma-clipped mean of this clump.         */
     CCOL_RIV_NUM,        /* Num river pixels around this clump.       */
     CCOL_RIV_SUM,        /* Sum of rivers around clump.               */
     CCOL_RIV_SUM_VAR,    /* Variance of sum (for error measurements). */
@@ -130,8 +157,18 @@ enum clumpcols
     CCOL_VXX,            /* Sum of flux*x*x of this clump.            */
     CCOL_VYY,            /* Sum of flux*y*y of this clump.            */
     CCOL_VXY,            /* Sum of flux*x*y of this clump.            */
-    CCOL_SUMSKY,         /* Sum of sky value on this object.          */
-    CCOL_SUMVAR,         /* Sum of sky variance value on this object. */
+    CCOL_MINVX,          /* X of minimum pixel in values array.       */
+    CCOL_MAXVX,          /* X of maximum pixel in values array.       */
+    CCOL_MINVY,          /* Y of minimum pixel in values array.       */
+    CCOL_MAXVY,          /* Y of maximum pixel in values array.       */
+    CCOL_MINVZ,          /* Z of minimum pixel in values array.       */
+    CCOL_MAXVZ,          /* Z of maximum pixel in values array.       */
+    CCOL_MINVNUM,        /* Number of pixels with minimum value.      */
+    CCOL_MAXVNUM,        /* Number of pixels with maximum value.      */
+    CCOL_SUMSKY,         /* Sum of sky value on this clump.           */
+    CCOL_NUMSKY,         /* Number of sky value on this clump.        */
+    CCOL_SUMVAR,         /* Sum of sky variance value on this clump.  */
+    CCOL_NUMVAR,         /* Number of sky variance value on this clump.*/
     CCOL_SUMWHT,         /* Sum of positive image pixels for wht.     */
     CCOL_NUMWHT,         /* Num of positive image pixels for wht.     */
     CCOL_GX,             /* Geometric center of clump in X.           */
@@ -150,6 +187,13 @@ enum clumpcols
     CCOL_UPPERLIMIT_S,   /* Upper limit one-sigma value.              */
     CCOL_UPPERLIMIT_Q,   /* Quantile of object in random distribution.*/
     CCOL_UPPERLIMIT_SKEW,/* (Mean-Median)/STD of random distribution. */
+    CCOL_HALFMAXNUM,     /* Area/Number of pixels above half of max.  */
+    CCOL_HALFMAXSUM,     /* Sum of pixels above half of max.          */
+    CCOL_HALFSUMNUM,     /* Area/Number containing half of total sum. */
+    CCOL_FRACMAX1NUM,    /* Area/Number containing frac of maximum.   */
+    CCOL_FRACMAX1SUM,    /* Sum containing frac of maximum.           */
+    CCOL_FRACMAX2NUM,    /* Area/Number containing frac of maximum.   */
+    CCOL_FRACMAX2SUM,    /* Sum containing frac of maximum.           */
 
     CCOL_NUMCOLS,        /* SHOULD BE LAST: total number of columns.  */
   };
@@ -180,10 +224,13 @@ struct mkcatalogparams
   uint8_t         noclumpsort;  /* Don't sort the clumps catalog.       */
   float             zeropoint;  /* Zero-point magnitude of object.      */
   uint8_t            variance;  /* Input STD file is actually variance. */
+  uint8_t        forcereadstd;  /* Read STD even if not needed.         */
   uint8_t         subtractsky;  /* ==1: subtract the Sky from values.   */
   float           sfmagnsigma;  /* Surface brightness multiple of sigma.*/
   float             sfmagarea;  /* Surface brightness area (arcsec^2).  */
   uint8_t            spectrum;  /* Object spectrum for 3D datasets.     */
+  uint8_t       inbetweenints;  /* Keep rows (integer ids) with no labels. */
+  double         sigmaclip[2];  /* Sigma clip column settings.          */
 
   char            *upmaskfile;  /* Name of upper limit mask file.       */
   char             *upmaskhdu;  /* HDU of upper limit mask file.        */
@@ -193,6 +240,8 @@ struct mkcatalogparams
   double       upsigmaclip[2];  /* Sigma clip to measure upper limit.   */
   float              upnsigma;  /* Multiple of sigma to define up-lim.  */
   int32_t       checkuplim[2];  /* Object & clump ID to check dist.     */
+
+  gal_data_t         *fracmax;  /* Fractions to use in --fracsumarea.   */
 
   /* Internal. */
   char           *relabclumps;  /* Name of new file for clump labels.   */
@@ -205,6 +254,8 @@ struct mkcatalogparams
   gal_data_t          *upmask;  /* Upper limit magnitude mask.          */
   float                medstd;  /* Median standard deviation value.     */
   float               cpscorr;  /* Counts-per-second correction.        */
+  int32_t            *outlabs;  /* Labels in output catalog (when necessary) */
+  int32_t         *outlabsinv;  /* Inverse of the 'outlabs' array.      */
   size_t           numobjects;  /* Number of object labels in image.    */
   float               clumpsn;  /* Clump S/N threshold.                 */
   size_t            numclumps;  /* Number of clumps in image.           */
@@ -228,6 +279,7 @@ struct mkcatalogparams
   size_t         *numclumps_c;  /* To sort the clumps table by Obj.ID.  */
   gal_data_t   *specsliceinfo;  /* Slice information for spectra.       */
   gal_data_t         *spectra;  /* Array of datasets containing spectra.*/
+  double        pixelarcsecsq;  /* Area of input's pixels in arcsec^2.  */
 
   char        *usedvaluesfile;  /* Ptr to final name used for values.   */
   char        *usedclumpsfile;  /* Ptr to final name used for clumps.   */

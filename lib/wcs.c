@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -32,16 +32,30 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <assert.h>
 
 #include <gsl/gsl_linalg.h>
+#include <wcslib/wcsmath.h>
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/tile.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/pointer.h>
 #include <gnuastro/dimension.h>
+#include <gnuastro/statistics.h>
 #include <gnuastro/permutation.h>
 
+#include <gnuastro-internal/checkset.h>
+
+#if GAL_CONFIG_HAVE_WCSLIB_DIS_H
+#include <wcslib/dis.h>
+#include <gnuastro-internal/wcsdistortion.h>
+#endif
 
 
+
+
+
+/* Static functions on for this file. */
+static void
+gal_wcs_to_cd(struct wcsprm *wcs);
 
 
 
@@ -50,6 +64,73 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /*************************************************************
  ***********               Read WCS                ***********
  *************************************************************/
+/* It may happen that both the PC+CDELT and CD matrices are present in a
+   file. But in some cases, they may not result in the same rotation
+   matrix. So we need to let the user know about this problem with the FITS
+   file, and as a default behavior, we'll disable the PC matrix (which also
+   needs a CDELT matrix (that may not have been written). */
+static void
+wcs_read_correct_pc_cd(struct wcsprm *wcs)
+{
+  int removepc=0;
+  size_t i, j, naxis=wcs->naxis;
+  double *cdfrompc=gal_pointer_allocate(GAL_TYPE_FLOAT64, naxis*naxis, 0,
+                                        __func__, "cdfrompc");
+
+  /* A small sanity check. */
+  if(wcs->cdelt==NULL)
+    error(EXIT_FAILURE, 0, "%s: the WCS structure has no 'cdelt' array, "
+          "please contact us at %s to see what the problem is", __func__,
+          PACKAGE_BUGREPORT);
+
+  /* Multiply the PC matrix with the CDELT matrix. */
+  for(i=0;i<naxis;++i)
+    for(j=0;j<naxis;++j)
+      cdfrompc[i*naxis+j] = wcs->cdelt[i] * wcs->pc[i*naxis+j];
+
+  /* Make sure the file's CD matrix is the same as the CD matrix that is
+     derived from the PC+CDELT matrix above. We'll divide the difference by
+     the samller value and if the result is larger than 1e-6, then we'll
+     consider it different. */
+  for(i=0;i<naxis*naxis;++i)
+    if( fabs( wcs->cd[i] - cdfrompc[i] )
+        / ( fabs(wcs->cd[i]) < fabs(cdfrompc[i])
+            ? fabs(wcs->cd[i])
+            : fabs(cdfrompc[i]) )
+        > 1e-5 )
+      { removepc=1; break; }
+
+  /* If the two matrices are different, then print the warning and remove
+     the PC+CDELT matrices to only keep the CD matrix. */
+  if(removepc)
+    {
+      /* Let the user know that there is a problem in the file. */
+      error(EXIT_SUCCESS, 0, "the WCS structure has both the PC matrix "
+            "and CD matrix. However, the two don't match and there is "
+            "no way to know which one was intended by the creator of "
+            "this file. THIS PROGRAM WILL ASSUME THE CD MATRIX AND "
+            "CONTINUE. BUT THIS MAY BE WRONG! To avoid confusion and "
+            "wrong results, its best to only use one of them in your "
+            "FITS file. You can use Gnuastro's 'astfits' program to "
+            "remove any that you want (please run 'info astfits' for "
+            "more). For example if you want to delete the PC matrix "
+            "you can use this command: 'astfits file.fits --delete=PC1_1 "
+            "--delete=PC1_2 --delete=PC2_1 --delete=PC2_2'");
+
+      /* Set the PC matrix to be equal to the CD matrix, and set the CDELTs
+         to 1. */
+      for(i=0;i<naxis;++i) wcs->cdelt[i] = 1.0f;
+      for(i=0;i<naxis*naxis;++i) wcs->pc[i] = wcs->cd[i];
+    }
+
+  /* Clean up. */
+  free(cdfrompc);
+}
+
+
+
+
+
 /* Read the WCS information from the header. Unfortunately, WCS lib is
    not thread safe, so it needs a mutex. In case you are not using
    multiple threads, just pass a NULL pointer as the mutex.
@@ -72,12 +153,18 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
                      int *nwcs)
 {
   /* Declaratins: */
+  int sumcheck;
+  size_t i, fulllen;
   int nkeys=0, status=0;
   struct wcsprm *wcs=NULL;
   char *fullheader, *to, *from;
+  int fixstatus[NWCSFIX]={0};/* For the various wcsfix checks.          */
   int relax    = WCSHDR_all; /* Macro: use all informal WCS extensions. */
   int ctrl     = 0;          /* Don't report why a keyword wasn't used. */
   int nreject  = 0;          /* Number of keywords rejected for syntax. */
+  int fixctrl  = 1;          /* Correct non-standard units in wcsfix.   */
+  void *fixnaxis = NULL;     /* For now disable cylfix() with this      */
+                             /* (because it depends on image size).     */
 
   /* CFITSIO function: */
   if( fits_hdr2str(fptr, 1, NULL, 0, &fullheader, &nkeys, &status) )
@@ -113,7 +200,6 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
       /*******************************************************/
     }
 
-
   /* WCSlib function to parse the FITS headers. */
   status=wcspih(fullheader, nkeys, relax, ctrl, &nreject, nwcs, &wcs);
   if(status)
@@ -124,14 +210,45 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
               status, wcs_errmsg[status]);
       wcs=NULL; *nwcs=0;
     }
-  if (fits_free_memory(fullheader, &status) )
-    gal_fits_io_error(status, "problem in fitsarrayvv.c for freeing "
-                           "the memory used to keep all the headers");
-
 
   /* Set the internal structure: */
   if(wcs)
     {
+      /* It may happen that the WCS-related keyword values are stored as
+         strings (they have single-quotes around them). In this case,
+         WCSLIB will read the CRPIX and CRVAL values as zero. When this
+         happens do a small check and abort, while informing the user about
+         the problem. */
+      sumcheck=0;
+      for(i=0;i<wcs->naxis;++i)
+        {sumcheck += (wcs->crval[i]==0.0f) + (wcs->crpix[i]==0.0f);}
+      if(sumcheck==wcs->naxis*2)
+        {
+          /* We only care about the first set of characters in each
+             80-character row, so we don't need to parse the last few
+             characters anyway. */
+          fulllen=strlen(fullheader)-12;
+          for(i=0;i<fulllen;++i)
+            if( strncmp(fullheader+i, "CRVAL1  = '", 11) == 0 )
+              fprintf(stderr, "WARNING: WCS Keyword values are not "
+                      "numbers.\n\n"
+                      "WARNING: The values to the WCS-related keywords are "
+                      "enclosed in single-quotes. In the FITS standard "
+                      "this is how string values are stored, therefore "
+                      "WCSLIB is unable to read them AND WILL PUT ZERO IN "
+                      "THEIR PLACE (creating a wrong WCS in the output). "
+                      "Please update the respective keywords of the input "
+                      "to be numbers (see next line).\n\n"
+                      "WARNING: You can do this with Gnuastro's 'astfits' "
+                      "program and the '--update' option. The minimal WCS "
+                      "keywords that need a numerical value are: 'CRVAL1', "
+                      "'CRVAL2', 'CRPIX1', 'CRPIX2', 'EQUINOX' and "
+                      "'CD%%_%%' (or 'PC%%_%%', where the %% are integers), "
+                      "please see the FITS standard, and inspect your FITS "
+                      "file to identify the full set of keywords that you "
+                      "need correct (for example PV%%_%% keywords).\n\n");
+        }
+
       /* CTYPE is a mandatory WCS keyword, so if it hasn't been given (its
          '\0'), then the headers didn't have a WCS structure. However,
          WCSLIB still fills in the basic information (for example the
@@ -144,6 +261,73 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
         }
       else
         {
+          /* For a check (we can't use 'wcsprt(wcs)' because this WCS isn't
+             yet initialized).
+          printf("flag: %d\n", wcs->flag);
+          printf("NAXIS: %d\n", wcs->naxis);
+          printf("CRPIX: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%g, ", wcs->crpix[i]); } printf("\n");
+          printf("PC: ");
+          for(i=0;i<wcs->naxis*wcs->naxis;++i)
+            { printf("%g, ", wcs->pc[i]); } printf("\n");
+          printf("CDELT: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%g, ", wcs->cdelt[i]);} printf("\n");
+          printf("CD: ");
+          for(i=0;i<wcs->naxis*wcs->naxis;++i)
+            { printf("%g, ", wcs->cd[i]); } printf("\n");
+          printf("CRVAL: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%g, ", wcs->crval[i]); } printf("\n");
+          printf("CUNIT: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%s, ", wcs->cunit[i]); } printf("\n");
+          printf("CTYPE: ");
+          for(i=0;i<wcs->naxis;++i)
+            { printf("%s, ", wcs->ctype[i]); } printf("\n");
+          printf("LONPOLE: %f\n", wcs->lonpole);
+          printf("LATPOLE: %f\n", wcs->latpole);
+          */
+
+          /* Some datasets may use 'angstroms' (not case-sensitive) in the
+             third dimension instead of the standard 'angstrom' (note the
+             differing 's'). In this case WCSLIB (atleast until version
+             7.3) will not recognize it. We will therefore manually remove
+             the 's' before feeding the WCS structure to WCSLIB. */
+          if( wcs->naxis==3
+              && strlen(wcs->cunit[2])==9
+              && !strncasecmp(wcs->cunit[2], "angstroms", 9) )
+            wcs->cunit[2][8]='\0';
+
+          /* Fix non-standard WCS features. */
+          if( wcsfix(fixctrl, fixnaxis, wcs, fixstatus) )
+            {
+              if(fixstatus[CDFIX])
+                error(0, 0, "%s: (warning) wcsfix status for cdfix: %d",
+                      __func__, fixstatus[CDFIX]);
+              if(fixstatus[DATFIX])
+                error(0, 0, "%s: (warning) wcsfix status for datfix: %d",
+                      __func__, fixstatus[DATFIX]);
+#if GAL_CONFIG_HAVE_WCSLIB_OBSFIX
+              if(fixstatus[OBSFIX])
+                error(0, 0, "%s: (warning) wcsfix status for obsfix: %d",
+                      __func__, fixstatus[OBSFIX]);
+#endif
+              if(fixstatus[UNITFIX])
+                error(0, 0, "%s: (warning) wcsfix status for unitfix: %d",
+                      __func__, fixstatus[UNITFIX]);
+              if(fixstatus[SPCFIX])
+                error(0, 0, "%s: (warning) wcsfix status for spcfix: %d",
+                      __func__, fixstatus[SPCFIX]);
+              if(fixstatus[CELFIX])
+                error(0, 0, "%s: (warning) wcsfix status for celfix: %d",
+                      __func__, fixstatus[CELFIX]);
+              if(fixstatus[CYLFIX])
+                error(0, 0, "%s: (warning) wcsfix status for cylfix: %d",
+                      __func__, fixstatus[CYLFIX]);
+            }
+
           /* Set the WCS structure. */
           status=wcsset(wcs);
           if(status)
@@ -156,19 +340,32 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
               wcs=NULL;
               *nwcs=0;
             }
+          /* A correctly useful WCS is present. */
           else
-            /* A correctly useful WCS is present. When no PC matrix
-               elements were present in the header, the default PC matrix
-               (a unity matrix) is used. In this case WCSLIB doesn't set
-               `altlin' (and gives it a value of 0). In Gnuastro, later on,
-               we might need to know the type of the matrix used, so in
-               such a case, we will set `altlin' to 1. */
-            if(wcs->altlin==0) wcs->altlin=1;
+            {
+              /* According to WCSLIB in discussing 'altlin': "If none of
+                 these bits are set the PCi_ja representation results, i.e.
+                 wcsprm::pc and wcsprm::cdelt will be used as given". In
+                 effect it will also set the PC matrix to unity. So we can
+                 safely set it to '1' here because some parts of Gnuastro
+                 will later look into this. */
+              if(wcs->altlin==0) wcs->altlin=1;
+
+              /* If both the PC and CD matrix have been given, the first
+                 two bits of 'altlin' will be '1'. We need to make sure
+                 they are the same matrix, and let the user know if they
+                 aren't. */
+              if( (wcs->altlin & 1) && (wcs->altlin & 2) )
+                wcs_read_correct_pc_cd(wcs);
+            }
         }
     }
 
-
-  /* Return the WCS structure. */
+  /* Clean up and return. */
+  status=0;
+  if (fits_free_memory(fullheader, &status) )
+    gal_fits_io_error(status, "problem in freeing the memory used to "
+                      "keep all the headers");
   return wcs;
 }
 
@@ -199,6 +396,470 @@ gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
   gal_fits_io_error(status, NULL);
   return wcs;
 }
+
+
+
+
+
+struct wcsprm *
+gal_wcs_create(double *crpix, double *crval, double *cdelt,
+               double *pc, char **cunit, char **ctype, size_t ndim)
+{
+  size_t i;
+  int status;
+  struct wcsprm *wcs;
+  double equinox=2000.0f;
+
+  /* Allocate the memory necessary for the wcsprm structure. */
+  errno=0;
+  wcs=malloc(sizeof *wcs);
+  if(wcs==NULL)
+    error(EXIT_FAILURE, errno, "%zu for wcs in preparewcs", sizeof *wcs);
+
+  /* Initialize the structure (allocate all its internal arrays). */
+  wcs->flag=-1;
+  if( (status=wcsini(1, ndim, wcs)) )
+    error(EXIT_FAILURE, 0, "wcsini error %d: %s",
+          status, wcs_errmsg[status]);
+
+  /* Fill in all the important WCS structure parameters. */
+  wcs->altlin  = 0x1;
+  wcs->equinox = equinox;
+  for(i=0;i<ndim;++i)
+    {
+      wcs->crpix[i] = crpix[i];
+      wcs->crval[i] = crval[i];
+      wcs->cdelt[i] = cdelt[i];
+      if(cunit[i]) strcpy(wcs->cunit[i], cunit[i]);
+      if(ctype[i]) strcpy(wcs->ctype[i], ctype[i]);
+    }
+  for(i=0;i<ndim*ndim;++i) wcs->pc[i]=pc[i];
+
+  /* Set up the wcs structure with the constants defined above. */
+  status=wcsset(wcs);
+  if(status)
+    error(EXIT_FAILURE, 0, "wcsset error %d: %s", status,
+          wcs_errmsg[status]);
+
+  /* Return the output WCS. */
+  return wcs;
+}
+
+
+
+
+
+/* Extract the dimension name from CTYPE. */
+char *
+gal_wcs_dimension_name(struct wcsprm *wcs, size_t dimension)
+{
+  size_t i;
+  char *out;
+
+  /* Make sure a WCS pointer actually exists. */
+  if(wcs==NULL) return NULL;
+
+  /* Make sure the requested dimension is not larger than the number of
+     dimensions in the WCS. */
+  if(dimension >= wcs->naxis) return NULL;
+
+  /* Make a copy of the CTYPE value and set the first occurance of '-' to
+     '\0', to avoid the projection type. */
+  gal_checkset_allocate_copy(wcs->ctype[dimension], &out);
+  for(i=0;i<strlen(out);++i) if(out[i]=='-') out[i]='\0';
+
+  /* Return the output array. */
+  return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************************************************************
+ ***********               Write WCS               ***********
+ *************************************************************/
+void
+gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
+{
+  char *wcsstr;
+  int tpvdist, status=0, nkeyrec;
+
+  /* Prepare the main rotation matrix. Note that for TPV distortion, WCSLIB
+     versions 7.3 and before couldn't deal with the CDELT keys, so to be
+     safe, in such cases, we'll remove the effect of CDELT in the
+     'gal_wcs_to_cd' function. */
+  tpvdist=wcs->lin.disseq && !strcmp(wcs->lin.disseq->dtype[1], "TPV");
+  if( tpvdist ) gal_wcs_to_cd(wcs);
+  else          gal_wcs_decompose_pc_cdelt(wcs);
+
+  /* Clean up small errors in the PC matrix and CDELT values. */
+  gal_wcs_clean_errors(wcs);
+
+  /* Convert the WCS information to text. */
+  status=wcshdo(WCSHDO_safe, wcs, &nkeyrec, &wcsstr);
+  if(status)
+    error(0, 0, "%s: WARNING: WCSLIB error, no WCS in output.\n"
+          "wcshdu ERROR %d: %s", __func__, status, wcs_errmsg[status]);
+  else
+    {
+      gal_fits_key_write_wcsstr(fptr, wcs, wcsstr, nkeyrec);
+      free(wcsstr);
+    }
+  status=0;
+
+   /* WCSLIB is going to write PC+CDELT keywords in any case. But when we
+      have a TPV distortion, it is cleaner to use a CD matrix. Also,
+      including and before version 7.3, WCSLIB wouldn't convert coordinates
+      properly if the PC matrix is used with the TPV distortion. So to help
+      users with WCSLIB 7.3 or earlier, we need to conver the PC matrix to
+      CD. 'gal_wcs_to_cd' function already made sure that CDELT=1, so
+      effectively the CD matrix and PC matrix are equivalent, we just need
+      to convert the keyword names and delete the CDELT keywords. Note that
+      zero-valued PC/CD elements may not be present, so we'll manually set
+      'status' to zero and not let CFITSIO crash.*/
+  if(wcs->altlin==2)
+    {
+      status=0; fits_modify_name(fptr, "PC1_1", "CD1_1", &status);
+      status=0; fits_modify_name(fptr, "PC1_2", "CD1_2", &status);
+      status=0; fits_modify_name(fptr, "PC2_1", "CD2_1", &status);
+      status=0; fits_modify_name(fptr, "PC2_2", "CD2_2", &status);
+      status=0; fits_delete_str(fptr, "CDELT1", &status);
+      status=0; fits_delete_str(fptr, "CDELT2", &status);
+      status=0;
+      fits_write_comment(fptr, "The CD matrix is used instead of the "
+                         "PC+CDELT due to conflicts with TPV distortion "
+                         "in WCSLIB 7.3 (released on 2020/06/03) and "
+                         "ealier. By default Gnuastro will write "
+                         "PC+CDELT matrices because the rotation (PC) and "
+                         "pixel-scale (CDELT) are separate; providing "
+                         "more physically relevant metadata for human "
+                         "readers (PC+CDELT is also the default format "
+                         "of WCSLIB).", &status);
+    }
+}
+
+
+
+
+
+void
+gal_wcs_write(struct wcsprm *wcs, char *filename,
+              char *extname, gal_fits_list_key_t *headers,
+              char *program_string)
+{
+  int status=0;
+  size_t ndim=0;
+  fitsfile *fptr;
+  long *naxes=NULL;
+
+  /* Small sanity checks */
+  if(wcs==NULL)
+    error(EXIT_FAILURE, 0, "%s: input WCS is NULL", __func__);
+  if( gal_fits_name_is_fits(filename)==0 )
+    error(EXIT_FAILURE, 0, "%s: not a FITS suffix", filename);
+
+  /* Open the file for writing */
+  fptr=gal_fits_open_to_write(filename);
+
+  /* Create the FITS file. */
+  fits_create_img(fptr, gal_fits_type_to_bitpix(GAL_TYPE_UINT8),
+                  ndim, naxes, &status);
+  gal_fits_io_error(status, NULL);
+
+  /* Remove the two comment lines put by CFITSIO. Note that in some cases,
+     it might not exist. When this happens, the status value will be
+     non-zero. We don't care about this error, so to be safe, we will just
+     reset the status variable after these calls. */
+  fits_delete_key(fptr, "COMMENT", &status);
+  fits_delete_key(fptr, "COMMENT", &status);
+  status=0;
+
+  /* If an extension name was requested, add it. */
+  if(extname)
+    fits_write_key(fptr, TSTRING, "EXTNAME", extname, "", &status);
+
+  /* Write the WCS structure. */
+  gal_wcs_write_in_fitsptr(fptr, wcs);
+
+  /* Write all the headers and the version information. */
+  gal_fits_key_write_version_in_ptr(&headers, program_string, fptr);
+
+  /* Close the FITS file. */
+  fits_close_file(fptr, &status);
+  gal_fits_io_error(status, NULL);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************************************************************
+ ***********              Distortions              ***********
+ *************************************************************/
+int
+gal_wcs_distortion_from_string(char *distortion)
+{
+  if(      !strcmp(distortion,"TPD") ) return GAL_WCS_DISTORTION_TPD;
+  else if( !strcmp(distortion,"SIP") ) return GAL_WCS_DISTORTION_SIP;
+  else if( !strcmp(distortion,"TPV") ) return GAL_WCS_DISTORTION_TPV;
+  else if( !strcmp(distortion,"DSS") ) return GAL_WCS_DISTORTION_DSS;
+  else if( !strcmp(distortion,"WAT") ) return GAL_WCS_DISTORTION_WAT;
+  else
+    error(EXIT_FAILURE, 0, "WCS distortion name '%s' not recognized, "
+          "currently recognized names are 'TPD', 'SIP', 'TPV', 'DSS' and "
+          "'WAT'", distortion);
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return GAL_WCS_DISTORTION_INVALID;
+}
+
+
+
+
+
+char *
+gal_wcs_distortion_to_string(int distortion)
+{
+  /* Return the proper literal string. */
+  switch(distortion)
+    {
+    case GAL_WCS_DISTORTION_TPD: return "TPD";
+    case GAL_WCS_DISTORTION_SIP: return "SIP";
+    case GAL_WCS_DISTORTION_TPV: return "TPV";
+    case GAL_WCS_DISTORTION_DSS: return "DSS";
+    case GAL_WCS_DISTORTION_WAT: return "WAT";
+    default:
+      error(EXIT_FAILURE, 0, "WCS distortion id '%d' isn't recognized",
+            distortion);
+    }
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return NULL;
+}
+
+
+
+
+
+/* Check the type of distortion present and return the appropriate
+   integer based on `enum gal_wcs_distortion`.
+
+   Parameters:
+    struct wcsprm *wcs - The wcs parameters of the fits file.
+
+   Return:
+    int out_distortion - The type of distortion present. */
+int
+gal_wcs_distortion_identify(struct wcsprm *wcs)
+{
+#if GAL_CONFIG_HAVE_WCSLIB_DIS_H
+  struct disprm *dispre=NULL;
+  struct disprm *disseq=NULL;
+
+  /* Small sanity check. */
+  if(wcs==NULL) return GAL_WCS_DISTORTION_INVALID;
+
+  /* To help in reading. */
+  disseq=wcs->lin.disseq;
+  dispre=wcs->lin.dispre;
+
+  /* Check if distortion present. */
+  if( disseq==NULL && dispre==NULL ) return GAL_WCS_DISTORTION_INVALID;
+
+  /* Check the type of distortion.
+
+     As mentioned in the WCS paper IV section 2.4.2 available at
+     https://www.atnf.csiro.au/people/mcalabre/WCS/dcs_20040422.pdf, the
+     DPja and DQia keywords are used to record the parameters required by
+     the prior and sequent distortion functions respectively.
+
+     Now, as mentioned in dis.h file reference section in WCSLIB manual
+     given here
+     https://www.atnf.csiro.au/people/mcalabre/WCS/wcslib/dis_8h.html, TPV,
+     DSS, and WAT are sequent polynomial distortions, while SIP is prior
+     polynomial distortion. TPD is a superset of all these distortions and
+     hence can be used both as a prior and sequent distortion polynomial.
+
+     References and citations:
+     "Representations of distortions in FITS world coordinate systems",
+     Calabretta, M.R. et al. (WCS Paper IV, draft dated 2004/04/22)
+      */
+
+  if( dispre != NULL )
+    {
+      if(      !strcmp(*dispre->dtype, "SIP") ) return GAL_WCS_DISTORTION_SIP;
+      else if( !strcmp(*dispre->dtype, "TPD") ) return GAL_WCS_DISTORTION_TPD;
+      else
+        error(EXIT_FAILURE, 0, "%s: distortion '%s' isn't recognized in "
+              "the 'dispre' structure of the given 'wcsprm'", __func__,
+              *dispre->dtype);
+    }
+  else if( disseq != NULL )
+    {
+      if(      !strcmp(*disseq->dtype, "TPV") ) return GAL_WCS_DISTORTION_TPV;
+      else if( !strcmp(*disseq->dtype, "TPD") ) return GAL_WCS_DISTORTION_TPD;
+      else if( !strcmp(*disseq->dtype, "DSS") ) return GAL_WCS_DISTORTION_DSS;
+      else if( !strcmp(*disseq->dtype, "WAT") ) return GAL_WCS_DISTORTION_WAT;
+      else
+        error(EXIT_FAILURE, 0, "%s: distortion '%s' isn't recognized in "
+              "the 'disseq' structure of the given 'wcsprm'", __func__,
+              *dispre->dtype);
+    }
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to fix "
+        "the problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+#else
+  /* The 'wcslib/dis.h' isn't present. */
+  error(EXIT_FAILURE, 0, "%s: the installed version of WCSLIB on this "
+        "system doesn't have the 'dis.h' header! Thus Gnuastro can't do "
+        "distortion-related operations on the world coordinate system "
+        "(WCS). To use these features, please upgrade your version "
+        "of WCSLIB and re-build Gnuastro", __func__);
+#endif
+  return GAL_WCS_DISTORTION_INVALID;
+}
+
+
+
+
+
+
+
+
+
+
+/* Convert a given distrotion type to other.
+
+  Parameters:
+    struct wcsprm *wcs - The wcs parameters of the fits file.
+    int out_distortion - The desired output distortion.
+    size_t* fitsize    - The size of the array along each dimension.
+
+  Return:
+    struct wcsprm *outwcs - The transformed wcs parameters in the
+                            required distortion type. */
+struct wcsprm *
+gal_wcs_distortion_convert(struct wcsprm *inwcs, int outdisptype,
+                           size_t *fitsize)
+{
+#if GAL_CONFIG_HAVE_WCSLIB_DIS_H
+  struct wcsprm *outwcs=NULL;
+  int indisptype=gal_wcs_distortion_identify(inwcs);
+
+  /* Make sure we have a PC+CDELT structure in the input WCS. */
+  gal_wcs_decompose_pc_cdelt(inwcs);
+
+  /* If the input and output types are the same, just copy the input,
+     otherwise, do the conversion. */
+  if(indisptype==outdisptype) outwcs=gal_wcs_copy(inwcs);
+  else
+    switch(indisptype)
+      {
+      /* If there is no distortion in the input, just return a
+         newly-allocated copy. */
+      case GAL_WCS_DISTORTION_INVALID: outwcs=gal_wcs_copy(inwcs); break;
+
+      /* Input's distortion is SIP. */
+      case GAL_WCS_DISTORTION_SIP:
+        switch(outdisptype)
+          {
+          case GAL_WCS_DISTORTION_TPV:
+            outwcs=gal_wcsdistortion_sip_to_tpv(inwcs);
+            break;
+          default:
+            error(EXIT_FAILURE, 0, "%s: conversion from %s to %s is not yet "
+                  "supported. Please contact us at '%s'", __func__,
+                  gal_wcs_distortion_to_string(indisptype),
+                  gal_wcs_distortion_to_string(outdisptype),
+                  PACKAGE_BUGREPORT);
+              }
+        break;
+
+      /* Input's distortion is TPV. */
+      case GAL_WCS_DISTORTION_TPV:
+        switch(outdisptype)
+          {
+          case GAL_WCS_DISTORTION_SIP:
+            if(fitsize==NULL)
+              error(EXIT_FAILURE, 0, "%s: the size array is necessary "
+                    "for this conversion", __func__);
+            outwcs=gal_wcsdistortion_tpv_to_sip(inwcs, fitsize);
+            break;
+          default:
+            error(EXIT_FAILURE, 0, "%s: conversion from %s to %s is not yet "
+                  "supported. Please contact us at '%s'", __func__,
+                  gal_wcs_distortion_to_string(indisptype),
+                  gal_wcs_distortion_to_string(outdisptype),
+                  PACKAGE_BUGREPORT);
+          }
+        break;
+
+      /* Input's distortion is not yet supported.. */
+      case GAL_WCS_DISTORTION_TPD:
+      case GAL_WCS_DISTORTION_DSS:
+      case GAL_WCS_DISTORTION_WAT:
+        error(EXIT_FAILURE, 0, "%s: input %s distortion is not yet "
+              "supported. Please contact us at '%s'", __func__,
+              gal_wcs_distortion_to_string(indisptype),
+              PACKAGE_BUGREPORT);
+
+      /* A bug! This distortion is not yet recognized. */
+      default:
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+              "the problem. The identifier '%d' is not recognized as a "
+              "distortion", __func__, PACKAGE_BUGREPORT, indisptype);
+      }
+
+  /* Return the converted WCS. */
+  return outwcs;
+#else
+  /* The 'wcslib/dis.h' isn't present. */
+  error(EXIT_FAILURE, 0, "%s: the installed version of WCSLIB on this "
+        "system doesn't have the 'dis.h' header! Thus Gnuastro can't do "
+        "distortion-related operations on the world coordinate system "
+        "(WCS). To use these features, please upgrade your version "
+        "of WCSLIB and re-build Gnuastro", __func__);
+  return NULL;
+#endif
+}
+
 
 
 
@@ -235,7 +896,7 @@ gal_wcs_copy(struct wcsprm *wcs)
       errno=0;
       out=malloc(sizeof *out);
       if(out==NULL)
-        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `out'",
+        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'out'",
               __func__, sizeof *out);
 
       /* Initialize the allocated WCS structure. The WCSLIB manual says "On
@@ -259,7 +920,7 @@ gal_wcs_copy(struct wcsprm *wcs)
 
 
 /* Remove the algorithm part of CTYPE (anything after, and including, a
-   `-') if necessary. */
+   '-') if necessary. */
 static void
 wcs_ctype_noalgorithm(char *str)
 {
@@ -323,7 +984,7 @@ gal_wcs_remove_dimension(struct wcsprm *wcs, size_t fitsdim)
   for(i=0;i<naxis;++i)
     {
       /* The dimensions are in FITS order, but counting starts from 0, so
-         we'll have to subtract 1 from `fitsdim'. */
+         we'll have to subtract 1 from 'fitsdim'. */
       if(i>fitsdim-1)
         {
           /* 1-D arrays. */
@@ -380,17 +1041,17 @@ gal_wcs_remove_dimension(struct wcsprm *wcs, size_t fitsdim)
   naxis = wcs->naxis -= 1;
 
 
-  /* The `TAN' algorithm needs two dimensions. So we need to remove it when
+  /* The 'TAN' algorithm needs two dimensions. So we need to remove it when
      it can cause confusion. */
   switch(naxis)
     {
-    /* The `TAN' algorithm cannot be used for any single-dimensional
+    /* The 'TAN' algorithm cannot be used for any single-dimensional
        dataset. So we'll have to remove it if it exists. */
     case 1:
       wcs_ctype_noalgorithm(wcs->ctype[0]);
       break;
 
-    /* For any other dimensionality, `TAN' should be kept only when exactly
+    /* For any other dimensionality, 'TAN' should be kept only when exactly
        two dimensions have it. */
     default:
 
@@ -480,7 +1141,7 @@ gal_wcs_on_tile(gal_data_t *tile)
    final matrix irrespective of the type of storage in the WCS
    structure. Recall that the FITS standard has several methods to store
    the matrix, which is up to this function to account for and return the
-   final matrix. The output is an allocated DxD matrix where `D' is the
+   final matrix. The output is an allocated DxD matrix where 'D' is the
    number of dimensions. */
 double *
 gal_wcs_warp_matrix(struct wcsprm *wcs)
@@ -492,7 +1153,7 @@ gal_wcs_warp_matrix(struct wcsprm *wcs)
   errno=0;
   out=malloc(size*sizeof *out);
   if(out==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `out'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'out'",
           __func__, size*sizeof *out);
 
   /* Fill in the array. */
@@ -525,7 +1186,7 @@ gal_wcs_warp_matrix(struct wcsprm *wcs)
 
          Just note that the equations of the link above convert CROTAi to
          PC. But here we want the "final" matrix (after multiplication by
-         the `CDELT' values). So to speed things up, we won't bother
+         the 'CDELT' values). So to speed things up, we won't bother
          dividing and then multiplying by the same CDELT values in the
          off-diagonal elements. */
       crota2=wcs->crota[1];
@@ -545,63 +1206,158 @@ gal_wcs_warp_matrix(struct wcsprm *wcs)
 
 
 
+/* Clean up small/negligible errros that are clearly caused by measurement
+   errors in the PC and CDELT elements. */
+void
+gal_wcs_clean_errors(struct wcsprm *wcs)
+{
+  double crdcheck=NAN;
+  size_t i, crdnum=0, ndim=wcs->naxis;
+  double mean, crdsum=0, sum=0, min=FLT_MAX, max=0;
+  double *pc=wcs->pc, *cdelt=wcs->cdelt, *crder=wcs->crder;
 
-/* According to the FITS standard, in the `PCi_j' WCS formalism, the matrix
-   elements m_{ij} are encoded in the `PCi_j' keywords and the scale
-   factors are encoded in the `CDELTi' keywords. There is also another
-   formalism (the `CDi_j' formalism) which merges the two into one
+  /* First clean up CDELT: if the CRDER keyword is set, then we'll use that
+     as a reference, if not, we'll use the absolute floating point error
+     defined in 'GAL_WCS_FLTERR'. */
+  for(i=0; i<ndim; ++i)
+    {
+      sum+=cdelt[i];
+      if(cdelt[i]>max) max=cdelt[i];
+      if(cdelt[i]<min) min=cdelt[i];
+      if(crder[i]!=UNDEFINED) {++crdnum; crdsum=crder[i];}
+    }
+  mean=sum/ndim;
+  crdcheck = crdnum ? crdsum/crdnum : GAL_WCS_FLTERROR;
+  if( (max-min)/mean < crdcheck )
+    for(i=0; i<ndim; ++i)
+      cdelt[i]=mean;
+
+  /* Now clean up the PC elements. If the diagonal elements are too close
+     to 0, 1, or -1, set them to 0 or 1 or -1. */
+  if(pc)
+    for(i=0;i<ndim*ndim;++i)
+      {
+        if(      fabs(pc[i] -  0 ) < GAL_WCS_FLTERROR ) pc[i]=0;
+        else if( fabs(pc[i] -  1 ) < GAL_WCS_FLTERROR ) pc[i]=1;
+        else if( fabs(pc[i] - -1 ) < GAL_WCS_FLTERROR ) pc[i]=-1;
+      }
+}
+
+
+
+
+
+/* According to the FITS standard, in the 'PCi_j' WCS formalism, the matrix
+   elements m_{ij} are encoded in the 'PCi_j' keywords and the scale
+   factors are encoded in the 'CDELTi' keywords. There is also another
+   formalism (the 'CDi_j' formalism) which merges the two into one
    matrix.
 
-   However, WCSLIB's internal operations are apparently done in the `PCi_j'
+   However, WCSLIB's internal operations are apparently done in the 'PCi_j'
    formalism. So its outputs are also all in that format by default. When
-   the input is a `CDi_j', WCSLIB will still read the image into the
-   `PCi_j' formalism and the `CDELTi's are set to 1. This function will
-   decompose the two matrices to give a reasonable `CDELTi' and `PCi_j' in
+   the input is a 'CDi_j', WCSLIB will still read the image into the
+   'PCi_j' formalism and the 'CDELTi's are set to 1. This function will
+   decompose the two matrices to give a reasonable 'CDELTi' and 'PCi_j' in
    such cases. */
 void
 gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs)
 {
-  double *ps;
   size_t i, j;
+  double *ps, *warp;
 
   /* If there is on WCS, then don't do anything. */
   if(wcs==NULL) return;
 
-  /* The correction is only needed when the PC matrix is filled. */
-  if(wcs->pc)
+  /* Get the pixel scale and full warp matrix. */
+  warp=gal_wcs_warp_matrix(wcs);
+  ps=gal_wcs_pixel_scale(wcs);
+  if(ps==NULL) return;
+
+  /* For a check.
+  printf("pc: %g, %g\n", pc[0], pc[1]);
+  printf("warp: %g, %g, %g, %g\n", warp[0], warp[1],
+         warp[2], warp[3]);
+  */
+
+  /* Set the CDELTs. */
+  for(i=0; i<wcs->naxis; ++i)
+    wcs->cdelt[i] = ps[i];
+
+  /* Write the PC matrix. */
+  for(i=0;i<wcs->naxis;++i)
+    for(j=0;j<wcs->naxis;++j)
+      wcs->pc[i*wcs->naxis+j] = warp[i*wcs->naxis+j]/ps[i];
+
+  /* According to the 'wcslib/wcs.h' header: "In particular, wcsset()
+     resets wcsprm::cdelt to unity if CDi_ja is present (and no
+     PCi_ja).". So apparently, when the input is a 'CDi_j', it might expect
+     the 'CDELTi' elements to be 1.0. But we have changed that here, so we
+     will correct the 'altlin' element of the WCS structure to make sure
+     that WCSLIB only looks into the 'PCi_j' and 'CDELTi' and makes no
+     assumptioins about 'CDELTi'. */
+  wcs->altlin=1;
+
+  /* Clean up. */
+  free(ps);
+  free(warp);
+}
+
+
+
+
+
+/* Set the WCS structure to use the CD matrix. */
+static void
+gal_wcs_to_cd(struct wcsprm *wcs)
+{
+  size_t i, j, naxis;
+
+  /* If there is on WCS, then don't do anything. */
+  if(wcs==NULL) return;
+
+  /* 'wcs->altlin' identifies which rotation element is being used (PCi_j,
+     CDi_J or CROTAi). For PCi_j, the first bit will be 1 (==1), for CDi_j,
+     the second bit is 1 (==2) and for CROTAi, the third bit is 1 (==4). */
+  naxis=wcs->naxis;
+  switch(wcs->altlin)
     {
-      /* Get the pixel scale. */
-      ps=gal_wcs_pixel_scale(wcs);
-      if(ps==NULL) return;
+   /* PCi_j: Convert it to CDi_j. */
+    case 1:
 
-      /* The PC matrix and the CDELT elements might both contain scale
-         elements (during processing the scalings might be added only to PC
-         elements for example). So to be safe, we first multiply them into
-         one matrix. */
-      for(i=0;i<wcs->naxis;++i)
-        for(j=0;j<wcs->naxis;++j)
-          wcs->pc[i*wcs->naxis+j] *= wcs->cdelt[i];
+      /* Fill in the CD matrix and correct the PC and CDELT arrays. We have
+         to do this because ultimately, WCSLIB will be writing the PC and
+         CDELT keywords, even when 'altlin' is 2. So effectively we have to
+         multiply the PC and CDELT matrices, then set cdelt=1 in all
+         dimensions. This is actually how WCSLIB reads a FITS header with
+         only a CD matrix. */
+      for(i=0;i<naxis;++i)
+        {
+          for(j=0;j<naxis;++j)
+            wcs->cd[i*naxis+j] = wcs->pc[i*naxis+j] *= wcs->cdelt[i];
+          wcs->cdelt[i]=1;
+        }
 
-      /* Set the CDELTs. */
-      for(i=0; i<wcs->naxis; ++i)
-        wcs->cdelt[i] = ps[i];
+      /* Set the altlin to be the CD matrix and free the PC matrix. */
+      wcs->altlin=2;
+      break;
 
-      /* Correct the PCi_js */
-      for(i=0;i<wcs->naxis;++i)
-        for(j=0;j<wcs->naxis;++j)
-          wcs->pc[i*wcs->naxis+j] /= ps[i];
+    /* CDi_j: No need to do any conversion. */
+    case 2: return; break;
 
-      /* Clean up. */
-      free(ps);
+    /* CROTAi: not yet supported. */
+    case 4:
+      error(0, 0, "%s: WARNING: Conversion of 'CROTAi' keywords to the CD "
+            "matrix is not yet supported (for lack of time!), please "
+            "contact us at %s to add this feature. But this may not cause a "
+            "problem at all, so please check if the output's WCS is "
+            "reasonable", __func__, PACKAGE_BUGREPORT);
+      break;
 
-      /* According to the `wcslib/wcs.h' header: "In particular, wcsset()
-         resets wcsprm::cdelt to unity if CDi_ja is present (and no
-         PCi_ja).". So apparently, when the input is a `CDi_j', it might
-         expect the `CDELTi' elements to be 1.0. But we have changed that
-         here, so we will correct the `altlin' element of the WCS structure
-         to make sure that WCSLIB only looks into the `PCi_j' and `CDELTi'
-         and makes no assumptioins about `CDELTi'. */
-      wcs->altlin=1;
+    /* The value isn't supported! */
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+            "problem. The value %d for wcs->altlin isn't recognized",
+            __func__, PACKAGE_BUGREPORT, wcs->altlin);
     }
 }
 
@@ -655,17 +1411,15 @@ gal_wcs_pixel_scale(struct wcsprm *wcs)
   /* Only continue if a WCS exists. */
   if(wcs==NULL) return NULL;
 
+
   /* Write the full WCS rotation matrix into an array, irrespective of what
-     style it was stored in the wcsprm structure (`PCi_j' style or `CDi_j'
+     style it was stored in the wcsprm structure ('PCi_j' style or 'CDi_j'
      style). */
   a=gal_wcs_warp_matrix(wcs);
 
-  /* A small sanity check (this won't work on a singular matrix, can happen
-     in FITS WCSs!). In this case, we should return NULL.*/
-  n=wcs->naxis;
-  for(i=0;i<n;++i) {if(a[i*n+i]==0.0f) return NULL;}
 
   /* Now that everything is good, we can allocate the necessary memory. */
+  n=wcs->naxis;
   v=gal_pointer_allocate(GAL_TYPE_FLOAT64, n*n, 0, __func__, "v");
   permutation=gal_pointer_allocate(GAL_TYPE_SIZE_T, n, 0, __func__,
                                    "permutation");
@@ -700,26 +1454,29 @@ gal_wcs_pixel_scale(struct wcsprm *wcs)
           }
 
       /* Do the check, print warning and make correction. */
-      if(maxrow!=minrow && maxrow/minrow>1e4 && warning_printed==0)
+      if(maxrow!=minrow
+         && maxrow/minrow>1e5    /* The difference between elements is large */
+         && maxrow/minrow<GAL_WCS_FLTERROR
+         && warning_printed==0)
         {
           fprintf(stderr, "\nWARNING: The input WCS matrix (possibly taken "
-                  "from the FITS header keywords starting with `CD' or `PC') "
+                  "from the FITS header keywords starting with 'CD' or 'PC') "
                   "contains values with very different scales (more than "
-                  "10^4 different). This is probably due to floating point "
+                  "10^5 different). This is probably due to floating point "
                   "errors. These values might bias the pixel scale (and "
                   "subsequent) calculations.\n\n"
                   "You can see the respective matrix with one of the "
                   "following two commands (depending on how the FITS file "
                   "was written). Recall that if the desired extension/HDU "
-                  "isn't the default, you can choose it with the `--hdu' "
-                  "(or `-h') option before the `|' sign in these commands."
+                  "isn't the default, you can choose it with the '--hdu' "
+                  "(or '-h') option before the '|' sign in these commands."
                   "\n\n"
                   "    $ astfits file.fits -p | grep 'PC._.'\n"
                   "    $ astfits file.fits -p | grep 'CD._.'\n\n"
                   "You can delete the ones with obvious floating point "
                   "error values using the following command (assuming you "
-                  "want to delete `CD1_2' and `CD2_1'). Afterwards, you can "
-                  "rerun your original command to remove this warning "
+                  "want to delete 'CD1_2' and 'CD2_1'). Afterwards, you can "
+                  "re-run your original command to remove this warning "
                   "message and possibly correct errors that it might have "
                   "caused.\n\n"
                   "    $ astfits file.fits --delete=CD1_2 --delete=CD2_1\n\n"
@@ -744,10 +1501,10 @@ gal_wcs_pixel_scale(struct wcsprm *wcs)
   /* The raw pixel scale array produced from the singular value
      decomposition above is ordered based on values, not the input. So when
      the pixel scales in all the dimensions aren't the same (the units of
-     the dimensions differ), the order of the values in `pixelscale' will
+     the dimensions differ), the order of the values in 'pixelscale' will
      not necessarily correspond to the input's dimensions.
 
-     To correct the order, we can use the `V' matrix to find the original
+     To correct the order, we can use the 'V' matrix to find the original
      position of the pixel scale values and then use permutation to
      re-order it correspondingly. The column with the largest (absolute)
      value will be taken as the one to be used for each row. */
@@ -800,7 +1557,7 @@ gal_wcs_pixel_area_arcsec2(struct wcsprm *wcs)
   if(wcs->naxis!=2) return NAN;
 
   /* Check if the units of the axis are degrees or not. Currently all FITS
-     images I have worked with use `deg' for degrees. If other alternatives
+     images I have worked with use 'deg' for degrees. If other alternatives
      exist, we can add corrections later. */
   if( strcmp("deg", wcs->cunit[0]) || strcmp("deg", wcs->cunit[1]) )
     return NAN;
@@ -815,6 +1572,159 @@ gal_wcs_pixel_area_arcsec2(struct wcsprm *wcs)
   return out;
 }
 
+
+
+
+
+int
+gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
+                 double **ocenter, double **owidth, double **omin,
+                 double **omax)
+{
+  fitsfile *fptr;
+  struct wcsprm *wcs;
+  int nwcs=0, type, status=0;
+  char *name=NULL, *unit=NULL;
+  gal_data_t *tmp, *coords=NULL;
+  size_t i, ndim, *dsize=NULL, numrows;
+  double *x=NULL, *y=NULL, *z=NULL, *min, *max, *center, *width;
+
+  /* Read the desired WCS. */
+  wcs=gal_wcs_read(filename, hdu, 0, 0, &nwcs);
+
+  /* If a WCS doesn't exist, return NULL. */
+  if(wcs==NULL) return 0;
+
+  /* Make sure the input HDU is an image. */
+  if( gal_fits_hdu_format(filename, hdu) != IMAGE_HDU )
+    error(EXIT_FAILURE, 0, "%s (hdu %s): is not an image HDU, the "
+          "'--skycoverage' option only applies to image extensions",
+          filename, hdu);
+
+  /* Get the array information of the image. */
+  fptr=gal_fits_hdu_open(filename, hdu, READONLY);
+  gal_fits_img_info(fptr, &type, ondim, &dsize, &name, &unit);
+  fits_close_file(fptr, &status);
+  ndim=*ondim;
+
+  /* Abort if we have more than 3 dimensions. */
+  if(ndim==1 || ndim>3) return 0;
+
+  /* Allocate the output datasets. */
+  center=*ocenter=gal_pointer_allocate(GAL_TYPE_FLOAT64, ndim, 0, __func__,
+                                       "ocenter");
+  width=*owidth=gal_pointer_allocate(GAL_TYPE_FLOAT64, ndim, 0, __func__,
+                                     "owidth");
+  min=*omin=gal_pointer_allocate(GAL_TYPE_FLOAT64, ndim, 0, __func__,
+                                 "omin");
+  max=*omax=gal_pointer_allocate(GAL_TYPE_FLOAT64, ndim, 0, __func__,
+                                 "omax");
+
+  /* Now that we have the number of dimensions in the image, allocate the
+     space needed for the coordinates. */
+  numrows = (ndim==2) ? 5 : 9;
+  for(i=0;i<ndim;++i)
+    {
+      tmp=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &numrows, NULL, 0,
+                         -1, 1, NULL, NULL, NULL);
+      tmp->next=coords;
+      coords=tmp;
+    }
+
+  /* Fill in the coordinate arrays, Note that 'dsize' is ordered in C
+     dimensions, for the WCS conversion, we need to have the dimensions
+     ordered in FITS/Fortran order. */
+  switch(ndim)
+    {
+    case 2:
+      x=coords->array;  y=coords->next->array;
+      x[0] = 1;         y[0] = 1;
+      x[1] = dsize[1];  y[1] = 1;
+      x[2] = 1;         y[2] = dsize[0];
+      x[3] = dsize[1];  y[3] = dsize[0];
+      x[4] = dsize[1]/2 + (dsize[1]%2 ? 1 : 0.5f);
+      y[4] = dsize[0]/2 + (dsize[0]%2 ? 1 : 0.5f);
+      break;
+    case 3:
+      x=coords->array; y=coords->next->array; z=coords->next->next->array;
+      x[0] = 1;        y[0] = 1;              z[0]=1;
+      x[1] = dsize[2]; y[1] = 1;              z[1]=1;
+      x[2] = 1;        y[2] = dsize[1];       z[2]=1;
+      x[3] = dsize[2]; y[3] = dsize[1];       z[3]=1;
+      x[4] = 1;        y[4] = 1;              z[4]=dsize[0];
+      x[5] = dsize[2]; y[5] = 1;              z[5]=dsize[0];
+      x[6] = 1;        y[6] = dsize[1];       z[6]=dsize[0];
+      x[7] = dsize[2]; y[7] = dsize[1];       z[7]=dsize[0];
+      x[8] = dsize[2]/2 + (dsize[2]%2 ? 1 : 0.5f);
+      y[8] = dsize[1]/2 + (dsize[1]%2 ? 1 : 0.5f);
+      z[8] = dsize[0]/2 + (dsize[0]%2 ? 1 : 0.5f);
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+            "fix the problem. 'ndim' of %zu is not recognized.",
+            __func__, PACKAGE_BUGREPORT, ndim);
+    }
+
+  /* For a check:
+  printf("IMAGE COORDINATES:\n");
+  for(i=0;i<numrows;++i)
+    if(ndim==2)
+      printf("%-15g%-15g\n", x[i], y[i]);
+    else
+      printf("%-15g%-15g%-15g\n", x[i], y[i], z[i]);
+  */
+
+  /* Convert to the world coordinate system. */
+  gal_wcs_img_to_world(coords, wcs, 1);
+
+  /* For a check:
+  printf("\nWORLD COORDINATES:\n");
+  for(i=0;i<numrows;++i)
+    if(ndim==2)
+      printf("%-15g%-15g\n", x[i], y[i]);
+    else
+      printf("%-15g%-15g%-15g\n", x[i], y[i], z[i]);
+  */
+
+  /* Get the minimum and maximum values in each dimension. */
+  tmp=gal_statistics_minimum(coords);
+  min[0] = ((double *)(tmp->array))[0];      gal_data_free(tmp);
+  tmp=gal_statistics_maximum(coords);
+  max[0] = ((double *)(tmp->array))[0];      gal_data_free(tmp);
+  tmp=gal_statistics_minimum(coords->next);
+  min[1] = ((double *)(tmp->array))[0];      gal_data_free(tmp);
+  tmp=gal_statistics_maximum(coords->next);
+  max[1] = ((double *)(tmp->array))[0];      gal_data_free(tmp);
+  if(ndim>2)
+    {
+      tmp=gal_statistics_minimum(coords->next->next);
+      min[2] = ((double *)(tmp->array))[0];      gal_data_free(tmp);
+      tmp=gal_statistics_maximum(coords->next->next);
+      max[2] = ((double *)(tmp->array))[0];      gal_data_free(tmp);
+    }
+
+  /* Write the center and width. */
+  switch(ndim)
+    {
+    case 2:
+      center[0]=x[4];         center[1]=y[4];
+      width[0]=max[0]-min[0]; width[1]=max[1]-min[1];
+      break;
+    case 3:
+      center[0]=x[8];         center[1]=y[8];         center[2]=z[8];
+      width[0]=max[0]-min[0]; width[1]=max[1]-min[1]; width[2]=max[2]-min[2];
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to solve the "
+            "problem. The value %zu is not a recognized dimension", __func__,
+            PACKAGE_BUGREPORT, ndim);
+    }
+
+  /* Clean up and return success. */
+  free(dsize);
+  wcsfree(wcs);
+  return 1;
+}
 
 
 
@@ -858,7 +1768,7 @@ wcs_convert_sanity_check_alloc(gal_data_t *coords, struct wcsprm *wcs,
 
       /* Check the type of the input. */
       if(tmp->type!=GAL_TYPE_FLOAT64)
-        error(EXIT_FAILURE, 0, "%s: input coordinates must have `float64' "
+        error(EXIT_FAILURE, 0, "%s: input coordinates must have 'float64' "
               "type", func);
 
       /* Make sure it has a single dimension. */
@@ -904,7 +1814,7 @@ wcs_convert_sanity_check_alloc(gal_data_t *coords, struct wcsprm *wcs,
 
 
 /* In Gnuastro, each column (coordinate for WCS conversion) is treated as a
-   separate array in a `gal_data_t' that are linked through a linked
+   separate array in a 'gal_data_t' that are linked through a linked
    list. But in WCSLIB, the input is a single array (with multiple
    columns). This function will convert between the two. */
 static void
@@ -958,8 +1868,8 @@ wcs_convert_prepare_out(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
 /* Convert world coordinates to image coordinates given the input WCS
    structure. The input must be a linked list of data structures of float64
-   (`double') type. The top element of the linked list must be the first
-   coordinate and etc. If `inplace' is non-zero, then the output will be
+   ('double') type. The top element of the linked list must be the first
+   coordinate and etc. If 'inplace' is non-zero, then the output will be
    written into the input's allocated space. */
 gal_data_t *
 gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
@@ -973,12 +1883,13 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
                                  &world, &pixcrd, &imgcrd);
   nelem=wcs->naxis; /* We have to make sure a WCS is given first. */
 
+
   /* Write the values from the input list of separate columns into a single
      array (WCSLIB input). */
   wcs_convert_list_to_array(coords, world, stat, wcs->naxis, 1);
 
 
-  /* Use WCSLIB's wcsp2s for the conversion. */
+  /* Use WCSLIB's wcss2p for the conversion. */
   status=wcss2p(wcs, ncoord, nelem, world, phi, theta, imgcrd, pixcrd, stat);
   if(status)
     error(EXIT_FAILURE, 0, "%s: wcss2p ERROR %d: %s", __func__, status,
@@ -1021,7 +1932,7 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
 
 
-/* Similar to `gal_wcs_world_to_img'. */
+/* Similar to 'gal_wcs_world_to_img'. */
 gal_data_t *
 gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 {
@@ -1047,14 +1958,24 @@ gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
           wcs_errmsg[status]);
 
 
-  /* For a sanity check.
+  /* For a check.
   {
     size_t i;
-    printf("\n\n%s sanity check:\n", __func__);
+    printf("\n\n%s sanity check (%d dimensions):\n", __func__, nelem);
     for(i=0;i<coords->size;++i)
-      printf("(%g, %g, %g) --> (%g, %g, %g), [stat: %d]\n",
-             pixcrd[i*3], pixcrd[i*3+1], pixcrd[i*3+2],
-             world[i*3],  world[i*3+1],  world[i*3+2], stat[i]);
+      switch(nelem)
+        {
+        case 2:
+          printf("(%-10g %-10g) --> (%-10g %-10g), [stat: %d]\n",
+                 pixcrd[i*2], pixcrd[i*2+1],
+                 world[i*2],  world[i*2+1], stat[i]);
+          break;
+        case 3:
+          printf("(%g, %g, %g) --> (%g, %g, %g), [stat: %d]\n",
+                 pixcrd[i*3], pixcrd[i*3+1], pixcrd[i*3+2],
+                 world[i*3],  world[i*3+1],  world[i*3+2], stat[i]);
+          break;
+        }
   }
   */
 

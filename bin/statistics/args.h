@@ -5,7 +5,7 @@ Statistics is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -36,10 +36,10 @@ struct argp_option program_options[] =
       UI_KEY_COLUMN,
       "STR",
       0,
-      "Column name or number if input is a table.",
+      "Column number (counting from 1) or search string.",
       GAL_OPTIONS_GROUP_INPUT,
-      &p->column,
-      GAL_TYPE_STRING,
+      &p->columns,
+      GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
@@ -97,6 +97,8 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET,
       ui_read_quantile_range
     },
+
+
 
 
 
@@ -424,6 +426,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "histogram2d",
+      UI_KEY_HISTOGRAM2D,
+      "STR",
+      0,
+      "2D histogram (as 'table' or 'image').",
+      UI_GROUP_PARTICULAR_STAT,
+      &p->histogram2d,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "mirror",
       UI_KEY_MIRROR,
       "FLT",
@@ -467,7 +482,7 @@ struct argp_option program_options[] =
       UI_KEY_SIGMACLIP,
       0,
       0,
-      "Overall sigma-clipping (see `--sclipparams')",
+      "Overall sigma-clipping (see '--sclipparams')",
       UI_GROUP_PARTICULAR_STAT,
       &p->sigmaclip,
       GAL_OPTIONS_NO_ARG_TYPE,
@@ -503,7 +518,7 @@ struct argp_option program_options[] =
     {
       "kernel",
       UI_KEY_KERNEL,
-      "STR",
+      "FITS",
       0,
       "File name of kernel to convolve input.",
       UI_GROUP_SKY,
@@ -611,7 +626,7 @@ struct argp_option program_options[] =
       UI_KEY_CHECKSKY,
       0,
       0,
-      "Store steps in `_sky_steps.fits' file.",
+      "Store steps in '_sky_steps.fits' file.",
       UI_GROUP_SKY,
       &p->checksky,
       GAL_OPTIONS_NO_ARG_TYPE,
@@ -649,6 +664,19 @@ struct argp_option program_options[] =
       "No. of bins in histogram or CFP tables.",
       UI_GROUP_HIST_CFP,
       &p->numbins,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GT_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "numbins2",
+      UI_KEY_NUMBINS2,
+      "INT",
+      0,
+      "No. of bins in second-dim of 2D histogram.",
+      UI_GROUP_HIST_CFP,
+      &p->numbins2,
       GAL_TYPE_SIZE_T,
       GAL_OPTIONS_RANGE_GT_0,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -727,6 +755,45 @@ struct argp_option program_options[] =
       "Shift bins so one bin starts on this value.",
       UI_GROUP_HIST_CFP,
       &p->onebinstart,
+      GAL_TYPE_FLOAT32,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "greaterequal2",
+      UI_KEY_GREATEREQUAL2,
+      "FLT",
+      0,
+      "Upper range of 2nd dim in 2D histograms.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->greaterequal2,
+      GAL_TYPE_FLOAT32,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "lessthan2",
+      UI_KEY_LESSTHAN2,
+      "FLT",
+      0,
+      "Lower range of 2nd dim in 2D histograms.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->lessthan2,
+      GAL_TYPE_FLOAT32,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "onebinstart2",
+      UI_KEY_ONEBINSTART2,
+      "FLT",
+      0,
+      "Similar to --onebinstart, for 2D histogram",
+      UI_GROUP_HIST_CFP,
+      &p->onebinstart2,
       GAL_TYPE_FLOAT32,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,

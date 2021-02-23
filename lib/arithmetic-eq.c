@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -36,11 +36,11 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* `BINARY_SET_LT' is defined in `arithmetic-binary.h'. As you see there,
+/* 'BINARY_SET_LT' is defined in 'arithmetic-binary.h'. As you see there,
    this is a deep macro (calls other macros) to deal with different
    types. This allows efficiency in processing (after compilation), but
    compilation will be very slow. Therefore, for each operator we have
-   defined a separate `.c' file so they are built separately and when built
+   defined a separate '.c' file so they are built separately and when built
    in parallel can be much faster than having them all in a single file. */
 void
 arithmetic_eq(gal_data_t *l, gal_data_t *r, gal_data_t *o)

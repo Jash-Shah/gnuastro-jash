@@ -5,7 +5,7 @@ Table is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -41,8 +41,8 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b d f g j k l m p t u v x y z
-   A B C E G H J L O Q R X Y
+   a d f g j k l p t v x y z
+   A B E G H J O Q R X Y
 */
 enum option_keys_enum
 {
@@ -59,9 +59,21 @@ enum option_keys_enum
   UI_KEY_DESCENDING      = 'd',
   UI_KEY_HEAD            = 'H',
   UI_KEY_TAIL            = 't',
+  UI_KEY_NOBLANK         = 'b',
+  UI_KEY_CATCOLUMNS      = 'C',
+  UI_KEY_CATCOLUMNHDU    = 'u',
+  UI_KEY_CATCOLUMNFILE   = 'L',
+  UI_KEY_COLMETADATA     = 'm',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
+  UI_KEY_POLYGON         = 1000,
+  UI_KEY_ENVSEED,
+  UI_KEY_ROWLIMIT,
+  UI_KEY_ROWRANDOM,
+  UI_KEY_INPOLYGON,
+  UI_KEY_OUTPOLYGON,
+  UI_KEY_CATCOLUMNRAWNAME,
 };
 
 

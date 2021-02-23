@@ -4,7 +4,7 @@ Function to parse options and configuration file values.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -134,8 +134,8 @@ gal_options_abort_if_mandatory_missing(struct gal_options_common_params *cp)
           "options and configuration files, please see the \"Options\" and "
           "\"Configuration files\" section of the Gnuastro book "
           "respectively. You can read them on the command-line by running "
-          "the following commands (type `SPACE' to flip through pages, type "
-          "`Q' to return to the command-line):\n\n"
+          "the following commands (type 'SPACE' to flip through pages, type "
+          "'Q' to return to the command-line):\n\n"
           "  info gnuastro Options\n"
           "  info gnuastro \"Configuration files\"\n");
 
@@ -187,7 +187,7 @@ gal_options_check_version(struct argp_option *option, char *arg,
   /* First see if we are reading or writing. */
   if(lineno==-1)
     {
-      /* `PACKAGE_VERSION' is a static/literal string, but the pointer
+      /* 'PACKAGE_VERSION' is a static/literal string, but the pointer
          returned by this function will be freed, so we must allocate space
          for it.
 
@@ -205,15 +205,15 @@ gal_options_check_version(struct argp_option *option, char *arg,
     {
       if(arg==NULL)
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-              "the problem. The value to `arg' is NULL", __func__,
+              "the problem. The value to 'arg' is NULL", __func__,
               PACKAGE_BUGREPORT);
       else if( strcmp(arg, PACKAGE_VERSION) )
         {
           /* Print an error message and abort.  */
           error_at_line(EXIT_FAILURE, 0, filename, lineno, "version "
                         "mis-match: you are running GNU Astronomy Utilities "
-                        "(Gnuastro) version `%s'. However, the `onlyversion' "
-                        "option is set to version `%s'.\n\n"
+                        "(Gnuastro) version '%s'. However, the 'onlyversion' "
+                        "option is set to version '%s'.\n\n"
                         "This was probably done for reproducibility. "
                         "Therefore, manually removing, or changing, the "
                         "option value might produce errors or unexpected "
@@ -251,19 +251,19 @@ gal_options_print_citation(struct argp_option *option, char *arg,
   struct gal_options_common_params *cp=(struct gal_options_common_params *)pa;
   char *gnuastro_acknowledgement;
   char *gnuastro_bibtex=
-    "Gnuastro package/infrastructure\n"
-    "-------------------------------\n"
-    "  @ARTICLE{2015ApJS..220....1A,\n"
+    "First paper introducing Gnuastro\n"
+    "--------------------------------\n"
+    "  @ARTICLE{gnuastro,\n"
     "     author = {{Akhlaghi}, M. and {Ichikawa}, T.},\n"
     "      title = \"{Noise-based Detection and Segmentation of Nebulous "
     "Objects}\",\n"
-    "    journal = {\\apjs},\n"
+    "    journal = {ApJS},\n"
     "  archivePrefix = \"arXiv\",\n"
     "     eprint = {1505.01664},\n"
     "   primaryClass = \"astro-ph.IM\",\n"
-    "   keywords = {galaxies: irregular, galaxies: photometry, "
-    "galaxies: structure, methods: data analysis, "
-    "techniques: image processing, techniques: photometric},\n"
+    "   keywords = {galaxies: irregular, galaxies: photometry,\n"
+    "               galaxies: structure, methods: data analysis,\n"
+    "               techniques: image processing, techniques: photometric},\n"
     "       year = 2015,\n"
     "      month = sep,\n"
     "     volume = 220,\n"
@@ -362,15 +362,15 @@ gal_options_check_config(struct argp_option *option, char *arg,
       /* Activate the option and let the user know its activated. */
       (*(uint8_t *)(option->value)) = 1;
       printf("-----------------\n"
-             "Parsing of options AFTER `--checkconfig'.\n\n"
+             "Parsing of options AFTER '--checkconfig'.\n\n"
              "IMPORTANT: Any option that was parsed before encountering "
-             "`--checkconfig', on the command-line or in a configuration "
+             "'--checkconfig', on the command-line or in a configuration "
              "file, is not shown here. It is thus recommended to use this "
              "option before calling any other option.\n"
              "-----------------\n");
 
-      /* Print where this option was first seen: if `checkconfig' is called
-         within a configuration file, `filename!=NULL' and has an argument
+      /* Print where this option was first seen: if 'checkconfig' is called
+         within a configuration file, 'filename!=NULL' and has an argument
          (=="1"). But on the command-line, it has no argument or
          filename. */
       if(filename)
@@ -379,7 +379,7 @@ gal_options_check_config(struct argp_option *option, char *arg,
         {
           if(arg)
             error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
-                  "fix the problem. `filename==NULL', but `arg!=NULL'",
+                  "fix the problem. 'filename==NULL', but 'arg!=NULL'",
                   __func__, PACKAGE_BUGREPORT);
           else
             printf("Command-line:\n");
@@ -403,7 +403,7 @@ gal_options_read_type(struct argp_option *option, char *arg,
   char *str;
   if(lineno==-1)
     {
-      /* Note that `gal_data_type_as_string' returns a static string. But
+      /* Note that 'gal_data_type_as_string' returns a static string. But
          the output must be an allocated string so we can free it. */
       gal_checkset_allocate_copy(
            gal_type_name( *(uint8_t *)(option->value), 1), &str);
@@ -417,11 +417,11 @@ gal_options_read_type(struct argp_option *option, char *arg,
       /* Read the value. */
       if ( (*(uint8_t *)(option->value) = gal_type_from_name(arg) )
            == GAL_TYPE_INVALID )
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' (value to "
-                      "`%s' option) couldn't be recognized as a known "
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value to "
+                      "'%s' option) couldn't be recognized as a known "
                       "type.\n\nFor the full list of known types, please "
                       "run the following command (press SPACE key to go "
-                      "down, and `q' to return to the command-line):\n\n"
+                      "down, and 'q' to return to the command-line):\n\n"
                       "    $ info gnuastro \"Numeric data types\"\n",
                       arg, option->name);
 
@@ -442,7 +442,7 @@ gal_options_read_searchin(struct argp_option *option, char *arg,
   char *str;
   if(lineno==-1)
     {
-      /* Note that `gal_data_type_as_string' returns a static string. But
+      /* Note that 'gal_data_type_as_string' returns a static string. But
          the output must be an allocated string so we can free it. */
       gal_checkset_allocate_copy(
         gal_tableintern_searchin_as_string( *(uint8_t *)(option->value)),
@@ -457,11 +457,11 @@ gal_options_read_searchin(struct argp_option *option, char *arg,
       /* Read the value. */
       if((*(uint8_t *)(option->value)=gal_tableintern_string_to_searchin(arg))
          == GAL_TABLE_SEARCH_INVALID )
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' (value to "
-                      "`%s' option) couldn't be recognized as a known table "
-                      "search-in field (`name', `unit', or `comment').\n\n"
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value to "
+                      "'%s' option) couldn't be recognized as a known table "
+                      "search-in field ('name', 'unit', or 'comment').\n\n"
                       "For more explanation, please run the following "
-                      "command (press SPACE key to go down, and `q' to "
+                      "command (press SPACE key to go down, and 'q' to "
                       "return to the command-line):\n\n"
                       "    $ info gnuastro \"Selecting table columns\"\n",
                       arg, option->name);
@@ -483,7 +483,7 @@ gal_options_read_tableformat(struct argp_option *option, char *arg,
   char *str;
   if(lineno==-1)
     {
-      /* Note that `gal_data_type_as_string' returns a static string. But
+      /* Note that 'gal_data_type_as_string' returns a static string. But
          the output must be an allocated string so we can free it. */
       gal_checkset_allocate_copy(
         gal_tableintern_format_as_string( *(uint8_t *)(option->value)), &str);
@@ -497,10 +497,10 @@ gal_options_read_tableformat(struct argp_option *option, char *arg,
       /* Read the value. */
       if( (*(uint8_t *)(option->value)=gal_tableintern_string_to_format(arg) )
           ==GAL_TABLE_FORMAT_INVALID )
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' (value to "
-                      "`%s' option) couldn't be recognized as a known table "
-                      "format field (`txt', `fits-ascii', or "
-                      "`fits-binary').\n\n", arg, option->name);
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value to "
+                      "'%s' option) couldn't be recognized as a known table "
+                      "format field ('txt', 'fits-ascii', or "
+                      "'fits-binary').\n\n", arg, option->name);
 
       /* For no un-used variable warning. This function doesn't need the
          pointer.*/
@@ -521,10 +521,10 @@ gal_options_read_interpmetric(struct argp_option *option, char *arg,
     {
       switch(*(uint8_t *)(option->value))
         {
-        case GAL_INTERPOLATE_CLOSE_METRIC_RADIAL:
+        case GAL_INTERPOLATE_NEIGHBORS_METRIC_RADIAL:
           gal_checkset_allocate_copy("radial", &str);
           break;
-        case GAL_INTERPOLATE_CLOSE_METRIC_MANHATTAN:
+        case GAL_INTERPOLATE_NEIGHBORS_METRIC_MANHATTAN:
           gal_checkset_allocate_copy("manhattan", &str);
           break;
         default:
@@ -542,13 +542,13 @@ gal_options_read_interpmetric(struct argp_option *option, char *arg,
 
       /* Set the value. */
       if(       !strcmp(arg, "radial") )
-        *(uint8_t *)(option->value) = GAL_INTERPOLATE_CLOSE_METRIC_RADIAL;
+        *(uint8_t *)(option->value) = GAL_INTERPOLATE_NEIGHBORS_METRIC_RADIAL;
       else if ( !strcmp(arg, "manhattan") )
-        *(uint8_t *)(option->value) = GAL_INTERPOLATE_CLOSE_METRIC_MANHATTAN;
+        *(uint8_t *)(option->value) = GAL_INTERPOLATE_NEIGHBORS_METRIC_MANHATTAN;
       else
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "`%s' (value to "
-                      "`%s' option) isn't valid. Currently only `radial' "
-                      "and `manhattan' metrics are recognized for nearest "
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value to "
+                      "'%s' option) isn't valid. Currently only 'radial' "
+                      "and 'manhattan' metrics are recognized for nearest "
                       "neighbor interpolation", arg, option->name);
 
       /* For no un-used variable warning. This function doesn't need the
@@ -562,9 +562,9 @@ gal_options_read_interpmetric(struct argp_option *option, char *arg,
 
 
 /* The input to this function is a string of any number of numbers
-   separated by a comma (`,') and possibly containing fractions, for
-   example: `1,2/3, 4.95'. The output `gal_data_t' contains the array of
-   given values in `double' type. You can read the number from its `size'
+   separated by a comma (',') and possibly containing fractions, for
+   example: '1,2/3, 4.95'. The output 'gal_data_t' contains the array of
+   given values in 'double' type. You can read the number from its 'size'
    element. */
 gal_data_t *
 gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
@@ -576,7 +576,7 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
   double numerator=NAN, denominator=NAN, tmp;
 
   /* The nature of the arrays/numbers read here is very small, so since
-     `p->cp.minmapsize' might not have been read yet, we will set it to -1
+     'p->cp.minmapsize' might not have been read yet, we will set it to -1
      (largest size_t number), so the values are kept in memory. */
   int quietmmap=1;
   size_t minmapsize=-1;
@@ -601,7 +601,7 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
         case ':':
           if(isnan(numerator))
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "a number "
-                          "must be given before `,'. You have given: `%s'",
+                          "must be given before ','. You have given: '%s'",
                           string);
           gal_list_f64_add(&list, isnan(denominator)
                            ? numerator : numerator/denominator);
@@ -613,17 +613,17 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
         /* Divide two numbers. */
         case '/':
           if( isnan(numerator) || !isnan(denominator) )
-            error_at_line(EXIT_FAILURE, 0, filename, lineno, "`/' must "
+            error_at_line(EXIT_FAILURE, 0, filename, lineno, "'/' must "
                           "only be between two numbers and used for "
-                          "division. But you have given `%s'", string);
+                          "division. But you have given '%s'", string);
           ++c;
           break;
 
-        /* Extra dot is an error (cases like 2.5.5). Valid `.'s will be
-           read by `strtod'. */
+        /* Extra dot is an error (cases like 2.5.5). Valid '.'s will be
+           read by 'strtod'. */
         case '.':
-          error_at_line(EXIT_FAILURE, 0, filename, lineno, "extra `.' in "
-                        "`%s'", string);
+          error_at_line(EXIT_FAILURE, 0, filename, lineno, "extra '.' in "
+                        "'%s'", string);
           break;
 
         /* Read the number. */
@@ -633,8 +633,8 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
           tmp=strtod(c, &tailptr);
           if(tailptr==c)
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "the first "
-                          "part of `%s' couldn't be read as a number. This "
-                          "was part of `%s'", c, string);
+                          "part of '%s' couldn't be read as a number. This "
+                          "was part of '%s'", c, string);
 
           /* See if the number should be put in the numerator or
              denominator. */
@@ -646,13 +646,13 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
                                  "than two numbers in each element.");
             }
 
-          /* Set `c' to tailptr. */
+          /* Set 'c' to tailptr. */
           c=tailptr;
         }
     }
 
 
-  /* If the last number wasn't finished by a `,', add the read value to the
+  /* If the last number wasn't finished by a ',', add the read value to the
      list */
   if( !isnan(numerator) )
     {
@@ -694,10 +694,62 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
 
 
 
+gal_data_t *
+gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
+{
+  size_t num;
+  gal_data_t *out;
+  gal_list_str_t *list=NULL, *tll;
+  char *cp, *token, **strarr, delimiters[]=",:";
+
+  /* The nature of the arrays/numbers read here is very small, so since
+     'p->cp.minmapsize' might not have been read yet, we will set it to -1
+     (largest size_t number), so the values are kept in memory. */
+  int quietmmap=1;
+  size_t minmapsize=-1;
+
+  /* If we have an empty string, just return NULL. */
+  if(string==NULL || *string=='\0') return NULL;
+
+  /* Make a copy of the input string, and save the tokens */
+  gal_checkset_allocate_copy(string, &cp);
+  token=strtok(cp, delimiters);
+  gal_list_str_add(&list, token, 1);
+  while(token!=NULL)
+    {
+      token=strtok(NULL, delimiters);
+      if(token!=NULL)
+        gal_list_str_add(&list, token, 1);
+    }
+
+
+  /* Allocate the output dataset (array containing all the given
+     strings). */
+  num=gal_list_str_number(list);
+  out=gal_data_alloc(NULL, GAL_TYPE_STRING, 1, &num, NULL, 0,
+                     minmapsize, quietmmap, NULL, NULL, NULL);
+
+  /* Fill the output dataset. */
+  strarr=out->array;
+  for(tll=list;tll!=NULL;tll=tll->next)
+    strarr[--num]=tll->v;
+
+  /* Clean up and return. Note that we don't want to free the values in the
+     list, the elements in 'out->array' point to them and will later use
+     them.*/
+  free(cp);
+  gal_list_str_free(list, 0);
+  return out;
+}
+
+
+
+
+
 /* The input to this function is a string of any number of strings
-   separated by a comma (`,') for example: `a,abc,abcd'. The output
-   `gal_data_t' contains the array of given strings. You can read the
-   number of inputs from its `size' element. */
+   separated by a comma (',') for example: 'a,abc,abcd'. The output
+   'gal_data_t' contains the array of given strings. You can read the
+   number of inputs from its 'size' element. */
 gal_data_t *
 gal_options_parse_csv_strings_raw(char *string, char *filename, size_t lineno)
 {
@@ -708,7 +760,7 @@ gal_options_parse_csv_strings_raw(char *string, char *filename, size_t lineno)
 
 
   /* The nature of the arrays/numbers read here is very small, so since
-     `p->cp.minmapsize' might not have been read yet, we will set it to -1
+     'p->cp.minmapsize' might not have been read yet, we will set it to -1
      (largest size_t number), so the values are kept in memory. */
   int quietmmap=1;
   size_t minmapsize=-1;
@@ -723,15 +775,15 @@ gal_options_parse_csv_strings_raw(char *string, char *filename, size_t lineno)
         case ',':
           if(str==NULL)
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "a string "
-                          "must exist before the first `,'. You have "
-                          "given: `%s'", string);
+                          "must exist before the first ','. You have "
+                          "given: '%s'", string);
           *c='\0';
           gal_list_str_add(&list, str, 1);
           str=NULL;  /* Mark that the next character is the start */
           break;
 
         /* If the character isn't a coma, it is either in the middle of a
-           string at the start of it. If `str==NULL', then it is at the
+           string at the start of it. If 'str==NULL', then it is at the
            start. */
         default: if(str==NULL) str=c;
         }
@@ -779,10 +831,10 @@ gal_options_parse_csv_strings_raw(char *string, char *filename, size_t lineno)
 
 
 
-/* `arg' is the value given to an option. It contains multiple strings
-   separated by a comma (`,'). This function will parse `arg' and make a
-   `gal_data_t' array of strings from it. The output `gal_data_t' will be
-   put in `option->value'. */
+/* 'arg' is the value given to an option. It contains multiple strings
+   separated by a comma (','). This function will parse 'arg' and make a
+   'gal_data_t' array of strings from it. The output 'gal_data_t' will be
+   put in 'option->value'. */
 void *
 gal_options_parse_csv_strings(struct argp_option *option, char *arg,
                               char *filename, size_t lineno, void *junk)
@@ -846,6 +898,11 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
       /* If the option is already set, just return. */
       if(option->set) return NULL;
 
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Read the values. */
       values=gal_options_parse_csv_strings_raw(arg, filename, lineno);
 
@@ -859,10 +916,65 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
 
 
 
+/* Some options can be called multiple times on the command-line, but
+   within the program, all the values must be merged into one. For example
+   '--column=1 --column=2,3 --column=4,5,6'. In this example, the output
+   'gal_list_str_t' will have 3 nodes, but we actually want a list that has
+   6 nodes. */
+void
+gal_options_merge_list_of_csv(gal_list_str_t **list)
+{
+  size_t i;
+  gal_data_t *strs;
+  char *c, **strarr;
+  gal_list_str_t *tmp, *in=*list, *out=NULL;
+
+  /* Go over each input and add it to the list. */
+  for(tmp=in; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Remove any possibly commented new-line where we have a backslash
+         followed by a new-line character (replace the two characters with
+         two single space characters). This can happen with options have
+         have longer scripts and the user is forced to break the line with
+         a '\' followed by newline. */
+      for(c=tmp->v;*c!='\0';++c)
+        if(*c=='\\' && *(c+1)=='\n') { *c=' '; *(++c)=' '; }
+
+      /* Read the different comma-separated strings into an array (within a
+         'gal_data_t'). */
+      strs=gal_options_parse_csv_strings_raw(tmp->v, NULL, 0);
+      strarr=strs->array;
+
+      /* Go through all the items and add the pointers to the output
+         list. We won't re-allocate the string, we'll just set it to NULL
+         in the array. */
+      for(i=0;i<strs->size;++i)
+        {
+          gal_list_str_add(&out, strarr[i], 0);
+          strarr[i]=NULL;
+        }
+
+      /* Clean up. */
+      gal_data_free(strs);
+    }
+
+  /* Free the input list and reverse the output list to be in the same
+     input order. */
+  gal_list_str_free(in, 1);
+  gal_list_str_reverse(&out);
+
+  /* Reset the input pointer. */
+  *list=out;
+}
+
+
+
+
+
 /* Parse the given string into a series of size values (integers, stored as
-   an array of size_t). The output array will be stored in the `value'
+   an array of size_t). The output array will be stored in the 'value'
    element of the option. The last element of the array is
-   `GAL_BLANK_SIZE_T' to allow finding the number of elements within it
+   'GAL_BLANK_SIZE_T' to allow finding the number of elements within it
    later (similar to a string which terminates with a '\0' element). */
 void *
 gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
@@ -908,6 +1020,11 @@ gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
       /* If the option is already set, just return. */
       if(option->set) return NULL;
 
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Read the values. */
       values=gal_options_parse_list_of_numbers(arg, filename, lineno);
 
@@ -917,19 +1034,19 @@ gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
         {
           if(v[i]<0)
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "a given "
-                          "value in `%s' (%g) is not 0 or positive. The "
-                          "values to the `--%s' option must be positive",
+                          "value in '%s' (%g) is not 0 or positive. The "
+                          "values to the '--%s' option must be positive",
                           arg, v[i], option->name);
 
           if(ceil(v[i]) != v[i])
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "a given "
-                          "value in `%s' (%g) is not an integer. The "
-                          "values to the `--%s' option must be integers",
+                          "value in '%s' (%g) is not an integer. The "
+                          "values to the '--%s' option must be integers",
                           arg, v[i], option->name);
         }
 
       /* Write the values into an allocated size_t array and finish it with
-         a `-1' so the total number can be found later.*/
+         a '-1' so the total number can be found later.*/
       num=values->size;
       array=gal_pointer_allocate(GAL_TYPE_SIZE_T, num+1, 0, __func__,
                                  "array");
@@ -990,6 +1107,11 @@ gal_options_parse_csv_float64(struct argp_option *option, char *arg,
       /* If the option is already set, just return. */
       if(option->set) return NULL;
 
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Read the values. */
       values=gal_options_parse_list_of_numbers(arg, filename, lineno);
 
@@ -1008,7 +1130,7 @@ gal_options_parse_csv_float64(struct argp_option *option, char *arg,
 
 /* Two numbers must be provided as an argument. This function will read
    them as the sigma-clipping multiple and parameter and store the two in a
-   2-element array. `option->value' must point to an already allocated
+   2-element array. 'option->value' must point to an already allocated
    2-element array of double type. */
 void *
 gal_options_read_sigma_clip(struct argp_option *option, char *arg,
@@ -1031,10 +1153,10 @@ gal_options_read_sigma_clip(struct argp_option *option, char *arg,
 
   /* Check if there was only two numbers. */
   if(in->size!=2)
-    error_at_line(EXIT_FAILURE, 0, filename, lineno, "the `--%s' "
+    error_at_line(EXIT_FAILURE, 0, filename, lineno, "the '--%s' "
                   "option takes two values (separated by a comma) for "
                   "defining the sigma-clip. However, %zu numbers were "
-                  "read in the string `%s' (value to this option).\n\n"
+                  "read in the string '%s' (value to this option).\n\n"
                   "The first number is the multiple of sigma, and the "
                   "second is either the tolerance (if its is less than "
                   "1.0), or a specific number of times to clip (if it "
@@ -1042,23 +1164,23 @@ gal_options_read_sigma_clip(struct argp_option *option, char *arg,
                   arg);
 
   /* Copy the sigma clip parameters into the space the caller has given (as
-     the `value' element of `option'). */
+     the 'value' element of 'option'). */
   memcpy(option->value, in->array, 2*sizeof *sigmaclip);
 
   /* Multiple of sigma must be positive. */
   if( sigmaclip[0] <= 0 )
     error_at_line(EXIT_FAILURE, 0, filename, lineno, "the first value to "
-                  "the `--%s' option (multiple of sigma), must be "
-                  "greater than zero. From the string `%s' (value to "
+                  "the '--%s' option (multiple of sigma), must be "
+                  "greater than zero. From the string '%s' (value to "
                   "this option), you have given a value of %g for the "
                   "first value", option->name, arg, sigmaclip[0]);
 
   /* Second value must also be positive. */
   if( sigmaclip[1] <= 0 )
     error_at_line(EXIT_FAILURE, 0, filename, lineno, "the second value "
-                  "to the `--%s' option (tolerance to stop clipping or "
+                  "to the '--%s' option (tolerance to stop clipping or "
                   "number of clips), must be greater than zero. From "
-                  "the string `%s' (value to this option), you have "
+                  "the string '%s' (value to this option), you have "
                   "given a value of %g for the second value",
                   option->name, arg, sigmaclip[1]);
 
@@ -1066,10 +1188,10 @@ gal_options_read_sigma_clip(struct argp_option *option, char *arg,
      integer. */
   if( sigmaclip[1] >= 1.0f && ceil(sigmaclip[1]) != sigmaclip[1])
     error_at_line(EXIT_FAILURE, 0, filename, lineno, "when the second "
-                  "value to the `--%s' option is >=1, it is interpretted "
+                  "value to the '--%s' option is >=1, it is interpretted "
                   "as an absolute number of clips. So it must be an "
                   "integer. However, your second value is a floating "
-                  "point number: %g (parsed from `%s')", option->name,
+                  "point number: %g (parsed from '%s')", option->name,
                   sigmaclip[1], arg);
 
   /* Clean up and return. */
@@ -1081,27 +1203,28 @@ gal_options_read_sigma_clip(struct argp_option *option, char *arg,
 
 
 
-/* Parse name and (float64) values:  name,value1,value2,value3,...
+/* Parse name and (string/float64) values:  name,value1,value2,value3,...
 
-   The output is a `gal_data_t', where the `name' is the given name and the
-   values are in its array (of `float64' type).
- */
-void *
+   The output is a 'gal_data_t', where the 'name' is the given name and the
+   values are in its array (of 'char *' or 'float64' type). */
+static void *
 gal_options_parse_name_and_values(struct argp_option *option, char *arg,
-                                  char *filename, size_t lineno, void *junk)
+                                  char *filename, size_t lineno, void *junk,
+                                  int str0_f641)
 {
   size_t i, nc;
-  double *darray;
-  char *c, *name, *values;
+  double *darray=NULL;
   gal_data_t *tmp, *existing, *dataset;
+  char *c, *name, *values, **strarr=NULL;
   char *str, sstr[GAL_OPTIONS_STATIC_MEM_FOR_VALUES];
 
   /* We want to print the stored values. */
   if(lineno==-1)
     {
-      /* Set the value pointer to `dataset'. */
+      /* Set the value pointer to 'existing'. */
       existing=*(gal_data_t **)(option->value);
-      darray = existing->array;
+      if(str0_f641) darray = existing->array;
+      else          strarr = existing->array;
 
       /* First write the name. */
       nc=0;
@@ -1116,8 +1239,11 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
                   "characters in the statically allocated string has become "
                   "too close to %d", __func__, PACKAGE_BUGREPORT,
                   GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
-          nc += sprintf(sstr+nc, "%g,", darray[i]);
+          if(str0_f641) nc += sprintf(sstr+nc, "%g,", darray[i]);
+          else          nc += sprintf(sstr+nc, "%s,", strarr[i]);
         }
+
+      /* Finish the string. */
       sstr[nc-1]='\0';
 
       /* Copy the string into a dynamically allocated space, because it
@@ -1127,20 +1253,28 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
     }
   else
     {
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
       /* Parse until the comma or the end of the string.*/
       c=arg; while(*c!='\0' && *c!=',') ++c;
       values = (*c=='\0') ? NULL : c+1;
 
-      /* Name of the dataset (note that `c' is already pointing the end of
-         the `name' and `values' points to the next character). So we can
-         safely set `c' to `\0' to have the `name'. */
+      /* Name of the dataset (note that 'c' is already pointing the end of
+         the 'name' and 'values' points to the next character). So we can
+         safely set 'c' to '\0' to have the 'name'. */
       *c='\0';
       gal_checkset_allocate_copy(arg, &name);
 
-      /* Read the values and write the name. */
-      dataset=gal_options_parse_list_of_numbers(values, filename, lineno);
+      /* Read the values. */
+      dataset=( str0_f641
+                ? gal_options_parse_list_of_numbers(values, filename, lineno)
+                : gal_options_parse_list_of_strings(values, filename, lineno));
 
-      /* If there actually was a string of numbers, then do the rest. */
+      /* If there actually was a string of numbers, add the dataset to the
+         rest. */
       if(dataset)
         {
           dataset->name=name;
@@ -1163,12 +1297,202 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
           */
         }
       else
-        error(EXIT_FAILURE, 0, "`--%s' requires a string of numbers "
-              "(separated by `,' or `:') following its first argument, "
-              "please run with `--help' for more information",
-              option->name);
+        error(EXIT_FAILURE, 0, "'--%s' requires a series of %s "
+              "(separated by ',' or ':') following its first argument, "
+              "please run with '--help' for more information",
+              option->name, str0_f641?"numbers":"strings");
 
       /* Our job is done, return NULL. */
+      return NULL;
+    }
+}
+
+
+
+
+
+void *
+gal_options_parse_name_and_strings(struct argp_option *option, char *arg,
+                                   char *filename, size_t lineno, void *junk)
+{
+  return gal_options_parse_name_and_values(option, arg, filename, lineno,
+                                           junk, 0);
+}
+
+
+
+
+
+void *
+gal_options_parse_name_and_float64s(struct argp_option *option, char *arg,
+                                    char *filename, size_t lineno, void *junk)
+{
+  return gal_options_parse_name_and_values(option, arg, filename, lineno,
+                                           junk, 1);
+}
+
+
+
+
+
+/* Parse strings like this: 'num1,num2:num3,n4:num5,num6' and return it as
+   a data container array: all elements are simply placed after each other
+   in the array. */
+static gal_data_t *
+options_parse_colon_sep_csv(char *instring, char *filename, size_t lineno)
+{
+  char *tailptr;
+  gal_data_t *out;
+  char *pt=instring;
+  size_t dim=0, size;
+  double read, *array;
+  gal_list_f64_t *vertices=NULL;
+
+  /* Parse the string. */
+  while(*pt!='\0')
+    {
+      switch(*pt)
+        {
+        case ',':
+          ++dim;
+          if(dim==2)
+            error_at_line(EXIT_FAILURE, 0, filename, lineno,
+                          "Extra ',' in '%s'", instring);
+          ++pt;
+          break;
+        case ':':
+          if(dim==0)
+            error_at_line(EXIT_FAILURE, 0, filename, lineno,
+                          "not enough coordinates for at least "
+                          "one polygon vertex (in %s)", instring);
+          dim=0;
+          ++pt;
+          break;
+        default:
+          break;
+        }
+
+      /* strtod will skip white spaces if they are before a number,
+         but not when they are before a : or ,. So we need to remove
+         all white spaces. White spaces are usually put beside each
+         other, so if one is encountered, go along the string until
+         the white space characters finish.  */
+      if(isspace(*pt))
+        ++pt;
+      else
+        {
+          /* Read the number: */
+          read=strtod(pt, &tailptr);
+
+          /* Check if there actually was a number.
+          printf("\n\n------\n%zu: %f (%s)\n", dim, read, tailptr);
+          */
+
+          /* Make sure if a number was read at all? */
+          if(tailptr==pt) /* No number was read! */
+            error_at_line(EXIT_FAILURE, 0, filename, lineno,
+                          "%s could not be parsed as a floating point "
+                          "number", tailptr);
+
+          /* Check if there are no extra characters in the number, for
+             example we don't have a case like '1.00132.17', or
+             1.01i:2.0. Such errors are not uncommon when typing large
+             numbers, and if ignored, they can lead to unpredictable
+             results, so its best to abort and inform the user. */
+          if( *tailptr!='\0'
+              && !isspace(*tailptr)
+              && strchr(":,", *tailptr)==NULL )
+            error_at_line(EXIT_FAILURE, 0, filename, lineno,
+                          "'%s' is an invalid floating point number "
+                          "sequence in the value to the '--polygon' "
+                          "option, error detected at '%s'", pt, tailptr);
+
+          /* Add the read coordinate to the list of coordinates. */
+          gal_list_f64_add(&vertices, read);
+
+          /* The job here is done, start from tailptr */
+          pt=tailptr;
+        }
+    }
+
+  /* Convert the list to an array, put it in a data structure, clean up and
+     return. */
+  array=gal_list_f64_to_array(vertices, 1, &size);
+  out=gal_data_alloc(array, GAL_TYPE_FLOAT64, 1, &size, NULL, 0, -1, 1,
+                     NULL, NULL, NULL);
+  gal_list_f64_free(vertices);
+  return out;
+}
+
+
+
+
+
+/* Parse strings that are given to a function in this format
+   'num1,num2:num3,n4:num5,num6' */
+void *
+gal_options_parse_colon_sep_csv(struct argp_option *option, char *arg,
+                                char *filename, size_t lineno, void *junk)
+{
+  double *darray;
+  size_t i, nc, size;
+  gal_data_t *tmp, *dataset, *existing;
+  char *str, sstr[GAL_OPTIONS_STATIC_MEM_FOR_VALUES];
+
+  /* We want to print the stored values. */
+  if(lineno==-1)
+    {
+      /* Set the value pointer to 'existing'. */
+      existing=*(gal_data_t **)(option->value);
+      darray=existing->array;
+
+      /* Start printing the values. */
+      nc=0;
+      size=existing->size;
+      for(i=0;i<size;i+=2)
+        {
+          /* Make sure we aren't passing the allocated space. */
+          if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
+                  "can address the problem. The number of necessary "
+                  "characters in the statically allocated string has become "
+                  "too close to %d", __func__, PACKAGE_BUGREPORT,
+                  GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
+
+          /* Print the two values in the expected format. */
+          nc += sprintf(sstr+nc, "%.6f,%.6f%s", darray[i], darray[i+1],
+                        (i==(size-2) ? "" : ":") );
+        }
+
+      /* Finish the string. */
+      sstr[nc-1]='\0';
+
+      /* Copy the string into a dynamically allocated space, because it
+         will be freed later.*/
+      gal_checkset_allocate_copy(sstr, &str);
+      return str;
+    }
+  else
+    {
+      /* Make sure an argument is actually given. */
+      if(*arg=='\0')
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
+                      "given to '--%s'", option->name);
+
+      /* Parse the desired format and put it in this option's pointer. */
+      dataset=options_parse_colon_sep_csv(arg, filename, lineno);
+
+      /* Add the given dataset to the end of an existing dataset. */
+      existing = *(gal_data_t **)(option->value);
+      if(existing)
+        {
+          for(tmp=existing;tmp!=NULL;tmp=tmp->next)
+            if(tmp->next==NULL) { tmp->next=dataset; break; }
+        }
+      else
+        *(gal_data_t **)(option->value) = dataset;
+
+      /* In this scenario, there is no NULL value. */
       return NULL;
     }
 }
@@ -1188,17 +1512,13 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
 
 
 
-
-
-
-
 /**********************************************************************/
 /************              Option actions               ***************/
 /**********************************************************************/
-/* The option value has been read and put into the `value' field of the
-   `argp_option' structure. This function will use the `range' field to
+/* The option value has been read and put into the 'value' field of the
+   'argp_option' structure. This function will use the 'range' field to
    define a check and abort with an error if the value is not in the given
-   range. It also takes the `arg' so it can be used for good error message
+   range. It also takes the 'arg' so it can be used for good error message
    (showing the value that could not be read). */
 static void
 options_sanity_check(struct argp_option *option, char *arg,
@@ -1215,7 +1535,7 @@ options_sanity_check(struct argp_option *option, char *arg,
                  | GAL_ARITHMETIC_INPLACE );
 
   /* Currently, this function is only for numeric types, so if the value is
-     string type, or its `range' field is `GAL_OPTIONS_RANGE_ANY', then
+     string type, or its 'range' field is 'GAL_OPTIONS_RANGE_ANY', then
      just return without any checks. */
   if( option->type==GAL_TYPE_STRING
       || option->type==GAL_TYPE_STRLL
@@ -1346,8 +1666,8 @@ options_sanity_check(struct argp_option *option, char *arg,
 
   /* Use the arithmetic library to check for the condition. We don't want
      to free the value or change its value, so when dealing with the value
-     directly, we won't use the `GAL_ARITHMETIC_FREE', or
-     `GAL_ARITHMETIC_INPLACE' flags. But we will do this when there are
+     directly, we won't use the 'GAL_ARITHMETIC_FREE', or
+     'GAL_ARITHMETIC_INPLACE' flags. But we will do this when there are
      multiple checks so from the two check data structures, we only have
      one remaining. */
   check1=gal_arithmetic(operator1, 1, GAL_ARITHMETIC_NUMOK, value, ref1);
@@ -1361,13 +1681,13 @@ options_sanity_check(struct argp_option *option, char *arg,
   /* If the final check is not successful, then print an error. */
   if( *(unsigned char *)(check1->array)==0 )
     error_at_line(EXIT_FAILURE, 0, filename, lineno,
-                  "value to option `%s' must be %s, but the given value "
-                  "is `%s'. Recall that `%s' is \"%s\"", option->name,
+                  "value to option '%s' must be %s, but the given value "
+                  "is '%s'. Recall that '%s' is '%s'", option->name,
                   message, arg, option->name, option->doc);
 
 
   /* Clean up and finish. Note that we used the actual value pointer in the
-     data structure, so first we need to set it to NULL, so `gal_data_free'
+     data structure, so first we need to set it to NULL, so 'gal_data_free'
      doesn't free it, we need it for later (for example to print the option
      values). */
   value->array=NULL;
@@ -1391,8 +1711,8 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
   if(option->func)
     {
       /* For the functions that are defined here (for all programs) and
-         need the last pointer, we must pass the `cp' pointer. For the
-         rest, we must pass the `cp->program_struct'. */
+         need the last pointer, we must pass the 'cp' pointer. For the
+         rest, we must pass the 'cp->program_struct'. */
       switch(option->key)
         {
         case GAL_OPTIONS_KEY_CITE:
@@ -1404,13 +1724,13 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
         }
 
       /* Call the function to parse the value, flag the option as set and
-         return (except for the `--config' option, which must always be
+         return (except for the '--config' option, which must always be
          unset). */
       option->func(option, arg, filename, lineno, topass);
       if(option->key!=GAL_OPTIONS_KEY_CONFIG) option->set=GAL_OPTIONS_SET;
 
-      /* The `--config' option is printed for `--checkconfig' by its
-         function (`gal_options_call_parse_config_file'), so must be
+      /* The '--config' option is printed for '--checkconfig' by its
+         function ('gal_options_call_parse_config_file'), so must be
          ignored here. */
       if(cp->checkconfig && option->key!=GAL_OPTIONS_KEY_CONFIG)
         printf("  %-25s%s\n", option->name, arg?arg:"ACTIVATED");
@@ -1436,10 +1756,10 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
 
           /* Read the string argument into the value. */
           if( gal_type_from_string(&option->value, arg, option->type) )
-            /* Fortunately `error_at_line' will behave like `error' when the
+            /* Fortunately 'error_at_line' will behave like 'error' when the
                filename is NULL (the option was read from a command-line). */
             error_at_line(EXIT_FAILURE, 0, filename, lineno,
-                          "`%s' (value to option `--%s') couldn't be read "
+                          "'%s' (value to option '--%s') couldn't be read "
                           "into the proper numerical type. Common causes "
                           "for this error are:\n"
                           "  - It contains non-numerical characters.\n"
@@ -1474,7 +1794,7 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
       else
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
               "correct it. Options with no arguments, must have "
-              "type `%s'. However, the `%s' option has type %s",
+              "type '%s'. However, the '%s' option has type %s",
               __func__, PACKAGE_BUGREPORT,
               gal_type_name(GAL_OPTIONS_NO_ARG_TYPE, 1),
               option->name, gal_type_name(option->type, 1));
@@ -1487,7 +1807,7 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
            (arg && option->type!=GAL_OPTIONS_NO_ARG_TYPE)?arg:"ACTIVATED");
 
 
-  /* Flip the `set' flag to `GAL_OPTIONS_SET'. */
+  /* Flip the 'set' flag to 'GAL_OPTIONS_SET'. */
   option->set=GAL_OPTIONS_SET;
 }
 
@@ -1512,7 +1832,7 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
 /**********************************************************************/
 /************            Command-line options           ***************/
 /**********************************************************************/
-/* Set the value given to the command-line, where we have the integer `key'
+/* Set the value given to the command-line, where we have the integer 'key'
    of the option, not its long name as a string. */
 error_t
 gal_options_set_from_key(int key, char *arg, struct argp_option *options,
@@ -1569,14 +1889,14 @@ gal_options_common_argp_parse(int key, char *arg, struct argp_state *state)
   struct gal_options_common_params *cp=state->input;
 
   /* In case the user incorrectly uses the equal sign (for example
-     with a short format or with space in the long format, then `arg`
+     with a short format or with space in the long format, then 'arg'
      start with (if the short version was called) or be (if the long
      version was called with a space) the equal sign. So, here we
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign (`=`). For short "
-               "options, `=` should not be used and for long options, "
+    argp_error(state, "incorrect use of the equal sign ('='). For short "
+               "options, '=' should not be used and for long options, "
                "there should be no space between the option, equal sign "
                "and value");
 
@@ -1599,11 +1919,11 @@ gal_options_stdin_error(long stdintimeout, int precedence, char *name)
                "or the standard input.%s Standard input can come from a "
                "pipe (output of another program) or typed on the "
                "command-line before %ld micro-seconds (configurable with "
-               "the `--stdintimeout' option).", name, name,
+               "the '--stdintimeout' option).", name, name,
                ( precedence
                  ? " If both are provided, a file takes precedence."
                  : "" ), stdintimeout )<0 )
-    error(EXIT_FAILURE, 0, "%s: `asprintf' allocation error", __func__);
+    error(EXIT_FAILURE, 0, "%s: 'asprintf' allocation error", __func__);
 
   return out;
 }
@@ -1755,7 +2075,7 @@ options_set_from_name(char *name, char *arg,  struct argp_option *options,
 
                - Not all common options are used by all programs. When a
                  program doesn't use an option, it will be given an
-                 `OPTION_HIDDEN' flag. There is no point in reading the
+                 'OPTION_HIDDEN' flag. There is no point in reading the
                  values of such options.
 
                - When the option already has a value AND it ISN'T a linked
@@ -1822,7 +2142,7 @@ options_parse_file(char *filename,  struct gal_options_common_params *cp,
   size_t linelen=10, lineno=0;
 
 
-  /* If `lastconfig' was called prior to this file, then just return and
+  /* If 'lastconfig' was called prior to this file, then just return and
      ignore this configuration file. */
   if( options_lastconfig_has_been_called(cp->coptions) )
     return;
@@ -1841,12 +2161,12 @@ options_parse_file(char *filename,  struct gal_options_common_params *cp,
 
 
   /* Allocate the space necessary to keep a copy of each line as we parse
-     it. Note that `getline' is going to later `realloc' this space to fit
+     it. Note that 'getline' is going to later 'realloc' this space to fit
      the line length. */
   errno=0;
   line=malloc(linelen*sizeof *line);
   if(line==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `line'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'line'",
           __func__, linelen*sizeof *line);
 
 
@@ -1860,7 +2180,7 @@ options_parse_file(char *filename,  struct gal_options_common_params *cp,
           options_read_name_arg(line, filename, lineno, &name, &arg);
 
           /* First look into this program's options, if the option isn't
-             found there, `options_set_from_name' will return 1. So the
+             found there, 'options_set_from_name' will return 1. So the
              condition will succeed and we will start looking into the
              common options, if it isn't found there either, then report an
              error.*/
@@ -1869,8 +2189,8 @@ options_parse_file(char *filename,  struct gal_options_common_params *cp,
             if( options_set_from_name(name, arg, cp->coptions, cp,
                                       filename, lineno) )
               error_at_line(EXIT_FAILURE, 0, filename, lineno,
-                            "unrecognized option `%s', for the full list of "
-                            "options, please run with `--help'", name);
+                            "unrecognized option '%s', for the full list of "
+                            "options, please run with '--help'", name);
         }
     }
 
@@ -1888,15 +2208,15 @@ options_parse_file(char *filename,  struct gal_options_common_params *cp,
 
 
 
-/* This function will be used when the `--config' option is called. */
+/* This function will be used when the '--config' option is called. */
 void *
 gal_options_call_parse_config_file(struct argp_option *option, char *arg,
                                    char *filename, size_t lineno, void *c)
 {
   struct gal_options_common_params *cp=(struct gal_options_common_params *)c;
 
-  /* The `--config' option is a special function when it comes to
-     `--checkconfig': we'll have to write its value before interpretting
+  /* The '--config' option is a special function when it comes to
+     '--checkconfig': we'll have to write its value before interpretting
      it. */
   if(cp->checkconfig)
     {
@@ -1925,14 +2245,14 @@ gal_options_call_parse_config_file(struct argp_option *option, char *arg,
    into it. The directories containing the configuration files are fixed
    for all the programs.
 
-    - `SYSCONFIG_DIR' is passed onto the library functions at compile time
+    - 'SYSCONFIG_DIR' is passed onto the library functions at compile time
       from the command-line. You can search for it in the outputs of
-      `make'. The main reason is that we want the the user still has the
-      chance to change the installation directory after `configure'.
+      'make'. The main reason is that we want the the user still has the
+      chance to change the installation directory after 'configure'.
 
-    - `USERCONFIG_DIR' is defined in `config.h'.
+    - 'USERCONFIG_DIR' is defined in 'config.h'.
 
-    - `CURDIRCONFIG_DIR' is defined in `config.h'. */
+    - 'CURDIRCONFIG_DIR' is defined in 'config.h'. */
 static void
 gal_options_parse_config_files(struct gal_options_common_params *cp)
 {
@@ -1940,11 +2260,11 @@ gal_options_parse_config_files(struct gal_options_common_params *cp)
   char *filename;
 
   /* A small sanity check because in multiple places, we have assumed the
-     on/off options have a type of `unsigned char'. */
+     on/off options have a type of 'unsigned char'. */
   if(GAL_OPTIONS_NO_ARG_TYPE != GAL_TYPE_UINT8)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s so we can fix "
-          "the problem. `GAL_OPTIONS_NO_ARG_TYPE' must be the "
-          "`uint8' type", __func__, PACKAGE_BUGREPORT);
+          "the problem. 'GAL_OPTIONS_NO_ARG_TYPE' must be the "
+          "'uint8' type", __func__, PACKAGE_BUGREPORT);
 
   /* The program's current directory configuration file. */
   if( asprintf(&filename, ".%s/%s.conf", PACKAGE, cp->program_exec)<0 )
@@ -2020,12 +2340,12 @@ gal_options_read_low_level_checks(struct gal_options_common_params *cp)
 {
   size_t suggested_mmap=10000000;
 
-  /* If `numthreads' is 0, use the number of threads available to the
+  /* If 'numthreads' is 0, use the number of threads available to the
      system. */
   if(cp->numthreads==0)
     cp->numthreads=gal_threads_number();
 
-  /* If `minmapsize==0' and quiet isn't given, print a warning. */
+  /* If 'minmapsize==0' and quiet isn't given, print a warning. */
   if(cp->minmapsize==0)
     {
       fprintf(stderr, "\n\n"
@@ -2045,7 +2365,7 @@ gal_options_read_low_level_checks(struct gal_options_common_params *cp)
 
               "     --minmapsize=%zu\n\n"
 
-              "[This warning can be disabled with the `--quiet' (or `-q') "
+              "[This warning can be disabled with the '--quiet' (or '-q') "
               "option.]\n"
               "===========================\n\n", suggested_mmap,
               suggested_mmap);
@@ -2131,6 +2451,8 @@ option_is_printable(struct argp_option *option)
     case GAL_OPTIONS_KEY_LASTCONFIG:
       return 0;
     }
+
+  /* Everything is fine, print the option. */
   return 1;
 }
 
@@ -2138,8 +2460,8 @@ option_is_printable(struct argp_option *option)
 
 
 
-/* For a given type, print the value in `ptr' in a space of `width'
-   elements. If `width==0', then return the width necessary to print the
+/* For a given type, print the value in 'ptr' in a space of 'width'
+   elements. If 'width==0', then return the width necessary to print the
    value. */
 static int
 options_print_any_type(struct argp_option *option, void *ptr, int type,
@@ -2257,17 +2579,17 @@ options_set_lengths(struct argp_option *poptions,
 
 
 
-/* The `#' before the `doc' string are not required by the configuration
+/* The '#' before the 'doc' string are not required by the configuration
    file parser when the documentation string fits in a line. However, when
-   the `doc' string is longer than 80 characters, it will be cut between
-   multiple lines and without the `#', the start of the line will be read
+   the 'doc' string is longer than 80 characters, it will be cut between
+   multiple lines and without the '#', the start of the line will be read
    as an option. */
 static void
 options_print_doc(FILE *fp, const char *doc, int nvwidth)
 {
   size_t len=strlen(doc);
 
-  /* The `+3' is because of the three extra spaces in this line: one before
+  /* The '+3' is because of the three extra spaces in this line: one before
      the variable name, one after it and one after the value. */
   int i, prewidth=nvwidth+3, width=77-prewidth, cwidth;
 
@@ -2386,30 +2708,30 @@ options_print_all(struct gal_options_common_params *cp, char *dirname,
               "# %s (%s) %s.\n"
               "# Written at %s#\n"
               "#  - Empty lines are ignored.\n"
-              "#  - Lines starting with `#` are ignored.\n"
+              "#  - Lines starting with '#' are ignored.\n"
               "#  - The long option name is followed by a value.\n"
               "#  - The name and value should be separated by atleast\n"
               "#    one white space character (for example space or tab).\n"
               "#  - If the value has space, enclose the whole value in\n"
               "#    double quotation (\") signs.\n"
               "#  - After the value, the rest of the line is ignored.\n"
-              "#\n# Run `info %s' for a more elaborate description of each "
+              "#\n# Run 'info %s' for a more elaborate description of each "
               "option.\n",
               cp->program_name, PACKAGE_NAME, PACKAGE_VERSION,
               ctime(&rawtime), cp->program_exec);
     }
   else fp=stdout;
 
-  /* Parse all the options with a title, note that the `Input', `Output'
-     and `Operating mode' options are defined in the common options, while
+  /* Parse all the options with a title, note that the 'Input', 'Output'
+     and 'Operating mode' options are defined in the common options, while
      the (possible) other groups are in the program specific options. We
-     will only be dealing with the `topics' linked list in this function
-     and the strings in `poption' are statically allocated, so its fine to
+     will only be dealing with the 'topics' linked list in this function
+     and the strings in 'poption' are statically allocated, so its fine to
      not waste CPU cycles allocating and freeing.*/
   for(i=0; !gal_options_is_last(&coptions[i]); ++i)
     if(coptions[i].name==NULL && coptions[i].key==0 && coptions[i].doc)
       {
-        /* The `(char *)' is because `.doc' is a constant and this helps
+        /* The '(char *)' is because '.doc' is a constant and this helps
            remove the compiler warning. */
         gal_list_i32_add(&group, coptions[i].group);
         gal_list_str_add(&topic, (char *)coptions[i].doc, 0);
@@ -2453,9 +2775,9 @@ options_print_all(struct gal_options_common_params *cp, char *dirname,
   if(dirname)
     {
       printf("\nNew/updated configuration file:\n\n  %s\n\n"
-             "You may inspect it with `cat %s'.\n"
+             "You may inspect it with 'cat %s'.\n"
              "You may use your favorite text editor to modify it later.\n"
-             "Or, run %s again with new values for the options and `--%s'.\n",
+             "Or, run %s again with new values for the options and '--%s'.\n",
              filename, filename, cp->program_name, optionname);
       free(filename);
     }
@@ -2490,7 +2812,7 @@ gal_options_print_state(struct gal_options_common_params *cp)
           /* Note that these options can have a value of 1 (enabled) or 0
              (explicitly disabled). Therefore the printing should only be
              done if they have a value of 1. This is why we have defined
-             the `OPTIONS_UINT8VAL' macro above. */
+             the 'OPTIONS_UINT8VAL' macro above. */
           sum += OPTIONS_UINT8VAL;
         }
 
@@ -2531,8 +2853,8 @@ gal_options_print_state(struct gal_options_common_params *cp)
 
     /* More than one of the printing options has been called. */
     default:
-      error(EXIT_FAILURE, 0, "only one of the `printparams', `setdirconf' "
-            "and `setusrconf' options can be called in each run");
+      error(EXIT_FAILURE, 0, "only one of the 'printparams', 'setdirconf' "
+            "and 'setusrconf' options can be called in each run");
     }
 }
 
@@ -2548,6 +2870,7 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
 {
   size_t i;
   void *vptr;
+  int vptrfree;
   uint8_t vtype;
   char *name, *doc;
   gal_list_str_t *tmp;
@@ -2560,11 +2883,11 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
           for(tmp=*(gal_list_str_t **)(options[i].value);
               tmp!=NULL; tmp=tmp->next)
             {
-              /* `name' and `doc' have a `const' qualifier. */
+              /* 'name' and 'doc' have a 'const' qualifier. */
               gal_checkset_allocate_copy(options[i].name, &name);
               gal_checkset_allocate_copy(options[i].doc,  &doc);
-              gal_fits_key_list_add(keys, GAL_TYPE_STRING, name, 1, tmp->v,
-                                    0, doc, 1, NULL);
+              gal_fits_key_list_add(keys, GAL_TYPE_STRING, name, 1,
+                                    tmp->v, 0, doc, 1, NULL, 0);
             }
         /* Normal types. */
         else
@@ -2572,11 +2895,13 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
             /* If the option is associated with a special function for
                reading and writing, we'll need to write the value as a
                string. */
+            vptrfree=0;
             if(options[i].func)
               {
+                vptrfree=1;
                 vtype=GAL_TYPE_STRING;
-                vptr=options[i].func(&options[i], NULL, NULL, (size_t)(-1),
-                                      cp->program_struct);
+                vptr=options[i].func(&options[i], NULL, NULL,
+                                     (size_t)(-1), cp->program_struct);
               }
             else
               {
@@ -2586,7 +2911,7 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
                          : options[i].value );
               }
 
-            /* Write the keyword. Note that `name' and `doc' have a `const'
+            /* Write the keyword. Note that 'name' and 'doc' have a 'const'
                qualifier. */
             gal_checkset_allocate_copy(options[i].name, &name);
             if(vtype==GAL_TYPE_STRING && strlen(vptr)>FLEN_KEYWORD)
@@ -2594,8 +2919,8 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
             else
               {
                 gal_checkset_allocate_copy(options[i].doc,  &doc);
-                gal_fits_key_list_add(keys, vtype, name, 1, vptr, 0, doc, 1,
-                                      NULL);
+                gal_fits_key_list_add(keys, vtype, name, 1, vptr,
+                                      vptrfree, doc, 1, NULL, 0);
               }
           }
       }

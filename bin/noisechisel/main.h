@@ -5,7 +5,7 @@ NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -106,6 +106,7 @@ struct noisechiselparams
   gal_data_t          *olabel;  /* Labels of objects in the detection.    */
   gal_data_t   *expand_thresh;  /* Quantile threshold to expand per tile. */
   gal_data_t *exp_thresh_full;  /* Full array containing growth thresh.   */
+  gal_data_t      *noskytiles;  /* Tiles to not use for Sky.              */
   gal_data_t             *sky;  /* Mean of undetected pixels, per tile.   */
   gal_data_t             *std;  /* STD of undetected pixels, per tile.    */
   size_t           maxtcontig;  /* Maximum contiguous space for a tile.   */

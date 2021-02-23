@@ -5,7 +5,7 @@ NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -160,11 +160,11 @@ noisechisel_output(struct noisechiselparams *p)
   /* Write the detected pixels and useful information into it's header. */
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "DETSN", 0, &p->detsnthresh,
                         0, "Minimum S/N of true pseudo-detections", 0,
-                        "ratio");
+                        "ratio", 0);
   if(p->label)
     gal_fits_key_list_add(&keys, GAL_TYPE_SIZE_T, "NUMLABS", 0,
                           &p->numdetections, 0, "Total number of labels "
-                          "(inclusive)", 0, "counter");
+                          "(inclusive)", 0, "counter", 0);
   gal_fits_key_list_reverse(&keys);
   if(p->label)
     {
@@ -193,13 +193,13 @@ noisechisel_output(struct noisechiselparams *p)
   p->std->name="SKY_STD";
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "MAXSTD", 0, &p->maxstd, 0,
                         "Maximum raw tile standard deviation", 0,
-                        p->input->unit);
+                        p->input->unit, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "MINSTD", 0, &p->minstd, 0,
                         "Minimum raw tile standard deviation", 0,
-                        p->input->unit);
+                        p->input->unit, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "MEDSTD", 0, &p->medstd, 0,
                         "Median raw tile standard deviation", 0,
-                        p->input->unit);
+                        p->input->unit, 0);
   gal_tile_full_values_write(p->std, &p->cp.tl, !p->ignoreblankintiles,
                              p->cp.output, keys, PROGRAM_NAME);
   p->std->name=NULL;
@@ -213,7 +213,7 @@ noisechisel_output(struct noisechiselparams *p)
 
   /* Let the user know that the output is written. */
   if(!p->cp.quiet)
-    printf("  - Output written to `%s'.\n", p->cp.output);
+    printf("  - Output written to '%s'.\n", p->cp.output);
 }
 
 
@@ -248,28 +248,14 @@ noisechisel(struct noisechiselparams *p)
   /* Remove false detections. */
   detection(p);
 
-  /* If we have any detections, find the Sky value and subtract it from the
-     input and convolved images. */
-  if(p->numdetections)
-    {
-      /* Find the final Sky and Sky STD values. */
-      sky_and_std(p, p->skyname);
+  /* Find the final Sky and Sky STD values. */
+  sky_and_std(p, p->skyname);
 
-      /* Abort if the user only wanted to see until this point.*/
-      if(p->skyname && !p->continueaftercheck)
-        ui_abort_after_check(p, p->skyname, NULL,
-                             "derivation of final Sky (and its STD) value");
+  /* Abort if the user only wanted to see until this point.*/
+  if(p->skyname && !p->continueaftercheck)
+    ui_abort_after_check(p, p->skyname, NULL,
+                         "derivation of final Sky (and its STD) value");
 
-      /* Write the output. */
-      noisechisel_output(p);
-    }
-  else
-    {
-      if(p->cp.quiet)
-        error(0, 0, "no output file created: no detections could found "
-              "in `%s' with given parameters", p->inputname);
-      else
-        gal_timing_report(NULL, "NO OUTPUT FILE CREATED (try with "
-                          "`--checkdetection' to see why)", 1);
-    }
+  /* Write the output. */
+  noisechisel_output(p);
 }

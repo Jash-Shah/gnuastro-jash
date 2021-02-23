@@ -4,7 +4,7 @@ A test program to multithreaded building using Gnuastro's helpers.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -37,9 +37,9 @@ struct params
 
 
 /* This is the main worker function which will be called by the different
-   threads. `gal_threads_params' is defined in `gnuastro/threads.h' and
+   threads. 'gal_threads_params' is defined in 'gnuastro/threads.h' and
    contains the pointer to the paramter we want. Note that its input and
-   output must have `void *' types. */
+   output must have 'void *' types. */
 void *
 worker_on_thread(void *in_prm)
 {
@@ -77,8 +77,8 @@ worker_on_thread(void *in_prm)
 /* A simple program to open a FITS image, distributes its pixels between
    different threads and print the value of each pixel and the thread it
    was assigned to, this will test both the opening of a FITS file and also
-   the multi-threaded functions. After running `make check' you can see the
-   outputs in `tests/multithread.log'.
+   the multi-threaded functions. After running 'make check' you can see the
+   outputs in 'tests/multithread.log'.
 
    Please run the following command for an explanation on easily linking
    and compiling C programs that use Gnuastro's libraries (without having
@@ -90,12 +90,15 @@ int
 main(void)
 {
   struct params p;
+  int quietmmap=1;
+  size_t minmapsize=-1;
   char *filename="psf.fits", *hdu="1";
   size_t numthreads=gal_threads_number();
 
 
   /* Read the image into memory as a float32 data type. */
-  p.image=gal_fits_img_read_to_type(filename, hdu, GAL_TYPE_FLOAT32, -1, 1);
+  p.image=gal_fits_img_read_to_type(filename, hdu, GAL_TYPE_FLOAT32,
+                                    minmapsize, quietmmap);
 
 
   /* Print some basic information before the actual contents: */
@@ -114,7 +117,8 @@ main(void)
 
 
   /* Spin-off the threads and do the processing on each thread. */
-  gal_threads_spin_off(worker_on_thread, &p, p.image->size, numthreads);
+  gal_threads_spin_off(worker_on_thread, &p, p.image->size, numthreads,
+                       minmapsize, quietmmap);
 
 
   /* Clean up and return. */

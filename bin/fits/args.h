@@ -5,7 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -31,11 +31,71 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Array of acceptable options. */
 struct argp_option program_options[] =
   {
-    /* Input options */
     {
       0, 0, 0, 0,
-      "HDUs (extensions):",
-      UI_GROUP_EXTENSION
+      "HDU (extension) information:",
+      UI_GROUP_EXTENSION_INFORMATION
+    },
+    {
+      "numhdus",
+      UI_KEY_NUMHDUS,
+      0,
+      0,
+      "Print number of HDUs in the given FITS file.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->numhdus,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "datasum",
+      UI_KEY_DATASUM,
+      0,
+      0,
+      "Calculate HDU's datasum and print in stdout.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->datasum,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "pixelscale",
+      UI_KEY_PIXELSCALE,
+      0,
+      0,
+      "Return the pixel-scale of the HDU's WCS.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->pixelscale,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "skycoverage",
+      UI_KEY_SKYCOVERAGE,
+      0,
+      0,
+      "Image coverage in the WCS coordinates.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->skycoverage,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
+
+
+    {
+      0, 0, 0, 0,
+      "HDU (extension) manipulation:",
+      UI_GROUP_EXTENSION_MANIPULATION
     },
     {
       "remove",
@@ -43,7 +103,7 @@ struct argp_option program_options[] =
       "STR",
       0,
       "Remove extension from input file.",
-      UI_GROUP_EXTENSION,
+      UI_GROUP_EXTENSION_MANIPULATION,
       &p->remove,
       GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
@@ -56,7 +116,7 @@ struct argp_option program_options[] =
       "STR",
       0,
       "Copy extension to output file.",
-      UI_GROUP_EXTENSION,
+      UI_GROUP_EXTENSION_MANIPULATION,
       &p->copy,
       GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
@@ -69,23 +129,10 @@ struct argp_option program_options[] =
       "STR",
       0,
       "Copy extension to output and remove from input.",
-      UI_GROUP_EXTENSION,
+      UI_GROUP_EXTENSION_MANIPULATION,
       &p->cut,
       GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
-      GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET
-    },
-    {
-      "numhdus",
-      UI_KEY_NUMHDUS,
-      0,
-      0,
-      "Print number of HDUs in the given FITS file.",
-      UI_GROUP_EXTENSION,
-      &p->numhdus,
-      GAL_OPTIONS_NO_ARG_TYPE,
-      GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
@@ -95,7 +142,7 @@ struct argp_option program_options[] =
       0,
       0,
       "Copy/cut image HDUs to primary/zero-th HDU.",
-      UI_GROUP_EXTENSION,
+      UI_GROUP_EXTENSION_MANIPULATION,
       &p->primaryimghdu,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
@@ -117,9 +164,22 @@ struct argp_option program_options[] =
       UI_KEY_ASIS,
       "STR",
       0,
-      "Write the argument string as is into the header.",
+      "Write value as-is (may corrupt FITS file).",
       UI_GROUP_KEYWORD,
       &p->asis,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "keyvalue",
+      UI_KEY_KEYVALUE,
+      "STR[,STR,...]",
+      0,
+      "Only print the value of requested keyword(s).",
+      UI_GROUP_KEYWORD,
+      &p->keyvalue,
       GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -268,6 +328,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "wcsdistortion",
+      UI_KEY_WCSDISTORTION,
+      "STR",
+      0,
+      "Convert WCS distortion to another type.",
+      UI_GROUP_KEYWORD,
+      &p->wcsdistortion,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 
@@ -287,6 +360,21 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "colinfoinstdout",
+      UI_KEY_COLINFOINSTDOUT,
+      0,
+      0,
+      "Column info/metadata when printing to stdout.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->colinfoinstdout,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
 
 
 

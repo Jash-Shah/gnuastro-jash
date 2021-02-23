@@ -5,7 +5,7 @@ BuildProgram is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -50,7 +50,7 @@ struct argp_option program_options[] =
       UI_KEY_INCLUDE,
       "STR",
       0,
-      "Directories to search for `#include's.",
+      "Directories to search for '#include's.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->include,
       GAL_TYPE_STRLL,
@@ -78,7 +78,7 @@ struct argp_option program_options[] =
       UI_KEY_LINKLIB,
       "STR",
       0,
-      "Link libraries, e.g., for libgsl: `-lgsl'.",
+      "Link libraries, e.g., for libgsl: '-lgsl'.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->linklib,
       GAL_TYPE_STRLL,
@@ -92,7 +92,7 @@ struct argp_option program_options[] =
       UI_KEY_LA,
       "STR",
       0,
-      "Libtool `.la' to use instead of default.",
+      "Libtool '.la' to use instead of default.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->la,
       GAL_TYPE_STRING,
@@ -106,7 +106,7 @@ struct argp_option program_options[] =
       UI_KEY_TAG,
       "STR",
       0,
-      "Libtool `--tag': programming language.",
+      "Libtool '--tag': programming language.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->tag,
       GAL_TYPE_STRING,

@@ -5,7 +5,7 @@ Segment is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2018-2019, Free Software Foundation, Inc.
+Copyright (C) 2018-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -26,12 +26,31 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* When any specific citation is necessary, please add its BibTeX (from ADS
    hopefully) to this variable along with a title decribing what this
    paper/book does for the progarm in a short line. In the following line
-   put a row of `-' with the same length and then put the BibTeX.
+   put a row of '-' with the same length and then put the BibTeX.
 
-   See the `gnuastro_bibtex' variable in `lib/options' (from the top
-   Gnuastro source code directory) as an example.*/
+   This macro will be used in 'gal_options_print_citation' function of
+   'lib/options.c' (from the top Gnuastro source code directory). */
 
-#define PROGRAM_BIBTEX ""
+#define PROGRAM_BIBTEX ""                                               \
+  "Paper on why Segment was spinned-off from NoiseChisel\n"             \
+  "-----------------------------------------------------\n"             \
+  "@ARTICLE{noisechisel_segment_2019,\n"                                \
+  "        author = {{Akhlaghi}, Mohammad},\n"                          \
+  "         title = \"{Carving out the low surface brightness universe with NoiseChisel}\",\n" \
+  "       journal = {arXiv e-prints},\n"                                \
+  "      keywords = {Astrophysics - Instrumentation and Methods for Astrophysics,\n" \
+  "                  Astrophysics - Astrophysics of Galaxies,\n"        \
+  "                  Computer Science - Computer Vision and Pattern Recognition},\n" \
+  "          year = \"2019\",\n"                                        \
+  "         month = \"Sep\",\n"                                         \
+  "           eid = {arXiv:1909.11230},\n"                              \
+  "         pages = {arXiv:1909.11230},\n"                              \
+  " archivePrefix = {arXiv},\n"                                         \
+  "        eprint = {1909.11230},\n"                                    \
+  "  primaryClass = {astro-ph.IM},\n"                                   \
+  "        adsurl = {https://ui.adsabs.harvard.edu/abs/2019arXiv190911230A},\n" \
+  "       adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n" \
+  "}\n"
 
 #define PROGRAM_AUTHORS "Mohammad Akhlaghi"
 

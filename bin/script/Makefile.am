@@ -3,7 +3,7 @@
 ## Original author:
 ##     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
-## Copyright (C) 2019, Free Software Foundation, Inc.
+## Copyright (C) 2019-2021, Free Software Foundation, Inc.
 ##
 ## Gnuastro is free software: you can redistribute it and/or modify it
 ## under the terms of the GNU General Public License as published by
@@ -23,12 +23,13 @@
 
 
 ## List of programs (scripts in this directory) to install under the
-## `prefix/bin' directory (`bin_SCRIPTS'), files necessary to distribute
-## with the tarball (`EXTRA_DIST') and output files (to be cleaned with
-## `make clean).
-bin_SCRIPTS = astscript-sort-by-night
+## 'prefix/bin' directory ('bin_SCRIPTS'), files necessary to distribute
+## with the tarball ('EXTRA_DIST') and output files (to be cleaned with
+## 'make clean').
+bin_SCRIPTS = astscript-make-ds9-reg \
+              astscript-sort-by-night
 
-EXTRA_DIST = sort-by-night.in
+EXTRA_DIST = make-ds9-reg.in sort-by-night.in
 
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -36,7 +37,7 @@ CLEANFILES = $(bin_SCRIPTS)
 
 
 
-## Command to do basic substitutions (anything surrounded by an `@').
+## Command to do basic substitutions (anything surrounded by an '@').
 do_subst = sed -e 's,[@]VERSION[@],$(VERSION),g' \
                -e 's,[@]SCRIPT_NAME[@],$@,g'
 
@@ -47,4 +48,8 @@ do_subst = sed -e 's,[@]VERSION[@],$(VERSION),g' \
 ## Rules to build the scripts
 astscript-sort-by-night: sort-by-night.in Makefile
 	$(do_subst) < $(srcdir)/sort-by-night.in > $@
+	chmod +x $@
+
+astscript-make-ds9-reg: make-ds9-reg.in Makefile
+	$(do_subst) < $(srcdir)/make-ds9-reg.in > $@
 	chmod +x $@

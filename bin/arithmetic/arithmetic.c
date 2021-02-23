@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -77,6 +77,9 @@ pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,
   /* See if this operator needs any parameters. If so, pop them. */
   switch(op)
     {
+    case GAL_ARITHMETIC_OP_QUANTILE:
+      numparams=1;
+      break;
     case GAL_ARITHMETIC_OP_SIGCLIP_STD:
     case GAL_ARITHMETIC_OP_SIGCLIP_MEAN:
     case GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN:
@@ -93,15 +96,15 @@ pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,
          to the list. */
       tmp=operands_pop(p, token_string);
       if(tmp->size>1)
-        error(EXIT_FAILURE, 0, "the %s popped operand of the \"%s\" "
+        error(EXIT_FAILURE, 0, "the %s popped operand of the '%s' "
               "operator must be a single number", cstring, token_string);
       tmp=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
       gal_list_data_add(params, tmp);
 
-      /* A small sanity check (none of the parameters for sigma-clipping
-         can be negative.. */
+      /* A small sanity check (none of the parameters for sigma-clipping,
+         or quantile estimation can be negative. */
       if( ((float *)(tmp->array))[0]<=0.0 )
-        error(EXIT_FAILURE, 0, "the %s popped operand of the \"%s\" "
+        error(EXIT_FAILURE, 0, "the %s popped operand of the '%s' "
               "operator cannot be negative", cstring, token_string);
 
       /* Increment the counter string. */
@@ -111,7 +114,7 @@ pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,
   /* Check if its a number. */
   numpop=operands_pop(p, token_string);
   if(numpop->size>1)
-    error(EXIT_FAILURE, 0, "the %s popped operand of the \"%s\" "
+    error(EXIT_FAILURE, 0, "the %s popped operand of the '%s' "
           "operator (number of input datasets) must be a number, not an "
           "array", cstring, token_string);
 
@@ -133,7 +136,7 @@ pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,
     /* Floating point numbers are not acceptable in this context. */
     case GAL_TYPE_FLOAT32:
     case GAL_TYPE_FLOAT64:
-      error(EXIT_FAILURE, 0, "the %s popped operand of the \"%s\" "
+      error(EXIT_FAILURE, 0, "the %s popped operand of the '%s' "
             "operator (number of input datasets) must be an integer type",
             cstring, token_string);
 
@@ -144,7 +147,7 @@ pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,
 
   /* If control reaches here, then the number must have been a negative
      value, so print an error. */
-  error(EXIT_FAILURE, 0, "the %s popped operand of the \"%s\" operator "
+  error(EXIT_FAILURE, 0, "the %s popped operand of the '%s' operator "
         "cannot be zero or a negative number", cstring,
         token_string);
   return 0;
@@ -219,7 +222,7 @@ arithmetic_filter(void *in_prm)
   /* Go over all the pixels that were assigned to this thread. */
   for(i=0; tprm->indexs[i] != GAL_BLANK_SIZE_T; ++i)
     {
-      /* For easy reading, put the index in `ind'. */
+      /* For easy reading, put the index in 'ind'. */
       ind=tprm->indexs[i];
 
       /* Get the coordinate of the pixel. */
@@ -289,7 +292,7 @@ arithmetic_filter(void *in_prm)
             case ARITHMETIC_OP_FILTER_SIGCLIP_MEDIAN: sind = 1; break;
             default:
               error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
-                    "%s to fix the problem. The `afp->operator' value "
+                    "%s to fix the problem. The 'afp->operator' value "
                     "%d is not recognized as sigma-clipped median or "
                     "mean", __func__, PACKAGE_BUGREPORT, afp->operator);
             }
@@ -307,7 +310,7 @@ arithmetic_filter(void *in_prm)
 
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
-                "to fix the problem. `afp->operator' code %d is not "
+                "to fix the problem. 'afp->operator' code %d is not "
                 "recognized", PACKAGE_BUGREPORT, __func__,
                 afp->operator);
         }
@@ -494,7 +497,7 @@ wrapper_for_filter(struct arithmeticparams *p, char *token, int operator)
 
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
-                "the problem. The `operator' code %d is not recognized",
+                "the problem. The 'operator' code %d is not recognized",
                 PACKAGE_BUGREPORT, __func__, operator);
         }
 
@@ -509,7 +512,8 @@ wrapper_for_filter(struct arithmeticparams *p, char *token, int operator)
 
       /* Spin off threads for each pixel. */
       gal_threads_spin_off(arithmetic_filter, &afp, afp.input->size,
-                           p->cp.numthreads);
+                           p->cp.numthreads, p->cp.minmapsize,
+                           p->cp.quietmmap);
     }
 
 
@@ -550,13 +554,13 @@ arithmetic_binary_sanity_checks(gal_data_t *in, gal_data_t *conn,
 {
   int conn_int;
 
-  /* Do proper sanity checks on `conn'. */
+  /* Do proper sanity checks on 'conn'. */
   if(conn->size!=1)
-    error(EXIT_FAILURE, 0, "the first popped operand to `%s' must be a "
+    error(EXIT_FAILURE, 0, "the first popped operand to '%s' must be a "
           "single number. However, it has %zu elements", operator,
           conn->size);
   if(conn->type==GAL_TYPE_FLOAT32 || conn->type==GAL_TYPE_FLOAT64)
-    error(EXIT_FAILURE, 0, "the first popped operand to `%s' is the "
+    error(EXIT_FAILURE, 0, "the first popped operand to '%s' is the "
           "connectivity (a value between 1 and the number of dimensions) "
           "therefore, it must NOT be a floating point", operator);
 
@@ -565,18 +569,18 @@ arithmetic_binary_sanity_checks(gal_data_t *in, gal_data_t *conn,
   conn=gal_data_copy_to_new_type_free(conn, GAL_TYPE_INT32);
   conn_int = *((int32_t *)(conn->array));
   if(conn_int>in->ndim)
-    error(EXIT_FAILURE, 0, "the first popped operand of `%s' (%d) is "
+    error(EXIT_FAILURE, 0, "the first popped operand of '%s' (%d) is "
           "larger than the number of dimensions in the second-popped "
           "operand (%zu)", operator, conn_int, in->ndim);
 
   /* Make sure the array has an unsigned 8-bit type. */
   if(in->type!=GAL_TYPE_UINT8)
-    error(EXIT_FAILURE, 0, "the second popped operand of `%s' doesn't "
+    error(EXIT_FAILURE, 0, "the second popped operand of '%s' doesn't "
           "have an 8-bit unsigned integer type. It must be a binary "
           "dataset (only being equal to zero is checked). You can use "
-          "the `uint8' operator for type conversion", operator);
+          "the 'uint8' operator for type conversion", operator);
 
-  /* Clean up and return the integer value of `conn'. */
+  /* Clean up and return the integer value of 'conn'. */
   gal_data_free(conn);
   return conn_int;
 }
@@ -635,7 +639,7 @@ arithmetic_connected_components(struct arithmeticparams *p, char *token)
   /* Push the result onto the stack. */
   operands_add(p, NULL, out);
 
-  /* Clean up (`conn' was freed in the sanity check). */
+  /* Clean up ('conn' was freed in the sanity check). */
   gal_data_free(in);
 }
 
@@ -684,10 +688,10 @@ arithmetic_invert(struct arithmeticparams *p, char *token)
     case GAL_TYPE_UINT32: do *u32 = UINT32_MAX-*u32; while(++u32<u32f); break;
     case GAL_TYPE_UINT64: do *u64 = UINT64_MAX-*u64; while(++u64<u64f); break;
     default:
-      error(EXIT_FAILURE, 0, "`invert' operand has %s type. `invert' can "
+      error(EXIT_FAILURE, 0, "'invert' operand has %s type. 'invert' can "
             "only take unsigned integer types.\n\nYou can use any of the "
-            "`uint8', `uint16', `uint32', or `uint64' operators to chage "
-            "the type before calling `invert'",
+            "'uint8', 'uint16', 'uint32', or 'uint64' operators to chage "
+            "the type before calling 'invert'",
             gal_type_name(in->type, 1));
     }
 
@@ -699,11 +703,145 @@ arithmetic_invert(struct arithmeticparams *p, char *token)
 
 
 
+#define INTERPOLATE_REGION(TYPE,OP,FUNC) {                              \
+    TYPE mm, b, *a=in->array, *m=minmax->array;                         \
+    FUNC(in->type, &mm);                                                \
+    gal_blank_write(&b, in->type);                                      \
+    for(i=0;i<minmax->size;++i) m[i]=mm;                                \
+    for(i=0;i<in->size;++i)                                             \
+      {                                                                 \
+        if( l[i]>0 )                                                    \
+          GAL_DIMENSION_NEIGHBOR_OP(i, in->ndim, in->dsize, in->ndim,   \
+                                    dinc,                               \
+            {                                                           \
+              if(in->type==GAL_TYPE_FLOAT32 || in->type==GAL_TYPE_FLOAT64) \
+                { if( a[nind] OP m[l[i]] ) m[l[i]]=a[nind]; }           \
+              else                                                      \
+                { if( a[nind]!=b && a[nind] OP m[l[i]] ) m[l[i]]=a[nind]; } \
+            });                                                         \
+      }                                                                 \
+    for(i=0;i<in->size;++i) if( l[i]>0 ) { a[i]=m[l[i]]; }              \
+}
+#define INTERPOLATE_REGION_OP(TYPE) {                                   \
+    switch(operator)                                                    \
+      {                                                                 \
+      case ARITHMETIC_OP_INTERPOLATE_MINOFREGION:                       \
+        INTERPOLATE_REGION(TYPE,<,gal_type_max); break;                 \
+      case ARITHMETIC_OP_INTERPOLATE_MAXOFREGION:                       \
+        INTERPOLATE_REGION(TYPE,>,gal_type_min); break;                 \
+      default:                                                          \
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to " \
+              "fix the problem. The operator code %d isn't recognized", \
+              __func__, PACKAGE_BUGREPORT, operator);                   \
+      }                                                                 \
+  }
 static void
-arithmetic_interpolate(struct arithmeticparams *p, char *token)
+arithmetic_interpolate_region(struct arithmeticparams *p,
+                              int operator, char *token)
 {
-  int num_int;
+  /* Pop the dataset to interpolate. */
+  int32_t *l;
+  gal_data_t *minmax;
+  gal_data_t *lab=NULL, *flag;
+  size_t i, *con, *dinc, numlabs;
+
+  /* First pop the number of nearby neighbors.*/
+  gal_data_t *connectivity = operands_pop(p, token);
+
+  /* Then pop the actual dataset to interpolate. */
+  gal_data_t *in = operands_pop(p, token);
+
+  /* Do proper sanity checks on 'con'. */
+  if(connectivity->size!=1)
+    error(EXIT_FAILURE, 0, "the first popped operand to the "
+          "'interpolate-XXXofregion' operators must be a single number. "
+          "However, it has %zu elements", connectivity->size);
+  if( connectivity->type==GAL_TYPE_FLOAT32
+      || connectivity->type==GAL_TYPE_FLOAT64)
+    error(EXIT_FAILURE, 0, "the first popped operand to "
+          "'interpolate-XXXofregion' operators is the connectivity to "
+          "define connected blank regions (a counter, an integer, with "
+          "a maximum of the number of dimensions of the input). It must "
+          "NOT be a floating point.\n\n"
+          "If its already an integer, but in a floating point container, "
+          "you can use the 'int32' operator to convert it to a 32-bit "
+          "integer for example");
+
+  /* Convert connectivity to an integer type and make sure its not larger
+     than dimensions of the input. */
+  connectivity=gal_data_copy_to_new_type_free(connectivity,
+                                              GAL_TYPE_SIZE_T);
+  con=connectivity->array;
+  if(con[0]>in->ndim)
+    error(EXIT_FAILURE, 0, "the first popped operand to "
+          "'interpolate-XXXofregion' operators must not be larger than "
+          "the number of dimensions of the input. The connectivity is "
+          "used to define connected blank regions. For example in a "
+          "2D dataset, a connectivity of 1 corresponds to 4-connected "
+          "neighbors and connectivity 2 corresponds to 8-connected "
+          "neighbors");
+
+  /* First make sure the input has blank values. If it doesn't, don't waste
+     time, just return it. */
+  if( gal_blank_present(in, 1)==0 )
+    { operands_add(p, NULL, in); return; }
+
+  /* Build a binary image with the blank regions masked and label them,
+     then free the flagged array. */
+  flag=gal_blank_flag(in);
+  numlabs=gal_binary_connected_components(flag, &lab, con[0]);
+  gal_data_free(flag);
+
+  /* Allocate array to keep maximum values for each region. Just note that
+     because we count the regions from 1, but the indexs from 0, we'll
+     allocate one extra point. */
+  ++numlabs;
+  minmax=gal_data_alloc(NULL, in->type, 1, &numlabs, NULL, 0, in->minmapsize,
+                        in->quietmmap, NULL, NULL, NULL);
+
+  /* Parse the dataset elements for NaNs. */
+  l=lab->array;
+  dinc=gal_dimension_increment(in->ndim, in->dsize);
+  switch(in->type)
+    {
+    case GAL_TYPE_UINT8:   INTERPOLATE_REGION_OP(uint8_t);  break;
+    case GAL_TYPE_INT8:    INTERPOLATE_REGION_OP(int8_t);   break;
+    case GAL_TYPE_UINT16:  INTERPOLATE_REGION_OP(uint16_t); break;
+    case GAL_TYPE_INT16:   INTERPOLATE_REGION_OP(int16_t);  break;
+    case GAL_TYPE_UINT32:  INTERPOLATE_REGION_OP(uint32_t); break;
+    case GAL_TYPE_INT32:   INTERPOLATE_REGION_OP(int32_t);  break;
+    case GAL_TYPE_FLOAT32: INTERPOLATE_REGION_OP(float);    break;
+    case GAL_TYPE_FLOAT64: INTERPOLATE_REGION_OP(double);   break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+            "fix the problem. The code %d is not a recognized data "
+            "type", __func__, PACKAGE_BUGREPORT, in->type);
+    }
+
+  /* For tests.
+  gal_fits_img_write(lab, "test-out.fits", NULL, NULL);
+  gal_fits_img_write(in, "test-out.fits", NULL, NULL);
+  printf("\n...%s...\n", __func__); exit(0);
+  */
+
+  /* Clean up. */
+  gal_data_free(lab);
+  gal_data_free(minmax);
+  gal_data_free(connectivity);
+
+  /* Push the interpolated dataset onto the stack. */
+  operands_add(p, NULL, in);
+}
+
+
+
+
+
+static void
+arithmetic_interpolate(struct arithmeticparams *p, int operator, char *token)
+{
   gal_data_t *interpolated;
+  int num_int, interpop=GAL_ARITHMETIC_OP_INVALID;
 
   /* First pop the number of nearby neighbors.*/
   gal_data_t *num = operands_pop(p, token);
@@ -711,27 +849,46 @@ arithmetic_interpolate(struct arithmeticparams *p, char *token)
   /* Then pop the actual dataset to interpolate. */
   gal_data_t *in = operands_pop(p, token);
 
-  /* Do proper sanity checks on `num'. */
+  /* Do proper sanity checks on 'num'. */
   if(num->size!=1)
     error(EXIT_FAILURE, 0, "the first popped operand to "
-          "`interpolate-medianngb' must be a single number. However, "
-          "it has %zu elements", num->size);
+          "'interpolate-XXXXXngb' operators must be a single number. "
+          "However, it has %zu elements", num->size);
   if(num->type==GAL_TYPE_FLOAT32 || num->type==GAL_TYPE_FLOAT64)
     error(EXIT_FAILURE, 0, "the first popped operand to "
-          "`interpolate-medianngb' is the number of nearby neighbors (a "
-          "counter, an integer). It must NOT be a floating point.\n\n"
+          "'interpolate-XXXXXngb' operators is the number of nearby "
+          "neighbors (a counter, an integer). It must NOT be a floating "
+          "point.\n\n"
           "If its already an integer, but in a floating point container, "
-          "you can use the `int32' operator to convert it to a 32-bit "
+          "you can use the 'int32' operator to convert it to a 32-bit "
           "integer for example");
 
   /* Convert the given number to a 32-bit integer and read it in. */
   num=gal_data_copy_to_new_type_free(num, GAL_TYPE_INT32);
   num_int = *((int32_t *)(num->array));
 
+  /* Set the interpolation operator. */
+  switch(operator)
+    {
+    case ARITHMETIC_OP_INTERPOLATE_MINNGB:
+      interpop=GAL_INTERPOLATE_NEIGHBORS_FUNC_MIN;
+      break;
+    case ARITHMETIC_OP_INTERPOLATE_MAXNGB:
+      interpop=GAL_INTERPOLATE_NEIGHBORS_FUNC_MAX;
+      break;
+    case ARITHMETIC_OP_INTERPOLATE_MEDIANNGB:
+      interpop=GAL_INTERPOLATE_NEIGHBORS_FUNC_MEDIAN;
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+            "the problem. The operator code %d isn't recognized",
+            __func__, PACKAGE_BUGREPORT, operator);
+    }
+
   /* Call the interpolation function. */
-  interpolated=gal_interpolate_close_neighbors(in, NULL, p->cp.interpmetric,
-                                               num_int, p->cp.numthreads,
-                                               1, 0);
+  interpolated=gal_interpolate_neighbors(in, NULL, p->cp.interpmetric,
+                                         num_int, p->cp.numthreads,
+                                         1, 0, interpop);
 
   /* Clean up and push the interpolated array onto the stack. */
   gal_data_free(in);
@@ -758,28 +915,28 @@ arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
 
   /* Small sanity check. */
   if( dimension->ndim!=1 || dimension->size!=1)
-    error(EXIT_FAILURE, 0, "first popped operand of `collapse-*' operators "
+    error(EXIT_FAILURE, 0, "first popped operand of 'collapse-*' operators "
           "(dimension to collapse) must be a single number (single-element, "
           "one-dimensional dataset). But it has %zu dimension(s) and %zu "
           "element(s).", dimension->ndim, dimension->size);
   if(dimension->type==GAL_TYPE_FLOAT32 || dimension->type==GAL_TYPE_FLOAT64)
-    error(EXIT_FAILURE, 0, "first popped operand of `collapse-*' operators "
+    error(EXIT_FAILURE, 0, "first popped operand of 'collapse-*' operators "
           "(dimension to collapse) must have an integer type, but it has "
-          "a floating point type (`%s')", gal_type_name(dimension->type,1));
+          "a floating point type ('%s')", gal_type_name(dimension->type,1));
   dimension=gal_data_copy_to_new_type_free(dimension, GAL_TYPE_LONG);
   dim=((long *)(dimension->array))[0];
   if(dim<0 || dim==0)
-    error(EXIT_FAILURE, 0, "first popped operand of `collapse-*' operators "
+    error(EXIT_FAILURE, 0, "first popped operand of 'collapse-*' operators "
           "(dimension to collapse) must be positive (larger than zero), it "
           "is %ld", dim);
   if(dim > input->ndim)
-    error(EXIT_FAILURE, 0, "input dataset to `%s' has %zu dimension(s), "
-          "but you have asked to collapse along dimension %zu", token,
+    error(EXIT_FAILURE, 0, "input dataset to '%s' has %zu dimension(s), "
+          "but you have asked to collapse along dimension %ld", token,
           input->ndim, dim);
 
 
   /* If a WCS structure has been read, we'll need to pass it to
-     `gal_dimension_collapse', so it modifies it respectively. */
+     'gal_dimension_collapse', so it modifies it respectively. */
   if(p->wcs_collapsed==0)
     {
       p->wcs_collapsed=1;
@@ -818,9 +975,9 @@ arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
 
 
   /* If a WCS structure existed, a modified WCS is now present in
-     `collapsed->wcs'. So we'll let the freeing of `input' free the old
-     `p->refdata.wcs' structure and we'll put the new one there, then we'll
-     set `collapsed->wcs' to `NULL', so the new one isn't freed. */
+     'collapsed->wcs'. So we'll let the freeing of 'input' free the old
+     'p->refdata.wcs' structure and we'll put the new one there, then we'll
+     set 'collapsed->wcs' to 'NULL', so the new one isn't freed. */
   if(collapsed->wcs)
     {
       p->refdata.wcs = collapsed->wcs;
@@ -829,9 +986,9 @@ arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
 
 
   /* We'll also need to correct the size of the reference dataset if it
-     hasn't been corrected yet. We'll use `memcpy' to write the new `dsize'
+     hasn't been corrected yet. We'll use 'memcpy' to write the new 'dsize'
      values into the old ones. The dimensions have decreased, so we won't
-     be writing outside of allocated space that `p->refdata.dsize' points
+     be writing outside of allocated space that 'p->refdata.dsize' points
      to. */
   if( p->refdata.ndim != collapsed->ndim )
     {
@@ -863,7 +1020,7 @@ arithmetic_tofile(struct arithmeticparams *p, char *token, int freeflag)
   /* Save it to a file. */
   popped->wcs=p->refdata.wcs;
   if(popped->ndim==1 && p->onedasimage==0)
-    gal_table_write(popped, NULL, p->cp.tableformat, filename,
+    gal_table_write(popped, NULL, NULL, p->cp.tableformat, filename,
                     "ARITHMETIC", 0);
   else
     gal_fits_img_write(popped, filename, NULL, PROGRAM_NAME);
@@ -882,53 +1039,11 @@ arithmetic_tofile(struct arithmeticparams *p, char *token, int freeflag)
 
 
 
-/* Pull out unique elements */
-#define UNIQUE_BYTYPE(TYPE) {                                           \
-    size_t i, j;                                                        \
-    TYPE *a=input->array, b;                                            \
-                                                                        \
-    /* Write the blank value for this type into `b'. */                 \
-    gal_blank_write(&b, input->type);                                   \
-                                                                        \
-    /* Go over the elements, and set the duplicates to blank. */        \
-    /* Note that for integers and floats, the behavior of blank/NaN */  \
-    /* differs: for floats (NaN), we can identify a blank using the  */ \
-    /* fact that by definition, NaN!=NaN. */                            \
-    if(b==b)                                                            \
-      for(i=0;i<input->size;++i)                                        \
-        { if(a[i]!=b)    for(j=i+1;j<input->size;++j) if(a[i]==a[j]) a[j]=b;} \
-    else                                                                \
-      for(i=0;i<input->size;++i)                                        \
-        { if(a[i]==a[i]) for(j=i+1;j<input->size;++j) if(a[i]==a[j]) a[j]=b;} \
-  }
-
 void
 arithmetic_unique(struct arithmeticparams *p, char *token, int operator)
 {
-  gal_data_t *input = operands_pop(p, token);
-
-  /* Remove the duplicates based on size. */
-  switch(input->type)
-    {
-    case GAL_TYPE_UINT8:   UNIQUE_BYTYPE( uint8_t  ); break;
-    case GAL_TYPE_INT8:    UNIQUE_BYTYPE( int8_t   ); break;
-    case GAL_TYPE_UINT16:  UNIQUE_BYTYPE( uint16_t ); break;
-    case GAL_TYPE_INT16:   UNIQUE_BYTYPE( int16_t  ); break;
-    case GAL_TYPE_UINT32:  UNIQUE_BYTYPE( uint32_t ); break;
-    case GAL_TYPE_INT32:   UNIQUE_BYTYPE( int32_t  ); break;
-    case GAL_TYPE_UINT64:  UNIQUE_BYTYPE( uint64_t ); break;
-    case GAL_TYPE_INT64:   UNIQUE_BYTYPE( int64_t  ); break;
-    case GAL_TYPE_FLOAT32: UNIQUE_BYTYPE( float    ); break;
-    case GAL_TYPE_FLOAT64: UNIQUE_BYTYPE( double   ); break;
-    default:
-      error(EXIT_FAILURE, 0, "the `unique' operator doesn't support type "
-            "code `%u'", input->type);
-    }
-
-  /* Remove all blank elements. */
-  gal_blank_remove(input);
-
-  /* Add the collapsed dataset to the top of the operands. */
+  /* Pass the popped operand to the statistics library. */
+  gal_data_t *input = gal_statistics_unique(operands_pop(p, token), 1);
   operands_add(p, NULL, input);
 }
 
@@ -945,10 +1060,10 @@ arithmetic_add_dimension(struct arithmeticparams *p, char *token, int operator)
 
   /* Make sure the first operand is a number. */
   if(tmp->size!=1)
-    error(EXIT_FAILURE, 0, "first popped operand to `%s' must be a "
+    error(EXIT_FAILURE, 0, "first popped operand to '%s' must be a "
           "number (specifying how many datasets to use)", token);
 
-  /* Put the value into `num'. */
+  /* Put the value into 'num'. */
   tmp=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_SIZE_T);
   num=*(size_t *)(tmp->array);
   gal_data_free(tmp);
@@ -964,14 +1079,14 @@ arithmetic_add_dimension(struct arithmeticparams *p, char *token, int operator)
         {
           /* Basic sanity checks. */
           if(tmp->type!=out->type)
-            error(EXIT_FAILURE, 0, "the operands to `%s' have to have the "
+            error(EXIT_FAILURE, 0, "the operands to '%s' have to have the "
                   "same data type (the inputs contain atleast two types: "
-                  "`%s' and `%s')", token, gal_type_name(tmp->type, 1),
+                  "'%s' and '%s')", token, gal_type_name(tmp->type, 1),
                   gal_type_name(out->type, 1));
           if( tmp->ndim!=out->ndim-1
               || tmp->dsize[0]!=out->dsize[1]
               || tmp->dsize[1]!=out->dsize[2] )
-            error(EXIT_FAILURE, 0, "the operands to `%s' have to have the "
+            error(EXIT_FAILURE, 0, "the operands to '%s' have to have the "
                   "same size", token);
         }
       else  /* First popped operand. */
@@ -979,7 +1094,7 @@ arithmetic_add_dimension(struct arithmeticparams *p, char *token, int operator)
           /* First popped operand, do necessary basic checks here. */
           if(tmp->ndim!=2)
             error(EXIT_FAILURE, 0, "currently only 2-dimensional datasets "
-                  "are acceptable for `%s', please get in touch with us at "
+                  "are acceptable for '%s', please get in touch with us at "
                   "%s so we add functionality for different dimensions",
                   token, PACKAGE_BUGREPORT);
 
@@ -1058,8 +1173,16 @@ arithmetic_set_operator(char *string, size_t *num_operands)
         { op=ARITHMETIC_OP_FILL_HOLES;            *num_operands=0; }
       else if (!strcmp(string, "invert"))
         { op=ARITHMETIC_OP_INVERT;                *num_operands=0; }
+      else if (!strcmp(string, "interpolate-minngb"))
+        { op=ARITHMETIC_OP_INTERPOLATE_MINNGB;    *num_operands=0; }
+      else if (!strcmp(string, "interpolate-maxngb"))
+        { op=ARITHMETIC_OP_INTERPOLATE_MAXNGB;    *num_operands=0; }
       else if (!strcmp(string, "interpolate-medianngb"))
         { op=ARITHMETIC_OP_INTERPOLATE_MEDIANNGB; *num_operands=0; }
+      else if (!strcmp(string, "interpolate-minofregion"))
+        { op=ARITHMETIC_OP_INTERPOLATE_MINOFREGION; *num_operands=0; }
+      else if (!strcmp(string, "interpolate-maxofregion"))
+        { op=ARITHMETIC_OP_INTERPOLATE_MAXOFREGION; *num_operands=0; }
       else if (!strcmp(string, "collapse-sum"))
         { op=ARITHMETIC_OP_COLLAPSE_SUM;          *num_operands=0; }
       else if (!strcmp(string, "collapse-min"))
@@ -1075,7 +1198,7 @@ arithmetic_set_operator(char *string, size_t *num_operands)
       else if (!strcmp(string, "add-dimension"))
         { op=ARITHMETIC_OP_ADD_DIMENSION;         *num_operands=0; }
       else
-        error(EXIT_FAILURE, 0, "the argument \"%s\" could not be "
+        error(EXIT_FAILURE, 0, "the argument '%s' could not be "
               "interpretted as a file name, named dataset, number, "
               "or operator", string);
     }
@@ -1098,7 +1221,7 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
   int flags = ( GAL_ARITHMETIC_INPLACE | GAL_ARITHMETIC_FREE
                 | GAL_ARITHMETIC_NUMOK );
 
-  /* When `num_operands!=0', the operator is in the library. */
+  /* When 'num_operands!=0', the operator is in the library. */
   if(num_operands)
     {
       /* Pop the necessary number of operators. Note that the
@@ -1128,7 +1251,7 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
              operand. So except for sigma-clipping (that has other
              parameters), the first popped operand must be an
              integer number, we will use that to construct a linked
-             list of any number of operands within the single `d1'
+             list of any number of operands within the single 'd1'
              pointer. */
           numop=pop_number_of_operands(p, operator, operator_string, &d2);
           for(i=0;i<numop;++i)
@@ -1137,12 +1260,12 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
 
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-                "the problem. `%zu' is not recognized as an operand "
-                "counter (with `%s')", __func__, PACKAGE_BUGREPORT,
+                "the problem. '%zu' is not recognized as an operand "
+                "counter (with '%s')", __func__, PACKAGE_BUGREPORT,
                 num_operands, operator_string);
         }
 
-      /* Run the arithmetic operation. Note that `gal_arithmetic'
+      /* Run the arithmetic operation. Note that 'gal_arithmetic'
          is a variable argument function (like printf). So the
          number of arguments it uses depend on the operator. So
          when the operator doesn't need three operands, the extra
@@ -1181,8 +1304,15 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
           arithmetic_invert(p, operator_string);
           break;
 
+        case ARITHMETIC_OP_INTERPOLATE_MINNGB:
+        case ARITHMETIC_OP_INTERPOLATE_MAXNGB:
         case ARITHMETIC_OP_INTERPOLATE_MEDIANNGB:
-          arithmetic_interpolate(p, operator_string);
+          arithmetic_interpolate(p, operator, operator_string);
+          break;
+
+        case ARITHMETIC_OP_INTERPOLATE_MINOFREGION:
+        case ARITHMETIC_OP_INTERPOLATE_MAXOFREGION:
+          arithmetic_interpolate_region(p, operator, operator_string);
           break;
 
         case ARITHMETIC_OP_COLLAPSE_SUM:
@@ -1204,10 +1334,32 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! please contact us at "
                 "%s to fix the problem. The code %d is not "
-                "recognized for `op'", __func__, PACKAGE_BUGREPORT,
+                "recognized for 'op'", __func__, PACKAGE_BUGREPORT,
                 operator);
         }
     }
+}
+
+
+
+
+
+/* Used by the 'set-' operator. */
+static int
+arithmetic_set_name_used_later(void *in, char *name)
+{
+  struct gal_arithmetic_set_params *p=(struct gal_arithmetic_set_params *)in;
+  gal_list_str_t *token, *tokens = (gal_list_str_t *)(p->tokens);
+
+  size_t counter=0;
+
+  /* If the name exists after the current token, then return 1. */
+  for(token=tokens;token!=NULL;token=token->next)
+    if( counter++ > p->tokencounter && !strcmp(token->v, name) )
+      return 1;
+
+  /* If we get to this point, it means that the name doesn't exist. */
+  return 0;
 }
 
 
@@ -1228,16 +1380,19 @@ reversepolish(struct arithmeticparams *p)
   char *hdu, *filename, *printnum;
   int operator=GAL_ARITHMETIC_OP_INVALID;
 
-
   /* Prepare the processing: */
-  p->operands=NULL;
   p->popcounter=0;
-
+  p->operands=NULL;
+  p->setprm.params=p;
+  p->setprm.tokencounter=0;
+  p->setprm.tokens=p->tokens;
+  p->setprm.pop=operands_pop_wrapper_set;
+  p->setprm.used_later=arithmetic_set_name_used_later;
 
   /* Go over each input token and do the work. */
   for(token=p->tokens;token!=NULL;token=token->next)
     {
-      /* The `tofile-' operator's string can end in a `.fits', similar to a
+      /* The 'tofile-' operator's string can end in a '.fits', similar to a
          FITS file input file. So, it needs to be checked before checking
          for a filename. If we have a name or number, then add it to the
          operands linked list. Otherwise, pull out two members and do the
@@ -1249,14 +1404,21 @@ reversepolish(struct arithmeticparams *p)
       else if( !strncmp(OPERATOR_PREFIX_TOFILEFREE, token->v,
                    OPERATOR_PREFIX_LENGTH_TOFILE) )
         arithmetic_tofile(p, token->v, 1);
-      else if( !strncmp(token->v, OPERATOR_PREFIX_SET,
-                        OPERATOR_PREFIX_LENGTH_SET) )
-        operands_set_name(p, token->v);
-      else if( gal_array_name_recognized(token->v)
-          || operands_is_name(p, token->v) )
+      else if( !strncmp(token->v, GAL_ARITHMETIC_SET_PREFIX,
+                        GAL_ARITHMETIC_SET_PREFIX_LENGTH) )
+        gal_arithmetic_set_name(&p->setprm, token->v);
+      else if(    gal_array_name_recognized(token->v)
+               || gal_arithmetic_set_is_name(p->setprm.named, token->v) )
         operands_add(p, token->v, NULL);
       else if( (data=gal_data_copy_string_to_number(token->v)) )
-        operands_add(p, NULL, data);
+        {
+          /* The 'minmapsize' and 'quietmmap' parameters should be passed
+             onto the library within numbers also (since they are the
+             only things that go in the library sometimes). */
+          data->quietmmap=p->cp.quietmmap;
+          data->minmapsize=p->cp.minmapsize;
+          operands_add(p, NULL, data);
+        }
       /* Last option is an operator: the program will abort if the token
          isn't an operator. */
       else
@@ -1266,7 +1428,7 @@ reversepolish(struct arithmeticparams *p)
         }
 
       /* Increment the token counter. */
-      ++p->tokencounter;
+      ++p->setprm.tokencounter;
     }
 
 
@@ -1282,10 +1444,10 @@ reversepolish(struct arithmeticparams *p)
     error(EXIT_FAILURE, 0, "too many operands");
 
 
-  /* If the final operand has a filename, but its `data' element is NULL,
+  /* If the final operand has a filename, but its 'data' element is NULL,
      then the file hasn't actually be read yet. In this case, we need to
      read the contents of the file and put the resulting dataset into the
-     operands `data' element. This can happen for example if no operators
+     operands 'data' element. This can happen for example if no operators
      are called and there is only one filename as an argument (which can
      happen in scripts). */
   if(p->operands->data==NULL && p->operands->filename)
@@ -1305,8 +1467,8 @@ reversepolish(struct arithmeticparams *p)
         }
       else
         error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
-              "the problem. While `operands->data' is NULL, the filename "
-              "(`%s') is not recognized as a FITS file", __func__,
+              "the problem. While 'operands->data' is NULL, the filename "
+              "('%s') is not recognized as a FITS file", __func__,
               PACKAGE_BUGREPORT, filename);
     }
 
@@ -1326,10 +1488,10 @@ reversepolish(struct arithmeticparams *p)
   else
     {
       /* Put a copy of the WCS structure from the reference image, it
-         will be freed while freeing `data'. */
+         will be freed while freeing 'data'. */
       data->wcs=p->refdata.wcs;
       if(data->ndim==1 && p->onedasimage==0)
-        gal_table_write(data, NULL, p->cp.tableformat,
+        gal_table_write(data, NULL, NULL, p->cp.tableformat,
                         p->onedonstdout ? NULL : p->cp.output,
                         "ARITHMETIC", 0);
       else
@@ -1339,11 +1501,11 @@ reversepolish(struct arithmeticparams *p)
     }
 
 
-  /* Clean up, note that above, we copied the pointer to `refdata->wcs'
-     into `data', so it is freed when freeing `data'. */
+  /* Clean up, note that above, we copied the pointer to 'refdata->wcs'
+     into 'data', so it is freed when freeing 'data'. */
   gal_data_free(data);
   free(p->refdata.dsize);
-  gal_list_data_free(p->named);
+  gal_list_data_free(p->setprm.named);
 
 
   /* Clean up. Note that the tokens were taken from the command-line

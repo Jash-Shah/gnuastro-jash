@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -27,6 +27,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/list.h>
 
 #include <gnuastro-internal/options.h>
+#include <gnuastro-internal/arithmetic-set.h>
 
 
 /* Progarm name macros: */
@@ -40,10 +41,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 /* Constants: */
 #define NEG_DASH_REPLACE 11 /* Vertical tab (ASCII=11) for negative dash */
-#define OPERATOR_PREFIX_SET               "set-"
 #define OPERATOR_PREFIX_TOFILE            "tofile-"
 #define OPERATOR_PREFIX_TOFILEFREE        "tofilefree-"
-#define OPERATOR_PREFIX_LENGTH_SET        strlen(OPERATOR_PREFIX_SET)
 #define OPERATOR_PREFIX_LENGTH_TOFILE     strlen(OPERATOR_PREFIX_TOFILE)
 #define OPERATOR_PREFIX_LENGTH_TOFILEFREE strlen(OPERATOR_PREFIX_TOFILEFREE)
 
@@ -51,8 +50,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* In every node of the operand linked list, only one of the `filename' or
-   `data' should be non-NULL. Otherwise it will be a bug and will cause
+/* In every node of the operand linked list, only one of the 'filename' or
+   'data' should be non-NULL. Otherwise it will be a bug and will cause
    problems. All the operands operate on this premise. */
 struct operand
 {
@@ -71,6 +70,7 @@ struct arithmeticparams
 {
   /* Other structures: */
   struct gal_options_common_params cp;  /* Common parameters.           */
+  struct gal_arithmetic_set_params setprm; /* Parameters for 'set-'.    */
 
   /* Input: */
   gal_list_str_t     *hdus;  /* List of all given HDU strings.          */
@@ -82,8 +82,6 @@ struct arithmeticparams
   char          *globalhdu;  /* Single HDU for all inputs.              */
   uint8_t      onedasimage;  /* Write 1D outputs as an image not table. */
   uint8_t     onedonstdout;  /* Write 1D outputs on stdout, not table.  */
-  gal_data_t        *named;  /* List containing variables.              */
-  size_t      tokencounter;  /* Counter for finding place in tokens.    */
 
   /* Operating mode: */
   int        wcs_collapsed;  /* If the internal WCS is already collapsed.*/

@@ -5,7 +5,7 @@ MakeNoise is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -116,7 +116,8 @@ ui_initialize_options(struct mknoiseparams *p,
   /* Initialize options for this program. */
   p->sigma               = NAN;
   p->zeropoint           = NAN;
-  p->background_mag      = NAN;
+  p->background          = NAN;
+  p->instrumental        = NAN;
 
 
   /* Modify common options. */
@@ -158,18 +159,18 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct mknoiseparams *p = state->input;
 
-  /* Pass `gal_options_common_params' into the child parser.  */
+  /* Pass 'gal_options_common_params' into the child parser.  */
   state->child_inputs[0] = &p->cp;
 
   /* In case the user incorrectly uses the equal sign (for example
-     with a short format or with space in the long format, then `arg`
+     with a short format or with space in the long format, then 'arg'
      start with (if the short version was called) or be (if the long
      version was called with a space) the equal sign. So, here we
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign (`=`). For short "
-               "options, `=` should not be used and for long options, "
+    argp_error(state, "incorrect use of the equal sign ('='). For short "
+               "options, '=' should not be used and for long options, "
                "there should be no space between the option, equal sign "
                "and value");
 
@@ -217,23 +218,46 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /***************       Sanity Check         *******************/
 /**************************************************************/
 /* Read and check ONLY the options. When arguments are involved, do the
-   check in `ui_check_options_and_arguments'. */
+   check in 'ui_check_options_and_arguments'. */
 static void
 ui_read_check_only_options(struct mknoiseparams *p)
 {
-  /* At leaset one of `--sigma' or `--background' are necessary. */
-  if( isnan(p->sigma) && isnan(p->background_mag) )
-    error(EXIT_FAILURE, 0, "at least one of `--sigma' or `--background' "
-          "must be given to identify the noise level");
+  /* At leaset one of '--sigma' or '--background' are necessary. */
+  if( isnan(p->sigma) && isnan(p->background) )
+    error(EXIT_FAILURE, 0, "noise not defined: please define the noise "
+          "level with either '--sigma' (for a fixed noise STD for all "
+          "the pixels, irrespective of their value) or '--background' "
+          "(to use in a Poisson noise model, where the noise will differ "
+          "based on pixel value)");
 
 
-  /* If a background magnitude is given (and the user hasn't given a
-     `--sigma'), the zeropoint is necessary. */
-  if( isnan(p->sigma) && !isnan(p->background_mag) && isnan(p->zeropoint) )
-    error(EXIT_FAILURE, 0, "no zeropoint magnitude given. When the noise is "
-          "identified by the background magnitude, a zeropoint magnitude "
-          "is mandatory. Please use the `--zeropoint' option to specify "
-          "a zeropoint magnitude");
+  /* If a background magnitude is given ('--bgbrightness' hasn't been
+     called), the zeropoint is necessary. */
+  if( !isnan(p->background) )
+    {
+      /* Make sure that the background can be interpretted properly. */
+      if( p->bgisbrightness==0 && isnan(p->zeropoint) )
+        error(EXIT_FAILURE, 0, "missing background information. When the "
+              "noise is identified by the background, a zeropoint magnitude "
+              "is mandatory. Please use the '--zeropoint' option to specify "
+              "a zeropoint magnitude. Alternatively, if your background value "
+              "is brightness (which is in linear scale and doesn't need a "
+              "zeropoint), please use '--bgisbrightness'");
+
+      /* If the background is in units of magnitudes, convert it to
+         brightness. */
+      if( p->bgisbrightness==0 )
+        p->background = pow(10, (p->zeropoint-p->background)/2.5f);
+
+      /* Make sure that the background is larger than 1 (where Poisson
+         noise is actually defined). */
+      if( p->background < 1 )
+        error(EXIT_FAILURE, 0, "background value is smaller than 1. "
+              "Poisson noise is only defined on a positive distribution "
+              "with values larger than 1. You can use the '--sigma' "
+              "option to add a fixed noise level (with any positive value) "
+              "to any pixel.");
+    }
 }
 
 
@@ -249,8 +273,8 @@ ui_check_options_and_arguments(struct mknoiseparams *p)
     {
       if( gal_fits_name_is_fits(p->inputname) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified. When the input is a FITS "
-              "file, a HDU must also be specified, you can use the `--hdu' "
-              "(`-h') option and give it the HDU number (starting from "
+              "file, a HDU must also be specified, you can use the '--hdu' "
+              "('-h') option and give it the HDU number (starting from "
               "zero), extension name, or anything acceptable by CFITSIO");
 
     }
@@ -305,16 +329,6 @@ ui_preparations(struct mknoiseparams *p)
     p->cp.output=gal_checkset_automatic_output(&p->cp, p->inputname,
                                                "_noised.fits");
 
-
-  /* Convert the background value from magnitudes to flux. Note that
-     magnitudes are actually calculated from the ratio of brightness, not
-     flux. But in the context of MakeNoise where everything is done on
-     pixels independently, brightness and flux are the same (flux is
-     multiplied by the area of one pixel (=1) to give brightness).*/
-  if( !isnan(p->background_mag) )
-    p->background=pow(10, (p->zeropoint-p->background_mag)/2.5f);
-
-
   /* Allocate the random number generator: */
   p->rng=gal_checkset_gsl_rng(p->envseed, &p->rng_name, &p->rng_seed);
 }
@@ -348,9 +362,9 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct mknoiseparams *p)
   char message[GAL_TIMING_VERB_MSG_LENGTH_V];
 
 
-  /* Include the parameters necessary for argp from this program (`args.h')
-     and for the common options to all Gnuastro (`commonopts.h'). We want
-     to directly put the pointers to the fields in `p' and `cp', so we are
+  /* Include the parameters necessary for argp from this program ('args.h')
+     and for the common options to all Gnuastro ('commonopts.h'). We want
+     to directly put the pointers to the fields in 'p' and 'cp', so we are
      simply including the header here to not have to use long macros in
      those headers which make them hard to read and modify. This also helps
      in having a clean environment: everything in those headers is only

@@ -5,7 +5,7 @@ CosmicCalculator is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -33,7 +33,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Option groups particular to this program. */
 enum program_args_groups
 {
-  UI_GROUP_SPECIFIC = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_BASIC = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_SPECTRAL_LINES,
 };
 
 
@@ -42,13 +43,14 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   f j k n p t w x y
-   B E J Q R W X Y
+   f j k n p t w x
+   B E J Q R W X
 */
 enum option_keys_enum
 {
   /* With short-option version. */
   UI_KEY_REDSHIFT            = 'z',
+  UI_KEY_VELOCITY            = 'y',
   UI_KEY_OBSLINE             = 'O',
   UI_KEY_H0                  = 'H',
   UI_KEY_OLAMBDA             = 'l',
@@ -68,10 +70,13 @@ enum option_keys_enum
   UI_KEY_LOOKBACKTIME        = 'b',
   UI_KEY_CRITICALDENSITY     = 'c',
   UI_KEY_VOLUME              = 'v',
+  UI_KEY_USEDVELOCITY        = 'Y',
   UI_KEY_LINEATZ             = 'i',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
+  UI_KEY_LISTLINES           = 1000,
+  UI_KEY_LISTLINESATZ,
 };
 
 

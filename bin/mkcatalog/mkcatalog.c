@@ -5,7 +5,7 @@ MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -134,14 +134,13 @@ mkcatalog_single_object(void *in_prm)
                                   NULL, NULL, NULL);
 
       /* Set the blank checked flag to 1. By definition, this dataset won't
-         have any blank values. Also `flag' is initialized to `0'. So we
-         just have to set the checked flag (`GAL_DATA_FLAG_BLANK_CH') to
+         have any blank values. Also 'flag' is initialized to '0'. So we
+         just have to set the checked flag ('GAL_DATA_FLAG_BLANK_CH') to
          one to inform later steps that there are no blank values. */
       pp.up_vals->flag |= GAL_DATA_FLAG_BLANK_CH;
     }
   else
     pp.up_vals=NULL;
-
 
   /* Fill the desired columns for all the objects given to this thread. */
   for(i=0; tprm->indexs[i]!=GAL_BLANK_SIZE_T; ++i)
@@ -149,7 +148,9 @@ mkcatalog_single_object(void *in_prm)
       /* For easy reading. Note that the object IDs start from one while
          the array positions start from 0. */
       pp.ci       = NULL;
-      pp.object   = tprm->indexs[i] + 1;
+      pp.object   = ( p->outlabs
+                      ? p->outlabs[ tprm->indexs[i] ]
+                      : tprm->indexs[i] + 1 );
       pp.tile     = &p->tiles[   tprm->indexs[i] ];
       pp.spectrum = &p->spectra[ tprm->indexs[i] ];
 
@@ -177,9 +178,20 @@ mkcatalog_single_object(void *in_prm)
           parse_clumps(&pp);
         }
 
-      /* If the median is requested, another pass is necessary. */
-      if( p->oiflag[ OCOL_MEDIAN ] )
-        parse_median(&pp);
+      /* If an order-based calculation is requested, another pass is
+         necessary. */
+      if( p->oiflag[ OCOL_MEDIAN ]
+          || p->oiflag[ OCOL_MAXIMUM ]
+          || p->oiflag[ OCOL_HALFMAXSUM ]
+          || p->oiflag[ OCOL_HALFMAXNUM ]
+          || p->oiflag[ OCOL_HALFSUMNUM ]
+          || p->oiflag[ OCOL_SIGCLIPNUM ]
+          || p->oiflag[ OCOL_SIGCLIPSTD ]
+          || p->oiflag[ OCOL_SIGCLIPMEAN ]
+          || p->oiflag[ OCOL_FRACMAX1NUM ]
+          || p->oiflag[ OCOL_FRACMAX2NUM ]
+          || p->oiflag[ OCOL_SIGCLIPMEDIAN ])
+        parse_order_based(&pp);
 
       /* Calculate the upper limit magnitude (if necessary). */
       if(p->upperlimit) upperlimit_calculate(&pp);
@@ -268,8 +280,8 @@ mkcatalog_wcs_conversion(struct mkcatalogparams *p)
       /* Definitions */
       c=NULL;
 
-      /* Set `c' for the columns that must be corrected. Note that this
-         `switch' statement doesn't need any `default', because there are
+      /* Set 'c' for the columns that must be corrected. Note that this
+         'switch' statement doesn't need any 'default', because there are
          probably columns that don't need any correction. */
       switch(column->status)
         {
@@ -300,8 +312,8 @@ mkcatalog_wcs_conversion(struct mkcatalogparams *p)
       /* Definitions */
       c=NULL;
 
-      /* Set `c' for the columns that must be corrected. Note that this
-         `switch' statement doesn't need any `default', because there are
+      /* Set 'c' for the columns that must be corrected. Note that this
+         'switch' statement doesn't need any 'default', because there are
          probably columns that don't need any correction. */
       switch(column->status)
         {
@@ -435,7 +447,7 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
       gal_list_str_add(&comments, str, 0);
     }
 
-  /* Write the date. However, `ctime' is going to put a new-line character
+  /* Write the date. However, 'ctime' is going to put a new-line character
      in the end of its string, so we are going to remove it manually. */
   if( asprintf(&str, "%s started on %s", PROGRAM_NAME, ctime(&p->rawtime))<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
@@ -447,14 +459,15 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
   mkcatalog_write_inputs_in_comments(p, &comments, 1, 1);
 
 
-  /* Write other supplimentary information. */
+  /* Write other supplementary information. */
   if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
     {
-      if( asprintf(&str, "--------- Supplimentary information ---------")<0 )
+      if( asprintf(&str, "--------- Supplementary information ---------")<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_list_str_add(&comments, str, 0);
     }
 
+  /* Pixel area. */
   if(p->objects->wcs)
     {
       pixarea=gal_wcs_pixel_area_arcsec2(p->objects->wcs);
@@ -466,6 +479,7 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
         }
     }
 
+  /* Zeropoint magnitude */
   if(p->hasmag)
     {
       if( asprintf(&str, "Zeropoint magnitude: %.4f", p->zeropoint)<0 )
@@ -474,49 +488,53 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
     }
 
   /* Print surface brightness limits. */
-  if( !isnan(p->medstd) && !isnan(p->zeropoint) &&  !isnan(p->sfmagnsigma) )
+  if( !isnan(p->medstd) && !isnan(p->sfmagnsigma) )
     {
-      /* Per pixel. */
-      if( asprintf(&str, "%g sigma surface brightness (magnitude/pixel): "
-                   "%.3f", p->sfmagnsigma, ( -2.5f
-                                             *log10( p->sfmagnsigma
-                                                     * p->medstd )
-                                             + p->zeropoint ) )<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
-
-      /* Requested projected area: if a pixel area could be measured (a WCS
-         was given), then also estimate the surface brightness over one
-         arcsecond^2. From the pixel area, we know how many pixels are
-         necessary to fill the requested projected area (in
-         arcsecond^2). We also know that as the number of samples (pixels)
-         increases (to N), the noise increases by sqrt(N), see the full
-         discussion in the book. */
-      if(!isnan(pixarea) && !isnan(p->sfmagarea))
+      /* Only print magnitudes if a zeropoint is given. */
+      if( !isnan(p->zeropoint) )
         {
-          /* Prepare the comment/information. */
-          if(p->sfmagarea==1.0f)
-            tstr=NULL;
-          else
-            if( asprintf(&tstr, "%g-", p->sfmagarea)<0 )
-              error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          if( asprintf(&str, "%g sigma surface brightness "
-                       "(magnitude/%sarcsec^2): %.3f", p->sfmagnsigma,
-                       tstr ? tstr : "",
-                       ( -2.5f * log10( p->sfmagnsigma
-                                        * p->medstd
-                                        * sqrt( p->sfmagarea / pixarea) )
-                         + p->zeropoint ) )<0 )
+          /* Per pixel. */
+          if( asprintf(&str, "%g sigma surface brightness (magnitude/pixel): "
+                       "%.3f", p->sfmagnsigma, ( -2.5f
+                                                 *log10( p->sfmagnsigma
+                                                         * p->medstd )
+                                                 + p->zeropoint ) )<0 )
             error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-
-          /* Add the final string/line to the catalog comments. */
           gal_list_str_add(&comments, str, 0);
 
-          /* Clean up (if necessary). */
-          if (tstr)
+          /* Requested projected area: if a pixel area could be measured (a
+             WCS was given), then also estimate the surface brightness over
+             one arcsecond^2. From the pixel area, we know how many pixels
+             are necessary to fill the requested projected area (in
+             arcsecond^2). We also know that as the number of samples
+             (pixels) increases (to N), the noise increases by sqrt(N), see
+             the full discussion in the book. */
+          if(!isnan(pixarea) && !isnan(p->sfmagarea))
             {
-              free(tstr);
-              tstr=NULL;
+              /* Prepare the comment/information. */
+              if(p->sfmagarea==1.0f)
+                tstr=NULL;
+              else
+                if( asprintf(&tstr, "%g-", p->sfmagarea)<0 )
+                  error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+              if( asprintf(&str, "%g sigma surface brightness "
+                           "(magnitude/%sarcsec^2): %.3f", p->sfmagnsigma,
+                           tstr ? tstr : "",
+                           ( -2.5f * log10( p->sfmagnsigma
+                                            * p->medstd
+                                            * sqrt( p->sfmagarea / pixarea) )
+                             + p->zeropoint ) )<0 )
+                error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+
+              /* Add the final string/line to the catalog comments. */
+              gal_list_str_add(&comments, str, 0);
+
+              /* Clean up (if necessary). */
+              if (tstr)
+                {
+                  free(tstr);
+                  tstr=NULL;
+                }
             }
         }
 
@@ -527,7 +545,17 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       gal_list_str_add(&comments, str, 0);
     }
+  else
+    {
+      gal_checkset_allocate_copy("No surface brightness calcuations "
+                                 "because no STD image used.", &str);
+      gal_list_str_add(&comments, str, 0);
+      gal_checkset_allocate_copy("Ask for column that uses the STD image, "
+                                 "or '--forcereadstd'.", &str);
+      gal_list_str_add(&comments, str, 0);
+    }
 
+  /* The count-per-second correction. */
   if(p->cpscorr>1.0f)
     {
       if( asprintf(&str, "Counts-per-second correction: %.3f", p->cpscorr)<0 )
@@ -535,11 +563,11 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
       gal_list_str_add(&comments, str, 0);
     }
 
+  /* Print upper-limit parameters. */
   if(p->upperlimit)
     upperlimit_write_comments(p, &comments, 1);
 
-
-
+  /* Start column metadata. */
   if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
     {
       if( asprintf(&str, "--------- Table columns ---------")<0 )
@@ -569,7 +597,7 @@ sort_clumps_by_objid(struct mkcatalogparams *p)
   /* Make sure everything is fine. */
   if(p->hostobjid_c==NULL || p->numclumps_c==NULL)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
-          "problem. `p->hostobjid_c' and `p->numclumps_c' must not be "
+          "problem. 'p->hostobjid_c' and 'p->numclumps_c' must not be "
           "NULL.", __func__, PACKAGE_BUGREPORT);
 
 
@@ -592,7 +620,9 @@ sort_clumps_by_objid(struct mkcatalogparams *p)
   i=0;
   while(i<p->numclumps)
     {
-      o=p->hostobjid_c[i]-1;
+      o = ( p->outlabsinv
+            ? (p->outlabsinv[ p->hostobjid_c[i] ] + 1)
+            : p->hostobjid_c[i] ) - 1;
       for(j=0; j<p->numclumps_c[o]; ++j)
         permute[i++] = rowstart[o] + j;
     }
@@ -628,7 +658,7 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
       /* Reverse the comments list (so it is printed in the same order
          here), write the objects catalog and free the comments. */
       gal_list_str_reverse(&comments);
-      gal_table_write(p->objectcols, comments, p->cp.tableformat,
+      gal_table_write(p->objectcols, NULL, comments, p->cp.tableformat,
                       p->objectsout, "OBJECTS", 0);
       gal_list_str_free(comments, 1);
 
@@ -645,7 +675,7 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
              Reverse the comments list (so it is printed in the same order
              here), write the objects catalog and free the comments. */
           gal_list_str_reverse(&comments);
-          gal_table_write(p->clumpcols, comments, p->cp.tableformat,
+          gal_table_write(p->clumpcols, NULL, comments, p->cp.tableformat,
                           p->clumpsout, "CLUMPS", 0);
           gal_list_str_free(comments, 1);
         }
@@ -660,7 +690,7 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
         printf("  - Catalog(s) complete, writing spectra.\n");
 
       /* Start counting and writing the files. Note that due to some
-         conditions (for example in debugging), a `p->spectra[i]' may not
+         conditions (for example in debugging), a 'p->spectra[i]' may not
          actually contain any data. So we'll also count the number of
          spectra that are written. */
       scounter=0;
@@ -675,7 +705,8 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
               {
                 /* Write the table. */
                 sprintf(str, "SPECTRUM_%zu", i+1);
-                gal_table_write(&p->spectra[i], NULL, GAL_TABLE_FORMAT_BFITS,
+                gal_table_write(&p->spectra[i], NULL, NULL,
+                                GAL_TABLE_FORMAT_BFITS,
                                 p->objectsout, str, 0);
               }
             else
@@ -683,7 +714,7 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
                 sprintf(str, "-spec-%zu.txt", i+1);
                 fname=gal_checkset_automatic_output(&p->cp, p->objectsout,
                                                     str);
-                gal_table_write(&p->spectra[i], NULL, GAL_TABLE_FORMAT_TXT,
+                gal_table_write(&p->spectra[i], NULL, NULL, GAL_TABLE_FORMAT_TXT,
                                 fname, NULL, 0);
                 free(fname);
               }
@@ -720,14 +751,14 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
           if(outisfits)
             {
               if(p->objectcols)
-                printf("  - Spectra in %zu extensions named `SPECTRUM_NN'.\n",
+                printf("  - Spectra in %zu extensions named 'SPECTRUM_NN'.\n",
                        p->numobjects);
               else
                 printf("  - Output: %s (Spectra in %zu extensions named "
-                       "`SPECTRUM_NN').\n)", p->objectsout, p->numobjects);
+                       "'SPECTRUM_NN').\n)", p->objectsout, p->numobjects);
             }
           else
-            printf("  - Spectra in %zu files with `-spec-NN.txt' suffix.\n",
+            printf("  - Spectra in %zu files with '-spec-NN.txt' suffix.\n",
                    p->numobjects);
         }
     }
@@ -764,7 +795,8 @@ mkcatalog(struct mkcatalogparams *p)
 
   /* Do the processing on each thread. */
   gal_threads_spin_off(mkcatalog_single_object, p, p->numobjects,
-                       p->cp.numthreads);
+                       p->cp.numthreads, p->cp.minmapsize,
+                       p->cp.quietmmap);
 
   /* Post-thread processing, for example to convert image coordinates to RA
      and Dec. */

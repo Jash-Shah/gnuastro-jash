@@ -3,7 +3,7 @@
 Original author:
     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019 Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 This stylesheet is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public Licence as
@@ -140,11 +140,11 @@ p{
 
 
 /* Select all paragraphs that must not be indented. Some of them don't need
-   any `:first-of-type' because:
+   any ':first-of-type' because:
 
-    - The `header's have only one <p> in the HTMLs.
+    - The 'header's have only one <p> in the HTMLs.
 
-    - All `<p>'s in the `.footnote's and `.bottom-links's must have no
+    - All '<p>'s in the '.footnote's and '.bottom-links's must have no
       indentation, not just the first ones. */
 .header p,
 .footnote p,

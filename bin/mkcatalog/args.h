@@ -5,7 +5,7 @@ MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -35,7 +35,7 @@ struct argp_option program_options[] =
     {
       "clumpsfile",
       UI_KEY_CLUMPSFILE,
-      "STR",
+      "FITS",
       0,
       "Dataset containing clump labels.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -61,7 +61,7 @@ struct argp_option program_options[] =
     {
       "valuesfile",
       UI_KEY_VALUESFILE,
-      "STR",
+      "FITS",
       0,
       "Values/brightness dataset.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -87,9 +87,9 @@ struct argp_option program_options[] =
     {
       "insky",
       UI_KEY_INSKY,
-      "STR/FLT",
+      "FITS/FLT",
       0,
-      "Input Sky value or dataset.",
+      "Input Sky value or file.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->skyfile,
       GAL_TYPE_STRING,
@@ -163,6 +163,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "forcereadstd",
+      UI_KEY_FORCEREADSTD,
+      0,
+      0,
+      "Read STD even if no columns need it.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->forcereadstd,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "zeropoint",
       UI_KEY_ZEROPOINT,
       "FLT",
@@ -174,6 +187,20 @@ struct argp_option program_options[] =
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
+    },
+    {
+      "sigmaclip",
+      UI_KEY_SIGMACLIP,
+      "FLT,FLT",
+      0,
+      "Sigma-clip column multiple and tolerance.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->sigmaclip,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_read_sigma_clip
     },
 
 
@@ -244,6 +271,21 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "inbetweenints",
+      UI_KEY_INBETWEENINTS,
+      0,
+      0,
+      "Keep rows (integer ids) with no labels.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->inbetweenints,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
 
 
 
@@ -256,7 +298,7 @@ struct argp_option program_options[] =
     {
       "upmaskfile",
       UI_KEY_UPMASKFILE,
-      "STR",
+      "FITS",
       0,
       "Mask image file name only for upper limit.",
       UI_GROUP_UPPERLIMIT,
@@ -365,13 +407,38 @@ struct argp_option program_options[] =
 
 
 
+    /* Other column configurations. */
+    {
+      0, 0, 0, 0,
+      "Settings for other columns:",
+      UI_GROUP_OTHERSETTINGS
+    },
+    {
+      "fracmax",
+      UI_KEY_FRACMAX,
+      "FLT[,FLT]",
+      0,
+      "Fraction(s) in --fracmaxarea1 or --fracmaxarea2.",
+      UI_GROUP_OTHERSETTINGS,
+      &p->fracmax,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_float64
+    },
+
+
+
+
+
     /* ID related columns. */
     {
       0, 0, 0, 0,
       "Identifier columns",
       UI_GROUP_COLUMNS_IDS
     },
-    {  /* `ids' is not a unique column, it is a combination of several
+    {  /* 'ids' is not a unique column, it is a combination of several
           columns. */
       "ids",
       UI_KEY_IDS,
@@ -524,11 +591,95 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
+      "minvx",
+      UI_KEY_MINVX,
+      0,
+      0,
+      "Minimum value's X axis position",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "maxvx",
+      UI_KEY_MAXVX,
+      0,
+      0,
+      "Maximum value's X axis position",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "minvy",
+      UI_KEY_MINVY,
+      0,
+      0,
+      "Minimum value's Y axis position",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "maxvy",
+      UI_KEY_MAXVY,
+      0,
+      0,
+      "Maximum value's Y axis position",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "minvz",
+      UI_KEY_MINVZ,
+      0,
+      0,
+      "Minimum value's Z axis position",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "maxvz",
+      UI_KEY_MAXVZ,
+      0,
+      0,
+      "Maximum value's Z axis position",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
       "minx",
       UI_KEY_MINX,
       0,
       0,
-      "Minimum first FITS axis position.",
+      "Minimum X axis position.",
       UI_GROUP_COLUMNS_POSITION_PIXEL,
       0,
       GAL_TYPE_INVALID,
@@ -542,7 +693,7 @@ struct argp_option program_options[] =
       UI_KEY_MAXX,
       0,
       0,
-      "Maximum first FITS axis position.",
+      "Maximum X axis position.",
       UI_GROUP_COLUMNS_POSITION_PIXEL,
       0,
       GAL_TYPE_INVALID,
@@ -556,7 +707,7 @@ struct argp_option program_options[] =
       UI_KEY_MINY,
       0,
       0,
-      "Minimum second FITS axis position.",
+      "Minimum Y axis position.",
       UI_GROUP_COLUMNS_POSITION_PIXEL,
       0,
       GAL_TYPE_INVALID,
@@ -570,7 +721,7 @@ struct argp_option program_options[] =
       UI_KEY_MAXY,
       0,
       0,
-      "Maximum second FITS axis position.",
+      "Maximum Y axis position.",
       UI_GROUP_COLUMNS_POSITION_PIXEL,
       0,
       GAL_TYPE_INVALID,
@@ -584,7 +735,7 @@ struct argp_option program_options[] =
       UI_KEY_MINZ,
       0,
       0,
-      "Minimum third FITS axis position.",
+      "Minimum Z axis position",
       UI_GROUP_COLUMNS_POSITION_PIXEL,
       0,
       GAL_TYPE_INVALID,
@@ -598,7 +749,7 @@ struct argp_option program_options[] =
       UI_KEY_MAXZ,
       0,
       0,
-      "Maximum third FITS axis position.",
+      "Maximum Z axis position.",
       UI_GROUP_COLUMNS_POSITION_PIXEL,
       0,
       GAL_TYPE_INVALID,
@@ -994,6 +1145,20 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
+      "maximum",
+      UI_KEY_MAXIMUM,
+      0,
+      0,
+      "Maximum value (mean of top three pixels)",
+      UI_GROUP_COLUMNS_BRIGHTNESS,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
       "magnitude",
       UI_KEY_MAGNITUDE,
       0,
@@ -1189,6 +1354,62 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET,
       ui_column_codes_ll
     },
+    {
+      "sigclip-number",
+      UI_KEY_SIGCLIPNUMBER,
+      0,
+      0,
+      "Number of pixels in Sigma-clipped measurement.",
+      UI_GROUP_COLUMNS_BRIGHTNESS,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "sigclip-median",
+      UI_KEY_SIGCLIPMEDIAN,
+      0,
+      0,
+      "Median after Sigma-clipping",
+      UI_GROUP_COLUMNS_BRIGHTNESS,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "sigclip-mean",
+      UI_KEY_SIGCLIPMEAN,
+      0,
+      0,
+      "Mean after Sigma-clipping",
+      UI_GROUP_COLUMNS_BRIGHTNESS,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "sigclip-std",
+      UI_KEY_SIGCLIPSTD,
+      0,
+      0,
+      "Standard deviation after Sigma-clipping",
+      UI_GROUP_COLUMNS_BRIGHTNESS,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
 
 
 
@@ -1228,11 +1449,67 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
+      "areaarcsec2",
+      UI_KEY_AREAARCSEC2,
+      0,
+      0,
+      "Area of labeled region in arcsec^2.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "areaminv",
+      UI_KEY_MINVNUM,
+      0,
+      0,
+      "Number of pixels with minimum value.",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "areamaxv",
+      UI_KEY_MAXVNUM,
+      0,
+      0,
+      "Number of pixels with maximum value.",
+      UI_GROUP_COLUMNS_POSITION_PIXEL,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "surfacebrightness",
+      UI_KEY_SURFACEBRIGHTNESS,
+      0,
+      0,
+      "Surface brightness (mag/arcsec^2).",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
       "areaxy",
       UI_KEY_AREAXY,
       0,
       0,
-      "Projected area in first two dimentions.",
+      "Projected area in first two dimensions.",
       UI_GROUP_COLUMNS_MORPHOLOGY,
       0,
       GAL_TYPE_INVALID,
@@ -1409,6 +1686,205 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET,
       ui_column_codes_ll
     },
+    {
+      "fwhm",
+      UI_KEY_FWHM,
+      0,
+      0,
+      "Full width at half max (non-parametric).",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfmaxarea",
+      UI_KEY_HALFMAXAREA,
+      0,
+      0,
+      "No. pixels valued above half the max.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfmaxradius",
+      UI_KEY_HALFMAXRADIUS,
+      0,
+      0,
+      "Radius at half the maximum (non-parametric).",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfmaxsum",
+      UI_KEY_HALFMAXSUM,
+      0,
+      0,
+      "Sum of pixels above half the maximum.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfmaxsb",
+      UI_KEY_HALFMAXSB,
+      0,
+      0,
+      "Surface brightness within half the maximum.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfsumarea",
+      UI_KEY_HALFSUMAREA,
+      0,
+      0,
+      "Area containing half of --brightness.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfsumsb",
+      UI_KEY_HALFSUMSB,
+      0,
+      0,
+      "Surface brightness within --halfsumarea.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "halfsumradius",
+      UI_KEY_HALFSUMRADIUS,
+      0,
+      0,
+      "Radius calculated from --halfsumarea.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "fracmaxsum1",
+      UI_KEY_FRACMAXSUM1,
+      0,
+      0,
+      "Sum of pixels brighter than 1st frac. of max.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "fracmaxsum2",
+      UI_KEY_FRACMAXSUM2,
+      0,
+      0,
+      "Sum of pixels brighter than 2nd frac. of max.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "fracmaxarea1",
+      UI_KEY_FRACMAXAREA1,
+      0,
+      0,
+      "Area containing 1st fraction of maximum.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "fracmaxarea2",
+      UI_KEY_FRACMAXAREA2,
+      0,
+      0,
+      "Area containing 2nd fraction of maximum.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "fracmaxradius1",
+      UI_KEY_FRACMAXRADIUS1,
+      0,
+      0,
+      "Radius calculated from --fracmaxarea1.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "fracmaxradius2",
+      UI_KEY_FRACMAXRADIUS2,
+      0,
+      0,
+      "Radius calculated from --fracmaxarea2.",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+
+
+
 
 
     {0}

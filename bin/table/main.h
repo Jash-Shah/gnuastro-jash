@@ -5,7 +5,7 @@ Table is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -24,9 +24,11 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define MAIN_H
 
 /* Include necessary headers */
+#include <gsl/gsl_rng.h>
 #include <gnuastro/data.h>
 
 #include <gnuastro-internal/options.h>
+#include <gnuastro-internal/arithmetic-set.h>
 
 /* Progarm names.  */
 #define PROGRAM_NAME   "Table"         /* Program full name.       */
@@ -38,6 +40,8 @@ enum select_types
 {
  /* Different types of row-selection */
  SELECT_TYPE_RANGE,             /* 0 by C standard */
+ SELECT_TYPE_INPOLYGON,
+ SELECT_TYPE_OUTPOLYGON,
  SELECT_TYPE_EQUAL,
  SELECT_TYPE_NOTEQUAL,
 
@@ -62,6 +66,8 @@ struct arithmetic_token
   size_t     num_operands;  /* OPERATOR: Number of required operands.     */
   size_t            index;  /* OPERAND: Index in requested columns.       */
   gal_data_t    *constant;  /* OPERAND: a constant/single number.         */
+  char          *name_def;  /* Name given to the 'set-' operator.         */
+  char          *name_use;  /* If this a usage of a name.                 */
   struct arithmetic_token *next;  /* Pointer to next token.               */
 };
 
@@ -69,7 +75,7 @@ struct column_pack
 {
   size_t                    start; /* Starting ind. in requested columns. */
   size_t                numsimple; /* Number of simple columns.           */
-  struct arithmetic_token *tokens; /* Arithmetic tokens to use.           */
+  struct arithmetic_token  *arith; /* Arithmetic tokens to use.           */
   struct column_pack        *next; /* Next output column.                 */
 };
 
@@ -89,12 +95,24 @@ struct tableparams
   uint8_t         information;  /* ==1: only print FITS information.    */
   uint8_t     colinfoinstdout;  /* ==1: print column metadata in CL.    */
   gal_data_t           *range;  /* Range to limit output.               */
+  gal_data_t       *inpolygon;  /* Columns to check if inside polygon.  */
+  gal_data_t      *outpolygon;  /* Columns to check if outside polygon. */
+  gal_data_t         *polygon;  /* Values of vertices of the polygon.   */
   gal_data_t           *equal;  /* Values to keep in output.            */
   gal_data_t        *notequal;  /* Values to not include in output.     */
   char                  *sort;  /* Column name or number for sorting.   */
   uint8_t          descending;  /* Sort columns in descending order.    */
   size_t                 head;  /* Output only the no. of top rows.     */
   size_t                 tail;  /* Output only the no. of bottom rows.  */
+  gal_data_t        *rowlimit;  /* Output rows in row-counter range.    */
+  size_t            rowrandom;  /* Number of rows to show randomly.     */
+  uint8_t             envseed;  /* Use the environment for random seed. */
+  gal_data_t         *noblank;  /* Remove rows that have blank.         */
+  gal_list_str_t *catcolumnfile; /* Filename to concat column wise.     */
+  gal_list_str_t *catcolumnhdu;  /* HDU/extension for the catcolumn.    */
+  gal_list_str_t  *catcolumns;  /* List of columns to concatenate.      */
+  uint8_t    catcolumnrawname;  /* Don't modify name of appended col.   */
+  gal_data_t     *colmetadata;  /* Set column metadata.                 */
 
   /* Internal. */
   struct column_pack *outcols;  /* Output column packages.              */
@@ -111,7 +129,10 @@ struct tableparams
   uint8_t              sortin;  /* If the sort column is in the output. */
   time_t              rawtime;  /* Starting time of the program.        */
   gal_data_t       **colarray;  /* Array of columns, with arithmetic.   */
-  size_t          numcolarray;  /* Number of elements in `colarray'.    */
+  size_t          numcolarray;  /* Number of elements in 'colarray'.    */
+  gsl_rng                *rng;  /* Main random number generator.        */
+  const char        *rng_name;  /* Name of random number generator.     */
+  unsigned long int  rng_seed;  /* Random number generator seed.        */
 
   /* For arithmetic operators. */
   gal_list_str_t  *wcstoimg_p;  /* Pointer to the node.                 */

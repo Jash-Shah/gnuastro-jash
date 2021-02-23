@@ -4,7 +4,7 @@ Functions dealing with general aspects of all Gnuastro.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -27,7 +27,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 /* The restrict keyword might not be present on some systems, so we are
-   redefining it here based on the checks in `configure.ac', see there for
+   redefining it here based on the checks in 'configure.ac', see there for
    more comments. */
 #define restrict @RESTRICT_REPLACEMENT@
 
@@ -40,6 +40,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #define GAL_CONFIG_HAVE_FITS_IS_REENTRANT   @HAVE_FITS_IS_REENTRANT@
 #define GAL_CONFIG_HAVE_WCSLIB_VERSION      @HAVE_WCSLIB_VERSION@
+#define GAL_CONFIG_HAVE_WCSLIB_DIS_H        @HAVE_WCSLIB_DIS_H@
+#define GAL_CONFIG_HAVE_WCSLIB_MJDREF       @HAVE_WCSLIB_MJDREF@
+#define GAL_CONFIG_HAVE_WCSLIB_OBSFIX       @HAVE_WCSLIB_OBSFIX@
 
 #define GAL_CONFIG_HAVE_PTHREAD_BARRIER     @HAVE_PTHREAD_BARRIER@
 

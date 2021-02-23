@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -28,13 +28,13 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/data.h>
 
 
-/* When we are within Gnuastro's building process, `IN_GNUASTRO_BUILD' is
+/* When we are within Gnuastro's building process, 'IN_GNUASTRO_BUILD' is
    defined. In the build process, installation information (in particular
-   `GAL_CONFIG_ARITH_CHAR' and the rest of the types that we needed in the
-   arithmetic function) is kept in `config.h'. When building a user's
-   programs, this information is kept in `gnuastro/config.h'. Note that all
-   `.c' files must start with the inclusion of `config.h' and that
-   `gnuastro/config.h' is only created at installation time (not present
+   'GAL_CONFIG_ARITH_CHAR' and the rest of the types that we needed in the
+   arithmetic function) is kept in 'config.h'. When building a user's
+   programs, this information is kept in 'gnuastro/config.h'. Note that all
+   '.c' files must start with the inclusion of 'config.h' and that
+   'gnuastro/config.h' is only created at installation time (not present
    during the building of Gnuastro).*/
 #ifndef IN_GNUASTRO_BUILD
 #include <gnuastro/config.h>
@@ -77,7 +77,7 @@ enum gal_arithmetic_operators
 
   GAL_ARITHMETIC_OP_PLUS,         /*   +     */
   GAL_ARITHMETIC_OP_MINUS,        /*   -     */
-  GAL_ARITHMETIC_OP_MULTIPLY,     /*   *     */
+  GAL_ARITHMETIC_OP_MULTIPLY,     /*   x     */
   GAL_ARITHMETIC_OP_DIVIDE,       /*   /     */
   GAL_ARITHMETIC_OP_MODULO,       /*   %     */
 
@@ -106,6 +106,25 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_LOG,          /* log()   */
   GAL_ARITHMETIC_OP_LOG10,        /* log10() */
 
+  GAL_ARITHMETIC_OP_SIN,          /* sine (input in deg).    */
+  GAL_ARITHMETIC_OP_COS,          /* cosine (input in deg).  */
+  GAL_ARITHMETIC_OP_TAN,          /* tangent (input in deg). */
+  GAL_ARITHMETIC_OP_ASIN,         /* Inverse sine (output in deg). */
+  GAL_ARITHMETIC_OP_ACOS,         /* Inverse cosine (output in deg). */
+  GAL_ARITHMETIC_OP_ATAN,         /* Inverse tangent (output in deg). */
+  GAL_ARITHMETIC_OP_ATAN2,        /* Inv. atan (preserves quad, out in deg). */
+  GAL_ARITHMETIC_OP_SINH,         /* Hyperbolic sine. */
+  GAL_ARITHMETIC_OP_COSH,         /* Hyperbolic cosine. */
+  GAL_ARITHMETIC_OP_TANH,         /* Hyperbolic tangent. */
+  GAL_ARITHMETIC_OP_ASINH,        /* Inverse hyperbolic sine. */
+  GAL_ARITHMETIC_OP_ACOSH,        /* Inverse hyperbolic cosine. */
+  GAL_ARITHMETIC_OP_ATANH,        /* Inverse hyperbolic tangent. */
+
+  GAL_ARITHMETIC_OP_RA_TO_DEGREE, /* right ascension to decimal      */
+  GAL_ARITHMETIC_OP_DEC_TO_DEGREE,/* declination to decimal          */
+  GAL_ARITHMETIC_OP_DEGREE_TO_RA, /* right ascension to decimal      */
+  GAL_ARITHMETIC_OP_DEGREE_TO_DEC,/* declination to decimal          */
+
   GAL_ARITHMETIC_OP_MINVAL,       /* Minimum value of array.               */
   GAL_ARITHMETIC_OP_MAXVAL,       /* Maximum value of array.               */
   GAL_ARITHMETIC_OP_NUMBERVAL,    /* Number of (non-blank) elements.       */
@@ -121,10 +140,13 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_MEAN,         /* Mean per pixel of multiple arrays.    */
   GAL_ARITHMETIC_OP_STD,          /* STD per pixel of multiple arrays.     */
   GAL_ARITHMETIC_OP_MEDIAN,       /* Median per pixel of multiple arrays.  */
+  GAL_ARITHMETIC_OP_QUANTILE,     /* Quantile per pixel of multiple arrays.*/
   GAL_ARITHMETIC_OP_SIGCLIP_NUMBER,/* Sigma-clipped number of mult. arrays.*/
   GAL_ARITHMETIC_OP_SIGCLIP_MEAN, /* Sigma-clipped mean of multiple arrays.*/
   GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN,/* Sigma-clipped median of mult. arrays.*/
   GAL_ARITHMETIC_OP_SIGCLIP_STD,  /* Sigma-clipped STD of multiple arrays. */
+
+  GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
 
   GAL_ARITHMETIC_OP_TO_UINT8,     /* Convert to uint8_t.                   */
   GAL_ARITHMETIC_OP_TO_INT8,      /* Convert to int8_t.                    */
@@ -136,6 +158,8 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_TO_INT64,     /* Convert to int64_t.                   */
   GAL_ARITHMETIC_OP_TO_FLOAT32,   /* Convert to float32.                   */
   GAL_ARITHMETIC_OP_TO_FLOAT64,   /* Convert to float64.                   */
+
+  GAL_ARITHMETIC_OP_MAKENEW,      /* Build a new dataset, containing zeros.*/
 
   GAL_ARITHMETIC_OP_LAST_CODE,    /* Last code of the library operands.    */
 };

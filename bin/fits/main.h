@@ -5,7 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -54,30 +54,37 @@ struct fitsparams
 {
   /* From the environment. */
   struct gal_options_common_params cp;  /* Common parameters.           */
-  int  hdu_in_commandline;     /* HDU wasn't given in config. file.     */
-  char          *filename;     /* Name of input file.                   */
-  char            *outhdu;     /* HDU of output (only when necessary).  */
-  gal_list_str_t  *remove;     /* Remove extensions from a file.        */
-  gal_list_str_t    *copy;     /* Copy extensions to output.            */
-  gal_list_str_t     *cut;     /* Copy ext. to output and remove.       */
-  uint8_t         numhdus;     /* Print number of HDUs in FITS file.    */
-  uint8_t   primaryimghdu;     /* Copy/cut HDU into primary HDU.        */
-  uint8_t    printallkeys;     /* Print all the header keywords.        */
-  uint8_t            date;     /* Set DATE to current time.             */
-  gal_list_str_t    *asis;     /* Strings to write asis.                */
-  gal_list_str_t  *delete;     /* Keywords to remove.                   */
-  gal_list_str_t  *rename;     /* Rename a keyword.                     */
-  gal_list_str_t  *update;     /* For keywords to update.               */
-  gal_list_str_t   *write;     /* Full arg. for keywords to add.        */
-  gal_list_str_t *history;     /* HISTORY value.                        */
-  gal_list_str_t *comment;     /* COMMENT value.                        */
-  uint8_t         *verify;     /* Verify the CHECKSUM and DATASUM keys. */
-  char          *copykeys;     /* Range of keywords to copy in output.  */
-  char         *datetosec;     /* Convert FITS date to seconds.         */
-  uint8_t     quitonerror;     /* Quit if an error occurs.              */
+  int    hdu_in_commandline;   /* HDU wasn't given in config. file.     */
+  gal_list_str_t     *input;   /* Name of input file.                   */
+  char              *outhdu;   /* HDU of output (only when necessary).  */
+  gal_list_str_t    *remove;   /* Remove extensions from a file.        */
+  gal_list_str_t      *copy;   /* Copy extensions to output.            */
+  gal_list_str_t       *cut;   /* Copy ext. to output and remove.       */
+  uint8_t           numhdus;   /* Print number of HDUs in FITS file.    */
+  uint8_t           datasum;   /* Calculate and print HDU's datasum.    */
+  uint8_t        pixelscale;   /* Calculate and print HDU's pixelscale. */
+  uint8_t       skycoverage;   /* Calculate and image coverage in WCS.  */
+  uint8_t     primaryimghdu;   /* Copy/cut HDU into primary HDU.        */
+  uint8_t      printallkeys;   /* Print all the header keywords.        */
+  uint8_t              date;   /* Set DATE to current time.             */
+  gal_list_str_t      *asis;   /* Strings to write asis.                */
+  gal_list_str_t  *keyvalue;   /* Strings to write asis.                */
+  gal_list_str_t    *delete;   /* Keywords to remove.                   */
+  gal_list_str_t    *rename;   /* Rename a keyword.                     */
+  gal_list_str_t    *update;   /* For keywords to update.               */
+  gal_list_str_t     *write;   /* Full arg. for keywords to add.        */
+  gal_list_str_t   *history;   /* HISTORY value.                        */
+  gal_list_str_t   *comment;   /* COMMENT value.                        */
+  uint8_t           *verify;   /* Verify the CHECKSUM and DATASUM keys. */
+  char            *copykeys;   /* Range of keywords to copy in output.  */
+  char           *datetosec;   /* Convert FITS date to seconds.         */
+  char       *wcsdistortion;   /* WCS distortion to write in output.    */
+  uint8_t       quitonerror;   /* Quit if an error occurs.              */
+  uint8_t   colinfoinstdout;   /* Print column info in output.          */
 
   /* Internal: */
   int                         mode;  /* Operating on HDUs or keywords.  */
+  int                 distortionid;  /* ID of desired distortion.       */
   long            copykeysrange[2];  /* Start and end of copy.          */
   gal_fits_list_key_t  *write_keys;  /* Keys to write in the header.    */
   gal_fits_list_key_t *update_keys;  /* Keys to update in the header.   */

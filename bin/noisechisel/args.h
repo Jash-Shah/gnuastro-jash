@@ -5,7 +5,7 @@ NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -36,7 +36,7 @@ struct argp_option program_options[] =
     {
       "kernel",
       UI_KEY_KERNEL,
-      "STR",
+      "FITS",
       0,
       "Filename of kernel to convolve with input",
       GAL_OPTIONS_GROUP_INPUT,
@@ -62,7 +62,7 @@ struct argp_option program_options[] =
     {
       "convolved",
       UI_KEY_CONVOLVED,
-      "STR",
+      "FITS",
       0,
       "Convolved image file to avoid convolution.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -88,7 +88,7 @@ struct argp_option program_options[] =
     {
       "widekernel",
       UI_KEY_WIDEKERNEL,
-      "STR",
+      "FITS",
       0,
       "Filename of wider kernel for better qthresh",
       GAL_OPTIONS_GROUP_INPUT,

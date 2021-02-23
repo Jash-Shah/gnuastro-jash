@@ -5,7 +5,7 @@ MakeProfiles is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -78,7 +78,7 @@ builtqueue_addempty(struct builtqueue **bq)
   errno=0;
   tbq=malloc(sizeof *tbq);
   if(tbq==NULL)
-    error(EXIT_FAILURE, 0, "%s: allocating %zu bytes for `tbq'",
+    error(EXIT_FAILURE, 0, "%s: allocating %zu bytes for 'tbq'",
           __func__, sizeof *tbq);
 
   /* Initialize the values (same order as in structure definition). */
@@ -134,8 +134,8 @@ saveindividual(struct mkonthread *mkp)
   char *filename, *jobname, *outdir=p->outdir;
 
 
-  /* Write the name and remove a similarly named file when the `--kernel'
-     option wasn't called. If `--kernel' is called, then we should just use
+  /* Write the name and remove a similarly named file when the '--kernel'
+     option wasn't called. If '--kernel' is called, then we should just use
      the final merged filename. */
   if(p->kernel)
     filename=p->mergedimgname;
@@ -154,7 +154,7 @@ saveindividual(struct mkonthread *mkp)
   else
     {
       /* Allocate space for the corrected crpix and fill it in. Both
-         `crpix' and `fpixel_i' are in FITS order. */
+         'crpix' and 'fpixel_i' are in FITS order. */
       crpix=gal_pointer_allocate(GAL_TYPE_FLOAT64, ndim, 0, __func__,
                                  "crpix");
       for(i=0;i<ndim;++i)
@@ -171,95 +171,98 @@ saveindividual(struct mkonthread *mkp)
   /* Write profile settings into the FITS file. */
   gal_fits_key_list_add(&keys, GAL_TYPE_STRING, "PROFILE", 0,
                         ui_profile_name_write(mkp->func), 0,
-                        "Radial function", 0, NULL);
+                        "Radial function", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT64, "XCENTER", 0,
                         &p->x[id], 0, "Center of profile in catalog "
-                        "(FITS axis 1)", 0, NULL);
+                        "(FITS axis 1)", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT64, "YCENTER", 0,
                         &p->y[id], 0, "Center of profile in catalog "
-                        "(FITS axis 2)", 0, NULL);
+                        "(FITS axis 2)", 0, NULL, 0);
   if(ndim==3)
     gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT64, "ZCENTER", 0,
                           &p->z[id], 0, "Center of profile in catalog "
-                          "(FITS axis 3)", 0, NULL);
+                          "(FITS axis 3)", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "RADIUS", 0,
                         &p->r[id], 0, "Radial parameter in catalog",
-                        0, NULL);
+                        0, NULL, 0);
   if( mkp->func==PROFILE_SERSIC || mkp->func==PROFILE_MOFFAT )
     gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PINDEX", 0,
                           &p->r[id], 0, "Index (Sersic or Moffat) of profile"
-                          "in catalog", 0, NULL);
+                          "in catalog", 0, NULL, 0);
   if(ndim==2)
     {
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA_DEG", 0,
                             &p->p1[id], 0, "Position angle of profile in "
-                            "catalog", 0, "deg");
+                            "catalog", 0, "deg", 0);
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "AXISRATIO", 0,
                             &p->q1[id], 0, "Axis ratio of profile in catalog",
-                            0, NULL);
+                            0, NULL, 0);
     }
   else
     {
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA1_DEG", 0,
                             &p->p1[id], 0, "First X-Z-X Euler angle in 3D", 0,
-                            "deg");
+                            "deg", 0);
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA2_DEG", 0,
                             &p->p2[id], 0, "Second X-Z-X Euler angle in 3D", 0,
-                            "deg");
+                            "deg", 0);
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "PA3_DEG", 0,
                             &p->p3[id], 0, "Third X-Z-X Euler angle in 3D", 0,
-                            "deg");
+                            "deg", 0);
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "AXISRATIO1", 0,
                             &p->q1[id], 0, "Axis ratio along second dim",
-                            0, NULL);
+                            0, NULL, 0);
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "AXISRATIO2", 0,
                             &p->q2[id], 0, "Axis ratio along third dim",
-                            0, NULL);
+                            0, NULL, 0);
     }
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "MAGNITUDE", 0,
                         &p->m[id], 0, "Magnitude of profile in catalog",
-                        0, NULL);
+                        0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "TRUNCATION", 0,
                         &p->t[id], 0, "Truncation of profile in catalog",
-                        0, NULL);
+                        0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_STRING, "RNGNAME", 0,
                         (void *)(p->rng_name), 0,
-                        "Name of random number generator", 0, NULL);
+                        "Name of random number generator", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_ULONG, "RNGSEED", 0,
                         &mkp->rng_seed, 0, "Seed of random number generator",
-                        0, NULL);
+                        0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_SIZE_T, "NUMRANDOM", 0,
                         &p->numrandom, 0,
-                        "Number of random points in central pixels", 0, NULL);
+                        "Number of random points in central pixels", 0,
+                        NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "TOLERANCE", 0,
                         &p->tolerance, 0,
                         "Tolerance level to stop random integration",
-                        0, NULL);
+                        0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_STRING, "MODE", 0,
                         p->mode==MKPROF_MODE_IMG?"img":"wcs", 0,
-                        "Coordinates in image or WCS units", 0, NULL);
+                        "Coordinates in image or WCS units", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "OVERSAMPLE", 0,
-                        &p->oversample, 0, "Oversampling factor", 0, NULL);
+                        &p->oversample, 0, "Oversampling factor", 0,
+                        NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "TUNITINP", 0,
                         &p->tunitinp, 0, "Truncation is in units of pixels, "
-                        "not radius", 0, NULL);
+                        "not radius", 0, NULL, 0);
   if( !isnan(p->zeropoint) )
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "ZEROPOINT", 0,
-                            &p->zeropoint, 0, "Zeropoint magnitude", 0, NULL);
+                            &p->zeropoint, 0, "Zeropoint magnitude", 0,
+                            NULL, 0);
   if( mkp->func==PROFILE_CIRCUMFERENCE )
       gal_fits_key_list_add(&keys, GAL_TYPE_FLOAT32, "CIRCUMWIDTH", 0,
                             &p->circumwidth, 0, "Width of circumference "
-                            "(inward) profiles", 0, NULL);
+                            "(inward) profiles", 0, NULL, 0);
   if( mkp->func==PROFILE_FLAT || mkp->func==PROFILE_CIRCUMFERENCE )
       gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "MFORFLATPIX", 0,
                             &p->mforflatpix, 0, "Magnitude is flat pixel "
-                            "value", 0, NULL);
+                            "value", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "MCOLISBRIGHTNESS", 0,
                         &p->mcolisbrightness, 0, "Catalog's magnitude is "
-                        "actually brightness", 0, NULL);
+                        "actually brightness", 0, NULL, 0);
   gal_fits_key_list_add(&keys, GAL_TYPE_UINT8, "MAGATPEAK", 0,
                         &p->magatpeak, 0, "Magnitude is for peak pixel, "
-                        "not full profile", 0, NULL);
+                        "not full profile", 0, NULL, 0);
 
   gal_fits_key_list_reverse(&keys);
   gal_fits_key_write_config(&keys, "Profile configuration", "PROFILE-CONFIG",
@@ -345,7 +348,7 @@ mkprof_build_single(struct mkonthread *mkp, long *fpixel_i, long *lpixel_i,
      overlapping region. */
   if(p->out)
     {
-      /* Note that `fpixel_i' and `lpixel_o' were in the un-oversampled
+      /* Note that 'fpixel_i' and 'lpixel_o' were in the un-oversampled
          image, they are also in the FITS coordinates. */
       for(i=0;i<ndim;++i)
         {
@@ -413,10 +416,10 @@ mkprof_add_built_to_write_queue(struct mkonthread *mkp,
       p->bq=ibq;
 
       /* If the list was empty when you locked the mutex, then either
-         `mkprof_write` is waiting behind a condition variable for you to
+         'mkprof_write' is waiting behind a condition variable for you to
          fill it up or not (either it hasn't got to setting the condition
          variable yet (this function locked the mutex before
-         `mkprof_write`) or it just got the list to be made and is busy
+         'mkprof_write') or it just got the list to be made and is busy
          writing the arrays in the output). In either case,
          pthread_cond_signal will work. */
       if((*fbq)->next==NULL)
@@ -457,13 +460,13 @@ mkprof_add_built_to_write_queue(struct mkonthread *mkp,
    About the Central x and y of each profile:
 
    The user has asked for the profile to be built on the coordinates
-   (real numbers) of `x` and `y` in an output image in the FITS
+   (real numbers) of 'x' and 'y' in an output image in the FITS
    format. We are building the full image for each galaxy separately
    in an array with an odd number of sides which maybe oversampled.
 
    In the FITS format, the pixel centers have an integer value. So for
    example in 1D, a pixel whose center value is 10.00 covers the area
-   of: [9.5,10.5). We want the fractional part of `x` (don't forget,
+   of: [9.5,10.5). We want the fractional part of 'x' (don't forget,
    this example is 1D) to be in the central pixel of this separate
    array (with odd sides) that we will be building.
 
@@ -489,19 +492,19 @@ mkprof_build(void *inparam)
   /* Make each profile that was specified for this thread. */
   for(i=0; mkp->indexs[i]!=GAL_BLANK_SIZE_T; ++i)
     {
-      /* Create a new builtqueue element with all the information. `fbq'
-         will be used when we want to add `ibq' to `p->bq'. It is defined
-         so we don't have to waste time traversing the `ibq'. Its
-         characteristic compared to the other elements of `ibq' is that
-         `fbq->next==NULL'. So to add ibq to p->bq, we just have to set
-         `fbq->next=p->bq' and then set `p->bq' to `ibq'.*/
+      /* Create a new builtqueue element with all the information. 'fbq'
+         will be used when we want to add 'ibq' to 'p->bq'. It is defined
+         so we don't have to waste time traversing the 'ibq'. Its
+         characteristic compared to the other elements of 'ibq' is that
+         'fbq->next==NULL'. So to add ibq to p->bq, we just have to set
+         'fbq->next=p->bq' and then set 'p->bq' to 'ibq'.*/
       builtqueue_addempty(&mkp->ibq);
       ibq=mkp->ibq;
       id=ibq->id=mkp->indexs[i];
       if(fbq==NULL) fbq=ibq;
 
 
-      /* Write the necessary parameters for this profile into `mkp'.*/
+      /* Write the necessary parameters for this profile into 'mkp'.*/
       oneprofile_set_prof_params(mkp);
 
 
@@ -528,7 +531,7 @@ mkprof_build(void *inparam)
 
           default:
             error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to "
-                  "address the issue. %zu is not recognized for `ndim'",
+                  "address the issue. %zu is not recognized for 'ndim'",
                   __func__, PACKAGE_BUGREPORT, ndim);
           }
 
@@ -629,7 +632,7 @@ mkprof_write(struct mkprofparams *p)
          array. */
       if(ibq->overlaps && out)
         GAL_TILE_PO_OISET(float,float,ibq->overlap_i,ibq->overlap_m,1,0, {
-            *o  = p->replace ? ( *i==0.0f ? *o : *i ) :  (*i + *o);
+            *o  = p->replace ? ( *i>*o ? *i : *o ) :  (*i + *o);
             sum += *i;
           });
 
@@ -693,8 +696,8 @@ mkprof_write(struct mkprofparams *p)
       if(!p->cp.quiet) gettimeofday(&t1, NULL);
 
       /* Write the final image into a FITS file with the requested
-         type. Until now, we were using `p->wcs' for the WCS, but from now
-         on, will put it in `out' to also free it while freeing `out'. */
+         type. Until now, we were using 'p->wcs' for the WCS, but from now
+         on, will put it in 'out' to also free it while freeing 'out'. */
       out->wcs=p->wcs;
       gal_fits_img_write_to_type(out, p->mergedimgname, NULL,
                                  PROGRAM_NAME, p->cp.type);
@@ -744,13 +747,14 @@ mkprof_write(struct mkprofparams *p)
 void
 mkprof(struct mkprofparams *p)
 {
-  int err;
-  char *tmp;
   pthread_t t;            /* Thread id not used, all are saved here. */
   pthread_attr_t attr;
   pthread_barrier_t b;
+  size_t numforprint=50;
   struct mkonthread *mkp;
+  char *tmp, *mmapname=NULL;
   gal_list_str_t *comments=NULL;
+  int err, origquiet=p->cp.quiet;
   size_t i, fi, *indexs, thrdcols;
   long *onaxes=NULL, os=p->oversample;
   size_t nb, ndim=p->ndim, nt=p->cp.numthreads;
@@ -761,17 +765,19 @@ mkprof(struct mkprofparams *p)
   errno=0;
   mkp=malloc(nt*sizeof *mkp);
   if(mkp==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `mkp'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'mkp'",
           __func__, (nt-1)*sizeof *mkp);
 
 
   /* Distribute the different profiles for different threads. Note
      that one thread is left out for writing, while nt-1 are left
      for building. */
-  gal_threads_dist_in_threads(p->num, nt, &indexs, &thrdcols);
+  mmapname=gal_threads_dist_in_threads(p->num, nt,
+                                       p->cp.minmapsize, p->cp.quietmmap,
+                                       &indexs, &thrdcols);
 
 
-  /* `onaxes' are size of the merged output image without over-sampling or
+  /* 'onaxes' are size of the merged output image without over-sampling or
      shifting in FITS order. When no output merged image is needed, we can
      ignore it. */
   if(p->out)
@@ -829,8 +835,27 @@ mkprof(struct mkprofparams *p)
     }
 
 
-  /* Write the created arrays into the image. */
+  /* If there are too many profiles, don't print the fact that a profile
+     has been built. */
+  if(p->num>numforprint)
+    {
+      /* Let the user know that building is ongoing. */
+      if(p->cp.quiet==0)
+        printf("  ---- Building %zu profiles... ", p->num);
+
+      /* Disable the quiet flag.*/
+      p->cp.quiet=1;
+    }
+
+
+  /* Write the created arrays into the image. Set the original quiet flag
+     and let the user know that its done. */
   mkprof_write(p);
+  if(p->num>numforprint)
+    {
+      p->cp.quiet=origquiet;
+      if(p->cp.quiet==0) printf("done.\n");
+    }
 
 
   /* Write the log file. */
@@ -857,9 +882,13 @@ mkprof(struct mkprofparams *p)
       pthread_mutex_destroy(&p->qlock);
     }
 
+  /* If a merged image was created, let the user know.... */
+  if(p->mergedimgname)
+    printf("  -- Output: %s\n", p->mergedimgname);
 
   /* Clean up. */
-  free(mkp);
-  free(indexs);
+  if(mmapname) gal_pointer_mmap_free(&mmapname, p->cp.quietmmap);
+  else         free(indexs);
   if(onaxes) free(onaxes);
+  free(mkp);
 }

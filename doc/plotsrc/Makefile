@@ -3,7 +3,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015-2019, Free Software Foundation, Inc.
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
 #
 # GNU Astronomy Utilities is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License
@@ -20,32 +20,43 @@
 # <http://www.gnu.org/licenses/>.
 
 # Definitions of which rules to apply:
-all: all.pdf
+finaltarget=../gnuastro-figures/done.txt
+all: $(finaltarget)
 .PHONY: clean
 
 
 
 
 
-# Make all the plots and convert all the figures
-all.pdf: all.tex ./tex/*.tex ./conversions.sh
+# Directory to keep TiKZ products.
+tikz:
+	mkdir $@
 
-# 	Make the tikz directory if it doesn't exist:
-	mkdir -p tikz
 
-# 	Run the LaTeX script:
-	latex -shell-escape all.tex
-	dvipdf all.dvi
-	rm -f *.bcf *.xml *.aux *.auxlock *.log *.out *.dvi
 
-# 	Put all the EPS files in their appropriate place:
-	cp tikz/all-figure0.eps ../gnuastro-figures/iandtime.eps
-	cp tikz/all-figure1.eps ../gnuastro-figures/samplingfreq.eps
-	cp tikz/all-figure2.eps ../gnuastro-figures/flatplane.eps
-	cp tikz/all-figure3.eps ../gnuastro-figures/sphereandplane.eps
 
-#	Make all the conversions:
-	./conversions.sh ../gnuastro-figures/
+
+# Make all the plots with LaTeX, then convert all the figures to the
+# necessary formats using a separate script and finally write the final
+# target.
+#
+# Explanation for putting all the commands in one line (by ending them with
+# a '\' and starting the next one with '&&'). We do this because we can't
+# assume GNU Make, or GNU Bash here (to use the '.SHELLFLAGS = -ec' and
+# '.ONESHELL:' features in the Makefile). The user's Make or shell can be
+# any implementation. If any of these commands fails, the final target
+# should not be built and the Makefile should crash.
+$(finaltarget): all.tex ./tex/*.tex ./conversions.sh | tikz
+
+	latex -shell-escape all.tex \
+	&& dvipdf all.dvi \
+	&& rm -f *.bcf *.xml *.aux *.auxlock *.log *.out *.dvi \
+	&& cp tikz/all-figure0.eps ../gnuastro-figures/iandtime.eps \
+	&& cp tikz/all-figure1.eps ../gnuastro-figures/samplingfreq.eps \
+	&& cp tikz/all-figure2.eps ../gnuastro-figures/flatplane.eps \
+	&& cp tikz/all-figure3.eps ../gnuastro-figures/sphereandplane.eps \
+	&& ./conversions.sh ../gnuastro-figures/ \
+	&& echo "All necessary images created." > $(finaltarget)
 
 
 
@@ -58,7 +69,7 @@ all.pdf: all.tex ./tex/*.tex ./conversions.sh
 #   2. Remove everything in the gnuastro-figures directory
 #   3. Put the actual images back in that directory.
 clean:
-	rm -rf all.pdf tikz
-	cp ../gnuastro-figures/epicycles.png ./
-	rm ../gnuastro-figures/*
-	mv epicycles.png ../gnuastro-figures/
+	rm -rf all.pdf tikz \
+	&& cp ../gnuastro-figures/epicycles.png ./ \
+	&& rm ../gnuastro-figures/* \
+	&& mv epicycles.png ../gnuastro-figures/

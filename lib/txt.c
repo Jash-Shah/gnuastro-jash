@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -33,6 +33,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/txt.h>
 #include <gnuastro/list.h>
+#include <gnuastro/units.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/table.h>
 
@@ -66,7 +67,7 @@ enum txt_formats_code
 
 
 
-/* Return one of the `txt_line_stat' constant values. */
+/* Return one of the 'txt_line_stat' constant values. */
 int
 gal_txt_line_stat(char *line)
 {
@@ -93,8 +94,8 @@ gal_txt_line_stat(char *line)
 
 /* Remove the spaces around the values, and if the final/trimmed string has
    no length, return NULL. */
-static char *
-txt_trim_space(char *str)
+char *
+gal_txt_trim_space(char *str)
 {
   char *end;
 
@@ -104,11 +105,10 @@ txt_trim_space(char *str)
   /* Remove the spaces before the start of the string. */
   while(isspace(*str)) ++str;
 
-  /* If there was nothing in the string, then just return the ending `\0'
-     character. */
+  /* If there was nothing in the string, return NULL. */
   if(*str=='\0') return NULL;
 
-  /* Remove the spaces at the end, and write a possibly new `\0'. */
+  /* Remove the spaces at the end, and write a possibly new '\0'. */
   end = str + strlen(str) - 1;
   while(end>str && isspace(*end)) --end;
   *(end+1)='\0';
@@ -122,7 +122,7 @@ txt_trim_space(char *str)
 
 
 /* Each information comment should have a format like this (replace
-   `Column' with `Image' for 2D arrays):
+   'Column' with 'Image' for 2D arrays):
 
       # Column N: NAME [UNITS, TYPE, BLANK] COMMENT
 
@@ -132,17 +132,17 @@ txt_trim_space(char *str)
   set. But if there are comments, then the brackets themselves are required
   to separate the name from the comments.
 
-  Any white space characters before or after the delimiters (`:', `[', `]',
-  `,') is ignored, but spaces within the values are kept. For example, in
-  the two following lines, NAME will be set to `col name' (even though
+  Any white space characters before or after the delimiters (':', '[', ']',
+  ',') is ignored, but spaces within the values are kept. For example, in
+  the two following lines, NAME will be set to 'col name' (even though
   there are extra spaces in the second line, The column unit will be
-  set to `col unit'.
+  set to 'col unit'.
 
       # Column 2: col name
       # Column 2 :  col name     [ col unit, type ] Column comments.
 
   When the column type is a string, the number of characters in the string
-  is also necessary, for example `str10'. Without an integer attached, the
+  is also necessary, for example 'str10'. Without an integer attached, the
   line will be ignored.
 
   In the case of an error or mis-match, the line will be ignored.
@@ -164,13 +164,13 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
   char *number=NULL, *name=NULL, *comment=NULL;
   char *inbrackets=NULL, *unit=NULL, *typestr=NULL, *blank=NULL;
 
-  /* Make a copy of the input line if `inplace==0'. */
+  /* Make a copy of the input line if 'inplace==0'. */
   if(inplace) line=aline=in_line;
   else
     {
-      /* Because the `line' pointer will change, we need a pointer to the
+      /* Because the 'line' pointer will change, we need a pointer to the
          start of the originally allocated lines. This is the purpose of
-         `aline' (allocated-line). */
+         'aline' (allocated-line). */
       gal_checkset_allocate_copy(in_line, &aline);
       line=aline;
     }
@@ -179,7 +179,7 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
   /* Only read this comment line if it follows the convention: */
   if( !strncmp(line, comm_start, len) )
     {
-      /* Set `name', `inbrackets', and `comment' in the first pass through
+      /* Set 'name', 'inbrackets', and 'comment' in the first pass through
          the line. */
       number=line+len;
       while(*line!='\0')
@@ -213,11 +213,11 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
       if(*tailptr!='\0' || index<=0) return;
 
 
-      /* If there was no name (the line is just `# Column N:'), then ignore
+      /* If there was no name (the line is just '# Column N:'), then ignore
          the line. Relying on the column count from the first line is more
          robust and less prone to human error, for example typing a number
          larger than the total number of columns.  */
-      name=txt_trim_space(name);
+      name=gal_txt_trim_space(name);
       if(name==NULL) return;
 
 
@@ -244,8 +244,8 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
         }
 
 
-      /* If `typestr' was given, then check if this is a standard type. If
-         `typestr' wasn't specified, then the default double type code will
+      /* If 'typestr' was given, then check if this is a standard type. If
+         'typestr' wasn't specified, then the default double type code will
          be used (see the variable definitions above). If the given type
          isn't a standard type then ignore the line. Just note that if we
          are dealing with the string type, we have to pull out the number
@@ -253,7 +253,7 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
          the line. */
       if(typestr && *typestr!='\0')
         {
-          typestr=txt_trim_space(typestr);
+          typestr=gal_txt_trim_space(typestr);
           if( !strncmp(typestr, "str", 3) )
             {
               type=GAL_TYPE_STRING;
@@ -271,12 +271,12 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
       /* Add this column's information into the columns linked list. We
          will define the data structur's array to have zero dimensions (no
          array) by default. If there is a blank value its value will be put
-         into the array by `gal_table_read_blank'. To keep the name, unit,
+         into the array by 'gal_table_read_blank'. To keep the name, unit,
          and comment strings, trim the white space before and after each
          before using them here.  */
       gal_list_data_add_alloc(datall, NULL, type, 0, NULL, NULL, 0, -1, 1,
-                              name, txt_trim_space(unit),
-                              txt_trim_space(comment) );
+                              name, gal_txt_trim_space(unit),
+                              gal_txt_trim_space(comment) );
 
 
       /* Put the number of this column into the status variable of the data
@@ -287,8 +287,12 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
 
 
       /* Write the blank value into the array. Note that this is not the
-         final column, we are just collecting information now. */
-      gal_tableintern_read_blank(*datall, txt_trim_space(blank));
+         final column, we are just collecting information now. If the blank
+         value wasn't interpretted into the given type the 'flag' element
+         of the dataset will be set and the contents of the 'blank' string
+         will be copied into the 'array' element (so it should be
+         interpretted as a 'char *'). */
+      gal_tableintern_read_blank(*datall, gal_txt_trim_space(blank));
     }
 
   /* Clean up. */
@@ -320,7 +324,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
   else
     {
       gal_checkset_allocate_copy(in_line, &line);
-      aline=line; /* We are going to change `line' during this function. */
+      aline=line; /* We are going to change 'line' during this function. */
     }
   end=line+strlen(line);
 
@@ -357,7 +361,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
 
 
       /* If there is information for this column, then check if it is a
-         string, and if so, don't use `strtok_r' (because it might have
+         string, and if so, don't use 'strtok_r' (because it might have
          delimiters). So manually go ahead in the line till you get to the
          start of the string, then increment the line until the end of the
          space set for the strings. */
@@ -373,9 +377,9 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
 
               /* If we haven't reached the end of the line, then set a NULL
                  character where the string ends, so we can use the
-                 token. VERY IMPORTANT: this should not be `<=end'. If the
+                 token. VERY IMPORTANT: this should not be '<=end'. If the
                  given width is larger than line, there is no problem, the
-                 `\0' of the line will also be used to end this last
+                 '\0' of the line will also be used to end this last
                  column.*/
               if(line<end)
                 {
@@ -402,7 +406,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
              no information, then set its status value to the column
              number. So, for a table, this should be done on every
              column. But for an image, this should only be done once (when
-             `datall' has not been defined yet, for example in the column
+             'datall' has not been defined yet, for example in the column
              information). */
           if( *datall==NULL || format==TXT_FORMAT_TABLE )
             {
@@ -414,16 +418,16 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
     }
 
 
-  /* When looking at a text table, `n' is the number of columns (elements
+  /* When looking at a text table, 'n' is the number of columns (elements
      in the linked list). But when looking at an image, it is the size of
      the second dimension. To unify things from this step forwards, we will
-     thus keep the value of `n' until this point in another variable (that
-     will be returned finally), and for an image, change `n' to 1. This is
+     thus keep the value of 'n' until this point in another variable (that
+     will be returned finally), and for an image, change 'n' to 1. This is
      necsesary in case the user has for example given two column
      information comments on an image plain text file.
 
-     Note that `n' counts from 1, so the total number of tokens is one less
-     than `n'.*/
+     Note that 'n' counts from 1, so the total number of tokens is one less
+     than 'n'.*/
   numtokens=n-1;
   if(format==TXT_FORMAT_IMAGE) n=1;
 
@@ -442,7 +446,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
               /* This column has to be removed/freed. But we have to make
                  some corrections before freeing it:
 
-                  - When `prev==NULL', then we still haven't got to the
+                  - When 'prev==NULL', then we still haven't got to the
                     first valid element yet and must free this one, but if
                     we do that, then the main pointer to the start of the
                     list will be lost (we will loose all connections with
@@ -450,7 +454,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
                     that to the next element.
 
                   - When there actually was a previous element
-                    (`prev!=NULL'), then we must correct it's next
+                    ('prev!=NULL'), then we must correct it's next
                     pointer. Otherwise we will break up the chain.*/
               if(prev) prev->next=col->next; else *datall=col->next;
               tmp=col->next;
@@ -497,7 +501,7 @@ txt_infoll_to_array(gal_data_t *datall, size_t *numdata)
   /* First find the total number of columns. */
   for(data=datall; data!=NULL; data=data->next) ++numc;
 
-  /* Conversion to an arry is only necessary when there is more than one
+  /* Conversion to an array is only necessary when there is more than one
      element in the list. */
   if(numc>1)
     {
@@ -510,14 +514,15 @@ txt_infoll_to_array(gal_data_t *datall, size_t *numdata)
           /* Pop the top element. */
           data=gal_list_data_pop(&datall);
 
-          /* The `status' value is the number of the column (counting from
+          /* The 'status' value is the number of the column (counting from
              1, not 0). */
           ind=data->status-1;
 
-          /* Put all the information from `data' into the respective part
+          /* Put all the information from 'data' into the respective part
              of the array. About the pointers, instead of having to
              allocate them again, we will just set them to NULL so
-             `gal_data_free' doesn't remove them.*/
+             'gal_data_free' doesn't remove them.*/
+          dataarr[ind].flag       = data->flag;    data->flag=0;
           dataarr[ind].name       = data->name;    data->name=NULL;
           dataarr[ind].unit       = data->unit;    data->unit=NULL;
           dataarr[ind].array      = data->array;   data->array=NULL;
@@ -548,7 +553,8 @@ txt_infoll_to_array(gal_data_t *datall, size_t *numdata)
 
 static void
 txt_get_info_line(char *line, gal_data_t **datall, char *comm_start,
-                  int *firstlinedone, int format, size_t *dsize, int inplace)
+                  int *firstlinedone, int format, size_t *dsize,
+                  int inplace)
 {
   size_t numtokens;
 
@@ -590,12 +596,12 @@ txt_get_info(char *filename, gal_list_str_t *lines, int format,
   gal_data_t *datall=NULL;
   int test, firstlinedone=0;
   char *line, *format_err="empty", *comm_start;
-  size_t linelen=10; /* `linelen' will be increased by `getline'. */
+  size_t linelen=10; /* 'linelen' will be increased by 'getline'. */
 
-  /* `filename' and `lines' cannot both be non-NULL. */
+  /* 'filename' and 'lines' cannot both be non-NULL. */
   test = (filename!=NULL) + (lines!=NULL);
   if( test!=1 )
-    error(EXIT_FAILURE, 0, "%s: one of the `filename' and `lines' "
+    error(EXIT_FAILURE, 0, "%s: one of the 'filename' and 'lines' "
           "arguments must be NULL, but they are both %s", __func__,
           test==2 ? "non-NULL" : "NULL");
 
@@ -609,7 +615,7 @@ txt_get_info(char *filename, gal_list_str_t *lines, int format,
             __func__, format);
     }
 
-  /* Initialize the first `dsize' element. */
+  /* Initialize the first 'dsize' element. */
   dsize[0]=0;
 
   /* Parse the file or go over the lines. */
@@ -620,12 +626,12 @@ txt_get_info(char *filename, gal_list_str_t *lines, int format,
       fp=fopen(filename, "r");
       if(fp==NULL)
         error(EXIT_FAILURE, errno, "%s: couldn't open to read as a plain "
-              "text %s (from Gnuastro's `%s')", filename, format_err,
+              "text %s (from Gnuastro's '%s')", filename, format_err,
               __func__);
 
 
       /* Allocate the space necessary to keep each line as we parse
-         it. Note that `getline' is going to later `realloc' this space to
+         it. Note that 'getline' is going to later 'realloc' this space to
          fit the line length. */
       errno=0;
       line=malloc(linelen*sizeof *line);
@@ -715,7 +721,7 @@ static void
 txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
                size_t i, char *filename, size_t lineno, size_t colnum)
 {
-  char   *tailptr;
+  char   *tailptr, emptystr[1]="\0";
   char     **str = data->array, **strb;
   uint8_t    *uc = data->array,   *ucb;
   int8_t      *c = data->array,    *cb;
@@ -728,94 +734,165 @@ txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
   float       *f = data->array,    *fb;
   double      *d = data->array,    *db;
 
-  /* Read the proper token into the column. */
-  switch(data->type)
+  /* See if this token is blank. */
+  int isblankstr = ( info->flag==GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING
+                     ? ( strcmp(info->array,token)==0 ? 1 : 0 )
+                     : 0);
+
+  /* If the string is equal to the given blank string, then just write
+     blank and don't bother parsing the token. */
+  if(isblankstr)
     {
-    case GAL_TYPE_STRING:
-      gal_checkset_allocate_copy(txt_trim_space(token), &str[i]);
-      if( (strb=info->array) && !strcmp( *strb, str[i] ) )
+      switch(data->type)
         {
+        case GAL_TYPE_STRING:
           free(str[i]);
-          gal_checkset_allocate_copy(GAL_BLANK_STRING, &str[i]);
+          gal_checkset_allocate_copy(GAL_BLANK_STRING, &str[i]); break;
+        case GAL_TYPE_UINT8:  uc[i] = GAL_BLANK_UINT8;   break;
+        case GAL_TYPE_INT8:    c[i] = GAL_BLANK_INT8;    break;
+        case GAL_TYPE_UINT16: us[i] = GAL_BLANK_UINT16;  break;
+        case GAL_TYPE_INT16:   s[i] = GAL_BLANK_INT16;   break;
+        case GAL_TYPE_UINT32: ui[i] = GAL_BLANK_UINT32;  break;
+        case GAL_TYPE_INT32:  ii[i] = GAL_BLANK_INT32;   break;
+        case GAL_TYPE_UINT64: ul[i] = GAL_BLANK_UINT64;  break;
+        case GAL_TYPE_INT64:   l[i] = GAL_BLANK_INT64;   break;
+        case GAL_TYPE_FLOAT32: f[i] = GAL_BLANK_FLOAT32; break;
+        case GAL_TYPE_FLOAT64: d[i] = GAL_BLANK_FLOAT64; break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: type code %d not recognized in "
+                "'blankstr' switch", __func__, data->type);
         }
-      break;
-
-    case GAL_TYPE_UINT8:
-      uc[i]=strtol(token, &tailptr, 0);
-      if( (ucb=info->array) && *ucb==uc[i] )
-        uc[i]=GAL_BLANK_UINT8;
-      break;
-
-    case GAL_TYPE_INT8:
-      c[i]=strtol(token, &tailptr, 0);
-      if( (cb=info->array) && *cb==c[i] )
-        c[i]=GAL_BLANK_INT8;
-      break;
-
-    case GAL_TYPE_UINT16:
-      us[i]=strtol(token, &tailptr, 0);
-      if( (usb=info->array) && *usb==us[i] )
-        us[i]=GAL_BLANK_UINT16;
-      break;
-
-    case GAL_TYPE_INT16:
-      s[i]=strtol(token, &tailptr, 0);
-      if( (sb=info->array) && *sb==s[i] )
-        s[i]=GAL_BLANK_INT16;
-      break;
-
-    case GAL_TYPE_UINT32:
-      ui[i]=strtol(token, &tailptr, 0);
-      if( (uib=info->array) && *uib==ui[i] )
-        ui[i]=GAL_BLANK_UINT32;
-      break;
-
-    case GAL_TYPE_INT32:
-      ii[i]=strtol(token, &tailptr, 0);
-      if( (ib=info->array) && *ib==ii[i] )
-        ii[i]=GAL_BLANK_INT32;
-      break;
-
-    case GAL_TYPE_UINT64:
-      ul[i]=strtoul(token, &tailptr, 0);
-      if( (ulb=info->array) && *ulb==ul[i] )
-        ul[i]=GAL_BLANK_UINT64;
-      break;
-
-    case GAL_TYPE_INT64:
-      l[i]=strtol(token, &tailptr, 0);
-      if( (lb=info->array) && *lb==l[i] )
-        l[i]=GAL_BLANK_INT64;
-      break;
-
-      /* For the blank value of floating point types, we need to make
-         sure it isn't a NaN, because a NaN value will fail on any
-         condition check (even `=='). If it isn't NaN, then we can
-         compare the values. */
-    case GAL_TYPE_FLOAT32:
-      f[i]=strtod(token, &tailptr);
-      if( (fb=info->array)
-          && ( (isnan(*fb) && isnan(f[i])) || *fb==f[i] ) )
-        f[i]=GAL_BLANK_FLOAT64;
-      break;
-
-    case GAL_TYPE_FLOAT64:
-      d[i]=strtod(token, &tailptr);
-      if( (db=info->array)
-          && ( (isnan(*db) && isnan(d[i])) || *db==d[i] ) )
-        d[i]=GAL_BLANK_FLOAT64;
-      break;
-
-    default:
-      error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
-            __func__, data->type);
     }
 
-  /* If a number couldn't be read properly, then report an error. */
-  if(data->type!=GAL_TYPE_STRING && *tailptr!='\0')
-    error_at_line(EXIT_FAILURE, 0, filename, lineno, "column %zu "
-                  "(`%s') couldn't be read as a `%s' number",
-                  colnum, token, gal_type_name(data->type, 1) );
+  /* Parse the token into the column's dataset. */
+  else
+    {
+      switch(data->type)
+        {
+        case GAL_TYPE_STRING:
+          gal_checkset_allocate_copy(gal_txt_trim_space(token), &str[i]);
+          if( (strb=info->array) && !strcmp( *strb, str[i] ) )
+            {
+              free(str[i]);
+              gal_checkset_allocate_copy(GAL_BLANK_STRING, &str[i]);
+            }
+          break;
+
+        case GAL_TYPE_UINT8:
+          uc[i]=strtol(token, &tailptr, 10);
+          if( (ucb=info->array) && *ucb==uc[i] )
+            uc[i]=GAL_BLANK_UINT8;
+          break;
+
+        case GAL_TYPE_INT8:
+          c[i]=strtol(token, &tailptr, 10);
+          if( (cb=info->array) && *cb==c[i] )
+            c[i]=GAL_BLANK_INT8;
+          break;
+
+        case GAL_TYPE_UINT16:
+          us[i]=strtol(token, &tailptr, 10);
+          if( (usb=info->array) && *usb==us[i] )
+            us[i]=GAL_BLANK_UINT16;
+          break;
+
+        case GAL_TYPE_INT16:
+          s[i]=strtol(token, &tailptr, 10);
+          if( (sb=info->array) && *sb==s[i] )
+            s[i]=GAL_BLANK_INT16;
+          break;
+
+        case GAL_TYPE_UINT32:
+          ui[i]=strtol(token, &tailptr, 10);
+          if( (uib=info->array) && *uib==ui[i] )
+            ui[i]=GAL_BLANK_UINT32;
+          break;
+
+        case GAL_TYPE_INT32:
+          ii[i]=strtol(token, &tailptr, 10);
+          if( (ib=info->array) && *ib==ii[i] )
+            ii[i]=GAL_BLANK_INT32;
+          break;
+
+        case GAL_TYPE_UINT64:
+          ul[i]=strtoul(token, &tailptr, 10);
+          if( (ulb=info->array) && *ulb==ul[i] )
+            ul[i]=GAL_BLANK_UINT64;
+          break;
+
+        case GAL_TYPE_INT64:
+          l[i]=strtol(token, &tailptr, 10);
+          if( (lb=info->array) && *lb==l[i] )
+            l[i]=GAL_BLANK_INT64;
+          break;
+
+          /* For the blank value of floating point types, we need to make
+             sure it isn't a NaN, because a NaN value will fail on any
+             condition check (even '=='). If it isn't NaN, then we can
+             compare the values. */
+        case GAL_TYPE_FLOAT32:
+          f[i]=strtod(token, &tailptr);
+          if( (*tailptr=='h' || *tailptr=='d') && isdigit(*(tailptr+1)) )
+            {
+              f[i] = ( *tailptr=='h'
+                       ? gal_units_ra_to_degree(token)
+                       : gal_units_dec_to_degree(token) );
+              if( !isnan(f[i]) ) tailptr=emptystr;
+            }
+          if( (fb=info->array)
+              && ( (isnan(*fb) && isnan(f[i])) || *fb==f[i] ) )
+            f[i]=GAL_BLANK_FLOAT32;
+          break;
+
+        /* In astronomical datasets, it can happen that a column is in the
+           format of __h__m__s or __d__m__s (where every '_' is a digit),
+           in these cases, they are actually coordinates (RA for first, Dec
+           for second). */
+        case GAL_TYPE_FLOAT64:
+          d[i]=strtod(token, &tailptr);
+          if( (*tailptr=='h' || *tailptr=='d') && isdigit(*(tailptr+1)) )
+            {
+              d[i] = ( *tailptr=='h'
+                       ? gal_units_ra_to_degree(token)
+                       : gal_units_dec_to_degree(token) );
+              if( !isnan(d[i]) ) tailptr=emptystr;
+            }
+          if( (db=info->array)
+              && ( (isnan(*db) && isnan(d[i])) || *db==d[i] ) )
+            d[i]=GAL_BLANK_FLOAT64;
+          break;
+
+        default:
+          error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
+                __func__, data->type);
+        }
+
+      /* If a number couldn't be read properly, then report an error. */
+      if(data->type!=GAL_TYPE_STRING && *tailptr!='\0')
+        {
+          if( tailptr!=token
+              && isdigit(*(tailptr-1))
+              && *tailptr==':'
+              && isdigit(*(tailptr+1)) )
+            error_at_line(EXIT_FAILURE, 0, filename, lineno, "column %zu "
+                          "('%s') couldn't be read as a '%s' number.\n\n"
+                          "If it was meant to be celestial coordinates (RA "
+                          "or Dec), please use the '_h_m_s' format for RA "
+                          "or '_d_m_s' for Dec. The '_:_:_' format is "
+                          "ambiguous (can be used for both RA and Dec). "
+                          "Alternatively, you can use the column arithmetic "
+                          "operators 'ra-to-degree' or 'dec-to-degree' of "
+                          "'asttable' which also accept the '_:_:_' "
+                          "format. For more, please run this command\n\n"
+                          "   $ info gnuastro \"column arithmetic\"",
+                          colnum, token,
+                          gal_type_name(data->type, 1) );
+          else
+            error_at_line(EXIT_FAILURE, 0, filename, lineno, "column %zu "
+                          "('%s') couldn't be read as a '%s' number",
+                          colnum, token, gal_type_name(data->type, 1) );
+        }
+    }
 }
 
 
@@ -823,30 +900,32 @@ txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
 
 
 static void
-txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
-         gal_data_t *out, size_t rowind, char *filename, size_t lineno,
-         int inplace, int format)
+txt_fill(char *in_line, char **tokens, size_t maxcolnum,
+         gal_data_t *colinfo, gal_data_t *out, size_t rowind,
+         char *filename, size_t lineno, int inplace, int format)
 {
-  size_t i, n=0;
   gal_data_t *data;
   int notenoughcols=0;
-  char *end, *line, *aline=NULL;
+  size_t i, n=0, strwidth;
+  char *end, *line, *tmpstr, *aline=NULL;
 
   /* Make a copy of the input line if necessary. */
   if(inplace) line=in_line;
   else
     {
       gal_checkset_allocate_copy(in_line, &line);
-      aline=line; /* We are going to change `line' during this function. */
+      aline=line; /* We are going to change 'line' during this function. */
     }
   end=line+strlen(line);
 
-  /* See explanations in `txt_info_from_first_row'. */
+  /* Remove the new-line character from the line. For more, see the top the
+     explanations in 'txt_info_from_first_row': 13 is the ASCII code for
+     the carriage return. */
   if( end>line+2 && *(end-2)==13 ) *(end-2)='\0';
   else if( *(end-1)=='\n' )        *(end-1)='\0';
 
-  /* Start parsing the line. Note that `n' and `maxcolnum' start from
-     one. */
+  /* Start parsing the line. Note that 'n' and 'maxcolnum' start from one
+     when entering this loop on the first time. */
   while(++n)
     {
       /* Break out of the parsing if we don't need the columns any
@@ -855,10 +934,10 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
       if(n>maxcolnum) break;
 
       /* Set the pointer to the start of this token/column. See
-         explanations in `txt_info_from_first_row'. Note that an image has
-         a single `info' element for the whole array, while a table has one
+         explanations in 'txt_info_from_first_row'. Note that an image has
+         a single 'info' element for the whole array, while a table has one
          for each column. */
-      if( info[format==TXT_FORMAT_TABLE ? n-1 : 0].type == GAL_TYPE_STRING )
+      if( colinfo[format==TXT_FORMAT_TABLE ? n-1 : 0].type == GAL_TYPE_STRING )
         {
           /* Remove any delimiters and stop at the first non-delimiter. If
              we have reached the end of the line then its an error, because
@@ -866,16 +945,31 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
           while(isspace(*line) || *line==',') ++line;
           if(*line=='\0') {notenoughcols=1; break;}
 
-          /* Everything is good, set the pointer and increment the line to
-             the end of the allocated space for this string. */
-          line = (tokens[n]=line) + info[n-1].disp_width;
-          if(line<end) *line++='\0';
+          /* We are at the start of the string. Allocate space for, and
+             copy the necessary number of characters into the 'tmpstr'
+             string. We need to allocate this because the string column may
+             be immediately (next character) followed by the next
+             column. This leaves us no space to put the '\0' character. */
+          strwidth=colinfo[n-1].disp_width;
+          errno=0;
+          tmpstr=malloc(strwidth+1);
+          if(tmpstr==NULL)
+            error(EXIT_FAILURE, errno, "%s: %zu bytes couldn't be allocated "
+                  "for variable 'tmpstr'", __func__, strwidth+1);
+          if(line+strwidth<end) strncpy(tmpstr, line, strwidth);
+          else                  strncpy(tmpstr, line, end-line);
+          tmpstr[strwidth]='\0';
+          tokens[n]=tmpstr;
+
+          /* Increment the line pointer beyond to the next token.*/
+          line += strwidth;
         }
       else
         {
-          /* If we have reached the end of the line, then `strtok_r' will
+          /* If we have reached the end of the line, then 'strtok_r' will
              return a NULL pointer. */
-          tokens[n]=strtok_r(n==1?line:NULL, GAL_TXT_DELIMITERS, &line);
+          tmpstr=strtok_r(n==1?line:NULL, GAL_TXT_DELIMITERS, &line);
+          gal_checkset_allocate_copy(tmpstr, &tokens[n]);
           if(tokens[n]==NULL) {notenoughcols=1; break;}
         }
     }
@@ -885,7 +979,7 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
     error_at_line(EXIT_FAILURE, 0, filename, lineno, "not enough columns in "
                   "this line. Previous (uncommented) lines in this file had "
                   "%zu columns, but this line has %zu columns", maxcolnum,
-                  n-1); /* This must be `n-1' (since n starts from 1). */
+                  n-1); /* This must be 'n-1' (since n starts from 1). */
 
   /* For a sanity check:
   printf("row: %zu: ", rowind+1);
@@ -895,19 +989,20 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
 
   /* Read the desired tokens into the columns that need them. Note that
      when a blank value is defined for the column, the column's array
-     pointer (`info[col->status-1]') is not NULL and points to the blank
-     value. For strings, this will actually be a string. */
+     pointer ('colinfo[col->status-1]') is not NULL and points to the blank
+     value. For strings (or when the blank value is actually a string),
+     this will actually be a string. */
   switch(out->ndim)
     {
     case 1:
       for(data=out; data!=NULL; data=data->next)
-        txt_read_token(data, &info[data->status-1], tokens[data->status],
+        txt_read_token(data, &colinfo[data->status-1], tokens[data->status],
                        rowind, filename, lineno, data->status);
       break;
 
     case 2:
       for(i=0;i<out->dsize[1];++i)
-        txt_read_token(out, info, tokens[i+1], rowind * out->dsize[1] + i,
+        txt_read_token(out, colinfo, tokens[i+1], rowind * out->dsize[1] + i,
                        filename, lineno, i+1);
       break;
 
@@ -915,6 +1010,11 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum, gal_data_t *info,
       error(EXIT_FAILURE, 0, "%s: currently only 1 and 2 dimensional "
             "datasets acceptable", __func__);
     }
+
+  /* Clean up the strings of each token within the tokens array, and set
+     the freed pointers to NULL. */
+  for(i=0;i<maxcolnum+1;++i)
+    if(tokens[i]) {free(tokens[i]); tokens[i]=NULL;}
 
   /* Clean up. */
   if(inplace==0) free(aline);
@@ -937,22 +1037,22 @@ txt_read(char *filename, gal_list_str_t *lines, size_t *dsize,
   gal_data_t *out=NULL;
   gal_list_sizet_t *ind;
   size_t one=1, maxcolnum=0, rowind=0, lineno=0, ndim;
-  size_t linelen=10;        /* `linelen' will be increased by `getline'. */
+  size_t linelen=10;        /* 'linelen' will be increased by 'getline'. */
 
-  /* `filename' and `lines' cannot both be non-NULL. */
+  /* 'filename' and 'lines' cannot both be non-NULL. */
   test = (filename!=NULL) + (lines!=NULL);
   if( test!=1 )
-    error(EXIT_FAILURE, 0, "%s: one of the `filename' and `lines' "
+    error(EXIT_FAILURE, 0, "%s: one of the 'filename' and 'lines' "
           "arguments must be NULL, but they are both %s", __func__,
           test==2 ? "non-NULL" : "NULL");
 
   /* Allocate the space necessary to keep a copy of each line as we parse
-     it. Note that `getline' is going to later `realloc' this space to fit
+     it. Note that 'getline' is going to later 'realloc' this space to fit
      the line length. */
   errno=0;
   line=malloc(linelen*sizeof *line);
   if(line==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `line'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'line'",
           __func__, linelen*sizeof *line);
 
   /* Allocate all the desired columns for output. We will be reading the
@@ -994,7 +1094,7 @@ txt_read(char *filename, gal_list_str_t *lines, size_t *dsize,
     case TXT_FORMAT_IMAGE:
       if(info->next)
         error(EXIT_FAILURE, 0, "%s: currently reading only one image (2d "
-              "array) from a text file is possible, the `info' input has "
+              "array) from a text file is possible, the 'info' input has "
               "more than one element", __func__);
       ndim=2;
       maxcolnum=dsize[1];
@@ -1011,13 +1111,13 @@ txt_read(char *filename, gal_list_str_t *lines, size_t *dsize,
 
   /* Allocate the space to keep the pointers to each token in the
      line. This is done here to avoid having to allocate/free this array
-     for each line in `txt_fill_columns'. Note that the column numbers are
+     for each line in 'txt_fill_columns'. Note that the column numbers are
      counted from one (unlike indexes that are counted from zero), so we
-     need `maxcolnum+1' elements in the array of tokens.*/
+     need 'maxcolnum+1' elements in the array of tokens.*/
   errno=0;
-  tokens=malloc((maxcolnum+1)*sizeof *tokens);
+  tokens=calloc(maxcolnum+1, sizeof *tokens);
   if(tokens==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `tokens'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'tokens'",
           __func__, (maxcolnum+1)*sizeof *tokens);
 
   if(filename)
@@ -1113,13 +1213,13 @@ txt_stdin_has_contents(long timeout_microsec)
   tv.tv_sec  = 0;
   tv.tv_usec = timeout_microsec;
 
-  /* Initialize `fd_set'. */
+  /* Initialize 'fd_set'. */
   FD_ZERO(&fds);
 
   /* Set standard input (STDIN_FILENO is 0) as the FD that must be read. */
   FD_SET(STDIN_FILENO, &fds);
 
-  /* `select' takes the last file descriptor value + 1 in the fdset to
+  /* 'select' takes the last file descriptor value + 1 in the fdset to
      check, the fdset for reads, writes, and errors.  We are only passing
      in reads.  the last parameter is the timeout.  select will return if
      an FD is ready or the timeout has occurred. */
@@ -1138,22 +1238,22 @@ gal_txt_stdin_read(long timeout_microsec)
 {
   char *line;
   gal_list_str_t *out=NULL;
-  size_t lineno=0, linelen=10;/* `linelen' will be increased by `getline'. */
+  size_t lineno=0, linelen=10;/* 'linelen' will be increased by 'getline'. */
 
   /* If there is nothing  */
   if( txt_stdin_has_contents(timeout_microsec) )
     {
       /* Allocate the space necessary to keep a copy of each line as we
-         parse it. Note that `getline' is going to later `realloc' this
+         parse it. Note that 'getline' is going to later 'realloc' this
          space to fit the line length. */
       errno=0;
       line=malloc(linelen*sizeof *line);
       if(line==NULL)
-        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `line'",
+        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'line'",
               __func__, linelen*sizeof *line);
 
       /* Read the whole standard input. We are using getline because it can
-         deal with a `NULL' in the input, while also handing allocation
+         deal with a 'NULL' in the input, while also handing allocation
          issues while reading (allocating by line, not by a fixed buffer
          size). */
       while( getline(&line, &linelen, stdin) != -1 )
@@ -1261,7 +1361,7 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
 
       /* Print the result into the allocated string and add its length to
          the final length of the overall format statement. The space in the
-         end of `fmts[i*2]' is to ensure that the columns don't merge, even
+         end of 'fmts[i*2]' is to ensure that the columns don't merge, even
          if the printed string is larger than the expected width. */
       if(data->disp_precision > 0)
         *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d.%d%s%s ",
@@ -1354,15 +1454,15 @@ txt_write_metadata(FILE *fp, gal_data_t *datall, char **fmts)
 
 
   /* When there are more than 9 columns, we don't want to have cases
-     like `# Column 1 :' (note the space between `1' and `:', this
+     like '# Column 1 :' (note the space between '1' and ':', this
      space won't exist for the 2 digit colum numbers).
 
      To do this, we are first allocating and printing a string long
-     enough to keep the final column's `N:'. Then, for each column, we
-     print only the number into the allocated space and put the `:' in
+     enough to keep the final column's 'N:'. Then, for each column, we
+     print only the number into the allocated space and put the ':' in
      manually immediately after the number. Note that the initial
-     `asprintf' put a `\0' in the allocated space, so we can safely
-     over-write the one that `sprintf' puts with a `:' for the columns
+     'asprintf' put a '\0' in the allocated space, so we can safely
+     over-write the one that 'sprintf' puts with a ':' for the columns
      that have the same number of digits as the final column. */
   i=0;
   if( asprintf(&nstr, "%zu:", num)<0 )
@@ -1370,7 +1470,7 @@ txt_write_metadata(FILE *fp, gal_data_t *datall, char **fmts)
   nlen=strlen(nstr);
   for(data=datall; data!=NULL; data=data->next)
     {
-      /* Print the number into the number string, then add the `:'
+      /* Print the number into the number string, then add the ':'
          immediately after the number. */
       sprintf(nstr, "%zu", i+1);
       for(j=1;j<nlen;++j)
@@ -1396,8 +1496,77 @@ txt_write_metadata(FILE *fp, gal_data_t *datall, char **fmts)
 
 
 
+static void
+txt_write_keys(FILE *fp, struct gal_fits_list_key_t **keylist)
+{
+  char *ending;
+  char *valuestr;
+  gal_fits_list_key_t *tmp, *ttmp;
+
+  tmp=*keylist;
+  while(tmp!=NULL)
+    {
+      /* If a title is requested, only put a title. */
+      if(tmp->title)
+        {
+          fprintf(fp, "# -------------\n# %s\n# -------------\n",
+                  tmp->title);
+          if(tmp->tfree) free(tmp->title);
+        }
+      else
+        {
+          /* For a string type, we need to return a pointer to the
+             string. */
+          valuestr = ( tmp->type==GAL_TYPE_STRING
+                       ? tmp->value
+                       : gal_type_to_string(tmp->value, tmp->type, 1) );
+
+          /* If a comment is requested, parepare it. */
+          ending=NULL;
+          if(tmp->unit)
+            {
+              if( asprintf(&ending, " / [%s] %s", tmp->unit,
+                           tmp->comment?tmp->comment:"")==-1 )
+                error(EXIT_FAILURE, errno, "%s: asprintf error for name",
+                      __func__);
+            }
+          else if(tmp->comment)
+            {
+              if( asprintf(&ending, " / %s", tmp->comment)==-1 )
+                error(EXIT_FAILURE, errno, "%s: asprintf error for name",
+                      __func__);
+            }
+
+          /* Write the keyword value. */
+          fprintf(fp, "# [key] %s: %s%s\n", tmp->keyname,
+                  valuestr, ending?ending:"");
+
+          /* Clean up. */
+          if(ending)     free(ending);
+          if(tmp->kfree) free(tmp->keyname);
+          if(tmp->vfree) free(tmp->value);
+          if(tmp->cfree) free(tmp->comment);
+          if(tmp->ufree) free(tmp->unit);
+        }
+
+      /* Keep the pointer to the next keyword and free the allocated
+         space for this keyword.*/
+      ttmp=tmp->next;
+      free(tmp);
+      tmp=ttmp;
+    }
+
+  /* Set it to NULL so it isn't mistakenly used later. */
+  *keylist=NULL;
+}
+
+
+
+
+
 void
-gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename,
+gal_txt_write(gal_data_t *input, struct gal_fits_list_key_t **keylist,
+              gal_list_str_t *comment, char *filename,
               uint8_t colinfoinstdout)
 {
   FILE *fp;
@@ -1438,7 +1607,7 @@ gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename,
          elements. */
       if( input!=data && gal_dimension_is_different(input, data) )
         error(EXIT_FAILURE, 0, "%s: the input list of datasets must have the "
-              "same sizes (dimentionality and length along each dimension)",
+              "same sizes (dimensions and length along each dimension)",
               __func__);
     }
 
@@ -1468,6 +1637,9 @@ gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename,
       /* Write the comments if there were any. */
       for(strt=comment; strt!=NULL; strt=strt->next)
         fprintf(fp, "# %s\n", strt->v);
+
+      /* Write the keywords */
+      if(keylist) txt_write_keys(fp, keylist);
     }
   else
     fp=stdout;
@@ -1480,14 +1652,26 @@ gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename,
   switch(input->ndim)
     {
     case 1:
-      for(i=0;i<input->size;++i)                        /* Row.    */
-        {
-          j=0;
-          for(data=input;data!=NULL;data=data->next)    /* Column. */
-            txt_print_value(fp, data->array, data->type, i,
+      /* When the dataset is bring printed on standard output and its a
+         single number, don't print the column structure, because it will
+         add white-space characters which can be annoying when used in an
+         automatic script. */
+      if(fp==stdout && input->size==1 && input->next==NULL)
+        fprintf(fp, "%s\n",
+                gal_type_to_string(input->array, input->type, 0));
+
+      /* Dataset has more than one row AND more than one column, so follow
+         the basic text formatting (like extra white space to keep the
+         columns under each other). */
+      else
+        for(i=0;i<input->size;++i)                        /* Row.    */
+          {
+            j=0;
+            for(data=input;data!=NULL;data=data->next)    /* Column. */
+              txt_print_value(fp, data->array, data->type, i,
                             fmts[j++ * FMTS_COLS]);
-          fprintf(fp, "\n");
-        }
+            fprintf(fp, "\n");
+          }
       break;
 
 
@@ -1506,7 +1690,6 @@ gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename,
       error(EXIT_FAILURE, 0, "%s: a bug! input->ndim=%zu is not recognized",
             __func__, input->ndim);
     }
-
 
 
   /* Clean up. */

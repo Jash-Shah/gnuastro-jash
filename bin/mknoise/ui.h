@@ -5,7 +5,7 @@ MakeNoise is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -33,16 +33,17 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Available letters for short options:
 
    a c d f g j k l m n p r t u v w x y
-   A B C E G H J L O Q R W X Y
+   A C E G H J L O Q R W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
-  UI_KEY_SIGMA        = 's',
-  UI_KEY_INSTRUMENTAL = 'i',
-  UI_KEY_BACKGROUND   = 'b',
-  UI_KEY_ZEROPOINT    = 'z',
-  UI_KEY_ENVSEED      = 'e',
+  UI_KEY_SIGMA          = 's',
+  UI_KEY_INSTRUMENTAL   = 'i',
+  UI_KEY_BACKGROUND     = 'b',
+  UI_KEY_ZEROPOINT      = 'z',
+  UI_KEY_ENVSEED        = 'e',
+  UI_KEY_BGISBRIGHTNESS = 'B',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */

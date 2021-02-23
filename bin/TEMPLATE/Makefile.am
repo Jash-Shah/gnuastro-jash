@@ -3,7 +3,7 @@
 ## Original author:
 ##     Mohammad akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
-## Copyright (C) 2016-2019, Free Software Foundation, Inc.
+## Copyright (C) 2016-2021, Free Software Foundation, Inc.
 ##
 ## Gnuastro is free software: you can redistribute it and/or modify it
 ## under the terms of the GNU General Public License as published by
@@ -20,24 +20,23 @@
 
 
 ## Necessary pre-processer and linker flags.
-AM_LDFLAGS = -L\$(top_builddir)/lib
-AM_CPPFLAGS = -I\$(top_srcdir)/bootstrapped/lib -I\$(top_srcdir)/lib
+AM_LDFLAGS  = -L\$(top_builddir)/lib
+AM_CPPFLAGS = -I\$(top_builddir)/bootstrapped/lib \
+              -I\$(top_srcdir)/bootstrapped/lib \
+              -I\$(top_srcdir)/lib
 
-if COND_NORPATH
-  MAYBE_NORPATH = $(CONFIG_LDADD)
-endif
 
 
 ## Program definition (name, linking, sources and headers)
 bin_PROGRAMS = astTEMPLATE
 
-## We are linking with `libgnu' first eventhough `libgnu' is already linked
-## to `libgnuastro'. The reason is that some linkers (Mac OS for example),
+## We are linking with 'libgnu' first eventhough 'libgnu' is already linked
+## to 'libgnuastro'. The reason is that some linkers (Mac OS for example),
 ## don't keep external variables (needed in Argp) after the first link. So
-## the `libgnu' (that is indirectly linked through `libgnuastro') can't see
-## those variables. We thus need to explicitly link with `libgnu' first.
-astTEMPLATE_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la -lgnuastro \
-                    $(MAYBE_NORPATH)
+## the 'libgnu' (that is indirectly linked through 'libgnuastro') can't see
+## those variables. We thus need to explicitly link with 'libgnu' first.
+astTEMPLATE_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
+                    -lgnuastro $(CONFIG_LDADD)
 
 astTEMPLATE_SOURCES = main.c ui.c TEMPLATE.c
 

@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -26,7 +26,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Include other headers if necessary here. Note that other header files
    must be included before the C++ preparations below */
 
-#include <gnuastro/fits.h> /* Includes `gnuastro/data.h' and `fitsio.h' */
+#include <gnuastro/fits.h> /* Includes 'gnuastro/data.h' and 'fitsio.h' */
 #include <gnuastro/list.h>
 
 
@@ -50,6 +50,14 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Actual header contants (the above were for the Pre-processor). */
 __BEGIN_C_DECLS  /* From C++ preparations */
 
+
+
+/* Flags for columns. */
+enum tableintern_flags
+{
+ GAL_TABLEINTERN_FLAG_INVALID,  /* Zero according to FITS standard. */
+ GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING,
+};
 
 
 

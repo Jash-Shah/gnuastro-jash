@@ -1,7 +1,7 @@
 GNU Astronomy Utilities
 =======================
 
-Copyright (C) 2015-2019 Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 GNU Astronomy Utilities (Gnuastro) is an official GNU package of programs
@@ -85,6 +85,10 @@ categories/chapters.
     in noise (galaxies in the sky), using thresholds that are below the Sky
     value (see arXiv:1505.01664).
 
+  - Query (astquery): High-level interface to query pre-defined remote, or
+    external, databases and directly download the required sub-tables on the
+    command-line.
+
   - Segment (astsegment): Segment a detection based on the structure of
     signal within it.
 
@@ -102,8 +106,12 @@ categories/chapters.
 The programs listed above are designed to be highly modular and
 generic. For higher-level operations (combining multiple programs, or
 running a program in a special way), Gnuastro also installs Bash scripts
-(all prefixed with `astscript-'). They can be run like a program and behave
+(all prefixed with 'astscript-'). They can be run like a program and behave
 very similarly (with minor differences, as explained in the book).
+
+  - astscript-make-ds9-reg: Given a table (either as a file or from
+    standard input), create an SAO DS9 region file from the requested
+    positional columns (WCS or image coordinates).
 
   - astscript-sort-by-night: Given a list of FITS files, and a HDU and
     keyword name for a date, this script separates the files in the same
@@ -150,7 +158,7 @@ The optional dependencies are:
 
 See the "Dependencies" section of the book for their detailed installation
 guides and optional dependencies to enable extra features. Prior to
-installation, you can find it in the `doc/gnuastro.texi' file (source of
+installation, you can find it in the 'doc/gnuastro.texi' file (source of
 the book), or on the web:
 
   https://www.gnu.org/software/gnuastro/manual/html_node/Dependencies.html
@@ -171,7 +179,7 @@ the standard GNU Build system as shown below. After the './configure'
 command, Gnuastro will print messages upon the successful completion of
 each step, giving further information and suggestions for the next steps.
 
-    tar xf gnuastro-latest.tar.lz        # Also works for `tar.gz' files
+    tar xf gnuastro-latest.tar.lz        # Also works for 'tar.gz' files
     cd gnuastro-X.X
     ./configure
     make
@@ -194,7 +202,7 @@ To access the appropriate section of the Gnuastro book/documentation from
 your command-line (in the middle of your work, without distracting your
 self by having to move your hand off the keyboard), please run any of the
 following two commands. Note that you can leave the Info environment by
-pressing the key `q'.
+pressing the key 'q'.
 
     info ProgramName               # For example 'info NoiseChisel'
     info astprogname               # For example 'info astnoisechisel'
@@ -223,7 +231,7 @@ Reporting bugs
 
 The most effective way to report bugs is explained in the "Report a bug"
 section of the documentation, after installation, you can read it by
-running (leave the Info environment by pressing the `q' key afterwards):
+running (leave the Info environment by pressing the 'q' key afterwards):
 
     info bug-gnuastro
 
@@ -249,7 +257,7 @@ bug for a shorter and more relevant list to look into.
 
 Copyright information
 ---------------------
-Copyright (C) 2015-2019 Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document under
 the terms of the GNU Free Documentation License, Version 1.3 or any later

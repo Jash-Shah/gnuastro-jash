@@ -5,7 +5,7 @@ Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -36,7 +36,7 @@ struct argp_option program_options[] =
       UI_KEY_MODE,
       "STR",
       0,
-      "Coordinate mode `img' or `wcs'.",
+      "Coordinate mode 'img' or 'wcs'.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->mode,
       GAL_TYPE_STRING,
@@ -89,6 +89,19 @@ struct argp_option program_options[] =
 
 
     /* Output. */
+    {
+      "primaryimghdu",
+      UI_KEY_PRIMARYIMGHDU,
+      0,
+      0,
+      "Write crop in primary/zero-th HDU of output.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->primaryimghdu,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
     {
       "noblank",
       UI_KEY_NOBLANK,
@@ -182,7 +195,7 @@ struct argp_option program_options[] =
     {
       "catalog",
       UI_KEY_CATALOG,
-      "STR",
+      "FITS/TXT",
       0,
       "Input catalog filename.",
       UI_GROUP_CENTER_CATALOG,
@@ -265,16 +278,30 @@ struct argp_option program_options[] =
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_colon_sep_csv
     },
     {
-      "outpolygon",
-      UI_KEY_OUTPOLYGON,
+      "polygonout",
+      UI_KEY_POLYGONOUT,
       0,
       0,
       "Keep the polygon's outside, mask the inside.",
       UI_GROUP_REGION,
-      &p->outpolygon,
+      &p->polygonout,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "polygonsort",
+      UI_KEY_POLYGONSORT,
+      0,
+      0,
+      "Sort polygon vertices as counter-clockwise.",
+      UI_GROUP_REGION,
+      &p->polygonsort,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,

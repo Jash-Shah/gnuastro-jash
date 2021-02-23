@@ -5,7 +5,7 @@ Statistics is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <stdlib.h>
 
+#include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/tile.h>
 #include <gnuastro/blank.h>
@@ -106,8 +107,8 @@ statistics_print_one_row(struct statisticsparams *p)
   for(tmp=p->singlevalue; tmp!=NULL; tmp=tmp->next)
     switch(tmp->v)
       {
-      /* Calculate respective values. Checking with `if(num==NULL)' gives
-         compiler warnings of `this if clause does not guard ...'. So we
+      /* Calculate respective values. Checking with 'if(num==NULL)' gives
+         compiler warnings of 'this if clause does not guard ...'. So we
          are using this empty-if and else statement. */
       case UI_KEY_NUMBER:
         num = num ? num : gal_statistics_number(p->input);           break;
@@ -211,7 +212,7 @@ statistics_print_one_row(struct statisticsparams *p)
 
       /* Print the number. Note that we don't want any extra white space
          characters before or after the printed outputs. So we have defined
-         `counter' to add a single white space character before any element
+         'counter' to add a single white space character before any element
          except the first one. */
       toprint=gal_type_to_string(out->array, out->type, 0);
       printf("%s%s", counter ? " " : "", toprint);
@@ -271,11 +272,12 @@ statistics_interpolate_and_write(struct statisticsparams *p,
   if( p->interpolate
       && !(p->cp.interponlyblank && gal_blank_present(values, 1)==0) )
     {
-      interpd=gal_interpolate_close_neighbors(values, &cp->tl,
-                                              cp->interpmetric,
-                                              cp->interpnumngb,
-                                              cp->numthreads,
-                                              cp->interponlyblank, 0);
+      interpd=gal_interpolate_neighbors(values, &cp->tl,
+                                        cp->interpmetric,
+                                        cp->interpnumngb,
+                                        cp->numthreads,
+                                        cp->interponlyblank, 0,
+                                        GAL_INTERPOLATE_NEIGHBORS_FUNC_MEDIAN);
       gal_data_free(values);
       values=interpd;
     }
@@ -415,7 +417,7 @@ statistics_on_tile(struct statisticsparams *p)
                     "recognized", __func__, PACKAGE_BUGREPORT, operation->v);
             }
 
-          /* Put the output value into the `values' array and clean up. */
+          /* Put the output value into the 'values' array and clean up. */
           tmp=gal_data_copy_to_new_type_free(tmp, type);
           memcpy(gal_pointer_increment(values->array, tind++, values->type),
                  tmp->array, gal_type_sizeof(type));
@@ -503,9 +505,9 @@ print_ascii_plot(struct statisticsparams *p, gal_data_t *plot,
 
 
 
-/* Data structure that must be fed into `gal_statistics_regular_bins'.*/
+/* Data structure that must be fed into 'gal_statistics_regular_bins'.*/
 static gal_data_t *
-set_bin_range_params(struct statisticsparams *p)
+set_bin_range_params(struct statisticsparams *p, size_t dim)
 {
   size_t rsize=2;
   gal_data_t *range=NULL;
@@ -513,10 +515,23 @@ set_bin_range_params(struct statisticsparams *p)
   if(p->manualbinrange)
     {
       /* Allocate the range data structure. */
-      range=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &rsize, NULL, 0, -1, 1,
-                           NULL, NULL, NULL);
-      ((float *)(range->array))[0]=p->greaterequal;
-      ((float *)(range->array))[1]=p->lessthan;
+      range=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &rsize, NULL,
+                           0, -1, 1, NULL, NULL, NULL);
+      switch(dim)
+        {
+        case 1:
+          ((float *)(range->array))[0]=p->greaterequal;
+          ((float *)(range->array))[1]=p->lessthan;
+          break;
+        case 2:
+          ((float *)(range->array))[0]=p->greaterequal2;
+          ((float *)(range->array))[1]=p->lessthan2;
+          break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "address the problem. The value %zu for 'dim' isn't "
+                "recogized", __func__, PACKAGE_BUGREPORT, dim);
+        }
     }
   return range;
 }
@@ -531,7 +546,7 @@ ascii_plots(struct statisticsparams *p)
   gal_data_t *bins, *hist, *cfp=NULL, *range=NULL;
 
   /* Make the bins and the respective plot. */
-  range=set_bin_range_params(p);
+  range=set_bin_range_params(p, 1);
   bins=gal_statistics_regular_bins(p->input, range, p->numasciibins, NAN);
   hist=gal_statistics_histogram(p->input, bins, 0, 0);
   if(p->asciicfp)
@@ -547,6 +562,7 @@ ascii_plots(struct statisticsparams *p)
   /* Clean up.*/
   gal_data_free(bins);
   gal_data_free(hist);
+  gal_data_free(range);
   if(p->asciicfp) gal_data_free(cfp);
 }
 
@@ -572,37 +588,58 @@ ascii_plots(struct statisticsparams *p)
 /*******************************************************************/
 /*******    Histogram and cumulative frequency tables    ***********/
 /*******************************************************************/
-void
-write_output_table(struct statisticsparams *p, gal_data_t *table,
-                   char *suf, char *contents)
+static char *
+statistics_output_name(struct statisticsparams *p, char *suf, int *isfits)
 {
-  char *output;
   int use_auto_output=0;
-  char *fix, *suffix=NULL, *tmp;
-  gal_list_str_t *comments=NULL;
-
+  char *out, *fix, *suffix=NULL;
 
   /* Automatic output should be used when no output name was specified or
      we have more than one output file. */
   use_auto_output = p->cp.output ? (p->numoutfiles>1 ? 1 : 0) : 1;
 
-
-  /* Set the `fix' and `suffix' strings. Note that `fix' is necessary in
+  /* Set the 'fix' and 'suffix' strings. Note that 'fix' is necessary in
      every case, even when no automatic output is to be used. Since it is
      used to determine the format of the output. */
-  fix = ( p->cp.output
-          ? gal_fits_name_is_fits(p->cp.output) ? "fits" : "txt"
-          : "txt" );
+  fix = ( *isfits
+          ? "fits"
+          : ( p->cp.output
+              ? gal_fits_name_is_fits(p->cp.output) ? "fits" : "txt"
+              : "txt" ) );
   if(use_auto_output)
     if( asprintf(&suffix, "%s.%s", suf, fix)<0 )
       error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
-
   /* Make the output name. */
-  output = ( use_auto_output
-             ? gal_checkset_automatic_output(&p->cp, p->inputname, suffix)
-             : p->cp.output );
+  out = ( use_auto_output
+          ? gal_checkset_automatic_output(&p->cp, p->inputname, suffix)
+          : p->cp.output );
 
+  /* See if it is a FITS file. */
+  *isfits=strcmp(fix, "fits")==0;
+
+  /* Make sure it doesn't already exist. */
+  gal_checkset_writable_remove(out, 0, p->cp.dontdelete);
+
+  /* Clean up and return. */
+  if(suffix) free(suffix);
+  return out;
+}
+
+
+
+
+
+void
+write_output_table(struct statisticsparams *p, gal_data_t *table,
+                   char *suf, char *contents)
+{
+  int isfits=0;
+  char *tmp, *output;
+  gal_list_str_t *comments=NULL;
+
+  /* Set the output. */
+  output=statistics_output_name(p, suf, &isfits);
 
   /* Write the comments, NOTE: we are writing the first two in reverse of
      the order we want them. They will later be freed as part of the list's
@@ -614,17 +651,18 @@ write_output_table(struct statisticsparams *p, gal_data_t *table,
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
   gal_list_str_add(&comments, tmp, 0);
 
-  if(strcmp(fix, "fits"))  /* The intro info will be in FITS files anyway.*/
-    gal_table_comments_add_intro(&comments, PROGRAM_NAME, &p->rawtime);
+  if(!isfits)  /* The intro info will be in FITS files anyway.*/
+    gal_table_comments_add_intro(&comments, PROGRAM_STRING, &p->rawtime);
 
 
   /* Write the table. */
   gal_checkset_writable_remove(output, 0, p->cp.dontdelete);
-  gal_table_write(table, comments, p->cp.tableformat, output, "TABLE", 0);
+  gal_table_write(table, NULL, comments, p->cp.tableformat, output,
+                  "TABLE", 0);
 
 
   /* Write the configuration information if we have a FITS output. */
-  if(!strcmp(fix, "fits"))
+  if(isfits)
     {
       gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
       gal_fits_key_write_config(&p->cp.okeys, "Statistics configuration",
@@ -638,7 +676,6 @@ write_output_table(struct statisticsparams *p, gal_data_t *table,
 
 
   /* Clean up. */
-  if(suffix) free(suffix);
   gal_list_str_free(comments, 1);
   if(output!=p->cp.output) free(output);
 }
@@ -656,7 +693,7 @@ save_hist_and_or_cfp(struct statisticsparams *p)
   /* Set the bins and make the histogram, this is necessary for both the
      histogram and CFP (recall that the CFP is built from the
      histogram). */
-  range=set_bin_range_params(p);
+  range=set_bin_range_params(p, 1);
   bins=gal_statistics_regular_bins(p->input, range, p->numbins,
                                    p->onebinstart);
   hist=gal_statistics_histogram(p->input, bins, p->normalize, p->maxbinone);
@@ -665,20 +702,20 @@ save_hist_and_or_cfp(struct statisticsparams *p)
   /* Set the histogram as the next pointer of bins. This is again necessary
      in both cases: when only a histogram is requested, it is used for the
      plotting. When only a CFP is desired, it is used as input into
-     `gal_statistics_cfp'. */
+     'gal_statistics_cfp'. */
   bins->next=hist;
 
 
   /* Make the cumulative frequency plot if the user wanted it. Make the
-     CFP, note that for the CFP, `maxbinone' and `normalize' are the same:
+     CFP, note that for the CFP, 'maxbinone' and 'normalize' are the same:
      the last bin (largest value) must be one. So if any of them are given,
      then set the last argument to 1.*/
   if(p->cumulative)
     cfp=gal_statistics_cfp(p->input, bins, p->normalize || p->maxbinone);
 
 
-  /* FITS tables don't accept `uint64_t', so to be consistent, we'll conver
-     the histogram and CFP to `uint32_t'.*/
+  /* FITS tables don't accept 'uint64_t', so to be consistent, we'll conver
+     the histogram and CFP to 'uint32_t'.*/
   if(hist->type==GAL_TYPE_UINT64)
     hist=gal_data_copy_to_new_type_free(hist, GAL_TYPE_UINT32);
   if(cfp && cfp->type==GAL_TYPE_UINT64)
@@ -692,11 +729,11 @@ save_hist_and_or_cfp(struct statisticsparams *p)
 
   /* Prepare the contents. */
   if(p->histogram && p->cumulative)
-    { suf="_hist_cfp"; contents="Histogram and cumulative frequency plot"; }
+    { suf="-hist-cfp"; contents="Histogram and cumulative frequency plot"; }
   else if(p->histogram)
-    { suf="_hist";     contents="Histogram"; }
+    { suf="-hist";     contents="Histogram"; }
   else
-    { suf="_cfp";      contents="Cumulative frequency plot"; }
+    { suf="-cfp";      contents="Cumulative frequency plot"; }
 
 
   /* Set the output file name. */
@@ -704,6 +741,121 @@ save_hist_and_or_cfp(struct statisticsparams *p)
 
   /* Clean up. */
   gal_data_free(range);
+}
+
+
+
+
+/* In the WCS standard, '-' is meaningful, so if a column name contains
+   '-', it should be changed to '_'. */
+static char *
+histogram_2d_set_ctype(char *orig, char *backup)
+{
+  char *c, *out=NULL;
+
+  /* If an original name exists, then check it. Otherwise, just return the
+     backup string so 'CTYPE' isn't left empty. */
+  if(orig)
+    {
+      /* Copy the original name into a newly allocated space because we
+         later want to free it. */
+      gal_checkset_allocate_copy(orig, &out);
+
+      /* Parse the copy and if a dash is present, correct it. */
+      for(c=out; *c!='\0'; ++c) if(*c=='-') *c='_';
+    }
+  else
+    gal_checkset_allocate_copy(backup, &out);
+
+  /* Return the final string. */
+  return out;
+}
+
+
+
+
+
+static void
+histogram_2d(struct statisticsparams *p)
+{
+  int isfits=1;
+  int32_t *imgarr;
+  double *d1, *d2;
+  uint32_t *histarr;
+  gal_data_t *range1, *range2;
+  gal_data_t *img, *hist2d, *bins;
+  size_t i, j, dsize[2], nb1=p->numbins, nb2=p->numbins2;
+  char *output, suf[]="-hist2d", contents[]="2D Histogram";
+
+  /* WCS-related arrays. */
+  char *cunit[2], *ctype[2];
+  double crpix[2], crval[2], cdelt[2], pc[4]={1,0,0,1};
+
+  /* Set the bins for each dimension */
+  range1=set_bin_range_params(p, 1);
+  range2=set_bin_range_params(p, 2);
+  bins=gal_statistics_regular_bins(p->input, range1, nb1,
+                                   p->onebinstart);
+  bins->next=gal_statistics_regular_bins(p->input->next, range2,
+                                         nb2, p->onebinstart2);
+
+  /* Build the 2D histogram. */
+  hist2d=gal_statistics_histogram2d(p->input, bins);
+
+  /* Write the histogram into a 2D FITS image. Note that in the FITS image
+     standard, the first axis is the fastest array (unlike the default
+     format we have adopted for the tables). */
+  if(!strcmp(p->histogram2d,"image"))
+    {
+      /* Allocate the 2D image array. Note that 'dsize' is in the order of
+         C, where the first dimension is the slowest. However, in FITS the
+         fastest dimension is the first. */
+      dsize[0]=nb2;
+      dsize[1]=nb1;
+      histarr=hist2d->next->next->array;
+      img=gal_data_alloc(NULL, GAL_TYPE_INT32, 2, dsize, NULL, 0,
+                         p->cp.minmapsize, p->cp.quietmmap,
+                         NULL, NULL, NULL);
+
+      /* Fill the array values. */
+      imgarr=img->array;
+      for(i=0;i<nb2;++i)
+        for(j=0;j<nb1;++j)
+          imgarr[i*nb1+j]=histarr[j*nb2+i];
+
+      /* Set the WCS. */
+      d1=bins->array;
+      d2=bins->next->array;
+      crpix[0] = 1;                   crpix[1] = 1;
+      crval[0] = d1[0];               crval[1] = d2[0];
+      cdelt[0] = d1[1]-d1[0];         cdelt[1] = d2[1]-d2[0];
+      cunit[0] = p->input->unit;      cunit[1] = p->input->next->unit;
+      ctype[0] = histogram_2d_set_ctype(p->input->name, "X");
+      ctype[1] = histogram_2d_set_ctype(p->input->next->name, "Y");
+      img->wcs=gal_wcs_create(crpix, crval, cdelt, pc, cunit, ctype, 2);
+
+      /* Write the output. */
+      output=statistics_output_name(p, suf, &isfits);
+      gal_fits_img_write(img, output, NULL, PROGRAM_STRING);
+      gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+      gal_fits_key_write_config(&p->cp.okeys, "Statistics configuration",
+                                "STATISTICS-CONFIG", output, "0");
+
+      /* Clean up and let the user know that the histogram is built. */
+      free(ctype[0]);
+      free(ctype[1]);
+      gal_data_free(img);
+      if(!p->cp.quiet) printf("%s created.\n", output);
+    }
+  /* Write 2D histogram as a table. */
+  else
+    write_output_table(p, hist2d, suf, contents);
+
+  /* Clean up. */
+  gal_data_free(range1);
+  gal_data_free(range2);
+  gal_list_data_free(bins);
+  gal_list_data_free(hist2d);
 }
 
 
@@ -766,7 +918,7 @@ print_mirror_hist_cfp(struct statisticsparams *p)
 /*******************************************************************/
 /**************           Basic information          ***************/
 /*******************************************************************/
-/* To keep things in `print_basics' clean, we'll define the input data
+/* To keep things in 'print_basics' clean, we'll define the input data
    here, then only print the values there. */
 void
 print_input_info(struct statisticsparams *p)
@@ -784,8 +936,8 @@ print_input_info(struct statisticsparams *p)
   printf("Input: %s\n", name);
 
   /* If a table was given, print the column. */
-  if(p->column) printf("Column: %s\n",
-                       p->input->name ? p->input->name : p->column);
+  if(p->columns) printf("Column: %s\n",
+                        p->input->name ? p->input->name : p->columns->v);
 
   /* Range. */
   str=NULL;
@@ -874,7 +1026,7 @@ print_basics(struct statisticsparams *p)
   tmp=gal_statistics_mode(p->input, mirrdist, 1);
   d=tmp->array;
   if(d[2]>GAL_STATISTICS_MODE_GOOD_SYM)
-    {        /* Same format as `gal_data_write_to_string' */
+    {        /* Same format as 'gal_data_write_to_string' */
       printf("  %-*s %.10g\n", namewidth, "Mode:", d[0]);
       printf("  %-*s %.10g\n", namewidth, "Mode quantile:", d[1]);
     }
@@ -888,7 +1040,7 @@ print_basics(struct statisticsparams *p)
   free(str);
 
   /* Print the mean and standard deviation. Same format as
-     `gal_data_write_to_string' */
+     'gal_data_write_to_string' */
   printf("  %-*s %.10g\n", namewidth, "Mean:", mean);
   printf("  %-*s %.10g\n", namewidth, "Standard deviation:", std);
 
@@ -898,7 +1050,7 @@ print_basics(struct statisticsparams *p)
      range of the histogram. In that case, we want to print the histogram
      information. */
   printf("-------");
-  range=set_bin_range_params(p);
+  range=set_bin_range_params(p, 1);
   p->asciiheight = p->asciiheight ? p->asciiheight : 10;
   p->numasciibins = p->numasciibins ? p->numasciibins : 70;
   bins=gal_statistics_regular_bins(p->input, range, p->numasciibins, NAN);
@@ -1043,6 +1195,13 @@ statistics(struct statisticsparams *p)
     {
       print_basic_info=0;
       save_hist_and_or_cfp(p);
+    }
+
+  /* 2D histogram. */
+  if(p->histogram2d)
+    {
+      print_basic_info=0;
+      histogram_2d(p);
     }
 
   /* Print the sigma-clipped results. */

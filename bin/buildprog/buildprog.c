@@ -5,7 +5,7 @@ BuildProgram is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -45,7 +45,7 @@ buildprog_as_one_string(char *opt, gal_list_str_t *list)
   /* Only if we have a list. */
   if(list)
     {
-      /* For every node in the list, we want the `opt' and a space along with
+      /* For every node in the list, we want the 'opt' and a space along with
          the actual string. */
       for(tmp=list; tmp!=NULL; tmp=tmp->next)
         len += 1 + (opt ? strlen(opt) : 0) + strlen(tmp->v);
@@ -71,7 +71,7 @@ buildprog_as_one_string(char *opt, gal_list_str_t *list)
 int
 buildprog(struct buildprogparams *p)
 {
-  /* Note that the first node of `sourceargs' is the acutal source and the
+  /* Note that the first node of 'sourceargs' is the acutal source and the
      rest are arguments to be run later. */
   int retval;
   char *fullla;
@@ -104,7 +104,7 @@ buildprog(struct buildprogparams *p)
     if( asprintf(&optimize, "-O%s", p->optimize)<0 )
       error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
-  /* Libtool `.la' file: */
+  /* Libtool '.la' file: */
   if(p->la) fullla=p->la;
   else
     if( asprintf(&fullla, "%s/libgnuastro.la", LIBDIR)<0 )
@@ -122,10 +122,10 @@ buildprog(struct buildprogparams *p)
                warning     ? warning   : "",
                p->debug    ? "-g"      : "",
                optimize    ? optimize  : "",
-               cppflags    ? cppflags  : "",
                include     ? include   : "",
-               ldflags     ? ldflags   : "",
+               cppflags    ? cppflags  : "",
                linkdir     ? linkdir   : "",
+               ldflags     ? ldflags   : "",
                p->sourceargs->v,
                linklib     ?linklib    : "",
                INCLUDEDIR,

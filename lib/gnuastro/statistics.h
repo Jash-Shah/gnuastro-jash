@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -108,6 +108,9 @@ gal_data_t *
 gal_statistics_quantile_function(gal_data_t *input, gal_data_t *value,
                                  int inplace);
 
+gal_data_t *
+gal_statistics_unique(gal_data_t *input, int inplace);
+
 
 
 
@@ -160,6 +163,9 @@ gal_statistics_histogram(gal_data_t *data, gal_data_t *bins,
                          int normalize, int maxhistone);
 
 gal_data_t *
+gal_statistics_histogram2d(gal_data_t *input, gal_data_t *bins);
+
+gal_data_t *
 gal_statistics_cfp(gal_data_t *data, gal_data_t *bins, int normalize);
 
 
@@ -174,9 +180,10 @@ gal_statistics_sigma_clip(gal_data_t *input, float multip, float param,
                           int inplace, int quiet);
 
 gal_data_t *
-gal_statistics_outlier_positive(gal_data_t *input, size_t window_size,
-                                float sigma, float sigclip_multip,
-                                float sigclip_param, int inplace, int quiet);
+gal_statistics_outlier_bydistance(int pos1_neg0, gal_data_t *input,
+                                  size_t window_size, float sigma,
+                                  float sigclip_multip, float sigclip_param,
+                                  int inplace, int quiet);
 
 gal_data_t *
 gal_statistics_outlier_flat_cfp(gal_data_t *input, size_t numprev,

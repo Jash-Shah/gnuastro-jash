@@ -9,7 +9,7 @@
 # To help readability, please add new files based on the length of the line
 # you wish to add.
 #
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -85,6 +85,7 @@ stamp-h1
 Makefile
 asttable
 astmatch
+astquery
 ltmain.sh
 .dirstamp
 configure
@@ -99,10 +100,14 @@ astmknoise
 config.sub
 install-sh
 aclocal.m4
+confdefs.h
+conftest.c
+.bootstrap*
 astconvertt
 astconvolve
 test-driver
 config.h.in
+conftest.err
 lib/config.h
 astcosmiccal
 astmkcatalog
@@ -160,3 +165,6 @@ bin/buildprog/astbuildprog.conf
 # directory, we have abandoned the convention above.
 
 /bootstrapped/build-aux
+
+# vscode
+.vscode/

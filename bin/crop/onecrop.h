@@ -5,7 +5,7 @@ Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -60,12 +60,9 @@ struct onecropparams
 };
 
 void
-onecrop_parse_polygon(struct cropparams *p);
-
-void
 onecrop_name(struct onecropparams *crp);
 
-void
+int
 onecrop(struct onecropparams *crp);
 
 int

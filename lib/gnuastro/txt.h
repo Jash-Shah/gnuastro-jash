@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -27,6 +27,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
    must be included before the C++ preparations below */
 
 #include <gnuastro/list.h>
+#include <gnuastro/fits.h>
 
 
 
@@ -78,6 +79,9 @@ enum gal_txt_line_status_enums
 int
 gal_txt_line_stat(char *line);
 
+char *
+gal_txt_trim_space(char *str);
+
 gal_data_t *
 gal_txt_table_info(char *filename, gal_list_str_t *lines, size_t *numcols,
                    size_t *numrows);
@@ -99,7 +103,8 @@ gal_list_str_t *
 gal_txt_stdin_read(long timeout_microsec);
 
 void
-gal_txt_write(gal_data_t *input, gal_list_str_t *comment, char *filename,
+gal_txt_write(gal_data_t *input, struct gal_fits_list_key_t **keylist,
+              gal_list_str_t *comment, char *filename,
               uint8_t colinfoinstdout);
 
 

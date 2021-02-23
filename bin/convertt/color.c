@@ -5,7 +5,7 @@ ConvertType is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -109,7 +109,7 @@ color_from_mono_hsv(struct converttparams *p)
                    channel->dsize, channel->wcs, 0, p->cp.minmapsize,
                    p->cp.quietmmap, "BLUE", NULL, "Blue color channel.");
 
-  /* Start the conversion. Note that the "Choroma" (`C') is fixed by our
+  /* Start the conversion. Note that the "Choroma" ('C') is fixed by our
      definition. */
   r=R->array;
   g=G->array;
@@ -195,7 +195,7 @@ color_from_mono_sls(struct converttparams *p)
                    channel->dsize, channel->wcs, 0, p->cp.minmapsize,
                    p->cp.quietmmap, "BLUE", NULL, "Blue color channel.");
 
-  /* Start the conversion. Note that the "Choroma" (`C') is fixed by our
+  /* Start the conversion. Note that the "Choroma" ('C') is fixed by our
      definition. */
   r=R->array;
   g=G->array;
@@ -206,7 +206,9 @@ color_from_mono_sls(struct converttparams *p)
       if(isnan(*f))
         *r=*g=*b=0.0;
       else
-        switch( (int)((*f-min)/(max-min)*200) )
+        switch( p->colormap->status==COLOR_SLS
+                ? (int)((*f-min)/(max-min)*200)
+                : 200 - (int)((*f-min)/(max-min)*200) )
           {
           case 0:   *r=0.000000; *g=0.000000; *b=0.000000; break;
           case 1:   *r=0.043442; *g=0.000000; *b=0.052883; break;
@@ -463,7 +465,7 @@ color_from_mono_viridis(struct converttparams *p)
                    channel->dsize, channel->wcs, 0, p->cp.minmapsize,
                    p->cp.quietmmap, "BLUE", NULL, "Blue color channel.");
 
-  /* Start the conversion. Note that the "Choroma" (`C') is fixed by our
+  /* Start the conversion. Note that the "Choroma" ('C') is fixed by our
      definition. */
   r=R->array;
   g=G->array;
@@ -764,9 +766,10 @@ color_map_prepare(struct converttparams *p)
   switch(p->colormap->status)
     {
     case COLOR_HSV:          color_from_mono_hsv(p); break;
-    case COLOR_SLS:          color_from_mono_sls(p); break;
     case COLOR_VIRIDIS:      color_from_mono_viridis(p); break;
     case COLOR_GRAY:         convertt_scale_to_uchar(p); break;
+    case COLOR_SLS:
+    case COLOR_SLS_INVERSE:  color_from_mono_sls(p); break;
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
             "the problem. The value %d is not a recognized color-space "
@@ -869,12 +872,12 @@ color_rgb_to_hsv(struct converttparams *p)
               if( *h<0.0 ) *h += 360.0;
             }
           else
-            /* When `max==0', then *r=*g=*b=0, so s=h=0. */
+            /* When 'max==0', then *r=*g=*b=0, so s=h=0. */
             *s=*h=0.0;
         }
       else
         /* When there is no difference, then its actually a grayscale
-           dataset, so `*v' is the only parameter that matters. */
+           dataset, so '*v' is the only parameter that matters. */
         *s=*h=0.0;
 
 

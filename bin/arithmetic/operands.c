@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/tiff.h>
 #include <gnuastro/array.h>
 #include <gnuastro-internal/checkset.h>
+#include <gnuastro-internal/arithmetic-set.h>
 
 #include "main.h"
 
@@ -76,197 +77,12 @@ operands_num(struct arithmeticparams *p)
 
 
 /**********************************************************************/
-/************                Named operands             ***************/
-/**********************************************************************/
-static int
-operands_name_is_used_later(struct arithmeticparams *p, char *name)
-{
-  size_t counter=0;
-  gal_list_str_t *token;
-
-  /* If the name indeed exists afterwards, then just return 1. */
-  for(token=p->tokens;token!=NULL;token=token->next)
-    if( counter++ > p->tokencounter && !strcmp(token->v, name) )
-      return 1;
-
-  /* If we get to this point, it means that the name doesn't exist. */
-  return 0;
-}
-
-
-
-
-
-/* Remove a name from the list of names and return the dataset it points
-   to. */
-static gal_data_t *
-operands_remove_name(struct arithmeticparams *p, char *name)
-{
-  gal_data_t *tmp, *removed=NULL, *prev=NULL;
-
-  /* Go over all the given names. */
-  for(tmp=p->named;tmp!=NULL;tmp=tmp->next)
-    {
-      if( !strcmp(tmp->name, name) )
-        {
-          removed=tmp;
-          if(prev) prev->next = tmp->next;
-          else     p->named   = tmp->next;
-        }
-
-      /* Set this node as the `prev' pointer. */
-      prev=tmp;
-    }
-
-  /* A small sanity check. */
-  if(removed==NULL)
-    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
-          "problem. `removed' must not be NULL at this point", __func__,
-          PACKAGE_BUGREPORT);
-
-  /* Nothing in the list points to it now. So we can safely modify and
-     return it. */
-  free(removed->name);
-  removed->next=NULL;
-  removed->name=NULL;
-  return removed;
-}
-
-
-
-
-
-/* Pop a dataset and keep it in the `named' list for later use. */
-void
-operands_set_name(struct arithmeticparams *p, char *token)
-{
-  gal_data_t *tmp, *tofree;
-  char *varname=&token[ OPERATOR_PREFIX_LENGTH_SET ];
-
-  /* If a dataset with this name already exists, it will be removed/deleted
-     so we can use the name for the newly designated dataset. */
-  for(tmp=p->named; tmp!=NULL; tmp=tmp->next)
-    if( !strcmp(varname, tmp->name) )
-      {
-        tofree=operands_remove_name(p, varname);
-        gal_data_free(tofree);
-
-        /* IMPORTANT: we MUST break here! `tmp' does't point to the right
-           place any more. We can define a `prev' node and modify it on
-           every attempt, but since there is only one dataset with a given
-           name, that is redundant and will just make the program slow. */
-        break;
-      }
-
-  /* Pop the top operand, then add it to the list of named datasets, but
-     only if it is used in later tokens. If it isn't, free the popped
-     dataset. The latter case (to define a name, but not use it), is
-     obviously a redundant operation, but that is upto the user, we
-     shouldn't worry about it here. We should just have everything in
-     place, so no crashes occur or no extra memory is consumed. */
-  if( operands_name_is_used_later(p, varname) )
-    {
-      /* Add the top popped operand to the list of names. */
-      gal_list_data_add(&p->named, operands_pop(p, "set"));
-
-      /* Write the requested name into this dataset. But note that `name'
-         MUST be already empty. So to be safe, we'll do a sanity check. */
-      if(p->named->name)
-        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-              "the problem. The `name' element should be NULL at this "
-              "point, but it isn't", __func__, PACKAGE_BUGREPORT);
-      gal_checkset_allocate_copy(varname, &p->named->name);
-    }
-  else
-    {
-      /* Pop the top operand, then free it. */
-      tmp=operands_pop(p, "set");
-      gal_data_free(tmp);
-    }
-}
-
-
-
-
-
-/* See if a given token is the name of a variable. */
-int
-operands_is_name(struct arithmeticparams *p, char *token)
-{
-  gal_data_t *tmp;
-
-  /* Make sure the variable name hasn't been set before. */
-  for(tmp=p->named; tmp!=NULL; tmp=tmp->next)
-    if( !strcmp(token, tmp->name) )
-      return 1;
-
-  /* If control reaches here, then there was no match*/
-  return 0;
-}
-
-
-
-
-
-/* Return a copy of the named dataset. */
-static gal_data_t *
-operands_copy_named(struct arithmeticparams *p, char *name)
-{
-  gal_data_t *out=NULL, *tmp;
-
-  /* Find the proper named element to use. */
-  for(tmp=p->named;tmp!=NULL;tmp=tmp->next)
-    if( !strcmp(tmp->name, name) )
-      {
-        /* If the named operand is used later, then copy it into the
-           output. */
-        if( operands_name_is_used_later(p, name) )
-          {
-            out=gal_data_copy(tmp);
-            free(out->name);
-            out->name=NULL;
-            out->next=NULL;
-          }
-        /* The named operand is not used any more. Remove it from the list
-           of named datasets and continue. */
-        else out=operands_remove_name(p, name);
-      }
-
-  /* A small sanity check. */
-  if(out==NULL)
-    error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix the "
-          "problem. The requested name `%s' couldn't be found in the list",
-          __func__, PACKAGE_BUGREPORT, name);
-
-  /* Return. */
-  return out;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**********************************************************************/
 /************      Adding to and popping from stack     ***************/
 /**********************************************************************/
 void
 operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
 {
+  int readwcs;
   size_t ndim, *dsize;
   struct operand *newnode;
 
@@ -279,15 +95,15 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
       errno=0;
       newnode=malloc(sizeof *newnode);
       if(newnode==NULL)
-        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `newnode'",
+        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'newnode'",
               __func__, sizeof *newnode);
 
-      /* If the `filename' is the name of a dataset, then use a copy of it.
+      /* If the 'filename' is the name of a dataset, then use a copy of it.
          otherwise, do the basic analysis. */
-      if( filename && operands_is_name(p, filename) )
+      if( filename && gal_arithmetic_set_is_name(p->setprm.named, filename) )
         {
           newnode->filename=NULL;
-          newnode->data=operands_copy_named(p, filename);
+          newnode->data=gal_arithmetic_set_copy_named(&p->setprm, filename);
         }
       else
         {
@@ -308,15 +124,33 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
 
               /* If no WCS is set yet, use the WCS of this image and remove
                  possibly extra dimensions if necessary. */
-              if(p->refdata.wcs==NULL)
+              readwcs = (p->wcsfile && !strcmp(p->wcsfile,"none")) ? 0 : 1;
+              if(readwcs && p->refdata.wcs==NULL)
                 {
-                  dsize=gal_fits_img_info_dim(filename, newnode->hdu, &ndim);
+                  /* If the HDU is an image, read its size. */
+                  dsize = ( gal_fits_hdu_format(filename,
+                                                newnode->hdu)==IMAGE_HDU
+                            ? gal_fits_img_info_dim(filename,
+                                                    newnode->hdu, &ndim)
+                            : NULL);
+
+                  /* Read the WCS. */
                   p->refdata.wcs=gal_wcs_read(filename, newnode->hdu, 0, 0,
                                               &p->refdata.nwcs);
-                  ndim=gal_dimension_remove_extra(ndim, dsize, p->refdata.wcs);
+
+                  /* Remove extra (length of 1) dimensions (if we had an
+                     image HDU). */
+                  if(dsize)
+                    {
+                      ndim=gal_dimension_remove_extra(ndim, dsize,
+                                                      p->refdata.wcs);
+                      free(dsize);
+                    }
+
+                  /* Let the user know that the WCS is read. */
                   if(p->refdata.wcs && !p->cp.quiet)
-                    printf(" - WCS: %s (hdu %s).\n", filename, newnode->hdu);
-                  free(dsize);
+                    printf(" - WCS: %s (hdu %s).\n", filename,
+                           newnode->hdu);
                 }
             }
           else newnode->hdu=NULL;
@@ -343,7 +177,7 @@ operands_pop(struct arithmeticparams *p, char *operator)
   /* If the operand linked list has finished, then give an error and
      exit. */
   if(operands==NULL)
-    error(EXIT_FAILURE, 0, "not enough operands for the \"%s\" operator",
+    error(EXIT_FAILURE, 0, "not enough operands for the '%s' operator",
           operator);
 
   /* Set the dataset. If filename is present then read the file
@@ -359,11 +193,14 @@ operands_pop(struct arithmeticparams *p, char *operator)
                                  p->cp.quietmmap);
       data->ndim=gal_dimension_remove_extra(data->ndim, data->dsize, NULL);
 
-      /* Arithmetic changes the contents of a dataset, so the existing name
-         (in the FITS `EXTNAME' keyword) should not be passed on beyond
-         this point. Also, in Arithmetic, the `name' element is used to
-         identify variables. */
-      if(data->name) { free(data->name); data->name=NULL; }
+      /* Arithmetic changes the contents of a dataset, so the old name and
+         metadata (in the FITS 'EXTNAME' keyword for example) must not be
+         used beyond this point. Furthermore, in Arithmetic, the 'name'
+         element is used to identify variables (with the 'set-'
+         operator). */
+      if(data->name)    { free(data->name);    data->name=NULL;    }
+      if(data->unit)    { free(data->unit);    data->unit=NULL;    }
+      if(data->comment) { free(data->comment); data->comment=NULL; }
 
       /* When the reference data structure's dimensionality is non-zero, it
          means that this is not the first image read. So, write its basic
@@ -405,4 +242,17 @@ operands_pop(struct arithmeticparams *p, char *operator)
   p->operands=operands->next;
   free(operands);
   return data;
+}
+
+
+
+
+/* Wrapper to use the 'operands_pop' function with the 'set-' operator. */
+gal_data_t *
+operands_pop_wrapper_set(void *in)
+{
+  struct gal_arithmetic_set_params *tprm
+    = (struct gal_arithmetic_set_params *)in;
+  struct arithmeticparams *p=(struct arithmeticparams *)tprm->params;
+  return operands_pop(p, "set");
 }

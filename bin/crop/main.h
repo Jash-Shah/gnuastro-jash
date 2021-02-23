@@ -5,7 +5,7 @@ Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -85,9 +85,10 @@ struct cropparams
   size_t               hendwcs;  /* Header keyword No. to end read WCS.   */
   int                     mode;  /* Image or WCS mode.                    */
   uint8_t       zeroisnotblank;  /* ==1: In float or double, keep 0.0.    */
+  uint8_t        primaryimghdu;  /* ==1: write in primary/0-th HDU.       */
   uint8_t              noblank;  /* ==1: no blank (out of image) pixels.  */
   char                 *suffix;  /* Ending of output file name.           */
-  gal_data_t    *incheckcenter;  /* Value given to `--checkcenter'.       */
+  gal_data_t    *incheckcenter;  /* Value given to '--checkcenter'.       */
   gal_data_t           *center;  /* Center position of crop.              */
   gal_data_t            *width;  /* Width of crop when defined by center. */
   char                *catname;  /* Name of input catalog.                */
@@ -95,8 +96,9 @@ struct cropparams
   char                *namecol;  /* Filename (without suffix) of crop col.*/
   gal_list_str_t     *coordcol;  /* Column in cat containing coordinates. */
   char                *section;  /* Section string.                       */
-  char                *polygon;  /* Input string of polygon vertices.     */
-  uint8_t           outpolygon;  /* ==1: Keep the inner polygon region.   */
+  gal_data_t          *polygon;  /* Input string of polygon vertices.     */
+  uint8_t           polygonout;  /* ==1: Keep the inner polygon region.   */
+  uint8_t          polygonsort;  /* Don't sort polygon vertices.          */
 
   /* Internal */
   size_t                 numin;  /* Number of input images.               */

@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -29,6 +29,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 
 #include <gnuastro/threads.h>
+#include <gnuastro/pointer.h>
 
 #include <nproc.h>         /* from Gnulib, in Gnuastro's source */
 
@@ -85,11 +86,11 @@ pthread_barrier_init(pthread_barrier_t *b, pthread_barrierattr_t *attr,
 
 /* Suspend the calling thread (tell it to wait), until the limiting number
    of barriers is reached by the other threads. When the number isn't
-   reached yet (process goes into the `else'), then we use the
-   `pthread_cond_wait' function, which will wait until a broadcast is
-   announced by another thread that succeeds the `if'. After the thread no
-   longer needs the condition variable, we increment `b->condfinished' so
-   `pthread_barrier_destroy' can know if it should wait (sleep) or
+   reached yet (process goes into the 'else'), then we use the
+   'pthread_cond_wait' function, which will wait until a broadcast is
+   announced by another thread that succeeds the 'if'. After the thread no
+   longer needs the condition variable, we increment 'b->condfinished' so
+   'pthread_barrier_destroy' can know if it should wait (sleep) or
    continue.*/
 int
 pthread_barrier_wait(pthread_barrier_t *b)
@@ -107,7 +108,7 @@ pthread_barrier_wait(pthread_barrier_t *b)
     {
       /* Initially b->count is smaller than b->limit, otherwise control
          would never have reached here. However, when it get to
-         `pthread_cond_wait', this thread goes into a suspended period and
+         'pthread_cond_wait', this thread goes into a suspended period and
          is only awaken when a broad-cast is made. But we only want this
          thread to finish when b->count >= b->limit, so we have this while
          loop. */
@@ -178,24 +179,26 @@ gal_threads_number()
 
 
 
-/* We have `numactions` jobs and we want their indexs to be divided
-   between `numthreads` CPU threads. This function will give each index to
+/* We have 'numactions' jobs and we want their indexs to be divided
+   between 'numthreads' CPU threads. This function will give each index to
    a thread such that the maximum difference between the number of
    images for each thread is 1. The results will be saved in a 2D
-   array of `outthrdcols` columns and each row will finish with a
+   array of 'outthrdcols' columns and each row will finish with a
    (size_t) -1, which is larger than any possible index!. */
-void
+char *
 gal_threads_dist_in_threads(size_t numactions, size_t numthreads,
+                            size_t minmapsize, int quietmmap,
                             size_t **outthrds, size_t *outthrdcols)
 {
   size_t *sp, *fp;
+  char *mmapname=NULL;
   size_t i, *thrds, thrdcols;
   *outthrdcols = thrdcols = numactions/numthreads+2;
 
-  errno=0;
-  thrds=*outthrds=malloc(numthreads*thrdcols*sizeof *thrds);
-  if(thrds==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating thrds", __func__);
+  /* Allocate the space to keep the identifiers. */
+  thrds=*outthrds=gal_pointer_allocate_ram_or_mmap(GAL_TYPE_SIZE_T,
+                              numthreads*thrdcols, 0, minmapsize, &mmapname,
+                              0, __func__, "thrds");
 
   /* Initialize all the elements to NONINDEX. */
   fp=(sp=thrds)+numthreads*thrdcols;
@@ -217,6 +220,9 @@ gal_threads_dist_in_threads(size_t numactions, size_t numthreads,
     }
   exit(0);
   */
+
+  /* Return the name of the possibly memory-mapped file. */
+  return mmapname;
 }
 
 
@@ -261,10 +267,10 @@ gal_threads_attr_barrier_init(pthread_attr_t *attr, pthread_barrier_t *b,
 /************     Run a function on multiple threads  **************/
 /*******************************************************************/
 /* Run a given function on the given tiles. The function has to be
-   link-able with your final executable and has to have only one `void *'
-   argument and return a `void *' value. To have access to
+   link-able with your final executable and has to have only one 'void *'
+   argument and return a 'void *' value. To have access to
    variables/parameters in the function, you have to define a structure and
-   pass its pointer as `caller_params'.
+   pass its pointer as 'caller_params'.
 
    Here is one simple example. At least two functions and one structure are
    necessary to use this function.
@@ -291,8 +297,8 @@ gal_threads_attr_barrier_init(pthread_attr_t *attr, pthread_barrier_t *b,
        {
 
            THE INDEX OF THE TARGET IS NOW AVAILABLE AS
-           `tprm->indexs[i]'. YOU CAN USE IT IN WHAT EVER MANNER YOU LIKE
-           ALONG WITH THE SET OF VARIABLES/ARRAYS in `prm'.
+           'tprm->indexs[i]'. YOU CAN USE IT IN WHAT EVER MANNER YOU LIKE
+           ALONG WITH THE SET OF VARIABLES/ARRAYS in 'prm'.
 
        }
 
@@ -328,10 +334,12 @@ gal_threads_attr_barrier_init(pthread_attr_t *attr, pthread_barrier_t *b,
 */
 void
 gal_threads_spin_off(void *(*worker)(void *), void *caller_params,
-                     size_t numactions, size_t numthreads)
+                     size_t numactions, size_t numthreads,
+                     size_t minmapsize, int quietmmap)
 {
   int err;
   pthread_t t;          /* All thread ids saved in this, not used. */
+  char *mmapname=NULL;
   pthread_attr_t attr;
   pthread_barrier_t b;
   struct gal_threads_params *prm;
@@ -342,7 +350,7 @@ gal_threads_spin_off(void *(*worker)(void *), void *caller_params,
 
   /* Sanity check. */
   if(numthreads==0)
-    error(EXIT_FAILURE, 0, "%s: the number of threads (`numthreads') "
+    error(EXIT_FAILURE, 0, "%s: the number of threads ('numthreads') "
           "cannot be zero", __func__);
 
   /* Allocate the array of parameters structure structures. */
@@ -356,12 +364,13 @@ gal_threads_spin_off(void *(*worker)(void *), void *caller_params,
     }
 
   /* Distribute the actions into the threads: */
-  gal_threads_dist_in_threads(numactions, numthreads, &indexs, &thrdcols);
+  mmapname=gal_threads_dist_in_threads(numactions, numthreads, minmapsize,
+                                       quietmmap, &indexs, &thrdcols);
 
   /* Do the job: when only one thread is necessary, there is no need to
      spin off one thread, just call the workerfunction directly (spinning
      off threads is expensive). This is for the generic thread spinner
-     function, not this simple function where `numthreads' is a
+     function, not this simple function where 'numthreads' is a
      constant. */
   if(numthreads==1)
     {
@@ -402,7 +411,13 @@ gal_threads_spin_off(void *(*worker)(void *), void *caller_params,
       pthread_barrier_destroy(&b);
     }
 
+  /* If 'mmapname' is NULL, then 'indexs' is in RAM and we can safely
+     'free' it. However, when its not NULL, then the space for 'indexs' has
+     been memory-mapped (its not in RAM) so special treatment is necessary
+     to delete it through the proper function. */
+  if(mmapname) gal_pointer_mmap_free(&mmapname, quietmmap);
+  else         free(indexs);
+
   /* Clean up. */
   free(prm);
-  free(indexs);
 }

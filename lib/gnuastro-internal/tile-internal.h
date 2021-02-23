@@ -6,7 +6,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2018-2019, Free Software Foundation, Inc.
+Copyright (C) 2018-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -28,13 +28,13 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
    must be included before the C++ preparations below */
 
 
-/* When we are within Gnuastro's building process, `IN_GNUASTRO_BUILD' is
+/* When we are within Gnuastro's building process, 'IN_GNUASTRO_BUILD' is
    defined. In the build process, installation information (in particular
-   `GAL_CONFIG_ARITH_CHAR' and the rest of the types that we needed in the
-   arithmetic function) is kept in `config.h'. When building a user's
-   programs, this information is kept in `gnuastro/config.h'. Note that all
-   `.c' files must start with the inclusion of `config.h' and that
-   `gnuastro/config.h' is only created at installation time (not present
+   'GAL_CONFIG_ARITH_CHAR' and the rest of the types that we needed in the
+   arithmetic function) is kept in 'config.h'. When building a user's
+   programs, this information is kept in 'gnuastro/config.h'. Note that all
+   '.c' files must start with the inclusion of 'config.h' and that
+   'gnuastro/config.h' is only created at installation time (not present
    during the building of Gnuastro).*/
 #ifndef IN_GNUASTRO_BUILD
 #include <gnuastro/config.h>
@@ -65,6 +65,14 @@ gal_tileinternal_no_outlier(gal_data_t *first, gal_data_t *second,
                             struct gal_tile_two_layer_params *tl,
                             double *outliersclip, float outliersigma,
                             char *filename);
+
+void
+gal_tileinternal_no_outlier_local(gal_data_t *input, gal_data_t *second,
+                                  gal_data_t *third,
+                                  struct gal_tile_two_layer_params *tl,
+                                  uint8_t metric, size_t numneighbors,
+                                  size_t numthreads, double *outliersclip,
+                                  double outliersigma, char *filename);
 
 __END_C_DECLS    /* From C++ preparations */
 

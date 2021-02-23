@@ -6,7 +6,7 @@
 ## Original author:
 ##     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
-## Copyright (C) 2015-2019, Free Software Foundation, Inc.
+## Copyright (C) 2015-2021, Free Software Foundation, Inc.
 ##
 ## GNU Astronomy Utilities is free software: you can redistribute it
 ## and/or modify it under the terms of the GNU General Public License
@@ -26,14 +26,20 @@
 ## Set the shell
 SHELL=/bin/sh
 
-BUILT_SOURCES = $(srcdir)/authors.texi
+
+# Built files that should be treated as sources for the main job.
+# imgrepresentative: This is just one of the images that is used in the
+# book as a representative for all of them because they are all built with
+# one script.
+imgrepresentative = $(top_srcdir)/doc/gnuastro-figures/done.txt
+BUILT_SOURCES = $(srcdir)/authors.texi $(imgrepresentative)
 
 
-## fdl.texi (The GNU Free documentation license in Texinfo format) is
-## bootstrapped from Gnulib. Therefore it is not in this
-## directory. However, it is needed by gnuastro.texi to build the
-## documentation. It is the job of AM_MAKEINFOFLAGS, to pass options to the
-## documentation build programs. BOOTSTRPDOC is defined in `configure.ac'.
+## gpl-3.0.texi (which is just the GPL in Texinfo format) is bootstrapped
+## from Gnulib. Therefore it is not in this directory. However, it is
+## needed by gnuastro.texi to build the documentation. It is the job of
+## AM_MAKEINFOFLAGS, to pass options to the documentation build
+## programs. BOOTSTRPDOC is defined in 'configure.ac'.
 bootstrpdoc = $(top_srcdir)/bootstrapped/doc
 AM_MAKEINFOFLAGS = -I $(bootstrpdoc) -I $(srcdir)
 
@@ -41,14 +47,14 @@ AM_MAKEINFOFLAGS = -I $(bootstrpdoc) -I $(srcdir)
 # This is just a temporary work-around since Automake does not pass the
 # AM_MAKEINFOFLAGS to texi2dvi (which builds DVI and PDF outputs). This was
 # reported in Automake's bug 23599. Note that a space is necessary between
-# the `-I' and directory for texi2dvi.
+# the '-I' and directory for texi2dvi.
 TEXI2DVI = texi2dvi -I $(bootstrpdoc) -I $(srcdir)
 
 
 ## Commands to make the texinfo tools.
 info_TEXINFOS = gnuastro.texi
-gnuastro_TEXINFOS = $(bootstrpdoc)/fdl.texi $(bootstrpdoc)/gpl-3.0.texi \
-                    $(srcdir)/authors.texi formath.texi
+gnuastro_TEXINFOS = fdl.texi formath.texi $(srcdir)/authors.texi \
+                    $(bootstrpdoc)/gpl-3.0.texi
 
 
 ## Files not predefined by Automake, and not in dependencies that must
@@ -56,14 +62,20 @@ gnuastro_TEXINFOS = $(bootstrpdoc)/fdl.texi $(bootstrpdoc)/gpl-3.0.texi \
 EXTRA_DIST = genauthors README
 
 
-## We want to build the authors.texi file only when we are building in the
-## version controlled source. For the non version controlled souce,
-## deleting this file is like somehow deleting formath.texi, it will not be
-## rebuilt and result in an error.
+## We want to build 'imgrepresentative' and 'authors.texi' only when we are
+## building in the version controlled source (in other words: when
+## 'configure' has been re-built). For the non version controlled souce,
+## deleting these files is like somehow deleting formath.texi (a core
+## file), it will not be rebuilt and result in an error.
 $(srcdir)/authors.texi: $(top_srcdir)/configure
 	$(top_srcdir)/doc/genauthors $(top_srcdir)
 
-## Images:
+## Build the images of the book (with one chosen as representative to act
+## as a target in Make).
+$(imgrepresentative):
+	cd $(top_srcdir)/doc/plotsrc; make
+
+## Images and their directories.
 infognuastrodir=$(infodir)/gnuastro-figures/
 dist_infognuastro_DATA = $(top_srcdir)/doc/gnuastro-figures/*
 
@@ -117,6 +129,9 @@ endif
 if COND_NOISECHISEL
   MAYBE_NOISECHISEL_MAN = man/astnoisechisel.1
 endif
+if COND_QUERY
+  MAYBE_QUERY_MAN = man/astquery.1
+endif
 if COND_SEGMENT
   MAYBE_SEGMENT_MAN = man/astsegment.1
 endif
@@ -132,12 +147,13 @@ endif
 #if COND_TEMPLATE
 #  MAYBE_TEMPLATE_MAN = man/astTEMPLATE.1
 #endif
-dist_man_MANS = $(MAYBE_ARITHMETIC_MAN) $(MAYBE_BUILDPROG_MAN)          \
-  $(MAYBE_CONVERTT_MAN) $(MAYBE_CONVOLVE_MAN) $(MAYBE_COSMICCAL_MAN)    \
-  $(MAYBE_CROP_MAN) $(MAYBE_FITS_MAN) $(MAYBE_MATCH_MAN)                \
-  $(MAYBE_MKCATALOG_MAN) $(MAYBE_MKNOISE_MAN) $(MAYBE_MKPROF_MAN)       \
-  $(MAYBE_NOISECHISEL_MAN) $(MAYBE_SEGMENT_MAN) $(MAYBE_STATISTICS_MAN) \
-  $(MAYBE_TABLE_MAN) $(MAYBE_WARP_MAN) man/astscript-sort-by-night.1
+dist_man_MANS = $(MAYBE_ARITHMETIC_MAN) $(MAYBE_BUILDPROG_MAN) \
+  $(MAYBE_CONVERTT_MAN) $(MAYBE_CONVOLVE_MAN) $(MAYBE_COSMICCAL_MAN) \
+  $(MAYBE_CROP_MAN) $(MAYBE_FITS_MAN) $(MAYBE_MATCH_MAN) \
+  $(MAYBE_MKCATALOG_MAN) $(MAYBE_MKNOISE_MAN) $(MAYBE_MKPROF_MAN) \
+  $(MAYBE_NOISECHISEL_MAN) $(MAYBE_QUERY_MAN) $(MAYBE_SEGMENT_MAN) \
+  $(MAYBE_STATISTICS_MAN) $(MAYBE_TABLE_MAN) $(MAYBE_WARP_MAN) \
+  man/astscript-sort-by-night.1
 
 
 ## See if help2man is present or not. When help2man doesn't exist, we don't
@@ -151,7 +167,7 @@ else
 endif
 
 
-# Build the `man' directory and then put all the man pages in
+# Build the 'man' directory and then put all the man pages in
 # it. Unfortunately as far as I know, pattern rules are not portable in all
 # implementations of Make, so we have to list all the utilities manually.
 toputildir=$(top_builddir)/bin
@@ -203,6 +219,10 @@ man/astmkprof.1: $(top_srcdir)/bin/mkprof/args.h  $(ALLMANSDEP)
 man/astnoisechisel.1: $(top_srcdir)/bin/noisechisel/args.h  $(ALLMANSDEP)
 	$(MAYBE_HELP2MAN) -n "detect signal in a noisy image"              \
 	                  --libtool $(toputildir)/noisechisel/astnoisechisel
+
+man/astquery.1: $(top_srcdir)/bin/query/args.h  $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "query remote data servers and download"      \
+	                  --libtool $(toputildir)/query/astquery
 
 man/astscript-sort-by-night.1: $(top_srcdir)/bin/script/sort-by-night.in   \
                                $(ALLMANSDEP)

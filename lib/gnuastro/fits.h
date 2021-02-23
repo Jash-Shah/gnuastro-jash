@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -23,12 +23,12 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __GAL_FITS_H__
 #define __GAL_FITS_H__
 
-/* When we are within Gnuastro's building process, `IN_GNUASTRO_BUILD' is
+/* When we are within Gnuastro's building process, 'IN_GNUASTRO_BUILD' is
    defined. In the build process, installation information (in particular
-   `GAL_CONFIG_HAVE_WCSLIB_VERION' that we need in `fits.c') is kept in
-   `config.h'. When building a user's programs, this information is kept in
-   `gnuastro/config.h'. Note that all `.c' files must start with the
-   inclusion of `config.h' and that `gnuastro/config.h' is only created at
+   'GAL_CONFIG_HAVE_WCSLIB_VERION' that we need in 'fits.c') is kept in
+   'config.h'. When building a user's programs, this information is kept in
+   'gnuastro/config.h'. Note that all '.c' files must start with the
+   inclusion of 'config.h' and that 'gnuastro/config.h' is only created at
    installation time (not present during the building of Gnuastro).*/
 #ifndef IN_GNUASTRO_BUILD
 #include <gnuastro/config.h>
@@ -47,7 +47,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/list.h>
 #include <gnuastro/data.h>
-#include <gnuastro/table.h>
+/* gnuastro/table.h is included below. */
 
 /* C++ Preparations */
 #undef __BEGIN_C_DECLS
@@ -77,16 +77,26 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 /* To create a linked list of headers. */
 typedef struct gal_fits_list_key_t
 {
+  char                      *title;   /* !=NULL, only print title. */
+  char                *fullcomment;   /* Fully COMMENT (no name).  */
+  char                    *keyname;   /* Keyword Name.             */
+  void                      *value;   /* Keyword value.            */
+  uint8_t                     type;   /* Keyword value type.       */
+  char                    *comment;   /* Keyword comment.          */
+  char                       *unit;   /* Keyword unit.             */
+  int                        tfree;   /* ==1, free title string.   */
+  int                       fcfree;   /* ==1, free full comment.   */
   int                        kfree;   /* ==1, free keyword name.   */
   int                        vfree;   /* ==1, free keyword value.  */
   int                        cfree;   /* ==1, free comment.        */
-  uint8_t                     type;   /* Keyword value type.       */
-  char                    *keyname;   /* Keyword Name.             */
-  void                      *value;   /* Keyword value.            */
-  char                    *comment;   /* Keyword comment.          */
-  char                       *unit;   /* Keyword unit.             */
+  int                        ufree;   /* ==1, free unit.           */
   struct gal_fits_list_key_t *next;   /* Pointer next keyword.     */
 } gal_fits_list_key_t;
+
+
+
+/* table.h needs 'gal_fits_list_key_t'. */
+#include <gnuastro/table.h>
 
 
 
@@ -146,8 +156,17 @@ gal_fits_open_to_write(char *filename);
 size_t
 gal_fits_hdu_num(char *filename);
 
+unsigned long
+gal_fits_hdu_datasum(char *filename, char *hdu);
+
+unsigned long
+gal_fits_hdu_datasum_ptr(fitsfile *fptr);
+
 int
 gal_fits_hdu_format(char *filename, char *hdu);
+
+int
+gal_fits_hdu_is_healpix(fitsfile *fptr);
 
 fitsfile *
 gal_fits_hdu_open(char *filename, char *hdu, int iomode);
@@ -185,12 +204,28 @@ gal_fits_key_read(char *filename, char *hdu, gal_data_t *keysll,
 void
 gal_fits_key_list_add(gal_fits_list_key_t **list, uint8_t type,
                       char *keyname, int kfree, void *value, int vfree,
-                      char *comment, int cfree, char *unit);
+                      char *comment, int cfree, char *unit, int ufree);
 
 void
 gal_fits_key_list_add_end(gal_fits_list_key_t **list, uint8_t type,
                           char *keyname, int kfree, void *value, int vfree,
-                          char *comment, int cfree, char *unit);
+                          char *comment, int cfree, char *unit, int ufree);
+
+void
+gal_fits_key_list_title_add(gal_fits_list_key_t **list, char *title,
+                            int tfree);
+
+void
+gal_fits_key_list_title_add_end(gal_fits_list_key_t **list, char *title,
+                                int tfree);
+
+void
+gal_fits_key_list_fullcomment_add(gal_fits_list_key_t **list,
+                                  char *fullcomment, int fcfree);
+
+void
+gal_fits_key_list_fullcomment_add_end(gal_fits_list_key_t **list,
+                                      char *fullcomment, int fcfree);
 
 void
 gal_fits_key_list_reverse(gal_fits_list_key_t **list);
@@ -203,7 +238,8 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
                             gal_fits_list_key_t **list, int top1end0);
 
 void
-gal_fits_key_write_wcsstr(fitsfile *fptr, char *wcsstr, int nkeyrec);
+gal_fits_key_write_wcsstr(fitsfile *fptr, struct wcsprm *wcs,
+                          char *wcsstr, int nkeyrec);
 
 void
 gal_fits_key_write(gal_fits_list_key_t **keylist, char *title,
@@ -291,7 +327,8 @@ gal_fits_tab_read(char *filename, char *hdu, size_t numrows,
 
 void
 gal_fits_tab_write(gal_data_t *cols, gal_list_str_t *comments,
-                   int tableformat, char *filename, char *extname);
+                   int tableformat, char *filename, char *extname,
+                   struct gal_fits_list_key_t **keywords);
 
 
 

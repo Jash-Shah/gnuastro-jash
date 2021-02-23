@@ -13,7 +13,7 @@
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
 #     Mosè Giordano <mose@gnu.org>
-# Copyright (C) 2016-2019, Free Software Foundation, Inc.
+# Copyright (C) 2016-2021, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -38,15 +38,15 @@ echo "Generating authors list for documentation."
 # directory and might be run from there)
 if [ -d $1/.git ]; then
 
-    # We will need to import the `.mailmap' file from the source directory
+    # We will need to import the '.mailmap' file from the source directory
     # temporarily to correct the changing emails (see the comments in
-    # `.mailmap'). Note that this script is run from within the `doc/'
-    # directory. The original `.mailmap' is in the `TOP_SRCDIR', so even
+    # '.mailmap'). Note that this script is run from within the 'doc/'
+    # directory. The original '.mailmap' is in the 'TOP_SRCDIR', so even
     # when the source and build directories are the same, there is no
     # problem.
     #
-    # But in case `.mailmap' already exists (for example the script is run
-    # in the top source directory not from the `doc' directory, or if a
+    # But in case '.mailmap' already exists (for example the script is run
+    # in the top source directory not from the 'doc' directory, or if a
     # symbolic link was already created), we won't do any copying.
     if [ -e .mailmap ]; then keepmailmap=1;
     else                     keepmailmap=0; ln -s $1/.mailmap .mailmap;
@@ -57,8 +57,12 @@ if [ -d $1/.git ]; then
     # (in particular "make -jN" with N > 1), so authors.texi needs to be
     # recreated anyway.
     git --git-dir=$1/.git shortlog --numbered --summary --email --no-merges \
-        | sed -e 's/</ /' -e 's/>/ /' -e 's/@/@@/' \
-              -e "s/è/@\`e/" -e "s/é/@\'e/" \
+        | sed -e 's/</ /' \
+              -e 's/>/ /' \
+              -e 's/@/@@/' \
+              -e "s/è/@\`e/" \
+              -e "s/é/@\'e/" \
+              -e "s/ç/@,{c}/" \
         | awk '{for(i=2;i<NF;++i) printf("%s ", $i); \
                 printf("(%s, %s)@*\n", $NF, $1)}' \
         > $1/doc/authors.texi

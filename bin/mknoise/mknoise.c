@@ -5,7 +5,7 @@ MakeNoise is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -35,6 +35,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_randist.h>     /* To make noise.        */
 
 #include <gnuastro-internal/timing.h>
+#include <gnuastro-internal/checkset.h>
 
 #include "main.h"
 
@@ -54,53 +55,66 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 void
 convertsaveoutput(struct mknoiseparams *p)
 {
-  char keyname1[FLEN_KEYWORD];
+  double tmp;
+  char *keyname;
   gal_fits_list_key_t *headers=NULL;
-  char keyname2[FLEN_KEYWORD], keyname3[FLEN_KEYWORD];
-  char keyname4[FLEN_KEYWORD], keyname5[FLEN_KEYWORD];
-
 
   /* Add the proper information to the header of the output: */
   gal_fits_key_write_filename("INF", p->inputname, &headers, 0);
-  if( !isnan(p->background_mag) )
+  if( !isnan(p->background) )
     {
-      strcpy(keyname1, "BCKGRND");
-      gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname1, 0,
-                                &p->background_mag, 0, "Background "
-                                "value (in magnitude) for noise.",
-                                0, NULL);
-      strcpy(keyname2, "BZRPNT");
-      gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname2, 0,
-                                &p->zeropoint, 0,
-                                "Zeropoint magnitude of image.", 0, NULL);
-      strcpy(keyname3, "INSTRU");
-      gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname3, 0,
-                                &p->instrumental, 0,
-                                "Instrumental noise in units of flux.",
-                                0, NULL);
+      gal_checkset_allocate_copy("BCKGRND", &keyname);
+      gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname, 1,
+                                &p->background, 0,
+                                "Background value for Poisson noise.",
+                                0, NULL, 0);
+      if( !isnan(p->zeropoint) )
+        {
+          tmp=-2.5 * log10(p->background) + p->zeropoint;
+          gal_checkset_allocate_copy("BCKGMAG", &keyname);
+          gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname, 1,
+                                    &tmp, 0,
+                                    "Background value in magnitudes",
+                                    0, NULL, 0);
+          gal_checkset_allocate_copy("BCKGZP", &keyname);
+          gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname, 1,
+                                    &p->zeropoint, 0,
+                                    "Zeropoint for interpreting magnitudes.",
+                                    0, NULL, 0);
+        }
+      if( !isnan(p->instrumental) )
+        {
+          gal_checkset_allocate_copy("INSTRU", &keyname);
+          gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname, 1,
+                                    &p->instrumental, 0,
+                                    "Instrumental noise in units of flux.",
+                                    0, NULL, 0);
+        }
     }
   else
     {
-      strcpy(keyname1, "SIGMA");
-      gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname1, 0,
-                                &p->sigma, 0, "Total noise sigma", 0, NULL);
+      gal_checkset_allocate_copy("SIGMA", &keyname);
+      gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname, 1,
+                                &p->sigma, 0, "Total noise sigma", 0,
+                                NULL, 0);
     }
-  strcpy(keyname4, "RNGTYPE");
-  gal_fits_key_list_add_end(&headers, GAL_TYPE_STRING, keyname4, 0,
+  gal_checkset_allocate_copy("RNGTYPE", &keyname);
+  gal_fits_key_list_add_end(&headers, GAL_TYPE_STRING, keyname, 1,
                             (void *)(p->rng_name), 0,
                             "Random number generator (by GSL) type.",
-                            0, NULL);
-  strcpy(keyname5, "RNGSEED");
-  gal_fits_key_list_add_end(&headers, GAL_TYPE_ULONG, keyname5, 0,
+                            0, NULL, 0);
+  gal_checkset_allocate_copy("RNGSEED", &keyname);
+  gal_fits_key_list_add_end(&headers, GAL_TYPE_ULONG, keyname, 1,
                             &p->rng_seed, 0,
                             "Random number generator (by GSL) seed.",
-                            0, NULL);
+                            0, NULL, 0);
 
-  /* Save the output: */
+  /* Save the output: first convert it to the desired type,  */
+  if(p->input->name) { free(p->input->name); p->input->name=NULL; }
   p->input=gal_data_copy_to_new_type_free(p->input, p->cp.type);
   p->input->name="NOISED";
   gal_fits_img_write(p->input, p->cp.output, headers, PROGRAM_NAME);
-  p->input->name=NULL;
+  p->input->name=NULL; /* because we didn't allocate it. */
 
   /* Write the configuration keywords. */
   gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
@@ -115,8 +129,10 @@ convertsaveoutput(struct mknoiseparams *p)
 void
 mknoise(struct mknoiseparams *p)
 {
-  double *d, *df, background=p->background;
-  double instpowtwo = p->instrumental*p->instrumental;
+  double *d, *df, back=p->background;
+  double inst = ( isnan(p->instrumental)
+                  ? 0.0f
+                  : p->instrumental*p->instrumental );
 
   /* Add the noise: */
   df=(d=p->input->array)+p->input->size;
@@ -129,9 +145,7 @@ mknoise(struct mknoiseparams *p)
   else
     {
       do
-        *d += ( background
-                + gsl_ran_gaussian(p->rng,
-                                   sqrt( instpowtwo + background + *d )) );
+        *d += back + gsl_ran_gaussian(p->rng, sqrt( inst + back + *d ));
       while(++d<df);
     }
 

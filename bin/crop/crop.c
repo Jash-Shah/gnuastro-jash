@@ -5,7 +5,7 @@ Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -31,6 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/fits.h>
 #include <gnuastro/threads.h>
+#include <gnuastro/pointer.h>
 
 #include <gnuastro-internal/timing.h>
 #include <gnuastro-internal/checkset.h>
@@ -115,7 +116,7 @@ crop_verbose_final(struct cropparams *p)
           case 3:
             /* When the center wasn't checked it has a value of -1, and
                when it was checked and the center was filled, it has a
-               value of 1. So if `array[i]==0', we know that the file was
+               value of 1. So if 'array[i]==0', we know that the file was
                removed. */
             for(i=0;i<p->numout;++i)
               {
@@ -184,7 +185,7 @@ crop_write_to_log(struct onecropparams *crp)
 
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-                "the problem. The value of %zu is not valid for `counter'",
+                "the problem. The value of %zu is not valid for 'counter'",
                 __func__, PACKAGE_BUGREPORT, counter);
         }
     }
@@ -225,7 +226,7 @@ crop_mode_img(void *inparam)
       onecrop(crp);
 
       /* If there was no overlap, then no FITS pointer is created, so
-         `numimg' should be set to zero. */
+         'numimg' should be set to zero. */
       if(crp->outfits==NULL) crp->numimg=0;
 
       /* Check the final output: */
@@ -312,10 +313,12 @@ crop_mode_wcs(void *inparam)
             if(crp->name==NULL) onecrop_name(crp);
 
             /* Increment the number of images used (necessary for the
-               header keywords that are written in `onecrop'). Then do the
-               crop. */
+               header keywords that are written in 'onecrop'). Then do the
+               crop. However, the previously WCS-based overlap can be
+               slightly different from the final overlap, so if we finally
+               don't find any overlap we'll decrement the 'numimg'. */
             ++crp->numimg;
-            onecrop(crp);
+            if( onecrop(crp)==0 ) --crp->numimg;
 
             /* Close the file. */
             status=0;
@@ -325,9 +328,9 @@ crop_mode_wcs(void *inparam)
       while ( ++(crp->in_ind) < p->numin );
 
 
-      /* Correct in_ind. The loop above went until `in_ind' is one more
+      /* Correct in_ind. The loop above went until 'in_ind' is one more
          than the index for the last input image (that is how it exited the
-         loop). But `crp->in_ind' is needed later, so correct it here. */
+         loop). But 'crp->in_ind' is needed later, so correct it here. */
       --crp->in_ind;
 
 
@@ -402,6 +405,7 @@ crop(struct cropparams *p)
   int err=0;
   char *tmp;
   pthread_t t; /* We don't use the thread id, so all are saved here. */
+  char *mmapname;
   pthread_attr_t attr;
   pthread_barrier_t b;
   struct onecropparams *crp;
@@ -420,14 +424,15 @@ crop(struct cropparams *p)
   errno=0;
   crp=malloc(nt*sizeof *crp);
   if(crp==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `crp'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'crp'",
           __func__, nt*sizeof *crp);
 
 
   /* Distribute the indexs into the threads (for clarity, this is needed
      even if we only have one object). */
-  gal_threads_dist_in_threads(p->catname ? p->numout : 1, nt,
-                              &indexs, &thrdcols);
+  mmapname=gal_threads_dist_in_threads(p->catname ? p->numout : 1, nt,
+                                       p->cp.minmapsize, p->cp.quietmmap,
+                                       &indexs, &thrdcols);
 
 
   /* Run the job, if there is only one thread, don't go through the
@@ -485,7 +490,8 @@ crop(struct cropparams *p)
     }
 
   /* Print the final verbose info, save log, and clean up: */
+  if(mmapname) gal_pointer_mmap_free(&mmapname, p->cp.quietmmap);
+  else         free(indexs);
   crop_verbose_final(p);
-  free(indexs);
   free(crp);
 }

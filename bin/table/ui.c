@@ -5,7 +5,7 @@ Table is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -70,8 +70,8 @@ doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" can be used to view the "
   "can be plain text (with white-space or comma as delimiters), FITS ascii, "
   "or FITS binary tables. The output columns can either be selected by "
   "number (counting from 1), name or using regular expressions. For regular "
-  "expressions, enclose the value to the `--column' (`-c') option in "
-  "slashes (`\\', as in `-c\\^mag\\'). To print the selected columns on the "
+  "expressions, enclose the value to the '--column' ('-c') option in "
+  "slashes ('\\', as in '-c\\^mag\\'). To print the selected columns on the "
   "command-line, don't specify an output file.\n"
   GAL_STRINGS_MORE_HELP_INFO
   /* After the list of options: */
@@ -162,18 +162,18 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct tableparams *p = state->input;
 
-  /* Pass `gal_options_common_params' into the child parser.  */
+  /* Pass 'gal_options_common_params' into the child parser.  */
   state->child_inputs[0] = &p->cp;
 
   /* In case the user incorrectly uses the equal sign (for example
-     with a short format or with space in the long format, then `arg`
+     with a short format or with space in the long format, then 'arg'
      start with (if the short version was called) or be (if the long
      version was called with a space) the equal sign. So, here we
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign (`=`). For short "
-               "options, `=` should not be used and for long options, "
+    argp_error(state, "incorrect use of the equal sign ('='). For short "
+               "options, '=' should not be used and for long options, "
                "there should be no space between the option, equal sign "
                "and value");
 
@@ -221,7 +221,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /***************       Sanity Check         *******************/
 /**************************************************************/
 /* Read and check ONLY the options. When arguments are involved, do the
-   check in `ui_check_options_and_arguments'. */
+   check in 'ui_check_options_and_arguments'. */
 static void
 ui_read_check_only_options(struct tableparams *p)
 {
@@ -232,28 +232,63 @@ ui_read_check_only_options(struct tableparams *p)
      the output. */
   gal_tableintern_check_fits_format(p->cp.output, p->cp.tableformat);
 
-  /* Some checks on `--range'. */
+  /* Some checks on '--range'. */
   if(p->range)
     for(tmp=p->range;tmp!=NULL;tmp=tmp->next)
       {
         /* Range needs two input numbers. */
         if(tmp->size!=2)
-          error(EXIT_FAILURE, 0, "two values (separated by `:' or `,') are "
-                "necessary for `--range' in this format: "
-                "`--range=COLUMN,min:max'");
+          error(EXIT_FAILURE, 0, "two values (separated by ':' or ',') are "
+                "necessary for '--range' in this format: "
+                "'--range=COLUMN,min:max'");
 
         /* The first must be smaller than the second. */
         darr=tmp->array;
         if( darr[0] > darr[1] )
-          error(EXIT_FAILURE, 0, "first value (%g) given to `--range' must "
+          error(EXIT_FAILURE, 0, "first value (%g) given to '--range' must "
                 "be smaller than the second (%g)", darr[0], darr[1]);
       }
 
+  /* Basic checks for '--inpolygon' or '--outpolygon'. */
+  if(p->inpolygon || p->outpolygon)
+    {
+      if(p->inpolygon && p->outpolygon)
+        error(EXIT_FAILURE, 0, "'--inpolygon' and '--outpolygon' options "
+              "cannot be called together");
 
-  /* Make sure `--head' and `--tail' aren't given together. */
-  if(p->head!=GAL_BLANK_SIZE_T && p->tail!=GAL_BLANK_SIZE_T)
-    error(EXIT_FAILURE, 0, "`--head' and `--tail' options cannot be "
-          "called together");
+      if(p->inpolygon && p->inpolygon->size!=2)
+        error(EXIT_FAILURE, 0, "two columns (for coordinates) can "
+              "be given to '--inpolygon'");
+
+      if(p->outpolygon && p->outpolygon->size!=2)
+        error(EXIT_FAILURE, 0, "two columns (for coordinates) can "
+              "be given to '--outpolygon'");
+
+      if(p->polygon==NULL)
+        error(EXIT_FAILURE, 0, "no polygon specified for '--inpolygon' or "
+              "'--outpolygon'! Please provide the vertices of the desired "
+              "polygon with the '--polygon' option in this format: "
+              "v1x,v1y:v2x,v2y:v3x,v3y:...");
+    }
+
+  /* Make sure only one of the positional row selection operations is
+     called in this run.*/
+  if(p->rowlimit
+     && p->rowrandom
+     && p->head!=GAL_BLANK_SIZE_T
+     && p->tail!=GAL_BLANK_SIZE_T)
+    error(EXIT_FAILURE, 0, "only one of the following options can be "
+          "called in one run: '--head', '--tail', '--rowlimit' and "
+          "'--rowrandom'");
+
+  /* If '--colmetadata' is given, make sure none of the given options have
+     more than three values. */
+  if(p->colmetadata)
+    for(tmp=p->colmetadata;tmp!=NULL;tmp=tmp->next)
+      if(tmp->size>3)
+        error(EXIT_FAILURE, 0, "at most three values can be given to each "
+              "call of '--colmetadata' ('-m') after the original columns "
+              "name or number. But %zu strings have been given", tmp->size);
 }
 
 
@@ -269,8 +304,8 @@ ui_check_options_and_arguments(struct tableparams *p)
     {
       if( gal_fits_name_is_fits(p->filename) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified. When the input is a FITS "
-              "file, a HDU must also be specified, you can use the `--hdu' "
-              "(`-h') option and give it the HDU number (starting from "
+              "file, a HDU must also be specified, you can use the '--hdu' "
+              "('-h') option and give it the HDU number (starting from "
               "zero), extension name, or anything acceptable by CFITSIO");
 
     }
@@ -414,7 +449,7 @@ ui_outcols_last(struct column_pack *list)
 
 
 
-/* Allocate a clean `out_columns' structure and put it at the top of the
+/* Allocate a clean 'out_columns' structure and put it at the top of the
    list. */
 static struct column_pack *
 ui_outcols_add_new_to_end(struct column_pack **list)
@@ -430,8 +465,8 @@ ui_outcols_add_new_to_end(struct column_pack **list)
 
   /* Initialize its elements. */
   node->next=NULL;
+  node->arith=NULL;
   node->numsimple=0;
-  node->tokens=NULL;
   node->start=GAL_BLANK_SIZE_T;
 
   /* If the list already has elements, go to the last node in the list and
@@ -448,6 +483,22 @@ ui_outcols_add_new_to_end(struct column_pack **list)
   return node;
 }
 
+
+
+
+
+static void
+ui_outcols_free(struct column_pack *list)
+{
+  struct column_pack *tmp;
+  while(list!=NULL)
+    {
+      arithmetic_token_free(list->arith);
+      tmp=list->next;
+      free(list);
+      list=tmp;
+    }
+}
 
 
 
@@ -525,8 +576,8 @@ ui_print_info_exit(struct tableparams *p)
 static void
 ui_columns_prepare(struct tableparams *p)
 {
-  char **strarr;
   gal_data_t *strs;
+  char *c, **strarr;
   size_t i, totcalled=0;
   struct column_pack *node, *last;
   gal_list_str_t *tmp, *toread=NULL;
@@ -535,8 +586,16 @@ ui_columns_prepare(struct tableparams *p)
      one value separated by a comma. */
   for(tmp=p->columns;tmp!=NULL;tmp=tmp->next)
     {
+      /* Remove any possibly commented new-line where we have a backslash
+         followed by a new-line character (replace the two characters with
+         two single space characters). This can happen with the 'arith'
+         argument in a script, when it gets long (bug #58371). But to be
+         general in other cases too, we'll just correct it here. */
+      for(c=tmp->v;*c!='\0';++c)
+        if(*c=='\\' && *(c+1)=='\n') { *c=' '; *(++c)=' '; }
+
       /* Read the different comma-separated strings into an array (within a
-         `gal_data_t'). */
+         'gal_data_t'). */
       strs=gal_options_parse_csv_strings_raw(tmp->v, NULL, 0);
       strarr=strs->array;
 
@@ -550,8 +609,8 @@ ui_columns_prepare(struct tableparams *p)
               /* If this is the first arithmetic operation and the user has
                  already asked for some columns, we'll need to put all
                  previously requested simply-printed columns into an
-                 `outcols' structure, then add this arithmetic operation's
-                 `outcols'. */
+                 'outcols' structure, then add this arithmetic operation's
+                 'outcols'. */
               if(p->outcols==NULL && toread)
                 {
                   /* Allocate an empty structure and set the necessary
@@ -565,7 +624,7 @@ ui_columns_prepare(struct tableparams *p)
               /* Add a new column pack, then read all the tokens (while
                  specifying which columns it needs). */
               node=ui_outcols_add_new_to_end(&p->outcols);
-              arithmetic_init(p, &node->tokens, &toread, &totcalled,
+              arithmetic_init(p, &node->arith, &toread, &totcalled,
                               strarr[i]+ARITHMETIC_CALL_LENGTH);
               free(strarr[i]);
             }
@@ -581,7 +640,7 @@ ui_columns_prepare(struct tableparams *p)
                   /* If the previous column package was an arithmetic
                      operation, allocate a new node. */
                   last=ui_outcols_last(p->outcols);
-                  if(last->tokens)
+                  if(last->arith)
                     {
                       node=ui_outcols_add_new_to_end(&p->outcols);
                       node->start=totcalled;
@@ -616,30 +675,31 @@ ui_columns_prepare(struct tableparams *p)
       struct column_pack *tmp;
       struct arithmetic_token *atmp;
       for(tmp=p->outcols;tmp!=NULL;tmp=tmp->next)
-        {
-          if(tmp->tokens)
-            for(atmp=tmp->tokens;atmp!=NULL;atmp=atmp->next)
+        if(tmp->arith)
+          {
+            printf("Arithmetic: \n");
+            for(atmp=tmp->arith;atmp!=NULL;atmp=atmp->next)
               {
-                printf("Arithmetic: ");
-                if(atmp->constant) printf("Constant number\n");
-                else if(atmp->index) printf("Called column: %zu\n",
-                                            atmp->index);
-                else if(atmp->operator!=ARITHMETIC_TABLE_OP_INVALID)
-                  printf("Operator: %d\n", atmp->operator);
-                else
-                  error(EXIT_FAILURE, 0, "%s: UNKNOWN SITUATION!",
-                        __func__);
+                if(atmp->operator!=GAL_ARITHMETIC_OP_INVALID)
+                  {
+                    printf("\tOperator: %d\n", atmp->operator);
+                    if(atmp->name_def)
+                      printf("\t\t(Name definition: %s)\n", atmp->name_def);
+                  }
+                else if(atmp->constant) printf("\tConstant number\n");
+                else if(atmp->name_use) printf("\tName usage: %s\n",
+                                               atmp->name_use);
+                else printf("\tCalled column: %zu\n", atmp->index);
               }
-          else
-            printf("Simple: start: %zu, num: %zu\n", tmp->start,
-                   tmp->numsimple);
-        }
+          }
+        else
+          printf("Simple: start: %zu, num: %zu\n", tmp->start,
+                 tmp->numsimple);
     }
   */
 
-
-  /* Delete the old list, then reverse the `toread' list, and put it into
-     `p->columns'. */
+  /* Delete the old list, then reverse the 'toread' list, and put it into
+     'p->columns'. */
   gal_list_str_free(p->columns, 1);
   gal_list_str_reverse(&toread);
   p->columns=toread;
@@ -649,7 +709,7 @@ ui_columns_prepare(struct tableparams *p)
 
 
 
-/* The users give column numbers counting from 1. But we need an `index'
+/* The users give column numbers counting from 1. But we need an 'index'
    (starting from 0). So if we can read it as a number, we'll subtract one
    from it. */
 static size_t
@@ -676,24 +736,52 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
                             size_t *sortindout, size_t **selectindout_out,
                             size_t **selecttypeout_out)
 {
-  gal_data_t *dtmp, *allcols;
-  size_t sortind=GAL_BLANK_SIZE_T;
+  char **strarr;
   gal_list_sizet_t *tmp, *indexll;
   gal_list_str_t *stmp, *add=NULL;
   int tableformat, selecthasname=0;
+  size_t one=1, sortind=GAL_BLANK_SIZE_T;
   size_t *selectind=NULL, *selecttype=NULL;
   size_t *selectindout=NULL, *selecttypeout=NULL;
   size_t i, j, k, *s, *sf, allncols, numcols, numrows;
+  gal_data_t *dtmp, *allcols, *inpolytmp=NULL, *outpolytmp=NULL;
 
-  /* Important note: these have to be in the same order as the `enum
-     select_types' in `main.h'. */
-  gal_data_t *select[SELECT_TYPE_NUMBER]={p->range, p->equal, p->notequal};
+  /* Important note: these have to be in the same order as the 'enum
+     select_types' in 'main.h'. We'll fill the two polygon elements
+     later. */
+  gal_data_t *select[SELECT_TYPE_NUMBER]={p->range, NULL, NULL,
+                                          p->equal, p->notequal};
+
+
+  /* The inpolygon dataset is currently a single dataset with two elements
+     (strings). But we need to have it as two linked datasets with a set
+     name. */
+  if(p->inpolygon)
+    {
+      strarr=p->inpolygon->array;
+      inpolytmp=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL, 1, -1, 1,
+                               strarr[0], NULL, NULL);
+      inpolytmp->next=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL,
+                                     1, -1, 1, strarr[1], NULL, NULL);
+      select[SELECT_TYPE_INPOLYGON]=inpolytmp;
+    }
+  if(p->outpolygon)
+    {
+      strarr=p->outpolygon->array;
+      outpolytmp=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL, 1, -1, 1,
+                               strarr[0], NULL, NULL);
+      outpolytmp->next=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL,
+                                     1, -1, 1, strarr[1], NULL, NULL);
+      select[SELECT_TYPE_OUTPOLYGON]=outpolytmp;
+    }
 
 
   /* Allocate necessary spaces. */
   if(p->selection)
     {
       *nselect = ( gal_list_data_number(p->range)
+                   + gal_list_data_number(inpolytmp)
+                   + gal_list_data_number(outpolytmp)
                    + gal_list_data_number(p->equal)
                    + gal_list_data_number(p->notequal) );
       selectind=gal_pointer_allocate(GAL_TYPE_SIZE_T, *nselect, 0,
@@ -712,7 +800,7 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
 
   /* See if the given columns are numbers or names. */
   i=0;
-  if(p->sort)  sortind  = ui_check_select_sort_read_col_ind(p->sort);
+  if(p->sort) sortind=ui_check_select_sort_read_col_ind(p->sort);
   if(p->selection)
     for(k=0;k<SELECT_TYPE_NUMBER;++k)
       for(dtmp=select[k];dtmp!=NULL;dtmp=dtmp->next)
@@ -733,14 +821,15 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
      zero. */
   if(p->sort && sortind!=GAL_BLANK_SIZE_T && sortind>=numcols)
     error(EXIT_FAILURE, 0, "%s has %zu columns, less than the column "
-          "number given to  `--sort' (%s)",
+          "number given to  '--sort' (%s)",
           gal_fits_name_save_as_string(p->filename, p->cp.hdu), numcols,
           p->sort);
   if(p->selection)
     for(i=0;i<*nselect;++i)
       if(selectind[i]!=GAL_BLANK_SIZE_T && selectind[i]>=numcols)
         error(EXIT_FAILURE, 0, "%s has %zu columns, less than the column "
-              "number given to  `--range', `--equal', or `--sort' (%zu)",
+              "number given to  '--range', '--inpolygon', '--outpolygon', "
+              "'--equal', or '--sort' (%zu)",
               gal_fits_name_save_as_string(p->filename, p->cp.hdu), numcols,
               selectind[i]);
 
@@ -752,9 +841,9 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
       if(selectind[i]==GAL_BLANK_SIZE_T) { selecthasname=1; break; }
   if( (p->sort && sortind==GAL_BLANK_SIZE_T) || selecthasname )
     {
-      /* For `--sort', go over all the columns if an index hasn't been set
+      /* For '--sort', go over all the columns if an index hasn't been set
          yet. If the input columns have a name, see if their names matches
-         the name given to `sort'. */
+         the name given to 'sort'. */
       if(p->sort && sortind==GAL_BLANK_SIZE_T)
         for(i=0;i<numcols;++i)
           if( allcols[i].name && !strcasecmp(allcols[i].name, p->sort) )
@@ -763,7 +852,7 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
       /* Same for the selection. Just note that here we may have multiple
          calls. It is thus important to loop over the values given to range
          first, then loop over the column names from the start for each new
-         `--ran */
+         '--ran */
       i=0;
       for(k=0;k<SELECT_TYPE_NUMBER;++k)
         for(dtmp=select[k];dtmp!=NULL;dtmp=dtmp->next)
@@ -781,7 +870,7 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
   /* The columns must be good indexs now, if they don't the user didn't
      specify the name properly and the program must abort. */
   if( p->sort && sortind==GAL_BLANK_SIZE_T )
-    error(EXIT_FAILURE, 0, "%s: no column named `%s' (value to `--sort') "
+    error(EXIT_FAILURE, 0, "%s: no column named '%s' (value to '--sort') "
           "you can either specify a name or number",
           gal_fits_name_save_as_string(p->filename, p->cp.hdu), p->sort);
   if(p->selection)
@@ -791,8 +880,8 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
         for(dtmp=select[k];dtmp!=NULL;dtmp=dtmp->next)
           {
             if(selectind[i]==GAL_BLANK_SIZE_T)
-              error(EXIT_FAILURE, 0, "%s: no column named `%s' (value to "
-                    "`--%s') you can either specify a name or number",
+              error(EXIT_FAILURE, 0, "%s: no column named '%s' (value to "
+                    "'--%s') you can either specify a name or number",
                     gal_fits_name_save_as_string(p->filename, p->cp.hdu),
                     dtmp->name,
                     ( k==0?"range":( k==1?"equal":"notequal") ));
@@ -873,6 +962,8 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
   if(selectind) free(selectind);
   if(selecttype) free(selecttype);
   gal_data_array_free(allcols, numcols, 0);
+  if(inpolytmp) gal_list_data_free(inpolytmp);
+  if(outpolytmp) gal_list_data_free(outpolytmp);
 }
 
 
@@ -924,12 +1015,12 @@ ui_check_select_sort_after(struct tableparams *p, size_t nselect,
 
 
   /* Terminate the desired output table where it should be terminated (by
-     setting `origlast->next' to NULL. */
+     setting 'origlast->next' to NULL. */
   origlast->next=NULL;
 
 
-  /*  Also, remove any possibly existing `next' pointer for `sortcol' and
-     `selectcol'. */
+  /*  Also, remove any possibly existing 'next' pointer for 'sortcol' and
+     'selectcol'. */
   if(p->sort && sortindout>=origoutncols)
     { p->sortcol->next=NULL;  p->freesort=1; }
   else p->sortin=1;
@@ -956,7 +1047,8 @@ ui_check_select_sort_after(struct tableparams *p, size_t nselect,
 static void
 ui_preparations(struct tableparams *p)
 {
-  size_t *colmatch;
+  double *darr;
+  size_t i, *colmatch;
   gal_list_str_t *lines;
   size_t nselect=0, origoutncols=0;
   size_t sortindout=GAL_BLANK_SIZE_T;
@@ -973,18 +1065,20 @@ ui_preparations(struct tableparams *p)
   ui_columns_prepare(p);
 
 
-  /* If the input is from stdin, save it as `lines'. */
+  /* If the input is from stdin, save it as 'lines'. */
   lines=gal_options_check_stdin(p->filename, p->cp.stdintimeout, "input");
 
 
-  /* If any kind of row-selection is requested set `p->selection' to 1. */
-  p->selection = p->range || p->equal || p->notequal;
+  /* If any kind of row-selection is requested set 'p->selection' to 1. */
+  p->selection = ( p->range || p->inpolygon || p->outpolygon || p->equal
+                   || p->notequal );
+
 
   /* If row sorting or selection are requested, see if we should read any
      extra columns. */
   if(p->selection || p->sort)
-    ui_check_select_sort_before(p, lines, &nselect, &origoutncols, &sortindout,
-                                &selectindout, &selecttypeout);
+    ui_check_select_sort_before(p, lines, &nselect, &origoutncols,
+                                &sortindout, &selectindout, &selecttypeout);
 
 
   /* If we have any arithmetic operations, we need to make sure how many
@@ -1035,7 +1129,7 @@ ui_preparations(struct tableparams *p)
 
   /* If the head or tail values are given and are larger than the number of
      rows, just set them to the number of rows (print the all the final
-     rows). This is how the `head' and `tail' programs of GNU Coreutils
+     rows). This is how the 'head' and 'tail' programs of GNU Coreutils
      operate. */
   p->head = ( ((p->head!=GAL_BLANK_SIZE_T) && (p->head > p->table->size))
               ? p->table->size
@@ -1044,6 +1138,51 @@ ui_preparations(struct tableparams *p)
               ? p->table->size
               : p->tail );
 
+  /* If rows are given, do some sanity checks and make sure that they are
+     within the table's limits. */
+  if(p->rowlimit)
+    {
+      /* There should only be two values. */
+      if(p->rowlimit->size!=2)
+        error(EXIT_FAILURE, 0, "only two should be given to "
+              "'--rowlimit' (the top and bottom row numbers specifying "
+              "your desired range)");
+
+      /* Do individual checks. */
+      darr=p->rowlimit->array;
+      for(i=0;i<p->rowlimit->size;++i)
+        {
+          /* Make sure it isn't 0 or negative. */
+          if( darr[i]<=0 )
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') "
+                  "is smaller than, or equal to, zero! This option's "
+                  "values are row-counters (starting from 1), so they "
+                  "must be positive integers", darr[i]);
+
+          /* Make sure its an integer. */
+          if( darr[i] != (size_t)(darr[i]) )
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') is "
+                  "not an integer! This option's values are row-counters "
+                  "so they must be integers.", darr[i]);
+
+          /* Subtract 1 from the value, so it counts from 0. */
+          --darr[i];
+        }
+
+      /* Make sure that the first value is smaller than the second. */
+      if( darr[0] > darr[1] )
+        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) is "
+              "larger than the second (%g). This option's values defines "
+              "a row-counter interval, assuming the first value is the top "
+              "of the desired interval (smaller row counter) and the second "
+              "value is the bottom of the desired interval (larger row "
+              "counter)", darr[0], darr[1]);
+    }
+
+  /* If random rows are desired, we need to define a GSL random number
+     generator structure. */
+  if(p->rowrandom)
+    p->rng=gal_checkset_gsl_rng(p->envseed, &p->rng_name, &p->rng_seed);
 
   /* Clean up. */
   free(colmatch);
@@ -1079,9 +1218,9 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct tableparams *p)
   struct gal_options_common_params *cp=&p->cp;
 
 
-  /* Include the parameters necessary for argp from this program (`args.h')
-     and for the common options to all Gnuastro (`commonopts.h'). We want
-     to directly put the pointers to the fields in `p' and `cp', so we are
+  /* Include the parameters necessary for argp from this program ('args.h')
+     and for the common options to all Gnuastro ('commonopts.h'). We want
+     to directly put the pointers to the fields in 'p' and 'cp', so we are
      simply including the header here to not have to use long macros in
      those headers which make them hard to read and modify. This also helps
      in having a clean environment: everything in those headers is only
@@ -1123,6 +1262,19 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct tableparams *p)
 
   /* Read/allocate all the necessary starting arrays. */
   ui_preparations(p);
+
+  /* Let the user know basic information if necessary (for example when a
+     random number generator has been used). */
+  if(p->rng && !p->cp.quiet)
+    {
+      /* Write the information. */
+      printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s",
+             ctime(&p->rawtime));
+      printf("Parameters used for '--randomrows':\n");
+      printf("  - Random number generator name: %s\n", p->rng_name);
+      printf("  - Random number generator seed: %lu\n", p->rng_seed);
+      printf("(use '--quiet' to supress this starting message)\n");
+    }
 }
 
 
@@ -1153,6 +1305,12 @@ ui_free_report(struct tableparams *p)
   /* Free the allocated arrays: */
   free(p->cp.hdu);
   free(p->cp.output);
+  ui_outcols_free(p->outcols);
   gal_list_data_free(p->table);
+  gal_list_data_free(p->colmetadata);
   if(p->colarray) free(p->colarray);
+
+  /* If a random number generator was allocated, free it. */
+  if(p->rng) gsl_rng_free(p->rng);
+
 }

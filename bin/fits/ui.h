@@ -5,7 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -33,7 +33,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Option groups particular to this program. */
 enum program_args_groups
 {
-  UI_GROUP_EXTENSION = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_EXTENSION_INFORMATION = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_EXTENSION_MANIPULATION,
   UI_GROUP_KEYWORD,
 };
 
@@ -43,36 +44,41 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   b e f g i j l m x y z
-   A B E G J L O W X Y
+   b e f g i j m x y z
+   A B E G J L W X Y
  */
 enum option_keys_enum
 {
   /* With short-option version. */
-  UI_KEY_REMOVE       = 'R',
-  UI_KEY_COPY         = 'C',
-  UI_KEY_CUT          = 'k',
-  UI_KEY_NUMHDUS      = 'n',
-  UI_KEY_PRINTALLKEYS = 'p',
-  UI_KEY_ASIS         = 'a',
-  UI_KEY_DELETE       = 'd',
-  UI_KEY_RENAME       = 'r',
-  UI_KEY_UPDATE       = 'u',
-  UI_KEY_WRITE        = 'w',
-  UI_KEY_COMMENT      = 'c',
-  UI_KEY_HISTORY      = 'H',
-  UI_KEY_DATE         = 't',
-  UI_KEY_VERIFY       = 'v',
-  UI_KEY_QUITONERROR  = 'Q',
-  UI_KEY_DATETOSEC    = 's',
-
+  UI_KEY_REMOVE          = 'R',
+  UI_KEY_COPY            = 'C',
+  UI_KEY_CUT             = 'k',
+  UI_KEY_NUMHDUS         = 'n',
+  UI_KEY_PRINTALLKEYS    = 'p',
+  UI_KEY_ASIS            = 'a',
+  UI_KEY_KEYVALUE        = 'l',
+  UI_KEY_DELETE          = 'd',
+  UI_KEY_RENAME          = 'r',
+  UI_KEY_UPDATE          = 'u',
+  UI_KEY_WRITE           = 'w',
+  UI_KEY_COMMENT         = 'c',
+  UI_KEY_HISTORY         = 'H',
+  UI_KEY_DATE            = 't',
+  UI_KEY_VERIFY          = 'v',
+  UI_KEY_QUITONERROR     = 'Q',
+  UI_KEY_DATETOSEC       = 's',
+  UI_KEY_COLINFOINSTDOUT = 'O',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
   UI_KEY_TITLE        = 1000,
+  UI_KEY_DATASUM,
+  UI_KEY_PIXELSCALE,
+  UI_KEY_SKYCOVERAGE,
   UI_KEY_OUTHDU,
   UI_KEY_COPYKEYS,
   UI_KEY_PRIMARYIMGHDU,
+  UI_KEY_WCSDISTORTION,
 };
 
 

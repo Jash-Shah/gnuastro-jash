@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -84,7 +84,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* This is for operators like `&&' and `||', where the right operator is
+/* This is for operators like '&&' and '||', where the right operator is
    not necessarily read (and thus incremented). */
 #define BINARY_OP_INCR_OT_RT_LT_SET(OP, OT, LT, RT) {                   \
     LT *la=l->array;                                                    \
@@ -146,7 +146,7 @@ enum arithmetic_binary_outtype_flags
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to "   \
-            "address the problem. %d not recognized for `F'",           \
+            "address the problem. %d not recognized for 'F'",           \
             "BINARY_SET_OUT_INT", PACKAGE_BUGREPORT, F);                \
     }
 
@@ -172,7 +172,7 @@ enum arithmetic_binary_outtype_flags
       break;                                                            \
     default:                                                            \
       error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to "   \
-            "address the problem. %d not recognized for `F'",           \
+            "address the problem. %d not recognized for 'F'",           \
             "BINARY_SET_OUT", PACKAGE_BUGREPORT, F);                    \
     }
 

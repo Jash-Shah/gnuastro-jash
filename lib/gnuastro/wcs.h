@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -29,7 +29,10 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <wcslib/wcs.h>
 
 #include <gnuastro/data.h>
+#include <gnuastro/fits.h>
 
+/* Assumed floating point error in the WCS-related functionality. */
+#define GAL_WCS_FLTERROR 1e-12
 
 /* C++ Preparations */
 #undef __BEGIN_C_DECLS
@@ -53,6 +56,25 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 /*************************************************************
+ **************           Constants            ***************
+ *************************************************************/
+/* Macros to identify the type of distortion for conversions. */
+enum gal_wcs_distortions
+{
+  GAL_WCS_DISTORTION_INVALID,         /* Invalid (=0 by C standard).    */
+
+  GAL_WCS_DISTORTION_TPD,             /* The TPD polynomial distortion. */
+  GAL_WCS_DISTORTION_SIP,             /* The SIP polynomial distortion. */
+  GAL_WCS_DISTORTION_TPV,             /* The TPV polynomial distortion. */
+  GAL_WCS_DISTORTION_DSS,             /* The DSS polynomial distortion. */
+  GAL_WCS_DISTORTION_WAT,             /* The WAT polynomial distortion. */
+};
+
+
+
+
+
+/*************************************************************
  ***********               Read WCS                ***********
  *************************************************************/
 struct wcsprm *
@@ -62,6 +84,45 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
 struct wcsprm *
 gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
              size_t hendwcs, int *nwcs);
+
+struct wcsprm *
+gal_wcs_create(double *crpix, double *crval, double *cdelt,
+               double *pc, char **cunit, char **ctype, size_t ndim);
+
+char *
+gal_wcs_dimension_name(struct wcsprm *wcs, size_t dimension);
+
+
+
+/*************************************************************
+ ***********               Write WCS               ***********
+ *************************************************************/
+void
+gal_wcs_write(struct wcsprm *wcs, char *filename,
+              char *extname, gal_fits_list_key_t *headers,
+              char *program_string);
+
+void
+gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs);
+
+
+
+
+/*************************************************************
+ ***********              Distortions              ***********
+ *************************************************************/
+int
+gal_wcs_distortion_from_string(char *distortion);
+
+char *
+gal_wcs_distortion_to_string(int distortion);
+
+int
+gal_wcs_distortion_identify(struct wcsprm *wcs);
+
+struct wcsprm *
+gal_wcs_distortion_convert(struct wcsprm *inwcs,
+                           int out_distortion, size_t *fitsize);
 
 
 
@@ -83,6 +144,9 @@ double *
 gal_wcs_warp_matrix(struct wcsprm *wcs);
 
 void
+gal_wcs_clean_errors(struct wcsprm *wcs);
+
+void
 gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs);
 
 double
@@ -94,7 +158,10 @@ gal_wcs_pixel_scale(struct wcsprm *wcs);
 double
 gal_wcs_pixel_area_arcsec2(struct wcsprm *wcs);
 
-
+int
+gal_wcs_coverage(char *filename, char *hdu, size_t *ndim,
+                 double **center, double **width, double **min,
+                 double **max);
 
 
 

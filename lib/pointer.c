@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -38,16 +38,16 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 /* Increment a give pointer depending on the given type.
 
-   When working with the `array' elements of `gal_data_t', we are actually
-   dealing with `void *' pointers. Pointer arithmetic doesn't apply to
-   `void *', because the system doesn't know how much space each element
+   When working with the 'array' elements of 'gal_data_t', we are actually
+   dealing with 'void *' pointers. Pointer arithmetic doesn't apply to
+   'void *', because the system doesn't know how much space each element
    has to increment the pointer respectively.
 
    So, here, we will use the type information to find the increment. This
-   is mainly useful when dealing with the `block' pointer of a tile over a
-   larger image. This function reads the address as a `char *' type (note
-   that `char' is guaranteed to have a size of 1 (byte)). It then
-   increments the `char *' by `increment*sizeof(type)' */
+   is mainly useful when dealing with the 'block' pointer of a tile over a
+   larger image. This function reads the address as a 'char *' type (note
+   that 'char' is guaranteed to have a size of 1 (byte)). It then
+   increments the 'char *' by 'increment*sizeof(type)' */
 void *
 gal_pointer_increment(void *pointer, size_t increment, uint8_t type)
 {
@@ -60,7 +60,7 @@ gal_pointer_increment(void *pointer, size_t increment, uint8_t type)
 
 
 /* Find the number of values between two void pointers with a given
-   type. See the explanations before `gal_data_ptr_increment'. */
+   type. See the explanations before 'gal_data_ptr_increment'. */
 size_t
 gal_pointer_num_between(void *earlier, void *later, uint8_t type)
 {
@@ -73,7 +73,7 @@ gal_pointer_num_between(void *earlier, void *later, uint8_t type)
 
 
 /* Allocate an array based on the value of type. Note that the argument
-   `size' is the number of elements, necessary in the array, the number of
+   'size' is the number of elements, necessary in the array, the number of
    bytes each element needs will be determined internaly by this function
    using the datatype argument, so you don't have to worry about it. */
 void *
@@ -90,7 +90,7 @@ gal_pointer_allocate(uint8_t type, size_t size, int clear,
     {
       if(varname)
         error(EXIT_FAILURE, errno, "%s: %zu bytes couldn't be allocated "
-              "for variable `%s'", funcname ? funcname : __func__,
+              "for variable '%s'", funcname ? funcname : __func__,
               size * gal_type_sizeof(type), varname);
       else
         error(EXIT_FAILURE, errno, "%s: %zu bytes couldn't be allocated",
@@ -105,7 +105,7 @@ gal_pointer_allocate(uint8_t type, size_t size, int clear,
 
 
 void *
-gal_pointer_allocate_mmap(uint8_t type, size_t size, int clear,
+gal_pointer_mmap_allocate(uint8_t type, size_t size, int clear,
                           char **filename, int quietmmap)
 {
   void *out;
@@ -115,30 +115,24 @@ gal_pointer_allocate_mmap(uint8_t type, size_t size, int clear,
   size_t bsize=size*gal_type_sizeof(type);
 
 
-  /* Check if the .gnuastro folder exists, write the file there. If it
-     doesn't exist, then make the .gnuastro directory. If it can't be
-     built, we'll make a randomly named directory. */
-  gal_checkset_allocate_copy("./.gnuastro/", &dirname);
+  /* Check if the 'gnuastro_mmap' folder exists, write the file there. If
+     it doesn't exist, then make it. If it can't be built, we'll make a
+     randomly named file in the current directory. */
+  gal_checkset_allocate_copy("./gnuastro_mmap/", &dirname);
   if( gal_checkset_mkdir(dirname) )
     {
-      /* Free the old name. */
+      /* The directory couldn't be built. Free the old name. */
       free(dirname);
 
-      /* Try `.gnuastro_mmap' (to avoid making a separate directory for
-         each memory mapping if possible). */
-      gal_checkset_allocate_copy("./.gnuastro_mmap/", &dirname);
-      if( gal_checkset_mkdir(dirname) )
-        {
-          free(dirname);
-          dirname=NULL;
-        }
+      /* Set 'dirname' to NULL so it knows not to write in a directory. */
+      dirname=NULL;
     }
 
 
-  /* Set the filename. If `dirname' couldn't be allocated, directly make
+  /* Set the filename. If 'dirname' couldn't be allocated, directly make
      the memory map file in the current directory (just as a hidden
      file). */
-  if( asprintf(filename, "%smmap_XXXXXX", dirname?dirname:"./.gnuastro_")<0 )
+  if( asprintf(filename, "%sXXXXXX", dirname?dirname:"./gnuastro_mmap_")<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
   if(dirname) free(dirname);
 
@@ -161,14 +155,18 @@ gal_pointer_allocate_mmap(uint8_t type, size_t size, int clear,
 
   /* Inform the user. */
   if(!quietmmap)
-    error(EXIT_SUCCESS, 0, "%s: temporary %zu byte file (consider "
-          "`--minmapsize')", *filename, bsize);
+    error(EXIT_SUCCESS, 0, "%s: temporary memory-mapped file (%zu bytes) "
+          "created for intermediate data that is not stored in RAM (see "
+          "the \"Memory management\" section of Gnuastro's manual for "
+          "optimizing your project's memory management, and thus speed). "
+          "To disable this warning, please use the option '--quiet-mmap'",
+          *filename, bsize);
 
 
   /* Write to the newly set file position so the space is allocated. To do
-     this, we are simply writing `uc' (a byte with value 0) into the space
-     we identified by `lseek' (above). This will ensure that this space is
-     set a side for this array and prepare us to use `mmap'. */
+     this, we are simply writing 'uc' (a byte with value 0) into the space
+     we identified by 'lseek' (above). This will ensure that this space is
+     set a side for this array and prepare us to use 'mmap'. */
   if( write(filedes, &uc, 1) == -1)
     error(EXIT_FAILURE, errno, "%s: %s: unable to write one byte at the "
           "%zu-th position", __func__, *filename, bsize);
@@ -184,7 +182,7 @@ gal_pointer_allocate_mmap(uint8_t type, size_t size, int clear,
               "finite number of mmap allocations. It is recommended to use "
               "ordinary RAM allocation for smaller arrays and keep mmap'd "
               "allocation only for the large volumes.\n\n", __func__);
-      error(EXIT_FAILURE, errno, "couldn't map %zu bytes into the file `%s'",
+      error(EXIT_FAILURE, errno, "couldn't map %zu bytes into the file '%s'",
             bsize, *filename);
     }
 
@@ -200,5 +198,72 @@ gal_pointer_allocate_mmap(uint8_t type, size_t size, int clear,
 
 
   /* Return the mmap'd pointer and save the file name. */
+  return out;
+}
+
+
+
+
+
+void
+gal_pointer_mmap_free(char **mmapname, int quietmmap)
+{
+  /* Delete the file keeping the array. */
+  remove(*mmapname);
+
+  /* Inform the user. */
+  if(!quietmmap)
+    error(EXIT_SUCCESS, 0, "%s: deleted", *mmapname);
+
+  /* Free the file name space. */
+  free(*mmapname);
+
+  /* Set the name pointer to NULL since it has been freed. */
+  *mmapname=NULL;
+}
+
+
+
+
+
+void *
+gal_pointer_allocate_ram_or_mmap(uint8_t type, size_t size, int clear,
+                                 size_t minmapsize, char **mmapname,
+                                 int quietmmap, const char *funcname,
+                                 const char *varname)
+{
+  void *out;
+  size_t bytesize=gal_type_sizeof(type)*size;
+
+  /* See if the requested size is larger than 1MB (otherwise,
+     its not worth checking RAM, which involves reading a text
+     file, we won't try memory-mapping anyway). */
+
+  /* If it is decided to do memory-mapping, then do it. */
+  if( gal_checkset_need_mmap(bytesize, minmapsize, quietmmap) )
+    out=gal_pointer_mmap_allocate(type, size, clear, mmapname,
+                                  quietmmap);
+  else
+    {
+      /* Allocate the necessary space in the RAM. */
+      errno=0;
+      out = ( clear
+              ? calloc( size,  gal_type_sizeof(type) )
+              : malloc( size * gal_type_sizeof(type) ) );
+
+      /* If the array is NULL (there was no RAM left: on
+         systems other than Linux, 'malloc' will actually
+         return NULL, Linux doesn't do this unfortunately so we
+         need to read the available RAM). */
+      if(out==NULL)
+        out=gal_pointer_mmap_allocate(type, size, clear,
+                                      mmapname, quietmmap);
+
+      /* The 'errno' is re-set to zero just incase 'malloc'
+         changed it, which may cause problems later. */
+      errno=0;
+    }
+
+  /* Return the allocated dataset. */
   return out;
 }

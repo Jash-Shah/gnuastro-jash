@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -57,6 +57,13 @@ gsl_rng *
 gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
                      unsigned long int *seed);
 
+size_t
+gal_checkset_ram_available(int quietmmap);
+
+int
+gal_checkset_need_mmap(size_t bytesize, size_t minmapsize, int quietmmap);
+
+
 
 
 /**************************************************************/
@@ -97,6 +104,12 @@ gal_checkset_dir_part(char *filename);
 
 char *
 gal_checkset_not_dir_part(char *filename);
+
+char *
+gal_checkset_suffix_separate(char *name, char **suffix);
+
+char *
+gal_checkset_make_unique_suffix(char *reference, char *suffix);
 
 void
 gal_checkset_check_file(char *filename);

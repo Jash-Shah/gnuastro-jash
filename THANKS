@@ -1,14 +1,14 @@
 GNU Astronomy Utilities Acknowledgments
 =======================================
 
-Copyright (C) 2015-2019 Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 The following people and institutions who contributed to Gnuastro
 indirectly (not by actually submitting code) are listed here. For the list
 of Gnuastro code/documentation authors (people who have contributed actual
 code/text as commits in the version controlled history of Gnuastro), please
-see the `AUTHORS' file in the same directory.
+see the 'AUTHORS' file in the same directory.
 
 
 People
@@ -20,6 +20,7 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
 
     Valentina Abril-melgarejo            valentina.abril@lam.fr
     Marjan Akbari                        mrjakbari@gmail.com
+    Carlos Allende Prieto                callende@iac.es
     Hamed Altafi                         hamed.altafi2@gmail.com
     Roland Bacon                         roland.bacon@univ-lyon1.fr
     Roberto Baena Gallé                  rbaena@iac.es
@@ -27,9 +28,11 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Karl Berry                           karl@gnu.org
     Leindert Boogaard                    boogaard@strw.leidenuniv.nl
     Nicolas Bouché                       nicolas.bouche@irap.omp.eu
+    Stefan Brüns                         stefan.bruens@rwth-aachen.de
     Fernando Buitrago                    fbuitrago@oal.ul.pt
     Adrian Bunk                          bunk@debian.org
     Rosa Calvi                           rcalvi@iac.es
+    Mark Calabretta                      mcalabre@atnf.csiro.au
     Nushkia Chamba                       chamba@iac.es
     Benjamin Clement                     benjamin.clement@univ-lyon1.fr
     Nima Dehdilani                       nimadehdilani@gmail.com
@@ -37,7 +40,9 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Alexey Dokuchaev                     danfe@freebsd.org
     Pierre-Alain Duc                     pierre-alain.duc@astro.unistra.fr
     Elham Eftekhari                      elhamea@iac.es
+    Paul Eggert                          eggert@cs.ucla.edu
     Gaspar Galaz                         ggalaz@astro.puc.cl
+    Andrés García-Serra Romero           alu0101451923@ull.edu.es
     Thérèse Godefroy                     godef.th@free.fr
     Madusha Gunawardhana                 gunawardhana@strw.leidenuniv.nl
     Bruno Haible                         bruno@clisp.org
@@ -52,22 +57,36 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Mohammad-Reza Khellat                moha.khe@gmail.com
     Johan Knapen                         jhk@iac.es
     Geoffry Krouchi                      geoffrey.krouchi@etu.univ-lyon1.fr
+    Martin Kuemmel                       mkuemmel@usm.lmu.de
     Floriane Leclercq                    floriane.leclercq@univ-lyon1.fr
     Alan Lefor                           alefor@astr.tohoku.ac.jp
+    Javier Licandro                      jlicandr@iac.es
     Sebastián Luna Valero                sluna@iaa.es
+    Alberto Madrigal                     brt.madrigal@gmail.com
     Guillaume Mahler                     guillaume.mahler@univ-lyon1.fr
+    Alireza Molaeinezhad                 amolaei@gmail.com
+    Javier Moldon                        jmoldon@iaa.es
     Juan Molina Tobar                    juan.a.molina.t@gmail.com
     Francesco Montanari                  francesco.montanari@openmailbox.org
+    Raphael Morales                      rmorales@iaa.es
+    Carlos Morales Socorro               cmorsoc@gmail.com
+    Sylvain Mottet                       mottet@iap.fr
     Dmitrii Oparin                       doparin2@gmail.com
     Bertrand Pain                        bertrand.pain@inserm.fr
     William Pence                        william.pence@nasa.gov
     Mamta Pommier                        mamta.pommier@univ-lyon1.fr
+    Marcel Popescu                       mpopescu@iac.es
     Bob Proulx                           bob@proulx.com
+    Joseph Putko                         josephputko@gmail.com
+    Samane Raji                          samaneraji@gmail.com
+    Francois Ochsenbein                  francois.ochsenbein@gmail.com
     Teymoor Saifollahi                   teymur.saif@gmail.com
+    Joanna Sakowska                      js01093@surrey.ac.uk
     Elham Saremi                         saremi@ipm.ir
     Yahya Sefidbakht                     y.sefidbakht@gmail.com
     Alejandro Serrano Borlaff            asborlaff@ucm.es
     Zahra Sharbaf                        samaeh.sharbaf2@yahoo.com
+    David Shupe                          shupe@ipac.caltech.edu
     Jenny Sorce                          jenny.sorce@univ-lyon1.fr
     Lee Spitler                          lee.spitler@mq.edu.au
     Richard Stallman                     rms@gnu.org
@@ -82,6 +101,7 @@ support in Gnuastro. The list is ordered alphabetically (by family name).
     Aaron Watkins                        aaron.watkins@oulu.fi
     Michael H.F. Wilkinson               m.h.f.wilkinson@gmail.com
     Christopher Willmer                  cnaw@as.arizona.edu
+    Xiuqin Wu                            xiuqin@ipac.caltech.edu
     Sara Yousefi Taemeh                  s.yousefi.t@gmail.com
     Johannes Zabl                        johannes.zabl@irap.omp.eu
 
@@ -104,12 +124,13 @@ Host institutions of Gnuastro's developers.
     University of Salento, Lecce, Italy.
     Centre de Recherche Astrophysique de Lyon (CRAL), Lyon, France.
     Instituto de Astrofisica de Canarias (IAC), Tenerife, Spain.
+    Google Summer of Code(GSoC).
 
 
 Copyright
 ---------
 
-Copyright (C) 2015-2019 Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document under
 the terms of the GNU Free Documentation License, Version 1.3 or any later

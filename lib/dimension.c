@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -78,7 +78,7 @@ gal_dimension_is_different(gal_data_t *first, gal_data_t *second)
 
 
 /* Calculate the values necessary to increment/decrement along each
-   dimension of a dataset with size `dsize'. */
+   dimension of a dataset with size 'dsize'. */
 size_t *
 gal_dimension_increment(size_t ndim, size_t *dsize)
 {
@@ -187,10 +187,10 @@ gal_dimension_coord_to_index(size_t ndim, size_t *dsize, size_t *coord)
 
 
 
-/* You know the index (`ind') of a point/tile in an n-dimensional (`ndim')
-   array which has `dsize[i]' elements along dimension `i'. You want to
+/* You know the index ('ind') of a point/tile in an n-dimensional ('ndim')
+   array which has 'dsize[i]' elements along dimension 'i'. You want to
    know the coordinates of that point along each dimension. The output is
-   not actually returned, it must be allocated (`ndim' elements) before
+   not actually returned, it must be allocated ('ndim' elements) before
    calling this function. This function will just fill it. The reason for
    this is that this function will often be called with a loop and a single
    allocated space would be enough for the whole loop. */
@@ -285,6 +285,60 @@ gal_dimension_dist_radial(size_t *a, size_t *b, size_t ndim)
 
 
 
+/* Elliptical distance of a point from a given center. */
+#define DEGREESTORADIANS   M_PI/180.0
+float
+gal_dimension_dist_elliptical(double *center, double *pa_deg, double *q,
+                              size_t ndim, double *point)
+{
+  double Xr, Yr, Zr;        /* Rotated x, y, z. */
+  double q1=q[0], q2;
+  double c1=cos( pa_deg[0] * DEGREESTORADIANS ), c2, c3;
+  double s1= sin( pa_deg[0] * DEGREESTORADIANS ), s2, s3;
+  double x=center[0]-point[0], y=center[1]-point[1], z;
+
+  /* Find the distance depending on the dimension. */
+  switch(ndim)
+    {
+    case 2:
+      /* The parenthesis aren't necessary, but help in readability and
+         avoiding human induced bugs. */
+      Xr = x * ( c1       )     +   y * ( s1 );
+      Yr = x * ( -1.0f*s1 )     +   y * ( c1 );
+      return sqrt( Xr*Xr + Yr*Yr/q1/q1 );
+      break;
+
+    case 3:
+      /* Define the necessary parameters. */
+      q2=q[1];
+      z=center[2]-point[2];
+      c2 = cos( pa_deg[1] * DEGREESTORADIANS );
+      s2 = sin( pa_deg[1] * DEGREESTORADIANS );
+      c3 = cos( pa_deg[2] * DEGREESTORADIANS );
+      s3 = sin( pa_deg[2] * DEGREESTORADIANS );
+
+      /* Calculate the distance. */
+      Xr = x*(  c3*c1   - s3*c2*s1 ) + y*( c3*s1   + s3*c2*c1) + z*( s3*s2 );
+      Yr = x*( -1*s3*c1 - c3*c2*s1 ) + y*(-1*s3*s1 + c3*c2*c1) + z*( c3*s2 );
+      Zr = x*(  s1*s2              ) + y*(-1*s2*c1           ) + z*( c2    );
+      return sqrt( Xr*Xr + Yr*Yr/q1/q1 + Zr*Zr/q2/q2 );
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: currently only 2 and 3 dimensional "
+            "distances are supported, you have asked for an %zu-dimensional "
+            "dataset", __func__, ndim);
+
+    }
+
+  /* Control should never reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return NAN;
+}
+
+
 
 
 
@@ -335,7 +389,7 @@ dimension_collapse_sanity_check(gal_data_t *in, gal_data_t *weight,
 
   /* If there is no blank value, there is no point in calculating the
      number of points in each collapsed dataset (when necessary). In that
-     case, `cnum!=0'. */
+     case, 'cnum!=0'. */
   if(hasblank==0)
     *cnum=in->dsize[c_dim];
 
@@ -411,7 +465,7 @@ dimension_collapse_sizes(gal_data_t *in, size_t c_dim, size_t *outndim,
 #define COLLAPSE_CHECKBLANK(OIND,IIND) {                                \
     if(hasblank)                                                        \
       {                                                                 \
-        if(B==B) /* An integer type: blank can be checked with `=='. */ \
+        if(B==B) /* An integer type: blank can be checked with '=='. */ \
           {                                                             \
             if( inarr[IIND] != B )           COLLAPSE_WRITE(OIND,IIND); \
           }                                                             \
@@ -548,7 +602,7 @@ gal_dimension_collapse_sum(gal_data_t *in, size_t c_dim, gal_data_t *weight)
             __func__, in->type);
     }
 
-  /* If `num' is zero on any element, set its sum to NaN. */
+  /* If 'num' is zero on any element, set its sum to NaN. */
   if(num)
     {
       ii = num->array;
@@ -557,8 +611,8 @@ gal_dimension_collapse_sum(gal_data_t *in, size_t c_dim, gal_data_t *weight)
     }
 
   /* Remove the respective dimension in the WCS structure also (if any
-     exists). Note that `sum->ndim' has already been changed. So we'll use
-     `in->wcs'. */
+     exists). Note that 'sum->ndim' has already been changed. So we'll use
+     'in->wcs'. */
   gal_wcs_remove_dimension(sum->wcs, in->ndim-c_dim);
 
   /* Clean up and return. */
@@ -642,7 +696,7 @@ gal_dimension_collapse_mean(gal_data_t *in, size_t c_dim,
             __func__, in->type);
     }
 
-  /* If `num' is zero on any element, set its sum to NaN. */
+  /* If 'num' is zero on any element, set its sum to NaN. */
   if(num)
     {
       ii = num->array;
@@ -724,8 +778,8 @@ gal_dimension_collapse_number(gal_data_t *in, size_t c_dim)
     }
 
   /* Remove the respective dimension in the WCS structure also (if any
-     exists). Note that `sum->ndim' has already been changed. So we'll use
-     `in->wcs'. */
+     exists). Note that 'sum->ndim' has already been changed. So we'll use
+     'in->wcs'. */
   gal_wcs_remove_dimension(num->wcs, in->ndim-c_dim);
 
   /* Return. */
@@ -786,8 +840,8 @@ gal_dimension_collapse_minmax(gal_data_t *in, size_t c_dim, int max1_min0)
     }
 
   /* Remove the respective dimension in the WCS structure also (if any
-     exists). Note that `sum->ndim' has already been changed. So we'll use
-     `in->wcs'. */
+     exists). Note that 'sum->ndim' has already been changed. So we'll use
+     'in->wcs'. */
   gal_wcs_remove_dimension(minmax->wcs, in->ndim-c_dim);
 
   /* Clean up and return. */
@@ -832,7 +886,7 @@ gal_dimension_remove_extra(size_t ndim, size_t *dsize, struct wcsprm *wcs)
         /* Shift all subsequent dimensions to replace this one. */
         for(j=i;j<ndim-1;++j) dsize[j]=dsize[j+1];
 
-        /* Decrement the `i' and the total number of dimension. */
+        /* Decrement the 'i' and the total number of dimension. */
         --i;
         --ndim;
       }

@@ -5,7 +5,7 @@ Match is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -81,7 +81,7 @@ struct argp_option program_options[] =
       UI_KEY_OUTCOLS,
       "STR",
       0,
-      "Out cols in CSV, `a': first, `b': second input.",
+      "Out cols in CSV, 'a': first, 'b': second input.",
       GAL_OPTIONS_GROUP_OUTPUT,
       &p->outcols,
       GAL_OPTIONS_NO_ARG_TYPE,

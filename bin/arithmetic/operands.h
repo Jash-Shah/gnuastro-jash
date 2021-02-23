@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -31,6 +31,9 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data);
 
 gal_data_t *
 operands_pop(struct arithmeticparams *p, char *operator);
+
+gal_data_t *
+operands_pop_wrapper_set(void *in);
 
 void
 operands_set_name(struct arithmeticparams *p, char *token);

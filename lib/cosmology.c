@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -309,4 +309,28 @@ gal_cosmology_to_absolute_mag(double z, double H0, double o_lambda_0,
   double dm=gal_cosmology_distance_modulus(z, H0, o_lambda_0, o_matter_0,
                                            o_radiation_0);
   return dm-2.5*log10(1.0+z);
+}
+
+
+
+
+
+/* Velocity at given redshift in units of km/s. */
+double
+gal_cosmology_velocity_from_z(double z)
+{
+  double c=GSL_CONST_MKSA_SPEED_OF_LIGHT;
+  return c * ( (1+z)*(1+z) - 1 ) / ( (1+z)*(1+z) + 1 ) / 1000;
+}
+
+
+
+
+
+/* Redshift at given velocity (in units of km/s). */
+double
+gal_cosmology_z_from_velocity(double v)
+{
+  double c=GSL_CONST_MKSA_SPEED_OF_LIGHT/1000;
+  return sqrt( (c+v)/(c-v) ) - 1;
 }

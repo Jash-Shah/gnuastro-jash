@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -69,20 +69,20 @@ doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" will do arithmetic "
   "operations on one or multiple images and numbers. Simply put, the name "
   "of the image along with the arithmetic operators and possible numbers "
   "are given as arguments. The extensions of each input are specified with "
-  "(possibly multiple) calls to the `--hdu' option."
+  "(possibly multiple) calls to the '--hdu' option."
   "\n\nCurrently "PROGRAM_NAME" only supports postfix or reverse polish "
-  "notation. For example to get the result of `5+6', you should write "
-  "`5 6 +', or to get the average of two images, you should write `a.fits "
-  "b.fits + 2 /' (or more simply use the `average' operator with "
-  "`a.fits b.fits average'). Please see the manual for more information. "
+  "notation. For example to get the result of '5+6', you should write "
+  "'5 6 +', or to get the average of two images, you should write 'a.fits "
+  "b.fits + 2 /' (or more simply use the 'average' operator with "
+  "'a.fits b.fits average'). Please see the manual for more information. "
   "\n\n"PROGRAM_NAME" recognizes a large collection of standard operators, "
   "including basic arithmetic (e.g., +, -, x, /), mathematical (e.g., abs, "
   "pow, sqrt, log), statistical (minvalue, min, max, average), comparison "
   "(e.g., lt, le, gt), logical (e.g., and, or, not), the full set of bitwise "
   "operators, and numeric type conversion operators to all known types. "
   "Please run the command below for a complete list describing all "
-  "operators (press the `SPACE' keyboard key, or arrow keys, to go down "
-  "and `q' to return to the command-line):\n\n"
+  "operators (press the 'SPACE' keyboard key, or arrow keys, to go down "
+  "and 'q' to return to the command-line):\n\n"
   "     $ info gnuastro \"Arithmetic operators\"\n"
   GAL_STRINGS_MORE_HELP_INFO
   /* After the list of options: */
@@ -157,8 +157,8 @@ ui_initialize_options(struct arithmeticparams *p,
       switch(cp->coptions[i].group)
         {
         case GAL_OPTIONS_GROUP_TESSELLATION:
-          cp->coptions[i].doc=NULL; /* Necessary to remove title. */
-          cp->coptions[i].flags=OPTION_HIDDEN;
+          if(cp->coptions[i].key!=GAL_OPTIONS_KEY_INTERPMETRIC)
+            cp->coptions[i].flags=OPTION_HIDDEN;
           break;
         }
     }
@@ -174,18 +174,18 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct arithmeticparams *p = state->input;
 
-  /* Pass `gal_options_common_params' into the child parser.  */
+  /* Pass 'gal_options_common_params' into the child parser.  */
   state->child_inputs[0] = &p->cp;
 
   /* In case the user incorrectly uses the equal sign (for example
-     with a short format or with space in the long format, then `arg`
+     with a short format or with space in the long format, then 'arg'
      start with (if the short version was called) or be (if the long
      version was called with a space) the equal sign. So, here we
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign (`=`). For short "
-               "options, `=` should not be used and for long options, "
+    argp_error(state, "incorrect use of the equal sign ('='). For short "
+               "options, '=' should not be used and for long options, "
                "there should be no space between the option, equal sign "
                "and value");
 
@@ -232,15 +232,15 @@ parse_opt(int key, char *arg, struct argp_state *state)
 static void
 ui_read_check_only_options(struct arithmeticparams *p)
 {
-  if(p->wcsfile)
+  if(p->wcsfile && strcmp(p->wcsfile,"none"))
     {
       if(gal_fits_name_is_fits(p->wcsfile)==0)
-        error(EXIT_FAILURE, 0, "%s: file given to `--wcsfile' must be in "
+        error(EXIT_FAILURE, 0, "%s: file given to '--wcsfile' must be in "
               "FITS format with a recognizable FITS format suffix.",
               p->wcsfile);
       if(p->wcshdu==NULL)
         error(EXIT_FAILURE, 0, "%s: no HDU/extension specified (file given "
-              "to `--wcsfile')! Please use `--wcshdu' to specify a "
+              "to '--wcsfile')! Please use '--wcshdu' to specify a "
               "HDU/extension to read from", p->wcsfile);
     }
 }
@@ -250,7 +250,7 @@ ui_read_check_only_options(struct arithmeticparams *p)
 
 
 /* Sanity check on options AND arguments. If only option values are to be
-   checked, use `ui_read_check_only_options'. */
+   checked, use 'ui_read_check_only_options'. */
 static void
 ui_check_options_and_arguments(struct arithmeticparams *p)
 {
@@ -272,11 +272,11 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
   /* The input tokens are put in a lastin-firstout (simple) linked list, so
      change them to the correct order so the order we pop a token is the
      same order that the user input a value. Note that for the options this
-     was done in `gal_options_read_config_set'. */
+     was done in 'gal_options_read_config_set'. */
   gal_list_str_reverse(&p->tokens);
 
-  /* To allow adding extensions to existing files, let the `keep' flag be
-     the same as the `dontdelete'. */
+  /* To allow adding extensions to existing files, let the 'keep' flag be
+     the same as the 'dontdelete'. */
   cp->keep=cp->dontdelete;
 
   /* Set the output file name (if any is needed). Note that since the lists
@@ -286,7 +286,7 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
      list. */
   for(token=p->tokens; token!=NULL; token=token->next)
     {
-      /* Strings given to the `tofile' operator are also considered as
+      /* Strings given to the 'tofile' operator are also considered as
          outputs and we should delete them before starting the parse. */
       if( strncmp(OPERATOR_PREFIX_TOFILE, token->v,
                   OPERATOR_PREFIX_LENGTH_TOFILE) )
@@ -298,8 +298,8 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
           if( gal_array_name_recognized(token->v) )
             {
               /* Increment the counter for FITS files (if they are
-                 input). Recall that the `tofile' operator can also have
-                 `.fits' suffixes (they are the names of the output
+                 input). Recall that the 'tofile' operator can also have
+                 '.fits' suffixes (they are the names of the output
                  files). */
               if( gal_array_name_recognized_multiext(token->v)  )
                 ++nummultiext;
@@ -318,18 +318,27 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
             }
 
           /* This token is a number. Check if a negative dash was present that
-             has been temporarily replaced with `NEG_DASH_REPLACE' before
+             has been temporarily replaced with 'NEG_DASH_REPLACE' before
              option parsing. */
           else if(token->v[0]==NEG_DASH_REPLACE && isdigit(token->v[1]) )
             token->v[0]='-';
         }
 
-      /* We are on the `tofile' operator. */
+      /* We are on the 'tofile' operator. */
       else
         {
           filename=&token->v[ OPERATOR_PREFIX_LENGTH_TOFILE ];
           gal_checkset_writable_remove(filename, cp->keep, cp->dontdelete);
         }
+    }
+
+  /* In case no output name has been given (can happen with operators like
+     'makenew' when the user doesn't set an output name explicity), use a
+     default name. */
+  if(p->cp.output==NULL)
+    {
+      gal_checkset_allocate_copy("arithmetic.fits", &p->cp.output);
+      gal_checkset_writable_remove(p->cp.output, cp->keep, cp->dontdelete);
     }
 
   /* Count the number of HDU values (if globalhdu isn't given) and check if
@@ -342,10 +351,10 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
       if(numhdus<nummultiext)
         error(EXIT_FAILURE, 0, "not enough HDUs. There are %zu input "
               "files in formats that may contain multiple extensions (for "
-              "example FITS or TIFF). Therefore, the `--hdu' (`-h') option "
+              "example FITS or TIFF). Therefore, the '--hdu' ('-h') option "
               "must be called atleaset %zu times (once for each "
               "multi-extension file). If the HDU value is the same for all "
-              "the files, you may use `--globalhdu' (`-g') to specify a "
+              "the files, you may use '--globalhdu' ('-g') to specify a "
               "single HDU to be used for any number of input files",
               nummultiext, nummultiext);
     }
@@ -362,7 +371,7 @@ ui_preparations(struct arithmeticparams *p)
 
   /* In case a file is specified to read the WCS from (and ignore input
      datasets), read the WCS prior to starting parsing of the arguments. */
-  if(p->wcsfile)
+  if(p->wcsfile && strcmp(p->wcsfile,"none"))
     {
       /* Read the number of dimensions and the size of each. */
       dsize=gal_fits_img_info_dim(p->wcsfile, p->wcshdu, &ndim);
@@ -377,10 +386,10 @@ ui_preparations(struct arithmeticparams *p)
         }
       else
         fprintf(stderr, "WARNING: %s (hdu %s) didn't contain a "
-                "(readable by WCSLIB) WCS.", p->wcsfile, p->wcshdu);
+                "(readable by WCSLIB) WCS.\n", p->wcsfile, p->wcshdu);
 
       /* Correct the WCS dimensions if necessary. Note that we don't need
-         the `ndim' or `dsize' any more. */
+         the 'ndim' or 'dsize' any more. */
       ndim=gal_dimension_remove_extra(ndim, dsize, p->refdata.wcs);
 
       /* Clean up. */
@@ -417,9 +426,9 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct arithmeticparams *p)
   struct gal_options_common_params *cp=&p->cp;
 
 
-  /* Include the parameters necessary for argp from this program (`args.h')
-     and for the common options to all Gnuastro (`commonopts.h'). We want
-     to directly put the pointers to the fields in `p' and `cp', so we are
+  /* Include the parameters necessary for argp from this program ('args.h')
+     and for the common options to all Gnuastro ('commonopts.h'). We want
+     to directly put the pointers to the fields in 'p' and 'cp', so we are
      simply including the header here to not have to use long macros in
      those headers which make them hard to read and modify. This also helps
      in having a clean environment: everything in those headers is only

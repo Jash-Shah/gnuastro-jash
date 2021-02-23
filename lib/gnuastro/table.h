@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -54,7 +54,7 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 
-/* `printf' default formattings. Note that the string type shouldn't have
+/* 'printf' default formattings. Note that the string type shouldn't have
    any precision and for the width,  */
 #define GAL_TABLE_DEF_WIDTH_STR       6
 #define GAL_TABLE_DEF_WIDTH_INT       6
@@ -72,7 +72,7 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 /* Particular display formats for different types: Integers or floating
    point numbers can be printed in various display formats. The values here
-   are stored in `gal_data_t' when necessary to help in printing of the
+   are stored in 'gal_data_t' when necessary to help in printing of the
    data.*/
 enum gal_table_diplay_formats
 {
@@ -156,9 +156,9 @@ gal_table_comments_add_intro(gal_list_str_t **comments,
                              char *program_string, time_t *rawtime);
 
 void
-gal_table_write(gal_data_t *cols, gal_list_str_t *comments,
-                int tableformat, char *filename, char *extname,
-                uint8_t colinfoinstdout);
+gal_table_write(gal_data_t *cols, struct gal_fits_list_key_t **keylist,
+                gal_list_str_t *comments, int tableformat, char *filename,
+                char *extname, uint8_t colinfoinstdout);
 
 void
 gal_table_write_log(gal_data_t *logll, char *program_string,

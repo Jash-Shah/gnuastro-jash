@@ -5,7 +5,7 @@ Table is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -29,13 +29,16 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <gsl/gsl_rng.h>
 #include <gsl/gsl_heapsort.h>
 
+#include <gnuastro/txt.h>
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/table.h>
 #include <gnuastro/qsort.h>
 #include <gnuastro/pointer.h>
+#include <gnuastro/polygon.h>
 #include <gnuastro/arithmetic.h>
 #include <gnuastro/statistics.h>
 #include <gnuastro/permutation.h>
@@ -75,6 +78,56 @@ table_apply_permutation(gal_data_t *table, size_t *permutation,
 
 
 
+static void
+table_bring_to_top(gal_data_t *table, gal_data_t *rowids)
+{
+  char **strarr;
+  gal_data_t *col;
+  size_t i, *ids=rowids->array;
+
+  /* Make sure the rowids are sorted by increasing index. */
+  gal_statistics_sort_increasing(rowids);
+
+  /* Go over each column and move the desired rows to the top. */
+  for(col=table;col!=NULL;col=col->next)
+    {
+      /* For easy operation if the column is a string. */
+      strarr = col->type==GAL_TYPE_STRING ? col->array : NULL;
+
+      /* Move the desired rows up to the top. */
+      for(i=0;i<rowids->size;++i)
+        if( i != ids[i] )
+          {
+            /* Copy the contents. For strings, its just about freeing and
+               copying pointers. */
+            if(col->type==GAL_TYPE_STRING)
+              {
+                free(strarr[i]);
+                strarr[i]=strarr[ ids[i] ];
+                strarr[ ids[i] ]=NULL;
+              }
+            else
+              memcpy(gal_pointer_increment(col->array, i,      col->type),
+                     gal_pointer_increment(col->array, ids[i], col->type),
+                     gal_type_sizeof(col->type));
+          }
+
+      /* For string arrays, free the pointers of the remaining rows. */
+      if(col->type==GAL_TYPE_STRING)
+        for(i=rowids->size;i<col->size;++i)
+          if(strarr[i]) free(strarr[i]);
+
+      /* Correct the size (this should be after freeing of the string
+         pointers. */
+      col->size = col->dsize[0] = rowids->size;
+    }
+
+}
+
+
+
+
+
 static gal_data_t *
 table_selection_range(struct tableparams *p, gal_data_t *col)
 {
@@ -87,7 +140,7 @@ table_selection_range(struct tableparams *p, gal_data_t *col)
   /* First, make sure everything is OK. */
   if(p->range==NULL)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us to fix the "
-          "problem at %s. `p->range' should not be NULL at this point",
+          "problem at %s. 'p->range' should not be NULL at this point",
           __func__, PACKAGE_BUGREPORT);
 
   /* Allocations. */
@@ -101,7 +154,7 @@ table_selection_range(struct tableparams *p, gal_data_t *col)
   ((double *)(min->array))[0] = darr[0];
   ((double *)(max->array))[0] = darr[1];
 
-  /* Move `p->range' to the next element in the list and free the current
+  /* Move 'p->range' to the next element in the list and free the current
      one (we have already read its values and don't need it any more). */
   tmp=p->range;
   p->range=p->range->next;
@@ -135,11 +188,121 @@ table_selection_range(struct tableparams *p, gal_data_t *col)
 
 
 
+/* Read column value of any type as a double for the polygon options. */
+static double
+selection_polygon_read_point(gal_data_t *col, size_t i)
+{
+  /* Check and assign the points to the points array. */
+  switch(col->type)
+    {
+    case GAL_TYPE_INT8:    return (( int8_t   *)col->array)[i];
+    case GAL_TYPE_UINT8:   return (( uint8_t  *)col->array)[i];
+    case GAL_TYPE_UINT16:  return (( uint16_t *)col->array)[i];
+    case GAL_TYPE_INT16:   return (( int16_t  *)col->array)[i];
+    case GAL_TYPE_UINT32:  return (( uint32_t *)col->array)[i];
+    case GAL_TYPE_INT32:   return (( int32_t  *)col->array)[i];
+    case GAL_TYPE_UINT64:  return (( uint64_t *)col->array)[i];
+    case GAL_TYPE_INT64:   return (( int64_t  *)col->array)[i];
+    case GAL_TYPE_FLOAT32: return (( float    *)col->array)[i];
+    case GAL_TYPE_FLOAT64: return (( double   *)col->array)[i];
+    default:
+      error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
+            __func__, col->type);
+    }
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return NAN;
+}
+
+
+
+
+
+/* Mask the rows that are not in the given polygon. */
+static gal_data_t *
+table_selection_polygon(struct tableparams *p, gal_data_t *col1,
+                        gal_data_t *col2, int in1out0)
+{
+  uint8_t *oarr;
+  double point[2];
+  gal_data_t *out=NULL;
+  size_t i, psize=p->polygon->size/2;
+
+  /* Allocate the output array: This array will have a '0' for the points
+     which are inside the polygon and '1' for those that are outside of it
+     (to be masked/removed from the input). */
+  out=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, col1->dsize, NULL, 0, -1, 1,
+                     NULL, NULL, NULL);
+  oarr=out->array;
+
+  /* Loop through all the rows in the given columns and check the points.*/
+  for(i=0; i<col1->size; i++)
+    {
+      /* Read the column values as a double. */
+      point[0]=selection_polygon_read_point(col1, i);
+      point[1]=selection_polygon_read_point(col2, i);
+
+      /* For '--inpolygon', if point is inside polygon, put 0, otherwise
+         1. Note that we are building a mask for the rows that must be
+         discarded, so we want '1' for the points we don't want. */
+      oarr[i] = (in1out0
+                 ? !gal_polygon_is_inside(p->polygon->array, point, psize)
+                 :  gal_polygon_is_inside(p->polygon->array, point, psize));
+
+      /* For a check
+      printf("(%f,%f): %s, %u\n", point[0], point[1], oarr[i]);
+      */
+    }
+
+  /* Return the output column. */
+  return out;
+}
+
+
+
+
+
+/* Given a string dataset and a single string, return a 'uint8_t' array
+   with the same size as the string dataset that has a '1' for all the
+   elements that are equal. */
+static gal_data_t *
+table_selection_string_eq_ne(gal_data_t *column, char *reference, int e0n1)
+{
+  gal_data_t *out;
+  uint8_t *oarr, comp;
+  size_t i, size=column->size;
+  char **strarr=column->array;
+
+  /* Allocate the output binary dataset. */
+  out=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &size, NULL, 0, -1, 1,
+                     NULL, NULL, NULL);
+  oarr=out->array;
+
+  /* Parse the values and mark the outputs IN THE OPPOSITE manner (we are
+     marking the ones that must be removed). */
+  for(i=0;i<size;++i)
+    {
+      comp=strcmp(strarr[i], reference);
+      oarr[i] = e0n1 ? (comp==0) : (comp!=0);
+    }
+
+  /* Return. */
+  return out;
+}
+
+
+
+
+
 static gal_data_t *
 table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
                                   int e0n1)
 {
-  double *darr;
+  void *varr;
+  char **strarr;
   size_t i, one=1;
   int numok=GAL_ARITHMETIC_NUMOK;
   int inplace=GAL_ARITHMETIC_INPLACE;
@@ -147,31 +310,50 @@ table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
   gal_data_t *arg = e0n1 ? p->notequal : p->equal;
 
   /* Note that this operator is used to make the "masked" array, so when
-     `e0n1==0' the operator should be `GAL_ARITHMETIC_OP_NE' and
+     'e0n1==0' the operator should be 'GAL_ARITHMETIC_OP_NE' and
      vice-versa.
 
-     For the merging with other elements, when `e0n1==0', we need the
-     `GAL_ARITHMETIC_OP_AND', but for `e0n1==1', it should be `OR'. */
+     For the merging with other elements, when 'e0n1==0', we need the
+     'GAL_ARITHMETIC_OP_AND', but for 'e0n1==1', it should be 'OR'. */
   int mergeop  = e0n1 ? GAL_ARITHMETIC_OP_OR : GAL_ARITHMETIC_OP_AND;
   int operator = e0n1 ? GAL_ARITHMETIC_OP_EQ : GAL_ARITHMETIC_OP_NE;
 
   /* First, make sure everything is OK. */
   if(arg==NULL)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us to fix the "
-          "problem at %s. `p->range' should not be NULL at this point",
+          "problem at %s. 'p->range' should not be NULL at this point",
           __func__, PACKAGE_BUGREPORT);
 
-  /* Allocate space for the value. */
-  value=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &one, NULL, 0, -1, 1,
-                     NULL, NULL, NULL);
+  /* To easily parse the given values. */
+  strarr=arg->array;
 
   /* Go through the values given to this call of the option and flag the
      elements. */
   for(i=0;i<arg->size;++i)
     {
-      darr=arg->array;
-      ((double *)(value->array))[0] = darr[i];
-      eq=gal_arithmetic(operator, 1, numok, col, value);
+      /* Write the value  */
+      if(col->type==GAL_TYPE_STRING)
+        eq=table_selection_string_eq_ne(col, strarr[i], e0n1);
+      else
+        {
+          /* Allocate the value dataset. */
+          value=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &one, NULL, 0, -1, 1,
+                               NULL, NULL, NULL);
+          varr=value->array;
+
+          /* Read the stored string as a float64. */
+          if( gal_type_from_string(&varr, strarr[i], GAL_TYPE_FLOAT64) )
+            {
+              fprintf(stderr, "%s couldn't be read as a number.\n", strarr[i]);
+              exit(EXIT_FAILURE);
+            }
+
+          /* Mark the rows that are equal (irrespective of the column's
+             original numerical datatype). */
+          eq=gal_arithmetic(operator, 1, numok, col, value);
+        }
+
+      /* Merge the results with (possible) previous results. */
       if(out)
         {
           out=gal_arithmetic(mergeop, 1, inplace, out, eq);
@@ -189,8 +371,10 @@ table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
   }
   */
 
+
   /* Move the main pointer to the next possible call of the given
-     option. With this, we can safely free `arg' at this point. */
+     option. Note that 'arg' already points to 'p->equal' or 'p->notequal',
+     so it will automatically be freed with the next step.*/
   if(e0n1) p->notequal=p->notequal->next;
   else     p->equal=p->equal->next;
 
@@ -205,18 +389,16 @@ table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
 
 
 static void
-table_selection(struct tableparams *p)
+table_select_by_value(struct tableparams *p)
 {
-  uint8_t *u;
+  gal_data_t *rowids;
   struct list_select *tmp;
-  gal_data_t *mask, *addmask=NULL;
-  gal_data_t *sum, *perm, *blmask;
-  size_t i, g, b, *s, *sf, ngood=0;
+  uint8_t *u, *uf, *ustart;
+  size_t i, *s, ngood=0;
   int inplace=GAL_ARITHMETIC_INPLACE;
+  gal_data_t *mask, *blmask, *addmask=NULL;
 
   /* Allocate datasets for the necessary numbers and write them in. */
-  perm=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, p->table->dsize, NULL, 0,
-                      p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
   mask=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, p->table->dsize, NULL, 1,
                       p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);
 
@@ -227,6 +409,14 @@ table_selection(struct tableparams *p)
         {
         case SELECT_TYPE_RANGE:
           addmask=table_selection_range(p, tmp->col);
+          break;
+
+        /* '--inpolygon' and '--outpolygon' need two columns. */
+        case SELECT_TYPE_INPOLYGON:
+        case SELECT_TYPE_OUTPOLYGON:
+          addmask=table_selection_polygon(p, tmp->col, tmp->next->col,
+                                          tmp->type==SELECT_TYPE_INPOLYGON);
+          tmp=tmp->next;
           break;
 
         case SELECT_TYPE_EQUAL:
@@ -275,49 +465,37 @@ table_selection(struct tableparams *p)
       gal_data_free(addmask);
     }
 
-  /* Find the final number of elements to print. */
-  sum=gal_statistics_sum(mask);
-  ngood = p->table->size - ((double *)(sum->array))[0];
+  /* Find the final number of elements to print and allocate the array to
+     keep them. */
+  uf=(u=mask->array)+mask->size;
+  ngood=0; do if(*u==0) ++ngood; while(++u<uf);
+  rowids=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &ngood, NULL, 0,
+                        p->cp.minmapsize, p->cp.quietmmap, NULL,
+                        NULL, NULL);
 
-  /* Define the permutation: elements within range remain on the top of
-     the list, while the ones outside of will be placed after them
-     (starting from the index after the last good one). */
-  g=0;          /* Good indexs (starting from 0). */
-  b=ngood;      /* Bad indexs (starting from total number of good). */
-  u=mask->array;
-  sf=(s=perm->array)+perm->size;
-  do *s = *u++ ? b++ : g++; while(++s<sf);
+  /* Fill-in the finally desired row-IDs. */
+  s=rowids->array;
+  ustart=mask->array;
+  uf=(u=mask->array)+mask->size;
+  do if(*u==0) *s++ = u-ustart; while(++u<uf);
 
-  /* For a check
-  {
-    size_t i;
-    double *v=ref->array;
-    uint8_t *a=mask->array;
-    printf("ref->type: %s\n", gal_type_name(ref->type, 1));
-    for(i=0;i<ref->size;++i) printf("%u, %g\n", a[i], v[i]);
-    gal_permutation_check(perm->array, perm->size);
-  }
-  */
-
-  /* Apply the final permutation to the whole table. */
-  table_apply_permutation(p->table, perm->array, ngood, 1);
+  /* Move the desired rows to the top of the table. */
+  table_bring_to_top(p->table, rowids);
 
   /* If the sort column is not in the table (the proper range has already
      been applied to it), and we need to sort the resulting columns
      afterwards, we should also apply the permutation on the sort
      column. */
-  if(p->sortcol && p->sortin==0)
-    table_apply_permutation(p->sortcol, perm->array, ngood, 1);
+  if(p->sortcol && p->sortin==0) table_bring_to_top(p->sortcol, rowids);
 
   /* Clean up. */
   i=0;
   for(tmp=p->selectcol;tmp!=NULL;tmp=tmp->next)
     { if(p->freeselect[i]) {gal_data_free(tmp->col); tmp->col=NULL;} ++i; }
   ui_list_select_free(p->selectcol, 0);
-  gal_data_free(mask);
-  gal_data_free(perm);
   free(p->freeselect);
-  gal_data_free(sum);
+  gal_data_free(mask);
+  gal_data_free(rowids);
 }
 
 
@@ -348,10 +526,10 @@ table_sort(struct tableparams *p)
           "TIP: if you know the columns contents are all numbers that are "
           "just stored as strings, you can use this program to save the "
           "table as a text file, modify the column meta-data (for example "
-          "to type `i32' or `f32' instead of `strN'), then use this "
+          "to type 'i32' or 'f32' instead of 'strN'), then use this "
           "program again to save it as a FITS table.\n\n"
           "For more on column metadata in plain text format, please run "
-          "the following command (or see the `Gnuastro text table format "
+          "the following command (or see the 'Gnuastro text table format "
           "section of the book/manual):\n\n"
           "    $ info gnuastro \"gnuastro text table format\"");
 
@@ -371,7 +549,7 @@ table_sort(struct tableparams *p)
       case GAL_TYPE_FLOAT64: qsortfn=gal_qsort_index_single_float64_d; break;
       default:
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-              "the problem. The code `%u' wasn't recognized as a data type",
+              "the problem. The code '%u' wasn't recognized as a data type",
               __func__, PACKAGE_BUGREPORT, p->sortcol->type);
       }
   else
@@ -389,7 +567,7 @@ table_sort(struct tableparams *p)
       case GAL_TYPE_FLOAT64: qsortfn=gal_qsort_index_single_float64_i; break;
       default:
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-              "the problem. The code `%u' wasn't recognized as a data type",
+              "the problem. The code '%u' wasn't recognized as a data type",
               __func__, PACKAGE_BUGREPORT, p->sortcol->type);
       }
 
@@ -397,7 +575,7 @@ table_sort(struct tableparams *p)
   gal_qsort_index_single=p->sortcol->array;
   qsort(perm->array, perm->size, sizeof *s, qsortfn);
 
-  /* For a check (only on float32 type `sortcol'):
+  /* For a check (only on float32 type 'sortcol'):
   {
     float *f=p->sortcol->array;
     sf=(s=perm->array)+perm->size;
@@ -418,49 +596,388 @@ table_sort(struct tableparams *p)
 
 
 
+/* Apply random row selection. If the returned value is 'EXIT_SUCCESS',
+   then, it was successful. Otherwise, it will return 'EXIT_FAILURE' and
+   the input won't be touched. */
+static int
+table_random_rows(gal_data_t *table, gsl_rng *rng, size_t numrandom,
+                  size_t minmapsize, int quietmmap)
+{
+  int bad;
+  gal_data_t *rowids;
+  size_t i, j, *ids, ind;
+
+  /* Sanity check. */
+  if(numrandom>table->size)
+    return EXIT_FAILURE;
+
+  /* Allocate space for the list of rows to use. */
+  rowids=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &numrandom, NULL, 0,
+                        minmapsize, quietmmap, NULL, NULL, NULL);
+
+  /* Select the row numbers. */
+  ids=rowids->array;
+  for(i=0;i<numrandom;++i)
+    {
+      /* Select a random index and make sure its new. */
+      bad=1;
+      while(bad)
+        {
+          ind = gsl_rng_uniform(rng) * table->size;
+          for(j=0;j<i;++j) if(ids[j]==ind) break;
+          if(i==j) bad=0;
+        }
+      ids[i]=ind;
+    }
+
+  /* Move the desired rows to the top. */
+  table_bring_to_top(table, rowids);
+
+  /* Clean up and return. */
+  gal_data_free(rowids);
+  return EXIT_SUCCESS;
+}
+
+
+
+
+
 static void
-table_head_tail(struct tableparams *p)
+table_select_by_position(struct tableparams *p)
 {
   char **strarr;
   gal_data_t *col;
   size_t i, start, end;
+  double *darr = p->rowlimit ? p->rowlimit->array : NULL;
+
+  /* Random row selection (by position, not value). This step is
+     independent of the other operations of this function, so as soon as
+     its finished return. */
+  if(p->rowrandom)
+    {
+      if( table_random_rows(p->table, p->rng, p->rowrandom,
+                            p->cp.minmapsize, p->cp.quietmmap)
+          == EXIT_FAILURE && p->cp.quiet==0 )
+        error(EXIT_SUCCESS, 0, "'--rowrandom' not activated because "
+              "the number of rows in the table at this stage (%zu) "
+              "is smaller than the number of requested random rows "
+              "(%zu). You can supress this message with '--quiet'",
+              p->table->size, p->rowrandom);
+      return;
+    }
+
+  /* Sanity check  */
+  if(p->rowlimit)
+    {
+      if(darr[0]>=p->table->size)
+        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) "
+              "is larger than the number of rows (%zu)",
+              darr[0]+1, p->table->size);
+      else if( darr[1]>=p->table->size )
+        error(EXIT_FAILURE, 0, "the second value to '--rowlimit' (%g) "
+              "is larger than the number of rows (%zu)",
+              darr[1]+1, p->table->size);
+    }
 
   /* Go over all the columns and make the necessary corrections. */
   for(col=p->table;col!=NULL;col=col->next)
     {
-      /* If we are dealing with strings, we'll need to free the strings
-         that the columns that will not be used point to (outside the
-         allocated array directly `gal_data_t'). We don't have to worry
-         about the space for the actual pointers (they will be free'd by
-         `free' in any case, since they are in the initially allocated
-         array).*/
+      /* FOR STRING: we'll need to free the individual strings that will
+         not be used (outside the allocated array directly
+         'gal_data_t'). We don't have to worry about the space for the
+         actual pointers (they will be free'd by 'free' in any case, since
+         they are in the initially allocated array).*/
       if(col->type==GAL_TYPE_STRING)
         {
-          /* Set the start and ending indexs. */
-          start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
-          end   = p->head!=GAL_BLANK_SIZE_T ? p->table->size : p->tail;
-
-          /* Free their allocated spaces. */
+          /* Parse the rows and free extra pointers. */
           strarr=col->array;
-          for(i=start; i<end; ++i) { free(strarr[i]); strarr[i]=NULL; }
+          if(p->rowlimit)
+            {
+              /* Note that the given values to '--rowlimit' started from 1,
+                 but in 'ui.c' we subtracted one from it (so at this stage,
+                 it starts from 0). */
+              start = darr[0];
+              end   = darr[1];
+              for(i=0;i<p->table->size;++i)
+                if(i<start || i>end) { free(strarr[i]); strarr[i]=NULL; }
+            }
+          else
+            {
+              /* Free their allocated spaces. */
+              start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
+              end   = p->head!=GAL_BLANK_SIZE_T ? p->table->size : p->tail;
+              for(i=start; i<end; ++i) { free(strarr[i]); strarr[i]=NULL; }
+            }
         }
 
-      /* For `--tail', we'll need to bring the last columns to the
-         start. Note that we are using `memmove' because we want to be safe
-         with overlap. */
-      if(p->tail!=GAL_BLANK_SIZE_T)
-        memmove(col->array,
-                gal_pointer_increment(col->array, col->size - p->tail,
-                                      col->type),
-                p->tail*gal_type_sizeof(col->type));
+      /* Make the final adjustment. */
+      if(p->rowlimit)
+        {
+          /* Move the values up to the top and correct the size. */
+          col->size=darr[1]-darr[0]+1;
+          memmove(col->array,
+                  gal_pointer_increment(col->array, darr[0], col->type),
+                  (darr[1]-darr[0]+1)*gal_type_sizeof(col->type));
+        }
+      else
+        {
+          /* For '--tail', we'll need to bring the last columns to the
+             start. Note that we are using 'memmove' because we want to be
+             safe with overlap. */
+          if(p->tail!=GAL_BLANK_SIZE_T)
+            memmove(col->array,
+                    gal_pointer_increment(col->array, col->size - p->tail,
+                                          col->type),
+                    p->tail*gal_type_sizeof(col->type));
 
-      /* In any case (head or tail), the new number of column elements is
-         the given value. */
-      col->size = col->dsize[0] = ( p->head!=GAL_BLANK_SIZE_T
-                                    ? p->head
-                                    : p->tail );
+          /* In any case (head or tail), the new number of column elements
+             is the given value. */
+          col->size = col->dsize[0] = ( p->head!=GAL_BLANK_SIZE_T
+                                        ? p->head
+                                        : p->tail );
+        }
     }
 }
+
+
+
+
+
+/*This function concatenates two table column wise .
+ It  attaches catcolumn table at the back of first table */
+static void
+table_catcolumn(struct tableparams *p)
+{
+  size_t counter=1;
+  gal_list_str_t *filell, *hdull;
+  gal_data_t *tocat, *final, *newcol;
+  char *tmpname, *hdu=NULL, cstr[100];
+  struct gal_options_common_params *cp=&p->cp;
+
+  /* Go over all the given files. */
+  hdull=p->catcolumnhdu;
+  for(filell=p->catcolumnfile; filell!=NULL; filell=filell->next)
+    {
+      /* Set the HDU (not necessary for non-FITS tables). */
+      if(gal_fits_name_is_fits(filell->v))
+        {
+          if(hdull) { hdu=hdull->v; hdull=hdull->next; }
+          else
+            error(EXIT_FAILURE, 0, "not enough '--catcolumnhdu's (or '-u'). "
+                  "For every FITS table given to '--catcolumnfile'. A call to "
+                  "'--catcolumnhdu' is necessary to identify its "
+                  "HDU/extension");
+        }
+      else hdu=NULL;
+
+      /* Read the catcolumn table. */
+      tocat=gal_table_read(filell->v, hdu, NULL, p->catcolumns, cp->searchin,
+                           cp->ignorecase, cp->minmapsize, p->cp.quietmmap,
+                           NULL);
+
+      /* Check the number of rows. */
+      if(tocat->dsize[0]!=p->table->dsize[0])
+        error(EXIT_FAILURE, 0, "%s: incorrect number of rows. The table given "
+              "to '--catcolumn' must have the same number of rows as the "
+              "main argument (after all row-selections have been applied), "
+              "but they have %zu and %zu rows respectively",
+              gal_fits_name_save_as_string(filell->v, hdu), tocat->dsize[0],
+              p->table->dsize[0]);
+
+      /* Append a counter to the column names because this option is most
+         often used with columns that have a similar name and it would help
+         the user if the output doesn't have multiple columns with same
+         name. */
+      if(p->catcolumnrawname==0)
+        for(newcol=tocat; newcol!=NULL; newcol=newcol->next)
+          if(newcol->name)
+            {
+              /* Add the counter suffix to the column name. */
+              sprintf(cstr, "-%zu", counter);
+              tmpname=gal_checkset_malloc_cat(newcol->name, cstr);
+
+              /* Free the old name and put in the new one. */
+              free(newcol->name);
+              newcol->name=tmpname;
+            }
+
+      /* Find the final column of the main table and add this table.*/
+      final=gal_list_data_last(p->table);
+      final->next=tocat;
+      ++counter;
+    }
+}
+
+
+
+
+
+void
+table_colmetadata(struct tableparams *p)
+{
+  char **strarr;
+  gal_data_t *meta, *col;
+  size_t counter, *colnum;
+
+  /* Loop through all the given updates and implement them. */
+  for(meta=p->colmetadata;meta!=NULL;meta=meta->next)
+    {
+      /* If the given column specifier is a name (not parse-able as a
+         number), then this condition will fail. */
+      colnum=NULL;
+      if( gal_type_from_string((void **)(&colnum), meta->name,
+                               GAL_TYPE_SIZE_T) )
+        {
+          /* We have been given a string, so find the first column that has
+             the same name. */
+          for(col=p->table; col!=NULL; col=col->next)
+            if(!strcmp(col->name, meta->name)) break;
+        }
+      /* The column specifier is a number. */
+      else
+        {
+          /* Go over the columns and find the one with this counter. */
+          counter=1;
+          for(col=p->table; col!=NULL; col=col->next)
+            if(counter++==colnum[0]) break;
+
+          /* Clean up the space that was allocated for 'colnum' (its not
+             allocated when the given value was a string). */
+          free(colnum);
+        }
+
+      /* If a match was found, then 'col' should not be NULL. */
+      if(col==NULL)
+        error(EXIT_FAILURE, 0, "no column found for '%s' (given to "
+              "'--colmetadata'). Columns can either be specified by "
+              "their position in the output table (integer counter, "
+              "starting from 1), or their name (the first column "
+              "found with the given name will be used)", meta->name);
+
+      /* The matching column is found and we know that atleast one value is
+         already given (otherwise 'gal_options_parse_name_and_values' would
+         abort the program). The first given string is the new name. */
+      strarr=meta->array;
+      if(col->name) free(col->name);
+      gal_checkset_allocate_copy(strarr[0], &col->name);
+
+      /* If more than one string is given, the second one is the new
+         unit. */
+      if(meta->size>1)
+        {
+          /* Replace the unit. */
+          if(col->unit) free(col->unit);
+          gal_checkset_allocate_copy(strarr[1], &col->unit);
+
+          /* The next element is the comment of the column. */
+          if(meta->size>2)
+            {
+              if(col->comment) free(col->comment);
+              gal_checkset_allocate_copy(strarr[2], &col->comment);
+            }
+        }
+    }
+}
+
+
+
+
+
+void
+table_noblank(struct tableparams *p)
+{
+  int found;
+  size_t i, j, *index;
+  gal_data_t *tcol, *flag;
+  char **strarr=p->noblank->array;
+  gal_list_sizet_t *column_indexs=NULL;
+
+  /* See if all columns should be checked, or just a select few. */
+  if( p->noblank->size==1 && !strcmp(strarr[0],"_all") )
+    {
+      for(i=0;i<gal_list_data_number(p->table);++i)
+        gal_list_sizet_add(&column_indexs, i);
+    }
+
+  /* Only certain columns should be checked, so find/add their index. */
+  else
+    for(i=0;i<p->noblank->size;++i)
+      {
+        /* First go through the column names and if they match, add
+           them. Note that we don't want to stop once a name is found, in
+           this scenario, if multiple columns have the same name, we should
+           use all.*/
+        j=0;
+        found=0;
+        for(tcol=p->table; tcol!=NULL; tcol=tcol->next)
+          {
+            if( tcol->name && !strcmp(tcol->name, strarr[i]) )
+              {
+                found=1;
+                gal_list_sizet_add(&column_indexs, j);
+              }
+            ++j;
+          }
+
+        /* If the given string didn't match any column name, it must be a
+           number, so parse it as a number and use that number. */
+        if(found==0)
+          {
+            /* Parse the given index. */
+            index=NULL;
+            if( gal_type_from_string((void **)(&index), strarr[i],
+                                     GAL_TYPE_SIZE_T) )
+              error(EXIT_FAILURE, 0, "column '%s' didn't match any of the "
+                    "final column names and can't be parsed as a column "
+                    "counter (starting from 1) either", strarr[i]);
+
+            /* Make sure its not zero (the user counts from 1). */
+            if(*index==0)
+              error(EXIT_FAILURE, 0, "the column number (given to the "
+                    "'--noblank' option) should start from 1, but you have "
+                    "given 0.");
+
+            /* Make sure that the index falls within the number (note that
+               it still counts from 1).  */
+            if(*index > gal_list_data_number(p->table))
+              error(EXIT_FAILURE, 0, "the final output table only has %zu "
+                    "columns, but you have given column %zu to '--noblank'. "
+                    "Recall that '--noblank' operates on the output columns "
+                    "and that you can also use output column names (if they "
+                    "have any)",
+                    gal_list_data_number(p->table), *index);
+
+            /* Everything is fine, add the index to the list of columns to
+               check. */
+            gal_list_sizet_add(&column_indexs, *index-1);
+
+            /* Clean up. */
+            free(index);
+          }
+
+        /* For a check.
+           printf("%zu\n", column_indexs->v);
+        */
+      }
+
+  /* Remove all blank rows from the output table, note that we don't need
+     the flags of the removed columns here. So we can just free it up. */
+  flag=gal_blank_remove_rows(p->table, column_indexs);
+  gal_data_free(flag);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -472,21 +989,33 @@ table_head_tail(struct tableparams *p)
 void
 table(struct tableparams *p)
 {
-  /* Apply a certain range (if required) to the output sample. */
-  if(p->selection) table_selection(p);
+  /* Apply ranges based on row values (if required). */
+  if(p->selection) table_select_by_value(p);
 
   /* Sort it (if required). */
   if(p->sort) table_sort(p);
 
   /* If the output number of rows is limited, apply them. */
-  if(p->head!=GAL_BLANK_SIZE_T || p->tail!=GAL_BLANK_SIZE_T)
-    table_head_tail(p);
+  if( p->rowlimit
+      || p->rowrandom
+      || p->head!=GAL_BLANK_SIZE_T
+      || p->tail!=GAL_BLANK_SIZE_T )
+    table_select_by_position(p);
 
-  /* If any operations are needed, do them. */
+  /* If any arithmetic operations are needed, do them. */
   if(p->outcols)
     arithmetic_operate(p);
 
+  /* Concatenate the columns of tables (if required)*/
+  if(p->catcolumnfile) table_catcolumn(p);
+
+  /* When column metadata should be updated. */
+  if(p->colmetadata) table_colmetadata(p);
+
+  /* When any columns with blanks should be removed. */
+  if(p->noblank) table_noblank(p);
+
   /* Write the output. */
-  gal_table_write(p->table, NULL, p->cp.tableformat, p->cp.output,
+  gal_table_write(p->table, NULL, NULL, p->cp.tableformat, p->cp.output,
                   "TABLE", p->colinfoinstdout);
 }

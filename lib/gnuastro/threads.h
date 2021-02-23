@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -28,12 +28,12 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 #include <gnuastro/blank.h>
 
-/* When we are within Gnuastro's building process, `IN_GNUASTRO_BUILD' is
+/* When we are within Gnuastro's building process, 'IN_GNUASTRO_BUILD' is
    defined. In the build process, installation information (in particular
-   `GAL_CONFIG_HAVE_PTHREAD_BARRIER' that we need below) is kept in
-   `config.h'. When building a user's programs, this information is kept in
-   `gnuastro/config.h'. Note that all `.c' files must start with the
-   inclusion of `config.h' and that `gnuastro/config.h' is only created at
+   'GAL_CONFIG_HAVE_PTHREAD_BARRIER' that we need below) is kept in
+   'config.h'. When building a user's programs, this information is kept in
+   'gnuastro/config.h'. Note that all '.c' files must start with the
+   inclusion of 'config.h' and that 'gnuastro/config.h' is only created at
    installation time (not present during the building of Gnuastro).*/
 #ifndef IN_GNUASTRO_BUILD
 #include <gnuastro/config.h>
@@ -65,7 +65,7 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 /*****************************************************************/
 #if GAL_CONFIG_HAVE_PTHREAD_BARRIER == 0
 
-/* Integer number of nano-seconds that `pthread_barrier_destroy' should
+/* Integer number of nano-seconds that 'pthread_barrier_destroy' should
    wait for a check to see if all barriers have been reached. */
 #define GAL_THREADS_BARRIER_DESTROY_NANOSECS 1000
 
@@ -102,8 +102,9 @@ pthread_barrier_destroy(pthread_barrier_t *b);
 size_t
 gal_threads_number();
 
-void
+char *
 gal_threads_dist_in_threads(size_t numactions, size_t numthreads,
+                            size_t minmapsize, int quietmmap,
                             size_t **outthrds, size_t *outthrdcols);
 
 void
@@ -126,7 +127,8 @@ struct gal_threads_params
 
 void
 gal_threads_spin_off(void *(*worker)(void *), void *caller_params,
-                     size_t numactions, size_t numthreads);
+                     size_t numactions, size_t numthreads,
+                     size_t minmapsize, int quietmmap);
 
 
 __END_C_DECLS    /* From C++ preparations */

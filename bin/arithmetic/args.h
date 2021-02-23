@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -25,6 +25,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+
+
 /* Definition of program-specific options. */
 struct argp_option program_options[] =
   {
@@ -33,7 +35,7 @@ struct argp_option program_options[] =
       UI_KEY_GLOBALHDU,
       "STR",
       0,
-      "Use this HDU for all inputs, ignore `--hdu'.",
+      "Use this HDU for all inputs, ignore '--hdu'.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->globalhdu,
       GAL_TYPE_STRING,
@@ -44,7 +46,7 @@ struct argp_option program_options[] =
     {
       "wcsfile",
       UI_KEY_WCSFILE,
-      "STR",
+      "FITS",
       0,
       "File to use for output's WCS.",
       GAL_OPTIONS_GROUP_INPUT,

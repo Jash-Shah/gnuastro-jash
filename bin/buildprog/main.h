@@ -5,7 +5,7 @@ BuildProgram is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -48,7 +48,7 @@ struct buildprogparams
   gal_list_str_t     *include;    /* Libraries to link against.         */
   gal_list_str_t     *linkdir;    /* Libraries to link against.         */
   gal_list_str_t     *linklib;    /* Libraries to link against.         */
-  char                    *la;    /* Libtool `.la' instead of default.  */
+  char                    *la;    /* Libtool '.la' instead of default.  */
   char                    *cc;    /* C compiler to use.                 */
   uint8_t               noenv;
 

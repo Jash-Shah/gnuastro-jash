@@ -5,7 +5,7 @@ MakeProfiles is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -33,7 +33,7 @@ struct argp_option program_options[] =
     {
       "background",
       UI_KEY_BACKGROUND,
-      "STR",
+      "FITS",
       0,
       "A background image to make the profiles on.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -82,6 +82,32 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
       ui_parse_kernel
+    },
+    {
+      "customtable",
+      UI_KEY_CUSTOMTABLE,
+      "FITS/TXT",
+      0,
+      "File for 'custom' profile.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->customname,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "customtablehdu",
+      UI_KEY_CUSTOMTABLEHDU,
+      "INT/STR",
+      0,
+      "HDU of table given to '--customtable'.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->customhdu,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
     },
 
 
@@ -169,7 +195,7 @@ struct argp_option program_options[] =
       UI_KEY_MODE,
       "STR",
       0,
-      "Mode of `--ccol': `img' or `wcs'.",
+      "Mode of '--ccol': 'img' or 'wcs'.",
       UI_GROUP_PROFILES,
       &p->mode,
       GAL_TYPE_STRING,
@@ -342,7 +368,7 @@ struct argp_option program_options[] =
 
     {
       0, 0, 0, 0,
-      "Columns, by info (see `--searchin'), or number (starting from 1):",
+      "Columns, by info (see '--searchin'), or number (starting from 1):",
       UI_GROUP_CATALOG
     },
     {
@@ -364,7 +390,8 @@ struct argp_option program_options[] =
       "STR/INT",
       0,
       "sersic (1), moffat (2), gaussian (3), point (4), "
-      "flat (5), circumference (6), distance (7).",
+      "flat (5), circumference (6), distance (7), "
+      "radial-table (8)",
       UI_GROUP_CATALOG,
       &p->fcol,
       GAL_TYPE_STRING,
@@ -560,7 +587,7 @@ struct argp_option program_options[] =
       UI_KEY_CUNIT,
       "STR[, ... ]",
       0,
-      "Units of the WCS coordinates (e.g., `deg').",
+      "Units of the WCS coordinates (e.g., 'deg').",
       UI_GROUP_WCS,
       &p->cunit,
       GAL_TYPE_FLOAT64,

@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -47,7 +47,7 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 
-/* The binary functions will be working on a `uint8_t' type dataset with
+/* The binary functions will be working on a 'uint8_t' type dataset with
    values of 1 or 0 (no other pixel will be touched). However, in some
    cases, it is necessary to put temporary values in each element during
    the processing of the functions. So if your input datasets have values
@@ -96,6 +96,10 @@ gal_data_t *
 gal_binary_connected_adjacency_matrix(gal_data_t *adjacency,
                                       size_t *numnewlabs);
 
+gal_data_t *
+gal_binary_connected_adjacency_list(gal_list_sizet_t **listarr,
+                                    size_t number, size_t minmapsize,
+                                    int quietmmap, size_t *numconnected);
 
 /*********************************************************************/
 /*****************            Fill holes          ********************/

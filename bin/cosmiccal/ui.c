@@ -5,7 +5,7 @@ CosmicCalculator is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -116,6 +116,7 @@ ui_initialize_options(struct cosmiccalparams *p,
 
   /* Program specific initializations. */
   p->redshift            = NAN;
+  p->velocity            = NAN;
 
   /* Modify the common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -158,18 +159,18 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct cosmiccalparams *p = state->input;
 
-  /* Pass `gal_options_common_params' into the child parser.  */
+  /* Pass 'gal_options_common_params' into the child parser.  */
   state->child_inputs[0] = &p->cp;
 
   /* In case the user incorrectly uses the equal sign (for example
-     with a short format or with space in the long format, then `arg`
+     with a short format or with space in the long format, then 'arg'
      start with (if the short version was called) or be (if the long
      version was called with a space) the equal sign. So, here we
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign (`=`). For short "
-               "options, `=` should not be used and for long options, "
+    argp_error(state, "incorrect use of the equal sign ('='). For short "
+               "options, '=' should not be used and for long options, "
                "there should be no space between the option, equal sign "
                "and value");
 
@@ -207,22 +208,22 @@ ui_add_to_single_value(struct argp_option *option, char *arg,
   /* In case of printing the option values. */
   if(lineno==-1)
     error(EXIT_FAILURE, 0, "currently the options to be printed in one row "
-          "(like `--age', `--luminositydist', and etc) do not support "
-          "printing with the `--printparams' (`-P'), or writing into "
+          "(like '--age', '--luminositydist', and etc) do not support "
+          "printing with the '--printparams' ('-P'), or writing into "
           "configuration files due to lack of time when implementing "
           "these features. You can put them into configuration files "
-          "manually. Please get in touch with us at `%s', so we can "
+          "manually. Please get in touch with us at '%s', so we can "
           "implement it", PACKAGE_BUGREPORT);
 
-  /* If this option is given in a configuration file, then `arg' will not
-     be NULL and we don't want to do anything if it is `0'. */
+  /* If this option is given in a configuration file, then 'arg' will not
+     be NULL and we don't want to do anything if it is '0'. */
   switch(option->key)
     {
     /* Options with arguments. */
     case UI_KEY_LINEATZ:
       /* Make sure an argument is given. */
       if(arg==NULL)
-        error(EXIT_FAILURE, 0, "option `--lineatz' needs an argument");
+        error(EXIT_FAILURE, 0, "option '--lineatz' needs an argument");
 
       /* If the argument is a number, read it, if not, see if its a known
          specral line name. */
@@ -231,7 +232,7 @@ ui_add_to_single_value(struct argp_option *option, char *arg,
         {
           linecode=gal_speclines_line_code(arg);
           if(linecode==GAL_SPECLINES_INVALID)
-            error(EXIT_FAILURE, 0, "`%s' not a known spectral line name",
+            error(EXIT_FAILURE, 0, "'%s' not a known spectral line name",
                   arg);
           val=gal_speclines_line_angstrom(linecode);
         }
@@ -242,11 +243,11 @@ ui_add_to_single_value(struct argp_option *option, char *arg,
     default:
       if(arg)
         {
-          /* Make sure the value is only `0' or `1'. */
+          /* Make sure the value is only '0' or '1'. */
           if( arg[1]!='\0' && *arg!='0' && *arg!='1' )
-            error_at_line(EXIT_FAILURE, 0, filename, lineno, "the `--%s' "
+            error_at_line(EXIT_FAILURE, 0, filename, lineno, "the '--%s' "
                           "option takes no arguments. In a configuration "
-                          "file it can only have the values `1' or `0', "
+                          "file it can only have the values '1' or '0', "
                           "indicating if it should be used or not",
                           option->name);
 
@@ -278,7 +279,7 @@ ui_parse_obsline(struct argp_option *option, char *arg,
   /* We want to print the stored values. */
   if(lineno==-1)
     {
-      /* Set the value pointer to `obsline'. */
+      /* Set the value pointer to 'obsline'. */
       obsline=*(gal_data_t **)(option->value);
       dptr = obsline->array;
 
@@ -297,7 +298,7 @@ ui_parse_obsline(struct argp_option *option, char *arg,
     }
   else
     {
-      /* The first part of `arg' (before the first comma) is not
+      /* The first part of 'arg' (before the first comma) is not
          necessarily a number. So we need to separate the first part from
          the rest.*/
       linename=arg;
@@ -310,7 +311,7 @@ ui_parse_obsline(struct argp_option *option, char *arg,
 
       /* Only one number must be given as second argument. */
       if(obsline==NULL || obsline->size!=1)
-        error(EXIT_FAILURE, 0, "Wrong format given to `--obsline'. Only "
+        error(EXIT_FAILURE, 0, "Wrong format given to '--obsline'. Only "
               "two values (line name/wavelengh, and observed wavelengh) "
               "must be given to it");
 
@@ -318,14 +319,14 @@ ui_parse_obsline(struct argp_option *option, char *arg,
          put that number in a second element of the array. */
       dptr=&manualwl;
       if( gal_type_from_string((void **)(&dptr), linename, GAL_TYPE_FLOAT64) )
-        { /* `linename' isn't a number. */
+        { /* 'linename' isn't a number. */
           obsline->status=gal_speclines_line_code(linename);
           if(obsline->status==GAL_SPECLINES_INVALID)
-            error(EXIT_FAILURE, 0, "`%s' not recognized as a standard spectral "
+            error(EXIT_FAILURE, 0, "'%s' not recognized as a standard spectral "
                   "line name", linename);
         }
       else
-        { /* `linename' is a number. */
+        { /* 'linename' is a number. */
 
           /* Allocate the new space. */
           tobsline=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &two, NULL,
@@ -343,7 +344,7 @@ ui_parse_obsline(struct argp_option *option, char *arg,
           obsline=tobsline;
         }
 
-      /* Point `option->value' to the dataset. */
+      /* Point 'option->value' to the dataset. */
       *(gal_data_t **)(option->value) = obsline;
 
       /* Our job is done, return NULL. */
@@ -374,24 +375,45 @@ ui_parse_obsline(struct argp_option *option, char *arg,
 /***************       Sanity Check         *******************/
 /**************************************************************/
 /* Read and check ONLY the options. When arguments are involved, do the
-   check in `ui_check_options_and_arguments'. */
+   check in 'ui_check_options_and_arguments'. */
 static void
 ui_read_check_only_options(struct cosmiccalparams *p)
 {
+  int hasobsline=p->obsline!=NULL;
+  int hasredshift=!isnan(p->redshift);
+  int hasvelocity=!isnan(p->velocity);
   double sum = p->olambda + p->omatter + p->oradiation;
 
   /* Check if the density fractions add up to 1 (within floating point
      error). */
   if( sum > (1+1e-8) || sum < (1-1e-8) )
     error(EXIT_FAILURE, 0, "sum of fractional densities is not 1, but %.8f. "
-          "The cosmological constant (`olambda'), matter (`omatter') "
-          "and radiation (`oradiation') densities are given as %.8f, %.8f, "
+          "The cosmological constant ('olambda'), matter ('omatter') "
+          "and radiation ('oradiation') densities are given as %.8f, %.8f, "
           "%.8f", sum, p->olambda, p->omatter, p->oradiation);
 
-  /* Make sure that `--redshift' and `--obsline' aren't called together. */
-  if(!isnan(p->redshift) && p->obsline)
-    error(EXIT_FAILURE, 0, "`--redshift' and `--obsline' cannot be called "
-          "together");
+  /* Make sure that '--listlines' and '--listlinesatz' aren't called
+     together. */
+  if(p->listlines && p->listlinesatz)
+    error(EXIT_FAILURE, 0, "'--listlines' and '--listlinesatz' can't be "
+          "called together");
+
+  /* Make sure that atleast one of '--redshift', '--obsline', or
+     '--velocity' are given (different ways to set/estimate the
+     redshift). However, when '--listlines' and/or '--printparams' are
+     called (i.e., when they have a non-zero value) we don't need a
+     redshift all and the program can run without any of the three options
+     above. */
+  if(isnan(p->redshift) && p->obsline==NULL && isnan(p->velocity)
+     && p->listlines==0 && p->cp.printparams==0)
+    error(EXIT_FAILURE, 0, "no redshift/velocity specified! Please use "
+          "'--redshift', '--velocity' (in km/s), or '--obsline' to specify "
+          "a redshift, run with '--help' for more");
+
+  /* Make sure that '--redshift' and '--obsline' aren't called together. */
+  if( (hasredshift + hasvelocity + hasobsline) > 1 )
+    error(EXIT_FAILURE, 0, "only one of '--redshift', '--velocity', or "
+          "'--obsline' can be called in each run");
 }
 
 
@@ -417,22 +439,74 @@ ui_read_check_only_options(struct cosmiccalparams *p)
 /***************       Preparations         *******************/
 /**************************************************************/
 static void
+ui_list_lines(struct cosmiccalparams *p)
+{
+  size_t i;
+
+  /* Print basic information. Note that '--listlinesatz' is requested, also
+     print the redshift used. */
+  printf("# %s\n", PROGRAM_STRING);
+  if(p->listlinesatz)
+    printf("# Assumed redshift: %g\n", p->redshift);
+
+  /* Print column metadata. */
+  printf("# Column 1: Wavelength [Angstrom,f32] %s.\n",
+         ( p->listlinesatz
+           ? "Line wavelength at assumed redshift"
+           : "Rest frame wavelength of the line"));
+  printf("# Column 2: Name       [name,  str10] Line name in Gnuastro.\n");
+
+  /* Print the line information. */
+  for(i=1;i<GAL_SPECLINES_INVALID_MAX;++i)
+    printf("%-15g%s\n",
+           ( p->listlinesatz
+             ? ( gal_speclines_line_angstrom(i) * (1+p->redshift) )
+             : gal_speclines_line_angstrom(i) ),
+           gal_speclines_line_name(i));
+
+  /* Abort the program. */
+  exit(EXIT_SUCCESS);
+}
+
+
+
+
+
+static void
 ui_preparations(struct cosmiccalparams *p)
 {
   double *obsline = p->obsline ? p->obsline->array : NULL;
 
-  /* If `--obsline' has been given, set the redshift based on it. */
+  /* If '--listlines' is given, print them and abort the program
+     successfully, don't continue with the preparations. Note that
+     '--listlines' is the rest-frame lines. So we don't need any
+     redshift. */
+  if(p->listlines)
+    ui_list_lines(p);
+
+  /* If '--obsline' has been given, set the redshift based on it (it can't
+     be called with '--velocity'). */
   if(p->obsline)
     p->redshift = ( (p->obsline->status==GAL_SPECLINES_INVALID)
                     ? gal_speclines_line_redshift(obsline[0], obsline[1])
                     : gal_speclines_line_redshift_code(obsline[0],
                                                        p->obsline->status) );
 
+  /* If '--velocity' has been given, set the redshift based on it (it can't
+     be called with '--obsline'). */
+  if( !isnan(p->velocity) )
+    p->redshift = gal_cosmology_z_from_velocity(p->velocity);
+
   /* Currently GSL will fail for z=0. So if a value of zero is given (bug
      #56299). As a work-around, in such cases, we'll change it to an
-     extremely small value. NOTE: This has to be after the `obsline'
+     extremely small value. NOTE: This has to be after the 'obsline'
      check.*/
   if(p->redshift==0.0f) p->redshift=MAIN_REDSHIFT_ZERO;
+
+  /* Now that we have the redshift, we can print the 'listlinesatz'
+     option. */
+  if(p->listlinesatz)
+    ui_list_lines(p);
 
   /* The list is filled out in a first-in-last-out order. By the time
      control reaches here, the list is finalized. So we should just reverse
@@ -469,9 +543,9 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct cosmiccalparams *p)
   struct gal_options_common_params *cp=&p->cp;
 
 
-  /* Include the parameters necessary for argp from this program (`args.h')
-     and for the common options to all Gnuastro (`commonopts.h'). We want
-     to directly put the pointers to the fields in `p' and `cp', so we are
+  /* Include the parameters necessary for argp from this program ('args.h')
+     and for the common options to all Gnuastro ('commonopts.h'). We want
+     to directly put the pointers to the fields in 'p' and 'cp', so we are
      simply including the header here to not have to use long macros in
      those headers which make them hard to read and modify. This also helps
      in having a clean environment: everything in those headers is only

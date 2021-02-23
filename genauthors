@@ -16,7 +16,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015-2019, Free Software Foundation, Inc.
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -78,13 +78,13 @@ fi
 
 
 # Set the version number. Note that this script is also run at the start of
-# the bootstrapping process. At that point we don't have the `.version'
-# file, so we will just rely on `.git describe'. Later during `make', this
-# scripot will be run again to set it using `git-version-gen'.
+# the bootstrapping process. At that point we don't have the '.version'
+# file, so we will just rely on '.git describe'. Later during 'make', this
+# scripot will be run again to set it using 'git-version-gen'.
 if [ -f "$1/.version" ]; then
     gnuastroversion="Gnuastro "$(cat "$1/.version")
 else
-    gnuastroversion=$(git --git-dir=$1/.git describe)
+    gnuastroversion=$(git --git-dir=$1/.git describe --always)
 fi
 
 

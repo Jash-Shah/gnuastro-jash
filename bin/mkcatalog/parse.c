@@ -5,7 +5,7 @@ MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2018-2019, Free Software Foundation, Inc.
+Copyright (C) 2018-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -169,7 +169,7 @@ parse_spectrum_pepare(struct mkcatalog_passparams *pp, size_t *start_end_inc,
                          p->values->unit, "Error in SUM_OTHER column.");
 
   /* Fill up the contents of the first element (note that the first
-     `gal_data_t' is actually in an array, so the skeleton is already
+     'gal_data_t' is actually in an array, so the skeleton is already
      allocated, we just have to allocate its contents. */
   gal_data_initialize(pp->spectrum, NULL, p->specsliceinfo->type, 1,
                       &numslices, NULL, 0, p->cp.minmapsize,
@@ -252,8 +252,8 @@ parse_spectrum_end(struct mkcatalog_passparams *pp, gal_data_t *xybin)
       osearr[i] = sqrt( osearr[i] );
     }
 
-  /* Convert the `double' type columns to `float'. The extra precision of
-     `double' was necessary when we were summing values in each slice. But
+  /* Convert the 'double' type columns to 'float'. The extra precision of
+     'double' was necessary when we were summing values in each slice. But
      afterwards, it is not necessary at all (the measurement error is much
      larger than a double-precision floating point number (15
      decimals). But the extra space gained (double) is very useful in not
@@ -271,7 +271,7 @@ parse_spectrum_end(struct mkcatalog_passparams *pp, gal_data_t *xybin)
   parse_spectrum_uint32_to_best_type(&oarea);
 
   /* List the datasets and write them into the pointer for this object
-     (exact copy of the statement in `parse_spectrum_pepare'). */
+     (exact copy of the statement in 'parse_spectrum_pepare'). */
   pp->spectrum->next->next                       = area;
   area->next                                     = sum;
   area->next->next                               = esum;
@@ -325,14 +325,14 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
   osarr  = area->next->next->next->next->next->next->array;
   osearr = area->next->next->next->next->next->next->next->array;
 
-  /* If tile-id isn't necessary, set `tid' to a blank value. */
+  /* If tile-id isn't necessary, set 'tid' to a blank value. */
   tid = (p->std && p->std->size>1 && st_std == NULL) ? 0 : GAL_BLANK_SIZE_T;
 
   /* Parse each contiguous patch of memory covered by this object. */
   while( start_end_inc[0] + increment <= start_end_inc[1] )
     {
       /* Set the contiguous range to parse. The pixel-to-pixel counting
-         along the fastest dimension will be done over the `O' pointer. */
+         along the fastest dimension will be done over the 'O' pointer. */
       if( p->values        ) V  = st_v   + increment;
       if( p->std && st_std ) ST = st_std + increment;
       OO = ( O = st_o + increment ) + pp->tile->dsize[ndim-1];
@@ -357,7 +357,7 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
 
                   /* Get the error associated with this voxel. Note that if
                      we are given a variance dataset already, there is no
-                     need to use `st*st', we can directly use `sval'. */
+                     need to use 'st*st', we can directly use 'sval'. */
                   sval = st_std ? *ST : (p->std->size>1?std[tid]:std[0]);
                   st = p->variance ? sqrt(sval) : sval;
                   var = (p->variance ? sval : st*st) + fabs(*V);
@@ -365,8 +365,8 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
               else var = NAN;
 
 
-              /* Projected spectra: see if we have a value of `2' in the
-                 `xybin' array (showing that there is atleast one non-blank
+              /* Projected spectra: see if we have a value of '2' in the
+                 'xybin' array (showing that there is atleast one non-blank
                  element there over the whole spectrum.  */
               ++nproj;
               parr [ sind ] += *V;
@@ -402,8 +402,8 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
       increment += ( gal_tile_block_increment(p->objects, tsize,
                                               num_increment++, NULL) );
 
-      /* Increment the slice number, `sind', and reset the projection (2D)
-         index `pind' if we have just finished parsing a slice. */
+      /* Increment the slice number, 'sind', and reset the projection (2D)
+         index 'pind' if we have just finished parsing a slice. */
       if( (num_increment-1)%pp->tile->dsize[1]==0 )
         {
           /* If there was no measurement, set NaN for the values and their
@@ -422,7 +422,7 @@ parse_spectrum(struct mkcatalog_passparams *pp, gal_data_t *xybin)
   free(tsize);
 
   /* For a check.
-  gal_table_write(pp->spectrum, NULL, GAL_TABLE_FORMAT_BFITS,
+  gal_table_write(pp->spectrum, NULL, NULL, GAL_TABLE_FORMAT_BFITS,
                   "spectrum.fits", "SPECTRUM", 0);
   */
 }
@@ -441,13 +441,14 @@ parse_objects(struct mkcatalog_passparams *pp)
   double *oi=pp->oi;
   gal_data_t *xybin=NULL;
   size_t *tsize=pp->tile->dsize;
-  uint8_t *xybinarr=NULL, *u, *uf;
-  float var, sval, *V=NULL, *SK=NULL, *ST=NULL;
+  uint8_t *u, *uf, goodvalue, *xybinarr=NULL;
+  double minima_v=FLT_MAX, maxima_v=-FLT_MAX;
   size_t d, pind=0, increment=0, num_increment=1;
   int32_t *O, *OO, *C=NULL, *objarr=p->objects->array;
+  float var, sval, varval, skyval, *V=NULL, *SK=NULL, *ST=NULL;
   float *std=p->std?p->std->array:NULL, *sky=p->sky?p->sky->array:NULL;
 
-  /* If tile processing isn't necessary, set `tid' to a blank value. */
+  /* If tile processing isn't necessary, set 'tid' to a blank value. */
   size_t tid = ( ( (p->sky     && p->sky->size>1 && pp->st_sky == NULL )
                    || ( p->std && p->std->size>1 && pp->st_std == NULL ) )
                  ? 0 : GAL_BLANK_SIZE_T );
@@ -461,15 +462,23 @@ parse_objects(struct mkcatalog_passparams *pp)
   /* If any coordinate columns are requested. */
   size_t *c = (
                /* Coordinate-related columns. */
-               ( oif[    OCOL_GX   ]
-                 || oif[ OCOL_GY   ]
-                 || oif[ OCOL_GZ   ]
-                 || oif[ OCOL_VX   ]
-                 || oif[ OCOL_VY   ]
-                 || oif[ OCOL_VZ   ]
-                 || oif[ OCOL_C_GX ]
-                 || oif[ OCOL_C_GY ]
-                 || oif[ OCOL_C_GZ ]
+               ( oif[    OCOL_GX    ]
+                 || oif[ OCOL_GY    ]
+                 || oif[ OCOL_GZ    ]
+                 || oif[ OCOL_VX    ]
+                 || oif[ OCOL_VY    ]
+                 || oif[ OCOL_VZ    ]
+                 || oif[ OCOL_C_GX  ]
+                 || oif[ OCOL_C_GY  ]
+                 || oif[ OCOL_C_GZ  ]
+                 || oif[ OCOL_MINVX ]
+                 || oif[ OCOL_MAXVX ]
+                 || oif[ OCOL_MINVY ]
+                 || oif[ OCOL_MAXVY ]
+                 || oif[ OCOL_MINVZ ]
+                 || oif[ OCOL_MAXVZ ]
+                 || oif[ OCOL_MINVNUM ]
+                 || oif[ OCOL_MAXVNUM ]
                  || sc
                  /* When the sky and its STD are tiles, we'll also need
                     the coordinate to find which tile a pixel belongs
@@ -477,7 +486,6 @@ parse_objects(struct mkcatalog_passparams *pp)
                  || tid==GAL_BLANK_SIZE_T )
                ? gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__, "c")
                : NULL );
-
 
   /* If an XY projection area is necessary, we'll need to allocate an array
      to keep the projected space. */
@@ -491,12 +499,11 @@ parse_objects(struct mkcatalog_passparams *pp)
       xybinarr=xybin->array;
     }
 
-
   /* Parse each contiguous patch of memory covered by this object. */
   while( pp->start_end_inc[0] + increment <= pp->start_end_inc[1] )
     {
       /* Set the contiguous range to parse. The pixel-to-pixel counting
-         along the fastest dimension will be done over the `O' pointer. */
+         along the fastest dimension will be done over the 'O' pointer. */
       if( p->clumps            ) C  = pp->st_c   + increment;
       if( p->values            ) V  = pp->st_v   + increment;
       if( p->sky && pp->st_sky ) SK = pp->st_sky + increment;
@@ -563,18 +570,66 @@ parse_objects(struct mkcatalog_passparams *pp)
 
 
               /* Value related measurements. */
+              goodvalue=0;
               if( p->values && !( p->hasblank && isnan(*V) ) )
                 {
+                  /* For the standard-deviation measurements later. */
+                  goodvalue=1;
+
                   /* General flux summations. */
                   if(xybin) xybinarr[ pind ]=2;
-                  if(oif[ OCOL_NUM    ]) oi[ OCOL_NUM     ]++;
-                  if(oif[ OCOL_SUM    ]) oi[ OCOL_SUM     ] += *V;
+                  if(oif[ OCOL_NUM ]) oi[ OCOL_NUM ]++;
+                  if(oif[ OCOL_SUM ]) oi[ OCOL_SUM ] += *V;
 
                   /* Get the necessary clump information. */
                   if(p->clumps && *C>0)
                     {
                       if(oif[ OCOL_C_NUM ]) oi[ OCOL_C_NUM ]++;
                       if(oif[ OCOL_C_SUM ]) oi[ OCOL_C_SUM ] += *V;
+                    }
+
+                  /* Get the extrema of the values. Note that if the minima
+                     or maxima value's coordinates are requested in any
+                     dimension, then 'OCOL_MINVNUM' or 'OCOL_MAXVNUM' will
+                     be activated). */
+                  if( oif[ OCOL_MINVNUM ] && *V<=minima_v )
+                    {
+                      /* If the value is smaller than the smallest found so
+                         far, reset the counter to one, and reset the sum
+                         of positions this one's position. */
+                      if( *V<minima_v )
+                        {
+                          minima_v = *V;
+                          oi[ OCOL_MINVNUM ]=1;
+                          if(oif[OCOL_MINVX]) oi[ OCOL_MINVX ] = c[ ndim-1 ]+1;
+                          if(oif[OCOL_MINVY]) oi[ OCOL_MINVY ] = c[ ndim-2 ]+1;
+                          if(oif[OCOL_MINVZ]) oi[ OCOL_MINVZ ] = c[ ndim-3 ]+1;
+                        }
+                      else
+                        {
+                          oi[ OCOL_MINVNUM ]++;
+                          if(oif[OCOL_MINVX]) oi[ OCOL_MINVX ] += c[ ndim-1 ]+1;
+                          if(oif[OCOL_MINVY]) oi[ OCOL_MINVY ] += c[ ndim-2 ]+1;
+                          if(oif[OCOL_MINVZ]) oi[ OCOL_MINVZ ] += c[ ndim-3 ]+1;
+                        }
+                    }
+                  if( oif[ OCOL_MAXVNUM ] && *V>=maxima_v )
+                    {
+                      if( *V>maxima_v )
+                        {
+                          maxima_v = *V;
+                          oi[ OCOL_MAXVNUM ]=1;
+                          if(oif[OCOL_MAXVX]) oi[ OCOL_MAXVX ] = c[ ndim-1 ]+1;
+                          if(oif[OCOL_MAXVY]) oi[ OCOL_MAXVY ] = c[ ndim-2 ]+1;
+                          if(oif[OCOL_MAXVZ]) oi[ OCOL_MAXVZ ] = c[ ndim-3 ]+1;
+                        }
+                      else
+                        {
+                          oi[ OCOL_MAXVNUM ]++;
+                          if(oif[OCOL_MAXVX]) oi[ OCOL_MAXVX ] += c[ ndim-1 ]+1;
+                          if(oif[OCOL_MAXVY]) oi[ OCOL_MAXVY ] += c[ ndim-2 ]+1;
+                          if(oif[OCOL_MAXVZ]) oi[ OCOL_MAXVZ ] += c[ ndim-3 ]+1;
+                        }
                     }
 
                   /* For flux weighted centers, we can only use positive
@@ -608,13 +663,19 @@ parse_objects(struct mkcatalog_passparams *pp)
 
 
               /* Sky value based measurements. */
-              if(p->sky)
-                if(oif[ OCOL_SUMSKY ])
-                  oi[ OCOL_SUMSKY  ] += ( pp->st_sky
-                                          ? *SK             /* Full array   */
-                                          : ( p->sky->size>1
-                                              ? sky[tid]    /* Tile         */
-                                              : sky[0] ) ); /* Single value */
+              if(p->sky && oif[ OCOL_SUMSKY ])
+                {
+                  skyval = ( pp->st_sky
+                             ? (isnan(*SK)?0:*SK)               /* Full array  */
+                             : ( p->sky->size>1
+                                 ? (isnan(sky[tid])?0:sky[tid]) /* Tile        */
+                                 : sky[0] ) );                  /* Single value*/
+                  if(!isnan(skyval))
+                    {
+                      oi[ OCOL_NUMSKY  ]++;
+                      oi[ OCOL_SUMSKY  ] += skyval;
+                    }
+                }
 
 
               /* Sky standard deviation based measurements.*/
@@ -622,20 +683,26 @@ parse_objects(struct mkcatalog_passparams *pp)
                 {
                   sval = pp->st_std ? *ST : (p->std->size>1?std[tid]:std[0]);
                   var = p->variance ? sval : sval*sval;
-                  if(oif[ OCOL_SUMVAR ]) oi[ OCOL_SUMVAR  ] += var;
+                  if(oif[ OCOL_SUMVAR ] && (!isnan(var)))
+                    {
+                      oi[ OCOL_NUMVAR  ]++;
+                      oi[ OCOL_SUMVAR  ] += var;
+                    }
                   /* For each pixel, we have a sky contribution to the
                      counts and the signal's contribution. The standard
-                     deviation in the sky is simply `sval', but the
+                     deviation in the sky is simply 'sval', but the
                      standard deviation of the signal (independent of the
-                     sky) is `sqrt(*V)'. Therefore the total variance of
+                     sky) is 'sqrt(*V)'. Therefore the total variance of
                      this pixel is the variance of the sky added with the
                      absolute value of its sky-subtracted flux. We use the
                      absolute value, because especially as the signal gets
                      noisy there will be negative values, and we don't want
                      them to decrease the variance. */
-                  if(oif[ OCOL_SUM_VAR ])
-                    oi[ OCOL_SUM_VAR ] += ( (p->variance ? var : sval)
-                                            + fabs(*V) );
+                  if(oif[ OCOL_SUM_VAR ] && goodvalue)
+                    {
+                      varval=p->variance ? var : sval;
+                      if(!isnan(varval)) oi[ OCOL_SUM_VAR ] += varval + fabs(*V);
+                    }
                 }
             }
 
@@ -653,7 +720,7 @@ parse_objects(struct mkcatalog_passparams *pp)
                                               num_increment++, NULL) );
 
       /* If a 2D projection is requested, see if we should initialize (set
-         to zero) the projection-index (`pind') not. */
+         to zero) the projection-index ('pind') not. */
       if(xybin && (num_increment-1)%tsize[1]==0 )
         pind=0;
     }
@@ -694,6 +761,43 @@ parse_objects(struct mkcatalog_passparams *pp)
 
 
 
+/* To keep the main function easier to read. */
+static void *
+parse_init_extrema(uint8_t *cif, uint8_t type, size_t num, int max1min0)
+{
+  void *out;
+  double *out_d;
+  size_t i, *out_s;
+
+  /* Allocate the array. */
+  out=gal_pointer_allocate(type, num, 0, __func__, "out");
+
+  /* Initialize the array. */
+  switch(type)
+    {
+    case GAL_TYPE_FLOAT64:
+      out_d=out;
+      for(i=0;i<num;++i) out_d[i]= max1min0 ? -FLT_MAX : FLT_MAX;
+      break;
+    case GAL_TYPE_SIZE_T:
+      out_s=out;
+      for(i=0;i<num;++i) out_s[i]= max1min0 ? 0 : GAL_BLANK_SIZE_T;
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+            "the problem. Type code %d isn't recognized", __func__,
+            PACKAGE_BUGREPORT, type);
+    }
+
+  /* Return the allocated array. */
+  return out;
+}
+
+
+
+
+
+
 /* Macro to help in finding the minimum and maximum coordinates. */
 #define CMIN(COL, DIM) ( ci[ CCOL_NUMALL ]==1.0f                        \
                          ? (c[ DIM ]+1)                                 \
@@ -704,9 +808,6 @@ parse_objects(struct mkcatalog_passparams *pp)
                          : ( (c[ DIM ]+1) > ci[ COL ]                   \
                              ? (c[ DIM ]+1) : ci[ COL ] ) )
 
-
-
-
 /* Parse over the clumps within an object.  */
 void
 parse_clumps(struct mkcatalog_passparams *pp)
@@ -716,16 +817,17 @@ parse_clumps(struct mkcatalog_passparams *pp)
 
   double *ci, *cir;
   gal_data_t *xybin=NULL;
-  size_t *tsize=pp->tile->dsize;
   int32_t *O, *OO, *C=NULL, nlab;
-  uint8_t *u, *uf, *cif=p->ciflag;
-  float var, sval, *V=NULL, *SK=NULL, *ST=NULL;
+  size_t cind, *tsize=pp->tile->dsize;
+  double *minima_v=NULL, *maxima_v=NULL;
+  uint8_t *u, *uf, goodvalue, *cif=p->ciflag;
   size_t nngb=gal_dimension_num_neighbors(ndim);
   size_t i, ii, d, pind=0, increment=0, num_increment=1;
+  float var, sval, varval, skyval, *V=NULL, *SK=NULL, *ST=NULL;
   int32_t *objects=p->objects->array, *clumps=p->clumps->array;
   float *std=p->std?p->std->array:NULL, *sky=p->sky?p->sky->array:NULL;
 
-  /* If tile processing isn't necessary, set `tid' to a blank value. */
+  /* If tile processing isn't necessary, set 'tid' to a blank value. */
   size_t tid = ( ( (p->sky     && p->sky->size>1 && pp->st_sky == NULL )
                    || ( p->std && p->std->size>1 && pp->st_std == NULL ) )
                  ? 0 : GAL_BLANK_SIZE_T );
@@ -737,18 +839,26 @@ parse_clumps(struct mkcatalog_passparams *pp)
                  : NULL );
 
   /* If any coordinate columns are requested. */
-  size_t *c = ( ( cif[    CCOL_GX ]
-                  || cif[ CCOL_GY ]
-                  || cif[ CCOL_GZ ]
-                  || cif[ CCOL_VX ]
-                  || cif[ CCOL_VY ]
-                  || cif[ CCOL_VZ ]
-                  || cif[ CCOL_MINX ]
-                  || cif[ CCOL_MAXX ]
-                  || cif[ CCOL_MINY ]
-                  || cif[ CCOL_MAXY ]
-                  || cif[ CCOL_MINZ ]
-                  || cif[ CCOL_MAXZ ]
+  size_t *c = ( ( cif[    CCOL_GX    ]
+                  || cif[ CCOL_GY    ]
+                  || cif[ CCOL_GZ    ]
+                  || cif[ CCOL_VX    ]
+                  || cif[ CCOL_VY    ]
+                  || cif[ CCOL_VZ    ]
+                  || cif[ CCOL_MINX  ]
+                  || cif[ CCOL_MAXX  ]
+                  || cif[ CCOL_MINY  ]
+                  || cif[ CCOL_MAXY  ]
+                  || cif[ CCOL_MINZ  ]
+                  || cif[ CCOL_MAXZ  ]
+                  || cif[ CCOL_MINVX ]
+                  || cif[ CCOL_MAXVX ]
+                  || cif[ CCOL_MINVY ]
+                  || cif[ CCOL_MAXVY ]
+                  || cif[ CCOL_MINVZ ]
+                  || cif[ CCOL_MAXVZ ]
+                  || cif[ CCOL_MINVNUM ]
+                  || cif[ CCOL_MAXVNUM ]
                   || sc
                   || tid==GAL_BLANK_SIZE_T )
                 ? gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim, 0, __func__,
@@ -776,12 +886,19 @@ parse_clumps(struct mkcatalog_passparams *pp)
                             NULL, NULL, NULL);
     }
 
+  /* For the extrema columns. */
+  if( cif[    CCOL_MINVNUM ] || cif[ CCOL_MINVX ]
+      || cif[ CCOL_MINVX   ] || cif[ CCOL_MINVZ ] )
+    minima_v=parse_init_extrema(cif, GAL_TYPE_FLOAT64, pp->clumpsinobj, 0);
+  if( cif[    CCOL_MAXVNUM ] || cif[ CCOL_MAXVX ]
+      || cif[ CCOL_MAXVY   ] || cif[ CCOL_MAXVZ ] )
+    maxima_v=parse_init_extrema(cif, GAL_TYPE_FLOAT64, pp->clumpsinobj, 1);
 
   /* Parse each contiguous patch of memory covered by this object. */
   while( pp->start_end_inc[0] + increment <= pp->start_end_inc[1] )
     {
       /* Set the contiguous range to parse. The pixel-to-pixel counting
-         along the fastest dimension will be done over the `O' pointer. */
+         along the fastest dimension will be done over the 'O' pointer. */
       C = pp->st_c + increment;
       if( p->values            ) V  = pp->st_v   + increment;
       if( p->sky && pp->st_sky ) SK = pp->st_sky + increment;
@@ -800,7 +917,8 @@ parse_clumps(struct mkcatalog_passparams *pp)
                 {
                   /* Pointer to make things easier. Note that the clump
                      labels start from 1, but the array indexs from 0.*/
-                  ci=&pp->ci[ (*C-1) * CCOL_NUMCOLS ];
+                  cind = *C-1;
+                  ci=&pp->ci[ cind * CCOL_NUMCOLS ];
 
                   /* Add to the area of this object. */
                   if( cif[ CCOL_NUMALL ]
@@ -809,7 +927,7 @@ parse_clumps(struct mkcatalog_passparams *pp)
                       || cif[ CCOL_MINZ ] || cif[ CCOL_MAXZ ] )
                     ci[ CCOL_NUMALL ]++;
                   if(cif[ CCOL_NUMALLXY ])
-                    ((uint8_t *)(xybin[*C-1].array))[ pind ] = 1;
+                    ((uint8_t *)(xybin[cind].array))[ pind ] = 1;
 
                   /* Raw-position related measurements. */
                   if(c)
@@ -853,15 +971,59 @@ parse_clumps(struct mkcatalog_passparams *pp)
                         }
                     }
 
-                  /* Value related measurements, see `parse_objects' for
+                  /* Value related measurements, see 'parse_objects' for
                      comments. */
+                  goodvalue=0;
                   if( p->values && !( p->hasblank && isnan(*V) ) )
                     {
+                      /* For the standard-deviation measurement. */
+                      goodvalue=1;
+
                       /* Fill in the necessary information. */
                       if(cif[ CCOL_NUM   ]) ci[ CCOL_NUM ]++;
                       if(cif[ CCOL_SUM   ]) ci[ CCOL_SUM ] += *V;
                       if(cif[ CCOL_NUMXY ])
-                        ((uint8_t *)(xybin[*C-1].array))[ pind ] = 2;
+                        ((uint8_t *)(xybin[cind].array))[ pind ] = 2;
+
+                      /* Minimum/maximum pixel positions. */
+                      if( cif[ CCOL_MINVNUM ] && *V<=minima_v[cind] )
+                        {
+                          if( *V<minima_v[cind] )
+                            {
+                              minima_v[cind] = *V;
+                              ci[ CCOL_MINVNUM ]=1;
+                              if(cif[CCOL_MINVX]) ci[ CCOL_MINVX ] = c[ ndim-1 ]+1;
+                              if(cif[CCOL_MINVY]) ci[ CCOL_MINVY ] = c[ ndim-2 ]+1;
+                              if(cif[CCOL_MINVZ]) ci[ CCOL_MINVZ ] = c[ ndim-3 ]+1;
+                            }
+                          else
+                            {
+                              ci[ CCOL_MINVNUM ]++;
+                              if(cif[CCOL_MINVX]) ci[ CCOL_MINVX ] += c[ ndim-1 ]+1;
+                              if(cif[CCOL_MINVY]) ci[ CCOL_MINVY ] += c[ ndim-2 ]+1;
+                              if(cif[CCOL_MINVZ]) ci[ CCOL_MINVZ ] += c[ ndim-3 ]+1;
+                            }
+                        }
+                      if( cif[ CCOL_MAXVNUM ] && *V>=maxima_v[cind] )
+                        {
+                          if( *V>maxima_v[cind] )
+                            {
+                              maxima_v[cind] = *V;
+                              ci[ CCOL_MAXVNUM ]=1;
+                              if(cif[CCOL_MAXVX]) ci[ CCOL_MAXVX ] = c[ ndim-1 ]+1;
+                              if(cif[CCOL_MAXVY]) ci[ CCOL_MAXVY ] = c[ ndim-2 ]+1;
+                              if(cif[CCOL_MAXVZ]) ci[ CCOL_MAXVZ ] = c[ ndim-3 ]+1;
+                            }
+                          else
+                            {
+                              ci[ CCOL_MAXVNUM ]++;
+                              if(cif[CCOL_MAXVX]) ci[ CCOL_MAXVX ] += c[ ndim-1 ]+1;
+                              if(cif[CCOL_MAXVY]) ci[ CCOL_MAXVY ] += c[ ndim-2 ]+1;
+                              if(cif[CCOL_MAXVZ]) ci[ CCOL_MAXVZ ] += c[ ndim-3 ]+1;
+                            }
+                        }
+
+                      /* Columns that need positive values. */
                       if( *V > 0.0f )
                         {
                           if(cif[ CCOL_NUMWHT ]) ci[ CCOL_NUMWHT ]++;
@@ -882,26 +1044,39 @@ parse_clumps(struct mkcatalog_passparams *pp)
                     }
 
                   /* Sky based measurements. */
-                  if(p->sky)
-                    if(cif[ CCOL_SUMSKY ])
-                      ci[ CCOL_SUMSKY  ] += ( pp->st_sky
-                                              ? *SK             /* Full */
-                                              : ( p->sky->size>1
-                                                  ? sky[tid]    /* Tile */
-                                                  : sky[0] ) ); /* 1 value */
+                  if(p->sky && cif[ CCOL_SUMSKY ])
+                    {
+                      skyval = ( pp->st_sky
+                                 ? *SK             /* Full. */
+                                 : ( p->sky->size>1
+                                     ? sky[tid]    /* Tile. */
+                                     : sky[0] ) ); /* 1 value. */
+                      if(!isnan(skyval))
+                        {
+                          ci[ CCOL_NUMSKY  ]++;
+                          ci[ CCOL_SUMSKY  ] += skyval;
+                        }
+                    }
 
                   /* Sky Standard deviation based measurements, see
-                     `parse_objects' for comments. */
+                     'parse_objects' for comments. */
                   if(p->std)
                     {
                       sval = ( pp->st_std
                                ? *ST
                                : (p->std->size>1 ? std[tid] : std[0]) );
                       var = p->variance ? sval : sval*sval;
-                      if(cif[ CCOL_SUMVAR  ]) ci[ CCOL_SUMVAR ] += var;
-                      if(cif[ CCOL_SUM_VAR ])
-                        ci[ CCOL_SUM_VAR ] += ( (p->variance ? var : sval)
-                                                + fabs(*V) );
+                      if(cif[ CCOL_SUMVAR  ] && (!isnan(var)))
+                        {
+                          ci[ CCOL_NUMVAR ]++;
+                          ci[ CCOL_SUMVAR ] += var;
+                        }
+                      if(cif[ CCOL_SUM_VAR ] && goodvalue)
+                        {
+                          varval=p->variance ? var : sval;
+                          if(!isnan(varval))
+                            ci[ CCOL_SUM_VAR ] += varval + fabs(*V);
+                        }
                     }
                 }
 
@@ -914,10 +1089,10 @@ parse_clumps(struct mkcatalog_passparams *pp)
                   /* We are on a diffuse (possibly a river) pixel. So the
                      value of this pixel has to be added to any of the
                      clumps in touches. But since it might touch a labeled
-                     region more than once, we use `ngblabs' to keep track
+                     region more than once, we use 'ngblabs' to keep track
                      of which label we have already added its value
-                     to. `ii' is the number of different labels this river
-                     pixel has already been considered for. `ngblabs' will
+                     to. 'ii' is the number of different labels this river
+                     pixel has already been considered for. 'ngblabs' will
                      keep the list labels. */
                   ii=0;
                   memset(ngblabs, 0, nngb*sizeof *ngblabs);
@@ -986,42 +1161,169 @@ parse_clumps(struct mkcatalog_passparams *pp)
                                               num_increment++, NULL) );
 
       /* If a 2D projection is requested, see if we should initialize (set
-         to zero) the projection-index (`pind') not. */
+         to zero) the projection-index ('pind') not. */
       if(xybin && (num_increment-1) % tsize[1]==0 )
         pind=0;
     }
 
 
-  /* Write the projected area columns. */
-  if(xybin)
-    for(i=0;i<pp->clumpsinobj;++i)
-      {
-        /* Pointer to make things easier. */
-        ci=&pp->ci[ i * CCOL_NUMCOLS ];
+  /* Write the higher-level columns. */
+  for(i=0;i<pp->clumpsinobj;++i)
+    {
+      /* Pointer to make things easier. */
+      ci=&pp->ci[ i * CCOL_NUMCOLS ];
 
-        /* Any non-zero pixel must be set for NUMALLXY. */
-        uf=(u=xybin[i].array)+xybin[i].size;
-        do
-          if(*u)
-            {
-              if(cif[ CCOL_NUMALLXY ]          ) ci[ CCOL_NUMALLXY ]++;
-              if(cif[ CCOL_NUMXY    ] && *u==2 ) ci[ CCOL_NUMXY    ]++;
-            }
-        while(++u<uf);
+      /* Write the XY projection columns. */
+      if(xybin)
+        {
+          /* Any non-zero pixel must be set for NUMALLXY. */
+          uf=(u=xybin[i].array)+xybin[i].size;
+          do
+            if(*u)
+              {
+                if(cif[ CCOL_NUMALLXY ]          ) ci[ CCOL_NUMALLXY ]++;
+                if(cif[ CCOL_NUMXY    ] && *u==2 ) ci[ CCOL_NUMXY    ]++;
+              }
+          while(++u<uf);
 
-        /* For a check on the projected 2D areas. */
-        if(xybin && pp->object==2)
-          gal_fits_img_write(&xybin[i], "xybin.fits", NULL, NULL);
+          /* For a check on the projected 2D areas. */
+          if(xybin && pp->object==2)
+            gal_fits_img_write(&xybin[i], "xybin.fits", NULL, NULL);
 
-      }
+        }
+    }
 
 
   /* Clean up. */
-  if(c)       free(c);
-  if(sc)      free(sc);
-  if(dinc)    free(dinc);
+  if(c) free(c);
+  if(sc) free(sc);
+  if(dinc) free(dinc);
   if(ngblabs) free(ngblabs);
-  if(xybin)   gal_data_array_free(xybin, pp->clumpsinobj, 1);
+  if(minima_v) free(minima_v);
+  if(maxima_v) free(maxima_v);
+  if(xybin) gal_data_array_free(xybin, pp->clumpsinobj, 1);
+}
+
+
+
+
+
+static size_t
+parse_frac_find(gal_data_t *sorted_d, double value, double frac, int dosum)
+{
+  size_t i;
+  double check=0.0f;
+  double *sorted=sorted_d->array;
+
+  /* Parse over the sorted array and find the index. */
+  for(i=0;i<sorted_d->size;++i)
+    if(dosum)
+      { if( (check+=sorted[i]) > value*frac ) break; }
+    else
+      { if(         sorted[i]  < value*frac ) break; }
+
+  /* Return the final value. Note that if the index is zero, we should
+     actually return 1, because we are starting with the maximum. */
+  return i==0 ? 1 : i;
+}
+
+
+
+
+
+static double
+parse_frac_sum(gal_data_t *sorted_d, double value, double frac, int dosum)
+{
+  double sum=0.0f, *sorted=sorted_d->array;
+  size_t i, ind=parse_frac_find(sorted_d, value, frac, 0);
+
+  for(i=0;i<ind;++i) sum+=sorted[i];
+  return sum;
+}
+
+
+
+
+
+static void
+parse_area_of_frac_sum(struct mkcatalog_passparams *pp, gal_data_t *values,
+                       double *outarr, int o1c0)
+{
+  struct mkcatalogparams *p=pp->p;
+
+  double max, *sorted;
+  gal_data_t *sorted_d;
+  uint8_t *flag = o1c0 ? p->oiflag : p->ciflag;
+  double *fracmax = p->fracmax ? p->fracmax->array : NULL;
+  double sumlab = o1c0 ? outarr[OCOL_SUM] : outarr[CCOL_SUM];
+
+  /* Allocate the array to use. */
+  sorted_d = ( values->type==GAL_TYPE_FLOAT64
+                ? values
+                : gal_data_copy_to_new_type(values, GAL_TYPE_FLOAT64) );
+
+  /* Sort the desired labels and find the number of elements where we reach
+     half the total sum. */
+  gal_statistics_sort_decreasing(sorted_d);
+
+  /* Set the required fractions. */
+  if(flag[ o1c0 ? OCOL_HALFSUMNUM : CCOL_HALFSUMNUM ])
+    outarr[ o1c0 ? OCOL_HALFSUMNUM : CCOL_HALFSUMNUM ]
+      = parse_frac_find(sorted_d, sumlab, 0.5f, 1);
+
+  /* Values related to the maximum. */
+  if( flag[    o1c0 ? OCOL_MAXIMUM     : CCOL_MAXIMUM     ]
+      || flag[ o1c0 ? OCOL_HALFMAXNUM  : CCOL_HALFMAXNUM  ]
+      || flag[ o1c0 ? OCOL_HALFMAXSUM  : CCOL_HALFMAXSUM  ]
+      || flag[ o1c0 ? OCOL_FRACMAX1NUM : CCOL_FRACMAX1NUM ]
+      || flag[ o1c0 ? OCOL_FRACMAX1SUM : CCOL_FRACMAX1SUM ]
+      || flag[ o1c0 ? OCOL_FRACMAX2NUM : CCOL_FRACMAX2NUM ]
+      || flag[ o1c0 ? OCOL_FRACMAX2SUM : CCOL_FRACMAX2SUM ] )
+    {
+      /* Set the array and maximum value. We'll use the median of the top
+         three pixels for the maximum (to avoid noise) */
+      sorted=sorted_d->array;
+      max = ( sorted_d->size>3
+              ? (sorted[0]+sorted[1]+sorted[2])/3
+              : sorted[0] );
+
+      /* If we want the maximum value, then write it in. */
+      if(flag[ o1c0 ? OCOL_MAXIMUM : CCOL_MAXIMUM ])
+        outarr[ o1c0 ? OCOL_MAXIMUM : CCOL_MAXIMUM ] = max;
+
+      /* The number of pixels within half the maximum. */
+      if(flag[ o1c0 ? OCOL_HALFMAXNUM : CCOL_HALFMAXNUM ])
+        outarr[ o1c0 ? OCOL_HALFMAXNUM : CCOL_HALFMAXNUM ]
+          = parse_frac_find(sorted_d, max, 0.5f, 0);
+
+      /* The number of pixels within the first requested fraction of maximum */
+      if(flag[ o1c0 ? OCOL_FRACMAX1NUM : CCOL_FRACMAX1NUM ])
+        outarr[ o1c0 ? OCOL_FRACMAX1NUM : CCOL_FRACMAX1NUM ]
+          = parse_frac_find(sorted_d, max, fracmax[0], 0);
+
+      /* The number of pixels within the first requested fraction of maximum */
+      if(flag[ o1c0 ? OCOL_FRACMAX2NUM : CCOL_FRACMAX2NUM ])
+        outarr[ o1c0 ? OCOL_FRACMAX2NUM : CCOL_FRACMAX2NUM ]
+          = parse_frac_find(sorted_d, max, fracmax[1], 0);
+
+      /* The sum of the pixels within the given fraction of the maximum. */
+      if( flag[ o1c0 ? OCOL_HALFMAXSUM : CCOL_HALFMAXSUM ] )
+        outarr[ o1c0 ? OCOL_HALFMAXSUM : CCOL_HALFMAXSUM ]
+          = parse_frac_sum(sorted_d, max, 0.5f, 0);
+
+      /* Sum of the pixels within the 1st given fraction of the maximum. */
+      if( flag[ o1c0 ? OCOL_FRACMAX1SUM : CCOL_FRACMAX1SUM ] )
+        outarr[ o1c0 ? OCOL_FRACMAX1SUM : CCOL_FRACMAX1SUM ]
+          = parse_frac_sum(sorted_d, max, fracmax[0], 0);
+
+      /* Sum of the pixels within the 1st given fraction of the maximum. */
+      if( flag[ o1c0 ? OCOL_FRACMAX2SUM : CCOL_FRACMAX2SUM ] )
+        outarr[ o1c0 ? OCOL_FRACMAX2SUM : CCOL_FRACMAX2SUM ]
+          = parse_frac_sum(sorted_d, max, fracmax[1], 0);
+    }
+
+  /* Clean up and return. */
+  if(sorted_d!=values) gal_data_free(sorted_d);
 }
 
 
@@ -1029,31 +1331,70 @@ parse_clumps(struct mkcatalog_passparams *pp)
 
 
 void
-parse_median(struct mkcatalog_passparams *pp)
+parse_order_based(struct mkcatalog_passparams *pp)
 {
   struct mkcatalogparams *p=pp->p;
 
   float *V;
   double *ci;
-  gal_data_t *median;
+  float *sigcliparr;
+  gal_data_t *result;
   int32_t *O, *OO, *C=NULL;
-  gal_data_t **clumpsmed=NULL;
   size_t i, increment=0, num_increment=1;
+  gal_data_t *objvals=NULL, **clumpsvals=NULL;
   size_t *tsize=pp->tile->dsize, ndim=p->objects->ndim;
   size_t counter=0, *ccounter=NULL, tmpsize=pp->oi[OCOL_NUM];
-  gal_data_t *objmed=gal_data_alloc(NULL, p->values->type, 1, &tmpsize, NULL,
-                                    0, p->cp.minmapsize, p->cp.quietmmap,
-                                    NULL, NULL, NULL);
 
-  /* Allocate space for the clump medians. */
+  /* It may happen that there are no usable pixels for this object (and
+     thus its possible clumps). In this case `tmpsize' will be zero and we
+     can just write NaN values for the necessary columns. */
+  if(tmpsize==0)
+    {
+      if(p->oiflag[ OCOL_MEDIAN        ]) pp->oi[ OCOL_MEDIAN       ] = NAN;
+      if(p->oiflag[ OCOL_MAXIMUM       ]) pp->oi[ OCOL_MAXIMUM      ] = NAN;
+      if(p->oiflag[ OCOL_HALFMAXSUM    ]) pp->oi[ OCOL_HALFMAXSUM   ] = NAN;
+      if(p->oiflag[ OCOL_HALFMAXNUM    ]) pp->oi[ OCOL_HALFMAXNUM   ] = 0;
+      if(p->oiflag[ OCOL_HALFSUMNUM    ]) pp->oi[ OCOL_HALFSUMNUM   ] = 0;
+      if(p->oiflag[ OCOL_FRACMAX1NUM   ]) pp->oi[ OCOL_FRACMAX1NUM  ] = 0;
+      if(p->oiflag[ OCOL_FRACMAX2NUM   ]) pp->oi[ OCOL_FRACMAX2NUM  ] = 0;
+      if(p->oiflag[ OCOL_SIGCLIPNUM    ]) pp->oi[ OCOL_SIGCLIPNUM   ] = 0;
+      if(p->oiflag[ OCOL_SIGCLIPSTD    ]) pp->oi[ OCOL_SIGCLIPSTD   ] = 0;
+      if(p->oiflag[ OCOL_SIGCLIPMEAN   ]) pp->oi[ OCOL_SIGCLIPMEAN  ] = NAN;
+      if(p->oiflag[ OCOL_SIGCLIPMEDIAN ]) pp->oi[ OCOL_SIGCLIPMEDIAN] = NAN;
+      if(p->clumps)
+        for(i=0;i<pp->clumpsinobj;++i)
+          {
+            ci=&pp->ci[ i * CCOL_NUMCOLS ];
+            if(p->ciflag[ CCOL_MEDIAN        ]) ci[ CCOL_MEDIAN      ] = NAN;
+            if(p->ciflag[ CCOL_MAXIMUM       ]) ci[ CCOL_MAXIMUM     ] = NAN;
+            if(p->ciflag[ CCOL_HALFMAXSUM    ]) ci[ CCOL_HALFMAXSUM  ] = NAN;
+            if(p->ciflag[ CCOL_HALFMAXNUM    ]) ci[ CCOL_HALFMAXNUM  ] = 0;
+            if(p->ciflag[ CCOL_HALFSUMNUM    ]) ci[ CCOL_HALFSUMNUM  ] = 0;
+            if(p->ciflag[ CCOL_FRACMAX1NUM   ]) ci[ CCOL_FRACMAX1NUM ] = 0;
+            if(p->ciflag[ CCOL_FRACMAX2NUM   ]) ci[ CCOL_FRACMAX2NUM ] = 0;
+            if(p->ciflag[ CCOL_SIGCLIPNUM    ]) ci[ CCOL_SIGCLIPNUM  ] = 0;
+            if(p->ciflag[ CCOL_SIGCLIPSTD    ]) ci[ CCOL_SIGCLIPSTD  ] = 0;
+            if(p->ciflag[ CCOL_SIGCLIPMEAN   ]) ci[ CCOL_SIGCLIPMEAN ] = NAN;
+            if(p->ciflag[ CCOL_SIGCLIPMEDIAN ]) ci[ CCOL_SIGCLIPMEDIAN] = NAN;
+          }
+      return;
+    }
+
+  /* We know we have pixels to use, so allocate space for the values within
+     the object. */
+  objvals=gal_data_alloc(NULL, p->values->type, 1, &tmpsize, NULL, 0,
+                         p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
+                         NULL);
+
+  /* Clump preparations. */
   if(p->clumps)
     {
+      /* Allocate the necessary space. */
       errno=0;
-      clumpsmed=malloc(pp->clumpsinobj * sizeof *clumpsmed);
-      if(clumpsmed==NULL)
-        error(EXIT_FAILURE, errno, "%s: couldn't allocate `clumpsmed' for "
+      clumpsvals=malloc(pp->clumpsinobj * sizeof *clumpsvals);
+      if(clumpsvals==NULL)
+        error(EXIT_FAILURE, errno, "%s: couldn't allocate 'clumpsvals' for "
               "%zu clumps", __func__, pp->clumpsinobj);
-
 
       /* Allocate the array necessary to keep the values of each clump. */
       ccounter=gal_pointer_allocate(GAL_TYPE_SIZE_T, pp->clumpsinobj, 1,
@@ -1061,9 +1402,13 @@ parse_median(struct mkcatalog_passparams *pp)
       for(i=0;i<pp->clumpsinobj;++i)
         {
           tmpsize=pp->ci[ i * CCOL_NUMCOLS + CCOL_NUM ];
-          clumpsmed[i]=gal_data_alloc(NULL, p->values->type, 1, &tmpsize,
-                                      NULL, 0, p->cp.minmapsize,
-                                      p->cp.quietmmap, NULL, NULL, NULL);
+          clumpsvals[i] = ( tmpsize
+                            ? gal_data_alloc(NULL, p->values->type, 1,
+                                             &tmpsize, NULL, 0,
+                                             p->cp.minmapsize,
+                                             p->cp.quietmmap,
+                                             NULL, NULL, NULL)
+                            : NULL );
         }
     }
 
@@ -1072,7 +1417,7 @@ parse_median(struct mkcatalog_passparams *pp)
   while( pp->start_end_inc[0] + increment <= pp->start_end_inc[1] )
     {
       /* Set the contiguous range to parse. The pixel-to-pixel counting
-         along the fastest dimension will be done over the `O' pointer. */
+         along the fastest dimension will be done over the 'O' pointer. */
       V = pp->st_v + increment;
       if(p->clumps) C = pp->st_c + increment;
       OO = ( O = pp->st_o + increment ) + tsize[ndim-1];
@@ -1081,20 +1426,20 @@ parse_median(struct mkcatalog_passparams *pp)
       do
         {
           /* If this pixel belongs to the requested object, then do the
-             processing. `hasblank' is constant, so when the values doesn't
-             have any blank values, the `isnan' will never be checked. */
+             processing. 'hasblank' is constant, so when the values doesn't
+             have any blank values, the 'isnan' will never be checked. */
           if( *O==pp->object && !( p->hasblank && isnan(*V) ) )
             {
               /* Copy the value for the whole object. */
-              memcpy( gal_pointer_increment(objmed->array, counter++,
+              memcpy( gal_pointer_increment(objvals->array, counter++,
                                              p->values->type), V,
                       gal_type_sizeof(p->values->type) );
 
               /* We are also on a clump. */
-              if(p->clumps && *C>0)
-                memcpy( gal_pointer_increment(clumpsmed[*C-1]->array,
-                                               ccounter[*C-1]++,
-                                               p->values->type), V,
+              if(p->clumps && *C>0 && clumpsvals[*C-1]!=NULL)
+                memcpy( gal_pointer_increment(clumpsvals[*C-1]->array,
+                                              ccounter[*C-1]++,
+                                              p->values->type), V,
                         gal_type_sizeof(p->values->type) );
             }
 
@@ -1110,28 +1455,134 @@ parse_median(struct mkcatalog_passparams *pp)
     }
 
 
-  /* Calculate the final medians for objects. */
-  median=gal_data_copy_to_new_type_free(gal_statistics_median(objmed, 1),
-                                        GAL_TYPE_FLOAT64);
-  pp->oi[OCOL_MEDIAN]=*((double *)(median->array));
-  gal_data_free(objmed);
-  gal_data_free(median);
+  /* Calculate the necessary values for the objects. */
+  if(p->oiflag[ OCOL_MEDIAN ])
+    {
+      result=gal_data_copy_to_new_type_free(gal_statistics_median(objvals, 1),
+                                            GAL_TYPE_FLOAT64);
+      pp->oi[OCOL_MEDIAN]=*((double *)(result->array));
+      gal_data_free(result);
+    }
+  if(p->oiflag[ OCOL_SIGCLIPNUM ]
+     || p->oiflag[ OCOL_SIGCLIPSTD ]
+     || p->oiflag[ OCOL_SIGCLIPMEAN ]
+     || p->oiflag[ OCOL_SIGCLIPMEDIAN ])
+    {
+      /* Calculate the sigma-clipped results and write them in any
+         requested column. */
+      result=gal_statistics_sigma_clip(objvals, p->sigmaclip[0],
+                                       p->sigmaclip[1], 1, 1);
+      sigcliparr=result->array;
+      if(p->oiflag[ OCOL_SIGCLIPNUM ])
+        pp->oi[OCOL_SIGCLIPNUM]=sigcliparr[0];
+      if(p->oiflag[ OCOL_SIGCLIPSTD ])
+        pp->oi[OCOL_SIGCLIPSTD]=sigcliparr[3];
+      if(p->oiflag[ OCOL_SIGCLIPMEAN ])
+        pp->oi[OCOL_SIGCLIPMEAN]=sigcliparr[2];
+      if(p->oiflag[ OCOL_SIGCLIPMEDIAN ])
+        pp->oi[OCOL_SIGCLIPMEDIAN]=sigcliparr[1];
+
+      /* Clean up the sigma-clipped values. */
+      gal_data_free(result);
+    }
+
+  /* Fractional values. */
+  if( p->oiflag[    OCOL_MAXIMUM     ]
+      || p->oiflag[ OCOL_HALFMAXNUM  ]
+      || p->oiflag[ OCOL_HALFMAXSUM  ]
+      || p->oiflag[ OCOL_HALFSUMNUM  ]
+      || p->oiflag[ OCOL_FRACMAX1NUM ]
+      || p->oiflag[ OCOL_FRACMAX2NUM ] )
+    parse_area_of_frac_sum(pp, objvals, pp->oi, 1);
+
+  /* Clean up the object values. */
+  gal_data_free(objvals);
 
 
-  /* Calculate the median for clumps. */
+  /* Calculate the necessary value for clumps. */
   if(p->clumps)
     {
       for(i=0;i<pp->clumpsinobj;++i)
         {
+          /* Set the main row to fill. */
           ci=&pp->ci[ i * CCOL_NUMCOLS ];
-          median=gal_statistics_median(clumpsmed[i], 1);
-          median=gal_data_copy_to_new_type_free(median, GAL_TYPE_FLOAT64);
-          ci[ CCOL_MEDIAN ] = ( *((double *)(median->array))
-                                - (ci[ CCOL_RIV_SUM ]/ci[ CCOL_RIV_NUM ]) );
-          gal_data_free(clumpsmed[i]);
-          gal_data_free(median);
+
+          /* Median. */
+          if(p->ciflag[ CCOL_MEDIAN ])
+            {
+              if(clumpsvals[i])
+                {
+                  result=gal_statistics_median(clumpsvals[i], 1);
+                  result=gal_data_copy_to_new_type_free(result, GAL_TYPE_FLOAT64);
+                  ci[ CCOL_MEDIAN ] = ( *((double *)(result->array))
+                                        - (ci[ CCOL_RIV_SUM ]/ci[ CCOL_RIV_NUM ]) );
+                  gal_data_free(result);
+                }
+              else ci[ CCOL_MEDIAN ] = NAN;
+            }
+
+          /* Sigma-clipping measurements. */
+          if(p->ciflag[ CCOL_SIGCLIPNUM ]
+             || p->ciflag[ CCOL_SIGCLIPSTD ]
+             || p->ciflag[ CCOL_SIGCLIPMEAN ]
+             || p->ciflag[ CCOL_SIGCLIPMEDIAN ])
+            {
+              if(clumpsvals[i])
+                {
+                  result=gal_statistics_sigma_clip(clumpsvals[i], p->sigmaclip[0],
+                                                   p->sigmaclip[1], 1, 1);
+                  sigcliparr=result->array;
+                  if(p->ciflag[ CCOL_SIGCLIPNUM ])
+                    ci[CCOL_SIGCLIPNUM]=sigcliparr[0];
+                  if(p->ciflag[ CCOL_SIGCLIPSTD ])
+                    ci[CCOL_SIGCLIPSTD]=( sigcliparr[3]
+                                          - (ci[ CCOL_RIV_SUM ]/ci[ CCOL_RIV_NUM ]));
+                  if(p->ciflag[ CCOL_SIGCLIPMEAN ])
+                    ci[CCOL_SIGCLIPMEAN]=( sigcliparr[2]
+                                           - (ci[ CCOL_RIV_SUM ]/ci[ CCOL_RIV_NUM ]));
+                  if(p->ciflag[ CCOL_SIGCLIPMEDIAN ])
+                    ci[CCOL_SIGCLIPMEDIAN]=( sigcliparr[1]
+                                             - (ci[ CCOL_RIV_SUM ]/ci[ CCOL_RIV_NUM ]));
+                  gal_data_free(result);
+                }
+              else
+                {
+                  if(p->ciflag[ CCOL_SIGCLIPNUM    ]) ci[ CCOL_SIGCLIPNUM  ]=NAN;
+                  if(p->ciflag[ CCOL_SIGCLIPSTD    ]) ci[ CCOL_SIGCLIPSTD  ]=NAN;
+                  if(p->ciflag[ CCOL_SIGCLIPMEAN   ]) ci[ CCOL_SIGCLIPMEAN ]=NAN;
+                  if(p->ciflag[ CCOL_SIGCLIPMEDIAN ]) ci[CCOL_SIGCLIPMEDIAN]=NAN;
+                }
+            }
+
+          /* Estimate half of the total sum. */
+          if( p->ciflag[    CCOL_MAXIMUM     ]
+              || p->ciflag[ CCOL_HALFMAXNUM  ]
+              || p->ciflag[ CCOL_HALFMAXSUM  ]
+              || p->ciflag[ CCOL_HALFSUMNUM  ]
+              || p->ciflag[ CCOL_FRACMAX1NUM ]
+              || p->ciflag[ CCOL_FRACMAX1SUM ]
+              || p->ciflag[ CCOL_FRACMAX2NUM ]
+              || p->ciflag[ CCOL_FRACMAX2SUM ] )
+            {
+              if(clumpsvals[i])
+                parse_area_of_frac_sum(pp, clumpsvals[i], ci, 0);
+              else
+                {
+                  if( p->ciflag[ CCOL_MAXIMUM     ]) ci[ CCOL_MAXIMUM     ]=NAN;
+                  if( p->ciflag[ CCOL_HALFMAXNUM  ]) ci[ CCOL_HALFMAXNUM  ]=NAN;
+                  if( p->ciflag[ CCOL_HALFMAXSUM  ]) ci[ CCOL_HALFMAXSUM  ]=NAN;
+                  if( p->ciflag[ CCOL_HALFSUMNUM  ]) ci[ CCOL_HALFSUMNUM  ]=NAN;
+                  if( p->ciflag[ CCOL_FRACMAX1NUM ]) ci[ CCOL_FRACMAX1NUM ]=NAN;
+                  if( p->ciflag[ CCOL_FRACMAX1SUM ]) ci[ CCOL_FRACMAX1SUM ]=NAN;
+                  if( p->ciflag[ CCOL_FRACMAX2NUM ]) ci[ CCOL_FRACMAX2NUM ]=NAN;
+                  if( p->ciflag[ CCOL_FRACMAX2SUM ]) ci[ CCOL_FRACMAX2SUM ]=NAN;
+                }
+            }
+
+          /* Clean up this clump's values. */
+          gal_data_free(clumpsvals[i]);
         }
-      free(clumpsmed);
+      free(clumpsvals);
       free(ccounter);
     }
 }

@@ -10,10 +10,10 @@
 # Column 10: Truncation radius [dist, f64]   Truncation radius to stop building profile
 #
 # Note that the positions and radii are multiplied by 5 compared to
-# `mkprofcat1.txt', because we are using the over-sampled image as a
+# 'mkprofcat1.txt', because we are using the over-sampled image as a
 # canvas.
 #
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and

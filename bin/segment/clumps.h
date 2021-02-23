@@ -5,7 +5,7 @@ Segment is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -39,7 +39,7 @@ struct clumps_params
   gal_data_t            *snind; /* Array of clump S/N index (for check).   */
 
   /* For detections. */
-  gal_data_t        *labindexs; /* Array of `gal_data_t' with obj indexs.  */
+  gal_data_t        *labindexs; /* Array of 'gal_data_t' with obj indexs.  */
   size_t            totobjects; /* Total number of objects at any point.   */
   size_t             totclumps; /* Total number of clumps at any point.    */
 };

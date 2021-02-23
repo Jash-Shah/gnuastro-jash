@@ -5,7 +5,7 @@ CosmicCalculator is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -72,7 +72,7 @@ cosmiccal_print_input(struct cosmiccalparams *p)
 static void
 cosmiccal_printall(struct cosmiccalparams *p)
 {
-  double ad, ld, vz, pd, absmagconv;
+  double ad, ld, vz, pd, vel, absmagconv;
   double curage, ccritd, distmod, outage, zcritd;
 
   /* The user wants everything, do all the calculations and print
@@ -104,6 +104,8 @@ cosmiccal_printall(struct cosmiccalparams *p)
   zcritd=gal_cosmology_critical_density(p->redshift, p->H0, p->olambda,
                                         p->omatter, p->oradiation);
 
+  vel=gal_cosmology_velocity_from_z(p->redshift);
+
   vz=gal_cosmology_comoving_volume(p->redshift, p->H0, p->olambda, p->omatter,
                                    p->oradiation);
 
@@ -115,6 +117,7 @@ cosmiccal_printall(struct cosmiccalparams *p)
   printf(    " ------------\n");
   printf(FLTFORMAT, "Age of Universe now (Ga*):", curage);
   printf(EXPFORMAT, "Critical density now (g/cm^3):",  ccritd);
+  printf(FLTFORMAT, "Velocity at z (km/s):", vel);
   printf(FLTFORMAT, "Proper distance to z (Mpc):", pd);
   printf(FLTFORMAT, "Angular diameter distance to z (Mpc):", ad);
   printf(FLTFORMAT, "Tangential distance covered by 1 arcsec at z (Kpc):",
@@ -155,7 +158,7 @@ cosmiccal(struct cosmiccalparams *p)
   if(isnan(p->redshift))
     {
       cosmiccal_print_input(p);
-      printf("\n\nPlease specify a redshift with the `--redshift' (or `-z') "
+      printf("\n\nPlease specify a redshift with the '--redshift' (or '-z') "
              "option.\n");
       return;
     }
@@ -254,6 +257,10 @@ cosmiccal(struct cosmiccalparams *p)
                                                           p->olambda,
                                                           p->omatter,
                                                           p->oradiation));
+              break;
+
+            case UI_KEY_USEDVELOCITY:
+              printf("%g", gal_cosmology_velocity_from_z(p->redshift));
               break;
 
             case UI_KEY_LINEATZ:

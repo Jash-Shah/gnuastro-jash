@@ -4,7 +4,7 @@ Function to parse options and configuration file values.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2017-2019, Free Software Foundation, Inc.
+Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* When printing the option names, values and comments, we want things to
    be clean and readable (all the comments starting on one line for most,
    ideally all, lines). But in some cases, option values can become too
-   long (for example the `--polygon' option in Crop, which takes many
+   long (for example the '--polygon' option in Crop, which takes many
    coordinates). So simply using the maximum option length is going to make
    the whole thing unreadable and we need to have a maximum so this rule
    only applies to them. */
@@ -63,7 +63,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
    We want the Operating mode group of options to be the last and the input
    and output groups to the be the first. So first we set the operating
-   mdoe group code to `-1', and benefit from the definition of the
+   mdoe group code to '-1', and benefit from the definition of the
    Enumerator type in C, so each field afterwards will be one integer
    larger than the previous. The largest common option group is then used
    to build the codes of program-specific option groups. */
@@ -83,7 +83,7 @@ enum options_standard_groups
 
 /* Key values for the common options, the free alphabetical keys are listed
    below. You can use any of the free letters for an option in a
-   program. Note that `-V', which is used by GNU and implemented by Argp,
+   program. Note that '-V', which is used by GNU and implemented by Argp,
    is also removed from this list.
 
    a b c d e f g i j k l m n p r s t u v w x y z
@@ -151,7 +151,7 @@ enum gal_options_range_values
 
 
 
-/* What to do if option isn't given. Note that in each program's `main.c'
+/* What to do if option isn't given. Note that in each program's 'main.c'
    the main program structure is initialized to zero (or NULL for
    pointers). */
 enum gal_options_mandatory_values
@@ -295,6 +295,9 @@ void *
 gal_options_parse_csv_strings(struct argp_option *option, char *arg,
                               char *filename, size_t lineno, void *junk);
 
+void
+gal_options_merge_list_of_csv(gal_list_str_t **list);
+
 void *
 gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
                                 char *filename, size_t lineno, void *params);
@@ -308,8 +311,16 @@ gal_options_read_sigma_clip(struct argp_option *option, char *arg,
                             char *filename, size_t lineno, void *junk);
 
 void *
-gal_options_parse_name_and_values(struct argp_option *option, char *arg,
-                                  char *filename, size_t lineno, void *junk);
+gal_options_parse_name_and_strings(struct argp_option *option, char *arg,
+                                   char *filename, size_t lineno, void *junk);
+
+void *
+gal_options_parse_name_and_float64s(struct argp_option *option, char *arg,
+                                    char *filename, size_t lineno, void *junk);
+
+void *
+gal_options_parse_colon_sep_csv(struct argp_option *option, char *arg,
+                                char *filename, size_t lineno, void *junk);
 
 
 /**********************************************************************/

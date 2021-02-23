@@ -5,7 +5,7 @@ Convolve is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -77,7 +77,7 @@ complextoreal(double *c, size_t size, int action, double **output)
       break;
     default:
       error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s so we can "
-            "correct it. The `action' code %d is not recognized", __func__,
+            "correct it. The 'action' code %d is not recognized", __func__,
             PACKAGE_BUGREPORT, action);
     }
 }
@@ -245,7 +245,7 @@ frequency_make_padded_complex(struct convolveparams *p)
     roundoff errors.
 
     NOTE: The padding to the input image (on the first axis for example)
-          was `p->kernel->dsize[0]-1'. Since `p->kernel->dsize[0]' is
+          was 'p->kernel->dsize[0]-1'. Since 'p->kernel->dsize[0]' is
           always odd, the padding will always be even.  */
 void
 removepaddingcorrectroundoff(struct convolveparams *p)
@@ -274,7 +274,7 @@ removepaddingcorrectroundoff(struct convolveparams *p)
       hi1 = ( p->kernel->dsize[1] - 1 )/2;
     }
 
-  /* To start with, `start' points to the first pixel in the final
+  /* To start with, 'start' points to the first pixel in the final
      image: */
   start=&rpad[hi0*ps1+hi1];
   for(i=0;i<isize[0];++i)
@@ -373,21 +373,21 @@ correctdeconvolve(struct convolveparams *p, double **spatial)
   errno=0;
   n=malloc(ps0*ps1*sizeof *n);
   if(n==NULL)
-    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for `n'",
+    error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'n'",
           __func__, ps0*ps1*sizeof *n);
 
 
   /* Put the elements in their proper place: For example in one
-     dimention where the values are actually the true distances:
+     dimension where the values are actually the true distances:
 
         s[0]=0, s[1]=1, s[2]=2, s[3]=3, s[4]=4, s[5]=5
 
-     We want the value 0 to be in the `center'. Note that `s' is
+     We want the value 0 to be in the 'center'. Note that 's' is
      periodic, for example the next 6 elements have distances:
 
         s[6]=0, s[7]=1, s[8]=2, s[9]=3, s[10]=4, s[11]=5
 
-     So a `center'ed array would be like:
+     So a 'center'ed array would be like:
 
         s[0]=4, s[1]=5, s[2]=0, s[3]=1, s[4]=2, s[5]=3
 
@@ -520,6 +520,7 @@ twodimensionfft(struct convolveparams *p, struct fftonthreadparams *fp,
 {
   int err;
   pthread_t t;          /* All thread ids saved in this, not used. */
+  char *mmapname=NULL;
   pthread_attr_t attr;
   pthread_barrier_t b;
   size_t i, nb, *indexs, thrdcols;
@@ -531,7 +532,7 @@ twodimensionfft(struct convolveparams *p, struct fftonthreadparams *fp,
   else if(forward1backwardn1==-1) multiple=1;
   else
     error(EXIT_FAILURE, 0, "%s: a bug! The value of the variable "
-          "`forward1backwardn1' is %d not 1 or 2. Please contact us at %s "
+          "'forward1backwardn1' is %d not 1 or 2. Please contact us at %s "
           "so we can find the cause of the problem and fix it", __func__,
           forward1backwardn1, PACKAGE_BUGREPORT);
 
@@ -539,7 +540,10 @@ twodimensionfft(struct convolveparams *p, struct fftonthreadparams *fp,
   /* ==================== */
   /* 1D FFT on each row. */
   /* ==================== */
-  gal_threads_dist_in_threads(multiple*p->ps0, nt, &indexs, &thrdcols);
+  mmapname=gal_threads_dist_in_threads(multiple*p->ps0, nt,
+                                       p->input->minmapsize,
+                                       p->cp.quietmmap,
+                                       &indexs, &thrdcols);
   if(nt==1)
     {
       fp[0].stride=1;
@@ -577,15 +581,21 @@ twodimensionfft(struct convolveparams *p, struct fftonthreadparams *fp,
       pthread_attr_destroy(&attr);
       pthread_barrier_destroy(&b);
     }
-  free(indexs);
+
+  /* Clean up. */
+  if(mmapname) gal_pointer_mmap_free(&mmapname, p->cp.quietmmap);
+  else         free(indexs);
 
 
 
   /* ====================== */
   /* 1D FFT on each column. */
   /* ====================== */
-  /* No comments, exact duplicate, except the p->ps1s! */
-  gal_threads_dist_in_threads(multiple*p->ps1, nt, &indexs, &thrdcols);
+  /* No comments, exact duplicate of above, except the p->ps1s! */
+  mmapname=gal_threads_dist_in_threads(multiple*p->ps1, nt,
+                                       p->input->minmapsize,
+                                       p->cp.quietmmap,
+                                       &indexs, &thrdcols);
   if(nt==1)
     {
       fp[0].stride=p->ps1;
@@ -614,7 +624,10 @@ twodimensionfft(struct convolveparams *p, struct fftonthreadparams *fp,
       pthread_attr_destroy(&attr);
       pthread_barrier_destroy(&b);
     }
-  free(indexs);
+
+  /* Clean up, note that 'indexs' may be memory-mapped. */
+  if(mmapname) gal_pointer_mmap_free(&mmapname, p->cp.quietmmap);
+  else         free(indexs);
 }
 
 
@@ -800,7 +813,7 @@ convolve(struct convolveparams *p)
 
   /* Save the output (which is in p->input) array. */
   if(p->input->ndim==1)
-    gal_table_write(p->input, NULL, p->cp.tableformat, p->cp.output,
+    gal_table_write(p->input, NULL, NULL, p->cp.tableformat, p->cp.output,
                     "CONVOLVED", 0);
   else
     gal_fits_img_write_to_type(p->input, cp->output, NULL, PROGRAM_NAME,

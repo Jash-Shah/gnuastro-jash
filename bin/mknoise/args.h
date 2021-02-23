@@ -5,7 +5,7 @@ MakeNoise is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -64,7 +64,7 @@ struct argp_option program_options[] =
       0,
       "Fixed background magnitude for whole input.",
       GAL_OPTIONS_GROUP_INPUT,
-      &p->background_mag,
+      &p->background,
       GAL_TYPE_FLOAT64,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -80,6 +80,19 @@ struct argp_option program_options[] =
       &p->zeropoint,
       GAL_TYPE_FLOAT64,
       GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "bgisbrightness",
+      UI_KEY_BGISBRIGHTNESS,
+      0,
+      0,
+      "Background is brightness, not magnitude.",
+      GAL_OPTIONS_GROUP_OPERATING_MODE,
+      &p->bgisbrightness,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },

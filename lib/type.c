@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -57,7 +57,7 @@ gal_type_sizeof(uint8_t type)
 
       /* The parenthesis after sizeof is not a function, it is actually a
          type cast, so we have put a space between size of and the
-         parenthesis to highlight this. In C, `sizeof' is an operator, not
+         parenthesis to highlight this. In C, 'sizeof' is an operator, not
          a function.*/
     case GAL_TYPE_UINT8:     return sizeof (uint8_t);
     case GAL_TYPE_INT8:      return sizeof (int8_t);
@@ -70,25 +70,25 @@ gal_type_sizeof(uint8_t type)
 
     case GAL_TYPE_FLOAT32:
       if( sizeof (float) != 4 )
-        error(EXIT_FAILURE, 0, "%s: `float' is not 32 bits on this machine",
+        error(EXIT_FAILURE, 0, "%s: 'float' is not 32 bits on this machine",
               __func__);
       return sizeof (float);
 
     case GAL_TYPE_FLOAT64:
       if( sizeof (double) != 8 )
-        error(EXIT_FAILURE, 0, "%s: `double' is not 64 bits on this machine",
+        error(EXIT_FAILURE, 0, "%s: 'double' is not 64 bits on this machine",
               __func__);
       return sizeof (double);
 
     case GAL_TYPE_COMPLEX32:
       if( sizeof (float) != 4 )
-        error(EXIT_FAILURE, 0, "%s: `float' is not 32 bits on this machine",
+        error(EXIT_FAILURE, 0, "%s: 'float' is not 32 bits on this machine",
               __func__);
       return sizeof (gsl_complex_float);
 
     case GAL_TYPE_COMPLEX64:
       if( sizeof (double) != 8 )
-        error(EXIT_FAILURE, 0, "%s: `double` is not 64 bits on this machine",
+        error(EXIT_FAILURE, 0, "%s: 'double' is not 64 bits on this machine",
               __func__);
       return sizeof (gsl_complex);
 
@@ -237,7 +237,7 @@ gal_type_from_name(char *str)
 
 
 
-/* Put the minimum (or maximum for the `gal_data_type_max') value for the
+/* Put the minimum (or maximum for the 'gal_data_type_max') value for the
    type in the space (that must already be allocated before the call to
    this function) pointed to by in.  */
 void
@@ -351,8 +351,8 @@ gal_type_out(int first_type, int second_type)
 /*************************************************************
  **************         To/from string         ***************
  *************************************************************/
-/* Write the bit (0 or 1) contents of `in' into a string ready for
-   printing. `size' is used to determine the number of bytes to print. The
+/* Write the bit (0 or 1) contents of 'in' into a string ready for
+   printing. 'size' is used to determine the number of bytes to print. The
    output string will be dynamically allocated within this function. This
    can be useful for easy checking of bit flag values, for example in an
    expression like below:
@@ -384,8 +384,8 @@ gal_type_bit_string(void *in, size_t size)
 
 
 
-/* Write the contents of memory that `ptr' points to as a string of type
-   `type'.*/
+/* Write the contents of memory that 'ptr' points to as a string of type
+   'type'.*/
 #define TO_STRING(CTYPE, FMT) {                                         \
   if( asprintf(&str, FMT, *(CTYPE *)ptr)<0 )                            \
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__); }
@@ -442,18 +442,18 @@ gal_type_to_string(void *ptr, uint8_t type, int quote_if_str_has_space)
 
 
 /* Read a string as a given data type and put a the pointer to it in
-   *out. When the input `*out!=NULL', then it is assumed to be allocated
-   and the value will be simply put there. If `*out==NULL', then space will
+   *out. When the input '*out!=NULL', then it is assumed to be allocated
+   and the value will be simply put there. If '*out==NULL', then space will
    be allocated for the given type and the string's value (in the given
    type) will be stored there.
 
-   Note that when we are dealing with a string type, `*out' should be
-   interpretted as `char **' (one element in an array of pointers to
-   different strings). In other words, `out' should be `char ***'.
+   Note that when we are dealing with a string type, '*out' should be
+   interpretted as 'char **' (one element in an array of pointers to
+   different strings). In other words, 'out' should be 'char ***'.
 
    This function can be used to fill in arrays of numbers from strings (in
    an already allocated data structure), or add nodes to a linked list. For
-   an array, you have to pass the pointer to the `i'th element where you
+   an array, you have to pass the pointer to the 'i'th element where you
    want the value to be stored, for example &(array[i]).
 
    If parsing was successful, it will return a 0. If there was a problem,
@@ -487,7 +487,7 @@ gal_type_from_string(void **out, char *string, uint8_t type)
       break;
 
     /* String, just allocate and copy the string and keep its pointer in
-       the place `*out' points to (for strings, `*out' is `char **'). */
+       the place '*out' points to (for strings, '*out' is 'char **'). */
     case GAL_TYPE_STRING:
       gal_checkset_allocate_copy(string, value);
       break;
@@ -502,8 +502,8 @@ gal_type_from_string(void **out, char *string, uint8_t type)
         status=1;
       else
         {
-          if(type==GAL_TYPE_FLOAT32) *(float *) value=d;
-          else                            *(double *) value=d;
+          if(type==GAL_TYPE_FLOAT32) *(float  *) value=d;
+          else                       *(double *) value=d;
         }
       break;
 
@@ -516,10 +516,10 @@ gal_type_from_string(void **out, char *string, uint8_t type)
         switch(type)
           {
           /* The signed values can easily be put in. */
-          case GAL_TYPE_INT8:         *(int8_t *)    value = l; break;
-          case GAL_TYPE_INT16:        *(int16_t *)   value = l; break;
-          case GAL_TYPE_INT32:        *(int32_t *)   value = l; break;
-          case GAL_TYPE_INT64:        *(int64_t *)   value = l; break;
+          case GAL_TYPE_INT8:  *(int8_t  *) value = l; break;
+          case GAL_TYPE_INT16: *(int16_t *) value = l; break;
+          case GAL_TYPE_INT32: *(int32_t *) value = l; break;
+          case GAL_TYPE_INT64: *(int64_t *) value = l; break;
 
           /* For the unsigned types, the value has to be positive, so if
              the input was negative, then just return a status of one and
@@ -530,10 +530,10 @@ gal_type_from_string(void **out, char *string, uint8_t type)
             else
               switch(type)
                 {
-                case GAL_TYPE_UINT8:  *(uint8_t *)   value=l;   break;
-                case GAL_TYPE_UINT16: *(uint16_t *)  value=l;   break;
-                case GAL_TYPE_UINT32: *(uint32_t *)  value=l;   break;
-                case GAL_TYPE_UINT64: *(uint64_t *)  value=l;   break;
+                case GAL_TYPE_UINT8:  *(uint8_t  *) value=l;   break;
+                case GAL_TYPE_UINT16: *(uint16_t *) value=l;   break;
+                case GAL_TYPE_UINT32: *(uint32_t *) value=l;   break;
+                case GAL_TYPE_UINT64: *(uint64_t *) value=l;   break;
                 default:
                   error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
                         __func__, type);
@@ -561,9 +561,9 @@ void *
 gal_type_string_to_number(char *string, uint8_t *type)
 {
   void *ptr, *out;
-  int fnz=-1, lnz=0;     /* `F'irst (or `L'ast) `N'on-`Z'ero. */
-  char *tailptr, *cp;
+  int fnz=-1, lnz=0;     /* 'F'irst (or 'L'ast) 'N'on-'Z'ero. */
   uint8_t forcedfloat=0;
+  char *c, *tailptr, *cp;
 
   /* Define initial spaces to keep the value. */
   uint8_t   u8;   int8_t   i8;      uint16_t u16;   int16_t i16;
@@ -574,6 +574,12 @@ gal_type_string_to_number(char *string, uint8_t *type)
   d=strtod(string, &tailptr);
   if(*tailptr=='f') { if(tailptr[1]=='\0') forcedfloat=1; else return NULL; }
   else if (*tailptr!='\0')  return NULL;
+
+  /* The number has been parsed successfully as a number. But if it
+     contains a '.', then it must a "forced" float also. This won't be a
+     problem in scenarios like '.2', but people may use '2.' or '2.0' to
+     force a float and this loop is necessary in such cases. */
+  for(c=string; *c!='\0'; ++c) if(*c=='.') { forcedfloat=1; break; }
 
   /* See if the number is actually an integer: */
   if( forcedfloat==0 && ceil(d) == d )
@@ -592,11 +598,11 @@ gal_type_string_to_number(char *string, uint8_t *type)
         {
           /* Note that the blank values are set to the maximum values in
              unsigned types. A blank value should be given as a blank
-             string to this function (`GAL_BLANK_STRING'). So, to avoid
+             string to this function ('GAL_BLANK_STRING'). So, to avoid
              confusing situations (for example when the user gives 255), if
              the value is equal to the given maximum of the given type,
              we'll assign it to a larger type. In other words, we won't be
-             using the `<=MAX', but `<MAX'. */
+             using the '<=MAX', but '<MAX'. */
           if     (d<UINT8_MAX)  { u8=d;  ptr=&u8;  *type=GAL_TYPE_UINT8;  }
           else if(d<UINT16_MAX) { u16=d; ptr=&u16; *type=GAL_TYPE_UINT16; }
           else if(d<UINT32_MAX) { u32=d; ptr=&u32; *type=GAL_TYPE_UINT32; }
@@ -617,13 +623,13 @@ gal_type_string_to_number(char *string, uint8_t *type)
          store the value as a double precision.
 
          Note that the number can have non-digit characters that we don't
-         want, like: `.', `e', `E', `,'. */
+         want, like: '.', 'e', 'E', ','. */
       for(cp=string;*cp!='\0';++cp)
         if(isdigit(*cp) && *cp!='0' && fnz==-1)
           fnz=cp-string;
 
-      /* In the previous loop, we went to the end of the string, so `cp'
-         now points to its `\0'. We just have to iterate backwards! */
+      /* In the previous loop, we went to the end of the string, so 'cp'
+         now points to its '\0'. We just have to iterate backwards! */
       for(;cp!=string;--cp)
         if(isdigit(*cp) && *cp!='0')
           {

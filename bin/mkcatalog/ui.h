@@ -5,7 +5,7 @@ MakeCatalog is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 enum program_args_groups
 {
   UI_GROUP_UPPERLIMIT = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_OTHERSETTINGS,
   UI_GROUP_COLUMNS_IDS,
   UI_GROUP_COLUMNS_POSITION_PIXEL,
   UI_GROUP_COLUMNS_POSITION_WCS,
@@ -86,12 +87,15 @@ enum option_keys_enum
   UI_KEY_SKYHDU,
   UI_KEY_STDHDU,
   UI_KEY_WITHCLUMPS,
+  UI_KEY_FORCEREADSTD,
   UI_KEY_ZEROPOINT,
+  UI_KEY_SIGMACLIP,
   UI_KEY_VARIANCE,
   UI_KEY_SUBTRACTSKY,
   UI_KEY_SFMAGNSIGMA,
   UI_KEY_SFMAGAREA,
   UI_KEY_SPECTRUM,
+  UI_KEY_INBETWEENINTS,
   UI_KEY_UPMASKFILE,
   UI_KEY_UPMASKHDU,
   UI_KEY_UPNUM,
@@ -100,9 +104,12 @@ enum option_keys_enum
   UI_KEY_UPNSIGMA,
   UI_KEY_CHECKUPLIM,
   UI_KEY_NOCLUMPSORT,
+  UI_KEY_FRACMAX,
 
   UI_KEY_OBJID,                         /* Catalog columns. */
   UI_KEY_IDINHOSTOBJ,
+  UI_KEY_AREAARCSEC2,
+  UI_KEY_SURFACEBRIGHTNESS,
   UI_KEY_AREAXY,
   UI_KEY_CLUMPSAREA,
   UI_KEY_WEIGHTAREA,
@@ -111,6 +118,14 @@ enum option_keys_enum
   UI_KEY_GEOX,
   UI_KEY_GEOY,
   UI_KEY_GEOZ,
+  UI_KEY_MINVX,
+  UI_KEY_MAXVX,
+  UI_KEY_MINVY,
+  UI_KEY_MAXVY,
+  UI_KEY_MINVZ,
+  UI_KEY_MAXVZ,
+  UI_KEY_MINVNUM,
+  UI_KEY_MAXVNUM,
   UI_KEY_CLUMPSX,
   UI_KEY_CLUMPSY,
   UI_KEY_CLUMPSZ,
@@ -140,6 +155,7 @@ enum option_keys_enum
   UI_KEY_BRIGHTNESSNORIVER,
   UI_KEY_MEAN,
   UI_KEY_MEDIAN,
+  UI_KEY_MAXIMUM,
   UI_KEY_CLUMPSMAGNITUDE,
   UI_KEY_UPPERLIMIT,
   UI_KEY_UPPERLIMITONESIGMA,
@@ -150,10 +166,28 @@ enum option_keys_enum
   UI_KEY_RIVERNUM,
   UI_KEY_SKY,
   UI_KEY_STD,
+  UI_KEY_SIGCLIPNUMBER,
+  UI_KEY_SIGCLIPMEDIAN,
+  UI_KEY_SIGCLIPMEAN,
+  UI_KEY_SIGCLIPSTD,
   UI_KEY_GEOSEMIMAJOR,
   UI_KEY_GEOSEMIMINOR,
   UI_KEY_GEOAXISRATIO,
   UI_KEY_GEOPOSITIONANGLE,
+  UI_KEY_FWHM,
+  UI_KEY_HALFMAXAREA,
+  UI_KEY_HALFMAXRADIUS,
+  UI_KEY_HALFMAXSUM,
+  UI_KEY_HALFMAXSB,
+  UI_KEY_HALFSUMAREA,
+  UI_KEY_HALFSUMSB,
+  UI_KEY_HALFSUMRADIUS,
+  UI_KEY_FRACMAXSUM1,
+  UI_KEY_FRACMAXSUM2,
+  UI_KEY_FRACMAXAREA1,
+  UI_KEY_FRACMAXAREA2,
+  UI_KEY_FRACMAXRADIUS1,
+  UI_KEY_FRACMAXRADIUS2,
 };
 
 

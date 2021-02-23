@@ -5,7 +5,7 @@ Crop is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -91,8 +91,8 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
   p->checkcenter=0;
 
 
-  /* Initialize the fpixel and lpixel arrays (note that `section' is only
-     defined in image mode, so there will only be one element in `imgs'. */
+  /* Initialize the fpixel and lpixel arrays (note that 'section' is only
+     defined in image mode, so there will only be one element in 'imgs'. */
   for(i=0;i<ndim;++i)
     {
       fpixel[i] = 1;
@@ -100,7 +100,7 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
     }
 
 
-  /* Parse the string: `forl': "first-or-last". */
+  /* Parse the string: 'forl': "first-or-last". */
   while(*pt!='\0')
     {
       add=0;
@@ -109,7 +109,7 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
         case ',':
           ++dim;
           if(dim>=ndim)
-            error(EXIT_FAILURE, 0, "Extra `,` in `%s`", p->section);
+            error(EXIT_FAILURE, 0, "Extra ',' in '%s'", p->section);
           forl='f';
           ++pt;
           break;
@@ -119,7 +119,7 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
           break;
         case '.':
           error(EXIT_FAILURE, 0, "the numbers in the argument to "
-                "`--section` (`-s') have to be integers. You input "
+                "'--section' ('-s') have to be integers. You input "
                 "includes a float number: %s", p->section);
           break;
         case ' ': case '\t':
@@ -138,10 +138,10 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
 
         /* An un-recognized character should crash the program. */
         default:
-          error(EXIT_FAILURE, 0, "value to `--section' must only contain "
+          error(EXIT_FAILURE, 0, "value to '--section' must only contain "
                 "integer numbers and these special characters between them: "
-                "`,', `:', `*' when necessary. But it is `%s' (the first "
-                "non-acceptable character is `%c').\n\n"
+                "',', ':', '*' when necessary. But it is '%s' (the first "
+                "non-acceptable character is '%c').\n\n"
                 "Please run the command below to learn more about this "
                 "option in Gnuastro's Crop program:\n\n"
                 "    $ info gnuastro \"Crop section syntax\"\n", p->section,
@@ -159,7 +159,7 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
       /* Make sure if a number was read at all? */
       if(tailptr==pt)           /* No number was read!                 */
         {
-          if(add) read=0;       /* We have a * followed by `:' or `,'. */
+          if(add) read=0;       /* We have a * followed by ':' or ','. */
           else    continue;
         }
 
@@ -189,112 +189,6 @@ onecrop_parse_section(struct cropparams *p, size_t *dsize,
   printf("\b\b)\n\n");
   exit(0);
   */
-}
-
-
-
-
-
-
-void
-onecrop_parse_polygon(struct cropparams *p)
-{
-  size_t dim=0;
-  char *tailptr;
-  char *pt=p->polygon;
-  double read, *array;
-  gal_list_f64_t *vertices=NULL;
-
-  /* If control reached here, then the cropped region is not defined by its
-     center. So it makes no sense to check if the center is blank. */
-  p->checkcenter=0;
-
-  /* Parse the string. */
-  while(*pt!='\0')
-    {
-      switch(*pt)
-        {
-        case ',':
-          ++dim;
-          if(dim==2)
-            error(EXIT_FAILURE, 0, "Extra `,` in `%s`", p->polygon);
-          ++pt;
-          break;
-        case ':':
-          if(dim==0)
-            error(EXIT_FAILURE, 0, "not enough coordinates for at least "
-                  "one polygon vertex (in %s)", p->polygon);
-          dim=0;
-          ++pt;
-          break;
-        default:
-          break;
-        }
-
-      /* strtod will skip white spaces if they are before a number,
-         but not when they are before a : or ,. So we need to remove
-         all white spaces. White spaces are usually put beside each
-         other, so if one is encountered, go along the string until
-         the white space characters finish.  */
-      if(isspace(*pt))
-        ++pt;
-      else
-        {
-          /* Read the number: */
-          read=strtod(pt, &tailptr);
-
-          /* Check if there actually was a number.
-          printf("\n\n------\n%zu: %f (%s)\n", dim, read, tailptr);
-          */
-
-          /* Make sure if a number was read at all? */
-          if(tailptr==pt) /* No number was read! */
-            error(EXIT_FAILURE, 0, "%s could not be parsed as a floating "
-                  "point number", tailptr);
-
-          /* Check if there are no extra characters in the number, for
-             example we don't have a case like `1.00132.17', or
-             1.01i:2.0. Such errors are not uncommon when typing large
-             numbers, and if ignored, they can lead to unpredictable
-             results, so its best to abort and inform the user. */
-          if( *tailptr!='\0'
-              && !isspace(*tailptr)
-              && strchr(":,", *tailptr)==NULL )
-            error(EXIT_FAILURE, 0, "'%s' is an invalid floating point number "
-                  "sequence in the value to the `--polygon' option, error "
-                  "detected at '%s'", pt, tailptr);
-
-          /* Add the read coordinate to the list of coordinates. */
-          gal_list_f64_add(&vertices, read);
-
-          /* The job here is done, start from tailptr */
-          pt=tailptr;
-        }
-    }
-
-  /* Put the coordinates into an array while reversing their order so they
-     correspond to the user's order, then put it in the right place.*/
-  array=gal_list_f64_to_array(vertices, 1, &p->nvertices);
-  if(p->mode==IMGCROP_MODE_IMG) { p->ipolygon=array; p->wpolygon=NULL;  }
-  else                          { p->ipolygon=NULL;  p->wpolygon=array; }
-
-  /* The number of vertices is actually the number of nodes in the list
-     divided by the dimension of the dataset (note that we were counting
-     the dimension from 0. */
-  p->nvertices/=(dim+1);
-
-  /* For a check:
-  {
-    size_t i;
-    double *polygon=p->mode==IMGCROP_MODE_IMG?p->ipolygon:p->wpolygon;
-    for(i=0;i<p->nvertices;++i)
-      printf("(%f, %f)\n", polygon[i*2], polygon[i*2+1]);
-  }
-  exit(0);
-  */
-
-  /* Clean up: */
-  gal_list_f64_free(vertices);
 }
 
 
@@ -334,7 +228,7 @@ onecrop_ipolygon_fl(double *ipolygon, size_t nvertices, long *fpixel,
     for(i=0;i<size;++i)                                                 \
       {                                                                 \
         point[0]=i%s1+1; point[1]=i/s1+1;                               \
-        if(gal_polygon_pin(ipolygon, point, nvertices)==outpolygon)     \
+        if((*isinside)(ipolygon, point, nvertices)==polygonout)         \
           ba[i]=*bb;                                                    \
       }                                                                 \
     free(bb);                                                           \
@@ -347,9 +241,9 @@ polygonmask(struct onecropparams *crp, void *array, long *fpixel_i,
 {
   int type=crp->p->type;
   double *ipolygon, point[2];
-  int outpolygon=crp->p->outpolygon;
+  int polygonout=crp->p->polygonout;
+  int (*isinside)(double *, double *, size_t);
   size_t i, *ordinds, size=s0*s1, nvertices=crp->p->nvertices;
-
 
   /* First of all, allocate enough space to put a copy of the input
      coordinates (we will be using that after sorting in an
@@ -363,17 +257,49 @@ polygonmask(struct onecropparams *crp, void *array, long *fpixel_i,
     error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for ordinds",
           __func__, nvertices*sizeof *ordinds);
 
+  /* If the user wants to sort the edges, do it. If not, make sure its in
+     counter-clockwise orientation. */
+  if(crp->p->polygonsort)
+    gal_polygon_vertices_sort(crp->ipolygon, nvertices, ordinds);
+  else
+    {
+      /* Keep the original order of the vertices, just make it
+         counter-clockwise. */
+      for(i=0;i<nvertices;++i) ordinds[i]=i;
+      gal_polygon_to_counterclockwise(crp->ipolygon, nvertices);
+    }
 
-  /* Find the order of the polygons and put the elements in the proper
-     order. Also subtract the fpixel_i coordinates from all the
-     vertices to bring them into the crop image coordinates.*/
-  gal_polygon_ordered_corners(crp->ipolygon, crp->p->nvertices, ordinds);
-  for(i=0;i<crp->p->nvertices;++i)
+  /* Fill the final polygon vertice positions within 'ipolygon' and also
+     the fpixel_i coordinates from all the vertices to bring them into the
+     crop image coordinates. */
+  for(i=0;i<nvertices;++i)
     {
       ipolygon[i*2  ] = crp->ipolygon[ordinds[i]*2]   - fpixel_i[0];
       ipolygon[i*2+1] = crp->ipolygon[ordinds[i]*2+1] - fpixel_i[1];
     }
 
+  /* Print a warning if we done the sorting, _and_ the sorted polygon is
+     concave, _and_ the user hasn't activated the quiet mode. Note that we
+     could'n do this immediately after calling 'gal_polygon_vertices_sort'
+     because that function doesn't touch the actual vertice values, it only
+     fills 'ordinds'. */
+  if(crp->p->polygonsort
+     && !crp->p->cp.quiet
+     && !gal_polygon_is_convex(ipolygon, nvertices) )
+    error(0, 0, "%s: warning: the given vertices belong to a concave "
+          "polygon, but there is no unique solution to the sorting of "
+          "concave polygons. Please check the cropped image, if it doesn't "
+          "correspond to your desired polygon, sort the vertices yourself "
+          "in counter-clockwise order _and_ don't use the '--polygonsort' "
+          "option", __func__);
+
+  /* Set the function for checking if a point is inside the polygon. For
+     concave polygons the process is more complex and thus
+     slower. Therefore when the polygon is convex, its better to use the
+     simpler/faster function. */
+  isinside = ( gal_polygon_is_convex(ipolygon, nvertices)
+               ? gal_polygon_is_inside_convex
+               : gal_polygon_is_inside );
 
   /* Go over all the pixels in the image and if they are within the
      polygon keep them if the user has asked for it.*/
@@ -521,7 +447,7 @@ onecrop_flpixel(struct onecropparams *crp)
         onecrop_parse_section(p, dsize, fpixel, lpixel);
       else if(p->polygon)       /* Defined by a polygon.  */
         {
-          if(p->outpolygon==0)
+          if(p->polygonout==0)
             onecrop_ipolygon_fl(p->ipolygon, p->nvertices, fpixel, lpixel);
         }
       else                      /* Defined by its center. */
@@ -537,12 +463,12 @@ onecrop_flpixel(struct onecropparams *crp)
         {
           /* Fill crp->ipolygon in wcspolygonpixel, then set flpixel*/
           fillcrpipolygon(crp);
-          if(p->outpolygon==0)
+          if(p->polygonout==0)
             onecrop_ipolygon_fl(crp->ipolygon, p->nvertices, fpixel, lpixel);
         }
       else
         {
-          /* Convert `crp->world' (in WCS) into `pixcrd' (image coord). */
+          /* Convert 'crp->world' (in WCS) into 'pixcrd' (image coord). */
           if(wcss2p(p->imgs[crp->in_ind].wcs, ncoord, ndim, crp->world,
                     phi, theta, imgcrd, pixcrd, &status) )
             if(status)
@@ -564,7 +490,7 @@ onecrop_flpixel(struct onecropparams *crp)
 
   /* If the user only wants regions outside to the polygon, then set
      the fpixel and lpixel to cover the full input image. */
-  if(p->polygon && p->outpolygon)
+  if(p->polygon && p->polygonout)
     {
       crp->fpixel[0]=crp->fpixel[1]=1;
       crp->lpixel[0]=dsize[1];
@@ -622,14 +548,17 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
 
 
   /* Create the FITS file with a blank first extension, then close it, so
-     with the next `fits_open_file', we build the image in the second
+     with the next 'fits_open_file', we build the image in the second
      extension. This way, atleast for Gnuastro's outputs, we can
-     consistently use `-h1' (something like how you count columns, or
+     consistently use '-h1' (something like how you count columns, or
      generally everything from 1). */
   if(fits_create_file(&ofp, outname, &status))
     gal_fits_io_error(status, "creating file");
-  fits_create_img(ofp, SHORT_IMG, 0, naxes, &status);
-  fits_close_file(ofp, &status);
+  if(crp->p->primaryimghdu==0)
+    {
+      fits_create_img(ofp, SHORT_IMG, 0, naxes, &status);
+      fits_close_file(ofp, &status);
+    }
 
 
   /* Create the output crop image. */
@@ -643,7 +572,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
   /* When CFITSIO creates a FITS extension it adds two comments linking to
      the FITS paper. Since we are mentioning the version of CFITSIO and
      only use its routines to read/write from/to FITS files, this is
-     redundant. If `status!=0', then `gal_fits_io_error' will abort, but in
+     redundant. If 'status!=0', then 'gal_fits_io_error' will abort, but in
      case CFITSIO doesn't write the comments, status will become
      non-zero. So we are resetting it to zero after these (because not
      being able to delete them isn't an error). */
@@ -664,7 +593,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
                       &status);
       gal_fits_io_error(status, "writing BUNIT");
     }
-  rkey->name=NULL;              /* `name' wasn't allocated. */
+  rkey->name=NULL;              /* 'name' wasn't allocated. */
   gal_data_free(rkey);
 
 
@@ -720,31 +649,32 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
 /* The starting and ending points are set in the onecropparams structure
    for one crop from one image. Crop that region out of the input.
 
-   On`basekeyname': To be safe, GCC 8.1 (and persumably later versions)
+   On'basekeyname': To be safe, GCC 8.1 (and persumably later versions)
    assumes that we are writing the full statically allocated space into
-   `regioinkey'! So it prints a warning that you may be writing outside the
+   'regioinkey'! So it prints a warning that you may be writing outside the
    allocated space! With these variables, we are ultimately just writing
    the file counters, so we can never (with current techologies!!!) exceed
-   `FLEN_KEYWORD' (which is 75 characters). To avoid compiler warnings, we
-   are just removing a few characters (`FLEN_KEYWORD-5') to allow the
+   'FLEN_KEYWORD' (which is 75 characters). To avoid compiler warnings, we
+   are just removing a few characters ('FLEN_KEYWORD-5') to allow the
    suffix and remove the warnings. */
-void
+int
 onecrop(struct onecropparams *crp)
 {
   struct cropparams *p=crp->p;
   struct inputimgs *img=&p->imgs[crp->in_ind];
 
   void *array;
+  int returnvalue=1;
   int status=0, anynul=0;
   fitsfile *ifp=crp->infits, *ofp;
-  char basekeyname[FLEN_KEYWORD-5];     /* `-5': avoid gcc 8.1+ warnings! */
+  char basekeyname[FLEN_KEYWORD-5];     /* '-5': avoid gcc 8.1+ warnings! */
   gal_fits_list_key_t *headers=NULL;    /* See above comment for more.    */
   size_t i, j, cropsize=1, ndim=img->ndim;
   char region[FLEN_VALUE], regionkey[FLEN_KEYWORD];
   long fpixel_o[MAXDIM], lpixel_o[MAXDIM], inc[MAXDIM];
   long naxes[MAXDIM], fpixel_i[MAXDIM], lpixel_i[MAXDIM];
 
-  /* Fill the `naxes' and `inc' arrays. */
+  /* Fill the 'naxes' and 'inc' arrays. */
   for(i=0;i<ndim;++i)
     {
       inc[ i ]   = 1;
@@ -753,7 +683,7 @@ onecrop(struct onecropparams *crp)
 
 
   /* Find the first and last pixel of this crop box from this input
-     image. Then copy the first and last pixels into the `_i' arrays.*/
+     image. Then copy the first and last pixels into the '_i' arrays.*/
   onecrop_flpixel(crp);
   memcpy(fpixel_i, crp->fpixel, ndim*sizeof *fpixel_i);
   memcpy(lpixel_i, crp->lpixel, ndim*sizeof *lpixel_i);
@@ -815,7 +745,7 @@ onecrop(struct onecropparams *crp)
 
 
       /* Write the selected region of this image as a string to include as
-         a FITS keyword. Then we want to delete the last coma `,'.*/
+         a FITS keyword. Then we want to delete the last coma ','.*/
       j=0;
       for(i=0;i<ndim;++i)
         j += sprintf(&region[j], "%ld:%ld,", fpixel_i[i], lpixel_i[i]);
@@ -829,7 +759,7 @@ onecrop(struct onecropparams *crp)
       sprintf(regionkey, "%sPIX", basekeyname);
       gal_fits_key_list_add_end(&headers, GAL_TYPE_STRING, regionkey,
                                 0, region, 0, "Range of pixels used for "
-                                "this output.", 0, NULL);
+                                "this output.", 0, NULL, 0);
       gal_fits_key_write_in_ptr(&headers, ofp);
 
 
@@ -837,11 +767,14 @@ onecrop(struct onecropparams *crp)
       free(array);
     }
   else
-    if(p->polygon && p->outpolygon==0 && p->mode==IMGCROP_MODE_WCS)
-      free(crp->ipolygon);
+    {
+      returnvalue=0;
+      if(p->polygon && p->polygonout==0 && p->mode==IMGCROP_MODE_WCS)
+        free(crp->ipolygon);
+    }
 
   /* The crop is complete. */
-  return;
+  return returnvalue;
 }
 
 
@@ -934,7 +867,7 @@ onecrop_center_filled(struct onecropparams *crp)
   free(array);
 
   /* CFITSIO already checks if there are any blank pixels. If there are,
-     then `anynul' will be 1, if there aren't it will be 0. So the output
+     then 'anynul' will be 1, if there aren't it will be 0. So the output
      of this function is just the inverse of that number. */
   return !anynul;
 }

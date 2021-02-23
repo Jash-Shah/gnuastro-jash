@@ -5,7 +5,7 @@ Table is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -47,7 +47,7 @@ struct argp_option program_options[] =
     {
       "wcsfile",
       UI_KEY_WCSFILE,
-      "STR",
+      "FITS",
       0,
       "File with WCS if conversion is requested.",
       GAL_OPTIONS_GROUP_INPUT,
@@ -66,6 +66,45 @@ struct argp_option program_options[] =
       GAL_OPTIONS_GROUP_INPUT,
       &p->wcshdu,
       GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "catcolumnfile",
+      UI_KEY_CATCOLUMNFILE,
+      "FITS/TXT",
+      0,
+      "File(s) to be concatenated by column.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->catcolumnfile,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "catcolumnhdu",
+      UI_KEY_CATCOLUMNHDU,
+      "STR/INT",
+      0,
+      "HDU/Extension(s) in catcolumnfile.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->catcolumnhdu,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "catcolumns",
+      UI_KEY_CATCOLUMNS,
+      "STR",
+      0,
+      "Columns to use in catcolumnfile.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->catcolumns,
+      GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
@@ -102,6 +141,33 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "catcolumnrawname",
+      UI_KEY_CATCOLUMNRAWNAME,
+      0,
+      0,
+      "Don't touch column names of --catcolumnfile.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->catcolumnrawname,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "colmetadata",
+      UI_KEY_COLMETADATA,
+      "STR,STR[,STR,STR]",
+      0,
+      "Update output metadata (name, unit, comments).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->colmetadata,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_name_and_strings
+    },
 
 
 
@@ -125,7 +191,49 @@ struct argp_option program_options[] =
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
-      gal_options_parse_name_and_values
+      gal_options_parse_name_and_float64s
+    },
+    {
+      "inpolygon",
+      UI_KEY_INPOLYGON,
+      "STR,STR",
+      0,
+      "Coord. columns that are inside '--polygon'.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->inpolygon,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_strings
+    },
+    {
+      "outpolygon",
+      UI_KEY_OUTPOLYGON,
+      "STR,STR",
+      0,
+      "Coord. columns that are outside '--polygon'.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->outpolygon,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_strings
+    },
+    {
+      "polygon",
+      UI_KEY_POLYGON,
+      "FLT:FLT[,...]",
+      0,
+      "Polygon for '--inpolygon' or '--outpolygon'.",
+      UI_GROUP_OUTROWS,
+      &p->polygon,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_colon_sep_csv
     },
     {
       "equal",
@@ -139,7 +247,7 @@ struct argp_option program_options[] =
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
-      gal_options_parse_name_and_values
+      gal_options_parse_name_and_strings
     },
     {
       "notequal",
@@ -153,7 +261,7 @@ struct argp_option program_options[] =
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
-      gal_options_parse_name_and_values
+      gal_options_parse_name_and_strings
     },
     {
       "sort",
@@ -207,6 +315,61 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "rowlimit",
+      UI_KEY_ROWLIMIT,
+      "INT,INT",
+      0,
+      "Only rows in this row-counter range.",
+      UI_GROUP_OUTROWS,
+      &p->rowlimit,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_float64
+    },
+    {
+      "rowrandom",
+      UI_KEY_ROWRANDOM,
+      "INT",
+      0,
+      "Number of rows to select randomly.",
+      UI_GROUP_OUTROWS,
+      &p->rowrandom,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+    },
+    {
+      "envseed",
+      UI_KEY_ENVSEED,
+      0,
+      0,
+      "Use GSL_RNG_SEED env. for '--rowrandom'.",
+      UI_GROUP_OUTROWS,
+      &p->envseed,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "noblank",
+      UI_KEY_NOBLANK,
+      "STR[,STR]",
+      0,
+      "Remove rows with blank in given columns.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->noblank,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_strings
+    },
+
 
 
 

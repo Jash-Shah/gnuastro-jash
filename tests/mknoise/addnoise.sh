@@ -6,7 +6,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -58,10 +58,11 @@ if [ ! -f $img2     ]; then echo "$img2 does not exist.";    exit 77; fi
 # Actual test script
 # ==================
 #
-# `check_with_program' can be something like `Valgrind' or an empty
+# 'check_with_program' can be something like Valgrind or an empty
 # string. Such programs will execute the command if present and help in
 # debugging when the developer doesn't have access to the user's system.
 export GSL_RNG_SEED=1
 export GSL_RNG_TYPE=ranlxs2
-$check_with_program $execname --envseed $img1
-$check_with_program $execname --envseed $img2
+options="--background=-10 --zeropoint=0 --envseed"
+$check_with_program $execname $img1 $options
+$check_with_program $execname $img2 $options

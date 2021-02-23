@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -49,7 +49,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /**************************************************************/
 /* The GSL random number generator (RNG) reads values from the
    environment. This function is designed to make the job easier for any
-   program using GSL's RNG. If the user doesn't want to set the */
+   Gnuastro program using GSL's RNG functions. */
 gsl_rng *
 gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
                      unsigned long int *seed)
@@ -57,13 +57,13 @@ gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
   gsl_rng *rng;
 
   /* Let GSL read the environment and convert the type name (as string) to
-     `gsl_rng_type'. After this function, `gsl_rng_default' contains the
-     generator's type and `gsl_rng_default_seed' contains the (possibly)
+     'gsl_rng_type'. After this function, 'gsl_rng_default' contains the
+     generator's type and 'gsl_rng_default_seed' contains the (possibly)
      given seed.*/
   gsl_rng_env_setup();
 
   /* Allocate the random number generator based on the requested type and
-     save its name. If no `GSL_RNG_TYPE' is set, then use a fixed
+     save its name. If no 'GSL_RNG_TYPE' is set, then use a fixed
      generator.*/
   rng=gsl_rng_alloc(secure_getenv("GSL_RNG_TYPE")
                     ? gsl_rng_default
@@ -71,7 +71,7 @@ gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
   *name = gsl_rng_name(rng);
 
   /* Initialize the random number generator, depending on the
-     `envseed_bool' argument. */
+     'envseed_bool' argument. */
   *seed = ( envseed_bool
             ? gsl_rng_default_seed
             : gal_timing_time_based_rng_seed() );
@@ -79,6 +79,196 @@ gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
 
   /* Return the GSL RNG structure. */
   return rng;
+}
+
+
+
+
+
+/* On the Linux kernel, due to "overcommitting" (which is activated by
+   default), malloc will not return NULL when we allocate more memory than
+   the physically available memory. It is possible to disable overcommiting
+   with root permissions, but I have not been able to find any way to do
+   this as a normal user. So the only way is to look into the
+   '/proc/meminfo' file (constantly filled by the Linux kernel) and read
+   the available memory from that.
+
+   Note that this overcommiting apparently only occurs on Linux. From what
+   I have read, other kernels are much more strict and 'malloc' will indeed
+   return NULL if there isn't any physical RAM to support it. So if the
+   '/proc/meminfo' doesn't exist, we can assume that 'malloc' works as
+   expected, until its inverse is proven. */
+size_t
+gal_checkset_ram_available(int quietmmap)
+{
+  FILE *file;
+  int keyfound=0;
+  size_t *freemem=NULL;
+  size_t linelen=80, out=GAL_BLANK_SIZE_T;
+  char *token, *line, *linecp, *saveptr, delimiters[] = " ";
+  char *meminfo="/proc/meminfo", *keyname="MemAvailable", *units="kB";
+
+  /* If /proc/meminfo exists, read it. Otherwise, don't bother doing
+     anything. */
+  if ((file = fopen(meminfo, "r")))
+    {
+      /* Allocate space to read the line. */
+      errno=0;
+      line=malloc(linelen*sizeof *line);
+      if(line==NULL)
+        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for line",
+              __func__, linelen*sizeof *line);
+
+      /* Read it line-by-line until you find 'MemAvailable'.  */
+      while( getline(&line, &linelen, file) != -1 )
+        if( !strncmp(line, keyname, 12) )
+          {
+            /* Necessary for final check: */
+            keyfound=1;
+
+            /* We need to work on a copied line to avoid messing up the
+               contents of the actual line. */
+            gal_checkset_allocate_copy(line, &linecp);
+
+            /* The first token (which we don't need). */
+            token=strtok_r(linecp, delimiters, &saveptr);
+
+            /* The second token (which is the actual number we want). */
+            token=strtok_r(NULL, delimiters, &saveptr);
+            if(token)
+              {
+                /* Read the token as a number. */
+                if( gal_type_from_string((void **)(&freemem), token,
+                                         GAL_TYPE_SIZE_T) )
+                  error(EXIT_SUCCESS, 0, "WARNING: %s: value of '%s' "
+                        "keyword couldn't be read as an integer. Hence "
+                        "the amount of available RAM couldn't be "
+                        "determined. If a large volume of data is "
+                        "provided, the program may crash. Please contact "
+                        "us at '%s' to fix the problem",
+                        meminfo, keyname, PACKAGE_BUGREPORT);
+                else
+                  {
+                    /* The third token should be the units ('kB'). If it
+                       isn't, there should be an error because we currently
+                       assume kilobytes. */
+                    token=strtok_r(NULL, delimiters, &saveptr);
+                    if(token)
+                      {
+                        /* The units should be 'kB' (for kilobytes). */
+                        if( !strncmp(token, units, 2) )
+                          out=freemem[0]*1000;
+                        else
+                          error(EXIT_SUCCESS, 0, "WARNING: %s: the units of "
+                                "the value of '%s' keyword is (usually 'kB') "
+                                "isn't recognized. Hence the amount of "
+                                "available RAM couldn't be determined. If a "
+                                "large volume of data is provided, the "
+                                "program may crash. Please contact us at "
+                                "'%s' to fix the problem", meminfo, keyname,
+                                PACKAGE_BUGREPORT);
+                      }
+                    else
+                      error(EXIT_SUCCESS, 0, "WARNING: %s: the units of the "
+                            "value of '%s' keyword (usually 'kB') couldn't "
+                            "be read as an integer. Hence the amount of "
+                            "available RAM couldn't be determined. If a "
+                            "large volume of data is provided, the program "
+                            "may crash. Please contact us at '%s' to fix "
+                            "the problem", meminfo, keyname, PACKAGE_BUGREPORT);
+                  }
+
+                /* Clean up. */
+                if(freemem) free(freemem);
+              }
+            else
+              error(EXIT_SUCCESS, 0, "WARNING: %s: line with the '%s' "
+                    "keyword didn't have a value. Hence the amount of "
+                    "available RAM couldn't be determined. If a large "
+                    "volume of data is provided, the program may crash. "
+                    "Please contact us at '%s' to fix the problem",
+                    meminfo, keyname, PACKAGE_BUGREPORT);
+
+            /* Clean up. */
+            free(linecp);
+          }
+
+      /* The file existed but a keyname couldn't be found. In this case we
+         should inform the user to be aware that we can't automatically
+         determine the available memory. */
+      if(keyfound==0 && quietmmap==0)
+        error(EXIT_SUCCESS, 0, "WARNING: %s: didn't contain a '%s' keyword "
+              "hence the amount of available RAM couldn't be determined. "
+              "If a large volume of data is provided, the program may "
+              "crash. Please contact us at '%s' to fix the problem",
+              meminfo, keyname, PACKAGE_BUGREPORT);
+
+      /* Close the opened file and free the line. */
+      free(line);
+      fclose(file);
+    }
+
+  /* Return the final value. */
+  return out;
+}
+
+
+
+
+
+int
+gal_checkset_need_mmap(size_t bytesize, size_t minmapsize, int quietmmap)
+{
+  int needmmap=0;
+  size_t availableram;
+  size_t minimumtommap=10000000;
+  size_t mustremainfree=250000000;
+
+  /* In case the given minmapsize is smaller than the default value of
+     'minimumtomap', then correct 'minimumtomap' to be the same as
+     'minmapsize' (the user has to have full control to over-write the
+     default value, but let them know in a warning that this is not
+     good). */
+  if(minmapsize < minimumtommap)
+    {
+      /* Let the user know that this is not a good choice and can cause
+         other problems. */
+      if(!quietmmap)
+        error(EXIT_SUCCESS, 0, "WARNING: it is recommended that minmapsize "
+              "have a value larger than %zu (it is currently %zu), see "
+              "\"Memory management\" section in the Gnuastro book for "
+              "more. To disable this warning, please use the option "
+              "'--quiet-mmap'", minimumtommap, minmapsize);
+
+      /* Set the variable. */
+      minimumtommap=minmapsize;
+    }
+
+  /* Memory mapping is only relevant here if the byte-size of the dataset
+     is larger than 'minimumtommap'. This is primarily because checking the
+     available memory can be expensive. */
+  if( bytesize >= minimumtommap )
+    {
+      /* Find the available RAM space (only relevant for Linux). */
+      availableram=gal_checkset_ram_available(quietmmap);
+
+      /* For a check:
+      printf("check: %zu (bs), %zu (ar), %zu (nu)\n",
+             bytesize, availableram, mustremainfree);
+      */
+
+      /* If the final size is larger than the user's maximum,
+         or is larger than the available memory minus 500Mb (to
+         leave the system some breathing space!), then read the
+         array into disk using memory-mapping (HDD/SSD). */
+      if( bytesize >= minmapsize
+          || availableram < mustremainfree
+          || bytesize > (availableram-mustremainfree) )
+        needmmap=1;
+    }
+
+  /* Return the final choice. */
+  return needmmap;
 }
 
 
@@ -270,7 +460,7 @@ gal_checkset_not_dir_part(char *filename)
   size_t i, l;
   char *out, *tmp=filename;
 
-  /* Find the first `/' to identify the directory */
+  /* Find the first '/' to identify the directory */
   l=strlen(filename);
   for(i=l;i!=0;--i)
     if(filename[i]=='/')
@@ -288,6 +478,88 @@ gal_checkset_not_dir_part(char *filename)
   return out;
 }
 
+
+
+
+
+/* Make an allocated copy of the input string, then remove the suffix from
+   that string. */
+char *
+gal_checkset_suffix_separate(char *name, char **outsuffix)
+{
+  char *c, *out=NULL, *suffix=NULL;
+
+  /* Make a copy of the input. */
+  gal_checkset_allocate_copy(name, &out);
+
+  /* Parse the string from the end and stop when we hit a '.'. */
+  c=out+strlen(out)-1;
+  while(c!=out)
+    {
+      /* As soon as we hit the first '.' take a copy of the string after it
+         and put it in 'suffix'. */
+      if(*c=='.')
+        {
+          gal_checkset_allocate_copy(c, &suffix);
+          *c='\0';
+          break;
+        }
+      --c;
+    }
+
+  /* Put the 'suffix' in the output pointer and return the string with no
+     suffix. */
+  *outsuffix=suffix;
+  return out;
+}
+
+
+
+
+
+/* Given a reference filename, add a format of AAAAA-XXXXXX.CCCC where
+   'AAAAA' is the base name of the 'reference' argument, 'XXXXX' is a
+   random/unique sequence of characters, and 'YYYYY' is the string given to
+   'suffix'. If 'suffix' is NULL, the suffix of 'reference' will be used.*/
+char *
+gal_checkset_make_unique_suffix(char *reference, char *suffix)
+{
+  int tmpnamefile;
+  char *nosuff, *tmpname;
+  char *out=NULL, *insuffix;
+
+  /* Remove the suffix. */
+  nosuff=gal_checkset_suffix_separate(reference, &insuffix);
+
+  /* First generate the input to 'mkstemp' (the 'XXXXXX's will be replaced
+     with a unique set of strings with same number of characters). */
+  if( asprintf(&tmpname, "%s-XXXXXX", nosuff)<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+
+  /* Generate the unique name with 'mkstemp', but it will actually open the
+     file (to make sure that the name is not used), so we need to close it
+     afterwards. */
+  tmpnamefile=mkstemp(tmpname);
+  errno=0;
+  if( close(tmpnamefile) != 0 )
+    error(EXIT_FAILURE, errno, "couldn't close temporary file");
+
+  /* Delete the temporarily created file. */
+  remove(tmpname);
+
+  /* Add the suffix. */
+  out = ( suffix
+          ? gal_checkset_malloc_cat(tmpname, suffix)
+          : ( insuffix
+              ? gal_checkset_malloc_cat(tmpname, insuffix)
+              : tmpname ) );
+
+  /* Clean up and return the output. */
+  if(tmpname!=out) free(tmpname);
+  if(insuffix) free(insuffix);
+  free(nosuff);
+  return out;
+}
 
 
 
@@ -312,7 +584,7 @@ gal_checkset_check_file(char *filename)
 
 
 
-/* Similar to `gal_checkset_check_file', but will report the result instead
+/* Similar to 'gal_checkset_check_file', but will report the result instead
    of doing it quietly. */
 int
 gal_checkset_check_file_return(char *filename)
@@ -343,14 +615,14 @@ gal_checkset_writable_notexist(char *filename)
   char *dir;
   FILE *tmpfile;
 
-  /* If the filename is `NULL' everything is ok (it doesn't exist)! In some
+  /* If the filename is 'NULL' everything is ok (it doesn't exist)! In some
      cases, a NULL filename is interpretted to mean standard output. */
   if(filename==NULL) return 1;
 
   /* We want to make sure that we can open and write to this file. But
      the user might have asked to not delete the file, so the
      contents should not be changed. Therefore we have to open it with
-     `r+`. */
+     'r+'. */
   errno=0;
   tmpfile=fopen(filename, "r+");
   if (tmpfile)                        /* The file opened. */
@@ -387,10 +659,10 @@ gal_checkset_writable_notexist(char *filename)
 
 
 
-/* Check if a file exists and can be opened. If the `keep' value is
+/* Check if a file exists and can be opened. If the 'keep' value is
    non-zero, then the file will remain untouched, otherwise, it will be
    deleted (since most programs need to make a clean output). When the file
-   is to be deleted and `dontdelete' has a non-zero value, then the file
+   is to be deleted and 'dontdelete' has a non-zero value, then the file
    won't be deleted, but the program will abort with an error, informing
    the user that the output can't be made. */
 void
@@ -399,7 +671,7 @@ gal_checkset_writable_remove(char *filename, int keep, int dontdelete)
   char *dir;
   FILE *tmpfile;
 
-  /* If the filename is `NULL' everything is ok (it doesn't exist)! In some
+  /* If the filename is 'NULL' everything is ok (it doesn't exist)! In some
      cases, a NULL filename is interpretted to mean standard output. */
   if(filename==NULL)
     return;
@@ -407,7 +679,7 @@ gal_checkset_writable_remove(char *filename, int keep, int dontdelete)
   /* We want to make sure that we can open and write to this file. But
      the user might have asked to not delete the file, so the
      contents should not be changed. Therefore we have to open it with
-     `r+`. */
+     'r+'. */
   errno=0;
   tmpfile=fopen(filename, "r+");
   if (tmpfile)                        /* The file opened. */
@@ -423,8 +695,8 @@ gal_checkset_writable_remove(char *filename, int keep, int dontdelete)
           /* Make sure it is ok to delete the file. */
           if(dontdelete)
             error(EXIT_FAILURE, 0, "%s already exists and you have "
-                  "asked to not remove it with the `--dontdelete` "
-                  "(`-D`) option", filename);
+                  "asked to not remove it with the '--dontdelete' "
+                  "('-D') option", filename);
 
           /* Delete the file: */
           errno=0;
@@ -444,7 +716,7 @@ gal_checkset_writable_remove(char *filename, int keep, int dontdelete)
       errno=0;
       if( access(dir, W_OK) )
         error(EXIT_FAILURE, errno, "cannot create any file(s) in the "
-              "directory `%s'", dir);
+              "directory '%s'", dir);
 
       /* Clean up. */
       free(dir);
@@ -537,15 +809,15 @@ gal_checkset_automatic_output(struct gal_options_common_params *cp,
       l=strlen(inname);
       for(i=l-1;i!=0;--i)
         {
-          /* We don't want to touch anything before a `/' (directory
+          /* We don't want to touch anything before a '/' (directory
              names). We are only concerned with file names here. */
           if(out[i]=='/')
             {
-              /* When `/' is the last input character, then the input is
+              /* When '/' is the last input character, then the input is
                  clearly not a filename, but a directory name. In this
                  case, adding a suffix is meaningless (a suffix belongs to
                  a filename for Gnuastro's tools). So close the string
-                 after the `/' and leave the loop. However, if the `/'
+                 after the '/' and leave the loop. However, if the '/'
                  isn't the last input name charector, there is probably a
                  filename (without a "." suffix), so break from the
                  loop. No further action is required, since we initially
@@ -557,9 +829,9 @@ gal_checkset_automatic_output(struct gal_options_common_params *cp,
             }
 
           /* The input file names can be compressed names (for example
-             `.fits.gz'). Currently the only compressed formats
+             '.fits.gz'). Currently the only compressed formats
              (decompressed within CFITSIO) are listed in
-             `gal_fits_name_is_fits' and `gal_fits_suffix_is_fits'.*/
+             'gal_fits_name_is_fits' and 'gal_fits_suffix_is_fits'.*/
           else if(out[i]=='.' && !( ( out[i+1]=='g' && out[i+2]=='z' )
                                     || (out[i+1]=='f' && out[i+2]=='z' )
                                     || out[i+1]=='Z' ) )
@@ -596,8 +868,8 @@ gal_checkset_automatic_output(struct gal_options_common_params *cp,
 
 
 /* Check write-ability by trying to make a temporary file. Return 0 if the
-   directory is writable, and `errno' if it isn't. We won't be using
-   `facccessat' because its not available on some systems (macOS 10.9 and
+   directory is writable, and 'errno' if it isn't. We won't be using
+   'facccessat' because its not available on some systems (macOS 10.9 and
    earlier, see https://github.com/conda-forge/staged-recipes/pull/9723
    ). */
 static int
@@ -608,7 +880,7 @@ checkset_directory_writable(char *dirname)
   char *tmpname;
 
   /* Set the template for the temporary file (accounting for the possible
-     extra `/'). */
+     extra '/'). */
   if(dirname[strlen(dirname)-1]=='/')
     tmpname=gal_checkset_malloc_cat(dirname, "gnuastroXXXXXX");
   else
@@ -664,18 +936,18 @@ gal_checkset_check_dir_write_add_slash(char **dirname)
   printf("\n\n%s\n\n", tmpname);
   if( write(file_d, buf, strlen(buf)) == -1 )
     error(EXIT_FAILURE, errno, "%s: writing to this temporary file to "
-          "check the given `%s` directory", tmpname, indir);
+          "check the given '%s' directory", tmpname, indir);
   */
   errno=0;
   if( close(file_d) == -1 )
     error(EXIT_FAILURE, errno, "%s: Closing this temporary file to check "
-          "the given `%s` directory", tmpname, indir);
+          "the given '%s' directory", tmpname, indir);
 
   /* Delete the temporary file: */
   errno=0;
   if(unlink(tmpname)==-1)
     error(EXIT_FAILURE, errno, "%s: removing this temporary file made "
-          "to check the given `%s directory`", tmpname, indir);
+          "to check the given '%s directory'", tmpname, indir);
 
   /* Remove the extra characters that were added for the random name. */
   tmpname[strlen(tmpname)-14]='\0';
@@ -691,7 +963,7 @@ gal_checkset_check_dir_write_add_slash(char **dirname)
 /* If the given directory exists and is writable, then nothing is done and
    this function returns 0. If it doesn't, it will be created. If it fails
    at creating the file, or the file isn't writable it returns a non-zero
-   value: the errno, which can be directly used in `error'. */
+   value: the errno, which can be directly used in 'error'. */
 int
 gal_checkset_mkdir(char *dirname)
 {
@@ -709,6 +981,6 @@ gal_checkset_mkdir(char *dirname)
     /* The directory exists, see if its writable. */
     errnum=checkset_directory_writable(dirname);
 
-  /* Return the final `errno'. */
+  /* Return the final 'errno'. */
   return errnum;
 }

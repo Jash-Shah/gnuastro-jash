@@ -5,7 +5,7 @@ CosmicCalculator is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2016-2019, Free Software Foundation, Inc.
+Copyright (C) 2016-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -47,11 +47,14 @@ struct cosmiccalparams
 
   /* Input: */
   double              redshift; /* Redshift of interest.                */
+  gal_data_t          *obsline; /* Observed wavelength of a line.       */
+  double              velocity; /* Velocity of interest.                */
   double                    H0; /* Current expansion rate (km/sec/Mpc). */
   double               olambda; /* Current cosmological constant dens.  */
   double               omatter; /* Current matter density.              */
   double            oradiation; /* Current radiation density.           */
-  gal_data_t          *obsline; /* Observed wavelength of a line.       */
+  uint8_t            listlines; /* List the known spectral lines.       */
+  uint8_t         listlinesatz; /* List the known spectral lines.       */
 
   /* Outputs. */
   gal_list_i32_t     *specific; /* Codes for single row calculations.   */

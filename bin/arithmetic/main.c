@@ -5,7 +5,7 @@ Arithmetic is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -36,7 +36,7 @@ int
 main (int argc, char *argv[])
 {
   struct timeval t1;
-  struct arithmeticparams p={{{0},0},0};
+  struct arithmeticparams p={{{0},0},{0},0};
 
   /* Set the starting time. */
   time(&p.rawtime);

@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2019, Free Software Foundation, Inc.
+Copyright (C) 2019-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -46,10 +46,13 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 __BEGIN_C_DECLS  /* From C++ preparations */
 
 
-/* Spectral line internal codes. */
+/* Spectral line internal codes (SORT BY WAVELENGTH). */
 enum gal_speclines_line_codes
 {
+  /* Allowing '0' to be identied as a known-non-line. */
   GAL_SPECLINES_INVALID=0,
+
+  /* Main list of recognized lines. */
   GAL_SPECLINES_SIIRED,
   GAL_SPECLINES_SII,
   GAL_SPECLINES_SIIBLUE,
@@ -57,11 +60,11 @@ enum gal_speclines_line_codes
   GAL_SPECLINES_NII,
   GAL_SPECLINES_HALPHA,
   GAL_SPECLINES_NIIBLUE,
-  GAL_SPECLINES_OIIIRED,
-  GAL_SPECLINES_OIII,
-  GAL_SPECLINES_OIIIBLUE,
+  GAL_SPECLINES_OIIIRED_VIS,
+  GAL_SPECLINES_OIII_VIS,
+  GAL_SPECLINES_OIIIBLUE_VIS,
   GAL_SPECLINES_HBETA,
-  GAL_SPECLINES_HEIIRED,
+  GAL_SPECLINES_HEII_VIS,
   GAL_SPECLINES_HGAMMA,
   GAL_SPECLINES_HDELTA,
   GAL_SPECLINES_HEPSILON,
@@ -76,13 +79,31 @@ enum gal_speclines_line_codes
   GAL_SPECLINES_CIIIRED,
   GAL_SPECLINES_CIII,
   GAL_SPECLINES_CIIIBLUE,
-  GAL_SPECLINES_HEIIBLUE,
+  GAL_SPECLINES_SiIIIRED,
+  GAL_SPECLINES_SiIII,
+  GAL_SPECLINES_SiIIIBLUE,
+  GAL_SPECLINES_OIIIRED_UV,
+  GAL_SPECLINES_OIII_UV,
+  GAL_SPECLINES_OIIIBLUE_UV,
+  GAL_SPECLINES_HEII_UV,
+  GAL_SPECLINES_CIVRED,
+  GAL_SPECLINES_CIV,
+  GAL_SPECLINES_CIVBLUE,
+  GAL_SPECLINES_NV,
   GAL_SPECLINES_LYALPHA,
+  GAL_SPECLINES_LYBETA,
+  GAL_SPECLINES_LYGAMMA,
+  GAL_SPECLINES_LYDELTA,
+  GAL_SPECLINES_LYEPSILON,
   GAL_SPECLINES_LYLIMIT,
+
+  /* This should be the last element (to keep the total number of
+     lines). */
+  GAL_SPECLINES_INVALID_MAX,
 };
 
 
-/* Spectral lines wavelengths in Angstroms. */
+/* Spectral lines wavelengths in Angstroms (SORT BY WAVELENGTH). */
 #define GAL_SPECLINES_ANGSTROM_SIIRED    6731
 #define GAL_SPECLINES_ANGSTROM_SII       6724
 #define GAL_SPECLINES_ANGSTROM_SIIBLUE   6717
@@ -90,11 +111,11 @@ enum gal_speclines_line_codes
 #define GAL_SPECLINES_ANGSTROM_NII       6566
 #define GAL_SPECLINES_ANGSTROM_HALPHA    6562.8
 #define GAL_SPECLINES_ANGSTROM_NIIBLUE   6548
-#define GAL_SPECLINES_ANGSTROM_OIIIRED   5007
-#define GAL_SPECLINES_ANGSTROM_OIII      4983
-#define GAL_SPECLINES_ANGSTROM_OIIIBLUE  4959
+#define GAL_SPECLINES_ANGSTROM_OIIIRED_VIS 5007
+#define GAL_SPECLINES_ANGSTROM_OIII_VIS  4983
+#define GAL_SPECLINES_ANGSTROM_OIIIBLUE_VIS 4959
 #define GAL_SPECLINES_ANGSTROM_HBETA     4861.36
-#define GAL_SPECLINES_ANGSTROM_HEIIRED   4686
+#define GAL_SPECLINES_ANGSTROM_HEII_VIS  4686
 #define GAL_SPECLINES_ANGSTROM_HGAMMA    4340.46
 #define GAL_SPECLINES_ANGSTROM_HDELTA    4101.74
 #define GAL_SPECLINES_ANGSTROM_HEPSILON  3970.07
@@ -109,12 +130,26 @@ enum gal_speclines_line_codes
 #define GAL_SPECLINES_ANGSTROM_CIIIRED   1909
 #define GAL_SPECLINES_ANGSTROM_CIII      1908
 #define GAL_SPECLINES_ANGSTROM_CIIIBLUE  1907
-#define GAL_SPECLINES_ANGSTROM_HEIIBLUE  1640
+#define GAL_SPECLINES_ANGSTROM_SiIIIRED  1892
+#define GAL_SPECLINES_ANGSTROM_SiIII     1887.5
+#define GAL_SPECLINES_ANGSTROM_SiIIIBLUE 1883
+#define GAL_SPECLINES_ANGSTROM_OIIIRED_UV 1666
+#define GAL_SPECLINES_ANGSTROM_OIII_UV   1663.5
+#define GAL_SPECLINES_ANGSTROM_OIIIBLUE_UV 1661
+#define GAL_SPECLINES_ANGSTROM_HEII_UV   1640
+#define GAL_SPECLINES_ANGSTROM_CIVRED    1551
+#define GAL_SPECLINES_ANGSTROM_CIV       1549.5
+#define GAL_SPECLINES_ANGSTROM_CIVBLUE   1548
+#define GAL_SPECLINES_ANGSTROM_NV        1240
 #define GAL_SPECLINES_ANGSTROM_LYALPHA   1215.67
+#define GAL_SPECLINES_ANGSTROM_LYBETA    1025.7
+#define GAL_SPECLINES_ANGSTROM_LYGAMMA   972.54
+#define GAL_SPECLINES_ANGSTROM_LYDELTA   949.74
+#define GAL_SPECLINES_ANGSTROM_LYEPSILON 937.80
 #define GAL_SPECLINES_ANGSTROM_LYLIMIT   912
 
 
-/* Spectral line name strings. */
+/* Spectral line name strings (SORT BY WAVELENGTH). */
 #define GAL_SPECLINES_NAME_SIIRED    "siired"
 #define GAL_SPECLINES_NAME_SII       "sii"
 #define GAL_SPECLINES_NAME_SIIBLUE   "siiblue"
@@ -122,11 +157,11 @@ enum gal_speclines_line_codes
 #define GAL_SPECLINES_NAME_NII       "nii"
 #define GAL_SPECLINES_NAME_HALPHA    "halpha"
 #define GAL_SPECLINES_NAME_NIIBLUE   "niiblue"
-#define GAL_SPECLINES_NAME_OIIIRED   "oiiired"
-#define GAL_SPECLINES_NAME_OIII      "oiii"
-#define GAL_SPECLINES_NAME_OIIIBLUE  "oiiiblue"
+#define GAL_SPECLINES_NAME_OIIIRED_VIS "oiiired-vis"
+#define GAL_SPECLINES_NAME_OIII_VIS  "oiii-vis"
+#define GAL_SPECLINES_NAME_OIIIBLUE_VIS "oiiiblue-vis"
 #define GAL_SPECLINES_NAME_HBETA     "hbeta"
-#define GAL_SPECLINES_NAME_HEIIRED   "heiired"
+#define GAL_SPECLINES_NAME_HEII_VIS  "heii-vis"
 #define GAL_SPECLINES_NAME_HGAMMA    "hgamma"
 #define GAL_SPECLINES_NAME_HDELTA    "hdelta"
 #define GAL_SPECLINES_NAME_HEPSILON  "hepsilon"
@@ -141,8 +176,22 @@ enum gal_speclines_line_codes
 #define GAL_SPECLINES_NAME_CIIIRED   "ciiired"
 #define GAL_SPECLINES_NAME_CIII      "ciii"
 #define GAL_SPECLINES_NAME_CIIIBLUE  "ciiiblue"
-#define GAL_SPECLINES_NAME_HEIIBLUE  "heiiblue"
+#define GAL_SPECLINES_NAME_SiIIIRED  "si_iiired"
+#define GAL_SPECLINES_NAME_SiIII     "si_iii"
+#define GAL_SPECLINES_NAME_SiIIIBLUE "si_iiiblue"
+#define GAL_SPECLINES_NAME_OIIIRED_UV "oiiired-uv"
+#define GAL_SPECLINES_NAME_OIII_UV   "oiii-uv"
+#define GAL_SPECLINES_NAME_OIIIBLUE_UV "oiiiblue-uv"
+#define GAL_SPECLINES_NAME_HEII_UV   "heii-uv"
+#define GAL_SPECLINES_NAME_CIVRED    "civred"
+#define GAL_SPECLINES_NAME_CIV       "civ"
+#define GAL_SPECLINES_NAME_CIVBLUE   "civblue"
+#define GAL_SPECLINES_NAME_NV        "nv"
 #define GAL_SPECLINES_NAME_LYALPHA   "lyalpha"
+#define GAL_SPECLINES_NAME_LYBETA    "lybeta"
+#define GAL_SPECLINES_NAME_LYGAMMA   "lygamma"
+#define GAL_SPECLINES_NAME_LYDELTA   "lydelta"
+#define GAL_SPECLINES_NAME_LYEPSILON "lyepsilon"
 #define GAL_SPECLINES_NAME_LYLIMIT   "lylimit"
 
 

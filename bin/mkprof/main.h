@@ -5,7 +5,7 @@ MakeProfiles is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -66,6 +66,7 @@ enum profile_types
   PROFILE_FLAT,                 /* Flat profile.               */
   PROFILE_CIRCUMFERENCE,        /* Circumference profile.      */
   PROFILE_DISTANCE,             /* Elliptical radius of pixel. */
+  PROFILE_CUSTOM,          /* Radial prof. in file/table. */
 
   PROFILE_MAXIMUM_CODE,         /* Just for a sanity check.    */
 };
@@ -114,6 +115,8 @@ struct mkprofparams
   char            *backname;  /* Name of background image file name.      */
   char             *catname;  /* Name of catalog of parameters.           */
   char             *backhdu;  /* HDU of background image.                 */
+  char          *customname;  /* Table to use for radial profile.         */
+  char           *customhdu;  /* HDU of table to use for radial profile.  */
   size_t             *dsize;  /* Size of the output image.                */
   uint8_t       clearcanvas;  /* Pixels in background image set to zero.  */
   gal_data_t        *kernel;  /* Parameters to define a kernel.           */
@@ -188,10 +191,12 @@ struct mkprofparams
   char           *wcsheader;  /* The WCS header information for main img. */
   int            wcsnkeyrec;  /* The number of keywords in the WCS header.*/
   char       *mergedimgname;  /* Name of merged image.                    */
+  gal_data_t        *custom;  /* Table containing custom values.          */
+  double   customregular[2];  /* Non-NaN if input table is regular.       */
   int                  nwcs;  /* for WCSLIB: no. coord. representations.  */
   struct wcsprm        *wcs;  /* WCS information for this dataset.        */
-  size_t               ndim;  /* Number of dimensions (for `nomerged').   */
-                              /* We can't put it in `out' because it is   */
+  size_t               ndim;  /* Number of dimensions (for 'nomerged').   */
+                              /* We can't put it in 'out' because it is   */
                               /* meaning ful there.                       */
 };
 

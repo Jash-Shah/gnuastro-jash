@@ -6,7 +6,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -55,9 +55,9 @@ if [ ! -f $img      ]; then echo "$img does not exist.";   exit 77; fi
 # enable multithreaded access to files, the tests pass. It is the
 # users choice to enable this feature.
 #
-# `check_with_program' can be something like `Valgrind' or an empty
+# 'check_with_program' can be something like Valgrind or an empty
 # string. Such programs will execute the command if present and help in
 # debugging when the developer doesn't have access to the user's system.
 $check_with_program $execname $img $cat --mode=img --zeroisnotblank     \
-                              --outpolygon --output=imgoutpolygon.fits  \
+                              --polygonout --output=imgpolygonout.fits  \
                               --polygon=209,50:436.76,151:475.64,438.2:210.6,454.04:121.4,289.88

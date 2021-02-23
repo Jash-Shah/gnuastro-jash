@@ -5,7 +5,7 @@ NoiseChisel is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-Copyright (C) 2015-2019, Free Software Foundation, Inc.
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -59,6 +59,7 @@ sky_mean_std_undetected(void *in_prm)
   struct noisechiselparams *p=(struct noisechiselparams *)tprm->params;
 
   int setblank, type=GAL_TYPE_FLOAT32;
+  uint8_t *noskytiles=p->noskytiles->array;
   size_t i, tind, numsky, bdsize=2, ndim=p->sky->ndim;
   size_t refarea, twidth=gal_type_sizeof(GAL_TYPE_FLOAT32);
   gal_data_t *tile, *fusage, *busage, *bintile, *sigmaclip;
@@ -90,71 +91,80 @@ sky_mean_std_undetected(void *in_prm)
       tile = &p->cp.tl.tiles[tind];
       refarea = p->skyfracnoblank ? 0 : tile->size;
 
-      /* Correct the fake binary tile's properties to be the same as this
-         one, then count the number of zero valued elements in it. Note
-         that the `CHECK_BLANK' flag of `GAL_TILE_PARSE_OPERATE' is set to
-         1. So blank values in the input array are not counted. */
-      bintile->size=tile->size;
-      bintile->dsize=tile->dsize;
-      bintile->array=gal_tile_block_relative_to_other(tile, p->binary);
-      GAL_TILE_PARSE_OPERATE(tile, bintile, 1, 1, {
-          if(p->skyfracnoblank) ++refarea;
-          if(!*o)               ++numsky;
-        });
-
-      /* Only continue, if the fraction of Sky values is less than the
-         requested fraction. */
-      setblank=0;
-      if( (float)(numsky)/(float)(refarea) > p->minskyfrac)
+      /* If this tile is already known to have signal in it (from the
+         'qthresh' phase) it will have a value of '1' in the 'noskytiles'
+         array and should be set to blank here too. */
+      setblank=noskytiles[tind];
+      if(setblank==0)
         {
-          /* Re-initialize the usage array's size information (will be
-             corrected to this tile's size by
-             `gal_data_copy_to_allocated'). */
-          busage->ndim = fusage->ndim = ndim;
-          busage->size = fusage->size = p->maxtcontig;
-          gal_data_copy_to_allocated(tile,    fusage);
-          gal_data_copy_to_allocated(bintile, busage);
+          /* Correct the fake binary tile's properties to be the same as
+             this one, then count the number of zero valued elements in
+             it. Note that the 'CHECK_BLANK' flag of
+             'GAL_TILE_PARSE_OPERATE' is set to 1. So blank values in the
+             input array are not counted. */
+          bintile->size=tile->size;
+          bintile->dsize=tile->dsize;
+          bintile->array=gal_tile_block_relative_to_other(tile, p->binary);
+          GAL_TILE_PARSE_OPERATE(tile, bintile, 1, 1, {
+              if(p->skyfracnoblank) ++refarea;
+              if(!*o)               ++numsky;
+            });
 
-
-          /* Set all the non-zero pixels in `busage' to NaN in `fusage'. */
-          busage->flag = fusage->flag = 0;
-          gal_blank_flag_apply(fusage, busage);
-
-
-          /* Do the sigma-clipping. */
-          sigmaclip=gal_statistics_sigma_clip(fusage, p->sigmaclip[0],
-                                              p->sigmaclip[1], 1, 1);
-
-          /* When there are zero-valued pixels on the edges of the dataset
-             (that have not been set to NaN/blank), given special
-             conditions, the whole zero-valued region can get a binary
-             value of 1 and so the Sky and its standard deviation can
-             become zero. So, we need ignore such tiles. */
-          if( ((float *)(sigmaclip->array))[3]==0.0 )
-            setblank=1;
-          else
+          /* Only continue, if the fraction of Sky values is less than the
+             requested fraction. */
+          if( (float)(numsky)/(float)(refarea) > p->minskyfrac)
             {
-              /* Copy the sigma-clipped mean and STD to their respective
-                 places in the tile arrays. But first, make sure
-                 `sigmaclip' has the same type as the sky and std
-                 arrays. */
-              sigmaclip=gal_data_copy_to_new_type_free(sigmaclip, type);
-              memcpy(gal_pointer_increment(p->sky->array, tind, type),
-                     gal_pointer_increment(sigmaclip->array, 2, type),
-                     twidth);
-              memcpy(gal_pointer_increment(p->std->array, tind, type),
-                     gal_pointer_increment(sigmaclip->array, 3, type),
-                     twidth);
+              /* Re-initialize the usage array's size information (will be
+                 corrected to this tile's size by
+                 'gal_data_copy_to_allocated'). */
+              busage->ndim = fusage->ndim = ndim;
+              busage->size = fusage->size = p->maxtcontig;
+              gal_data_copy_to_allocated(tile,    fusage);
+              gal_data_copy_to_allocated(bintile, busage);
+
+
+              /* Set all the non-zero pixels in 'busage' to NaN in
+                 'fusage'. */
+              busage->flag = fusage->flag = 0;
+              gal_blank_flag_apply(fusage, busage);
+
+
+              /* Do the sigma-clipping. */
+              sigmaclip=gal_statistics_sigma_clip(fusage, p->sigmaclip[0],
+                                                  p->sigmaclip[1], 1, 1);
+
+
+              /* When there are zero-valued pixels on the edges of the
+                 dataset (that have not been set to NaN/blank), given
+                 special conditions, the whole zero-valued region can get a
+                 binary value of 1 and so the Sky and its standard
+                 deviation can become zero. So, we need ignore such
+                 tiles. */
+              if( ((float *)(sigmaclip->array))[3]==0.0 )
+                setblank=1;
+              else
+                {
+                  /* Copy the sigma-clipped mean and STD to their
+                     respective places in the tile arrays. But first, make
+                     sure 'sigmaclip' has the same type as the sky and std
+                     arrays. */
+                  sigmaclip=gal_data_copy_to_new_type_free(sigmaclip, type);
+                  memcpy(gal_pointer_increment(p->sky->array, tind, type),
+                         gal_pointer_increment(sigmaclip->array, 2, type),
+                         twidth);
+                  memcpy(gal_pointer_increment(p->std->array, tind, type),
+                         gal_pointer_increment(sigmaclip->array, 3, type),
+                         twidth);
+                }
+
+              /* Clean up. */
+              gal_data_free(sigmaclip);
             }
-
-          /* Clean up. */
-          gal_data_free(sigmaclip);
+          else
+            setblank=1;
         }
-      else
-        setblank=1;
 
-      /* If the tile is marked as being blank, write blank values into
-         it. */
+      /* If the tile is marked to be blank, write blank values into it. */
       if(setblank==1)
         {
           gal_blank_write(gal_pointer_increment(p->sky->array, tind, type),
@@ -197,17 +207,18 @@ sky_and_std(struct noisechiselparams *p, char *checkname)
 
 
   /* Allocate space for the mean and standard deviation. */
-  p->sky=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim, tl->numtiles,
-                        NULL, 0, cp->minmapsize, p->cp.quietmmap, NULL,
-                        p->input->unit, NULL);
-  p->std=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim, tl->numtiles,
-                        NULL, 0, cp->minmapsize, p->cp.quietmmap, NULL,
-                        p->input->unit, NULL);
+  p->sky=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim,
+                        tl->numtiles, NULL, 0, cp->minmapsize,
+                        p->cp.quietmmap, NULL, p->input->unit, NULL);
+  p->std=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, p->input->ndim,
+                        tl->numtiles, NULL, 0, cp->minmapsize,
+                        p->cp.quietmmap, NULL, p->input->unit, NULL);
 
 
   /* Find the Sky and its STD on proper tiles. */
   gal_threads_spin_off(sky_mean_std_undetected, p, tl->tottiles,
-                       cp->numthreads);
+                       cp->numthreads, p->cp.minmapsize,
+                       p->cp.quietmmap);
   if(checkname)
     {
       p->sky->name="SKY";
@@ -291,8 +302,8 @@ sky_subtract(struct noisechiselparams *p)
 
   /* A small sanity check. */
   if(p->sky->type!=GAL_TYPE_FLOAT32)
-    error(EXIT_FAILURE, 0, "%s: only `float32' type is acceptable "
-          "for sky values. but `p->sky' has type `%s'", __func__,
+    error(EXIT_FAILURE, 0, "%s: only 'float32' type is acceptable "
+          "for sky values. but 'p->sky' has type '%s'", __func__,
           gal_type_name(p->sky->type, 1));
 
   /* Go over all the tiles. */
