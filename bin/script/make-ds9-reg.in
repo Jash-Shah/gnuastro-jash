@@ -1,0 +1,326 @@
+#!/bin/sh
+
+# Convert the given two columns into a ds9 region file.
+#
+# Original author:
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Contributing author(s):
+# Copyright (C) 2021 Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+# Exit the script in the case of failure
+set -e
+
+
+
+
+
+# Default option values (can be changed with options on the
+# command-line).
+hdu=1
+col=""
+name=""
+width=1
+mode=wcs
+radius=""
+command=""
+out=ds9.reg
+color=green
+dontdelete=0
+version=@VERSION@
+scriptname=@SCRIPT_NAME@
+
+
+
+
+
+# Output of '--usage' and '--help':
+print_usage() {
+    cat <<EOF
+$scriptname: run with '--help' for list of options
+EOF
+}
+
+print_help() {
+    cat <<EOF
+Usage: $scriptname [OPTION] FITS-files
+
+This script is part of GNU Astronomy Utilities $version.
+
+This script will take two column names (or numbers) and return a "region
+file" (with one region over each entry) for easy inspection of catalog
+entries in this SAO DS9.
+
+For more information, please run any of the following commands. In
+particular the first contains a very comprehensive explanation of this
+script's invocation: expected input(s), output(s), and a full description
+of all the options.
+
+     Inputs/Outputs and options:           $ info $scriptname
+     Full Gnuastro manual/book:            $ info gnuastro
+
+If you couldn't find your answer in the manual, you can get direct help from
+experienced Gnuastro users and developers. For more information, please run:
+
+     $ info help-gnuastro
+
+$scriptname options:
+ Input:
+  -h, --hdu=STR           HDU/extension of all input FITS files.
+  -c, --column=STR,STR    Columns to use as coordinates (name or number).
+  -m, --mode=wcs|img      Coordinates in WCS or image (default: $mode)
+
+ Output:
+  -C, --color             Color for the regions (read by DS9).
+  -w, --width             Line thickness of the regions (in DS9).
+  -r, --radius            Radius of each region (arcseconds if in WCS mode).
+  -D, --dontdelete        Don't delete output if it exists.
+  -o, --output=STR        Name of output file.
+      --command="STR"     DS9 command to run after making region.
+
+ Operating mode:
+  -h, --help              Print this help list.
+      --cite              BibTeX citation for this program.
+  -V, --version           Print program version.
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+GNU Astronomy Utilities home page: http://www.gnu.org/software/gnuastro/
+
+Report bugs to bug-gnuastro@gnu.org.
+EOF
+}
+
+
+
+
+
+# Output of '--version':
+print_version() {
+    cat <<EOF
+$scriptname (GNU Astronomy Utilities) $version
+Copyright (C) 2015-2021, Free Software Foundation, Inc.
+License GPLv3+: GNU General public license version 3 or later.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written/developed by Mohammad Akhlaghi
+EOF
+}
+
+
+
+
+
+# Functions to check option values and complain if necessary.
+on_off_option_error() {
+    if [ "x$2" = x ]; then
+        echo "$scriptname: '$1' doesn't take any values."
+    else
+        echo "$scriptname: '$1' (or '$2') doesn't take any values."
+    fi
+    exit 1
+}
+
+check_v() {
+    if [ x"$2" = x ]; then
+        echo "$scriptname: option '$1' requires an argument."
+        echo "Try '$scriptname --help' for more information."
+        exit 1;
+    fi
+}
+
+
+
+
+
+# Separate command-line arguments from options. Then put the option
+# value into the respective variable.
+#
+# OPTIONS WITH A VALUE:
+#
+#   Each option has three lines because we want to all common formats: for
+#   long option names: '--longname value' and '--longname=value'. For short
+#   option names we want '-l value', '-l=value' and '-lvalue' (where '-l'
+#   is the short version of the hypothetical '--longname' option).
+#
+#   The first case (with a space between the name and value) is two
+#   command-line arguments. So, we'll need to shift it two times. The
+#   latter two cases are a single command-line argument, so we just need to
+#   "shift" the counter by one. IMPORTANT NOTE: the ORDER OF THE LATTER TWO
+#   cases matters: '-h*' should be checked only when we are sure that its
+#   not '-h=*').
+#
+# OPTIONS WITH NO VALUE (ON-OFF OPTIONS)
+#
+#   For these, we just want the two forms of '--longname' or '-l'. Nothing
+#   else. So if an equal sign is given we should definitely crash and also,
+#   if a value is appended to the short format it should crash. So in the
+#   second test for these ('-l*') will account for both the case where we
+#   have an equal sign and where we don't.
+while [ $# -gt 0 ]
+do
+    # Initialize 'tcol':
+    tcol=""
+
+    # Put the values in the proper variable.
+    case "$1" in
+        # Input parameters.
+        -h|--hdu)           hdu="$2";                            check_v "$1" "$hdu";   shift;shift;;
+        -h=*|--hdu=*)       hdu="${1#*=}";                       check_v "$1" "$hdu";   shift;;
+        -h*)                hdu=$(echo "$1"  | sed -e's/-h//');  check_v "$1" "$hdu";   shift;;
+        -c|--column)        tcol="$2";                           check_v "$1" "$tcol";  shift;shift;;
+        -c=*|--column=*)    tcol="${1#*=}";                      check_v "$1" "$tcol";  shift;;
+        -c*)                tcol=$(echo "$1"  | sed -e's/-c//'); check_v "$1" "$tcol";  shift;;
+        -m|--mode)          mode="$2";                           check_v "$1" "$mode";  shift;shift;;
+        -m=*|--mode=*)      mode="${1#*=}";                      check_v "$1" "$mode";  shift;;
+        -m*)                mode=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$mode";  shift;;
+
+        # Output parameters
+        -C|--color)         color="$2";                            check_v "$1" "$color";   shift;shift;;
+        -C=*|--color=*)     color="${1#*=}";                       check_v "$1" "$color";   shift;;
+        -C*)                color=$(echo "$1"  | sed -e's/-C//');  check_v "$1" "$color";   shift;;
+        -w|--width)         width="$2";                            check_v "$1" "$width";   shift;shift;;
+        -w=*|--width=*)     width="${1#*=}";                       check_v "$1" "$width";   shift;;
+        -w*)                width=$(echo "$1"  | sed -e's/-w//');  check_v "$1" "$width";   shift;;
+        -r|--radius)        radius="$2";                           check_v "$1" "$radius";  shift;shift;;
+        -r=*|--radius=*)    radius="${1#*=}";                      check_v "$1" "$radius";  shift;;
+        -r*)                radius=$(echo "$1"  | sed -e's/-r//'); check_v "$1" "$radius";  shift;;
+        -D|--dontdelete)    dontdelete=1; shift;;
+        -D*|--dontdelete=*) on_off_option_error --dontdelete -D;;
+        -o|--output)        out="$2";                              check_v "$1" "$out";     shift;shift;;
+        -o=*|--output=*)    out="${1#*=}";                         check_v "$1" "$out";     shift;;
+        -o*)                out=$(echo "$1"  | sed -e's/-o//');    check_v "$1" "$out";     shift;;
+        --command)          command="$2";                          check_v "$1" "$command"; shift;shift;;
+        --command=*)        command="${1#*=}";                     check_v "$1" "$command"; shift;;
+
+        # Non-operating options.
+        -?|--help)        print_help; exit 0;;
+        -'?'*|--help=*)   on_off_option_error --help -?;;
+        -V|--version)     print_version; exit 0;;
+        -V*|--version=*)  on_off_option_error --version -V;;
+        --cite)           astfits --cite; exit 0;;
+        --cite=*)         on_off_option_error --cite;;
+
+        # Unrecognized option:
+        -*) echo "$scriptname: unknown option '$1'"; exit 1;;
+
+        # Not an option (not starting with a '-'): assumed to be input FITS
+        # file name.
+        *) input="$1 $input"; shift;;
+    esac
+
+    # If a column was given, add it to possibly existing previous columns
+    # into a comma-separate list.
+    if [ x"$tcol" != x ]; then
+        if [ x"$col" != x ]; then col="$col,$tcol"; else col=$tcol; fi
+    fi
+done
+
+
+
+
+# Basic sanity checks
+# ===================
+
+# Make sure only two columns are given, then set the columns.
+if [ x$col = x ]; then
+    echo "$scriptname: no columns specified, you can use '--column' (or '-c')"
+    exit 1
+else
+    ncols=$(echo $col | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$ncols != x2 ]; then
+        echo "$scriptname: only two columns should be given, but $ncols were given"
+        exit 1
+    fi
+fi
+
+# Make sure the value to '--mode' is either 'wcs' or 'img'.
+if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+    junk=1
+else
+    echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
+    exit 1
+fi
+
+# If the output already exists and the user doesn't want to overwrite, then
+# abort with an error.
+if [ -f $out ]; then
+    if [ $dontdelete = 1 ]; then
+        echo "$scriptname: '$out' already exists! Aborting due to '--dontdelete'"
+        exit 1
+    fi
+fi
+
+
+
+
+
+# Initalize the radius value if not given. If we are in WCS mode, select a
+# 3 arcsecond radius and if we are in image mode, select a 5 pixel radius.
+if [ x"$radius" = x ]; then
+    if [ $mode = "wcs" ]; then radius=1
+    else                       radius=3
+    fi
+fi
+
+# Set the units of the radius.
+if [ x$mode = x"wcs" ]; then unit="\""; else unit=""; fi
+
+
+
+
+
+# Write the metadata in the output.
+printf "# Region file format: DS9 version 4.1\n" > $out
+printf "# Created by $scriptname (GNU Astronomy Utilities) $version\n" >> $out
+printf "# Input: $input (hdu $hdu)\n" >> $out
+printf "# Columns: $col\n" >> $out
+printf "global color=%s width=%d\n" $color $width >> $out
+if [ $mode = "wcs" ]; then  printf "fk5\n" >> $out
+else                        printf "image\n" >> $out;   fi
+
+
+
+
+
+# Write each region's results (when no input file is given, read from the
+# standard input).
+if [ x"$input" = x ]; then
+    cat /dev/stdin \
+        | asttable $input --column=$col \
+        | while read a b; do \
+            printf "circle(%g,%g,%g%s)\n" $a $b $radius $unit >> $out; \
+          done
+else
+    asttable $input --column=$col \
+        | while read a b; do \
+            printf "circle(%g,%g,%g%s)\n" $a $b $radius $unit >> $out; \
+    done
+fi
+
+
+
+
+
+# Run ds9 with the desired region over-plotted.
+if [ x"$command" = x ]; then
+    junk=1
+else
+    $command -regions $out
+    if [ $dontdelete = 0 ]; then rm $out; fi
+fi

@@ -107,6 +107,8 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 
 * astscript-sort-by-night: (gnuastro)Invoking astscript-sort-by-night. Options to this script
 
+* astscript-make-ds9-reg: (gnuastro)Invoking astscript-make-ds9-reg. Options to this script
+
 @end direntry
 
 
@@ -385,7 +387,6 @@ Recognized table formats
 Data containers
 
 * Fits::                        View and manipulate extensions and keywords.
-* Sort FITS files by night::    Installed script to sort FITS files by obs night.
 * ConvertType::                 Convert data to various formats.
 * Table::                       Read and Write FITS tables to plain text.
 * Query::                       Import data from external databases.
@@ -398,10 +399,6 @@ Invoking Fits
 
 * HDU information and manipulation::  Learn about the HDUs and move them.
 * Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU
-
-Sort FITS files by night
-
-* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
 
 ConvertType
 
@@ -484,6 +481,8 @@ Data analysis
 * Segment::                     Segment detections based on signal structure.
 * MakeCatalog::                 Catalog from input and labeled images.
 * Match::                       Match two datasets.
+* Sort FITS files by night::    Sort and classify images in separate nights.
+* SAO DS9 region files from table::  Table's positional columns into DS9 region file.
 
 Statistics
 
@@ -543,6 +542,14 @@ Invoking MakeCatalog
 Match
 
 * Invoking astmatch::           Inputs, outputs and options of Match
+
+Sort FITS files by night
+
+* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
+
+SAO DS9 region files from table
+
+* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
 
 Modeling and fitting
 
@@ -8629,7 +8636,6 @@ It can be used to select certain table columns in a FITS table and see them as a
 
 @menu
 * Fits::                        View and manipulate extensions and keywords.
-* Sort FITS files by night::    Installed script to sort FITS files by obs night.
 * ConvertType::                 Convert data to various formats.
 * Table::                       Read and Write FITS tables to plain text.
 * Query::                       Import data from external databases.
@@ -8639,7 +8645,7 @@ It can be used to select certain table columns in a FITS table and see them as a
 
 
 
-@node Fits, Sort FITS files by night, Data containers, Data containers
+@node Fits, ConvertType, Data containers, Data containers
 @section Fits
 
 @cindex Vatican library
@@ -9343,206 +9349,7 @@ $ astfits in.fits --wcsdistortion=SIP --output=out.fits
 
 
 
-@node Sort FITS files by night, ConvertType, Fits, Data containers
-@section Sort FITS files by night
-
-@cindex Calendar
-FITS images usually contain (several) keywords for preserving important dates.
-In particular, for lower-level data, this is usually the observation date and time (for example, stored in the @code{DATE-OBS} keyword value).
-When analyzing observed datasets, many calibration steps (like the dark, bias or flat-field), are commonly calculated on a per-observing-night basis.
-
-However, the FITS standard's date format (@code{YYYY-MM-DDThh:mm:ss.ddd}) is based on the western (Gregorian) calendar.
-Dates that are stored in this format are complicated for automatic processing: a night starts in the final hours of one calendar day, and extends to the early hours of the next calendar day.
-As a result, to identify datasets from one night, we commonly need to search for two dates.
-However calendar peculiarities can make this identification very difficult.
-For example when an observation is done on the night separating two months (like the night starting on March 31st and going into April 1st), or two years (like the night starting on December 31st 2018 and going into January 1st, 2019).
-To account for such situations, it is necessary to keep track of how many days are in a month, and leap years, etc.
-
-@cindex Unix epoch time
-@cindex Time, Unix epoch
-@cindex Epoch, Unix time
-Gnuastro's @file{astscript-sort-by-night} script is created to help in such important scenarios.
-It uses @ref{Fits} to convert the FITS date format into the Unix epoch time (number of seconds since 00:00:00 of January 1st, 1970), using the @option{--datetosec} option.
-The Unix epoch time is a single number (integer, if not given in sub-second precision), enabling easy comparison and sorting of dates after January 1st, 1970.
-
-You can use this script as a basis for making a much more highly customized sorting script.
-Here are some examples
-
-@itemize
-@item
-If you need to copy the files, but only need a single extension (not the whole file), you can add a step just before the making of the symbolic links, or copies, and change it to only copy a certain extension of the FITS file using the Fits program's @option{--copy} option, see @ref{HDU information and manipulation}.
-
-@item
-If you need to classify the files with finer detail (for example the purpose of the dataset), you can add a step just before the making of the symbolic links, or copies, to specify a file-name prefix based on other certain keyword values in the files.
-For example when the FITS files have a keyword to specify if the dataset is a science, bias, or flat-field image.
-You can read it and to add a @code{sci-}, @code{bias-}, or @code{flat-} to the created file (after the @option{--prefix}) automatically.
-
-For example, let's assume the observing mode is stored in the hypothetical @code{MODE} keyword, which can have three values of @code{BIAS-IMAGE}, @code{SCIENCE-IMAGE} and @code{FLAT-EXP}.
-With the step below, you can generate a mode-prefix, and add it to the generated link/copy names (just correct the filename and extension of the first line to the script's variables):
-
-@example
-modepref=$(astfits infile.fits -h1 \
-                   | sed -e"s/'/ /g" \
-                   | awk '$1=="MODE"@{ \
-                       if($3=="BIAS-IMAGE") print "bias-"; \
-                       else if($3=="SCIENCE-IMAGE") print "sci-"; \
-                       else if($3==FLAT-EXP) print "flat-"; \
-                       else print $3, "NOT recognized"; exit 1@}')
-@end example
-
-@cindex GNU AWK
-@cindex GNU Sed
-Here is a description of it.
-We first use @command{astfits} to print all the keywords in extension @code{1} of @file{infile.fits}.
-In the FITS standard, string values (that we are assuming here) are placed in single quotes (@key{'}) which are annoying in this context/use-case.
-Therefore, we pipe the output of @command{astfits} into @command{sed} to remove all such quotes (substituting them with a blank space).
-The result is then piped to AWK for giving us the final mode-prefix: with @code{$1=="MODE"}, we ask AWK to only consider the line where the first column is @code{MODE}.
-There is an equal sign between the key name and value, so the value is the third column (@code{$3} in AWK).
-We thus use a simple @code{if-else} structure to look into this value and print our custom prefix based on it.
-The output of AWK is then stored in the @code{modepref} shell variable which you can add to the link/copy name.
-
-With the solution above, the increment of the file counter for each night will be independent of the mode.
-If you want the counter to be mode-dependent, you can add a different counter for each mode and use that counter instead of the generic counter for each night (based on the value of @code{modepref}).
-But we'll leave the implementation of this step to you as an exercise.
-
-@end itemize
-
-@menu
-* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
-@end menu
-
-@node Invoking astscript-sort-by-night,  , Sort FITS files by night, Sort FITS files by night
-@subsection Invoking astscript-sort-by-night
-
-This installed script will read a FITS date formatted value from the given keyword, and classify the input FITS files into individual nights.
-For more on installed scripts please see (see @ref{Installed scripts}).
-This script can be used with the following general template:
-
-@example
-$ astscript-sort-by-night [OPTION...] FITS-files
-@end example
-
-@noindent
-One line examples:
-
-@example
-## Use the DATE-OBS keyword
-$ astscript-sort-by-night --key=DATE-OBS /path/to/data/*.fits
-
-## Make links to the input files with the `img-' prefix
-$ astscript-sort-by-night --link --prefix=img- /path/to/data/*.fits
-@end example
-
-This script will look into a HDU/extension (@option{--hdu}) for a keyword (@option{--key}) in the given FITS files and interpret the value as a date.
-The inputs will be separated by "night"s (11:00a.m to next day's 10:59:59a.m, spanning two calendar days, exact hour can be set with @option{--hour}).
-
-The default output is a list of all the input files along with the following two columns: night number and file number in that night (sorted by time).
-With @option{--link} a symbolic link will be made (one for each input) that contains the night number, and number of file in that night (sorted by time), see the description of @option{--link} for more.
-When @option{--copy} is used instead of a link, a copy of the inputs will be made instead of symbolic link.
-
-Below you can see one example where all the @file{target-*.fits} files in the @file{data} directory should be separated by observing night according to the @code{DATE-OBS} keyword value in their second extension (number @code{1}, recall that HDU counting starts from 0).
-You can see the output after the @code{ls} command.
-
-@example
-$ astscript-sort-by-night -pimg- -h1 -kDATE-OBS data/target-*.fits
-$ ls
-img-n1-1.fits img-n1-2.fits img-n2-1.fits ...
-@end example
-
-The outputs can be placed in a different (already existing) directory by including that directory's name in the @option{--prefix} value, for example @option{--prefix=sorted/img-} will put them all under the @file{sorted} directory.
-
-This script can be configured like all Gnuastro's programs (through command-line options, see @ref{Common options}), with some minor differences that are described in @ref{Installed scripts}.
-The particular options to this script are listed below:
-
-@table @option
-@item -h STR
-@itemx --hdu=STR
-The HDU/extension to use in all the given FITS files.
-All of the given FITS files must have this extension.
-
-@item -k STR
-@itemx --key=STR
-The keyword name that contains the FITS date format to classify/sort by.
-
-@item -H FLT
-@itemx --hour=FLT
-The hour that defines the next ``night''.
-By default, all times before 11:00a.m are considered to belong to the previous calendar night.
-If a sub-hour value is necessary, it should be given in units of hours, for example @option{--hour=9.5} corresponds to 9:30a.m.
-
-@cartouche
-@noindent
-@cindex Time zone
-@cindex UTC (Universal time coordinate)
-@cindex Universal time coordinate (UTC)
-@strong{Dealing with time zones:}
-The time that is recorded in @option{--key} may be in UTC (Universal Time Coordinate).
-However, the organization of the images taken during the night depends on the local time.
-It is possible to take this into account by setting the @option{--hour} option to the local time in UTC.
-
-For example, consider a set of images taken in Auckland (New Zealand, UTC+12) during different nights.
-If you want to classify these images by night, you have to know at which time (in UTC time) the Sun rises (or any other separator/definition of a different night).
-For example if your observing night finishes before 9:00a.m in Auckland, you can use @option{--hour=21}.
-Because in Auckland the local time of 9:00 corresponds to 21:00 UTC.
-@end cartouche
-
-@item -l
-@itemx --link
-Create a symbolic link for each input FITS file.
-This option cannot be used with @option{--copy}.
-The link will have a standard name in the following format (variable parts are written in @code{CAPITAL} letters and described after it):
-
-@example
-PnN-I.fits
-@end example
-
-@table @code
-@item P
-This is the value given to @option{--prefix}.
-By default, its value is @code{./} (to store the links in the directory this script was run in).
-See the description of @code{--prefix} for more.
-@item N
-This is the night-counter: starting from 1.
-@code{N} is just incremented by 1 for the next night, no matter how many nights (without any dataset) there are between two subsequent observing nights (its just an identifier for each night which you can easily map to different calendar nights).
-@item I
-File counter in that night, sorted by time.
-@end table
-
-@item -c
-@itemx --copy
-Make a copy of each input FITS file with the standard naming convention described in @option{--link}.
-With this option, instead of making a link, a copy is made.
-This option cannot be used with @option{--link}.
-
-@item -p STR
-@itemx --prefix=STR
-Prefix to append before the night-identifier of each newly created link or copy.
-This option is thus only relevant with the @option{--copy} or @option{--link} options.
-See the description of @option{--link} for how its used.
-For example, with @option{--prefix=img-}, all the created file names in the current directory will start with @code{img-}, making outputs like @file{img-n1-1.fits} or @file{img-n3-42.fits}.
-
-@option{--prefix} can also be used to store the links/copies in another directory relative to the directory this script is being run (it must already exist).
-For example @code{--prefix=/path/to/processing/img-} will put all the links/copies in the @file{/path/to/processing} directory, and the files (in that directory) will all start with @file{img-}.
-@end table
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@node ConvertType, Table, Sort FITS files by night, Data containers
+@node ConvertType, Table, Fits, Data containers
 @section ConvertType
 
 @cindex Data format conversion
@@ -14312,6 +14119,8 @@ For example getting general or specific statistics of the dataset (with @ref{Sta
 * Segment::                     Segment detections based on signal structure.
 * MakeCatalog::                 Catalog from input and labeled images.
 * Match::                       Match two datasets.
+* Sort FITS files by night::    Sort and classify images in separate nights.
+* SAO DS9 region files from table::  Table's positional columns into DS9 region file.
 @end menu
 
 @node Statistics, NoiseChisel, Data analysis, Data analysis
@@ -17970,7 +17779,7 @@ For random measurements on any area, please use the upper-limit columns of MakeC
 
 
 
-@node Match,  , MakeCatalog, Data analysis
+@node Match, Sort FITS files by night, MakeCatalog, Data analysis
 @section Match
 
 Data can come come from different telescopes, filters, software and even different configurations for a single software.
@@ -18210,6 +18019,356 @@ The last three are the three Euler angles in units of degrees in the ZXZ order a
 
 @end table
 @end table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node Sort FITS files by night, SAO DS9 region files from table, Match, Data analysis
+@section Sort FITS files by night
+
+@cindex Calendar
+FITS images usually contain (several) keywords for preserving important dates.
+In particular, for lower-level data, this is usually the observation date and time (for example, stored in the @code{DATE-OBS} keyword value).
+When analyzing observed datasets, many calibration steps (like the dark, bias or flat-field), are commonly calculated on a per-observing-night basis.
+
+However, the FITS standard's date format (@code{YYYY-MM-DDThh:mm:ss.ddd}) is based on the western (Gregorian) calendar.
+Dates that are stored in this format are complicated for automatic processing: a night starts in the final hours of one calendar day, and extends to the early hours of the next calendar day.
+As a result, to identify datasets from one night, we commonly need to search for two dates.
+However calendar peculiarities can make this identification very difficult.
+For example when an observation is done on the night separating two months (like the night starting on March 31st and going into April 1st), or two years (like the night starting on December 31st 2018 and going into January 1st, 2019).
+To account for such situations, it is necessary to keep track of how many days are in a month, and leap years, etc.
+
+@cindex Unix epoch time
+@cindex Time, Unix epoch
+@cindex Epoch, Unix time
+Gnuastro's @file{astscript-sort-by-night} script is created to help in such important scenarios.
+It uses @ref{Fits} to convert the FITS date format into the Unix epoch time (number of seconds since 00:00:00 of January 1st, 1970), using the @option{--datetosec} option.
+The Unix epoch time is a single number (integer, if not given in sub-second precision), enabling easy comparison and sorting of dates after January 1st, 1970.
+
+You can use this script as a basis for making a much more highly customized sorting script.
+Here are some examples
+
+@itemize
+@item
+If you need to copy the files, but only need a single extension (not the whole file), you can add a step just before the making of the symbolic links, or copies, and change it to only copy a certain extension of the FITS file using the Fits program's @option{--copy} option, see @ref{HDU information and manipulation}.
+
+@item
+If you need to classify the files with finer detail (for example the purpose of the dataset), you can add a step just before the making of the symbolic links, or copies, to specify a file-name prefix based on other certain keyword values in the files.
+For example when the FITS files have a keyword to specify if the dataset is a science, bias, or flat-field image.
+You can read it and to add a @code{sci-}, @code{bias-}, or @code{flat-} to the created file (after the @option{--prefix}) automatically.
+
+For example, let's assume the observing mode is stored in the hypothetical @code{MODE} keyword, which can have three values of @code{BIAS-IMAGE}, @code{SCIENCE-IMAGE} and @code{FLAT-EXP}.
+With the step below, you can generate a mode-prefix, and add it to the generated link/copy names (just correct the filename and extension of the first line to the script's variables):
+
+@example
+modepref=$(astfits infile.fits -h1 \
+                   | sed -e"s/'/ /g" \
+                   | awk '$1=="MODE"@{ \
+                       if($3=="BIAS-IMAGE") print "bias-"; \
+                       else if($3=="SCIENCE-IMAGE") print "sci-"; \
+                       else if($3==FLAT-EXP) print "flat-"; \
+                       else print $3, "NOT recognized"; exit 1@}')
+@end example
+
+@cindex GNU AWK
+@cindex GNU Sed
+Here is a description of it.
+We first use @command{astfits} to print all the keywords in extension @code{1} of @file{infile.fits}.
+In the FITS standard, string values (that we are assuming here) are placed in single quotes (@key{'}) which are annoying in this context/use-case.
+Therefore, we pipe the output of @command{astfits} into @command{sed} to remove all such quotes (substituting them with a blank space).
+The result is then piped to AWK for giving us the final mode-prefix: with @code{$1=="MODE"}, we ask AWK to only consider the line where the first column is @code{MODE}.
+There is an equal sign between the key name and value, so the value is the third column (@code{$3} in AWK).
+We thus use a simple @code{if-else} structure to look into this value and print our custom prefix based on it.
+The output of AWK is then stored in the @code{modepref} shell variable which you can add to the link/copy name.
+
+With the solution above, the increment of the file counter for each night will be independent of the mode.
+If you want the counter to be mode-dependent, you can add a different counter for each mode and use that counter instead of the generic counter for each night (based on the value of @code{modepref}).
+But we'll leave the implementation of this step to you as an exercise.
+
+@end itemize
+
+@menu
+* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
+@end menu
+
+@node Invoking astscript-sort-by-night,  , Sort FITS files by night, Sort FITS files by night
+@subsection Invoking astscript-sort-by-night
+
+This installed script will read a FITS date formatted value from the given keyword, and classify the input FITS files into individual nights.
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+$ astscript-sort-by-night [OPTION...] FITS-files
+@end example
+
+@noindent
+One line examples:
+
+@example
+## Use the DATE-OBS keyword
+$ astscript-sort-by-night --key=DATE-OBS /path/to/data/*.fits
+
+## Make links to the input files with the `img-' prefix
+$ astscript-sort-by-night --link --prefix=img- /path/to/data/*.fits
+@end example
+
+This script will look into a HDU/extension (@option{--hdu}) for a keyword (@option{--key}) in the given FITS files and interpret the value as a date.
+The inputs will be separated by "night"s (11:00a.m to next day's 10:59:59a.m, spanning two calendar days, exact hour can be set with @option{--hour}).
+
+The default output is a list of all the input files along with the following two columns: night number and file number in that night (sorted by time).
+With @option{--link} a symbolic link will be made (one for each input) that contains the night number, and number of file in that night (sorted by time), see the description of @option{--link} for more.
+When @option{--copy} is used instead of a link, a copy of the inputs will be made instead of symbolic link.
+
+Below you can see one example where all the @file{target-*.fits} files in the @file{data} directory should be separated by observing night according to the @code{DATE-OBS} keyword value in their second extension (number @code{1}, recall that HDU counting starts from 0).
+You can see the output after the @code{ls} command.
+
+@example
+$ astscript-sort-by-night -pimg- -h1 -kDATE-OBS data/target-*.fits
+$ ls
+img-n1-1.fits img-n1-2.fits img-n2-1.fits ...
+@end example
+
+The outputs can be placed in a different (already existing) directory by including that directory's name in the @option{--prefix} value, for example @option{--prefix=sorted/img-} will put them all under the @file{sorted} directory.
+
+This script can be configured like all Gnuastro's programs (through command-line options, see @ref{Common options}), with some minor differences that are described in @ref{Installed scripts}.
+The particular options to this script are listed below:
+
+@table @option
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension to use in all the given FITS files.
+All of the given FITS files must have this extension.
+
+@item -k STR
+@itemx --key=STR
+The keyword name that contains the FITS date format to classify/sort by.
+
+@item -H FLT
+@itemx --hour=FLT
+The hour that defines the next ``night''.
+By default, all times before 11:00a.m are considered to belong to the previous calendar night.
+If a sub-hour value is necessary, it should be given in units of hours, for example @option{--hour=9.5} corresponds to 9:30a.m.
+
+@cartouche
+@noindent
+@cindex Time zone
+@cindex UTC (Universal time coordinate)
+@cindex Universal time coordinate (UTC)
+@strong{Dealing with time zones:}
+The time that is recorded in @option{--key} may be in UTC (Universal Time Coordinate).
+However, the organization of the images taken during the night depends on the local time.
+It is possible to take this into account by setting the @option{--hour} option to the local time in UTC.
+
+For example, consider a set of images taken in Auckland (New Zealand, UTC+12) during different nights.
+If you want to classify these images by night, you have to know at which time (in UTC time) the Sun rises (or any other separator/definition of a different night).
+For example if your observing night finishes before 9:00a.m in Auckland, you can use @option{--hour=21}.
+Because in Auckland the local time of 9:00 corresponds to 21:00 UTC.
+@end cartouche
+
+@item -l
+@itemx --link
+Create a symbolic link for each input FITS file.
+This option cannot be used with @option{--copy}.
+The link will have a standard name in the following format (variable parts are written in @code{CAPITAL} letters and described after it):
+
+@example
+PnN-I.fits
+@end example
+
+@table @code
+@item P
+This is the value given to @option{--prefix}.
+By default, its value is @code{./} (to store the links in the directory this script was run in).
+See the description of @code{--prefix} for more.
+@item N
+This is the night-counter: starting from 1.
+@code{N} is just incremented by 1 for the next night, no matter how many nights (without any dataset) there are between two subsequent observing nights (its just an identifier for each night which you can easily map to different calendar nights).
+@item I
+File counter in that night, sorted by time.
+@end table
+
+@item -c
+@itemx --copy
+Make a copy of each input FITS file with the standard naming convention described in @option{--link}.
+With this option, instead of making a link, a copy is made.
+This option cannot be used with @option{--link}.
+
+@item -p STR
+@itemx --prefix=STR
+Prefix to append before the night-identifier of each newly created link or copy.
+This option is thus only relevant with the @option{--copy} or @option{--link} options.
+See the description of @option{--link} for how its used.
+For example, with @option{--prefix=img-}, all the created file names in the current directory will start with @code{img-}, making outputs like @file{img-n1-1.fits} or @file{img-n3-42.fits}.
+
+@option{--prefix} can also be used to store the links/copies in another directory relative to the directory this script is being run (it must already exist).
+For example @code{--prefix=/path/to/processing/img-} will put all the links/copies in the @file{/path/to/processing} directory, and the files (in that directory) will all start with @file{img-}.
+@end table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node SAO DS9 region files from table,  , Sort FITS files by night, Data analysis
+@section SAO DS9 region files from table
+
+Once your desired catalog (containing the positions of some objects) is created (for example with @ref{MakeCatalog}, @ref{Match}, or @ref{Table}) it often happens that you want to see your selected objects on an image for a feeling of the spatial properties of your objects.
+For example you want to see their positions relative to each other.
+
+In this section we describe a simple installed script that is provided within Gnuastro for converting your given columns to an SAO DS9 region file to help in this process.
+SAO DS9@footnote{@url{https://sites.google.com/cfa.harvard.edu/saoimageds9}} is one of the most common FITS image vizualization tools in astronomy and is free software.
+
+@menu
+* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
+@end menu
+
+@node Invoking astscript-make-ds9-reg,  , SAO DS9 region files from table, SAO DS9 region files from table
+@subsection Invoking astscript-make-ds9-reg
+
+This installed script will read two positional columns within an input table and generate an SAO DS9 region file to visualize the position of the given objects over an image.
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+## Use the RA and DEC columns of 'table.fits' for the region file.
+$ astscript-make-ds9-reg table.fits --column=RA,DEC \
+                          --output=ds9.reg
+
+## Select objects with a magnitude between 18 to 20, and generate the
+## region file directly (through a pipe), each region with radius of
+## 0.5 arcseconds.
+$ asttable table.fits --range=MAG,18:20 --column=RA,DEC \
+      | astscript-make-ds9-reg --column=1,2 --radius=0.5
+
+## With the first command, select objects with a magnitude of 25 to 26
+## as red regions in 'bright.reg'. With the second command, select
+## objects with a magnitude between 28 to 29 as a green region and
+## show both.
+$ asttable cat.fits --range=MAG_F160W,25:26 -cRA,DEC \
+      | ./astscript-make-ds9-reg -c1,2 --color=red -obright.reg
+$ asttable cat.fits --range=MAG_F160W,28:29 -cRA,DEC \
+      | ./astscript-make-ds9-reg -c1,2 --color=green \
+                    --command="ds9 image.fits -regions bright.reg"
+@end example
+
+The input can either be passed as a named file, or from standard input (a pipe).
+Only the @option{--column} option is mandatory (to specify the input table columns): two colums from the input table must be specified, either by name (recommended) or number.
+You can optionally also specify the region's radius, width and color of the regions with the @option{--radius}, @option{--width} and @option{--color} options, otherwise default values will be used for these (described under each option).
+
+The created region file will be written into the file name given to @option{--output}.
+When @option{--output} isn't called, the default name of @file{ds9.reg} will be used (in the running directory).
+If the file exists before calling this script, it will be overwritten, unless you pass the @option{--dontdelete} option.
+Optionally you can also use the @option{--command} option to give the full command that should be run to execute SAO DS9 (see example above and description below).
+In this mode, the created region file will be deleted once DS9 is closed (unless you pass the @option{--dontdelete} option).
+A full description of each option is given below.
+
+@table @option
+
+@item -h INT/STR
+@item --hdu INT/STR
+The HDU of the input table when a named FITS file is given as input.
+The HDU (or extension) can be either a name or number (counting from zero).
+For more on this option, see @ref{Input output options}.
+
+@item -c STR,STR
+@itemx --column=STR,STR
+Identifiers of the two positional columns to use in the DS9 region file from the table.
+They can either be in WCS (RA and Dec) or image (pixel) coordiantes.
+The mode can be specified with the @option{--mode} option, described below.
+
+@item -m wcs|img
+@itemx --mode=wcs|org
+The coordinate system of the positional columns (can be either @option{--mode=wcs} and @option{--mode=img}).
+In the WCS mode, the values within the columns are interpreted to be RA and Dec.
+In the image mode, they are interpreted to be pixel X and Y positions.
+This option also affects the interpretation of the value given to @option{--radius}.
+When this option isn't explicitly given, the columns are assumed to be in WCS mode.
+
+@item -C STR
+@itemx --color=STR
+The color to use for created regions.
+These will be directly interpreted by SAO DS9 when it wants to open the region file so it must be recognizable by SAO DS9.
+As of SAO DS9 8.2, the recognized color names are @code{black}, @code{white}, @code{red}, @code{green}, @code{blue}, @code{cyan}, @code{magenta} and @code{yellow}.
+The default color (when this option is not called) is @code{green}
+
+@item -w INT
+@itemx --width=INT
+The line width of the regions.
+These will be directly interpreted by SAO DS9 when it wants to open the region file so it must be recognizable by SAO DS9.
+The default value is @code{1}.
+
+@item -r FLT
+@itemx --radius=FLT
+The radius of all the regions.
+In WCS mode, the radius is assumed to be in arc-seconds, in image mode, it is in pixel units.
+If this option is not explicitly given, in WCS mode the default radius is 1 arc-seconds and in image mode it is 3 pixels.
+
+@item --dontdelete
+If the output file name exists, abort the program and don't over-write the contents of the file.
+This option is thus good if you want to avoid accidentally writing over an important file.
+Also, don't delete the created region file when @option{--command} is given (by default, when @option{--command} is given, the created region file will be deleted after SAO DS9 closes).
+
+@item -o STR
+@itemx --output=STR
+Write the created SAO DS9 region file into the name given to this option.
+If not explicity given on the command-line, a default name of @file{ds9.reg} will be used.
+If the file already exists, it will be over-written, you can avoid the deletion (or over-writing) of an existing file with the @option{--dontdelete}.
+
+@item --command="STR"
+After creating the region file, run the string given to this option as a command-line command.
+The SAO DS9 region command will be appended to the end of the given command.
+Because the command will mostly likely contain white-space characters it is recommended to put the given string in double quotations.
+
+For example, let's assume @option{--command="ds9 image.fits -zscale"}.
+After making the region file (assuming it is called @file{ds9.reg}), the following command will be executed:
+
+@example
+ds9 image.fits -zscale -regions ds9.reg
+@end example
+
+You can customize all aspects of SAO DS9 with its command-line options, therefore the value of this option can be as long and complicated as you like.
+For example if you also want the image to fit into the window, this option will be: @command{--command="ds9 image.fits -zscale -zoom to fit"}.
+You can see the SAO DS9 command-line descriptions by clicking on the ``Help'' menu and selecting ``Reference Manual''.
+In the opened window, click on ``Command Line Options''.
+@end table
+
+
+
+
+
+
+
 
 
 
