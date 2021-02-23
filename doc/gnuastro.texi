@@ -18307,6 +18307,12 @@ Identifiers of the two positional columns to use in the DS9 region file from the
 They can either be in WCS (RA and Dec) or image (pixel) coordiantes.
 The mode can be specified with the @option{--mode} option, described below.
 
+@item -n STR
+@itemx --namecol=STR
+The column containing the name (or label) of each region.
+The type of the column (numeric or a character-based string) is irrelevant: you can use both types of columns as a name or label for the region.
+This feature is useful when you need to recognize each region with a certain ID or property (for example magnitude or redshift).
+
 @item -m wcs|img
 @itemx --mode=wcs|org
 The coordinate system of the positional columns (can be either @option{--mode=wcs} and @option{--mode=img}).
