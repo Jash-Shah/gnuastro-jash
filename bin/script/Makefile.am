@@ -27,9 +27,12 @@
 ## with the tarball ('EXTRA_DIST') and output files (to be cleaned with
 ## 'make clean').
 bin_SCRIPTS = astscript-make-ds9-reg \
+              astscript-radial-profile \
               astscript-sort-by-night
 
-EXTRA_DIST = make-ds9-reg.in sort-by-night.in
+EXTRA_DIST = make-ds9-reg.in \
+             radial-profile.in \
+             sort-by-night.in
 
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -45,11 +48,15 @@ do_subst = sed -e 's,[@]VERSION[@],$(VERSION),g' \
 
 
 
-## Rules to build the scripts
-astscript-sort-by-night: sort-by-night.in Makefile
-	$(do_subst) < $(srcdir)/sort-by-night.in > $@
-	chmod +x $@
-
+## Rules to install the scripts.
 astscript-make-ds9-reg: make-ds9-reg.in Makefile
 	$(do_subst) < $(srcdir)/make-ds9-reg.in > $@
+	chmod +x $@
+
+astscript-radial-profile: radial-profile.in Makefile
+	$(do_subst) < $(srcdir)/radial-profile.in > $@
+	chmod +x $@
+
+astscript-sort-by-night: sort-by-night.in Makefile
+	$(do_subst) < $(srcdir)/sort-by-night.in > $@
 	chmod +x $@
