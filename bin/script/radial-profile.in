@@ -34,18 +34,18 @@ set -e
 
 # Default option values (can be changed with options on the command-line).
 hdu=1
-quiet=0
-qratio=1
-pangle=0
+rmax=""
+quiet=""
 tmpdir=""
+output=""
 keeptmp=0
-rmax="max"
 mode="img"
+measure=""
+axisratio=1
+sigmaclip=""
+positionangle=0
 xcenter="center"
 ycenter="center"
-measure="--mean"
-sigmaclip="3,0.2"
-output="default"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -89,10 +89,10 @@ $scriptname options:
   -x, --xcenter=FLT       Coordinate of the center along the first axis.
   -y, --ycenter=FLT       Coordinate of the center along the second axis.
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
-  -Q, --qratio=FLT        Axis ratio for ellipse profiles (A/B).
-  -p, --pangle=FLT        Position angle for ellipse profiles.
-  -m, --measure="STR"     Measurement operator ("--mean", "--median", etc.).
-  -s, --sigmaclip=FLT,FLT Parameters for sigma clipping measure operators.
+  -Q, --axisratio=FLT     Axis ratio for ellipse profiles (A/B).
+  -p, --positionangle=FLT Position angle for ellipse profiles.
+  -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
+  -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
 
  Output:
   -k, --keeptmp           Keep temporal/auxiliar files.
@@ -199,15 +199,15 @@ do
         -R|--rmax)          rmax="$2";                                 check_v "$1" "$rmax";  shift;shift;;
         -R=*|--rmax=*)      rmax="${1#*=}";                            check_v "$1" "$rmax";  shift;;
         -R*)                rmax=$(echo "$1"  | sed -e's/-R//');       check_v "$1" "$rmax";  shift;;
-        -Q|--qratio)        qratio="$2";                               check_v "$1" "$qratio";  shift;shift;;
-        -Q=*|--qratio=*)    qratio="${1#*=}";                          check_v "$1" "$qratio";  shift;;
-        -Q*)                qratio=$(echo "$1"  | sed -e's/-Q//');     check_v "$1" "$qratio";  shift;;
-        -p|--pangle)        pangle="$2";                               check_v "$1" "$pangle";  shift;shift;;
-        -p=*|--pangle=*)    pangle="${1#*=}";                          check_v "$1" "$pangle";  shift;;
-        -p*)                pangle=$(echo "$1"  | sed -e's/-p//');     check_v "$1" "$pangle";  shift;;
-        -m|--measure)       measure="$2";                              check_v "$1" "$measure";  shift;shift;;
-        -m=*|--measure=*)   measure="${1#*=}";                         check_v "$1" "$measure";  shift;;
-        -m*)                measure=$(echo "$1"  | sed -e's/-m//');    check_v "$1" "$measure";  shift;;
+        -Q|--axisratio)     axisratio="$2";                            check_v "$1" "$axisratio";  shift;shift;;
+        -Q=*|--axisratio=*) axisratio="${1#*=}";                       check_v "$1" "$axisratio";  shift;;
+        -Q*)                axisratio=$(echo "$1"  | sed -e's/-Q//');  check_v "$1" "$axisratio";  shift;;
+        -p|--positionangle) positionangle="$2";                        check_v "$1" "$positionangle";  shift;shift;;
+        -p=*|--positionangle=*) positionangle="${1#*=}";               check_v "$1" "$positionangle";  shift;;
+        -p*)                positionangle=$(echo "$1"  | sed -e's/-p//'); check_v "$1" "$positionangle";  shift;;
+        -m|--measure)       measuretmp="$2";                           check_v "$1" "$measuretmp";  shift;shift;;
+        -m=*|--measure=*)   measuretmp="${1#*=}";                      check_v "$1" "$measuretmp";  shift;;
+        -m*)                measuretmp=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$measuretmp";  shift;;
         -s|--sigmaclip)     sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*) sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
@@ -224,7 +224,7 @@ do
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
 
         # Non-operating options.
-        -q|--quiet)       quiet=1; shift;;
+        -q|--quiet)       quiet="--quiet"; shift;;
         -q*|--quiet=*)    on_off_option_error --quiet -q;;
         -?|--help)        print_help; exit 0;;
         -'?'*|--help=*)   on_off_option_error --help -?;;
@@ -240,21 +240,29 @@ do
         # file name.
         *) inputs="$1 $inputs"; shift;;
     esac
+
+    # If a measurment was given, add it to possibly existing previous
+    # measurements into a comma-separate list.
+    if [ x"$measuretmp" != x ]; then
+        if [ x"$measure" = x ]; then measure=$measuretmp;
+        else                         measure="$measure,$measuretmp";
+        fi
+    fi
 done
 
 
 
 
 
-# Basic sanity checks on arguments.
+# Basic sanity checks
+# ===================
+
+# If an input image is given at all.
 if [ x"$inputs" = x ]; then
-    echo "$scriptname: no input FITS files."
+    echo "$scriptname: no input FITS image files."
     echo "Run with '--help' for more information on how to run."
     exit 1
 fi
-
-
-
 
 # If one of X or Y are given the other also needs to be given.
 if [ "z$xcenter" = zcenter ]; then
@@ -269,6 +277,9 @@ else
   fi
 fi
 
+# If no specific measurement has been requested, use the mean.
+if [ x"$measure" = x ]; then measure=mean; fi
+
 
 
 
@@ -276,9 +287,10 @@ fi
 # Convert center to image coordinates if necessary
 # ------------------------------------------------
 #
-# If the user provides specific coordinates in WCS (--mode=wcs), then convert
-# them to image mode so we can safely assume image coordianates from now on. To
-# do that, WCS information from the input header image is used.
+# If the user provides specific coordinates in WCS (--mode=wcs), then
+# convert them to image mode so we can safely assume image coordianates
+# from now on. To do that, WCS information from the input header image is
+# used.
 if ! [ "z$xcenter" = zcenter ]; then
   if [ $mode = wcs ]; then
     xy=$(echo "$xcenter $ycenter" \
@@ -298,8 +310,8 @@ fi
 #
 # If the user does not set the x and y coordinates to be `center' (the
 # coordinates of the object), then compute the center of the image for
-# constructing the profiles. Here, we are assuming that the object is already
-# centered on the input image.
+# constructing the profiles. Here, we are assuming that the object is
+# already centered on the input image.
 #
 # In the FITS standard, pixels are counted from 1, and the integers are in
 # the center of the pixel. So after dividing the pixel size of the image by
@@ -316,7 +328,7 @@ fi
 # Calculate the maximum radius
 # ----------------------------
 #
-# If the user set the --rmax parameter to `max', then compute the maximum
+# If the user didn't set the '--rmax' parameter, then compute the maximum
 # radius possible on the image.
 #
 # If the user has not given any maximum radius, we give the most reliable
@@ -334,7 +346,7 @@ fi
 #              --------------
 #              0        x   X
 #
-if [ "z$rmax" = zmax ]; then
+if [ x"$rmax" = x ]; then
   rmax=$(astfits $inputs --hdu=$hdu \
              | awk '/^NAXIS1/{X=$3} /^NAXIS2/{Y=$3} \
                     END{ x='$xcenter'; y='$ycenter'; \
@@ -351,17 +363,18 @@ fi
 #
 # Here, it is defined the final output file containing the radial profile.
 # If the user has defined a specific path/name for the output, it will be
-# used for saving the output file. If the user does not specify a output name,
-# then a default value containing the center and mode will be generated.
+# used for saving the output file. If the user does not specify a output
+# name, then a default value containing the center and mode will be
+# generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 defaultname=$(pwd)/"$bname_prefix"_rprofile_$mode"_$xcenter"_"$ycenter"
-if [ z$output = zdefault ]; then output="$defaultname.fits"; fi
+if [ x$output = x ]; then output="$defaultname.fits"; fi
 
-# Construct the temporal directory. If the user does not specify any directory,
-# then a default one with the base name of the input image will be constructed.
-# If the user set the directory, then make it. This directory will be deleted
-# at the end of the script if the user does not want to keep it (with the
-# `--keeptmp' option).
+# Construct the temporal directory. If the user does not specify any
+# directory, then a default one with the base name of the input image will
+# be constructed.  If the user set the directory, then make it. This
+# directory will be deleted at the end of the script if the user does not
+# want to keep it (with the `--keeptmp' option).
 if [ z$tmpdir = z        ]; then tmpdir=$defaultname; fi
 mkdir -p $tmpdir
 
@@ -372,24 +385,29 @@ mkdir -p $tmpdir
 # Crop image
 # ----------
 #
-# Crop the input image around the desired point so we can continue processing
-# only on those pixels (we do not need the other pixels).
+# Crop the input image around the desired point so we can continue
+# processing only on those pixels (we do not need the other pixels).
 #
-# The crop's output always has the range of pixels from the original image used
-# in the `ICF1PIX' keyword value. So, to find the new center (important if it
-# is sub-pixel precission), we can simply get the first and third value of that
-# string, and convert to the cropped coordinate system. Note that because FITS
-# pixel couting starts from 1, we need to subtract `1'.
+# The crop's output always has the range of pixels from the original image
+# used in the `ICF1PIX' keyword value. So, to find the new center
+# (important if it is sub-pixel precission), we can simply get the first
+# and third value of that string, and convert to the cropped coordinate
+# system. Note that because FITS pixel couting starts from 1, we need to
+# subtract `1'.
 crop=$tmpdir/crop.fits
 cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$xcenter,$ycenter --mode=img \
-        --width=$cropwidth --output=$crop
+        --width=$cropwidth --output=$crop $quiet
 dxy=$(astfits $crop -h1 \
           | grep ICF1PIX \
           | sed -e"s/'/ /g" -e's/\:/ /g' -e's/,/ /' \
           | awk '{print $3-1, $5-1}')
-xcenter=$(echo "$xcenter $cropwidth $dxy" | awk '{if($1>int($2/2)) print $1-$3; else print int($2/2)+$1-int($1)}')
-ycenter=$(echo "$ycenter $cropwidth $dxy" | awk '{if($1>int($2/2)) print $1-$4; else print int($2/2)+$1-int($1)}')
+xcenter=$(echo "$xcenter $cropwidth $dxy" \
+              | awk '{ if($1>int($2/2)) print $1-$3; \
+                       else             print int($2/2)+$1-int($1) }')
+ycenter=$(echo "$ycenter $cropwidth $dxy" \
+              | awk '{ if($1>int($2/2)) print $1-$4; \
+                       else             print int($2/2)+$1-int($1) }')
 
 
 
@@ -401,20 +419,51 @@ ycenter=$(echo "$ycenter $cropwidth $dxy" | awk '{if($1>int($2/2)) print $1-$4; 
 # The apertures image is generated using MakeProfiles with the parameters
 # specified in the echo statement:
 
-# rmax    -- maximum radius value (in pixels)
-# xcenter -- X center position (in pixels).
-# ycenter -- Y center position (in pixels).
-# 7       -- type of the profiles (radial distance).
-# 1       -- the Sersic or Moffat index.
-# pangle  -- position angle.
-# qratio  -- axis ratio.
-# rmax    -- magnitude of the profile within the truncation radius (rmax).
-# 1       -- Truncation in radius unit.
+# rmax          -- maximum radius value (in pixels)
+# xcenter       -- X center position (in pixels).
+# ycenter       -- Y center position (in pixels).
+# 7             -- type of the profiles (radial distance).
+# 1             -- the Sersic or Moffat index.
+# positionangle -- position angle.
+# axisratio     -- axis ratio.
+# rmax          -- magnitude of the profile within the truncation radius (rmax).
+# 1             -- Truncation in radius unit.
 apertures=$tmpdir/apertures.fits
-echo "$rmax $xcenter $ycenter 7 $rmax 1 $pangle $qratio $rmax 1" \
+echo "$rmax $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio $rmax 1" \
      | astmkprof --background=$crop --backhdu=1 --mforflatpix \
                  --mode=img --clearcanvas --type=int16 \
-                 --circumwidth=1 --replace --output=$apertures
+                 --circumwidth=1 --replace --output=$apertures \
+                 $quiet
+
+
+
+
+
+# Extract each measurement column into a MakeCatalog option
+# ---------------------------------------------------------
+#
+# The user of this script gives each desired MakeCatalog option name as a
+# value to the '--measure' option here as a comma-separated list of
+# values. But we want to feed them into MakeCatalog (which needs each one
+# of them to be prefixed with '--' and separated by a space).
+finalmeasure=$(echo "$measure" \
+                   | awk 'BEGIN{FS=","} \
+                          END{for(i=1;i<=NF;++i) printf "--%s ", $i}')
+
+
+
+
+
+# Set the used sigma-clipping parameters
+# --------------------------------------
+#
+# If not given, don't use anything and just use MakeCatalog's default
+# values.
+if [ x"$sigmaclip" = x ]; then
+    finalsigmaclip=""
+else
+    finalsigmaclip="--sigmaclip=$sigmaclip";
+fi
 
 
 
@@ -423,11 +472,13 @@ echo "$rmax $xcenter $ycenter 7 $rmax 1 $pangle $qratio $rmax 1" \
 # Obtain the radial profile
 # -------------------------
 #
-# The radial profile is obtained using Catalog. In practice, what is done is to
-# obtain a catalogue using the segmentation image previously generated (the
-# elliptical apertures) and the original input image for measuring the values.
+# The radial profile is obtained using MakeCatalog. In practice, we obtain
+# a catalogue using the segmentation image previously generated (the
+# elliptical apertures) and the original input image for measuring the
+# values.
 astmkcatalog $apertures -h1 --valuesfile=$crop --valueshdu=1 \
-             --ids $measure --sigmaclip=$sigmaclip --output=$output
+             --ids $finalmeasure $finalsigmaclip --output=$output \
+             $quiet
 
 
 

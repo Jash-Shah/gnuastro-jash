@@ -113,6 +113,11 @@ very similarly (with minor differences, as explained in the book).
     standard input), create an SAO DS9 region file from the requested
     positional columns (WCS or image coordinates).
 
+  - astscript-radial-profile: Calculate the radial profile of an object
+    within an image. The object can be at any location in the image, using
+    various measures (median, sigma-clipped mean and etc), and the radial
+    distance can also be measured on any general ellipse.
+
   - astscript-sort-by-night: Given a list of FITS files, and a HDU and
     keyword name for a date, this script separates the files in the same
     night (possibly over two calendar days).

@@ -16,6 +16,11 @@ See the end of the file for license conditions.
         asttable table.fits --range=MAG,18:20 --column=RA,DEC \
             | astscript-make-ds9-reg --column=1,2 --radius=0.5 \
                                      --command="ds9 image.fits"
+   - astscript-radial-profile: Measure the radial profile of an object on
+     an image. The profile can be centered anywhere in the image and any
+     circular, or elliptical distance can be defined. The output is a table
+     with the profile's value in one column and any requested measure in
+     the other columns (any MakeCatalog measurement is possible).
 
   Arithmetic:
    - New operators (the trigonometric/hyperbolic functions were previously

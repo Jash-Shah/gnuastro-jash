@@ -883,7 +883,7 @@ mkprof(struct mkprofparams *p)
     }
 
   /* If a merged image was created, let the user know.... */
-  if(p->mergedimgname)
+  if(p->mergedimgname && p->cp.quiet==0)
     printf("  -- Output: %s\n", p->mergedimgname);
 
   /* Clean up. */

@@ -202,6 +202,7 @@ To go to the sections or subsections, you have to click on the menu entries that
 * Data analysis::               Analyze images.
 * Modeling and fittings::       Make and fit models.
 * High-level calculations::     Physical calculations.
+* Installed scripts::           Installed scripts that operate like programs.
 * Library::                     Gnuastro's library of useful functions.
 * Developing::                  The development environment.
 * Gnuastro programs list::      List and short summary of Gnuastro.
@@ -328,7 +329,6 @@ Common program behavior
 * Command-line::                How to use the command-line.
 * Configuration files::         Values for unspecified variables.
 * Getting help::                Getting more information on the go.
-* Installed scripts::           Installed Bash scripts, not compiled programs.
 * Multi-threaded operations::   How threads are managed in Gnuastro.
 * Numeric data types::          Different types and how to specify them.
 * Memory management::           How memory is allocated (in RAM or HDD/SSD).
@@ -481,9 +481,6 @@ Data analysis
 * Segment::                     Segment detections based on signal structure.
 * MakeCatalog::                 Catalog from input and labeled images.
 * Match::                       Match two datasets.
-* Sort FITS files by night::    Sort and classify images in separate nights.
-* SAO DS9 region files from table::  Table's positional columns into DS9 region file.
-* Generate radial profile::     Generate the radial profile of a target.
 
 Statistics
 
@@ -544,18 +541,6 @@ Match
 
 * Invoking astmatch::           Inputs, outputs and options of Match
 
-Sort FITS files by night
-
-* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
-
-SAO DS9 region files from table
-
-* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
-
-Generate radial profile
-
-* Invoking astscript-radial-profile::  How to call astscript-radial-profile
-
 Modeling and fitting
 
 * MakeProfiles::                Making mock galaxies and stars.
@@ -612,6 +597,24 @@ Invoking CosmicCalculator
 * CosmicCalculator input options::  Options to specify input conditions.
 * CosmicCalculator basic cosmology calculations::  Like distance modulus, distances and etc.
 * CosmicCalculator spectral line calculations::  How they get affected by redshift.
+
+Installed scripts
+
+* Sort FITS files by night::    Sort many files by date.
+* SAO DS9 region files from table::  Create ds9 region file from a table.
+* Generate radial profile::     Radial profile of an object in an image.
+
+Sort FITS files by night
+
+* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
+
+SAO DS9 region files from table
+
+* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
+
+Generate radial profile
+
+* Invoking astscript-radial-profile::  How to call astscript-radial-profile
 
 Library
 
@@ -6521,7 +6524,6 @@ When the output is a FITS file, all the programs also store some very useful inf
 * Command-line::                How to use the command-line.
 * Configuration files::         Values for unspecified variables.
 * Getting help::                Getting more information on the go.
-* Installed scripts::           Installed Bash scripts, not compiled programs.
 * Multi-threaded operations::   How threads are managed in Gnuastro.
 * Numeric data types::          Different types and how to specify them.
 * Memory management::           How memory is allocated (in RAM or HDD/SSD).
@@ -7416,7 +7418,7 @@ The prefix of @file{/usr/local/} is conventionally used for programs you install
 
 
 
-@node Getting help, Installed scripts, Configuration files, Common program behavior
+@node Getting help, Multi-threaded operations, Configuration files, Common program behavior
 @section Getting help
 
 @cindex Help
@@ -7668,75 +7670,7 @@ We have other mailing lists and tools for those purposes, see @ref{Report a bug}
 
 
 
-
-
-
-
-
-@node Installed scripts, Multi-threaded operations, Getting help, Common program behavior
-@section Installed scripts
-
-Gnuastro's programs (introduced in previous chapters) are designed to be highly modular and thus mainly contain lower-level operations on the data.
-However, in many contexts, higher-level operations (for example a sequence of calls to multiple Gnuastro programs, or a special way of running a program and using the outputs) are also very similar between various projects.
-
-To facilitate data analysis on these higher-level steps also, Gnuastro also installs some scripts on your system with the (@code{astscript-}) prefix (in contrast to the other programs that only have the @code{ast} prefix).
-
-@cindex GNU Bash
-Like all of Gnuastro's source code, these scripts are also heavily commented.
-They are written in GNU Bash, which doesn't need compilation.
-Therefore, if you open the installed scripts in a text editor, you can actually read them@footnote{Gnuastro's installed programs (those only starting with @code{ast}) aren't human-readable.
-They are written in C and are thus compiled (optimized in binary CPU instructions that will be given directly to your CPU).
-Because they don't need an interpreter like Bash on every run, they are much faster and more independent than scripts.
-To read the source code of the programs, look into the @file{bin/progname} directory of Gnuastro's source (@ref{Downloading the source}).
-If you would like to read more about why C was chosen for the programs, please see @ref{Why C}.}.
-Bash is the same language that is mainly used when typing on the command-line.
-Because of these factors, Bash is much more widely known and used than C (the language of other Gnuastro programs).
-Gnuastro's installed scripts also do higher-level operations, so customizing these scripts for a special project will be more common than the programs.
-You can always inspect them (to customize, check, or educate your self) with this command (just replace @code{emacs} with your favorite text editor):
-
-@example
-$ emacs $(which astscript-NAME)
-@end example
-
-These scripts also accept options and are in many ways similar to the programs (see @ref{Common options}) with some minor differences:
-
-@itemize
-@item
-Currently they don't accept configuration files themselves.
-However, the configuration files of the Gnuastro programs they call are indeed parsed and used by those programs.
-
-As a result, they don't have the following options: @option{--checkconfig}, @option{--config}, @option{--lastconfig}, @option{--onlyversion}, @option{--printparams}, @option{--setdirconf} and @option{--setusrconf}.
-
-@item
-They don't directly allocate any memory, so there is no @option{--minmapsize}.
-
-@item
-They don't have an independent @option{--usage} option: when called with @option{--usage}, they just recommend running @option{--help}.
-
-@item
-The output of @option{--help} is not configurable like the programs (see @ref{--help}).
-
-@item
-@cindex GNU AWK
-@cindex GNU SED
-The scripts will commonly use your installed Bash and other basic command-line tools (for example AWK or SED).
-Different systems have different versions and implementations of these basic tools (for example GNU/Linux systems use GNU AWK and GNU SED which are far more advanced and up to date then the minimalist AWK and SED of most other systems).
-Therefore, unexpected errors in these tools might come up when you run these scripts.
-We will try our best to write these scripts in a portable way.
-However, if you do confront such strange errors, please submit a bug report so we fix it (see @ref{Report a bug}).
-
-@end itemize
-
-
-
-
-
-
-
-
-
-
-@node Multi-threaded operations, Numeric data types, Installed scripts, Common program behavior
+@node Multi-threaded operations, Numeric data types, Getting help, Common program behavior
 @section Multi-threaded operations
 
 @pindex nproc
@@ -14124,9 +14058,6 @@ For example getting general or specific statistics of the dataset (with @ref{Sta
 * Segment::                     Segment detections based on signal structure.
 * MakeCatalog::                 Catalog from input and labeled images.
 * Match::                       Match two datasets.
-* Sort FITS files by night::    Sort and classify images in separate nights.
-* SAO DS9 region files from table::  Table's positional columns into DS9 region file.
-* Generate radial profile::     Generate the radial profile of a target.
 @end menu
 
 @node Statistics, NoiseChisel, Data analysis, Data analysis
@@ -17801,7 +17732,7 @@ For random measurements on any area, please use the upper-limit columns of MakeC
 
 
 
-@node Match, Sort FITS files by night, MakeCatalog, Data analysis
+@node Match,  , MakeCatalog, Data analysis
 @section Match
 
 Data can come come from different telescopes, filters, software and even different configurations for a single software.
@@ -18040,514 +17971,6 @@ The last three are the three Euler angles in units of degrees in the ZXZ order a
 @end table
 
 @end table
-@end table
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@node Sort FITS files by night, SAO DS9 region files from table, Match, Data analysis
-@section Sort FITS files by night
-
-@cindex Calendar
-FITS images usually contain (several) keywords for preserving important dates.
-In particular, for lower-level data, this is usually the observation date and time (for example, stored in the @code{DATE-OBS} keyword value).
-When analyzing observed datasets, many calibration steps (like the dark, bias or flat-field), are commonly calculated on a per-observing-night basis.
-
-However, the FITS standard's date format (@code{YYYY-MM-DDThh:mm:ss.ddd}) is based on the western (Gregorian) calendar.
-Dates that are stored in this format are complicated for automatic processing: a night starts in the final hours of one calendar day, and extends to the early hours of the next calendar day.
-As a result, to identify datasets from one night, we commonly need to search for two dates.
-However calendar peculiarities can make this identification very difficult.
-For example when an observation is done on the night separating two months (like the night starting on March 31st and going into April 1st), or two years (like the night starting on December 31st 2018 and going into January 1st, 2019).
-To account for such situations, it is necessary to keep track of how many days are in a month, and leap years, etc.
-
-@cindex Unix epoch time
-@cindex Time, Unix epoch
-@cindex Epoch, Unix time
-Gnuastro's @file{astscript-sort-by-night} script is created to help in such important scenarios.
-It uses @ref{Fits} to convert the FITS date format into the Unix epoch time (number of seconds since 00:00:00 of January 1st, 1970), using the @option{--datetosec} option.
-The Unix epoch time is a single number (integer, if not given in sub-second precision), enabling easy comparison and sorting of dates after January 1st, 1970.
-
-You can use this script as a basis for making a much more highly customized sorting script.
-Here are some examples
-
-@itemize
-@item
-If you need to copy the files, but only need a single extension (not the whole file), you can add a step just before the making of the symbolic links, or copies, and change it to only copy a certain extension of the FITS file using the Fits program's @option{--copy} option, see @ref{HDU information and manipulation}.
-
-@item
-If you need to classify the files with finer detail (for example the purpose of the dataset), you can add a step just before the making of the symbolic links, or copies, to specify a file-name prefix based on other certain keyword values in the files.
-For example when the FITS files have a keyword to specify if the dataset is a science, bias, or flat-field image.
-You can read it and to add a @code{sci-}, @code{bias-}, or @code{flat-} to the created file (after the @option{--prefix}) automatically.
-
-For example, let's assume the observing mode is stored in the hypothetical @code{MODE} keyword, which can have three values of @code{BIAS-IMAGE}, @code{SCIENCE-IMAGE} and @code{FLAT-EXP}.
-With the step below, you can generate a mode-prefix, and add it to the generated link/copy names (just correct the filename and extension of the first line to the script's variables):
-
-@example
-modepref=$(astfits infile.fits -h1 \
-                   | sed -e"s/'/ /g" \
-                   | awk '$1=="MODE"@{ \
-                       if($3=="BIAS-IMAGE") print "bias-"; \
-                       else if($3=="SCIENCE-IMAGE") print "sci-"; \
-                       else if($3==FLAT-EXP) print "flat-"; \
-                       else print $3, "NOT recognized"; exit 1@}')
-@end example
-
-@cindex GNU AWK
-@cindex GNU Sed
-Here is a description of it.
-We first use @command{astfits} to print all the keywords in extension @code{1} of @file{infile.fits}.
-In the FITS standard, string values (that we are assuming here) are placed in single quotes (@key{'}) which are annoying in this context/use-case.
-Therefore, we pipe the output of @command{astfits} into @command{sed} to remove all such quotes (substituting them with a blank space).
-The result is then piped to AWK for giving us the final mode-prefix: with @code{$1=="MODE"}, we ask AWK to only consider the line where the first column is @code{MODE}.
-There is an equal sign between the key name and value, so the value is the third column (@code{$3} in AWK).
-We thus use a simple @code{if-else} structure to look into this value and print our custom prefix based on it.
-The output of AWK is then stored in the @code{modepref} shell variable which you can add to the link/copy name.
-
-With the solution above, the increment of the file counter for each night will be independent of the mode.
-If you want the counter to be mode-dependent, you can add a different counter for each mode and use that counter instead of the generic counter for each night (based on the value of @code{modepref}).
-But we'll leave the implementation of this step to you as an exercise.
-
-@end itemize
-
-@menu
-* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
-@end menu
-
-@node Invoking astscript-sort-by-night,  , Sort FITS files by night, Sort FITS files by night
-@subsection Invoking astscript-sort-by-night
-
-This installed script will read a FITS date formatted value from the given keyword, and classify the input FITS files into individual nights.
-For more on installed scripts please see (see @ref{Installed scripts}).
-This script can be used with the following general template:
-
-@example
-$ astscript-sort-by-night [OPTION...] FITS-files
-@end example
-
-@noindent
-One line examples:
-
-@example
-## Use the DATE-OBS keyword
-$ astscript-sort-by-night --key=DATE-OBS /path/to/data/*.fits
-
-## Make links to the input files with the `img-' prefix
-$ astscript-sort-by-night --link --prefix=img- /path/to/data/*.fits
-@end example
-
-This script will look into a HDU/extension (@option{--hdu}) for a keyword (@option{--key}) in the given FITS files and interpret the value as a date.
-The inputs will be separated by "night"s (11:00a.m to next day's 10:59:59a.m, spanning two calendar days, exact hour can be set with @option{--hour}).
-
-The default output is a list of all the input files along with the following two columns: night number and file number in that night (sorted by time).
-With @option{--link} a symbolic link will be made (one for each input) that contains the night number, and number of file in that night (sorted by time), see the description of @option{--link} for more.
-When @option{--copy} is used instead of a link, a copy of the inputs will be made instead of symbolic link.
-
-Below you can see one example where all the @file{target-*.fits} files in the @file{data} directory should be separated by observing night according to the @code{DATE-OBS} keyword value in their second extension (number @code{1}, recall that HDU counting starts from 0).
-You can see the output after the @code{ls} command.
-
-@example
-$ astscript-sort-by-night -pimg- -h1 -kDATE-OBS data/target-*.fits
-$ ls
-img-n1-1.fits img-n1-2.fits img-n2-1.fits ...
-@end example
-
-The outputs can be placed in a different (already existing) directory by including that directory's name in the @option{--prefix} value, for example @option{--prefix=sorted/img-} will put them all under the @file{sorted} directory.
-
-This script can be configured like all Gnuastro's programs (through command-line options, see @ref{Common options}), with some minor differences that are described in @ref{Installed scripts}.
-The particular options to this script are listed below:
-
-@table @option
-@item -h STR
-@itemx --hdu=STR
-The HDU/extension to use in all the given FITS files.
-All of the given FITS files must have this extension.
-
-@item -k STR
-@itemx --key=STR
-The keyword name that contains the FITS date format to classify/sort by.
-
-@item -H FLT
-@itemx --hour=FLT
-The hour that defines the next ``night''.
-By default, all times before 11:00a.m are considered to belong to the previous calendar night.
-If a sub-hour value is necessary, it should be given in units of hours, for example @option{--hour=9.5} corresponds to 9:30a.m.
-
-@cartouche
-@noindent
-@cindex Time zone
-@cindex UTC (Universal time coordinate)
-@cindex Universal time coordinate (UTC)
-@strong{Dealing with time zones:}
-The time that is recorded in @option{--key} may be in UTC (Universal Time Coordinate).
-However, the organization of the images taken during the night depends on the local time.
-It is possible to take this into account by setting the @option{--hour} option to the local time in UTC.
-
-For example, consider a set of images taken in Auckland (New Zealand, UTC+12) during different nights.
-If you want to classify these images by night, you have to know at which time (in UTC time) the Sun rises (or any other separator/definition of a different night).
-For example if your observing night finishes before 9:00a.m in Auckland, you can use @option{--hour=21}.
-Because in Auckland the local time of 9:00 corresponds to 21:00 UTC.
-@end cartouche
-
-@item -l
-@itemx --link
-Create a symbolic link for each input FITS file.
-This option cannot be used with @option{--copy}.
-The link will have a standard name in the following format (variable parts are written in @code{CAPITAL} letters and described after it):
-
-@example
-PnN-I.fits
-@end example
-
-@table @code
-@item P
-This is the value given to @option{--prefix}.
-By default, its value is @code{./} (to store the links in the directory this script was run in).
-See the description of @code{--prefix} for more.
-@item N
-This is the night-counter: starting from 1.
-@code{N} is just incremented by 1 for the next night, no matter how many nights (without any dataset) there are between two subsequent observing nights (its just an identifier for each night which you can easily map to different calendar nights).
-@item I
-File counter in that night, sorted by time.
-@end table
-
-@item -c
-@itemx --copy
-Make a copy of each input FITS file with the standard naming convention described in @option{--link}.
-With this option, instead of making a link, a copy is made.
-This option cannot be used with @option{--link}.
-
-@item -p STR
-@itemx --prefix=STR
-Prefix to append before the night-identifier of each newly created link or copy.
-This option is thus only relevant with the @option{--copy} or @option{--link} options.
-See the description of @option{--link} for how its used.
-For example, with @option{--prefix=img-}, all the created file names in the current directory will start with @code{img-}, making outputs like @file{img-n1-1.fits} or @file{img-n3-42.fits}.
-
-@option{--prefix} can also be used to store the links/copies in another directory relative to the directory this script is being run (it must already exist).
-For example @code{--prefix=/path/to/processing/img-} will put all the links/copies in the @file{/path/to/processing} directory, and the files (in that directory) will all start with @file{img-}.
-@end table
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@node SAO DS9 region files from table, Generate radial profile, Sort FITS files by night, Data analysis
-@section SAO DS9 region files from table
-
-Once your desired catalog (containing the positions of some objects) is created (for example with @ref{MakeCatalog}, @ref{Match}, or @ref{Table}) it often happens that you want to see your selected objects on an image for a feeling of the spatial properties of your objects.
-For example you want to see their positions relative to each other.
-
-In this section we describe a simple installed script that is provided within Gnuastro for converting your given columns to an SAO DS9 region file to help in this process.
-SAO DS9@footnote{@url{https://sites.google.com/cfa.harvard.edu/saoimageds9}} is one of the most common FITS image vizualization tools in astronomy and is free software.
-
-@menu
-* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
-@end menu
-
-@node Invoking astscript-make-ds9-reg,  , SAO DS9 region files from table, SAO DS9 region files from table
-@subsection Invoking astscript-make-ds9-reg
-
-This installed script will read two positional columns within an input table and generate an SAO DS9 region file to visualize the position of the given objects over an image.
-For more on installed scripts please see (see @ref{Installed scripts}).
-This script can be used with the following general template:
-
-@example
-## Use the RA and DEC columns of 'table.fits' for the region file.
-$ astscript-make-ds9-reg table.fits --column=RA,DEC \
-                          --output=ds9.reg
-
-## Select objects with a magnitude between 18 to 20, and generate the
-## region file directly (through a pipe), each region with radius of
-## 0.5 arcseconds.
-$ asttable table.fits --range=MAG,18:20 --column=RA,DEC \
-      | astscript-make-ds9-reg --column=1,2 --radius=0.5
-
-## With the first command, select objects with a magnitude of 25 to 26
-## as red regions in 'bright.reg'. With the second command, select
-## objects with a magnitude between 28 to 29 as a green region and
-## show both.
-$ asttable cat.fits --range=MAG_F160W,25:26 -cRA,DEC \
-      | ./astscript-make-ds9-reg -c1,2 --color=red -obright.reg
-$ asttable cat.fits --range=MAG_F160W,28:29 -cRA,DEC \
-      | ./astscript-make-ds9-reg -c1,2 --color=green \
-                    --command="ds9 image.fits -regions bright.reg"
-@end example
-
-The input can either be passed as a named file, or from standard input (a pipe).
-Only the @option{--column} option is mandatory (to specify the input table columns): two colums from the input table must be specified, either by name (recommended) or number.
-You can optionally also specify the region's radius, width and color of the regions with the @option{--radius}, @option{--width} and @option{--color} options, otherwise default values will be used for these (described under each option).
-
-The created region file will be written into the file name given to @option{--output}.
-When @option{--output} isn't called, the default name of @file{ds9.reg} will be used (in the running directory).
-If the file exists before calling this script, it will be overwritten, unless you pass the @option{--dontdelete} option.
-Optionally you can also use the @option{--command} option to give the full command that should be run to execute SAO DS9 (see example above and description below).
-In this mode, the created region file will be deleted once DS9 is closed (unless you pass the @option{--dontdelete} option).
-A full description of each option is given below.
-
-@table @option
-
-@item -h INT/STR
-@item --hdu INT/STR
-The HDU of the input table when a named FITS file is given as input.
-The HDU (or extension) can be either a name or number (counting from zero).
-For more on this option, see @ref{Input output options}.
-
-@item -c STR,STR
-@itemx --column=STR,STR
-Identifiers of the two positional columns to use in the DS9 region file from the table.
-They can either be in WCS (RA and Dec) or image (pixel) coordiantes.
-The mode can be specified with the @option{--mode} option, described below.
-
-@item -n STR
-@itemx --namecol=STR
-The column containing the name (or label) of each region.
-The type of the column (numeric or a character-based string) is irrelevant: you can use both types of columns as a name or label for the region.
-This feature is useful when you need to recognize each region with a certain ID or property (for example magnitude or redshift).
-
-@item -m wcs|img
-@itemx --mode=wcs|org
-The coordinate system of the positional columns (can be either @option{--mode=wcs} and @option{--mode=img}).
-In the WCS mode, the values within the columns are interpreted to be RA and Dec.
-In the image mode, they are interpreted to be pixel X and Y positions.
-This option also affects the interpretation of the value given to @option{--radius}.
-When this option isn't explicitly given, the columns are assumed to be in WCS mode.
-
-@item -C STR
-@itemx --color=STR
-The color to use for created regions.
-These will be directly interpreted by SAO DS9 when it wants to open the region file so it must be recognizable by SAO DS9.
-As of SAO DS9 8.2, the recognized color names are @code{black}, @code{white}, @code{red}, @code{green}, @code{blue}, @code{cyan}, @code{magenta} and @code{yellow}.
-The default color (when this option is not called) is @code{green}
-
-@item -w INT
-@itemx --width=INT
-The line width of the regions.
-These will be directly interpreted by SAO DS9 when it wants to open the region file so it must be recognizable by SAO DS9.
-The default value is @code{1}.
-
-@item -r FLT
-@itemx --radius=FLT
-The radius of all the regions.
-In WCS mode, the radius is assumed to be in arc-seconds, in image mode, it is in pixel units.
-If this option is not explicitly given, in WCS mode the default radius is 1 arc-seconds and in image mode it is 3 pixels.
-
-@item --dontdelete
-If the output file name exists, abort the program and don't over-write the contents of the file.
-This option is thus good if you want to avoid accidentally writing over an important file.
-Also, don't delete the created region file when @option{--command} is given (by default, when @option{--command} is given, the created region file will be deleted after SAO DS9 closes).
-
-@item -o STR
-@itemx --output=STR
-Write the created SAO DS9 region file into the name given to this option.
-If not explicity given on the command-line, a default name of @file{ds9.reg} will be used.
-If the file already exists, it will be over-written, you can avoid the deletion (or over-writing) of an existing file with the @option{--dontdelete}.
-
-@item --command="STR"
-After creating the region file, run the string given to this option as a command-line command.
-The SAO DS9 region command will be appended to the end of the given command.
-Because the command will mostly likely contain white-space characters it is recommended to put the given string in double quotations.
-
-For example, let's assume @option{--command="ds9 image.fits -zscale"}.
-After making the region file (assuming it is called @file{ds9.reg}), the following command will be executed:
-
-@example
-ds9 image.fits -zscale -regions ds9.reg
-@end example
-
-You can customize all aspects of SAO DS9 with its command-line options, therefore the value of this option can be as long and complicated as you like.
-For example if you also want the image to fit into the window, this option will be: @command{--command="ds9 image.fits -zscale -zoom to fit"}.
-You can see the SAO DS9 command-line descriptions by clicking on the ``Help'' menu and selecting ``Reference Manual''.
-In the opened window, click on ``Command Line Options''.
-@end table
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@node Generate radial profile,  , SAO DS9 region files from table, Data analysis
-@section Generate radial profile
-
-@cindex Radial profile
-@cindex Profile, profile
-Sometimes it is necessary to compute a radial profile of an astronomical object.
-For example, imagine you want to study how the light of a galaxy is distributed as a function of the radial distance from the center.
-This is exactly what a radial profile is.
-Gnuastro's @file{astscript-radial-profile} script is created to obtain such radial profiles.
-It uses @command{astmkprof} to generate elliptical apertures with the values equal to the distance from the center of the object and @command{astmkcatalog} for measuring the values over the apertures.
-With the default options, the script will generate a circular radial profile using the mean value and centered at the center of the image.
-In order to have more flexibility, several options are available and the user can play with them in order to obtain the wanted radial profile.
-In this sense, it can be changed the center position, the maximum radius, the axis ratio and the position angle (elliptical apertures are considered), the operator for obtaining the values, and some other options.
-
-@menu
-* Invoking astscript-radial-profile::  How to call astscript-radial-profile
-@end menu
-
-@node Invoking astscript-radial-profile,  , Generate radial profile, Generate radial profile
-@subsection Invoking astscript-radial-profile
-
-For more on installed scripts please see (see @ref{Installed scripts}).
-This script can be used with the following general template:
-
-@example
-$ astscript-radial-profile [OPTION...] FITS-file
-@end example
-
-@noindent
-Examples:
-
-@example
-## Generate the radial profile with default options
-$ astscript-radial-profile image.fits
-
-## Generate the radial profile centered at x=44 and y=37 (in pixels),
-## up to  a radial distance of 19 pixels, use the mean value.
-$ astscript-radial-profile image.fits     \
-                           --xcenter=44   \
-                           --ycenter=37   \
-                           --rmax=19
-
-## Generate the radial profile centered at x=44 and y=37 (in pixels),
-## up to a radial distance of 100 pixels, compute sigma clipped
-## mean and standard deviation (sigclip-mean and sigclip-std) using
-## 3 sigma and 10 iterations.
-$ astscript-radial-profile image.fits       \
-                           --xcenter=44     \
-                           --ycenter=37     \
-                           --rmax=100       \
-                           --sigmaclip=3,10 \
-                           --measure="sigclip-mean sigclip-std"
-
-## Generate the radial profile centered at RA=20.53751695,
-## DEC=0.9454292263, up to a radial distance of 88 pixels,
-## axis ratio equal to 0.32, and position angle of 148 deg.
-## Name the output table as `radial-profile.fits'
-$ astscript-radial-profile image.fits --mode=wcs   \
-                           --xcenter=20.53751695   \
-                           --ycenter=0.9454292263  \
-                           --rmax=88 --qratio=0.32 \
-                           --pangle=148 -oradial-profile.fits
-
-@end example
-
-This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
-The output radial profile consists in a FITS table containing the radial distance from the center in the first column and the specified measurements in the other columns (mean, median, sigclip-mean, sigclip-median, etc.).
-
-@table @option
-@item -h STR
-@itemx --hdu=STR
-The HDU/extension to use.
-
-@item -O STR
-@itemx --mode=STR
-Interpret the center position of the object (@option{--xcenter} and @option{--ycenter}) in image or WCS coordinates.
-This option thus accepts only two values: @option{img} or @option{wcs}.
-By default, it is @option{--mode=img}.
-
-@item -x FLT
-@itemx --xcenter=FLT
-Center coordinate along the first dimension.
-This option will be used for placing the center of the profiles.
-If @option{--mode=img} is considered, then @option{--xcenter} has to be in image units (pixels).
-If @option{--mode=wcs} is considered, then @option{--xcenter} has to be in WCS units.
-By default, it is @option{--xcenter=center}, which means that it will put the center of the radial profiles in the center of the image.
-This parameter is used as the @option{--ccol} option for generating the apertures with @command{astmkprof}.
-
-@item -y FLT
-@itemx --ycenter=FLT
-Center coordinate along the second dimension.
-Same than @option{--xcenter} argument, but for the second dimension (see above for details).
-
-@item -R FLT
-@itemx --rmax=FLT
-Maximum radius for the radial profile (in pixels).
-By default, it is @option{--rmax=max}, which means that the radial profile will be computed up to a radial distance equal to the maximum radius that fits into the image (assuming circular shape).
-This parameter is used as the options @option{--fcol} and @option{--tcol} in the generation of the apertures with @command{astmkprof}.
-
-@item -Q FLT
-@itemx --qratio=FLT
-The axis ratio of the apertures (minor axis divided by the major axis in a 2D ellipse).
-By default, it is @option{--qratio=1}, which means that the radial profile will be circular.
-This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
-
-@item -p FLT
-@itemx --pangle=FLT
-The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO ds9).
-By default, it is @option{--pangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
-This parameter is used as the option @option{--pcol} in the generation of the apertures with @command{astmkprof}.
-
-@item -m "STR"
-@itemx --measure="STR"
-The operator for measuring the values over each different aperture.
-By default, it is @option{--measure="--mean"}, which means that the mean of all pixels inside each aperture will be computed.
-This parameter is used for measuring the values with @command{astmkcatalog}.
-As a consequence, all operators like median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
-Multiple operators can be specified at once.
-For example, by setting @option{--measure="--mean --median"} the mean and median values will be computed.
-In this case, the output radial profile will have 3 columns: radial distance, mean, and median.
-
-@item -s FLT,FLT
-@itemx --sigmaclip=FLT,FLT
-Sigma clipping parameters if @option{--measure} operator requested is any of the available sigma-clipping operators.
-By default, it is @option{--sigmaclip=3,0.2}, see @ref{Arithmetic operators} for more details.
-
-@item -t
-@itemx --tmpdir=STR
-Several intermediate files are necessary to obtain the radial profile.
-All of these temporal files are saved into a temporal directory.
-With the option @option{--tmpdir} the user can specify this directory.
-Once the radial profile has been obtained, this directory is removed if the option @option{--keeptmp} is not used (see below for more details).
-
-@item -k
-@itemx --keeptmp
-With the option @option{--keeptmp} (no argument is required) all temporal files generated into the temporal directory @option{--keeptmp} will not be removed.
-This option is useful for debugging.
-For example, to check that the profiles generated for obtaining the radial profile have the same shape and orientation than the source.
 @end table
 
 
@@ -19982,7 +19405,7 @@ This option will be most useful if the input images were of integer types.
 
 
 
-@node High-level calculations, Library, Modeling and fittings, Top
+@node High-level calculations, Installed scripts, Modeling and fittings, Top
 @chapter High-level calculations
 
 After the reduction of raw data (for example with the programs in @ref{Data manipulation}) you will have reduced images/data ready for processing/analyzing (for example with the programs in @ref{Data analysis}).
@@ -20663,6 +20086,250 @@ In the latter (when a number is given), the returned value is the same units of 
 
 
 
+@node Installed scripts, Library, High-level calculations, Top
+@chapter Installed scripts
+
+Gnuastro's programs (introduced in previous chapters) are designed to be highly modular and thus contain lower-level operations on the data.
+However, in many contexts, certain higher-level are also shared between many contexts.
+For example a sequence of calls to multiple Gnuastro programs, or a special way of running a program and treating the output.
+To facilitate such higher-level data analysis, Gnuastro also installs some scripts on your system with the (@code{astscript-}) prefix (in contrast to the other programs that only have the @code{ast} prefix).
+
+@cindex GNU Bash
+@cindex Portable shell
+@cindex Shell, portable
+Like all of Gnuastro's source code, these scripts are also heavily commented.
+They are written in portable shell scripts (command-line environments), which doesn't need compilation.
+Therefore, if you open the installed scripts in a text editor, you can actually read them@footnote{Gnuastro's installed programs (those only starting with @code{ast}) aren't human-readable.
+They are written in C and need to be compiled before execution.
+Compilation optimizes the steps into the low-level hardware CPU instructions/language to improve efficiency.
+Because compiled programs don't need an interpreter like Bash on every run, they are much faster and more independent than scripts.
+To read the source code of the programs, look into the @file{bin/progname} directory of Gnuastro's source (@ref{Downloading the source}).
+If you would like to read more about why C was chosen for the programs, please see @ref{Why C}.}.
+For example with this command (just replace @code{nano} with your favorite text editor, like @command{emacs} or @command{vim}):
+
+@example
+$ nano $(which astscript-NAME)
+@end example
+
+Shell scripting is the same language that you use when typing on the command-line.
+Therefore shell scripting is much more widely known and used compared to C (the language of other Gnuastro programs).
+Because Gnuastro's installed scripts do higher-level operations, customizing these scripts for a special project will be more common than the programs.
+
+These scripts also accept options and are in many ways similar to the programs (see @ref{Common options}) with some minor differences:
+
+@itemize
+@item
+Currently they don't accept configuration files themselves.
+However, the configuration files of the Gnuastro programs they call are indeed parsed and used by those programs.
+
+As a result, they don't have the following options: @option{--checkconfig}, @option{--config}, @option{--lastconfig}, @option{--onlyversion}, @option{--printparams}, @option{--setdirconf} and @option{--setusrconf}.
+
+@item
+They don't directly allocate any memory, so there is no @option{--minmapsize}.
+
+@item
+They don't have an independent @option{--usage} option: when called with @option{--usage}, they just recommend running @option{--help}.
+
+@item
+The output of @option{--help} is not configurable like the programs (see @ref{--help}).
+
+@item
+@cindex GNU AWK
+@cindex GNU SED
+The scripts will commonly use your installed shell and other basic command-line tools (for example AWK or SED).
+Different systems have different versions and implementations of these basic tools (for example GNU/Linux systems use GNU Bash, GNU AWK and GNU SED which are far more advanced and up to date then the minimalist AWK and SED of most other systems).
+Therefore, unexpected errors in these tools might come up when you run these scripts on non-GNU/Linux operating systems.
+If you do confront such strange errors, please submit a bug report so we fix it as soon as possible (see @ref{Report a bug}).
+
+@end itemize
+
+@menu
+* Sort FITS files by night::    Sort many files by date.
+* Generate radial profile::     Radial profile of an object in an image.
+* SAO DS9 region files from table::  Create ds9 region file from a table.
+@end menu
+
+@node Sort FITS files by night, SAO DS9 region files from table, Installed scripts, Installed scripts
+@section Sort FITS files by night
+
+@cindex Calendar
+FITS images usually contain (several) keywords for preserving important dates.
+In particular, for lower-level data, this is usually the observation date and time (for example, stored in the @code{DATE-OBS} keyword value).
+When analyzing observed datasets, many calibration steps (like the dark, bias or flat-field), are commonly calculated on a per-observing-night basis.
+
+However, the FITS standard's date format (@code{YYYY-MM-DDThh:mm:ss.ddd}) is based on the western (Gregorian) calendar.
+Dates that are stored in this format are complicated for automatic processing: a night starts in the final hours of one calendar day, and extends to the early hours of the next calendar day.
+As a result, to identify datasets from one night, we commonly need to search for two dates.
+However calendar peculiarities can make this identification very difficult.
+For example when an observation is done on the night separating two months (like the night starting on March 31st and going into April 1st), or two years (like the night starting on December 31st 2018 and going into January 1st, 2019).
+To account for such situations, it is necessary to keep track of how many days are in a month, and leap years, etc.
+
+@cindex Unix epoch time
+@cindex Time, Unix epoch
+@cindex Epoch, Unix time
+Gnuastro's @file{astscript-sort-by-night} script is created to help in such important scenarios.
+It uses @ref{Fits} to convert the FITS date format into the Unix epoch time (number of seconds since 00:00:00 of January 1st, 1970), using the @option{--datetosec} option.
+The Unix epoch time is a single number (integer, if not given in sub-second precision), enabling easy comparison and sorting of dates after January 1st, 1970.
+
+You can use this script as a basis for making a much more highly customized sorting script.
+Here are some examples
+
+@itemize
+@item
+If you need to copy the files, but only need a single extension (not the whole file), you can add a step just before the making of the symbolic links, or copies, and change it to only copy a certain extension of the FITS file using the Fits program's @option{--copy} option, see @ref{HDU information and manipulation}.
+
+@item
+If you need to classify the files with finer detail (for example the purpose of the dataset), you can add a step just before the making of the symbolic links, or copies, to specify a file-name prefix based on other certain keyword values in the files.
+For example when the FITS files have a keyword to specify if the dataset is a science, bias, or flat-field image.
+You can read it and to add a @code{sci-}, @code{bias-}, or @code{flat-} to the created file (after the @option{--prefix}) automatically.
+
+For example, let's assume the observing mode is stored in the hypothetical @code{MODE} keyword, which can have three values of @code{BIAS-IMAGE}, @code{SCIENCE-IMAGE} and @code{FLAT-EXP}.
+With the step below, you can generate a mode-prefix, and add it to the generated link/copy names (just correct the filename and extension of the first line to the script's variables):
+
+@example
+modepref=$(astfits infile.fits -h1 \
+                   | sed -e"s/'/ /g" \
+                   | awk '$1=="MODE"@{ \
+                       if($3=="BIAS-IMAGE") print "bias-"; \
+                       else if($3=="SCIENCE-IMAGE") print "sci-"; \
+                       else if($3==FLAT-EXP) print "flat-"; \
+                       else print $3, "NOT recognized"; exit 1@}')
+@end example
+
+@cindex GNU AWK
+@cindex GNU Sed
+Here is a description of it.
+We first use @command{astfits} to print all the keywords in extension @code{1} of @file{infile.fits}.
+In the FITS standard, string values (that we are assuming here) are placed in single quotes (@key{'}) which are annoying in this context/use-case.
+Therefore, we pipe the output of @command{astfits} into @command{sed} to remove all such quotes (substituting them with a blank space).
+The result is then piped to AWK for giving us the final mode-prefix: with @code{$1=="MODE"}, we ask AWK to only consider the line where the first column is @code{MODE}.
+There is an equal sign between the key name and value, so the value is the third column (@code{$3} in AWK).
+We thus use a simple @code{if-else} structure to look into this value and print our custom prefix based on it.
+The output of AWK is then stored in the @code{modepref} shell variable which you can add to the link/copy name.
+
+With the solution above, the increment of the file counter for each night will be independent of the mode.
+If you want the counter to be mode-dependent, you can add a different counter for each mode and use that counter instead of the generic counter for each night (based on the value of @code{modepref}).
+But we'll leave the implementation of this step to you as an exercise.
+
+@end itemize
+
+@menu
+* Invoking astscript-sort-by-night::  Inputs and outputs to this script.
+@end menu
+
+@node Invoking astscript-sort-by-night,  , Sort FITS files by night, Sort FITS files by night
+@subsection Invoking astscript-sort-by-night
+
+This installed script will read a FITS date formatted value from the given keyword, and classify the input FITS files into individual nights.
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+$ astscript-sort-by-night [OPTION...] FITS-files
+@end example
+
+@noindent
+One line examples:
+
+@example
+## Use the DATE-OBS keyword
+$ astscript-sort-by-night --key=DATE-OBS /path/to/data/*.fits
+
+## Make links to the input files with the `img-' prefix
+$ astscript-sort-by-night --link --prefix=img- /path/to/data/*.fits
+@end example
+
+This script will look into a HDU/extension (@option{--hdu}) for a keyword (@option{--key}) in the given FITS files and interpret the value as a date.
+The inputs will be separated by "night"s (11:00a.m to next day's 10:59:59a.m, spanning two calendar days, exact hour can be set with @option{--hour}).
+
+The default output is a list of all the input files along with the following two columns: night number and file number in that night (sorted by time).
+With @option{--link} a symbolic link will be made (one for each input) that contains the night number, and number of file in that night (sorted by time), see the description of @option{--link} for more.
+When @option{--copy} is used instead of a link, a copy of the inputs will be made instead of symbolic link.
+
+Below you can see one example where all the @file{target-*.fits} files in the @file{data} directory should be separated by observing night according to the @code{DATE-OBS} keyword value in their second extension (number @code{1}, recall that HDU counting starts from 0).
+You can see the output after the @code{ls} command.
+
+@example
+$ astscript-sort-by-night -pimg- -h1 -kDATE-OBS data/target-*.fits
+$ ls
+img-n1-1.fits img-n1-2.fits img-n2-1.fits ...
+@end example
+
+The outputs can be placed in a different (already existing) directory by including that directory's name in the @option{--prefix} value, for example @option{--prefix=sorted/img-} will put them all under the @file{sorted} directory.
+
+This script can be configured like all Gnuastro's programs (through command-line options, see @ref{Common options}), with some minor differences that are described in @ref{Installed scripts}.
+The particular options to this script are listed below:
+
+@table @option
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension to use in all the given FITS files.
+All of the given FITS files must have this extension.
+
+@item -k STR
+@itemx --key=STR
+The keyword name that contains the FITS date format to classify/sort by.
+
+@item -H FLT
+@itemx --hour=FLT
+The hour that defines the next ``night''.
+By default, all times before 11:00a.m are considered to belong to the previous calendar night.
+If a sub-hour value is necessary, it should be given in units of hours, for example @option{--hour=9.5} corresponds to 9:30a.m.
+
+@cartouche
+@noindent
+@cindex Time zone
+@cindex UTC (Universal time coordinate)
+@cindex Universal time coordinate (UTC)
+@strong{Dealing with time zones:}
+The time that is recorded in @option{--key} may be in UTC (Universal Time Coordinate).
+However, the organization of the images taken during the night depends on the local time.
+It is possible to take this into account by setting the @option{--hour} option to the local time in UTC.
+
+For example, consider a set of images taken in Auckland (New Zealand, UTC+12) during different nights.
+If you want to classify these images by night, you have to know at which time (in UTC time) the Sun rises (or any other separator/definition of a different night).
+For example if your observing night finishes before 9:00a.m in Auckland, you can use @option{--hour=21}.
+Because in Auckland the local time of 9:00 corresponds to 21:00 UTC.
+@end cartouche
+
+@item -l
+@itemx --link
+Create a symbolic link for each input FITS file.
+This option cannot be used with @option{--copy}.
+The link will have a standard name in the following format (variable parts are written in @code{CAPITAL} letters and described after it):
+
+@example
+PnN-I.fits
+@end example
+
+@table @code
+@item P
+This is the value given to @option{--prefix}.
+By default, its value is @code{./} (to store the links in the directory this script was run in).
+See the description of @code{--prefix} for more.
+@item N
+This is the night-counter: starting from 1.
+@code{N} is just incremented by 1 for the next night, no matter how many nights (without any dataset) there are between two subsequent observing nights (its just an identifier for each night which you can easily map to different calendar nights).
+@item I
+File counter in that night, sorted by time.
+@end table
+
+@item -c
+@itemx --copy
+Make a copy of each input FITS file with the standard naming convention described in @option{--link}.
+With this option, instead of making a link, a copy is made.
+This option cannot be used with @option{--link}.
+
+@item -p STR
+@itemx --prefix=STR
+Prefix to append before the night-identifier of each newly created link or copy.
+This option is thus only relevant with the @option{--copy} or @option{--link} options.
+See the description of @option{--link} for how its used.
+For example, with @option{--prefix=img-}, all the created file names in the current directory will start with @code{img-}, making outputs like @file{img-n1-1.fits} or @file{img-n3-42.fits}.
+
+@option{--prefix} can also be used to store the links/copies in another directory relative to the directory this script is being run (it must already exist).
+For example @code{--prefix=/path/to/processing/img-} will put all the links/copies in the @file{/path/to/processing} directory, and the files (in that directory) will all start with @file{img-}.
+@end table
 
 
 
@@ -20675,7 +20342,366 @@ In the latter (when a number is given), the returned value is the same units of 
 
 
 
-@node Library, Developing, High-level calculations, Top
+
+
+
+
+
+
+
+
+@node Generate radial profile,  , SAO DS9 region files from table, Installed scripts
+@section Generate radial profile
+
+@cindex Radial profile
+@cindex Profile, profile
+The 1 dimensional radial profile of an object is an important parameter in many aspects of astronomical image processing.
+For example, you want to study how the light of a galaxy is distributed as a function of the radial distance from the center.
+In other cases, the radial profile of a star can show the PSF (see @ref{PSF}).
+Gnuastro's @file{astscript-radial-profile} script is created to obtain such radial profiles for one object within an image.
+This script uses @ref{MakeProfiles} to generate elliptical apertures with the values equal to the distance from the center of the object and @ref{MakeCatalog} for measuring the values over the apertures.
+
+@menu
+* Invoking astscript-radial-profile::  How to call astscript-radial-profile
+@end menu
+
+@node Invoking astscript-radial-profile,  , Generate radial profile, Generate radial profile
+@subsection Invoking astscript-radial-profile
+
+This installed script will measure the radial profile of an object within an image.
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+$ astscript-radial-profile [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Generate the radial profile with default options (assuming the
+## object is in the center of the image, and using the mean).
+$ astscript-radial-profile image.fits
+
+## Generate the radial profile centered at x=44 and y=37 (in pixels),
+## up to  a radial distance of 19 pixels, use the mean value.
+$ astscript-radial-profile image.fits     \
+                           --xcenter=44   \
+                           --ycenter=37   \
+                           --rmax=19
+
+## Generate the radial profile centered at x=44 and y=37 (in pixels),
+## up to a radial distance of 100 pixels, compute sigma clipped
+## mean and standard deviation (sigclip-mean and sigclip-std) using
+## 3 sigma and 10 iterations.
+$ astscript-radial-profile image.fits       \
+                           --xcenter=44     \
+                           --ycenter=37     \
+                           --rmax=100       \
+                           --sigmaclip=3,10 \
+                           --measure=sigclip-mean,sigclip-std
+
+## Generate the radial profile centered at RA=20.53751695,
+## DEC=0.9454292263, up to a radial distance of 88 pixels,
+## axis ratio equal to 0.32, and position angle of 148 deg.
+## Name the output table as `radial-profile.fits'
+$ astscript-radial-profile image.fits --mode=wcs   \
+                           --xcenter=20.53751695   \
+                           --ycenter=0.9454292263  \
+                           --rmax=88               \
+                           --axisratio=0.32        \
+                           --positionangle=148 -oradial-profile.fits
+
+@end example
+
+This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
+The output radial profile is a table (FITS or plain-text) containing the radial distance from the center in the first row and the specified measurements in the other columns (mean, median, sigclip-mean, sigclip-median, etc.).
+
+To measure the radial profile, this script needs to generate temporary files.
+All these temporary files will be created within the directory given to the @option{--tmpdir} option.
+When @option{--tmpdir} is not called, a temporary directory (with a name based on the inputs) will be created in the running directory.
+After the output is created, this script will delete the directory by default, unless you call the @option{--keeptmp} option.
+
+With the default options, the script will generate a circular radial profile using the mean value and centered at the center of the image.
+In order to have more flexibility, several options are available to configure for the desired radial profile.
+In this sense, you can change the center position, the maximum radius, the axis ratio and the position angle (elliptical apertures are considered), the operator for obtaining the profiles, and others (described below).
+
+@cartouche
+@noindent
+@strong{Debug your profile:} to debug your results, especially close to the center of your object, you can see the radial distance associated to every pixel in your input.
+To do this, use @option{--keeptmp} to keep the temporary files, and compare @file{crop.fits} (crop of your input image centered on your desired coordinate) with @file{apertures.fits} (radial distance of each pixel).
+@end cartouche
+
+@cartouche
+@noindent
+@strong{Finding properties of your elliptical target: } you want to measure the radial profile of a galaxy, but don't know its exact location, position angle or axis ratio.
+To obtain these values, you can use @ref{NoiseChisel} to detect signal in the image, feed it to @ref{Segment} to do basic segmentation, then use @ref{MakeCatalog} to measure the center (@option{--x} and @option{--y} in MakeCatalog), axis ratio (@option{--axisratio}) and position angle (@option{--positionangle}).
+@end cartouche
+
+@cartouche
+@noindent
+@strong{Masking other sources:} The image of an astronomical object will usually have many other sources with your main target.
+A crude solution is to use sigma-clipped measurements for the profile.
+However, sigma-clipped measurements can easily be baised when the number of sources at each radial distance increases at larger distances.
+Therefore a robust solution is to mask all other detections within the image.
+You can use @ref{NoiseChisel} and @ref{Segment} to detect and segment the sources, then set all pixels that don't belong to your target to blank using @ref{Arithmetic} (in particular, its @code{where} operator).
+@end cartouche
+
+@table @option
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension of the input image to use.
+
+@item -o STR
+@itemx --output=STR
+Filename of measured radial profile.
+It can be either a FITS table, or plain-text table (determied from your given file name suffix).
+
+@item -O STR
+@itemx --mode=STR
+Interpret the center position of the object (values given to @option{--xcenter} and @option{--ycenter}) in image or WCS coordinates.
+This option thus accepts only two values: @option{img} or @option{wcs}.
+By default, it is @option{--mode=img}.
+
+@item -x FLT
+@itemx --xcenter=FLT
+Center coordinate along the first dimension (horizontal axis in FITS).
+This option will be used for placing the center of the profiles.
+If @option{--mode=img} is considered, then @option{--xcenter} has to be in image units (pixels).
+If @option{--mode=wcs} is considered, then @option{--xcenter} has to be in WCS units.
+When this option isn't called, this script will assume the the radial profile's core in the center of the image along the first/horizontal axis.
+
+@item -y FLT
+@itemx --ycenter=FLT
+Center coordinate along the second dimension (vertical axis in FITS).
+This operator behaves very similar to @option{--xcenter} argument, but for the second dimension (see above for details).
+
+@item -R FLT
+@itemx --rmax=FLT
+Maximum radius for the radial profile (in pixels).
+By default, the radial profile will be computed up to a radial distance equal to the maximum radius that fits into the image (assuming circular shape).
+
+@item -Q FLT
+@itemx --axisratio=FLT
+The axis ratio of the apertures (minor axis divided by the major axis in a 2D ellipse).
+By default (when this option isn't given), the radial profile will be circular (axis ratio of 1).
+This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
+
+@item -p FLT
+@itemx --positionangle=FLT
+The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO ds9).
+By default, it is @option{--pangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
+
+@item -m STR
+@itemx --measure=STR
+The operator for measuring the values over each radial distance.
+The values given to this option will be directly passed to @ref{MakeCatalog}.
+As a consequence, all MakeCatalog measurements like the median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
+For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
+Multiple values can be given to this option, each separated by a comma.
+This option can also be called multiple times.
+
+For example, by setting @option{--measure=mean,sigclip-mean --measure=median}, the mean, sigma-clipped mean and median values will be computed.
+The output radial profile will have 4 columns in this order: radial distance, mean, sigma-clipped and median.
+By default (when this option isn't given), the mean of all pixels at each radial position will be computed.
+
+@item -s FLT,FLT
+@itemx --sigmaclip=FLT,FLT
+Sigma clipping parameters: only relevant if sigma-clipping operators are requested by @option{--measure}.
+For more on sigma-clipping, see @ref{Sigma clipping}.
+If given, the value to this option is directly passed to the @option{--sigmaclip} option of @ref{MakeCatalog}, see @ref{MakeCatalog inputs and basic settings}.
+By default (when this option isn't given), the default values within MakeCatalog will be used.
+To see the default value of this option in MakeCatalog, you can run this command:
+
+@example
+$ astmkcatalog -P | grep " sigmaclip "
+@end example
+
+@item -t STR
+@itemx --tmpdir=STR
+Several intermediate files are necessary to obtain the radial profile.
+All of these temporal files are saved into a temporal directory.
+With this option, you can directly specify this directory.
+By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+Once the radial profile has been obtained, this directory is removed.
+You can disable the deletion of the temporary directory with the @option{--keeptmp} option.
+
+@item -k
+@itemx --keeptmp
+Don't delete the temporary directory (see description of @option{--tmpdir} above).
+This option is useful for debugging.
+For example, to check that the profiles generated for obtaining the radial profile have the desired center, shape and orientation.
+@end table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node SAO DS9 region files from table, Generate radial profile, Sort FITS files by night, Installed scripts
+@section SAO DS9 region files from table
+
+Once your desired catalog (containing the positions of some objects) is created (for example with @ref{MakeCatalog}, @ref{Match}, or @ref{Table}) it often happens that you want to see your selected objects on an image for a feeling of the spatial properties of your objects.
+For example you want to see their positions relative to each other.
+
+In this section we describe a simple installed script that is provided within Gnuastro for converting your given columns to an SAO DS9 region file to help in this process.
+SAO DS9@footnote{@url{https://sites.google.com/cfa.harvard.edu/saoimageds9}} is one of the most common FITS image vizualization tools in astronomy and is free software.
+
+@menu
+* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
+@end menu
+
+@node Invoking astscript-make-ds9-reg,  , SAO DS9 region files from table, SAO DS9 region files from table
+@subsection Invoking astscript-make-ds9-reg
+
+This installed script will read two positional columns within an input table and generate an SAO DS9 region file to visualize the position of the given objects over an image.
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+## Use the RA and DEC columns of 'table.fits' for the region file.
+$ astscript-make-ds9-reg table.fits --column=RA,DEC \
+                          --output=ds9.reg
+
+## Select objects with a magnitude between 18 to 20, and generate the
+## region file directly (through a pipe), each region with radius of
+## 0.5 arcseconds.
+$ asttable table.fits --range=MAG,18:20 --column=RA,DEC \
+      | astscript-make-ds9-reg --column=1,2 --radius=0.5
+
+## With the first command, select objects with a magnitude of 25 to 26
+## as red regions in 'bright.reg'. With the second command, select
+## objects with a magnitude between 28 to 29 as a green region and
+## show both.
+$ asttable cat.fits --range=MAG_F160W,25:26 -cRA,DEC \
+      | ./astscript-make-ds9-reg -c1,2 --color=red -obright.reg
+$ asttable cat.fits --range=MAG_F160W,28:29 -cRA,DEC \
+      | ./astscript-make-ds9-reg -c1,2 --color=green \
+                    --command="ds9 image.fits -regions bright.reg"
+@end example
+
+The input can either be passed as a named file, or from standard input (a pipe).
+Only the @option{--column} option is mandatory (to specify the input table columns): two colums from the input table must be specified, either by name (recommended) or number.
+You can optionally also specify the region's radius, width and color of the regions with the @option{--radius}, @option{--width} and @option{--color} options, otherwise default values will be used for these (described under each option).
+
+The created region file will be written into the file name given to @option{--output}.
+When @option{--output} isn't called, the default name of @file{ds9.reg} will be used (in the running directory).
+If the file exists before calling this script, it will be overwritten, unless you pass the @option{--dontdelete} option.
+Optionally you can also use the @option{--command} option to give the full command that should be run to execute SAO DS9 (see example above and description below).
+In this mode, the created region file will be deleted once DS9 is closed (unless you pass the @option{--dontdelete} option).
+A full description of each option is given below.
+
+@table @option
+
+@item -h INT/STR
+@item --hdu INT/STR
+The HDU of the input table when a named FITS file is given as input.
+The HDU (or extension) can be either a name or number (counting from zero).
+For more on this option, see @ref{Input output options}.
+
+@item -c STR,STR
+@itemx --column=STR,STR
+Identifiers of the two positional columns to use in the DS9 region file from the table.
+They can either be in WCS (RA and Dec) or image (pixel) coordiantes.
+The mode can be specified with the @option{--mode} option, described below.
+
+@item -n STR
+@itemx --namecol=STR
+The column containing the name (or label) of each region.
+The type of the column (numeric or a character-based string) is irrelevant: you can use both types of columns as a name or label for the region.
+This feature is useful when you need to recognize each region with a certain ID or property (for example magnitude or redshift).
+
+@item -m wcs|img
+@itemx --mode=wcs|org
+The coordinate system of the positional columns (can be either @option{--mode=wcs} and @option{--mode=img}).
+In the WCS mode, the values within the columns are interpreted to be RA and Dec.
+In the image mode, they are interpreted to be pixel X and Y positions.
+This option also affects the interpretation of the value given to @option{--radius}.
+When this option isn't explicitly given, the columns are assumed to be in WCS mode.
+
+@item -C STR
+@itemx --color=STR
+The color to use for created regions.
+These will be directly interpreted by SAO DS9 when it wants to open the region file so it must be recognizable by SAO DS9.
+As of SAO DS9 8.2, the recognized color names are @code{black}, @code{white}, @code{red}, @code{green}, @code{blue}, @code{cyan}, @code{magenta} and @code{yellow}.
+The default color (when this option is not called) is @code{green}
+
+@item -w INT
+@itemx --width=INT
+The line width of the regions.
+These will be directly interpreted by SAO DS9 when it wants to open the region file so it must be recognizable by SAO DS9.
+The default value is @code{1}.
+
+@item -r FLT
+@itemx --radius=FLT
+The radius of all the regions.
+In WCS mode, the radius is assumed to be in arc-seconds, in image mode, it is in pixel units.
+If this option is not explicitly given, in WCS mode the default radius is 1 arc-seconds and in image mode it is 3 pixels.
+
+@item --dontdelete
+If the output file name exists, abort the program and don't over-write the contents of the file.
+This option is thus good if you want to avoid accidentally writing over an important file.
+Also, don't delete the created region file when @option{--command} is given (by default, when @option{--command} is given, the created region file will be deleted after SAO DS9 closes).
+
+@item -o STR
+@itemx --output=STR
+Write the created SAO DS9 region file into the name given to this option.
+If not explicity given on the command-line, a default name of @file{ds9.reg} will be used.
+If the file already exists, it will be over-written, you can avoid the deletion (or over-writing) of an existing file with the @option{--dontdelete}.
+
+@item --command="STR"
+After creating the region file, run the string given to this option as a command-line command.
+The SAO DS9 region command will be appended to the end of the given command.
+Because the command will mostly likely contain white-space characters it is recommended to put the given string in double quotations.
+
+For example, let's assume @option{--command="ds9 image.fits -zscale"}.
+After making the region file (assuming it is called @file{ds9.reg}), the following command will be executed:
+
+@example
+ds9 image.fits -zscale -regions ds9.reg
+@end example
+
+You can customize all aspects of SAO DS9 with its command-line options, therefore the value of this option can be as long and complicated as you like.
+For example if you also want the image to fit into the window, this option will be: @command{--command="ds9 image.fits -zscale -zoom to fit"}.
+You can see the SAO DS9 command-line descriptions by clicking on the ``Help'' menu and selecting ``Reference Manual''.
+In the opened window, click on ``Command Line Options''.
+@end table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node Library, Developing, Installed scripts, Top
 @chapter Library
 
 Each program in Gnuastro that was discussed in the prior chapters (or any program in general) is a collection of functions that is compiled into one executable file which can communicate directly with the outside world.
@@ -30690,10 +30716,15 @@ in a special way), are done with installed Bash scripts (all prefixed with
 similarly (with minor differences, see @ref{Installed scripts}).
 
 @table @code
+@item astscript-make-ds9-reg
+(See @ref{SAO DS9 region files from table}) Given a table (either as a file or from standard input), create an SAO DS9 region file from the requested positional columns (WCS or image coordinates).
+
+@item astscript-radial-profile
+(See @ref{Generate radial profile}) Calculate the radial profile of an object within an image.
+The object can be at any location in the image, using various measures (median, sigma-clipped mean and etc), and the radial distance can also be measured on any general ellipse.
+
 @item astscript-sort-by-night
-(See @ref{Sort FITS files by night}) Given a list of FITS files, and a HDU
-and keyword name (for a date), this script separates the files in the same
-night (possibly over two calendar days).
+(See @ref{Sort FITS files by night}) Given a list of FITS files, and a HDU and keyword name (for a date), this script separates the files in the same night (possibly over two calendar days).
 @end table
 
 
