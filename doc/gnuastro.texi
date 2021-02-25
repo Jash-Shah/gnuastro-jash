@@ -20546,6 +20546,12 @@ To see the default value of this option in MakeCatalog, you can run this command
 $ astmkcatalog -P | grep " sigmaclip "
 @end example
 
+@item -v INT
+@itemx --oversample=INT
+Oversample the input dataset to the fraction given to this option.
+Therefore if you set @option{--rmax=20} for example and @option{--oversample=5}, your output will have 100 rows (without @option{--oversample} it will only have 20 rows).
+Unless the object is heavily undersampled (the pixels are larger than the actual object), this method provides a much more accurate result and there are sufficient number of pixels to get the profile accurately.
+
 @item -t STR
 @itemx --tmpdir=STR
 Several intermediate files are necessary to obtain the radial profile.

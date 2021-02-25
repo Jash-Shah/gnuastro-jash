@@ -36,6 +36,7 @@ set -e
 hdu=1
 rmax=""
 quiet=""
+center=""
 tmpdir=""
 output=""
 keeptmp=0
@@ -43,9 +44,8 @@ mode="img"
 measure=""
 axisratio=1
 sigmaclip=""
+oversample=""
 positionangle=0
-xcenter="center"
-ycenter="center"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -86,17 +86,18 @@ $scriptname options:
  Input:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -O, --mode=STR          Coordinate mode: img or wcs.
-  -x, --xcenter=FLT       Coordinate of the center along the first axis.
-  -y, --ycenter=FLT       Coordinate of the center along the second axis.
+  -c, --center=FLT,FLT    Coordinate of the center along 2 axises.
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -Q, --axisratio=FLT     Axis ratio for ellipse profiles (A/B).
   -p, --positionangle=FLT Position angle for ellipse profiles.
-  -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
 
  Output:
+  -t, --tmpdir            Directory to keep temporary files.
   -k, --keeptmp           Keep temporal/auxiliar files.
+  -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
   -o, --output            Output table with the radial profile.
+  -v, --oversample        Oversample for higher resolution radial profile.
 
  Operating mode:
   -h, --help              Print this help list.
@@ -190,12 +191,9 @@ do
         -O|--mode)          mode="$2";                                 check_v "$1" "$mode";  shift;shift;;
         -O=*|--mode=*)      mode="${1#*=}";                            check_v "$1" "$mode";  shift;;
         -O*)                mode=$(echo "$1"  | sed -e's/-O//');       check_v "$1" "$mode";  shift;;
-        -x|--xcenter)       xcenter="$2";                              check_v "$1" "$xcenter";  shift;shift;;
-        -x=*|--xcenter=*)   xcenter="${1#*=}";                         check_v "$1" "$xcenter";  shift;;
-        -x*)                xcenter=$(echo "$1"  | sed -e's/-x//');    check_v "$1" "$xcenter";  shift;;
-        -y|--ycenter)       ycenter="$2";                              check_v "$1" "$ycenter";  shift;shift;;
-        -y=*|--ycenter=*)   ycenter="${1#*=}";                         check_v "$1" "$ycenter";  shift;;
-        -y*)                ycenter=$(echo "$1"  | sed -e's/-y//');    check_v "$1" "$ycenter";  shift;;
+        -c|--center)        center="$2";                               check_v "$1" "$center";  shift;shift;;
+        -c=*|--center=*)    center="${1#*=}";                          check_v "$1" "$center";  shift;;
+        -c*)                center=$(echo "$1"  | sed -e's/-x//');     check_v "$1" "$center";  shift;;
         -R|--rmax)          rmax="$2";                                 check_v "$1" "$rmax";  shift;shift;;
         -R=*|--rmax=*)      rmax="${1#*=}";                            check_v "$1" "$rmax";  shift;;
         -R*)                rmax=$(echo "$1"  | sed -e's/-R//');       check_v "$1" "$rmax";  shift;;
@@ -205,13 +203,9 @@ do
         -p|--positionangle) positionangle="$2";                        check_v "$1" "$positionangle";  shift;shift;;
         -p=*|--positionangle=*) positionangle="${1#*=}";               check_v "$1" "$positionangle";  shift;;
         -p*)                positionangle=$(echo "$1"  | sed -e's/-p//'); check_v "$1" "$positionangle";  shift;;
-        -m|--measure)       measuretmp="$2";                           check_v "$1" "$measuretmp";  shift;shift;;
-        -m=*|--measure=*)   measuretmp="${1#*=}";                      check_v "$1" "$measuretmp";  shift;;
-        -m*)                measuretmp=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$measuretmp";  shift;;
         -s|--sigmaclip)     sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*) sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
-
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
@@ -219,9 +213,15 @@ do
         -t|--tmpdir)      tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
         -t=*|--tmpdir=*)  tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
         -t*)              tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
+        -m|--measure)     measuretmp="$2";                           check_v "$1" "$measuretmp";  shift;shift;;
+        -m=*|--measure=*) measuretmp="${1#*=}";                      check_v "$1" "$measuretmp";  shift;;
+        -m*)              measuretmp=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$measuretmp";  shift;;
         -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
         -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
+        -v|--oversample)  oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
+        -v=*|--oversample=*) oversample="${1#*=}";                  check_v "$1" "$oversample"; shift;;
+        -v*)              oversample=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$oversample"; shift;;
 
         # Non-operating options.
         -q|--quiet)       quiet="--quiet"; shift;;
@@ -264,17 +264,21 @@ if [ x"$inputs" = x ]; then
     exit 1
 fi
 
-# If one of X or Y are given the other also needs to be given.
-if [ "z$xcenter" = zcenter ]; then
-  if ! [ "z$ycenter" = zcenter ]; then
-    echo "Center position's Y axis value is given, but not X!"
-    exit 1
-  fi
+# If a '--center' has been given, make sure it only has two numbers.
+if [ x"$center" = x ]; then
+    ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$ncenter != x2 ]; then
+        echo "$scriptname: '--center' (or '-c') only take two values, but $ncenter were given"
+        exit 1
+    fi
+fi
+
+# Make sure the value to '--mode' is either 'wcs' or 'img'.
+if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+    junk=1
 else
-  if [ "z$ycenter" = zcenter ]; then
-    echo "Center position's X axis value is given, but not Y!"
+    echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
     exit 1
-  fi
 fi
 
 # If no specific measurement has been requested, use the mean.
@@ -284,41 +288,43 @@ if [ x"$measure" = x ]; then measure=mean; fi
 
 
 
-# Convert center to image coordinates if necessary
-# ------------------------------------------------
+# Finalize the center value
+# -------------------------
 #
-# If the user provides specific coordinates in WCS (--mode=wcs), then
-# convert them to image mode so we can safely assume image coordianates
-# from now on. To do that, WCS information from the input header image is
-# used.
-if ! [ "z$xcenter" = zcenter ]; then
-  if [ $mode = wcs ]; then
-    xy=$(echo "$xcenter $ycenter" \
-             | asttable -c'arith $1 $2 wcstoimg' \
-                        --wcsfile=$inputs --wcshdu=$hdu)
-    xcenter=$(echo $xy | awk '{print $1}');
-    ycenter=$(echo $xy | awk '{print $2}');
-  fi
-fi
+# Beyond this point, we know the image-based, central coordinate for the
+# radial profile as two values (one along each dimension).
+if [ x"$center" = x ]; then
 
+    # No center has been given: we thus assume that the object is already
+    # centered on the input image and will set the center to the central
+    # pixel in the image. In the FITS standard, pixels are counted from 1,
+    # and the integers are in the center of the pixel. So after dividing
+    # the pixel size of the image by 2, we should add it with 0.5 to be the
+    # `center' of the image.
+    xcenter=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS1/{print $3/2+0.5}')
+    ycenter=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS2/{print $3/2+0.5}')
 
+else
 
+    if [ $mode = img ]; then
 
+        # A center has been given, we should just separate them.
+        xcenter=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
+        ycenter=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 
-# Set default central position
-# ----------------------------
-#
-# If the user does not set the x and y coordinates to be `center' (the
-# coordinates of the object), then compute the center of the image for
-# constructing the profiles. Here, we are assuming that the object is
-# already centered on the input image.
-#
-# In the FITS standard, pixels are counted from 1, and the integers are in
-# the center of the pixel. So after dividing the pixel size of the image by
-# 2, we should add it with 0.5 to be the `center' of the image.
-if [ "z$xcenter" = zcenter ]; then
-  xcenter=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS1/{print $3/2+0.5}')
-  ycenter=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS2/{print $3/2+0.5}')
+    else
+
+        # WCS coordinates have been given. We should thus convert them to
+        # image coordinates at this point. To do that, WCS information from
+        # the input header image is used.
+        xy=$(echo "$center" \
+                  | sed 's/,/ /' \
+                  | asttable -c'arith $1 $2 wcstoimg' \
+                             --wcsfile=$inputs --wcshdu=$hdu)
+        xcenter=$(echo $xy | awk '{print $1}');
+        ycenter=$(echo $xy | awk '{print $2}');
+
+    fi
 fi
 
 
@@ -367,7 +373,7 @@ fi
 # name, then a default value containing the center and mode will be
 # generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
-defaultname=$(pwd)/"$bname_prefix"_rprofile_$mode"_$xcenter"_"$ycenter"
+defaultname=$(pwd)/"$bname_prefix"_radial_profile_$mode"_$xcenter"_"$ycenter"
 if [ x$output = x ]; then output="$defaultname.fits"; fi
 
 # Construct the temporary directory. If the user does not specify any
@@ -411,6 +417,19 @@ ycenter=$(echo "$ycenter $cropwidth $dxy" \
 
 
 
+# Over-sample the input if necessary
+# ----------------------------------
+values=$tmpdir/values.fits
+if [ x$oversample = x ]; then
+    ln -fs $crop $values
+else
+    astwarp $crop --scale=$oversample,$oversample -o$values
+    xcenter=$(echo $xcenter | awk '{print '$oversample'*$1}')
+    ycenter=$(echo $ycenter | awk '{print '$oversample'*$1}')
+    rmax=$(echo    $rmax    | awk '{print '$oversample'*$1}')
+fi
+
+
 
 
 # Generate the apertures image
@@ -418,34 +437,48 @@ ycenter=$(echo "$ycenter $cropwidth $dxy" \
 #
 # The apertures image is generated using MakeProfiles with the parameters
 # specified in the echo statement:
-
-# rmax          -- maximum radius value (in pixels)
+#
+# 1             -- ID of profile (irrelevant here!)
 # xcenter       -- X center position (in pixels).
 # ycenter       -- Y center position (in pixels).
-# 7             -- type of the profiles (radial distance).
-# 1             -- the Sersic or Moffat index.
+# 7             -- Type of the profiles (radial distance).
+# 1             -- The Sersic or Moffat index (irrelevant here!).
 # positionangle -- position angle.
 # axisratio     -- axis ratio.
 # rmax          -- magnitude of the profile within the truncation radius (rmax).
 # 1             -- Truncation in radius unit.
-apertures=$tmpdir/apertures.fits
-echo "$rmax $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio $rmax 1" \
-     | astmkprof --background=$crop --backhdu=1 --mforflatpix \
+aperturesraw=$tmpdir/apertures-raw.fits
+echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
+     | astmkprof --background=$values --backhdu=1 --mforflatpix \
                  --mode=img --clearcanvas --type=int16 \
-                 --circumwidth=1 --replace --output=$apertures \
+                 --circumwidth=1 --replace --output=$aperturesraw \
                  $quiet
 
 
 
 
 
-# Extract each measurement column into a MakeCatalog option
-# ---------------------------------------------------------
+# Fill the central pixel(s)
+# -------------------------
 #
-# The user of this script gives each desired MakeCatalog option name as a
-# value to the '--measure' option here as a comma-separated list of
-# values. But we want to feed them into MakeCatalog (which needs each one
-# of them to be prefixed with '--' and separated by a space).
+# The central pixel(s) have a distance of 0! So we need to add a single
+# value to all the profile pixels (but keep the outer parts at 0).
+apertures=$tmpdir/apertures.fits
+astarithmetic $aperturesraw set-i \
+              i 0 ne 1 fill-holes set-good \
+              i good i 1 + where -o$apertures
+
+
+
+
+
+# Extract each measurement column(s)
+# ----------------------------------
+#
+# The user gives each desired MakeCatalog option name as a value to the
+# '--measure' option here as a comma-separated list of values. But we want
+# to feed them into MakeCatalog (which needs each one of them to be
+# prefixed with '--' and separated by a space).
 finalmeasure=$(echo "$measure" \
                    | awk 'BEGIN{FS=","} \
                           END{for(i=1;i<=NF;++i) printf "--%s ", $i}')
@@ -476,9 +509,33 @@ fi
 # a catalogue using the segmentation image previously generated (the
 # elliptical apertures) and the original input image for measuring the
 # values.
-astmkcatalog $apertures -h1 --valuesfile=$crop --valueshdu=1 \
-             --ids $finalmeasure $finalsigmaclip --output=$output \
+cat=$tmpdir/catalog.fits
+astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 \
+             --ids $finalmeasure $finalsigmaclip --output=$cat \
              $quiet
+
+
+
+
+
+# Prepare the final output
+# ------------------------
+#
+# The raw MakeCatalog output isn't clear for the users of this script (for
+# example the radius column is called 'OBJ_ID'!). Also, when oversampling
+# is requested we need to divide the radii by the over-sampling factor.
+#
+# But before anything, we need to set the options to print the other
+# columns untouched (we only want to change the first column).
+restcols=$(astfits $cat -h1 \
+               | awk '/^TFIELDS/{for(i=2;i<=$3;++i) printf "-c%d ", i}')
+if [ x"$oversample" = x ]; then
+    asttable $cat -c'arith OBJ_ID float32 1 -' $restcols -o$output \
+             --colmetadata=1,RADIUS,pix,"Radial distance"
+else
+    asttable $cat -c'arith OBJ_ID float32 '$oversample' /' $restcols \
+             -o$output --colmetadata=ARITH_2,RADIUS,pix,"Radial distance"
+fi
 
 
 
