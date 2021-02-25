@@ -370,13 +370,13 @@ bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 defaultname=$(pwd)/"$bname_prefix"_rprofile_$mode"_$xcenter"_"$ycenter"
 if [ x$output = x ]; then output="$defaultname.fits"; fi
 
-# Construct the temporal directory. If the user does not specify any
+# Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
 # be constructed.  If the user set the directory, then make it. This
 # directory will be deleted at the end of the script if the user does not
 # want to keep it (with the `--keeptmp' option).
-if [ z$tmpdir = z        ]; then tmpdir=$defaultname; fi
-mkdir -p $tmpdir
+if [ x$tmpdir = x ]; then tmpdir=$defaultname; fi
+if [ -d $tmpdir ]; then junk=1; else mkdir $tmpdir; fi
 
 
 

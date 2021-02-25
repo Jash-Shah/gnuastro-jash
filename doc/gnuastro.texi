@@ -20448,6 +20448,7 @@ The output radial profile is a table (FITS or plain-text) containing the radial 
 To measure the radial profile, this script needs to generate temporary files.
 All these temporary files will be created within the directory given to the @option{--tmpdir} option.
 When @option{--tmpdir} is not called, a temporary directory (with a name based on the inputs) will be created in the running directory.
+If the directory doesn't exist at run-time, this script will create it.
 After the output is created, this script will delete the directory by default, unless you call the @option{--keeptmp} option.
 
 With the default options, the script will generate a circular radial profile using the mean value and centered at the center of the image.
@@ -20551,6 +20552,7 @@ Several intermediate files are necessary to obtain the radial profile.
 All of these temporal files are saved into a temporal directory.
 With this option, you can directly specify this directory.
 By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+If the directory doesn't exist at run-time, this script will create it.
 Once the radial profile has been obtained, this directory is removed.
 You can disable the deletion of the temporary directory with the @option{--keeptmp} option.
 
