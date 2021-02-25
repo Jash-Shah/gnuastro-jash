@@ -11658,6 +11658,21 @@ These operators take a single operand.
 Inverse Hyperbolic sine, cosine, and tangent.
 These operators take a single operand.
 
+@item counts-to-jy
+@cindex AB magnitude
+@cindex Magnitude, AB
+Convert counts (CCD outputs) to Janskys through an AB-magnitude based zeropoint.
+The top-popped operand is assumed to be the AB-magnitude zero point and the second-popped operand is assumed to be a dataset in units of counts (an image in Arithmetic, and a column in Table's @ref{Column arithmetic}).
+For the full equation and basic definitions, see @ref{Brightness flux magnitude}.
+
+@cindex SDSS
+For example SDSS images are calibrated in units of nano-maggies, with a fixed zero point magnitude of 22.5.
+Therefore you can convert the units of SDSS image pixels to Janskys with the command below:
+
+@example
+$ astarithmetic sdss-image.fits 22.5 counts-to-jy
+@end example
+
 @item minvalue
 Minimum value in the first popped operand, so ``@command{a.fits minvalue}'' will push the minimum pixel value in this image onto the stack.
 When this operator acts on a single image, the output (operand that is put back on the stack) will no longer be an image, but a number.
@@ -18441,6 +18456,9 @@ Using the zero point magnitude (@mymath{Z}), we can write the magnitude relation
 @cindex AB magnitude
 @cindex Magnitude, AB
 Having the zero point of an image, you can convert its pixel values to physical units of microJanskys (or @mymath{\mu{}Jy}) to enable direct pixel-based comparisons with images from other instruments (just note that this assumes instrument and observation signatures are corrected, things like the flat-field or the Sky).
+Jansky is used for measuring spectral flux density.
+One Jansky is equivalent to @mymath{10^{-26} W/m^2/Hz} (watts per square meter per hertz).
+
 This conversion can be done with the fact that in the AB magnitude standard@footnote{@url{https://en.wikipedia.org/wiki/AB_magnitude}}, @mymath{3631Jy} corresponds to the zero-th magnitude, therefore @mymath{B\equiv3631\times10^{6}\mu{Jy}} and @mymath{m\equiv0}.
 We can therefore estimate the brightness (@mymath{B_z}, in @mymath{\mu{Jy}}) corresponding to the image zero point (@mymath{Z}) using this equation:
 
@@ -18452,12 +18470,21 @@ We can therefore estimate the brightness (@mymath{B_z}, in @mymath{\mu{Jy}}) cor
 Because the image zero point corresponds to a pixel value of @mymath{1}, the @mymath{B_z} value calculated above also corresponds to a pixel value of @mymath{1}.
 Therefore you simply have to multiply your image by @mymath{B_z} to convert it to @mymath{\mu{Jy}}.
 Don't forget that this only applies when your zero point was also estimated in the AB magnitude system.
-On the command-line, you can easily estimate this value for a certain zero point with AWK, then multiply it to all the pixels in the image with @ref{Arithmetic}.
+On the command-line, you can estimate this value for a certain zero point with AWK, then multiply it to all the pixels in the image with @ref{Arithmetic}.
 For example let's assume you are using an SDSS image with a zero point of 22.5:
 
 @example
 bz=$(echo 22.5 | awk '@{print 3631 * 10^(6-$1/2.5)@}')
 astarithmetic sdss.fits $bz x --output=sdss-in-muJy.fits
+@end example
+
+@noindent
+But in Gnuastro, it gets even easier: Arithmetic has an operator called @code{counts-to-jy}.
+This will directly convert your image pixels (in units of counts) to Janskys though a provided AB Magnitude-based zero point like below.
+See @ref{Arithmetic operators} for more.
+
+@example
+$ astarithmetic sdss.fits 22.5 counts-to-jy
 @end example
 
 @cindex Steradian
@@ -28324,6 +28351,14 @@ If @code{usecolon!=0}, then the delimiters between the components will be colons
 @cindex Declination
 Convert the input Declination (Dec) degree (a single floating point number) to old/standard notation (in the format of degrees, arc-minutes and arc-seconds of @code{_d_m_s}).
 If @code{usecolon!=0}, then the delimiters between the components will be colons: @code{_:_:_}.
+@end deftypefun
+
+@deftypefun double gal_units_counts_to_jy (double @code{counts}, double @code{zeropoint_ab})
+@cindex Jansky (Jy)
+@cindex AB Magnitude
+@cindex Magnitude, AB
+Convert counts to Janskys through an AB magnitude-based zero point.
+For more on the equation, see @ref{Brightness flux magnitude}.
 @end deftypefun
 
 @node Spectral lines library, Cosmology library, Unit conversion library (@file{units.h}), Gnuastro library

@@ -331,3 +331,35 @@ gal_units_degree_to_dec(double decimal, int usecolon)
   /* Return the final string. */
   return dec;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**********************************************************************/
+/****************          Flux conversions           *****************/
+/**********************************************************************/
+
+/* Convert Pixel values to Janskys with an AB-magnitude based
+   zero-point. See the "Brightness, Flux, Magnitude and Surface
+   brightness". */
+double
+gal_units_counts_to_jy(double counts, double zeropoint_ab)
+{
+  return counts * 3631 * pow(10, -1 * zeropoint_ab / 2.5);
+}

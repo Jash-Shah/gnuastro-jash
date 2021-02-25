@@ -73,6 +73,9 @@ gal_units_degree_to_ra (double decimal, int usecolon);
 char *
 gal_units_degree_to_dec (double decimal, int usecolon);
 
+double
+gal_units_counts_to_jy(double counts, double zeropoint_ab);
+
 __END_C_DECLS    /* From C++ preparations */
 
 #endif           /* __GAL_UNITS_H__ */
