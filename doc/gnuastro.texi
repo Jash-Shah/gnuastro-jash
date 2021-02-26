@@ -20486,24 +20486,20 @@ The HDU/extension of the input image to use.
 Filename of measured radial profile.
 It can be either a FITS table, or plain-text table (determied from your given file name suffix).
 
+@item -c FLT[,FLT[,...]]
+@itemx --center=FLT[,FLT[,...]]
+The central position of the radial profile.
+This option is used for placing the center of the profiles.
+This parameter is used in @ref{Crop} to center an crop the region.
+The positions along each dimension must be separated by a comma (@key{,}) and fractions are also acceptable.
+The number of values given to this option must be the same as the dimensions of the input dataset.
+The units of the coordinates are read based on the value to the @option{--mode} option, see below.
+
 @item -O STR
 @itemx --mode=STR
-Interpret the center position of the object (values given to @option{--xcenter} and @option{--ycenter}) in image or WCS coordinates.
+Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
 This option thus accepts only two values: @option{img} or @option{wcs}.
 By default, it is @option{--mode=img}.
-
-@item -x FLT
-@itemx --xcenter=FLT
-Center coordinate along the first dimension (horizontal axis in FITS).
-This option will be used for placing the center of the profiles.
-If @option{--mode=img} is considered, then @option{--xcenter} has to be in image units (pixels).
-If @option{--mode=wcs} is considered, then @option{--xcenter} has to be in WCS units.
-When this option isn't called, this script will assume the the radial profile's core in the center of the image along the first/horizontal axis.
-
-@item -y FLT
-@itemx --ycenter=FLT
-Center coordinate along the second dimension (vertical axis in FITS).
-This operator behaves very similar to @option{--xcenter} argument, but for the second dimension (see above for details).
 
 @item -R FLT
 @itemx --rmax=FLT

@@ -86,7 +86,7 @@ $scriptname options:
  Input:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -O, --mode=STR          Coordinate mode: img or wcs.
-  -c, --center=FLT,FLT    Coordinate of the center along 2 axises.
+  -c, --center=FLT,FLT    Coordinate of the center along 2 axes.
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -Q, --axisratio=FLT     Axis ratio for ellipse profiles (A/B).
   -p, --positionangle=FLT Position angle for ellipse profiles.
@@ -193,7 +193,7 @@ do
         -O*)                mode=$(echo "$1"  | sed -e's/-O//');       check_v "$1" "$mode";  shift;;
         -c|--center)        center="$2";                               check_v "$1" "$center";  shift;shift;;
         -c=*|--center=*)    center="${1#*=}";                          check_v "$1" "$center";  shift;;
-        -c*)                center=$(echo "$1"  | sed -e's/-x//');     check_v "$1" "$center";  shift;;
+        -c*)                center=$(echo "$1"  | sed -e's/-c//');     check_v "$1" "$center";  shift;;
         -R|--rmax)          rmax="$2";                                 check_v "$1" "$rmax";  shift;shift;;
         -R=*|--rmax=*)      rmax="${1#*=}";                            check_v "$1" "$rmax";  shift;;
         -R*)                rmax=$(echo "$1"  | sed -e's/-R//');       check_v "$1" "$rmax";  shift;;
@@ -221,7 +221,7 @@ do
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
         -v|--oversample)  oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
         -v=*|--oversample=*) oversample="${1#*=}";                  check_v "$1" "$oversample"; shift;;
-        -v*)              oversample=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$oversample"; shift;;
+        -v*)              oversample=$(echo "$1" | sed -e's/-v//'); check_v "$1" "$oversample"; shift;;
 
         # Non-operating options.
         -q|--quiet)       quiet="--quiet"; shift;;
