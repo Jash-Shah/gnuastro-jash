@@ -1384,9 +1384,9 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
         {
         case GAL_ARITHMETIC_OP_QUANTILE:
           if(p1<0 || p1>1)
-            error(EXIT_FAILURE, 0, "%s: the parameter given to the 'quantile' "
-                  "operator must be between (and including) 0 and 1. The "
-                  "given value is: %g", __func__, p1);
+            error(EXIT_FAILURE, 0, "%s: the parameter given to the "
+                  "'quantile' operator must be between (and including) "
+                  "0 and 1. The given value is: %g", __func__, p1);
           break;
         }
     }
@@ -1465,15 +1465,17 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
 
 
   /* Clean up and return. Note that the operation might have been done in
-     place. In that case, the top most list element was used. So we need to
-     check before freeing each data structure. */
+     place. In that case, a list element was used. So we need to check
+     before freeing each data structure. If we are on the designated output
+     dataset, we should set its 'next' pointer to NULL so it isn't treated
+     as a list any more by future functions. */
   if(flags & GAL_ARITHMETIC_FREE)
     {
       tmp=list;
       while(tmp!=NULL)
         {
           ttmp=tmp->next;
-          if(tmp!=out) gal_data_free(tmp);
+          if(tmp==out) tmp->next=NULL; else gal_data_free(tmp);
           tmp=ttmp;
         }
       if(params) gal_list_data_free(params);

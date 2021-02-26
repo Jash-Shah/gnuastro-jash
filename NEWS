@@ -111,6 +111,7 @@ See the end of the file for license conditions.
 
 ** Bugs fixed
   bug #60082: Arithmetic library crash for integer operators like modulo
+  bug #60121: Arithmetic segfault when multi-operand output given to set-
 
 
 

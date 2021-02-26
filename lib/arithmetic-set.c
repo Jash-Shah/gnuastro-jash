@@ -116,8 +116,10 @@ gal_arithmetic_set_name(struct gal_arithmetic_set_params *p, char *token)
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
               "fix the problem. The 'name' element should be NULL at "
               "this point, but it isn't", __func__, PACKAGE_BUGREPORT);
-      if(p->named->unit)    { free(p->named->unit);    p->named->unit=NULL;    }
-      if(p->named->comment) { free(p->named->comment); p->named->comment=NULL; }
+      if(p->named->unit)
+        { free(p->named->unit); p->named->unit=NULL; }
+      if(p->named->comment)
+        { free(p->named->comment); p->named->comment=NULL; }
       gal_checkset_allocate_copy(varname, &p->named->name);
     }
   else
