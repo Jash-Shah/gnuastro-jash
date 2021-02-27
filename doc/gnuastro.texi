@@ -734,7 +734,7 @@ Developing
 * Documentation::               Documentation is an integral part of Gnuastro.
 * Building and debugging::      Build and possibly debug during development.
 * Test scripts::                Understanding the test scripts.
-* Shell programmable completion::    Suggest completions for a better user experience.
+* Shell programmable completion::  Auto-completions for better user experience.
 * Developer's checklist::       Checklist to finalize your changes.
 * Gnuastro project webpage::    Central hub for Gnuastro activities.
 * Developing mailing lists::    Stay up to date with Gnuastro's development.
@@ -744,6 +744,11 @@ Program source
 
 * Mandatory source code files::  Description of files common to all programs.
 * The TEMPLATE program::        Template for easy creation of a new program.
+
+Shell programmable completion
+
+* Bash auto-completion tutorial::  Fast tutorial to get you started on concepts.
+* Auto-completion tips for Gnuastro::  Tips and tricks for Gnuastro's programs.
 
 Contributing to Gnuastro
 
@@ -29781,7 +29786,7 @@ development and get involved in @ref{Gnuastro project webpage},
 * Documentation::               Documentation is an integral part of Gnuastro.
 * Building and debugging::      Build and possibly debug during development.
 * Test scripts::                Understanding the test scripts.
-* Shell programmable completion::    Suggest completions for a better user experience.
+* Shell programmable completion::  Auto-completions for better user experience.
 * Developer's checklist::       Checklist to finalize your changes.
 * Gnuastro project webpage::    Central hub for Gnuastro activities.
 * Developing mailing lists::    Stay up to date with Gnuastro's development.
@@ -30759,7 +30764,7 @@ guide after you have read the separate introductions.
 
 
 
-@node Test scripts, Developer's checklist, Building and debugging, Developing
+@node Test scripts, Shell programmable completion, Building and debugging, Developing
 @section Test scripts
 
 @cindex Test scripts
@@ -30812,11 +30817,14 @@ be prefixed with that variable. This is also true for images or files that
 were produced by other tests.
 
 
-@node Shell programmable completion
+@node Shell programmable completion, Developer's checklist, Test scripts, Developing
 @section Shell programmable completion
-Gnuastro uses the @i{shell programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} feature to help users type fewer keystrokes, and spend less time on figuring out required arguments.
-Shell programmable completion, also known as bash completion, auto-completion, or word completion, is a bash built-in feature that helps increase workflow efficiency.
-You can attempt for word completion by pressing the @key{[TAB]} key while typing a command.
+@cindex Bash auto-complete
+@cindex Shell programmable completion
+@cindex Autocomplete (in the shell/Bash)
+Gnuastro uses Bash's @i{Programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} to decrease the necessary keystrokes by users, and help them spend less time on figuring out the option names and values.
+Bash's programmable completion, also known as bash completion, auto-completion, or word completion, is a GNU Bash built-in feature that helps increase workflow efficiency.
+You can activate word completion by pressing the @key{[TAB]} key while typing a command.
 Gnuastro's completion script not only completes the half-written commands, but also prints suggestions based on previous arguments.
 
 Imagine a scenario where we need to download three columns containing the right ascension, declination, and parallax from the GAIA EDR3 dataset.
@@ -30843,70 +30851,75 @@ $ astquery gaia --dataset=edr3 --output=gaia.fits --column=@key{[TAB]}
 @end example
 
 @noindent
-After pressing @key{[TAB]}, a full list of gaia edr3 dataset column names will be show up.
-Again, use @key{[TAB]} while typing and auto-completion will fill-out the rest of the word for you.
+After pressing @key{[TAB]}, a full list of gaia edr3 dataset column names will be displayed.
+Typing the first key of the desired column and pressing @key{[TAB]} again will limit the displayed list to only the matching ones until the desired column is found.
 
-@subsection Basic auto-completion example
-Gnuastro's completion script is based on shell programmable completion and follows the same procedure.
-When a user presses the @key{[TAB]} key while typing commands, shell will inspect the input to find a relevant @command{compspec}.
-If available, the @command{compsec} will generate a list of possible suggestions to complete the current word.
-We can generate a custom @command{compsec} for any application using @i{bash completion builtins}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion-Builtins.html}} and @i{bash variables}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html}} that start with the @samp{COMP} keyword.
+@menu
+* Bash auto-completion tutorial::  Fast tutorial to get you started on concepts.
+* Auto-completion tips for Gnuastro::  Tips and tricks for Gnuastro's programs.
+@end menu
+
+@node Bash auto-completion tutorial, Auto-completion tips for Gnuastro, Shell programmable completion, Shell programmable completion
+@subsection Bash auto-completion tutorial
+When a user presses the @key{[TAB]} key while typing commands, Bash will inspect the input to find a relevant ``completion specification'', or @command{compspec}.
+If available, the @command{compspec} will generate a list of possible suggestions to complete the current word.
+A custom @command{compsec} can be generated for any command using @i{bash completion builtins}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion-Builtins.html}} and the bash variables that start with the @code{COMP} keyword@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html}}.
 
 First, let's see a quick example of how you can make a completion script in just one line of code.
-For sake of demonstration, in the command below, we are asking shell to give us three suggestions @samp{hello}, @samp{huge} and @samp{world} for a non-existent program named @command{myprogram}.
+With the command below, we are asking Bash to give us three suggestions for @command{echo}: @code{foo}, @code{bar} and @code{bAr}.
+Please run it in your terminal for the next steps.
 
 @example
-$ complete -W "hello huge world" myprogram
+$ complete -W "foo bar bAr" echo
+@end example
+
+The possible completion suggestions are fed into  @command{complete} using the @option{-W} option followed by a list of space delimited words.
+Let's see it in action:
+
+@example
+$ echo @key{[TAB][TAB]}
+bar  bAr  foo
+@end example
+
+Nicely done!
+Just note that the strings are sorted alphabetically, not in the original order.
+Also, an arbitrary number of space characters are printed between them (based on the number of suggestions and terminal size and etc).
+Now, if you type @samp{f} and press @key{[TAB]}, bash will automatically figure out that you wanted @code{foo} and it be completed right away:
+
+@example
+$ myprogram f@key{[TAB]}
+$ myprogram foo
 @end example
 
 @noindent
-The command above is telling shell to use the @command{complete} builtin function for @command{myprogram}.
-The possible completion suggestions are fed into  @command{complete} using the @samp{-W} option followed by a list of space delimited words.
-Let's see if it works:
+However, nothing will happen if you type @samp{b} and press @key{[TAB]} only @i{once}.
+This is because of the ambiguity: there isn't enough information to figure out which suggetion you want: @code{bar} or @code{bAr}?
+So, if you press @key{[TAB]} twice, it will print out all the options that start with @samp{b}:
 
 @example
-$ myprogram @key{[TAB][TAB]}
-hello  huge  world
-@end example
-
-@noindent
-Nicely done.
-Now, if you type @samp{w} and press @key{[TAB]}, shell will automatically figure out that @samp{world} is the only option and will complete it right away:
-
-@example
-$ myprogram w@key{[TAB]}
-$ myprogram world
-@end example
-
-@noindent
-However, nothing will happen if you type @samp{h} and press @key{[TAB]} only @b{once}.
-This is because of the ambiguity -- shell can not figure out which word to print: @samp{huge} or @samp{hello}?
-So, if you press @key{[TAB]} twice, it will print out all the options that start with @samp{h}:
-
-@example
-$ myprogram h@key{[TAB][TAB]}
-hello  huge
-$ myprogram he@key{[TAB]}
-$ myprogram hello
+$ echo b@key{[TAB][TAB]}
+bar  bAr
+$ echo ba@key{[TAB]}
+$ echo bar
 @end example
 
 Not bad for a simple program.
-But what if we need more control?
-Let's say, we would like to print the current username into the command line if the previous word is @samp{hello}.
-So instead of the @samp{-W} option, we can use the @samp{-F} option and ask shell to run a @i{function} instead.
-Since the logic is getting more complex, let's write and save the commands below into a shell script with an arbitrary name such as @file{mycompletion.sh}:
+But what if you need more control?
+By passing the @option{-F} option to @command{complete} instead of @option{-W}, it will run a @i{function} for generating the suggestions, instead of using a static string.
+For example, let's assume that the expected value after @code{foo} is the number of files in the current directory.
+Since the logic is getting more complex, let's write and save the commands below into a shell script with an arbitrary name such as @file{completion-tutorial.sh}:
 
 @example
 @verbatim
-_myprogram(){
-  if [ "$3" == "hello" ]; then
-    # Print current username
-    COMPREPLY=( "$USER" )
-  else
-    COMPREPLY=( $(compgen -W "hello huge world" -- "$2") )
-  fi
+$ cat completion-tutorial.sh
+_echo(){
+    if [ "$3" == "foo" ]; then
+	COMPREPLY=( $(ls | wc -l) )
+    else
+	COMPREPLY=( $(compgen -W "foo bar bAr" -- "$2") )
+    fi
 }
-complete -F _myprogram myprogram
+complete -F _echo echo
 @end verbatim
 @end example
 
@@ -30915,45 +30928,45 @@ We will look at it in detail soon.
 But for now, let's @command{source} the file into your current terminal and check if it works as expected:
 
 @example
-[gnuastro@@gnu ~]$ source mycompletion.sh
-[gnuastro@@gnu ~]$ myprogram @key{[TAB][TAB]}
-hello  huge  world
-[gnuastro@@gnu ~]$ myprogram hello @key{[TAB]}
-[gnuastro@@gnu ~]$ myprogram hello gnuastro
+$ source completion-tutorial.sh
+$ echo @key{[TAB][TAB]}
+foo bar bAr
+$ echo foo @key{[TAB]}
+$ touch empty.txt
+$ echo foo @key{[TAB]}
 @end example
 
 @noindent
 Success!
-This allows for setting up much more complicated completion scripts.
-Now let's have a closer look at the @file{mycompletion.sh} completion script from above.
+As you see, this allows for setting up highly customized completion scripts.
+Now let's have a closer look at the @file{completion-tutorial.sh} completion script from above.
+First, the @samp{-F} option in front the @command{complete} command indicates that we want shell to execute the @command{_echo} function whenever @command{echo} is called.
+As a convention, the function name should be the same as the program name, but prefixed with an underscore (@samp{_}).
 
-First, the @samp{-F} option in front the @command{complete} command indicates that we want shell to execute the @command{_myprogram} function whenever @command{myprogram} is called.
-As a convention, the function name should be the same as the program name starting with an underscore @samp{_}.
-
-Next, we're checking if @code{$3} is equal to @samp{hello}.
-Here, @code{$3} means the word @b{before} current cursor position.
+Within the @command{_echo} function, we're checking if @code{$3} is equal to @option{foo}.
+In Bash's auto-complete, @code{$3} means the word @b{before} current cursor position.
 In fact, these are the arguments that the @command{_myprogram} function is receiving:
 
-@itemize
-@item
-@samp{$1} is the name of the command, here it is @samp{myprogram}.
+@table @code
+@item $1
+The name of the command, here it is @samp{myprogram}.
 
-@item
-@samp{$2} is the current word being completed, it is empty unless you are in the middle of typing a word.
+@item $2
+The current word being completed (empty unless we are in the middle of typing a word).
 
-@item
-@samp{$3} is the word before the word being completed, and we are looking for the word @samp{hello}.
-@end itemize
+@item $3
+The word before the word being completed.
+@end table
 
-Now, we have to tell the completion script what to reply with.
-For this, we use the @command{COMPREPLY} array.
-This array holds all the suggestions that @command{complete} will print for the user.
+To tell the completion script what to reply with, we use the @command{COMPREPLY} array.
+This array holds all the suggestions that @command{complete} will show for the user in the end.
+In the example above, we simply give it the string output of @samp{ls | wc -l}.
 
-Then, we have the command @command{compgen}.
+Finally, we have the @command{compgen} command.
 According to bash programmable completion builtins manual, the command @code{compgen [OPTION] [WORD]} generates possible completion matches for @code{[WORD]} according to @code{[OPTIONS]}.
 Using the @samp{-W} option asks @command{compgen} to generate a list of words from an input string.
 This is known as @i{Word Splitting}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Word-Splitting.html}}.
-@command{compgen} will automatically use the @command{$IFS} variable to split the string into a list of words as described in
+@command{compgen} will automatically use the @command{$IFS} variable to split the string into a list of words.
 You can check the default delimiters by calling:
 
 @example
@@ -30961,44 +30974,47 @@ $ printf %q "$IFS"
 @end example
 
 @noindent
-The default value of @command{$IFS} might be @samp{ \t\n}, that is, spaces, tabs, and newlines.
-
+The default value of @command{$IFS} might be @samp{ \t\n}.
+This means the SPACE, TAB, and New-line characters.
 Finally, notice the @samp{-- "$2"} in this command:
 
 @example
-COMPREPLY=( $(compgen -W "hello huge world" -- "$2") )
+COMPREPLY=( $(compgen -W "foo bar bAr" -- "$2") )
 @end example
 
 @noindent
 Here, the @samp{--} instructs @command{compgen} to only reply with a list of words that match @command{$2}, i.e. the current word being completed.
-That is why when you type the letter @samp{h}, @command{complete} will reply only with its matches: @samp{hello} and @samp{huge}, not @samp{world}.
+That is why when you type the letter @samp{b}, @command{complete} will reply only with its matches (@samp{bar} and @samp{bAr}), and will exclude @samp{foo}.
 
-@subsection Auto-completion for Gnuastro developers
-Now that we have a basic understanding of how shell programmable completion works, we can develop smarter completions for our programs.
+@node Auto-completion tips for Gnuastro,  , Bash auto-completion tutorial, Shell programmable completion
+@subsection Auto-completion tips for Gnuastro
+The basics of Bash auto-completion was reviewed in @ref{Bash auto-completion tutorial}.
+Here, we'll develop smarter completions for Gnuastro's programs.
 If you have followed the Gnuastro conventions for designing your program, then you have already designed a @command{--help} option for it.
 Since this option will tell users all the options available, we are going to reuse this command to our advantage.
 
-Let's use @command{asttable} as an example.
+We'll use @command{asttable} as an example here.
 The goal is to suggest all options that this program has to offer.
-You can print all of them already using:
+You can print all of them (with a lot of extra information) with this command:
 
 @example
 $ asttable --help
 @end example
 
-@noindent
-So let's write an @command{awk} script that prints all of the long options.
-We are not interested in short options because if a user knows about the short options, s/he already has things covered.
-One way to catch them might be using the @samp{--} at the beginning of every long option.
+Let's write an @command{awk} script that prints all of the long options.
+When printing the option names we can safely ignore the short options because if a user knows about the short options, s/he already knows exactly what they want!
+Also, due to their single-character length, they will be too cryptic without their descriptions.
+
+One way to catch the long options might be using the @samp{--} at the beginning of every long option.
 For more information about @command{awk} syntax and @i{regular expressions} or @i{regex} in short, please refer to relevant manuals@footnote{Such as: @url{https://www.gnu.org/software/gawk/manual/html_node/Regexp.html}}.
 
 @verbatim
-$ asttable --help | \
-  awk -v regex=" --+[a-zA-Z0-9]*=?" \
-      'match($0, regex) {print substr($0, RSTART, RLENGTH)}'
+$ asttable --help \
+           | awk -v regex=" --+[a-zA-Z0-9]*=?" \
+                 'match($0, regex) {print substr($0, RSTART, RLENGTH)}'
 @end verbatim
 
-Now if we wanted to show all the options to the user, we could feed all these options to @command{compgen} and @command{COMPREPLY} subsequently.
+If we wanted to show all the options to the user, we could feed all these options to @command{compgen} and @command{COMPREPLY} subsequently.
 But, we need smarter completions.
 That means, we want to offer suggestions based on the previous option already typed in.
 For that, the @command{case} function can be pretty useful.
@@ -31023,16 +31039,12 @@ Taking all of that into consideration, the code below might serve well:
 
 @verbatim
 _asttable(){
-    if [ "$2" = "=" ]; then
-      word=""
-    else
-      word="$2"
+    if [ "$2" = "=" ]; then word=""
+    else                    word="$2"
     fi
 
-    if [ "$3" = "=" ]; then
-      prev="${COMP_WORDS[COMP_CWORD-2]}"
-    else
-      prev="${COMP_WORDS[COMP_CWORD-1]}"
+    if [ "$3" = "=" ]; then prev="${COMP_WORDS[COMP_CWORD-2]}"
+    else                    prev="${COMP_WORDS[COMP_CWORD-1]}"
     fi
 
     case "$prev" in
@@ -31044,20 +31056,19 @@ _asttable(){
 complete -o nospace -F _asttable asttable
 @end verbatim
 
-The code above checks if the @b{previous} word matches any of the upcoming patterns.
+The code above checks if the previous word matches any of the upcoming patterns.
 As you can see, we also took the short option @code{-w} into account.
 We do not show the short options as suggestions, but we @b{do} recognize them as valid options.
 
-The @code{-f} option in @command{compgen} indicates we're looking for a file.
-The @code{-X} option filters out the filenames that match the next @i{regex} pattern.
-The @samp{!} in @i{regex} negates the whole pattern.
-Now this means only show filenames that @b{match} the current pattern instead of excluding them.
-The @samp{-- "$word"} collects only filenames that match the current word being typed.
+The @option{-f} option in @command{compgen} indicates we're looking for a file.
+The @option{-X} option @emph{filters out} the filenames that match the next regular expression pattern.
+Therefore we should start the regular expression with @samp{!} if we want the files matching the regular expression.
+The @code{-- "$word"} component collects only filenames that match the current word being typed.
 And last but not least, the @samp{-o nospace} option in the @command{complete} command instructs the completion script to @b{not} append a white space after each suggestion.
-That is important because the long option and its argument must stick together only with a @samp{=} sign.
+That is important because the long option and its argument must stick together only with an @samp{=} sign.
 
 
-@node Developer's checklist, Gnuastro project webpage, Test scripts, Developing
+@node Developer's checklist, Gnuastro project webpage, Shell programmable completion, Developing
 @section Developer's checklist
 This is a checklist of things to do after applying your changes/additions
 in Gnuastro:
