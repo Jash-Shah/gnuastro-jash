@@ -8,7 +8,7 @@
 # Original author:
 #     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 # Contributing author(s):
-# Copyright (C) 2019-2021, Free Software Foundation, Inc.
+# Copyright (C) 2021 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free

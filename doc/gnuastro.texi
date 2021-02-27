@@ -748,7 +748,7 @@ Program source
 Shell programmable completion
 
 * Bash auto-completion tutorial::  Fast tutorial to get you started on concepts.
-* Auto-completion tips for Gnuastro::  Tips and tricks for Gnuastro's programs.
+* Auto-completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
 
 Contributing to Gnuastro
 
@@ -30332,56 +30332,39 @@ program containing all these files, see @ref{The TEMPLATE program}.
 
 @item main.c
 @cindex @code{main} function
-Each executable has a @code{main} function, which is located in
-@file{main.c}. Therefore this file is the starting point when reading any
-program's source code. No actual processing functions must be defined in
-this file, the function(s) in this file are only meant to connect the most
-high level steps of each program. Generally, @code{main} will first call
-the top user interface function to read user input and make all the
-preparations. Then it will pass control to the top processing function for
-that program. The functions to do both these jobs must be defined in other
-source files.
+Each executable has a @code{main} function, which is located in @file{main.c}.
+Therefore this file is the starting point when reading any program's source code.
+No actual processing functions must be defined in this file, the function(s) in this file are only meant to connect the most high level steps of each program.
+Generally, @code{main} will first call the top user interface function to read user input and make all the preparations.
+Then it will pass control to the top processing function for that program.
+The functions to do both these jobs must be defined in other source files.
 
 @item main.h
 @cindex Top root structure
 @cindex @code{prognameparams}
 @cindex Root parameter structure
 @cindex Main parameters C structure
-All the major parameters which will be used in the program must be stored
-in a structure which is defined in @file{main.h}. The name of this
-structure is usually @code{prognameparams}, for example @code{cropparams}
-or @code{noisechiselparams}. So @code{#include "main.h"} will be a staple
-in all the source codes of the program. It is also regularly the first (and
-only) argument most of the program's functions which greatly helps in
-readability.
+All the major parameters which will be used in the program must be stored in a structure which is defined in @file{main.h}.
+The name of this structure is usually @code{prognameparams}, for example @code{cropparams} or @code{noisechiselparams}.
+So @code{#include "main.h"} will be a staple in all the source codes of the program.
+It is also regularly the first (and only) argument most of the program's functions which greatly helps in readability.
 
-Keeping all the major parameters of a program in this structure has the
-major benefit that most functions will only need one argument: a pointer to
-this structure. This will significantly facilitate the job of the
-programmer, the inquirer and the computer. All the programs in Gnuastro are
-designed to be low-level, small and independent parts, so this structure
-should not get too large.
+Keeping all the major parameters of a program in this structure has the major benefit that most functions will only need one argument: a pointer to this structure.
+This will significantly facilitate the job of the programmer, the inquirer and the computer.
+All the programs in Gnuastro are designed to be low-level, small and independent parts, so this structure should not get too large.
 
 @cindex @code{p}
-The main root structure of all programs contains at least one instance of
-the @code{gal_options_common_params} structure. This structure will keep
-the values to all common options in Gnuastro's programs (see @ref{Common
-options}). This top root structure is conveniently called @code{p} (short
-for parameters) by all the functions in the programs and the common options
-parameters within it are called @code{cp}. With this convention any reader
-can immediately understand where to look for the definition of one
-parameter. For example you know that @code{p->cp->output} is in the common
-parameters while @code{p->threshold} is in the program's parameters.
+The main root structure of all programs contains at least one instance of the @code{gal_options_common_params} structure.
+This structure will keep the values to all common options in Gnuastro's programs (see @ref{Common options}).
+This top root structure is conveniently called @code{p} (short for parameters) by all the functions in the programs and the common options parameters within it are called @code{cp}.
+With this convention any reader can immediately understand where to look for the definition of one parameter.
+For example you know that @code{p->cp->output} is in the common parameters while @code{p->threshold} is in the program's parameters.
 
 @cindex Structure de-reference operator
 @cindex Operator, structure de-reference
-With this basic root structure, source code of functions can potentially
-become full of structure de-reference operators (@command{->}) which can
-make the code very unreadable. In order to avoid this, whenever a
-structure element is used more than a couple of times in a function, a
-variable of the same type and with the same name (so it can be searched) as
-the desired structure element should be defined with the value of the root
-structure inside of it in definition time. Here is an example.
+With this basic root structure, source code of functions can potentially become full of structure de-reference operators (@command{->}) which can make the code very unreadable.
+In order to avoid this, whenever a structure element is used more than a couple of times in a function, a variable of the same type and with the same name (so it can be searched) as the desired structure element should be defined with the value of the root structure inside of it in definition time.
+Here is an example.
 
 @example
 char *hdu=p->cp.hdu;
@@ -30391,63 +30374,43 @@ float threshold=p->threshold;
 @item args.h
 @cindex GNU C library
 @cindex Argp argument parser
-The options particular to each program are defined in this file. Each
-option is defined by a block of parameters in @code{program_options}. These
-blocks are all you should modify in this file, leave the bottom group of
-definitions untouched. These are fed directly into the GNU C library's Argp
-facilities and it is recommended to have a look at that for better
-understand what is going on, although this is not required here.
+The options particular to each program are defined in this file.
+Each option is defined by a block of parameters in @code{program_options}.
+These blocks are all you should modify in this file, leave the bottom group of definitions untouched.
+These are fed directly into the GNU C library's Argp facilities and it is recommended to have a look at that for better understand what is going on, although this is not required here.
 
-Each element of the block defining an option is described under
-@code{argp_option} in @code{bootstrapped/lib/argp.h} (from Gnuastro's top
-source file). Note that the last few elements of this structure are
-Gnuastro additions (not documented in the standard Argp manual). The values
-to these last elements are defined in @code{lib/gnuastro/type.h} and
-@code{lib/gnuastro-internal/options.h} (from Gnuastro's top source
-directory).
+Each element of the block defining an option is described under @code{argp_option} in @code{bootstrapped/lib/argp.h} (from Gnuastro's top source file).
+Note that the last few elements of this structure are Gnuastro additions (not documented in the standard Argp manual).
+The values to these last elements are defined in @code{lib/gnuastro/type.h} and @code{lib/gnuastro-internal/options.h} (from Gnuastro's top source directory).
 
 @item ui.h
-Besides declaring the exported functions of @code{ui.c}, this header also
-keeps the ``key''s to every program-specific option. The first class of
-keys for the options that have a short-option version (single letter, see
-@ref{Options}). The character that is defined here is the option's short
-option name. The list of available alphabet characters can be seen in the
-comments. Recall that some common options also take some characters, for
-those, see @file{lib/gnuastro-internal/options.h}.
+Besides declaring the exported functions of @code{ui.c}, this header also keeps the ``key''s to every program-specific option.
+The first class of keys for the options that have a short-option version (single letter, see @ref{Options}).
+The character that is defined here is the option's short option name.
+The list of available alphabet characters can be seen in the comments.
+Recall that some common options also take some characters, for those, see @file{lib/gnuastro-internal/options.h}.
 
-The second group of options are those that don't have a short option
-alternative. Only the first in this group needs a value (@code{1000}), the
-rest will be given a value by C's @code{enum} definition, so the actual
-value is irrelevant and must never be used, always use the name.
+The second group of options are those that don't have a short option alternative.
+Only the first in this group needs a value (@code{1000}), the rest will be given a value by C's @code{enum} definition, so the actual value is irrelevant and must never be used, always use the name.
 
 @item ui.c
 @cindex User interface functions
 @cindex Functions for user interface
-Everything related to reading the user input arguments and options,
-checking the configuration files and checking the consistency of the input
-parameters before the actual processing is run should be done in this
-file. Since most functions are the same, with only the internal checks and
-structure parameters differing. We recommend going through the @code{ui.c}
-of @ref{The TEMPLATE program}, or several other programs for a better
-understanding.
+Everything related to reading the user input arguments and options, checking the configuration files and checking the consistency of the input parameters before the actual processing is run should be done in this file.
+Since most functions are the same, with only the internal checks and structure parameters differing.
+We recommend going through the @code{ui.c} of @ref{The TEMPLATE program}, or several other programs for a better understanding.
 
-The most high-level function in @file{ui.c} is named
-@code{ui_read_check_inputs_setup}. It accepts the raw command-line inputs
-and a pointer to the root structure for that program (see the explanation
-for @file{main.h}). This is the function that @code{main} calls. The basic
-idea of the functions in this file is that the processing functions should
-need a minimum number of such checks. With this convention an inquirer who
-only wants to understand only one part (mostly the processing part and not
-user input details and sanity checks) of the code can easily do so in the
-later files. It also makes all the errors related to input appear before
-the processing begins which is more convenient for the user.
+The most high-level function in @file{ui.c} is named @code{ui_read_check_inputs_setup}.
+It accepts the raw command-line inputs and a pointer to the root structure for that program (see the explanation for @file{main.h}).
+This is the function that @code{main} calls.
+The basic idea of the functions in this file is that the processing functions should need a minimum number of such checks.
+With this convention an inquirer who only wants to understand only one part (mostly the processing part and not user input details and sanity checks) of the code can easily do so in the later files.
+It also makes all the errors related to input appear before the processing begins which is more convenient for the user.
 
 @item progname.c, progname.h
 @cindex Top processing source file
-The high-level processing functions in each program are in a file named
-@file{progname.c}, for example @file{crop.c} or @file{noisechisel.c}. The
-function within these files which @code{main} calls is also named after
-the program, for example
+The high-level processing functions in each program are in a file named @file{progname.c}, for example @file{crop.c} or @file{noisechisel.c}.
+The function within these files which @code{main} calls is also named after the program, for example
 
 @example
 void
@@ -30463,22 +30426,25 @@ noisechisel(struct noisechiselparams *p)
 @end example
 
 @noindent
-In this manner, if an inquirer is interested the processing steps, they can
-immediately come and check this file for the first processing step without
-having to go through @file{main.c} and @file{ui.c} first. In most
-situations, any failure in any step of the programs will result in an
-informative error message and an immediate abort in the program. So there
-is usually no need for return values. Under more complicated situations
-where a return value might be necessary, @code{void} will be replaced with
-an @code{int} in the examples above. This value must be directly returned
-by @code{main}, so it has to be an @code{int}.
+In this manner, if an inquirer is interested the processing steps, they can immediately come and check this file for the first processing step without having to go through @file{main.c} and @file{ui.c} first.
+In most situations, any failure in any step of the programs will result in an informative error message and an immediate abort in the program.
+So there is usually no need for return values.
+Under more complicated situations where a return value might be necessary, @code{void} will be replaced with an @code{int} in the examples above.
+This value must be directly returned by @code{main}, so it has to be an @code{int}.
 
 @item authors-cite.h
 @cindex Citation information
-This header file keeps the global variable for the program authors and its
-BibTeX record for citation. They are used in the outputs of the common
-options @option{--version} and @option{--cite}, see @ref{Operating mode
-options}.
+This header file keeps the global variable for the program authors and its BibTeX record for citation.
+They are used in the outputs of the common options @option{--version} and @option{--cite}, see @ref{Operating mode options}.
+
+@item completion.bash
+@cindex GNU Bash
+@cindex Bash auto-complete
+@cindex Completion in the shell
+@cindex Shell programmable completion
+@cindex Autocomplete (in the shell/Bash)
+This shell script is used for implementing auto-completion features when running Gnuastro's programs within GNU Bash.
+For more on the concept of shell auto-completion and how it is managed in Gnuastro, see @ref{Shell programmable completion}.
 
 @end vtable
 
@@ -30820,6 +30786,7 @@ were produced by other tests.
 @node Shell programmable completion, Developer's checklist, Test scripts, Developing
 @section Shell programmable completion
 @cindex Bash auto-complete
+@cindex Completion in the shell
 @cindex Shell programmable completion
 @cindex Autocomplete (in the shell/Bash)
 Gnuastro uses Bash's @i{Programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} to decrease the necessary keystrokes by users, and help them spend less time on figuring out the option names and values.
@@ -30856,10 +30823,10 @@ Typing the first key of the desired column and pressing @key{[TAB]} again will l
 
 @menu
 * Bash auto-completion tutorial::  Fast tutorial to get you started on concepts.
-* Auto-completion tips for Gnuastro::  Tips and tricks for Gnuastro's programs.
+* Auto-completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
 @end menu
 
-@node Bash auto-completion tutorial, Auto-completion tips for Gnuastro, Shell programmable completion, Shell programmable completion
+@node Bash auto-completion tutorial, Auto-completion in Gnuastro, Shell programmable completion, Shell programmable completion
 @subsection Bash auto-completion tutorial
 When a user presses the @key{[TAB]} key while typing commands, Bash will inspect the input to find a relevant ``completion specification'', or @command{compspec}.
 If available, the @command{compspec} will generate a list of possible suggestions to complete the current word.
@@ -30986,10 +30953,16 @@ COMPREPLY=( $(compgen -W "foo bar bAr" -- "$2") )
 Here, the @samp{--} instructs @command{compgen} to only reply with a list of words that match @command{$2}, i.e. the current word being completed.
 That is why when you type the letter @samp{b}, @command{complete} will reply only with its matches (@samp{bar} and @samp{bAr}), and will exclude @samp{foo}.
 
-@node Auto-completion tips for Gnuastro,  , Bash auto-completion tutorial, Shell programmable completion
-@subsection Auto-completion tips for Gnuastro
+@node Auto-completion in Gnuastro,  , Bash auto-completion tutorial, Shell programmable completion
+@subsection Auto-completion in Gnuastro
 The basics of Bash auto-completion was reviewed in @ref{Bash auto-completion tutorial}.
-Here, we'll develop smarter completions for Gnuastro's programs.
+All Gnuastro programs contain a @file{completion.bash} script within their source (see @ref{Program source} for more on the fixed files of each program).
+This file contains all the programmable completion features unique to that program.
+However, many useful functions can be shared between various programs.
+Therefore under the @file{bin/} directory, we also have a @file{completion.bash}.
+The @file{bin/completion.bash} file will be loaded before the completion script of the programs, so it is safe to assume the function definitions there within each program's @file{completion.bash}.
+
+Below, we'll develop smarter completions for Gnuastro's programs.
 If you have followed the Gnuastro conventions for designing your program, then you have already designed a @command{--help} option for it.
 Since this option will tell users all the options available, we are going to reuse this command to our advantage.
 
@@ -31076,12 +31049,11 @@ in Gnuastro:
 @enumerate
 
 @item
-If the change is non-trivial, write test(s) in the @file{tests/progname/}
-directory to test the change(s)/addition(s) you have made. Then add their
-file names to @file{tests/Makefile.am}.
+If the change is non-trivial, write test(s) in the @file{tests/progname/} directory to test the change(s)/addition(s) you have made.
+Then add their file names to @file{tests/Makefile.am}.
 
 @item
-Optionally, create or update the 'completion.sh' file described under the @ref{Shell programmable completion} section.
+If your change involves a change in command-line behavior of a Gnuastro program or script (for example, adding a new option or argument), create or update the respective @file{bin/PROGNAME/completion.sh} file described under the @ref{Shell programmable completion} section.
 
 @item
 Run @command{$ make check} to make sure everything is working correctly.
@@ -31091,9 +31063,8 @@ Make sure the documentation (this book) is completely up to date with your
 changes, see @ref{Documentation}.
 
 @item
-Commit the change to your issue branch (see @ref{Production workflow} and
-@ref{Forking tutorial}). Afterwards, run Autoreconf to generate the
-appropriate version number:
+Commit the change to your issue branch (see @ref{Production workflow} and @ref{Forking tutorial}).
+Afterwards, run Autoreconf to generate the appropriate version number:
 
 @example
 $ autoreconf -f
@@ -31101,22 +31072,17 @@ $ autoreconf -f
 
 @cindex Making a distribution package
 @item
-Finally, to make sure everything will be built, installed and checked
-correctly run the following command (after re-configuring, and
-re-building). To greatly speed up the process, use multiple threads (8 in
-the example below, change it appropriately)
+Finally, to make sure everything will be built, installed and checked correctly run the following command (after re-configuring, and re-building).
+To greatly speed up the process, use multiple threads (8 in the example below, change it appropriately)
 
 @example
 $ make distcheck -j8
 @end example
 
 @noindent
-This command will create a distribution file (ending with @file{.tar.gz})
-and try to compile it in the most general cases, then it will run the tests
-on what it has built in its own mini-environment. If @command{$ make
-distcheck} finishes successfully, then you are safe to send your changes to
-us to implement or for your own purposes. See @ref{Production workflow} and
-@ref{Forking tutorial}.
+This command will create a distribution file (ending with @file{.tar.gz}) and try to compile it in the most general cases, then it will run the tests on what it has built in its own mini-environment.
+If @command{$ make distcheck} finishes successfully, then you are safe to send your changes to us to implement or for your own purposes.
+See @ref{Production workflow} and @ref{Forking tutorial}.
 
 @end enumerate
 
