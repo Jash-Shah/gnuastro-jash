@@ -388,7 +388,7 @@ _gnuastro_asttable_completions(){
 
     # when a File has been given, and the information option is called, we
     # should tell the user to avoid trying new options and just press ENTER
-    if [[ "$COMP_LINE" =~ "--information" ]] && [ -f "$last_table" ]; then
+    if [ -f "$last_table" ] && [[ "$COMP_LINE" =~ "--information" ]] || [[ "$COMP_LINE" =~ " -i" ]]; then
         printf "\nThe '--information' (or '-i') will disable all other options, you can safely press ENTER now.\n%s" "$COMP_LINE"
         COMPREPLY=()
     else
