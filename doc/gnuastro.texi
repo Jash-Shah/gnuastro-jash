@@ -30912,11 +30912,11 @@ As a convention, the function name should be the same as the program name, but p
 
 Within the @command{_echo} function, we're checking if @code{$3} is equal to @option{foo}.
 In Bash's auto-complete, @code{$3} means the word @b{before} current cursor position.
-In fact, these are the arguments that the @command{_myprogram} function is receiving:
+In fact, these are the arguments that the @command{_echo} function is receiving:
 
 @table @code
 @item $1
-The name of the command, here it is @samp{myprogram}.
+The name of the command, here it is @samp{echo}.
 
 @item $2
 The current word being completed (empty unless we are in the middle of typing a word).
