@@ -351,6 +351,24 @@ _gnuastro_autocomplete_list_options(){
 
 
 
+# Prints the message taken as $1 and asks for user action. Then reprints
+# the former prompt, which lives in $COMP_LINE.
+_gnuastro_autocomplete_print_message(){
+    if ! [ x"$1" = x ]; then
+        printf "\n------------------------\n"
+        printf "$1"
+        printf "\n------------------------\n"
+        printf "\n\$ %s" "$COMP_LINE"
+        return 0
+    else
+        # Return 1 if the argument is NULL or not specified.
+        return 1
+    fi
+}
+
+
+
+
 _gnuastro_asttable_completions(){
     # Basic definitions.
     PROG_NAME=$1
@@ -386,54 +404,69 @@ _gnuastro_asttable_completions(){
     # was a FITS table), will be put in 'last_table_hdu'.
     _gnuastro_autocomplete_last_table
 
-    # when a File has been given, and the information option is called, we
-    # should tell the user to avoid trying new options and just press ENTER
-    if [ -f "$last_table" ] && [[ "$COMP_LINE" =~ "--information" ]] || [[ "$COMP_LINE" =~ " -i" ]]; then
-        printf "\nThe '--information' (or '-i') will disable all other options, you can safely press ENTER now.\n%s" "$COMP_LINE"
-        COMPREPLY=()
-    else
-        # Regular completion
-        case "$prev" in
-            asttable)
+
+    case "$prev" in
+        asttable)
+            _gnuastro_autocomplete_list_fits_names
+            _gnuastro_autocomplete_list_options $PROG_NAME
+            ;;
+        -i|--information)
+            # when a File has been given, and the information option is
+            # called, we should tell the user to avoid trying new options
+            # and just press ENTER
+            if [ -f "$last_table" ]; then
+                _gnuastro_autocomplete_print_message \
+                    "The '--information' (or '-i') will disable all other options. You can safely press ENTER now."
+                COMPREPLY=()
+            else
+                # Check if the user has already specified a fits file. If
+                # the _gnuastro_autocomplete_get_file_name echoes an empty
+                # response, it means no fits files were specified.
                 _gnuastro_autocomplete_list_fits_names
+            fi
+            ;;
+        -L|--catcolumnfile|-w|--wcsfile)
+            # Only suggest a fits filename
+            _gnuastro_autocomplete_list_fits_names
+            ;;
+        -c|--column|-r|--range|-s|--sort|-C|--catcolumns| \
+            -m|--colmetadata|--inpolygon|--outpolygon| \
+            -e|--equal|-n|--notequal|-b|--noblank|--searchin)
+            # The function below returns the columns inside the last fits
+            # file specified in the commandline. If no fits files were
+            # detected, there will be no response from autocompletion. This
+            # might alert the user that something is going wrong.
+            _gnuastro_autocomplete_list_fits_columns "$last_table"
+            ;;
+        -W|--wcshdu|-u|--catcolumnhdu|-h|--hdu)
+            # Description is same as the '--column' option.
+            _gnuastro_autocomplete_list_fits_hdu "$last_table"
+            ;;
+        -o|--output|--polygon|-H|--head|-t|--tail| \
+            --onlyversion|-N|--numthreads|--minmapsize)
+            # Do not suggest anything.
+            ;;
+        --config)
+            # Suggest config files
+            COMPREPLY=($(compgen -f -X "!*.[cC][oO][nN][fF]" -- "$word"))
+            ;;
+        *)
+            # Check the entire prompt line $COMP_LINE, if the '-i' or
+            # '--information' option is passed and there is a valid fits
+            # file present in the command line, prompt user that they can
+            # safely press ENTER since this configuration disables all
+            # other options. Otherwise, just print all available options.
+            if echo "$COMP_LINE" \
+                    | grep -e ' --information' -e ' -i' &> /dev/null \
+                    &&  [ -f "$last_table" ]; then
+                _gnuastro_autocomplete_print_message \
+                    "The '--information' (or '-i') will disable all other options. You can safely press ENTER now."
+                COMPREPLY=()
+            else
                 _gnuastro_autocomplete_list_options $PROG_NAME
-                ;;
-            -i|--information)
-                if ! [ -f "$last_table" ]; then
-                    # Check if the user has already specified a fits file. If
-                    # the _gnuastro_autocomplete_get_file_name echoes an empty
-                    # response, it means no fits files were specified.
-                    _gnuastro_autocomplete_list_fits_names
-                fi
-                ;;
-            -L|--catcolumnfile|-w|--wcsfile)
-                # Only suggest a fits filename
-                _gnuastro_autocomplete_list_fits_names
-                ;;
-            -c|--column|-r|--range|-s|--sort|-C|--catcolumns| \
-                -m|--colmetadata|--inpolygon|--outpolygon| \
-                -e|--equal|-n|--notequal|-b|--noblank|--searchin)
-                # The function below returns the columns inside the last fits
-                # file specified in the commandline. If no fits files were
-                # detected, there will be no response from autocompletion. This
-                # might alert the user that something is going wrong.
-                _gnuastro_autocomplete_list_fits_columns "$last_table"
-                ;;
-            -W|--wcshdu|-u|--catcolumnhdu|-h|--hdu)
-                # Description is same as the '--column' option.
-                _gnuastro_autocomplete_list_fits_hdu "$last_table"
-                ;;
-            -o|--output|--polygon|-H|--head|-t|--tail| \
-                --onlyversion|-N|--numthreads|--minmapsize)
-                # Do not suggest anything.
-                ;;
-            --config)
-                # Suggest config files
-                COMPREPLY=($(compgen -f -X "!*.[cC][oO][nN][fF]" -- "$word"))
-                ;;
-            *) _gnuastro_autocomplete_list_options $PROG_NAME ;;
-        esac
-    fi
+            fi
+            ;;
+    esac
 
     if [[ "${COMPREPLY[@]}" =~ "=" ]]; then
         # Do not append 'space' character to the end of line in case there
