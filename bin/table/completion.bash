@@ -101,6 +101,8 @@ _gnuastro_autocomplete_list_fits_hdu(){
         # 'hdu' names might contain dash symbols in them. This ensures that
         # all of them are suggested.
         _gnuastro_autocomplete_compgen "${list[@]}" "$word"
+        # TODO: If using `local` is allowed, remove the `unset` commands
+        # and declare variables as `local` instead
         unset list
     fi
 }
@@ -384,56 +386,54 @@ _gnuastro_asttable_completions(){
     # was a FITS table), will be put in 'last_table_hdu'.
     _gnuastro_autocomplete_last_table
 
-    # TODO: Prettify the code syntax, shorter ones on top
-    case "$prev" in
-        asttable)
-            _gnuastro_autocomplete_list_fits_names
-            _gnuastro_autocomplete_list_options $PROG_NAME
-            ;;
-        -i|--information)
-            if [ -f "$last_table" ]; then
-                # The extra, empty array element is a hack so Bash prints a
-                # warning in a separate line and waits for input.
-                #
-                # PROBLEM: In this scenario (when a File has been given,
-                # and the information option is called, we should tell the
-                # user to avoid trying new options and just press
-                # ENTER. But I can't get the script to do this!
-                COMPREPLY+=("The '--information' (or '-i') will disable all other options, you can safely press ENTER now", "")
-            else
-                # Check if the user has already specified a fits file. If
-                # the _gnuastro_autocomplete_get_file_name echoes an empty
-                # response, it means no fits files were specified.
+    # when a File has been given, and the information option is called, we
+    # should tell the user to avoid trying new options and just press ENTER
+    if [[ "$COMP_LINE" =~ "--information" ]] && [ -f "$last_table" ]; then
+        printf "\nThe '--information' (or '-i') will disable all other options, you can safely press ENTER now.\n%s" "$COMP_LINE"
+        COMPREPLY=()
+    else
+        # Regular completion
+        case "$prev" in
+            asttable)
                 _gnuastro_autocomplete_list_fits_names
-            fi
-            ;;
-        -L|--catcolumnfile|-w|--wcsfile)
-            # Only suggest a fits filename
-            _gnuastro_autocomplete_list_fits_names
-            ;;
-        -c|--column|-r|--range|-s|--sort|-C|--catcolumns| \
-            -m|--colmetadata|--inpolygon|--outpolygon| \
-            -e|--equal|-n|--notequal|-b|--noblank|--searchin)
-            # The function below returns the columns inside the last fits
-            # file specified in the commandline. If no fits files were
-            # detected, there will be no response from autocompletion. This
-            # might alert the user that something is going wrong.
-            _gnuastro_autocomplete_list_fits_columns "$last_table"
-            ;;
-        -W|--wcshdu|-u|--catcolumnhdu|-h|--hdu)
-            # Description is same as the '--column' option.
-            _gnuastro_autocomplete_list_fits_hdu "$last_table"
-            ;;
-        -o|--output|--polygon|-H|--head|-t|--tail| \
-            --onlyversion|-N|--numthreads|--minmapsize)
-            # Do not suggest anything.
-            ;;
-        --config)
-            # Suggest config files
-            COMPREPLY=($(compgen -f -X "!*.[cC][oO][nN][fF]" -- "$word"))
-            ;;
-        *) _gnuastro_autocomplete_list_options $NAME ;;
-    esac
+                _gnuastro_autocomplete_list_options $PROG_NAME
+                ;;
+            -i|--information)
+                if ! [ -f "$last_table" ]; then
+                    # Check if the user has already specified a fits file. If
+                    # the _gnuastro_autocomplete_get_file_name echoes an empty
+                    # response, it means no fits files were specified.
+                    _gnuastro_autocomplete_list_fits_names
+                fi
+                ;;
+            -L|--catcolumnfile|-w|--wcsfile)
+                # Only suggest a fits filename
+                _gnuastro_autocomplete_list_fits_names
+                ;;
+            -c|--column|-r|--range|-s|--sort|-C|--catcolumns| \
+                -m|--colmetadata|--inpolygon|--outpolygon| \
+                -e|--equal|-n|--notequal|-b|--noblank|--searchin)
+                # The function below returns the columns inside the last fits
+                # file specified in the commandline. If no fits files were
+                # detected, there will be no response from autocompletion. This
+                # might alert the user that something is going wrong.
+                _gnuastro_autocomplete_list_fits_columns "$last_table"
+                ;;
+            -W|--wcshdu|-u|--catcolumnhdu|-h|--hdu)
+                # Description is same as the '--column' option.
+                _gnuastro_autocomplete_list_fits_hdu "$last_table"
+                ;;
+            -o|--output|--polygon|-H|--head|-t|--tail| \
+                --onlyversion|-N|--numthreads|--minmapsize)
+                # Do not suggest anything.
+                ;;
+            --config)
+                # Suggest config files
+                COMPREPLY=($(compgen -f -X "!*.[cC][oO][nN][fF]" -- "$word"))
+                ;;
+            *) _gnuastro_autocomplete_list_options $PROG_NAME ;;
+        esac
+    fi
 
     if [[ "${COMPREPLY[@]}" =~ "=" ]]; then
         # Do not append 'space' character to the end of line in case there
@@ -443,7 +443,7 @@ _gnuastro_asttable_completions(){
     fi
 
     # Be verbose in debugging mode, where $db is set to '0'.
-    if [ 1 = 0 ]; then
+    if [ $_gnuastro_completion_debug = 0 ]; then
         cat <<EOF
 
 ************ DEBUG ************
