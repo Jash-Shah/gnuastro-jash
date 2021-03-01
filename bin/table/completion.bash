@@ -95,15 +95,12 @@ _gnuastro_autocomplete_compgen(){
 # suggestions
 _gnuastro_autocomplete_list_fits_hdu(){
     if [ -f "$1"  ]; then
-        list=("$(_gnuastro_autocomplete_get_fits_hdu "$1")")
+        local list=("$(_gnuastro_autocomplete_get_fits_hdu "$1")")
         # A custom enhancement for the 'compgen' command. This version will
         # have no problem with the dash sign '-'. Because sometimes the
         # 'hdu' names might contain dash symbols in them. This ensures that
         # all of them are suggested.
         _gnuastro_autocomplete_compgen "${list[@]}" "$word"
-        # TODO: If using `local` is allowed, remove the `unset` commands
-        # and declare variables as `local` instead
-        unset list
     fi
 }
 
@@ -129,7 +126,7 @@ _gnuastro_autocomplete_list_fits_names(){
     # characters into '$COMPREPLY'.
     local files=($(ls | grep -e "^$word" --color=never))
     for f in ${files[*]} ; do
-        if astfits $f &> /dev/null; then COMPREPLY+=("$f"); fi
+        if astfits "$f" -q &> /dev/null; then COMPREPLY+=("$f"); fi
     done
 }
 
@@ -210,7 +207,7 @@ _gnuastro_autocomplete_option_value(){
 
 
 
-# Return 1 if the given non-FITS file is a table.
+# Return 0 if the given non-FITS file is a table.
 _gnuastro_autocomplete_plaintext_is_table(){
 
     # For easy reading.
@@ -321,9 +318,8 @@ _gnuastro_autocomplete_get_fits_columns(){
 # column names. If the file does not exist, pass.
 _gnuastro_autocomplete_list_fits_columns(){
     if [ -f "$1" ]; then
-        list=("$(_gnuastro_autocomplete_get_fits_columns "$1")")
+        local list=("$(_gnuastro_autocomplete_get_fits_columns "$1")")
         _gnuastro_autocomplete_compgen "${list[@]}"
-        unset list
     fi
 }
 
@@ -346,12 +342,11 @@ _gnuastro_autocomplete_get_file(){
 # short/long options as its first argument. In this case, autocompletion
 # suggests both.
 _gnuastro_autocomplete_list_options(){
-    list=("$("$1" --help \
+    local list=("$("$1" --help \
                   | awk -v regex=" --+[a-zA-Z0-9]*=?" \
                         'match($0, regex) \
                            {print substr($0, RSTART, RLENGTH)}')")
     _gnuastro_autocomplete_compgen "${list[@]}" "$word"
-    unset list
 }
 
 
