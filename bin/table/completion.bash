@@ -353,16 +353,15 @@ _gnuastro_autocomplete_list_options(){
 
 # Prints the message taken as $1 and asks for user action. Then reprints
 # the former prompt, which lives in $COMP_LINE.
+#
+# TODO: The newly printed prompt was taken from here:
+# https://stackoverflow.com/questions/22322879/how-to-print-current-bash-prompt
+# This is only available since Bash 4.4 (September 2016). We should find
+# A more low-level/basic operation.
 _gnuastro_autocomplete_print_message(){
     if ! [ x"$1" = x ]; then
-        printf "\n------------------------\n"
-        printf "$1"
-        printf "\n------------------------\n"
-        printf "\n\$ %s" "$COMP_LINE"
-        return 0
-    else
-        # Return 1 if the argument is NULL or not specified.
-        return 1
+        printf "\n$1\n"
+        printf "${PS1@P} %s" "$COMP_LINE"
     fi
 }
 
@@ -375,6 +374,9 @@ _gnuastro_asttable_completions(){
 
     # Initialize the completion response with null
     COMPREPLY=();
+
+    # Strings used in multiple places.
+    local infowarning="With '--information' (or '-i') all other options are disabled, you can press ENTER now."
 
     # Variable "word", is the current word being completed. "$2" is the
     # default value for the current word in completion scripts. But we are
@@ -411,18 +413,16 @@ _gnuastro_asttable_completions(){
             _gnuastro_autocomplete_list_options $PROG_NAME
             ;;
         -i|--information)
-            # when a File has been given, and the information option is
-            # called, we should tell the user to avoid trying new options
-            # and just press ENTER
-            if [ -f "$last_table" ]; then
-                _gnuastro_autocomplete_print_message \
-                    "The '--information' (or '-i') will disable all other options. You can safely press ENTER now."
-                COMPREPLY=()
-            else
-                # Check if the user has already specified a fits file. If
-                # the _gnuastro_autocomplete_get_file_name echoes an empty
-                # response, it means no fits files were specified.
+            # when a file has been given before this, and the
+            # '--information' option is called, we should tell the user to
+            # avoid trying new options and just press ENTER. Otherwise, we
+            # should let the user choose a FITS table (to view its
+            # information).
+            if [ x"$last_table" = x ]; then
                 _gnuastro_autocomplete_list_fits_names
+            else
+                _gnuastro_autocomplete_print_message "$infowarning"
+                COMPREPLY=()
             fi
             ;;
         -L|--catcolumnfile|-w|--wcsfile)
@@ -459,8 +459,7 @@ _gnuastro_asttable_completions(){
             if echo "$COMP_LINE" \
                     | grep -e ' --information' -e ' -i' &> /dev/null \
                     &&  [ -f "$last_table" ]; then
-                _gnuastro_autocomplete_print_message \
-                    "The '--information' (or '-i') will disable all other options. You can safely press ENTER now."
+                _gnuastro_autocomplete_print_message "$infowarning"
                 COMPREPLY=()
             else
                 _gnuastro_autocomplete_list_options $PROG_NAME
