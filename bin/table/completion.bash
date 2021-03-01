@@ -123,7 +123,14 @@ _gnuastro_autocomplete_list_fits_hdu(){
 # The completion can not suggest filenames that contain white space in them
 # for the time being.
 _gnuastro_autocomplete_list_fits_names(){
-    COMPREPLY+=($(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word"))
+    # List all files in the current directory. Filter out those that start
+    # with the current word in the command line '$word'. Note that the grep
+    # option '--color=never' has to be there to prevent passing special
+    # characters into '$COMPREPLY'.
+    local files=($(ls | grep -e "^$word" --color=never))
+    for f in ${files[*]} ; do
+        if astfits $f &> /dev/null; then COMPREPLY+=("$f"); fi
+    done
 }
 
 
@@ -207,11 +214,11 @@ _gnuastro_autocomplete_option_value(){
 _gnuastro_autocomplete_plaintext_is_table(){
 
     # For easy reading.
-    local inputfile=$1
+    local inputfile="$1"
 
     # If the file is not plain-text, it will contain an 'executable' or
     # 'binary' in the output of the 'file' command.
-    if file samaeh-abstract.txt \
+    if file $inputfile \
             | grep 'executable\|binary' &> /dev/null; then
         return 1
     else
