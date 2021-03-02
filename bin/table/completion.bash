@@ -303,16 +303,19 @@ _gnuastro_autocomplete_last_table(){
                 # break out of the loop that parses the tokens.
                 if $_gnuastro_asttable $token -h$last_table_hdu -i &> /dev/null; then
                     last_table="$token"
-                    break;
+                    return 0
                 fi
 
             # Not a FITS file.
             else
                 if _gnuastro_autocomplete_is_plaintext_table $token; then
                     last_table="$token"
-                    break;
+                    return 0
                 fi
             fi
+        else
+            # The file $token does not exist
+            return 1
         fi
     done
 }
