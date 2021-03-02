@@ -133,6 +133,31 @@ _gnuastro_autocomplete_list_fits_names(){
 
 
 
+_gnuastro_autocomplete_list_plaintext_tables(){
+    local files=($(ls | grep -e "^$word" --color=never))
+    for f in ${files[*]} ; do
+        if _gnuastro_autocomplete_plaintext_is_table "$f"; then
+            COMPREPLY+=("$f"); fi
+    done
+}
+
+
+
+
+# List all files that are considered as valid input. This is here to
+# prevent going throught a list of files serveral times for each extension.
+_gnuastro_autocomplete_list_all_valid_files(){
+    local files=($(ls | grep -e "^$word" --color=never))
+    for f in ${files[*]} ; do
+        if _gnuastro_autocomplete_plaintext_is_table "$f"; then
+            COMPREPLY+=("$f"); fi
+        if $_gnuastro_astfits "$f" -q &> /dev/null; then COMPREPLY+=("$f"); fi
+    done
+}
+
+
+
+
 # Prompt the user that this option only accepts a number
 _gnuastro_autocomplete_expect_number(){
     echo "Pass"
@@ -421,7 +446,7 @@ _gnuastro_asttable_completions(){
             # should let the user choose a FITS table (to view its
             # information).
             if [ x"$last_table" = x ]; then
-                _gnuastro_autocomplete_list_fits_names
+                _gnuastro_autocomplete_list_all_valid_files
             else
                 _gnuastro_autocomplete_print_message "$infowarning"
                 COMPREPLY=()
