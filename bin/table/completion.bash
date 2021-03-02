@@ -126,7 +126,7 @@ _gnuastro_autocomplete_list_fits_names(){
     # characters into '$COMPREPLY'.
     local files=($(ls | grep -e "^$word" --color=never))
     for f in ${files[*]} ; do
-        if astfits "$f" -q &> /dev/null; then COMPREPLY+=("$f"); fi
+        if $_gnuastro_astfits "$f" -q &> /dev/null; then COMPREPLY+=("$f"); fi
     done
 }
 
@@ -146,7 +146,7 @@ _gnuastro_autocomplete_expect_number(){
 # opened). Note that FITS files have many possible extensions (see the
 # 'gal_fits_name_is_fits' function in 'lib/fits.c').
 _gnuastro_autocomplete_file_is_fits(){
-    if astfits $1 -h0 &> /dev/null; then return 0; else return 1; fi
+    if $_gnuastro_astfits $1 -h0 &> /dev/null; then return 0; else return 1; fi
 }
 
 
@@ -224,7 +224,7 @@ _gnuastro_autocomplete_plaintext_is_table(){
         # properly. We don't want to bother with the other lines, because
         # we don't want to waste computational power here.
         if awk '!/^#/ && NF>0 {print; exit 0}' $inputfile \
-                | asttable &> /dev/null; then
+                | $_gnuastro_asttable &> /dev/null; then
             return 0
         else
             return 1
@@ -275,7 +275,7 @@ _gnuastro_autocomplete_last_table(){
                 # If this extension of this file is actually a FITS table
                 # (not an image), then set the 'last_table' variable and
                 # break out of the loop that parses the tokens.
-                if asttable $token -h$last_table_hdu -i &> /dev/null; then
+                if $_gnuastro_asttable $token -h$last_table_hdu -i &> /dev/null; then
                     last_table="$token"
                     break;
                 fi
