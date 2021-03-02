@@ -136,7 +136,7 @@ _gnuastro_autocomplete_list_fits_names(){
 _gnuastro_autocomplete_list_plaintext_tables(){
     local files=($(ls | grep -e "^$word" --color=never))
     for f in ${files[*]} ; do
-        if _gnuastro_autocomplete_plaintext_is_table "$f"; then
+        if _gnuastro_autocomplete_is_plaintext_table "$f"; then
             COMPREPLY+=("$f"); fi
     done
 }
@@ -149,7 +149,7 @@ _gnuastro_autocomplete_list_plaintext_tables(){
 _gnuastro_autocomplete_list_all_valid_files(){
     local files=($(ls | grep -e "^$word" --color=never))
     for f in ${files[*]} ; do
-        if _gnuastro_autocomplete_plaintext_is_table "$f"; then
+        if _gnuastro_autocomplete_is_plaintext_table "$f"; then
             COMPREPLY+=("$f"); fi
         if $_gnuastro_astfits "$f" -q &> /dev/null; then COMPREPLY+=("$f"); fi
     done
@@ -170,7 +170,7 @@ _gnuastro_autocomplete_expect_number(){
 # Check if the given file is a FITS file (that can actually be
 # opened). Note that FITS files have many possible extensions (see the
 # 'gal_fits_name_is_fits' function in 'lib/fits.c').
-_gnuastro_autocomplete_file_is_fits(){
+_gnuastro_autocomplete_is_fits(){
     local inputfile="$1"
     if $_gnuastro_astfits $inputfile -h0 &> /dev/null; then return 0; else return 1; fi
 }
@@ -234,7 +234,7 @@ _gnuastro_autocomplete_option_value(){
 
 
 # Return 0 if the given non-FITS file is a table.
-_gnuastro_autocomplete_plaintext_is_table(){
+_gnuastro_autocomplete_is_plaintext_table(){
 
     # For easy reading.
     local inputfile="$1"
@@ -284,7 +284,7 @@ _gnuastro_autocomplete_last_table(){
         if [ -f $token ]; then
 
             # It is a FITS file.
-            if _gnuastro_autocomplete_file_is_fits $token; then
+            if _gnuastro_autocomplete_is_fits $token; then
 
                 # See if a HDU has been given or not. If it hasn't been
                 # given, its safe to assume the first HDU. In this case,
@@ -308,7 +308,7 @@ _gnuastro_autocomplete_last_table(){
 
             # Not a FITS file.
             else
-                if _gnuastro_autocomplete_plaintext_is_table $token; then
+                if _gnuastro_autocomplete_is_plaintext_table $token; then
                     last_table="$token"
                     break;
                 fi
