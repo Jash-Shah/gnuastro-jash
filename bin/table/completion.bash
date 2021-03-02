@@ -60,8 +60,9 @@ _gnuastro_asttable="$_gnuastro_prefix/asttable";
 
 # Accepts a FITS filename as input and echoes its headers.
 _gnuastro_autocomplete_get_fits_hdu(){
-    if [ -f "$1" ]; then
-        $_gnuastro_astfits --quiet "$1" | awk '{print $2}'
+    local inputfile="$1"
+    if [ -f $inputfile ]; then
+        $_gnuastro_astfits --quiet $inputfile | awk '{print $2}'
     fi
 }
 
@@ -82,9 +83,6 @@ _gnuastro_autocomplete_compgen(){
         # the portability.
         [[ "$w" =~ $2 ]] && COMPREPLY+=( "$w" )
     done
-
-    # Uncomment if you want to accept user's current word as a completion
-    # [[ -z "${COMPREPLY[*]}" ]] && COMPREPLY+=( "$2" )
 }
 
 
@@ -94,8 +92,9 @@ _gnuastro_autocomplete_compgen(){
 # Checks for the current fits file and puts its headers into completion
 # suggestions
 _gnuastro_autocomplete_list_fits_hdu(){
-    if [ -f "$1"  ]; then
-        local list=("$(_gnuastro_autocomplete_get_fits_hdu "$1")")
+    local inputfile="$1"
+    if [ -f $inputfile  ]; then
+        local list=("$(_gnuastro_autocomplete_get_fits_hdu $inputfile)")
         # A custom enhancement for the 'compgen' command. This version will
         # have no problem with the dash sign '-'. Because sometimes the
         # 'hdu' names might contain dash symbols in them. This ensures that
@@ -119,11 +118,12 @@ _gnuastro_autocomplete_list_fits_hdu(){
 #
 # The completion can not suggest filenames that contain white space in them
 # for the time being.
+#
+# List all files in the current directory. Filter out those that start
+# with the current word in the command line '$word'. Note that the grep
+# option '--color=never' has to be there to prevent passing special
+# characters into '$COMPREPLY'.
 _gnuastro_autocomplete_list_fits_names(){
-    # List all files in the current directory. Filter out those that start
-    # with the current word in the command line '$word'. Note that the grep
-    # option '--color=never' has to be there to prevent passing special
-    # characters into '$COMPREPLY'.
     local files=($(ls | grep -e "^$word" --color=never))
     for f in ${files[*]} ; do
         if $_gnuastro_astfits "$f" -q &> /dev/null; then COMPREPLY+=("$f"); fi
@@ -171,7 +171,8 @@ _gnuastro_autocomplete_expect_number(){
 # opened). Note that FITS files have many possible extensions (see the
 # 'gal_fits_name_is_fits' function in 'lib/fits.c').
 _gnuastro_autocomplete_file_is_fits(){
-    if $_gnuastro_astfits $1 -h0 &> /dev/null; then return 0; else return 1; fi
+    local inputfile="$1"
+    if $_gnuastro_astfits $inputfile -h0 &> /dev/null; then return 0; else return 1; fi
 }
 
 
@@ -330,7 +331,7 @@ _gnuastro_autocomplete_get_fits_columns(){
         # start with numbers. If so, there will be an unwanted '(hdu:'
         # printed in the results. Here, 'awk' will print the second column
         # in lines that start with a number.
-        "$_gnuastro_asttable" --information "$1" \
+        $_gnuastro_asttable --information "$1" \
             | awk 'NR>2' \
             | awk '/^[0-9]/ {print $2}'
     fi
