@@ -273,7 +273,8 @@ _gnuastro_autocomplete_last_table(){
 
     # Parse the tokens in reverse.
     for token in $(echo "${COMP_WORDS[@]}" \
-                    | awk '{for(i=NF;i>1;--i) printf "%s ", $i}')
+                    | awk '{for(i=NF;i>1;--i)
+                          if ($i !~ /^-/) printf "%s ", $i}')
     do
         # First, make sure it is an existing file.
         if [ -f $token ]; then
@@ -482,7 +483,7 @@ _gnuastro_asttable_completions(){
             # other options. Otherwise, just print all available options.
             if echo "$COMP_LINE" \
                     | grep -e ' --information' -e ' -i' &> /dev/null \
-                    &&  [ -f "$last_table" ]; then
+                    &&  [ x"$last_table" ]; then
                 _gnuastro_autocomplete_print_message "$infowarning"
                 COMPREPLY=()
             else
