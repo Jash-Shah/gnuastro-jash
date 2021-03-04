@@ -386,7 +386,7 @@ _gnuastro_autocomplete_list_options(){
 _gnuastro_autocomplete_print_message(){
     if ! [ x"$1" = x ]; then
         printf "\n$1\n"
-        printf "${PS1@P} %s" "$COMP_LINE"
+        printf "${PS1@P}%s" "$COMP_LINE"
     fi
 }
 
@@ -426,10 +426,7 @@ _gnuastro_asttable_completions(){
         prev="${COMP_WORDS[COMP_CWORD-2]}"
     fi
 
-    # If a table has been called until this stage, extract it. The table
-    # name itself will be put in 'last_table' and its possible HDU (if its
-    # was a FITS table), will be put in 'last_table_hdu'.
-    _gnuastro_autocomplete_last_table
+
 
 
     case "$prev" in
@@ -438,6 +435,11 @@ _gnuastro_asttable_completions(){
             _gnuastro_autocomplete_list_options $PROG_NAME
             ;;
         -i|--information)
+            # If a table has been called until this stage, extract it. The table
+            # name itself will be put in 'last_table' and its possible HDU (if its
+            # was a FITS table), will be put in 'last_table_hdu'.
+            _gnuastro_autocomplete_last_table
+
             # when a file has been given before this, and the
             # '--information' option is called, we should tell the user to
             # avoid trying new options and just press ENTER. Otherwise, we
@@ -461,10 +463,12 @@ _gnuastro_asttable_completions(){
             # file specified in the commandline. If no fits files were
             # detected, there will be no response from autocompletion. This
             # might alert the user that something is going wrong.
+            _gnuastro_autocomplete_last_table
             _gnuastro_autocomplete_list_fits_columns "$last_table"
             ;;
         -W|--wcshdu|-u|--catcolumnhdu|-h|--hdu)
             # Description is same as the '--column' option.
+            _gnuastro_autocomplete_last_table
             _gnuastro_autocomplete_list_fits_hdu "$last_table"
             ;;
         -o|--output|--polygon|-H|--head|-t|--tail| \
@@ -482,10 +486,12 @@ _gnuastro_asttable_completions(){
             # safely press ENTER since this configuration disables all
             # other options. Otherwise, just print all available options.
             if echo "$COMP_LINE" \
-                    | grep -e ' --information' -e ' -i' &> /dev/null \
-                    &&  [ x"$last_table" ]; then
-                _gnuastro_autocomplete_print_message "$infowarning"
-                COMPREPLY=()
+                    | grep -e ' --information' -e ' -i' &> /dev/null; then
+                _gnuastro_autocomplete_last_table
+                if  [ x"$last_table" ]; then
+                    _gnuastro_autocomplete_print_message "$infowarning"
+                    COMPREPLY=()
+                fi
             else
                 _gnuastro_autocomplete_list_options $PROG_NAME
             fi
