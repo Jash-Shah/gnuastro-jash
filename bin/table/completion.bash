@@ -259,7 +259,7 @@ _gnuastro_autocomplete_is_plaintext_table(){
 
 # Reverse the list of existing strings on the command-line (so the last
 # word becomes the first), then check if it is an acceptable Table file in
-# there.
+# there. This covers FITS and plaintext files so far.
 _gnuastro_autocomplete_last_table(){
 
     # Output variables.
@@ -299,19 +299,14 @@ _gnuastro_autocomplete_last_table(){
                 # break out of the loop that parses the tokens.
                 if $_gnuastro_asttable $token -h$last_table_hdu -i &> /dev/null; then
                     last_table="$token"
-                    return 0
+                    break;
                 fi
 
-            # Not a FITS file.
-            else
-                if _gnuastro_autocomplete_is_plaintext_table $token; then
-                    last_table="$token"
-                    return 0
-                fi
+            # Not a FITS file, check if it is a plaintext table.
+            elif _gnuastro_autocomplete_is_plaintext_table $token; then
+                last_table="$token"
+                break;
             fi
-        else
-            # The file $token does not exist
-            return 1
         fi
     done
 }
