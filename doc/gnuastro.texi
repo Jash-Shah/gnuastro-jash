@@ -20501,7 +20501,7 @@ To obtain these values, you can use @ref{NoiseChisel} to detect signal in the im
 @noindent
 @strong{Masking other sources:} The image of an astronomical object will usually have many other sources with your main target.
 A crude solution is to use sigma-clipped measurements for the profile.
-However, sigma-clipped measurements can easily be baised when the number of sources at each radial distance increases at larger distances.
+However, sigma-clipped measurements can easily be biased when the number of sources at each radial distance increases at larger distances.
 Therefore a robust solution is to mask all other detections within the image.
 You can use @ref{NoiseChisel} and @ref{Segment} to detect and segment the sources, then set all pixels that don't belong to your target to blank using @ref{Arithmetic} (in particular, its @code{where} operator).
 @end cartouche
