@@ -143,6 +143,9 @@ vizier_sanity_checks(struct queryparams *p)
           gal_checkset_allocate_copy("II/363/unwise", &p->datasetstr);
         }
     }
+
+  /* Currently we assume VizieR only uses TAP. */
+  p->usetap=1;
 }
 
 

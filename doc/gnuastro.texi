@@ -10536,12 +10536,42 @@ Here is the list of short names for popular datasets within Gaia:
 @cindex NED (NASA/IPAC Extragalactic Database)
 The NASA/IPAC Extragalactic Database (NED, @url{http://ned.ipac.caltech.edu}) is a fusion database, integrating the information about extra-galactic sources from many large sky surveys into a single catalog.
 It covers the full spectrum, from Gamma rays to radio frequencies and is updated when new data arrives.
-A query to @code{ned} is submitted to @code{https://ned.ipac.caltech.edu/tap/sync}.
+A TAP query to @code{ned} is submitted to @code{https://ned.ipac.caltech.edu/tap/sync}.
 
-Currently NED only has its main dataset for TAP access (shown below), more datasets will be added for TAP access in the future.
 @itemize
 @item
-@code{objdir --> NEDTAP.objdir}
+@code{objdir --> NEDTAP.objdir}: default TAP-based dataset in NED.
+
+@item
+@cindex VOTable
+@code{extinction}: A command-line interface to the @url{https://ned.ipac.caltech.edu/extinction_calculator, NED Extinction Calculator}.
+It only takes a central coordinate and returns a VOTable of the calculated extinction in many commonly used filters at that point.
+As a result, options like @option{--width} or @option{--radius} are not supported.
+However, Gnuastro doesn't yet support the VOTable format.
+Therefore, if you specify an @option{--output} file, it should have an @file{.xml} suffix and the downloaded file will not be checked.
+
+Until VOTable support is added to Gnuastro, you can use GREP, AWK and SED to convert the VOTable data into a FITS table with a command like below (assuming the queried VOTable is called @file{ned-extinction.xml}):
+
+@verbatim
+grep '^<TR><TD>' ned-extinction.xml \
+ | sed -e's|<TR><TD>||' \
+       -e's|</TD></TR>||' \
+       -e's|</TD><TD>|@|g' \
+ | awk 'BEGIN{FS="@"; \
+     print "# Column 1: FILTER [name,str15] Filter name"; \
+     print "# Column 2: CENTRAL [um,f32] Central Wavelength"; \
+     print "# Column 3: EXTINCTION [mag,f32] Galactic Ext."; \
+     print "# Column 4: ADS_REF [ref,str50] ADS reference"} \
+        {printf "%-15s %g %g %s\n", $1, $2, $3, $4}' \
+ | asttable -oned-extinction.fits
+@end verbatim
+
+Once the table is in FITS, you can easily get the extinction for a certain filter (for example the @code{SDSS r} filter) like the command below:
+
+@example
+asttable ned-extinction.fits --equal=FILTER,"SDSS r" \
+         -cEXTINCTION
+@end example
 @end itemize
 
 @item vizier

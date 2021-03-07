@@ -95,6 +95,9 @@ gaia_sanity_checks(struct queryparams *p)
           gal_checkset_allocate_copy("public.tycho2", &p->datasetstr);
         }
     }
+
+  /* Currently we assume GAIA only uses TAP. */
+  p->usetap=1;
 }
 
 

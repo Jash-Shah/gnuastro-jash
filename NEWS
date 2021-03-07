@@ -71,6 +71,13 @@ See the end of the file for license conditions.
      program for selecting a certain sub-set of your FITS files, or sorting
      them for example.
 
+  Query:
+   - NED's Galactic extinction calculator is now available for any
+     coordinate with a command like below. See the description of the
+     'extinction' dataset of NED in the "Available datasets" section of the
+     manual.
+         astquery ned --dataset=extinction --center=49.9507,41.5116
+
   Library:
    - gal_units_counts_to_jy: Convert counts to Janskys.
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
