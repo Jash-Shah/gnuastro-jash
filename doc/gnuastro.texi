@@ -30491,9 +30491,37 @@ the body with `@code{This fixes bug #ID.}', or `@code{This finishes task
 full description when reading the commit message, so give a short
 introduction too.
 @end itemize
-
 @end table
 
+
+Below you can see a good commit message example (don't forget to read it, it has tips for you).
+After reading this, please run @command{git log} on the @code{master} branch and read some of the recent commits for more realistic examples.
+
+@example
+The first line should be the title of the commit
+
+An empty line is necessary after the title so Git doesn't confuse
+lines. This top paragraph of the body of the commit usually describes
+the reason this commit was done. Therefore it usually starts with
+"Until now ...". It is very useful to explain the reason behind the
+change, things that aren't immediately obvious when looking into the
+code. You don't need to list the names of the files, or what lines
+have been changed, don't forget that the code changes are fully
+stored within Git :-).
+
+In the second paragraph (or any later paragraph!) of the body, we
+describe the solution and why (not "how"!) the particular solution
+was implemented. So we usually start this part of the commit body
+with "With this commit ...". Again, you don't need to go into the
+details that can be seen from the 'git diff' command (like the
+file names that have been changed or the code that has been
+implemented). The imprtant thing here is the things that aren't
+immediately obvious from looking into the code.
+
+You can continue the explanation and it is encouraged to be very
+explicit about the "human factor" of the change as much as possible,
+not technical details.
+@end example
 
 
 @node Production workflow, Forking tutorial, Commit guidelines, Contributing to Gnuastro
