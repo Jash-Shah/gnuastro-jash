@@ -12124,7 +12124,7 @@ In effect, this expands the outer borders of the foreground.
 This operator assumes a binary dataset (all pixels are @code{0} and @code{1}).
 The usage is similar to @code{erode}, for example:
 @example
-$ astarithmetic binary.fits 2 erode -oout.fits
+$ astarithmetic binary.fits 2 dilate -oout.fits
 @end example
 
 @item connected-components

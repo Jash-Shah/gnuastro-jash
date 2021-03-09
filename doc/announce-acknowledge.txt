@@ -3,6 +3,7 @@ Alphabetically ordered list to acknowledge in the next release.
 Mark Calabretta
 Raul Infante-Sainz
 Alberto Madrigal
+Juan Miro
 Sylvain Mottet
 Francois Ochsenbein
 Samane Raji
