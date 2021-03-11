@@ -1777,6 +1777,8 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
       BINFUNC_F_OPERATOR_SET( pow,   +0 );         break;
     case GAL_ARITHMETIC_OP_ATAN2:
       BINFUNC_F_OPERATOR_SET( atan2, *180.0f/pi ); break;
+    case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:
+      BINFUNC_F_OPERATOR_SET( gal_units_counts_to_mag, +0 ); break;
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
       BINFUNC_F_OPERATOR_SET( gal_units_counts_to_jy, +0 ); break;
     default:
@@ -1962,6 +1964,8 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
     { op=GAL_ARITHMETIC_OP_DEGREE_TO_RA;      *num_operands=1;  }
   else if (!strcmp(string, "degree-to-dec"))
     { op=GAL_ARITHMETIC_OP_DEGREE_TO_DEC;     *num_operands=1;  }
+  else if (!strcmp(string, "counts-to-mag"))
+    { op=GAL_ARITHMETIC_OP_COUNTS_TO_MAG;     *num_operands=2;  }
   else if (!strcmp(string, "counts-to-jy"))
     { op=GAL_ARITHMETIC_OP_COUNTS_TO_JY;      *num_operands=2;  }
 
@@ -2137,6 +2141,7 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:   return "dec-to-degree";
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:    return "degree-to-ra";
     case GAL_ARITHMETIC_OP_DEGREE_TO_DEC:   return "degree-to-dec";
+    case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:   return "counts-to-mag";
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:    return "counts-to-jy";
 
     case GAL_ARITHMETIC_OP_MINVAL:          return "minvalue";
@@ -2260,6 +2265,7 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     /* Binary function operators. */
     case GAL_ARITHMETIC_OP_POW:
     case GAL_ARITHMETIC_OP_ATAN2:
+    case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);

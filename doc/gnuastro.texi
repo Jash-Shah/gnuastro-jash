@@ -11688,10 +11688,23 @@ These operators take a single operand.
 Inverse Hyperbolic sine, cosine, and tangent.
 These operators take a single operand.
 
+@item counts-to-mag
+Convert counts (usually CCD outputs) to magnitudes using the given zeropoint.
+The zero point is the first popped operand and the count value is the second.
+For example assume you have measured the standard deviation of the noise in an image to be @code{0.1}, and the image's zero point is @code{22.5}.
+You can therefore measure the @emph{per-pixel} surface brightness limit of the dataset (which is the magnitude of the noise standrard deviation) with this simple command below.
+Note that because the output is a simple number, we are using @option{--quiet} to avoid printing extra information.
+
+@example
+astarithmetic 0.1 22.5 counts-to-mag --quiet
+@end example
+
+Of course, you can also convert every pixel in an image (or table column in Table's @ref{Column arithmetic}) with this operator if you replace the second popped operand with an image/column.
+
 @item counts-to-jy
 @cindex AB magnitude
 @cindex Magnitude, AB
-Convert counts (CCD outputs) to Janskys through an AB-magnitude based zeropoint.
+Convert counts (usually CCD outputs) to Janskys through an AB-magnitude based zeropoint.
 The top-popped operand is assumed to be the AB-magnitude zero point and the second-popped operand is assumed to be a dataset in units of counts (an image in Arithmetic, and a column in Table's @ref{Column arithmetic}).
 For the full equation and basic definitions, see @ref{Brightness flux magnitude}.
 
@@ -28385,6 +28398,12 @@ If @code{usecolon!=0}, then the delimiters between the components will be colons
 @cindex Declination
 Convert the input Declination (Dec) degree (a single floating point number) to old/standard notation (in the format of degrees, arc-minutes and arc-seconds of @code{_d_m_s}).
 If @code{usecolon!=0}, then the delimiters between the components will be colons: @code{_:_:_}.
+@end deftypefun
+
+@deftypefun double gal_units_counts_to_mag (double @code{counts}, double @code{zeropoint})
+@cindex Magnitude
+Convert counts to magnitudes through the given zero point.
+For more on the equation, see @ref{Brightness flux magnitude}.
 @end deftypefun
 
 @deftypefun double gal_units_counts_to_jy (double @code{counts}, double @code{zeropoint_ab})

@@ -35,6 +35,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/wcs.h>
 #include <gnuastro/data.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/units.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/pointer.h>
 #include <gnuastro/dimension.h>
@@ -495,10 +496,9 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
         {
           /* Per pixel. */
           if( asprintf(&str, "%g sigma surface brightness (magnitude/pixel): "
-                       "%.3f", p->sfmagnsigma, ( -2.5f
-                                                 *log10( p->sfmagnsigma
-                                                         * p->medstd )
-                                                 + p->zeropoint ) )<0 )
+                       "%.3f", p->sfmagnsigma,
+                       gal_units_counts_to_mag(p->sfmagnsigma * p->medstd,
+                                               p->zeropoint) )<0 )
             error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
           gal_list_str_add(&comments, str, 0);
 
@@ -520,10 +520,10 @@ mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
               if( asprintf(&str, "%g sigma surface brightness "
                            "(magnitude/%sarcsec^2): %.3f", p->sfmagnsigma,
                            tstr ? tstr : "",
-                           ( -2.5f * log10( p->sfmagnsigma
-                                            * p->medstd
-                                            * sqrt( p->sfmagarea / pixarea) )
-                             + p->zeropoint ) )<0 )
+                           gal_units_counts_to_mag(p->sfmagnsigma
+                                                   * p->medstd
+                                                   * sqrt( p->sfmagarea / pixarea),
+                                                   p->zeropoint) ) <0 )
                 error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
               /* Add the final string/line to the catalog comments. */

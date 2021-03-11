@@ -355,6 +355,19 @@ gal_units_degree_to_dec(double decimal, int usecolon)
 /****************          Flux conversions           *****************/
 /**********************************************************************/
 
+/* Convert counts to magnitude using the given zeropoint. */
+double
+gal_units_counts_to_mag(double counts, double zeropoint)
+{
+  return ( counts > 0.0f
+           ? ( -2.5f * log10(counts) + zeropoint )
+           : NAN );
+}
+
+
+
+
+
 /* Convert Pixel values to Janskys with an AB-magnitude based
    zero-point. See the "Brightness, Flux, Magnitude and Surface
    brightness". */

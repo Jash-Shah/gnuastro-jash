@@ -32,6 +32,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gsl/gsl_rng.h>         /* Used in setrandoms.   */
 #include <gnuastro/fits.h>
+#include <gnuastro/units.h>
 #include <gsl/gsl_randist.h>     /* To make noise.        */
 
 #include <gnuastro-internal/timing.h>
@@ -70,7 +71,7 @@ convertsaveoutput(struct mknoiseparams *p)
                                 0, NULL, 0);
       if( !isnan(p->zeropoint) )
         {
-          tmp=-2.5 * log10(p->background) + p->zeropoint;
+          tmp=gal_units_counts_to_mag(p->background, p->zeropoint);
           gal_checkset_allocate_copy("BCKGMAG", &keyname);
           gal_fits_key_list_add_end(&headers, GAL_TYPE_FLOAT64, keyname, 1,
                                     &tmp, 0,

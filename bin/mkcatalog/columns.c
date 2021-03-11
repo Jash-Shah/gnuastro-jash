@@ -31,6 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 
 #include <gnuastro/wcs.h>
+#include <gnuastro/units.h>
 #include <gnuastro/pointer.h>
 
 #include <gnuastro-internal/checkset.h>
@@ -1995,7 +1996,7 @@ columns_define_alloc(struct mkcatalogparams *p)
 /**********            Column calculation           ***************/
 /******************************************************************/
 #define MKC_RATIO(TOP,BOT) ( (BOT)!=0.0f ? (TOP)/(BOT) : NAN )
-#define MKC_MAG(B) ( ((B)>0) ? -2.5f * log10(B) + p->zeropoint : NAN )
+#define MKC_MAG(B) ( gal_units_counts_to_mag(B, p->zeropoint) )
 #define MKC_SB(B, A) ( ((B)>0 && (A)>0)                                 \
                        ? MKC_MAG(B) + 2.5f * log10((A) * p->pixelarcsecsq) \
                        : NAN )

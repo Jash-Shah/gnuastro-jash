@@ -124,6 +124,7 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_DEC_TO_DEGREE,/* declination to decimal. */
   GAL_ARITHMETIC_OP_DEGREE_TO_RA, /* right ascension to decimal. */
   GAL_ARITHMETIC_OP_DEGREE_TO_DEC,/* declination to decimal. */
+  GAL_ARITHMETIC_OP_COUNTS_TO_MAG,/* Counts to magnitude. */
   GAL_ARITHMETIC_OP_COUNTS_TO_JY, /* Counts to Janskys with AB-mag zeropoint. */
 
   GAL_ARITHMETIC_OP_MINVAL,       /* Minimum value of array.               */

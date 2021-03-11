@@ -36,6 +36,7 @@ See the end of the file for license conditions.
      - asinh: Inverse of hyperbolic sine.
      - acosh: Inverse of hyperbolic cosine.
      - atabh: Inverse of hyperbolic tangent.
+     - counts-to-mag: Convert counts to magnitudes with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
 
@@ -79,6 +80,7 @@ See the end of the file for license conditions.
          astquery ned --dataset=extinction --center=49.9507,41.5116
 
   Library:
+   - gal_units_counts_to_mag: Convert counts to magnitudes.
    - gal_units_counts_to_jy: Convert counts to Janskys.
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
      - GAL_ARITHMETIC_OP_SIN: sine (input in deg).
