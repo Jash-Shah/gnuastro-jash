@@ -338,86 +338,92 @@ mkcatalog_wcs_conversion(struct mkcatalogparams *p)
 
 
 void
-mkcatalog_write_inputs_in_comments(struct mkcatalogparams *p,
-                                   gal_list_str_t **comments, int withsky,
-                                   int withstd)
+mkcatalog_outputs_keys_numeric(gal_fits_list_key_t **keylist, void *number,
+                               uint8_t type, char *nameliteral,
+                               char *commentliteral, char *unitliteral)
 {
-  char *tmp, *str;
+  void *value;
+  value=gal_pointer_allocate(type, 1, 0, __func__, "value");
+  memcpy(value, number, gal_type_sizeof(type));
+  gal_fits_key_list_add_end(keylist, type, nameliteral, 0,
+                            value, 1, commentliteral, 0,
+                            unitliteral, 0);
+}
 
-  /* Basic classifiers for plain text outputs. */
-  if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
-    {
-      if( asprintf(&str, "--------- Input files ---------")<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(comments, str, 0);
-    }
+
+
+
+
+void
+mkcatalog_outputs_keys_infiles(struct mkcatalogparams *p,
+                               gal_fits_list_key_t **keylist)
+{
+  char *stdname, *stdhdu, *stdvalcom;
+
+  gal_fits_key_list_title_add_end(keylist,
+                                  "Input files and/or configuration", 0);
 
   /* Object labels. */
-  if( asprintf(&str, "Objects: %s (hdu: %s).", p->objectsfile, p->cp.hdu)<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_str_add(comments, str, 0);
+  gal_fits_key_write_filename("INLAB", p->objectsfile, keylist, 0);
+  gal_fits_key_write_filename("INLABHDU", p->cp.hdu, keylist, 0);
 
   /* Clump labels. */
   if(p->clumps)
     {
-      if(asprintf(&str, "Clumps:  %s (hdu: %s).", p->usedclumpsfile,
-                  p->clumpshdu)<0)
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(comments, str, 0);
+      gal_fits_key_write_filename("INCLU", p->usedclumpsfile, keylist, 0);
+      gal_fits_key_write_filename("INCLUHDU", p->clumpshdu, keylist, 0);
     }
 
-  /* Values dataset. */
+  /* Values image. */
   if(p->values)
     {
-      if( asprintf(&str, "Values:  %s (hdu: %s).", p->usedvaluesfile,
-                   p->valueshdu)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(comments, str, 0);
+      gal_fits_key_write_filename("INVAL", p->usedvaluesfile, keylist, 0);
+      gal_fits_key_write_filename("INVALHDU", p->valueshdu, keylist, 0);
     }
 
-  /* Sky dataset. */
-  if(withsky && p->sky)
+  /* Sky image/value. */
+  if(p->sky)
     {
       if(p->sky->size==1)
-        {
-          if( asprintf(&str, "Sky:     %g.", *((float *)(p->sky->array)) )<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-        }
+        mkcatalog_outputs_keys_numeric(keylist, p->sky->array,
+                                       p->sky->type, "INSKYVAL",
+                                       "Value of Sky used (a single number).",
+                                       NULL);
       else
         {
-          if( asprintf(&str, "Sky:     %s (hdu: %s).", p->usedskyfile,
-                       p->skyhdu)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+          gal_fits_key_write_filename("INSKY", p->usedskyfile, keylist, 0);
+          gal_fits_key_write_filename("INSKYHDU", p->skyhdu, keylist, 0);
         }
-      gal_list_str_add(comments, str, 0);
     }
 
-  /* Sky standard deviation dataset. */
-  tmp = p->variance ? "VAR" : "STD";
-  if(withstd && p->std)
+  /* Standard deviation (or variance) image. */
+  if(p->variance)
+    {
+      stdname="INVAR"; stdhdu="INVARHDU";
+      stdvalcom="Value of Sky variance (a single number).";
+    }
+  else
+    {
+      stdname="INSTD"; stdhdu="INSTDHDU";
+      stdvalcom="Value of Sky STD (a single number).";
+    }
+  if(p->std)
     {
       if(p->std->size==1)
-        {
-          if( asprintf(&str, "Sky %s: %g.", tmp,
-                       *((float *)(p->std->array)) )<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-        }
+        mkcatalog_outputs_keys_numeric(keylist, p->std->array, p->std->type,
+                                       stdname, stdvalcom, NULL);
       else
         {
-          if( asprintf(&str, "Sky %s: %s (hdu: %s).", tmp, p->usedstdfile,
-                       p->stdhdu)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+          gal_fits_key_write_filename(stdname, p->usedstdfile, keylist, 0);
+          gal_fits_key_write_filename(stdhdu, p->stdhdu, keylist, 0);
         }
-      gal_list_str_add(comments, str, 0);
     }
 
   /* Upper limit mask. */
   if(p->upmaskfile)
     {
-      if( asprintf(&str, "Upperlimit mask: %s (hdu: %s).", p->upmaskfile,
-                   p->upmaskhdu)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(comments, str, 0);
+      gal_fits_key_write_filename("INUPM", p->upmaskfile, keylist, 0);
+      gal_fits_key_write_filename("INUPMHDU", p->upmaskhdu, keylist, 0);
     }
 }
 
@@ -425,160 +431,140 @@ mkcatalog_write_inputs_in_comments(struct mkcatalogparams *p,
 
 
 
-/* Write the similar information. */
-static gal_list_str_t *
-mkcatalog_outputs_same_start(struct mkcatalogparams *p, int o0c1,
-                             char *ObjClump)
+/* Write the output keywords. */
+static gal_fits_list_key_t *
+mkcatalog_outputs_keys(struct mkcatalogparams *p, int o0c1)
 {
-  char *str, *tstr;
-  double pixarea=NAN;
-  gal_list_str_t *comments=NULL;
+  float pixarea=NAN, fvalue;
+  gal_fits_list_key_t *keylist=NULL;
 
-  if( asprintf(&str, "%s catalog of %s", o0c1 ? "Object" : "Clump",
-               PROGRAM_STRING)<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_str_add(&comments, str, 0);
+  /* First, add the file names. */
+  mkcatalog_outputs_keys_infiles(p, &keylist);
 
-  /* If in a Git controlled directory and output isn't a FITS file (in
-     FITS, this will be automatically included). */
+  /* Type of catalog. */
+  gal_fits_key_list_add_end(&keylist, GAL_TYPE_STRING, "CATTYPE", 0,
+                            o0c1 ? "clumps" : "objects", 0,
+                            "Type of catalog ('object' or 'clump').", 0,
+                            NULL, 0);
+
+  /* Add project commit information when in a Git-controlled directory and
+     the output isn't a FITS file (in FITS, this will be automatically
+     included). */
   if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT && gal_git_describe())
-    {
-      if(asprintf(&str, "Working directory commit %s", gal_git_describe())<0)
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
-    }
-
-  /* Write the date. However, 'ctime' is going to put a new-line character
-     in the end of its string, so we are going to remove it manually. */
-  if( asprintf(&str, "%s started on %s", PROGRAM_NAME, ctime(&p->rawtime))<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  str[strlen(str)-1]='\0';
-  gal_list_str_add(&comments, str, 0);
-
-
-  /* Write the basic information. */
-  mkcatalog_write_inputs_in_comments(p, &comments, 1, 1);
-
-
-  /* Write other supplementary information. */
-  if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
-    {
-      if( asprintf(&str, "--------- Supplementary information ---------")<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
-    }
+    gal_fits_key_list_add_end(&keylist, GAL_TYPE_STRING, "COMMIT", 0,
+                              gal_git_describe(), 1,
+                              "Git commit in running directory.", 0,
+                              NULL, 0);
 
   /* Pixel area. */
   if(p->objects->wcs)
     {
       pixarea=gal_wcs_pixel_area_arcsec2(p->objects->wcs);
       if( isnan(pixarea)==0 )
-        {
-          if( asprintf(&str, "Pixel area (arcsec^2): %g", pixarea)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          gal_list_str_add(&comments, str, 0);
-        }
+        mkcatalog_outputs_keys_numeric(&keylist, &pixarea,
+                                       GAL_TYPE_FLOAT32, "PIXAREA",
+                                       "Pixel area of input image.",
+                                       "arcsec^2");
     }
 
-  /* Zeropoint magnitude */
-  if(p->hasmag)
-    {
-      if( asprintf(&str, "Zeropoint magnitude: %.4f", p->zeropoint)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
-    }
+  /* Zeropoint magnitude. */
+  if( !isnan(p->zeropoint) )
+    mkcatalog_outputs_keys_numeric(&keylist, &p->zeropoint,
+                                   GAL_TYPE_FLOAT32, "ZEROPNT",
+                                   "Zeropoint used for magnitude.",
+                                   "mag");
 
-  /* Print surface brightness limits. */
+  /* Add the title for the keywords. */
+  gal_fits_key_list_title_add_end(&keylist, "Surface brightness limit (SBL)", 0);
+
+  /* Print surface brightness limit. */
   if( !isnan(p->medstd) && !isnan(p->sfmagnsigma) )
     {
+      /* Used noise value (per pixel) and multiple of sigma. */
+      mkcatalog_outputs_keys_numeric(&keylist, &p->medstd,
+                                     GAL_TYPE_FLOAT32, "SBLSTD",
+                                     "Pixel STD for surface brightness limit.",
+                                     NULL);
+      mkcatalog_outputs_keys_numeric(&keylist, &p->sfmagnsigma,
+                                     GAL_TYPE_FLOAT32, "SBLNSIG",
+                                     "Sigma multiple for surface brightness "
+                                     "limit.", NULL);
+
       /* Only print magnitudes if a zeropoint is given. */
       if( !isnan(p->zeropoint) )
         {
-          /* Per pixel. */
-          if( asprintf(&str, "%g sigma surface brightness (magnitude/pixel): "
-                       "%.3f", p->sfmagnsigma,
-                       gal_units_counts_to_mag(p->sfmagnsigma * p->medstd,
-                                               p->zeropoint) )<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          gal_list_str_add(&comments, str, 0);
+          /* Per pixel, Surface brightness limit magnitude. */
+          fvalue=gal_units_counts_to_mag(p->sfmagnsigma * p->medstd,
+                                         p->zeropoint);
+          mkcatalog_outputs_keys_numeric(&keylist, &fvalue,
+                                         GAL_TYPE_FLOAT32, "SBLMAGPX",
+                                         "Surface brightness limit per pixel.",
+                                         "mag/pix");
 
-          /* Requested projected area: if a pixel area could be measured (a
-             WCS was given), then also estimate the surface brightness over
-             one arcsecond^2. From the pixel area, we know how many pixels
-             are necessary to fill the requested projected area (in
-             arcsecond^2). We also know that as the number of samples
-             (pixels) increases (to N), the noise increases by sqrt(N), see
-             the full discussion in the book. */
-          if(!isnan(pixarea) && !isnan(p->sfmagarea))
+          /* Only print the SBL in fixed area if a WCS is present. */
+          if(p->objects->wcs)
             {
-              /* Prepare the comment/information. */
-              if(p->sfmagarea==1.0f)
-                tstr=NULL;
-              else
-                if( asprintf(&tstr, "%g-", p->sfmagarea)<0 )
-                  error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-              if( asprintf(&str, "%g sigma surface brightness "
-                           "(magnitude/%sarcsec^2): %.3f", p->sfmagnsigma,
-                           tstr ? tstr : "",
-                           gal_units_counts_to_mag(p->sfmagnsigma
-                                                   * p->medstd
-                                                   * sqrt( p->sfmagarea / pixarea),
-                                                   p->zeropoint) ) <0 )
-                error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+              /* Area used for measuring SBL. */
+              mkcatalog_outputs_keys_numeric(&keylist, &p->sfmagarea,
+                                             GAL_TYPE_FLOAT32, "SBLAREA",
+                                             "Area for surface brightness limit.",
+                                             "arcsec^2");
 
-              /* Add the final string/line to the catalog comments. */
-              gal_list_str_add(&comments, str, 0);
-
-              /* Clean up (if necessary). */
-              if (tstr)
-                {
-                  free(tstr);
-                  tstr=NULL;
-                }
+              /* Per area, Surface brightness limit magnitude. */
+              fvalue=gal_units_counts_to_mag(p->sfmagnsigma
+                                             * p->medstd
+                                             / sqrt( p->sfmagarea
+                                                     * pixarea),
+                                             p->zeropoint);
+              mkcatalog_outputs_keys_numeric(&keylist, &fvalue,
+                                             GAL_TYPE_FLOAT32, "SBLMAG",
+                                             "Surf. bright. limit in SBLAREA.",
+                                             "mag/arcsec^2");
             }
+          else
+            gal_fits_key_list_fullcomment_add_end(&keylist, "Can't "
+                   "write surface brightness limiting magnitude values "
+                   "in fixed area ('SBLAREA' and 'SBLMAG' keywords) "
+                   "because input doesn't have a world coordinate system "
+                   "to identify the pixel scale.", 0);
         }
-
-      /* Notice: */
-      if( asprintf(&str, "Pixel STD for surface brightness calculation%s: %f",
-                   (!isnan(pixarea) && !isnan(p->sfmagarea))?"s":"",
-                   p->medstd)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
+      else
+        gal_fits_key_list_fullcomment_add_end(&keylist, "Can't write "
+               "surface brightness limiting magnitude values (e.g., "
+               "'SBLMAG' or 'SBLMAGPX' keywords) because no "
+               "'--zeropoint' has been given.", 0);
     }
   else
     {
-      gal_checkset_allocate_copy("No surface brightness calcuations "
-                                 "because no STD image used.", &str);
-      gal_list_str_add(&comments, str, 0);
-      gal_checkset_allocate_copy("Ask for column that uses the STD image, "
-                                 "or '--forcereadstd'.", &str);
-      gal_list_str_add(&comments, str, 0);
+      gal_fits_key_list_fullcomment_add_end(&keylist, "No surface "
+             "brightness calcuations (e.g., 'SBLMAG' or 'SBLMAGPX' "
+             "keywords) because STD image didn't have the 'MEDSTD' "
+             "keyword. There are two solutions: 1) Call with "
+             "'--forcereadstd'. 2) Measure the median noise level "
+             "manually (possibly with Gnuastro's Arithmetic program) "
+             "and put the value in the 'MEDSTD' keyword of the STD "
+             "image.", 0);
+      gal_fits_key_list_fullcomment_add_end(&keylist, "", 0);
     }
 
   /* The count-per-second correction. */
   if(p->cpscorr>1.0f)
-    {
-      if( asprintf(&str, "Counts-per-second correction: %.3f", p->cpscorr)<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
-    }
+    mkcatalog_outputs_keys_numeric(&keylist, &p->cpscorr,
+                                   GAL_TYPE_FLOAT32, "CPSCORR",
+                                   "Counts-per-second correction.",
+                                   NULL);
 
   /* Print upper-limit parameters. */
   if(p->upperlimit)
-    upperlimit_write_comments(p, &comments, 1);
+    upperlimit_write_keys(p, &keylist, 1);
 
-  /* Start column metadata. */
+  /* In plain-text outputs, put a title for column metadata. */
   if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
-    {
-      if( asprintf(&str, "--------- Table columns ---------")<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, str, 0);
-    }
+    gal_fits_key_list_title_add_end(&keylist, "Column metadata", 0);
 
-  /* Return the comments. */
-  return comments;
+  /* Return the list of keywords. */
+  return keylist;
 }
-
 
 
 
@@ -646,19 +632,20 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
 {
   size_t i, scounter;
   char str[200], *fname;
-  gal_list_str_t *comments;
+  gal_fits_list_key_t *keylist;
+  gal_list_str_t *comments=NULL;
   int outisfits=gal_fits_name_is_fits(p->objectsout);
 
   /* If a catalog is to be generated. */
   if(p->objectcols)
     {
       /* OBJECT catalog */
-      comments=mkcatalog_outputs_same_start(p, 0, "Detection");
+      keylist=mkcatalog_outputs_keys(p, 0);
 
       /* Reverse the comments list (so it is printed in the same order
          here), write the objects catalog and free the comments. */
       gal_list_str_reverse(&comments);
-      gal_table_write(p->objectcols, NULL, comments, p->cp.tableformat,
+      gal_table_write(p->objectcols, &keylist, NULL, p->cp.tableformat,
                       p->objectsout, "OBJECTS", 0);
       gal_list_str_free(comments, 1);
 
@@ -667,7 +654,7 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
       if(p->clumps)
         {
           /* Make the comments. */
-          comments=mkcatalog_outputs_same_start(p, 1, "Clumps");
+          keylist=mkcatalog_outputs_keys(p, 1);
 
           /* Write objects catalog
              ---------------------

@@ -258,6 +258,7 @@ columns_wcs_preparation(struct mkcatalogparams *p)
       case UI_KEY_HALFMAXSB:
       case UI_KEY_HALFSUMSB:
       case UI_KEY_AREAARCSEC2:
+      case UI_KEY_UPPERLIMITSB:
       case UI_KEY_SURFACEBRIGHTNESS:
         pixscale=gal_wcs_pixel_scale(p->objects->wcs);
         p->pixelarcsecsq=pixscale[0]*pixscale[1]*3600.0f*3600.0f;
@@ -1416,6 +1417,22 @@ columns_define_alloc(struct mkcatalogparams *p)
           oiflag[ OCOL_UPPERLIMIT_B ] = ciflag[ CCOL_UPPERLIMIT_B ] = 1;
           break;
 
+        case UI_KEY_UPPERLIMITSB:
+          name           = "UPPERLIMIT_SB";
+          unit           = "mag/arcsec^2";
+          ocomment       = "Upper limit surface brightness over its footprint.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_width     = 8;
+          disp_precision = 3;
+          p->hasmag      = 1;
+          p->upperlimit  = 1;
+          oiflag[ OCOL_NUMALL       ] = ciflag[ CCOL_NUMALL       ] = 1;
+          oiflag[ OCOL_UPPERLIMIT_B ] = ciflag[ CCOL_UPPERLIMIT_B ] = 1;
+          break;
+
         case UI_KEY_UPPERLIMITONESIGMA:
           name           = "UPPERLIMIT_ONE_SIGMA";
           unit           = MKCATALOG_NO_UNIT;
@@ -2545,6 +2562,11 @@ columns_fill(struct mkcatalog_passparams *pp)
           ((float *)colarr)[oind] = MKC_MAG(oi[ OCOL_UPPERLIMIT_B ]);
           break;
 
+        case UI_KEY_UPPERLIMITSB:
+          ((float *)colarr)[oind] = MKC_SB( oi[ OCOL_UPPERLIMIT_B ],
+                                            oi[ OCOL_NUMALL ] );
+          break;
+
         case UI_KEY_UPPERLIMITONESIGMA:
           ((float *)colarr)[oind] = oi[ OCOL_UPPERLIMIT_S ];
           break;
@@ -2887,6 +2909,11 @@ columns_fill(struct mkcatalog_passparams *pp)
 
           case UI_KEY_UPPERLIMITMAG:
             ((float *)colarr)[cind] = MKC_MAG(ci[ CCOL_UPPERLIMIT_B ]);
+            break;
+
+          case UI_KEY_UPPERLIMITSB:
+            ((float *)colarr)[cind] = MKC_SB( ci[ CCOL_UPPERLIMIT_B ],
+                                              ci[ CCOL_NUMALL ] );
             break;
 
           case UI_KEY_UPPERLIMITONESIGMA:

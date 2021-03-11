@@ -1423,10 +1423,20 @@ ui_preparations_read_keywords(struct mkcatalogparams *p)
           keys[0].array=&minstd;              keys[1].array=&p->medstd;
           gal_fits_key_read(p->usedstdfile, p->stdhdu, keys, 0, 0);
 
-          /* If the two keywords couldn't be read. We don't want to slow down
-             the user for the median (which needs sorting). So we'll just
-             calculate the minimum which is necessary for the 'p->cpscorr'. */
-          if(keys[1].status) p->medstd=NAN;
+          /* If the two keywords couldn't be read. We don't want to slow
+             down the user for the median (which needs sorting). So we'll
+             just calculate if if '--forcereadstd' is called. However, we
+             need the minimum for 'p->cpscorr'. */
+          if(keys[1].status)
+            {
+              if(p->forcereadstd)
+                {
+                  tmp=gal_statistics_median(p->std, 0);
+                  p->medstd=*((float *)(tmp->array));
+                }
+              else
+                p->medstd=NAN;
+            }
           if(keys[0].status)
             {
               /* Calculate the minimum STD. */

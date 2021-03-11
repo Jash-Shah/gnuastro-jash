@@ -22,6 +22,12 @@ See the end of the file for license conditions.
      with the profile's value in one column and any requested measure in
      the other columns (any MakeCatalog measurement is possible).
 
+  Book:
+   - New "Image surface brightness limit" section added to the third
+     tutorial (on "Detecting large extended targets"). It describes the
+     different ways to measure a dataset's surface brightness limit and
+     upper-limit surface brightness level on the dataset of this tutorial.
+
   Arithmetic:
    - New operators (all also available in Table's column arithmetic):
      - sin: Trigonometric sine (input in degrees).
@@ -39,6 +45,13 @@ See the end of the file for license conditions.
      - counts-to-mag: Convert counts to magnitudes with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
+
+  MakeCatalog:
+   - Newly added measurement columns:
+     --upperlimitsb: upper-limit surface brightness for the given label
+       (object or clump). This is useful for measuring a dataset's
+       realistic surface-brightness limit (not extrapolated like the
+       surface brightness limit, but using the actual object footprint).
 
   Table:
    - When given a value of '_all', the '--noblank' option (that will remove
@@ -110,6 +123,17 @@ See the end of the file for license conditions.
    - The default end to a "night" is set to 11:00a.m. Until now it was
      9:00a.m. But in some cases, calibration images may be taken after
      that. So to be safer in general it was incremented by 2 hours.
+
+  MakeCatalog:
+   - Surface brightness limit calculations are now written as standard FITS
+     keywords in the output catalog/table. Until now, they were simply
+     stored as 'COMMENT' keywords with no name so it was hard to parse
+     them. From this version, the following keywords are also written into
+     the output table(s), see the "MakeCatalog output" section of the book
+     for more: 'SBLSTD', 'SBLNSIG', 'SBLMAGPX', 'SBLAREA', 'SBLMAG'.
+   - Upper-limit settings are also written into the output tables as
+     keywords (like surface brightness limit numbers above): 'UPNSIGMA',
+     'UPNUMBER', 'UPRNGNAM', 'UPRNGSEE', 'UPSCMLTP', 'UPSCTOL'.
 
   Library:
    - gal_fits_key_write_wcsstr: also takes WCS structure as argument.

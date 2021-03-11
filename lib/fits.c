@@ -2052,7 +2052,7 @@ gal_fits_key_write_version_in_ptr(gal_fits_list_key_t **keylist, char *title,
   if(gitdescribe)
     {
       fits_update_key(fptr, TSTRING, "COMMIT", gitdescribe,
-                      "Git's commit description in running dir.", &status);
+                      "Git commit in running directory.", &status);
       free(gitdescribe);
     }
 

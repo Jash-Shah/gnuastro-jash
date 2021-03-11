@@ -35,6 +35,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/dimension.h>
 #include <gnuastro/statistics.h>
 
+#include <gnuastro-internal/checkset.h>
+
 #include "main.h"
 
 #include "ui.h"
@@ -277,82 +279,64 @@ upperlimit_random_position(struct mkcatalog_passparams *pp, gal_data_t *tile,
    used/necessary, so to avoid confusion, we won't write it.
 */
 void
-upperlimit_write_comments(struct mkcatalogparams *p,
-                          gal_list_str_t **comments, int withsigclip)
+upperlimit_write_keys(struct mkcatalogparams *p,
+                      gal_fits_list_key_t **keylist, int withsigclip)
 {
-  char *str;
+  /* Write a title for  */
+  gal_fits_key_list_title_add_end(keylist, "Upper-limit (UP) parameters", 0);
 
-  if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
-    {
-      if(asprintf(&str, "--------- Upper-limit measurement ---------")<0)
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(comments, str, 0);
-    }
+  /* Basic settings. */
+  gal_fits_key_list_add_end(keylist, GAL_TYPE_FLOAT32, "UPNSIGMA", 0,
+                            &p->upnsigma, 0,
+                            "Multiple of sigma to measure upper-limit.", 0,
+                            NULL, 0);
+  gal_fits_key_list_add_end(keylist, GAL_TYPE_SIZE_T, "UPNUMBER", 0,
+                            &p->upnum, 0,
+                            "Number of usable random samples.", 0,
+                            "counter", 0);
+  gal_fits_key_list_add_end(keylist, GAL_TYPE_STRING, "UPRNGNAM", 0,
+                            (void *)(p->rng_name), 0,
+                            "Random number generator name.", 0, NULL, 0);
+  mkcatalog_outputs_keys_numeric(keylist, &p->rng_seed,
+                                 GAL_TYPE_ULONG, "UPRNGSEE",
+                                 "Random number generator seed.", NULL);
 
-  if( asprintf(&str, "Number of usable random samples: %zu", p->upnum)<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_str_add(comments, str, 0);
-
+  /* Range of upper-limit values. */
   if(p->uprange)
     {
-      switch(p->objects->ndim)
-        {
-        case 2:
-          if( asprintf(&str, "Range of random samples about target: "
-                       "%zu, %zu", p->uprange[1], p->uprange[0])<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          break;
-        case 3:
-          if( asprintf(&str, "Range of random samples about target: %zu, "
-                       "%zu, %zu", p->uprange[2], p->uprange[1],
-                       p->uprange[0])<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          break;
-        default:
-          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
-                "address the problem. The value %zu is not recognized for "
-                "'p->input->ndim'", __func__, PACKAGE_BUGREPORT,
-                p->objects->ndim);
-        }
-      gal_list_str_add(comments, str, 0);
+      gal_fits_key_list_add_end(keylist, GAL_TYPE_SIZE_T, "UPRANGE1", 0,
+                                &p->uprange[p->objects->ndim-1], 0,
+                                "Range about target in axis 1.", 0,
+                                "pixels", 0);
+      gal_fits_key_list_add_end(keylist, GAL_TYPE_STRING, "UPRANGE2", 0,
+                                &p->uprange[p->objects->ndim==2 ? 0 : 1], 0,
+                                "Range about target in axis 2.", 0,
+                                "pixels", 0);
+      if(p->objects->ndim==3)
+        gal_fits_key_list_add_end(keylist, GAL_TYPE_STRING, "UPRANGE3", 0,
+                                  &p->uprange[0], 0,
+                                  "Range about target in axis 3.", 0,
+                                  "pixels", 0);
     }
 
-  if( asprintf(&str, "Random number generator name: %s", p->rng_name)<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_str_add(comments, str, 0);
-
-  if( asprintf(&str, "Random number generator seed: %lu", p->rng_seed)<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_str_add(comments, str, 0);
-
+  /* If the upper-limit measurement included sigma-clipping. */
   if(withsigclip)
     {
-      if( asprintf(&str, "Multiple of STD used for sigma-clipping: %.3f",
-                   p->upsigmaclip[0])<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(comments, str, 0);
-
+      gal_fits_key_list_add_end(keylist, GAL_TYPE_FLOAT64, "UPSCMLTP", 0,
+                                &p->upsigmaclip[0], 0,
+                                "Multiple of STD used for sigma-clipping.", 0,
+                                NULL, 0);
       if(p->upsigmaclip[1]>=1.0f)
-        {
-          if( asprintf(&str, "Number of clips for sigma-clipping: %.0f",
-                       p->upsigmaclip[1])<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-        }
+        gal_fits_key_list_add_end(keylist, GAL_TYPE_FLOAT64, "UPSCNUM", 0,
+                                  &p->upsigmaclip[1], 0,
+                                  "Number of clips for sigma-clipping.", 0,
+                                  NULL, 0);
       else
-        {
-          if( asprintf(&str, "Tolerance level to sigma-clipping: %.3f",
-                       p->upsigmaclip[1])<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-        }
-      gal_list_str_add(comments, str, 0);
+        gal_fits_key_list_add_end(keylist, GAL_TYPE_FLOAT64, "UPSCTOL", 0,
+                                  &p->upsigmaclip[1], 0,
+                                  "Tolerance level to sigma-clipping.", 0,
+                                  NULL, 0);
 
-      if( p->oiflag[ OCOL_UPPERLIMIT_B ] )
-        {
-          if( asprintf(&str, "Multiple of sigma-clipped STD for upper-limit: "
-                       "%.3f", p->upnsigma)<0 )
-            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-          gal_list_str_add(comments, str, 0);
-        }
     }
 }
 
@@ -367,8 +351,7 @@ upperlimit_write_check(struct mkcatalogparams *p, gal_list_sizet_t *check_x,
                        gal_list_f32_t *check_s)
 {
   float *sarr;
-  char *tmp=NULL, *tmp2=NULL;
-  gal_list_str_t *comments=NULL;
+  gal_fits_list_key_t *keylist=NULL;
   size_t *xarr, *yarr, *zarr=NULL, tnum, ttnum, num;
   gal_data_t *x=NULL, *y=NULL, *z=NULL, *s=NULL; /* To avoid warnings. */
 
@@ -418,35 +401,30 @@ upperlimit_write_check(struct mkcatalogparams *p, gal_list_sizet_t *check_x,
 
 
   /* Write exactly what object/clump this table is for. */
+  gal_fits_key_list_title_add_end(&keylist, "Target for upper-limit check", 0);
+  mkcatalog_outputs_keys_numeric(&keylist, &p->checkuplim[0],
+                                 GAL_TYPE_INT32, "UPCHKOBJ",
+                                 "Object label for upper-limit check target.",
+                                 NULL);
   if( p->checkuplim[1]!=GAL_BLANK_INT32 )
-    if( asprintf(&tmp2, ", Clump %d", p->checkuplim[1]) <0 )
-      error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  if( asprintf(&tmp, "Upperlimit distribution for Object %d%s",
-               p->checkuplim[0],
-               ( p->checkuplim[1]==GAL_BLANK_INT32
-                 ? "" : tmp2) ) <0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_str_add(&comments, tmp, 0);
-  if(tmp2) {free(tmp2); tmp2=NULL;}
+    mkcatalog_outputs_keys_numeric(&keylist, &p->checkuplim[1],
+                                   GAL_TYPE_INT32, "UPCHKCLU",
+                                   "Clump label for upper-limit check target.",
+                                   NULL);
 
 
-  /* Write the basic info, and conclude the comments. */
-  mkcatalog_write_inputs_in_comments(p, &comments, 0, 0);
-  upperlimit_write_comments(p, &comments, 0);
+  /* Write the basic info, and conclude the keywords. */
+  mkcatalog_outputs_keys_infiles(p, &keylist);
+  upperlimit_write_keys(p, &keylist, 0);
   if(p->cp.tableformat==GAL_TABLE_FORMAT_TXT)
-    {
-      if( asprintf(&tmp, "--------- Table columns ---------")<0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_list_str_add(&comments, tmp, 0);
-    }
+    gal_fits_key_list_title_add_end(&keylist, "Column metadata", 0);
 
 
   /* Define a list from the containers and write them into a table. */
   x->next=y;
   if(check_z) { y->next=z; z->next=s; }
   else        { y->next=s;            }
-  gal_list_str_reverse(&comments);
-  gal_table_write(x, NULL, comments, p->cp.tableformat, p->upcheckout,
+  gal_table_write(x, &keylist, NULL, p->cp.tableformat, p->upcheckout,
                   "UPPERLIMIT_CHECK", 0);
 
   /* Inform the user. */
@@ -488,12 +466,33 @@ upperlimit_measure(struct mkcatalog_passparams *pp, int32_t clumplab,
         {
           switch(column->status)
             {
-            /* Columns that depend on the sigma of the distribution. */
-            case UI_KEY_UPPERLIMIT:
-            case UI_KEY_UPPERLIMITMAG:
-            case UI_KEY_UPPERLIMITSIGMA:
-            case UI_KEY_UPPERLIMITONESIGMA:
+            /* Quantile column. */
+            case UI_KEY_UPPERLIMITQUANTILE:
 
+              /* Also only necessary once (if requested multiple times). */
+              if(qfunc==NULL)
+                {
+                  /* Similar to the case for sigma-clipping, we'll need to
+                     keep the size here also. */
+                  init_size=pp->up_vals->size;
+                  sum=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0,
+                                     -1, 1, NULL, NULL, NULL);
+                  ((float *)(sum->array))[0]=o[clumplab?CCOL_SUM:OCOL_SUM];
+                  qfunc=gal_statistics_quantile_function(pp->up_vals, sum, 1);
+
+                  /* Fill in the column. */
+                  col = clumplab ? CCOL_UPPERLIMIT_Q : OCOL_UPPERLIMIT_Q;
+                  pp->up_vals->size=pp->up_vals->dsize[0]=init_size;
+                  o[col] = ((double *)(qfunc->array))[0];
+
+                  /* Clean up. */
+                  gal_data_free(sum);
+                  gal_data_free(qfunc);
+                }
+              break;
+
+            /* Columns that depend on the sigma of the distribution. */
+            default:
               /* We only need to do this once, but the columns can be
                  requested in any order. */
               if(sigclip==NULL)
@@ -523,31 +522,6 @@ upperlimit_measure(struct mkcatalog_passparams *pp, int32_t clumplab,
 
                   /* Clean up. */
                   gal_data_free(sigclip);
-                }
-              break;
-
-            /* Quantile column. */
-            case UI_KEY_UPPERLIMITQUANTILE:
-
-              /* Also only necessary once (if requested multiple times). */
-              if(qfunc==NULL)
-                {
-                  /* Similar to the case for sigma-clipping, we'll need to
-                     keep the size here also. */
-                  init_size=pp->up_vals->size;
-                  sum=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0,
-                                     -1, 1, NULL, NULL, NULL);
-                  ((float *)(sum->array))[0]=o[clumplab?CCOL_SUM:OCOL_SUM];
-                  qfunc=gal_statistics_quantile_function(pp->up_vals, sum, 1);
-
-                  /* Fill in the column. */
-                  col = clumplab ? CCOL_UPPERLIMIT_Q : OCOL_UPPERLIMIT_Q;
-                  pp->up_vals->size=pp->up_vals->dsize[0]=init_size;
-                  o[col] = ((double *)(qfunc->array))[0];
-
-                  /* Clean up. */
-                  gal_data_free(sum);
-                  gal_data_free(qfunc);
                 }
               break;
             }
