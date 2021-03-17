@@ -852,7 +852,7 @@ In @ref{Tutorials} some real life examples of how these programs might be used a
 
 
 @node Science and its tools, Your rights, Quick start, Introduction
-@section Science and its tools
+@section Gnuastro manifesto: Science and its tools
 
 History of science indicates that there are always inevitably unseen faults, hidden assumptions, simplifications and approximations in all our theoretical models, data acquisition and analysis techniques.
 It is precisely these that will ultimately allow future generations to advance the existing experimental and theoretical knowledge through their new solutions and corrections.
@@ -888,7 +888,7 @@ This kind of subjective experience is prone to serious misunderstandings about t
 This attitude is further encouraged through non-free software@footnote{@url{https://www.gnu.org/philosophy/free-sw.html}}, poorly written (or non-existent) scientific software manuals, and non-reproducible papers@footnote{Where the authors omit many of the analysis/processing ``details'' from the paper by arguing that they would make the paper too long/unreadable.
 However, software engineers have been dealing with such issues for a long time.
 There are thus software management solutions that allow us to supplement papers with all the details necessary to exactly reproduce the result.
-For example see @url{https://doi.org/10.5281/zenodo.1163746, zenodo.1163746} and @url{https://doi.org/10.5281/zenodo.1164774, zenodo.1164774} and this @url{ http://akhlaghi.org/reproducible-science.html, general discussion}.}.
+For example see Akhlaghi et al. (2021, @url{https://arxiv.org/abs/2006.03018,arXiv:2006.03018}).}.
 This approach to scientific software and methods only helps in producing dogmas and an ``@emph{obscurantist faith in the expert's special skill, and in his personal knowledge and authority}''@footnote{Karl Popper. The logic of scientific discovery. 1959.
 Larger quote is given at the start of the PDF (for print) version of this book.}.
 
@@ -924,11 +924,7 @@ Therefore, while it empowers the privileged individual who has access to it, it 
 Exactly at the opposite end of the spectrum, Gnuastro's source code is released under the GNU general public license (GPL) and this book is released under the GNU free documentation license.
 You are therefore free to distribute any software you create using parts of Gnuastro's source code or text, or figures from this book, see @ref{Your rights}.
 
-With these principles in mind, Gnuastro's developers aim to impose the
-minimum requirements on you (in computer science, engineering and even the
-mathematics behind the tools) to understand and modify any step of Gnuastro
-if you feel the need to do so, see @ref{Why C} and @ref{Program design
-philosophy}.
+With these principles in mind, Gnuastro's developers aim to impose the minimum requirements on you (in computer science, engineering and even the mathematics behind the tools) to understand and modify any step of Gnuastro if you feel the need to do so, see @ref{Why C} and @ref{Program design philosophy}.
 
 @cindex Brahe, Tycho
 @cindex Galileo, Galilei
@@ -949,9 +945,16 @@ The same is true today: science cannot progress with a black box, or poorly rele
 The source code of a research is the new (abstractified) communication language in science, understandable by humans @emph{and} computers.
 Source code (in any programming language) is a language/notation designed to express all the details that would be too tedious/long/frustrating to report in spoken languages like English, similar to mathematic notation.
 
+@quotation
+An article about computational science [almost all sciences today] ... is not the scholarship itself, it is merely advertising of the scholarship.
+The Actual Scholarship is the complete software development environment and the complete set of instructions which generated the figures.
+@author Buckheit & Donoho, Lecture Notes in Statistics, Vol 103, 1996
+@end quotation
+
 Today, the quality of the source code that goes into a scientific result (and the distribution of that code) is as critical to scientific vitality and integrity, as the quality of its written language/English used in publishing/distributing its paper.
 A scientific paper will not even be reviewed by any respectable journal if its written in a poor language/English.
 A similar level of quality assessment is thus increasingly becoming necessary regarding the codes/methods used to derive the results of a scientific paper.
+For more on this, please see Akhlaghi et al. (2021) at @url{https://arxiv.org/abs/2006.03018,arXiv:2006.03018}).
 
 @cindex Ken Thomson
 @cindex Stroustrup, Bjarne
@@ -983,7 +986,7 @@ Our future discoveries must be looked for in the sixth place of decimals.
 
 @cindex Puzzle solving scientist
 @cindex Scientist, puzzle solver
-If scientists are considered to be more than mere ``puzzle'' solvers@footnote{Thomas S. Kuhn. @emph{The Structure of Scientific Revolutions}, University of Chicago Press, 1962.} (simply adding to the decimals of existing values or observing a feature in 10, 100, or 100000 more galaxies or stars, as Kelvin and Michelson clearly believed), they cannot just passively sit back and uncritically repeat the previous (observational or theoretical) methods/tools on new data.
+If scientists are considered to be more than mere puzzle solvers@footnote{Thomas S. Kuhn. @emph{The Structure of Scientific Revolutions}, University of Chicago Press, 1962.} (simply adding to the decimals of existing values or observing a feature in 10, 100, or 100000 more galaxies or stars, as Kelvin and Michelson clearly believed), they cannot just passively sit back and uncritically repeat the previous (observational or theoretical) methods/tools on new data.
 Today there is a wealth of raw telescope images ready (mostly for free) at the finger tips of anyone who is interested with a fast enough internet connection to download them.
 The only thing lacking is new ways to analyze this data and dig out the treasure that is lying hidden in them to existing methods and techniques.
 
