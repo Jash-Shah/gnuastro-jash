@@ -1899,6 +1899,36 @@ gal_fits_key_write(gal_fits_list_key_t **keylist, char *title,
 
 
 
+/* Fits doesn't allow NaN values, so if the type of float or double, we'll
+   just check to see if its NaN or not and let the user know the keyword
+   name (to help them fix it). */
+static void
+gal_fits_key_write_in_ptr_nan_check(gal_fits_list_key_t *tmp)
+{
+  int nanwarning=0;
+
+  /* Check the value. */
+  switch(tmp->type)
+    {
+    case GAL_TYPE_FLOAT32:
+      if( isnan( ((float *)(tmp->value))[0] ) ) nanwarning=1;
+      break;
+    case GAL_TYPE_FLOAT64:
+      if( isnan( ((double *)(tmp->value))[0] ) ) nanwarning=1;
+      break;
+    }
+
+  /* Print the warning. */
+  if(nanwarning)
+    error(EXIT_SUCCESS, 0, "%s: (WARNING) value of '%s' is NaN "
+          "and FITS doesn't recognize a NaN key value", __func__,
+          tmp->keyname);
+}
+
+
+
+
+
 /* Write the keywords in the gal_fits_list_key_t linked list to the FITS
    file. Every keyword that is written is freed, that is why we need the
    pointer to the linked list (to correct it after we finish). */
@@ -1928,6 +1958,10 @@ gal_fits_key_write_in_ptr(gal_fits_list_key_t **keylist, fitsfile *fptr)
           /* Write the basic key value and comments. */
           if(tmp->value)
             {
+              /* Print a warning if the value is NaN. */
+              gal_fits_key_write_in_ptr_nan_check(tmp);
+
+              /* Write/Update the keyword value. */
               if( fits_update_key(fptr, gal_fits_type_to_datatype(tmp->type),
                                   tmp->keyname, tmp->value, tmp->comment,
                                   &status) )

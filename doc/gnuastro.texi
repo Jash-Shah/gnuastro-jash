@@ -17065,7 +17065,7 @@ Plugging this into the magnitude equation, we get the @mymath{n\sigma} surface b
 @dispmath{SB_{{n\sigma,\rm A arcsec}^2}=-2.5\times\log_{10}{\left(n\sigma_m\over \sqrt{pA}\right)+z} \quad\quad [mag/arcsec^2]}
 
 @cindex World Coordinate System (WCS)
-MakeCatalog will calculate the input dataset's @mymath{SB_{n\sigma,\rm pixel}} and @mymath{SB_{{n\sigma,\rm A arcsec}^2}} and will write them as comments/meta-data in the output catalog(s)@footnote{Information on the general surface brightness limit is written in the @code{COMMENT} keywords if the requested output is a FITS table, or lines starting with a @code{#} when the output is plain-text.}, see @ref{Image surface brightness limit}.
+MakeCatalog will calculate the input dataset's @mymath{SB_{n\sigma,\rm pixel}} and @mymath{SB_{{n\sigma,\rm A arcsec}^2}} and will write them as the @code{SBLMAGPIX} and @code{SBLMAG} keywords the output catalog(s), see @ref{MakeCatalog output}.
 You can set your desired @mymath{n}-th multiple of @mymath{\sigma} and the @mymath{A} arcsec@mymath{^2} area using the following two options respectively: @option{--sfmagnsigma} and @option{--sfmagarea} (see @ref{MakeCatalog output}).
 Just note that @mymath{SB_{{n\sigma,\rm A arcsec}^2}} is only calculated if the input has World Coordinate System (WCS).
 Without WCS, the pixel scale cannot be derived.
@@ -25780,9 +25780,9 @@ return @code{NULL}.
 @end deftypefun
 
 @deftypefun double gal_wcs_pixel_area_arcsec2 (struct wcsprm @code{*wcs})
-Return the pixel area of @code{wcs} in arc-second squared. If the input WCS
-structure is not two dimensional and the units (@code{CUNIT} keywords) are
-not @code{deg} (for degrees), then this function will return a NaN.
+Return the pixel area of @code{wcs} in arc-second squared.
+This only works when the input dataset has atleast two dimensions and the units of the first two dimensions (@code{CUNIT} keywords) are @code{deg} (for degrees).
+In other cases, this function will return a NaN.
 @end deftypefun
 
 @deftypefun int gal_wcs_coverage (char @code{*filename}, char @code{*hdu}, size_t @code{*ondim}, double @code{**ocenter}, double @code{**owidth}, double @code{**omin}, double @code{**omax})

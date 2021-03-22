@@ -501,14 +501,15 @@ mkcatalog_outputs_keys(struct mkcatalogparams *p, int o0c1)
                                          "Surface brightness limit per pixel.",
                                          "mag/pix");
 
-          /* Only print the SBL in fixed area if a WCS is present. */
-          if(p->objects->wcs)
+          /* Only print the SBL in fixed area if a WCS is present and a
+             pixel area could be deduced. */
+          if( !isnan(pixarea) )
             {
               /* Area used for measuring SBL. */
               mkcatalog_outputs_keys_numeric(&keylist, &p->sfmagarea,
                                              GAL_TYPE_FLOAT32, "SBLAREA",
-                                             "Area for surface brightness limit.",
-                                             "arcsec^2");
+                                             "Area for surface brightness "
+                                             "limit.", "arcsec^2");
 
               /* Per area, Surface brightness limit magnitude. */
               fvalue=gal_units_counts_to_mag(p->sfmagnsigma
@@ -523,10 +524,12 @@ mkcatalog_outputs_keys(struct mkcatalogparams *p, int o0c1)
             }
           else
             gal_fits_key_list_fullcomment_add_end(&keylist, "Can't "
-                   "write surface brightness limiting magnitude values "
-                   "in fixed area ('SBLAREA' and 'SBLMAG' keywords) "
-                   "because input doesn't have a world coordinate system "
-                   "to identify the pixel scale.", 0);
+                   "write surface brightness limiting magnitude (SBLM) "
+                   "values in fixed area ('SBLAREA' and 'SBLMAG' "
+                   "keywords) because input doesn't have a world "
+                   "coordinate system (WCS), or the first two "
+                   "coordinates of the WCS weren't angular positions "
+                   "in units of degrees.", 0);
         }
       else
         gal_fits_key_list_fullcomment_add_end(&keylist, "Can't write "

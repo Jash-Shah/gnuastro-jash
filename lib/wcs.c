@@ -1551,10 +1551,9 @@ gal_wcs_pixel_area_arcsec2(struct wcsprm *wcs)
   double out;
   double *pixscale;
 
-  /* A small sanity check. Later, when higher dimensions are necessary, we
-     can find which ones correlate to RA and Dec and use them to find the
-     pixel area in arcsec^2. */
-  if(wcs->naxis!=2) return NAN;
+  /* Some basic sanity checks. */
+  if(wcs==NULL) return NAN;
+  if(wcs->naxis==1) return NAN;
 
   /* Check if the units of the axis are degrees or not. Currently all FITS
      images I have worked with use 'deg' for degrees. If other alternatives
