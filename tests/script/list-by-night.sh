@@ -16,24 +16,24 @@
 
 
 
+
 # Preliminaries
 # =============
 #
 # Set the variables (The executable is in the build tree). Do the
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
-#
-# We will be adding noise to two images: the warped (smaller) and unwarped
-# (larger) mock images. The warped one will be used by programs that don't
-# care about the size of the image, but the larger one will be used by
-# those that do: for example SubtractSky and NoiseChisel will be better
-# tested on a larger image.
 prog=sort-by-night
 dep1=fits
 dep2=table
 dep1name=../bin/$dep1/ast$dep1
 dep2name=../bin/$dep2/ast$dep2
 execname=../bin/script/astscript-$prog
+fits1name=clearcanvas.fits
+fits2name=aperturephot.fits
+fits3name=convolve_spatial.fits
+fits4name=convolve_spatial_noised.fits
+fits5name=convolve_spatial_noised_detected.fits
 
 
 
@@ -47,9 +47,16 @@ execname=../bin/script/astscript-$prog
 #
 #   - The executable script was not made.
 #   - The programs it use weren't made.
+#   - The input data weren't made.
 if [ ! -f $execname ]; then echo "$execname doesn't exist."; exit 77; fi
 if [ ! -f $dep1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
 if [ ! -f $dep2name ]; then echo "$dep2name doesn't exist."; exit 77; fi
+if [ ! -f $fits1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+if [ ! -f $fits2name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+if [ ! -f $fits3name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+if [ ! -f $fits4name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+if [ ! -f $fits5name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+
 
 
 
@@ -74,4 +81,5 @@ ln -sf $dep2name ast$dep2
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
 export PATH="./:$PATH"
-$check_with_program $execname *.fits
+$check_with_program $execname $fits1name $fits2name $fits3name \
+                    $fits4name $fits5name
