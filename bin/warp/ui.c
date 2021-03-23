@@ -352,7 +352,8 @@ ui_check_options_and_arguments(struct warpparams *p)
                                              p->cp.quietmmap);
 
       /* Read the WCS and remove one-element wide dimension(s). */
-      p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu, p->hstartwcs,
+      p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu,
+                                 p->cp.wcslinearmatrix, p->hstartwcs,
                                  p->hendwcs, &p->input->nwcs);
       p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
                                                 p->input->dsize,

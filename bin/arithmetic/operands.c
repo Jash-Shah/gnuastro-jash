@@ -135,8 +135,9 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
                             : NULL);
 
                   /* Read the WCS. */
-                  p->refdata.wcs=gal_wcs_read(filename, newnode->hdu, 0, 0,
-                                              &p->refdata.nwcs);
+                  p->refdata.wcs=gal_wcs_read(filename, newnode->hdu,
+                                              p->cp.wcslinearmatrix,
+                                              0, 0, &p->refdata.nwcs);
 
                   /* Remove extra (length of 1) dimensions (if we had an
                      image HDU). */

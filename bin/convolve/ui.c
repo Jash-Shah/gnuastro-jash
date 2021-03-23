@@ -438,7 +438,8 @@ ui_read_input(struct convolveparams *p)
                                                INPUT_USE_TYPE,
                                                p->cp.minmapsize,
                                                p->cp.quietmmap);
-        p->input->wcs=gal_wcs_read(p->filename, p->cp.hdu, 0, 0,
+        p->input->wcs=gal_wcs_read(p->filename, p->cp.hdu,
+                                   p->cp.wcslinearmatrix, 0, 0,
                                    &p->input->nwcs);
         p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
                                                   p->input->dsize,

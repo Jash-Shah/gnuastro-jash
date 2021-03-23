@@ -538,7 +538,8 @@ ui_wcs_info(struct mkcatalogparams *p)
   size_t i;
 
   /* Read the WCS meta-data. */
-  p->objects->wcs=gal_wcs_read(p->objectsfile, p->cp.hdu, 0, 0,
+  p->objects->wcs=gal_wcs_read(p->objectsfile, p->cp.hdu,
+                               p->cp.wcslinearmatrix, 0, 0,
                                &p->objects->nwcs);
 
   /* Read the basic WCS information. */

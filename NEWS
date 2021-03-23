@@ -22,6 +22,13 @@ See the end of the file for license conditions.
      with the profile's value in one column and any requested measure in
      the other columns (any MakeCatalog measurement is possible).
 
+  All programs:
+   --wcslinearmatrix: new option in all programs that let's you select the
+     output WCS linear matrix format. It takes one of two values: 'pc' (for
+     the 'PCi_j' formalism) and 'cd' (for 'CDi_j'). Until now, the outputs
+     were always stored in the 'PCi_j' formalism (which is still the
+     recommended format).
+
   Book:
    - New "Image surface brightness limit" section added to the third
      tutorial (on "Detecting large extended targets"). It describes the
@@ -141,6 +148,8 @@ See the end of the file for license conditions.
      desired keyword's value is no longer mandatory. When not given, the
      smallest numeric datatype that can keep the value will be found and
      used.
+   - gal_wcs_read: allows specifying the linear matrix of the WCS.
+   - gal_wcs_read_fitsptr: allows specifying the linear matrix of the WCS.
 
 ** Bugs fixed
   bug #60082: Arithmetic library crash for integer operators like modulo

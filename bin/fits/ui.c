@@ -120,6 +120,7 @@ ui_initialize_options(struct fitsparams *p,
         case GAL_OPTIONS_KEY_SEARCHIN:
         case GAL_OPTIONS_KEY_IGNORECASE:
         case GAL_OPTIONS_KEY_TYPE:
+        case GAL_OPTIONS_KEY_WCSLINEARMATRIX:
         case GAL_OPTIONS_KEY_DONTDELETE:
         case GAL_OPTIONS_KEY_LOG:
         case GAL_OPTIONS_KEY_NUMTHREADS:

@@ -463,7 +463,8 @@ keywords_distortion_wcs(struct fitsparams *p)
     }
 
   /* Read the input's WCS and make sure one exists. */
-  inwcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
+  inwcs=gal_wcs_read(p->input->v, p->cp.hdu, p->cp.wcslinearmatrix,
+                     0, 0, &nwcs);
   if(inwcs==NULL)
     error(EXIT_FAILURE, 0, "%s (hdu %s): doesn't have any WCS structure "
           "for converting its distortion",

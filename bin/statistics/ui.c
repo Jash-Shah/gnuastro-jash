@@ -971,7 +971,8 @@ ui_preparations(struct statisticsparams *p)
       p->inputformat=INPUT_FORMAT_IMAGE;
       p->input=gal_array_read_one_ch(p->inputname, cp->hdu, NULL,
                                      cp->minmapsize, p->cp.quietmmap);
-      p->input->wcs=gal_wcs_read(p->inputname, cp->hdu, 0, 0,
+      p->input->wcs=gal_wcs_read(p->inputname, cp->hdu,
+                                 p->cp.wcslinearmatrix, 0, 0,
                                  &p->input->nwcs);
       p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
                                                 p->input->dsize,

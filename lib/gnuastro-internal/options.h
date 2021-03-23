@@ -125,6 +125,7 @@ enum options_common_keys
   GAL_OPTIONS_KEY_INTERPONLYBLANK,
   GAL_OPTIONS_KEY_INTERPMETRIC,
   GAL_OPTIONS_KEY_INTERPNUMNGB,
+  GAL_OPTIONS_KEY_WCSLINEARMATRIX,
 };
 
 
@@ -194,9 +195,10 @@ struct gal_options_common_params
   /* Output. */
   char                 *output; /* Directory containg output.             */
   uint8_t                 type; /* Data type of output.                   */
+  uint8_t          tableformat; /* Internal code for output table format. */
+  uint8_t      wcslinearmatrix; /* WCS matrix to use (PC or CD).          */
   uint8_t           dontdelete; /* ==1: Don't delete existing file.       */
   uint8_t         keepinputdir; /* Keep input directory for auto output.  */
-  uint8_t          tableformat; /* Internal code for output table format. */
 
   /* Operating modes. */
   uint8_t                quiet; /* Only print errors.                     */
@@ -274,6 +276,10 @@ gal_options_read_type(struct argp_option *option, char *arg,
 void *
 gal_options_read_searchin(struct argp_option *option, char *arg,
                           char *filename, size_t lineno, void *junk);
+
+void *
+gal_options_read_wcslinearmatrix(struct argp_option *option, char *arg,
+                                 char *filename, size_t lineno, void *junk);
 
 void *
 gal_options_read_tableformat(struct argp_option *option, char *arg,

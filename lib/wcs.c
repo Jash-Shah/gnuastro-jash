@@ -53,14 +53,6 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* Static functions on for this file. */
-static void
-gal_wcs_to_cd(struct wcsprm *wcs);
-
-
-
-
-
 /*************************************************************
  ***********               Read WCS                ***********
  *************************************************************/
@@ -149,8 +141,8 @@ wcs_read_correct_pc_cd(struct wcsprm *wcs)
    Don't call this function within a thread or use a mutex.
 */
 struct wcsprm *
-gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
-                     int *nwcs)
+gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
+                     size_t hendwcs, int *nwcs)
 {
   /* Declaratins: */
   int sumcheck;
@@ -361,6 +353,9 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
         }
     }
 
+  /* If the user wants a CD linear matrix, do the conversion here. */
+  if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD) gal_wcs_to_cd(wcs);
+
   /* Clean up and return. */
   status=0;
   if (fits_free_memory(fullheader, &status) )
@@ -374,8 +369,8 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
 
 
 struct wcsprm *
-gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
-             size_t hendwcs, int *nwcs)
+gal_wcs_read(char *filename, char *hdu, int linearmatrix,
+             size_t hstartwcs, size_t hendwcs, int *nwcs)
 {
   int status=0;
   fitsfile *fptr;
@@ -389,7 +384,8 @@ gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
   fptr=gal_fits_hdu_open_format(filename, hdu, 0);
 
   /* Read the WCS information: */
-  wcs=gal_wcs_read_fitsptr(fptr, hstartwcs, hendwcs, nwcs);
+  wcs=gal_wcs_read_fitsptr(fptr, linearmatrix, hstartwcs,
+                           hendwcs, nwcs);
 
   /* Close the FITS file and return. */
   fits_close_file(fptr, &status);
@@ -403,7 +399,8 @@ gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
 
 struct wcsprm *
 gal_wcs_create(double *crpix, double *crval, double *cdelt,
-               double *pc, char **cunit, char **ctype, size_t ndim)
+               double *pc, char **cunit, char **ctype,
+               size_t ndim, int linearmatrix)
 {
   size_t i;
   int status;
@@ -440,6 +437,10 @@ gal_wcs_create(double *crpix, double *crval, double *cdelt,
   if(status)
     error(EXIT_FAILURE, 0, "wcsset error %d: %s", status,
           wcs_errmsg[status]);
+
+  /* If a CD matrix is desired make it. */
+  if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD)
+    gal_wcs_to_cd(wcs);
 
   /* Return the output WCS. */
   return wcs;
@@ -497,15 +498,21 @@ void
 gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
 {
   char *wcsstr;
-  int tpvdist, status=0, nkeyrec;
+  int cdfordist, status=0, nkeyrec;
 
-  /* Prepare the main rotation matrix. Note that for TPV distortion, WCSLIB
-     versions 7.3 and before couldn't deal with the CDELT keys, so to be
-     safe, in such cases, we'll remove the effect of CDELT in the
-     'gal_wcs_to_cd' function. */
-  tpvdist=wcs->lin.disseq && !strcmp(wcs->lin.disseq->dtype[1], "TPV");
-  if( tpvdist ) gal_wcs_to_cd(wcs);
-  else          gal_wcs_decompose_pc_cdelt(wcs);
+  /* For the TPV, TNX and ZPX distortions, WCSLIB can't deal with the CDELT
+     keys properly and its better to use the CD matrix instead, so we'll
+     use the 'gal_wcs_to_cd' function. */
+  cdfordist = ( wcs->lin.disseq
+                && ( !strcmp(   wcs->lin.disseq->dtype[1], "TPV")
+                     || !strcmp(wcs->lin.disseq->dtype[1], "TNX")
+                     || !strcmp(wcs->lin.disseq->dtype[1], "ZPX") ) );
+
+  /* Finalize the linear transformation matrix. Note that some programs may
+     have worked on the WCS. So even if 'altlin' is already 2, we'll just
+     ensure that the final matrix is CD here. */
+  if(wcs->altlin==2 || cdfordist) gal_wcs_to_cd(wcs);
+  else                            gal_wcs_decompose_pc_cdelt(wcs);
 
   /* Clean up small errors in the PC matrix and CDELT values. */
   gal_wcs_clean_errors(wcs);
@@ -523,33 +530,33 @@ gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
   status=0;
 
    /* WCSLIB is going to write PC+CDELT keywords in any case. But when we
-      have a TPV distortion, it is cleaner to use a CD matrix. Also,
-      including and before version 7.3, WCSLIB wouldn't convert coordinates
-      properly if the PC matrix is used with the TPV distortion. So to help
-      users with WCSLIB 7.3 or earlier, we need to conver the PC matrix to
-      CD. 'gal_wcs_to_cd' function already made sure that CDELT=1, so
-      effectively the CD matrix and PC matrix are equivalent, we just need
-      to convert the keyword names and delete the CDELT keywords. Note that
-      zero-valued PC/CD elements may not be present, so we'll manually set
-      'status' to zero and not let CFITSIO crash.*/
+      have a TPV, TNX or ZPX distortion, it is cleaner to use a CD matrix
+      (WCSLIB can't convert coordinates properly if the PC matrix is used
+      with the TPV distortion). So to help users avoid the potential
+      problems with WCSLIB. 'gal_wcs_to_cd' function already made sure that
+      CDELTi=1.0, so effectively the CD matrix and PC matrix are
+      equivalent, we just need to convert the keyword names and delete the
+      CDELT keywords. Note that zero-valued PC/CD elements may not be
+      present, so we'll manually set 'status' to zero to avoid CFITSIO from
+      crashing. */
   if(wcs->altlin==2)
     {
+      status=0; fits_delete_str(fptr, "CDELT1", &status);
+      status=0; fits_delete_str(fptr, "CDELT2", &status);
       status=0; fits_modify_name(fptr, "PC1_1", "CD1_1", &status);
       status=0; fits_modify_name(fptr, "PC1_2", "CD1_2", &status);
       status=0; fits_modify_name(fptr, "PC2_1", "CD2_1", &status);
       status=0; fits_modify_name(fptr, "PC2_2", "CD2_2", &status);
-      status=0; fits_delete_str(fptr, "CDELT1", &status);
-      status=0; fits_delete_str(fptr, "CDELT2", &status);
+      if(wcs->naxis==3)
+        {
+          status=0; fits_delete_str(fptr, "CDELT3", &status);
+          status=0; fits_modify_name(fptr, "PC1_3", "CD1_3", &status);
+          status=0; fits_modify_name(fptr, "PC2_3", "CD2_3", &status);
+          status=0; fits_modify_name(fptr, "PC3_1", "CD3_1", &status);
+          status=0; fits_modify_name(fptr, "PC3_2", "CD3_2", &status);
+          status=0; fits_modify_name(fptr, "PC3_3", "CD3_3", &status);
+        }
       status=0;
-      fits_write_comment(fptr, "The CD matrix is used instead of the "
-                         "PC+CDELT due to conflicts with TPV distortion "
-                         "in WCSLIB 7.3 (released on 2020/06/03) and "
-                         "ealier. By default Gnuastro will write "
-                         "PC+CDELT matrices because the rotation (PC) and "
-                         "pixel-scale (CDELT) are separate; providing "
-                         "more physically relevant metadata for human "
-                         "readers (PC+CDELT is also the default format "
-                         "of WCSLIB).", &status);
     }
 }
 
@@ -1307,7 +1314,7 @@ gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs)
 
 
 /* Set the WCS structure to use the CD matrix. */
-static void
+void
 gal_wcs_to_cd(struct wcsprm *wcs)
 {
   size_t i, j, naxis;
@@ -1588,8 +1595,10 @@ gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
   size_t i, ndim, *dsize=NULL, numrows;
   double *x=NULL, *y=NULL, *z=NULL, *min, *max, *center, *width;
 
-  /* Read the desired WCS. */
-  wcs=gal_wcs_read(filename, hdu, 0, 0, &nwcs);
+  /* Read the desired WCS (note that the linear matrix is irrelevant here,
+     we'll just select PC because its the default WCS mode. */
+  wcs=gal_wcs_read(filename, hdu, GAL_WCS_LINEAR_MATRIX_PC,
+                   0, 0, &nwcs);
 
   /* If a WCS doesn't exist, return NULL. */
   if(wcs==NULL) return 0;
