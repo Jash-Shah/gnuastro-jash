@@ -782,10 +782,10 @@ keywords_value(struct fitsparams *p)
   size_t i, ii=0, ninput, nkeys;
   gal_data_t *out=NULL, *keysll=NULL;
 
-  /* Count how many inputs there are and allocate the first column with the
-     name. */
+  /* Count how many inputs there are, and allocate the first column with
+     the name. */
   ninput=gal_list_str_number(p->input);
-  if(ninput>1)
+  if(ninput>1 || p->cp.quiet==0)
     out=gal_data_alloc(NULL, GAL_TYPE_STRING, 1, &ninput, NULL, 0,
                        p->cp.minmapsize, p->cp.quietmmap, "FILENAME",
                        "name", "Name of input file.");

@@ -9128,7 +9128,7 @@ Also, unlike the rest of the options in this section, with @option{--keyvalue}, 
 @item -l STR[,STR[,...]
 @itemx --keyvalue=STR[,STR[,...]
 Only print the value of the requested keyword(s): the @code{STR}s.
-@option{--keyvalue} can be called multiple times, and each call can contain multiple comma-separated values.
+@option{--keyvalue} can be called multiple times, and each call can contain multiple comma-separated keywords.
 If more than one file is given, this option uses the same HDU/extension for all of them (value to @option{--hdu}).
 For example, you can get the number of dimensions of the three FITS files in the running directory, as well as the length along each dimension, with this command:
 
@@ -9139,11 +9139,11 @@ image-b.fits 2      774    672
 image-c.fits 2      387    336
 @end example
 
-If a single dataset is given, its name is not printed on the first column, only the values of the requested keywords.
+If only one input is given, and the @option{--quiet} option is activated, the file name is not printed on the first column, only the values of the requested keywords.
 
 @example
 $ astfits image-a.fits --keyvalue=NAXIS,NAXIS1 \
-          --keyvalue=NAXIS2
+          --keyvalue=NAXIS2 --quiet
 2      774    672
 @end example
 
@@ -9179,7 +9179,7 @@ image-a.fits
 image-b.fits
 @end example
 
-Note that @option{--colinfoinstdout} is necessary to use column names in the subsequent @command{asttable} command.
+Note that @option{--colinfoinstdout} is necessary to use column names when piping to other programs (like @command{asttable} above).
 Also, with the @option{-cFILENAME} option, we are asking Table to only print the final file names (we don't need the sizes any more).
 
 The commands with multiple files above used @file{*.fits}, which is only useful when all your FITS files are in the same directory.
