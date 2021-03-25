@@ -9506,7 +9506,46 @@ In this case (following the GNU C Library), this option will make the following 
 This is a very useful option for operations on the FITS date values, for example sorting FITS files by their dates, or finding the time difference between two FITS files.
 The advantage of working with the Unix epoch time is that you don't have to worry about calendar details (for example the number of days in different months, or leap years, etc).
 
-@item --wcsdistortion STR
+@item --wcscoordsys=STR
+@cindex Galactic coordinate system
+@cindex Ecliptic coordinate system
+@cindex Equatorial coordinate system
+@cindex Supergalactic coordinate system
+@cindex Coordinate system: Galactic
+@cindex Coordinate system: Ecliptic
+@cindex Coordinate system: Equatorial
+@cindex Coordinate system: Supergalactic
+Convert the coordinate system of the image's world coordinate system (WCS) to the given coordinate system (@code{STR}) and write it into the file given to @option{--output} (or an automatically named file if no @option{--output} has been given).
+
+For example with the command below, @file{img-eq.fits} will have an identical dataset (pixel values) as @file{image.fits}.
+However, the WCS coordinate system of @file{img-eq.fits} will be the equatorial coordinate system in the Julian calendar epoch 2000 (which is the most common epoch used today).
+Fits will automatically extract the current coordinate system of @file{image.fits} and as long as its one of the recognized coordinate systems listed below, it will do the conversion.
+
+@example
+$ astfits image.fits --coordsys=eq-j2000 --output=img-eq.fits
+@end example
+
+The currently recognized coordinate systems are listed below (the most common one today is @code{eq-j2000}):
+
+@table @code
+@item eq-j2000
+2000.0 (Julian-year) equatorial coordinates.
+@item eq-b1950
+1950.0 (Besselian-year) equatorial coordinates.
+@item ec-j2000
+2000.0 (Julian-year) ecliptic coordinates.
+@item ec-b1950
+1950.0 (Besselian-year) ecliptic coordinates.
+@item galactic
+Galactic coordinates.
+@item supergalactic
+Supergalactic coordinates.
+@end table
+
+The Equatorial and Ecliptic coordinate systems are defined by the mean equator and equinox epoch: either the Besselian year 1950.0, or the Julian year 2000.
+For more on their difference and links for further reading about epochs in astronomy, please see the description in @url{https://en.wikipedia.org/wiki/Epoch_(astronomy), Wikipedia}.
+
+@item --wcsdistortion=STR
 @cindex WCS distortion
 @cindex Distortion, WCS
 @cindex SIP WCS distortion
@@ -25606,6 +25645,26 @@ TPD is a superset of all these, hence it has both prior and sequeal distortion c
 More information is given in the documentation of @code{dis.h}, from the WCSLIB manual@footnote{@url{https://www.atnf.csiro.au/people/mcalabre/WCS/wcslib/dis_8h.html}}.
 @end deffn
 
+@deffn  Macro GAL_WCS_COORDSYS_EQB1950
+@deffnx Macro GAL_WCS_COORDSYS_EQJ2000
+@deffnx Macro GAL_WCS_COORDSYS_ECB1950
+@deffnx Macro GAL_WCS_COORDSYS_ECJ2000
+@deffnx Macro GAL_WCS_COORDSYS_GALACTIC
+@deffnx Macro GAL_WCS_COORDSYS_SUPERGALACTIC
+@deffnx Macro GAL_WCS_COORDSYS_INVALID
+@cindex Galactic coordinate system
+@cindex Ecliptic coordinate system
+@cindex Equatorial coordinate system
+@cindex Supergalactic coordinate system
+@cindex Coordinate system: Galactic
+@cindex Coordinate system: Ecliptic
+@cindex Coordinate system: Equatorial
+@cindex Coordinate system: Supergalactic
+Recognized WCS coordinate systems in Gnuastro.
+@code{EQ} and @code{EC} stand for the Equatorial and Ecliptic coordinate systems.
+In the equatorial and ecliptic coordinates, @code{B1950} stands for the Besselian 1950 epoch and @code{J2000} stands for the Julian 2000 epoch.
+@end deffn
+
 @deffn  Macro GAL_WCS_LINEAR_MATRIX_PC
 @deffnx Macro GAL_WCS_LINEAR_MATRIX_CD
 Identifiers of the linear transformation matrix: either in the @code{PCi_j} or the @code{CDi_j} formalism.
@@ -25733,6 +25792,21 @@ the rotation.
 Make sure that the WCS structure's @code{PCi_j} and @code{CDi_j} keywords have the same value and that the @code{CDELTi} keywords have a value of 1.0.
 Also, set the @code{wcs->altlin=2} (for the @code{CDi_j} formalism).
 With these changes @code{gal_wcs_write_in_fitsptr} (and thus @code{gal_wcs_write} and @code{gal_fits_img_write} and its derivates) will have an output file in the format of @code{CDi_j}.
+@end deftypefun
+
+@deftypefun int gal_wcs_coordsys_from_string (char @code{*coordsys})
+Convert the given string to Gnuastro's integer-based WCS coordinate system identifier (one of the @code{GAL_WCS_COORDSYS_*}, listed above).
+The expected strings can be seen in the description of the @option{--wcscoordsys} option of the Fits program, see @ref{Keyword inspection and manipulation}.
+@end deftypefun
+
+@deftypefun int gal_wcs_coordsys_identify (struct wcsprm @code{*wcs})
+Read the given WCS structure and return its coordinate system as one of Gnuastro's WCS coordinate system identifiers (the macros @code{GAL_WCS_COORDSYS_*}, listed above).
+@end deftypefun
+
+@deftypefun {struct wcsprm *} gal_wcs_coordsys_convert (struct wcsprm @code{*inwcs}, int @code{coordsysid})
+Return a newly allocated WCS structure with the @code{coordsysid} coordinate system identifier.
+The Gnuastro WCS distortion identifiers are defined in the @code{GAL_WCS_COORDSYS_*} macros mentioned above.
+Since the returned dataset is newly allocated, if you don't need the original dataset after this, use the WCSLIB library function @code{wcsfree} to free the input, for example @code{wcsfree(inwcs)}.
 @end deftypefun
 
 @deftypefun int gal_wcs_distortion_from_string (char @code{*distortion})

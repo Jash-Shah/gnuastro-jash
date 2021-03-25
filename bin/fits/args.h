@@ -341,6 +341,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "wcscoordsys",
+      UI_KEY_WCSCOORDSYS,
+      "STR",
+      0,
+      "Convert WCS coordinate system.",
+      UI_GROUP_KEYWORD,
+      &p->wcscoordsys,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

@@ -150,6 +150,7 @@ gnuastro/config.h: Makefile $(internaldir)/config.h.in
 	       -e 's|@HAVE_WCSLIB_DIS_H[@]|$(HAVE_WCSLIB_DIS_H)|g' \
 	       -e 's|@HAVE_WCSLIB_MJDREF[@]|$(HAVE_WCSLIB_MJDREF)|g' \
 	       -e 's|@HAVE_WCSLIB_OBSFIX[@]|$(HAVE_WCSLIB_OBSFIX)|g' \
+	       -e 's|@HAVE_WCSLIB_WCSCCS[@]|$(HAVE_WCSLIB_WCSCCS)|g' \
 	       -e 's|@HAVE_WCSLIB_VERSION[@]|$(HAVE_WCSLIB_VERSION)|g' \
 	       -e 's|@HAVE_PTHREAD_BARRIER[@]|$(HAVE_PTHREAD_BARRIER)|g' \
 	       -e 's|@RESTRICT_REPLACEMENT[@]|$(RESTRICT_REPLACEMENT)|g' \

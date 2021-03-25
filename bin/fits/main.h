@@ -78,12 +78,14 @@ struct fitsparams
   uint8_t           *verify;   /* Verify the CHECKSUM and DATASUM keys. */
   char            *copykeys;   /* Range of keywords to copy in output.  */
   char           *datetosec;   /* Convert FITS date to seconds.         */
+  char         *wcscoordsys;   /* Name of new WCS coordinate system.    */
   char       *wcsdistortion;   /* WCS distortion to write in output.    */
   uint8_t       quitonerror;   /* Quit if an error occurs.              */
   uint8_t   colinfoinstdout;   /* Print column info in output.          */
 
   /* Internal: */
   int                         mode;  /* Operating on HDUs or keywords.  */
+  int                   coordsysid;  /* ID of desired coordinate system.*/
   int                 distortionid;  /* ID of desired distortion.       */
   long            copykeysrange[2];  /* Start and end of copy.          */
   gal_fits_list_key_t  *write_keys;  /* Keys to write in the header.    */

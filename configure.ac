@@ -555,6 +555,12 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_OBSFIX], [$has_wcslib_obsfix],
                    [WCSLIB comes with OBSFIX macro])
 AC_SUBST(HAVE_WCSLIB_OBSFIX, [$has_wcslib_obsfix])
 
+# If the WCS library has the 'wcsccs' function.
+AC_CHECK_LIB([wcs], [wcsccs], [has_wcslib_wcsccs=1],
+             [has_wcslib_wcsccs=0; anywarnings=yes], [-lcfitsio -lm])
+AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_WCSCCS], [$has_wcslib_wcsccs],
+                   [WCSLIB comes with wcsccs])
+AC_SUBST(HAVE_WCSLIB_WCSCCS, [$has_wcslib_wcsccs])
 
 # If the pthreads library has 'pthread_barrier_wait'.
 AC_CHECK_LIB([pthread], [pthread_barrier_wait], [has_pthread_barrier=1],
@@ -1113,6 +1119,17 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    have 'dis.h'. This build won't crash but Gnuastro will not be able"])
                AS_ECHO(["    to do distortion-related operations. If you don't need such"])
                AS_ECHO(["    operations you can ignore this warning."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_wcslib_wcsccs" = "x0"],
+              [dependency_notice=yes
+               AS_ECHO(["  - WCSLIB (https://www.atnf.csiro.au/people/mcalabre/WCS) version"])
+               AS_ECHO(["    on this system doesn't support conversion of coordinate systems"])
+               AS_ECHO(["    (through the 'wcsccs' function that was introduced in WCSLIB 7.5, "])
+               AS_ECHO(["    March 2021). For example converting from equatorial J2000 to"])
+               AS_ECHO(["    Galactic coordinates). This build won't crash but the related"])
+               AS_ECHO(["    functionalities in Gnuastro will be disabled. If you don't need"])
+               AS_ECHO(["    such operations you can ignore this warning."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_libjpeg" = "xno"],

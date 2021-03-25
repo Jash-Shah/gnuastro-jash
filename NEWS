@@ -53,6 +53,16 @@ See the end of the file for license conditions.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
 
+  Fits:
+   --wcscoordsys: convert the WCS coordinate system of the input into any
+     recognized coordinate system (currently supports: equatorial (J2000,
+     B1950), ecliptic (J2000, B1950), Galactic and Supergalactic. For
+     example if 'image.fits' is in galactic coordinates, you can use this
+     command to convert its WCS to equatorial (J2000):
+          astfits image.fits --wcscoordsys=eq-j2000
+     This option only works with WCSLIB 7.5 and above (released in March
+     2021), otherwise it will not work (abort with an informative warning).
+
   MakeCatalog:
    - Newly added measurement columns:
      --upperlimitsb: upper-limit surface brightness for the given label
@@ -117,6 +127,16 @@ See the end of the file for license conditions.
      - GAL_ARITHMETIC_OP_ACOSH: Inverse hyperbolic cosine.
      - GAL_ARITHMETIC_OP_ATANH: Inverse hyperbolic tangent.
      - GAL_ARITHMETIC_OP_COUNTS_TO_JY: Convert counts to Janskys.
+   - WCS coordinate system identifiers:
+     - GAL_WCS_COORDSYS_EQB1950: 1950.0 (Besselian-year) equatorial coords.
+     - GAL_WCS_COORDSYS_EQJ2000: 2000.0 (Julian-year) equatorial coords.
+     - GAL_WCS_COORDSYS_ECB1950: 1950.0 (Besselian-year) ecliptic coords.
+     - GAL_WCS_COORDSYS_ECJ2000: 2000.0 (Julian-year) ecliptic coords.
+     - GAL_WCS_COORDSYS_GALACTIC: Galactic coordinates.
+     - GAL_WCS_COORDSYS_SUPERGALACTIC: Supergalactic coordinates.
+   - gal_wcs_coordsys_from_string: WCS coordinate system from string.
+   - gal_wcs_coordsys_identify: Parse WCS struct to find  coordinate system.
+   - gal_wcs_coordsys_convert: Convert the coordinate system of the WCS.
 
 ** Removed features
 
