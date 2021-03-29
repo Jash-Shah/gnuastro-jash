@@ -524,8 +524,8 @@ match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
       kdtree = gal_kdtree_create(p->cols1, &root);
       out = gal_match_kdtree(p->cols1, p->cols2, kdtree, root,
                              p->aperture->array, p->cp.numthreads,
-                             p->cp.minmapsize, nummatched, 1,
-                             p->cp.quietmmap);
+                             p->cp.minmapsize, p->cp.quietmmap,
+                             nummatched);
       gal_list_data_free(kdtree);
       break;
 

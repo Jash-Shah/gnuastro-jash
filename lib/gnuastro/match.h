@@ -50,12 +50,14 @@ gal_match_coordinates(gal_data_t *coord1, gal_data_t *coord2,
                       int inplace, size_t minmapsize, int quietmmap,
                       size_t *nummatched);
 
-
 gal_data_t *
 gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
                  gal_data_t *coord1_kdtree, size_t kdtree_root,
                  double *aperture, size_t numthreads, size_t minmapsize,
-                 size_t *nummatched, int inplace, int quietmmap);
+                 int quietmmap, size_t *nummatched);
+
+
+
 
 
 __END_C_DECLS    /* From C++ preparations */
