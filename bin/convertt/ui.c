@@ -518,12 +518,21 @@ ui_make_channels_ll(struct converttparams *p)
       if( gal_fits_name_is_fits(name->v) )
         {
           /* Get the HDU value for this channel. */
-          if(p->hdus)
-            hdu=gal_list_str_pop(&p->hdus);
+          if(p->globalhdu)
+            hdu=p->globalhdu;
           else
-            error(EXIT_FAILURE, 0, "not enough HDUs. Every input FITS image "
-                  "needs a HDU, you can use the '--hdu' ('-h') option once "
-                  "for each input FITS image (in the same order)");
+            {
+              if(p->hdus)
+                hdu=gal_list_str_pop(&p->hdus);
+              else
+                error(EXIT_FAILURE, 0, "not enough HDUs. Every input FITS "
+                      "image needs a HDU (identified by name or number, "
+                      "counting from zero). You can use multiple calls to "
+                      "the '--hdu' ('-h') option for each input FITS image "
+                      "(in the same order as the input FITS files), or use "
+                      "'--globalhdu' ('-g') once when the same HDU should "
+                      "be used for all of them");
+            }
 
           /* Read in the array and its WCS information. */
           data=gal_fits_img_read(name->v, hdu, p->cp.minmapsize,

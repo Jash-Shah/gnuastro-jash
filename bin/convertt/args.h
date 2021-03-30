@@ -30,6 +30,25 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Array of acceptable options. */
 struct argp_option program_options[] =
   {
+    /* Input */
+    {
+      "globalhdu",
+      UI_KEY_GLOBALHDU,
+      "STR/INT",
+      0,
+      "Use this HDU for all inputs, ignore '--hdu'.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->globalhdu,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
+
+
+
     /* Output */
     {
       "quality",

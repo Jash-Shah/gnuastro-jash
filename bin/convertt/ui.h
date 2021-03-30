@@ -42,12 +42,13 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a d e f g j k l n p r s t v y z
+   a d e f j k l n p r s t v y z
    E G J O Q R W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
+  UI_KEY_GLOBALHDU           = 'g',
   UI_KEY_QUALITY             = 'u',
   UI_KEY_WIDTHINCM           = 'w',
   UI_KEY_BORDERWIDTH         = 'b',

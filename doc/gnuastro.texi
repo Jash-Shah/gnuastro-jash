@@ -9878,6 +9878,8 @@ Input:
 @table @option
 @item -h STR/INT
 @itemx --hdu=STR/INT
+Input HDU name or counter (counting from 0) for each input FITS file.
+If the same HDU should be used from all the FITS files, you can use the @option{--globalhdu} option described below.
 In ConvertType, it is possible to call the HDU option multiple times for the different input FITS or TIFF files in the same order that they are called on the command-line.
 Note that in the TIFF standard, one `directory' (similar to a FITS HDU) may contain multiple color channels (for example when the image is in RGB).
 
@@ -9886,6 +9888,11 @@ The number of calls to this option cannot be less than the number of input FITS 
 
 Unlike CFITSIO, libtiff (which is used to read TIFF files) only recognizes numbers (counting from zero, similar to CFITSIO) for `directory' identification.
 Hence the concept of names is not defined for the directories and the values to this option for TIFF files must be numbers.
+
+@item -g STR/INT
+@itemx --globalhdu=STR/INT
+Use the value given to this option (a HDU name or a counter, starting from 0) for the HDU identifier of all the input FITS files.
+This is useful when all the inputs are distributed in different files, but have the same HDU in those files.
 @end table
 
 @noindent

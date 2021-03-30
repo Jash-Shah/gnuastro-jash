@@ -53,6 +53,12 @@ See the end of the file for license conditions.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
 
+  ConvertType:
+   --globalhdu: Use a single HDU identifier for all the input files
+     files. Its operation is identical to the similarly named option in
+     Arithmetic. Until now it was necessary to call '--hdu' three times if
+     you had three input FITS files with input in the same HDU.
+
   Fits:
    --wcscoordsys: convert the WCS coordinate system of the input into any
      recognized coordinate system (currently supports: equatorial (J2000,
