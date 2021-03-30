@@ -627,6 +627,97 @@ ui_make_channels_ll(struct converttparams *p)
 
 
 
+static void
+ui_prepare_input_channels_check_wcs(struct converttparams *p)
+{
+  int printwarning=0;
+  float wcsmatch=1.0;
+  gal_data_t *tmp, *coords=NULL;
+  size_t one=1, numwcs=0, numnonblank=0;
+  double *c1, *c2, r1=NAN, r2=NAN, *pixscale=NULL;
+
+  /* If all the inputs have WCS, check to see if the inputs are aligned and
+     print a warning if they aren't. */
+  for(tmp=p->chll; tmp!=NULL; tmp=tmp->next)
+    {
+      if(tmp->wcs && tmp->type!=GAL_TYPE_INVALID) ++numwcs;
+      if(tmp->type!=GAL_TYPE_INVALID)             ++numnonblank;
+    }
+  if(numwcs==numnonblank)
+    {
+      /* Allocate the coordinate columns. */
+      gal_list_data_add_alloc(&coords, NULL, GAL_TYPE_FLOAT64, 1,
+                              &one, NULL, 0, -1, 1, NULL, NULL, NULL);
+      gal_list_data_add_alloc(&coords, NULL, GAL_TYPE_FLOAT64, 1,
+                              &one, NULL, 0, -1, 1, NULL, NULL, NULL);
+
+      /* Go over each image and put its central pixel in the coordinates
+         and do the world-coordinate transformation. Recall that the C
+         coordinates are the inverse order of FITS coordinates and that
+         FITS coordinates count from 1 (not 0).*/
+      for(tmp=p->chll; tmp!=NULL; tmp=tmp->next)
+        if(tmp->wcs)
+          {
+            /* Fill the coordinate values. */
+            c1=coords->array;
+            c2=coords->next->array;
+            c1[0] = tmp->dsize[1] / 2 + 1;
+            c2[0] = tmp->dsize[0] / 2 + 1;
+
+            /* Get the RA/Dec. */
+            gal_wcs_img_to_world(coords, tmp->wcs, 1);
+
+            /* If the pixel scale hasn't been calculated yet, do it (we
+               only need it once, should be similar in all). */
+            if(pixscale==NULL)
+              pixscale=gal_wcs_pixel_scale(tmp->wcs);
+
+            /* If the reference/first center is not yet defined then write
+               the conversions in it. If it is defined, compare with it
+               with the new dataset and print a warning if necessary. */
+            if( isnan(r1) )
+              { r1=c1[0]; r2=c2[0]; }
+            else
+              {
+                /* For a check.
+                printf("check: %g, %g\n", fabs(c1[0]-r1)/pixscale[0],
+                       fabs(c2[0]-r2)/pixscale[1]);
+                */
+
+                /* See if a warning should be printed. */
+                if( fabs(c1[0]-r1)/pixscale[0] > wcsmatch
+                    || fabs(c2[0]-r2)/pixscale[1] > wcsmatch )
+                  printwarning=1;
+              }
+          }
+    }
+
+  /* Print the warning message if necessary. */
+  if(printwarning && p->cp.quiet==0)
+    {
+      error(EXIT_SUCCESS, 0, "WARNING: The WCS information of the input "
+            "FITS images don't match (by more than %g pixels in the "
+            "center), even though the input images have the same number "
+            "of pixels in each dimension. Therefore the color channels "
+            "of the output colored image may not be aligned. If this is "
+            "not a problem, you can suppress this warning with the "
+            "'--quiet' option.\n\n"
+            "A solution to align your images is provided in the "
+            "\"Aligning images with small WCS offsets\" section of "
+            "Gnuastro's manual. Please run the command below to see "
+            "it (you can return to the command-line by pressing 'q'):\n\n"
+            "   info gnuastro \"Aligning images\"\n",
+            wcsmatch);
+    }
+
+  /* Clean up. */
+  free(pixscale);
+}
+
+
+
+
+
 /* Read the input(s)/channels. */
 static void
 ui_prepare_input_channels(struct converttparams *p)
@@ -702,6 +793,8 @@ ui_prepare_input_channels(struct converttparams *p)
           wcs=tmp->wcs;
       }
 
+  /* Make sure the images are all aligned to the same grid. */
+  ui_prepare_input_channels_check_wcs(p);
 
   /* If ndim is still NULL, then there were no non-blank inputs, so print
      an error. */

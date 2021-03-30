@@ -401,6 +401,7 @@ ConvertType
 
 * Recognized file formats::     Recognized file formats
 * Color::                       Some explanations on color.
+* Aligning images with small WCS offsets::  When the WCS slightly differs.
 * Invoking astconvertt::        Options and arguments to ConvertType.
 
 Table
@@ -9610,6 +9611,7 @@ So before explaining the options and arguments (in @ref{Invoking astconvertt}), 
 @menu
 * Recognized file formats::     Recognized file formats
 * Color::                       Some explanations on color.
+* Aligning images with small WCS offsets::  When the WCS slightly differs.
 * Invoking astconvertt::        Options and arguments to ConvertType.
 @end menu
 
@@ -9745,7 +9747,7 @@ To print to the standard output, set the output name to `@file{stdout}'.
 
 @end table
 
-@node Color, Invoking astconvertt, Recognized file formats, ConvertType
+@node Color, Aligning images with small WCS offsets, Recognized file formats, ConvertType
 @subsection Color
 
 @cindex RGB
@@ -9813,7 +9815,67 @@ But thanks to the JPEG compression algorithms, when all the pixels of one channe
 Therefore a Grayscale image and a CMYK image that has only the K-channel filled are approximately the same file size.
 
 
-@node Invoking astconvertt,  , Color, ConvertType
+@node Aligning images with small WCS offsets, Invoking astconvertt, Color, ConvertType
+@subsection Aligning images with small WCS offsets
+
+In order to have nice color images, it is important that the images be properly aligned.
+This is usually the case in many scenarios, but it some times happens that the images have a small WCS offset, even though they have the same size.
+In such cases you can use the script below to align the images into approximately the same pixel grid (to within about 0.5 pixels which is sufficient in many color-image usage scenarios).
+
+The script below does the job using Gnuastro's @ref{Warp} and @ref{Crop} programs.
+Simply copy the lines below into a plain-text file with your favorite text editor and save it as @file{my-align.sh}.
+Don't forget to set the variables of the first three lines to specify the file names (without the @file{.fits} suffix) and the HDUs of your inputs.
+These four lines are all you need to edit, leave the rest unchanged.
+Also, if you are copy/pasting the script from a PDF, be careful that the single-quotes used in AWK may need to be corrected.
+
+@example
+#!/bin/sh
+
+# Set the input names (without the '.fits' suffix),
+# and their HDUs.
+r=RED_IMAGE_NO_SUFFIX;   rhdu=1
+g=GREEN_IMAGE_NO_SUFFIX; ghdu=1
+b=BLUE_IMAGE_NO_SUFFIX;  bhdu=1
+
+# To stop the script if there is a crash
+set -e
+
+# Align all the images to the celestial poles.
+astwarp $r.fits --align -h$rhdu -o $r-aligned.fits
+astwarp $g.fits --align -h$ghdu -o $g-aligned.fits
+astwarp $b.fits --align -h$bhdu -o $b-aligned.fits
+
+# Calculate the final WCS-based center and image-based width based on
+# the G-band (in RGB) image.
+centerwcs=$(astfits $g-aligned.fits --skycoverage --quiet \
+                    | awk 'NR==1@{printf "%g %g", $1,$2@}')
+widthpix=$(astfits $g-aligned.fits -h1 --quiet \
+                   --keyvalue=NAXIS1,NAXIS2 \
+               | awk '@{printf "%d,%d", $1, $2@}')
+
+# Crop all the images around the desired center and width.
+for f in $r $g $b; do
+  centerpix=$(echo $centerwcs \
+                   | asttable -c'arith $1 $2 wcstoimg' \
+                              --wcsfile=$f-aligned.fits \
+                   | awk '@{printf "%g,%g", $1, $2@}')
+  astcrop $f-aligned.fits --mode=img --width=$widthpix \
+          --center=$centerpix -o$f-use.fits
+  rm $f-aligned.fits
+done
+@end example
+
+Once you have have saved the file and come back to your command-line you can run the script like this:
+
+@example
+$ chmod +x my-align.sh
+$ ./my-align.sh
+@end example
+
+@noindent
+Of course, feel free to hack it and modify it to fit your datasets, like the rest of Gnuastro, this script is released under GNU GPLv.3 and above, see @ref{Your rights}.
+
+@node Invoking astconvertt,  , Aligning images with small WCS offsets, ConvertType
 @subsection Invoking ConvertType
 
 ConvertType will convert any recognized input file type to any specified output type.
