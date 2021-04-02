@@ -4,6 +4,7 @@ Mark Calabretta
 Raul Infante-Sainz
 Alberto Madrigal
 Juan Miro
+Carlos Morales Socorro
 Sylvain Mottet
 Francois Ochsenbein
 Samane Raji

@@ -11076,7 +11076,7 @@ If this option is given, the raw string is directly passed to the server and all
 With the high-level options (like @option{--column}, @option{--center}, @option{--radius}, @option{--range} and other constraining options below), the low-level query will be constructed automatically for the particular database.
 This method is only limited to the generic capabilities that Query provides for all servers.
 So @option{--query} is more powerful, however, in this mode, you don't need any knowledge of the database's query language.
-You can see the internally generated query on the terminal (if @option{--quiet} is not used) or in the 0-th extension of the output (if its a FITS file).
+You can see the internally generated query on the terminal (if @option{--quiet} is not used) or in the 0-th extension of the output (if it is a FITS file).
 This full command contains the internally generated query.
 @end itemize
 
@@ -19302,11 +19302,11 @@ Also note that in such cases, besides de-convolution, you will have to set @opti
 
 @item --customtable FITS/TXT
 The filename of the table to use in the custom profiles (see description of @option{--fcol} in @ref{MakeProfiles catalog}.
-This can be a plain-text table, or FITS table, see @ref{Tables}, if its a FITS table, you can use @option{--customtablehdu} to specify which HDU should be used (described below).
+This can be a plain-text table, or FITS table, see @ref{Tables}, if it is a FITS table, you can use @option{--customtablehdu} to specify which HDU should be used (described below).
 
-A custom profile can have any value you want for a given radial profile.
-Each interval is defined by its minimum (inclusive) and maximum (exclusive) radius, when a pixel falls within this radius the value specified for that interval will be used.
-If a pixel is not in the given intervals, a value of 0 will be used for it.
+A custom profile can have any value you want for a given radial profile (including NaN/blank values).
+Each interval is defined by its minimum (inclusive) and maximum (exclusive) radius, when a pixel center falls within a radius interval, the value specified for that interval will be used.
+If a pixel is not in the given intervals, a value of 0.0 will be used for that pixel.
 
 The table should have 3 columns as shown below.
 If the intervals are contiguous (the maximum value of the previous interval is equal to the minimum value of an interval) and the intervals all have the same size (difference between minimum and maximum values) the creation of these profiles will be fast.
@@ -19318,11 +19318,11 @@ The interval's minimum radius.
 @item Column 2:
 The interval's maximum radius.
 @item Column 3:
-The value to be used for pixels within the given interval.
+The value to be used for pixels within the given interval (including NaN/blank).
 @end table
 
 For example let's assume you have the radial profile below in a file called @file{radial.txt}.
-The first column is the larger interval radius and the second column is the value in that interval:
+The first column is the larger interval radius (in units of pixels) and the second column is the value in that interval:
 
 @example
 1    100
@@ -19335,15 +19335,15 @@ The first column is the larger interval radius and the second column is the valu
 @end example
 
 @noindent
-You can construct the table to give to @option{--customtable} with either of the commands below: the first one with Gnuastro's @ref{Column arithmetic} which can also work on FITS tables, and the second one with an AWK command that only works on plain-text tables..
+You can construct the table to give to @option{--customtable} with the command below (using Gnuastro's @ref{Column arithmetic}).
 
 @example
 asttable radial.fits -c'arith $1 1 -' -c1,2 -ocustom.fits
-awk '@{print $1-1, $1, $2@}' radial.txt > custom.txt
 @end example
 
 @noindent
-In case the intervals are different from 1 (for example 0.5), change them respectively: for Gnuastro's table change @code{$1 1 -} to @code{$1 0.5 -} and for AWK change  @code{$1-1} to @code{$1-0.5}.
+In case the intervals are different from 1 (for example 0.5), change the @code{$1 1 -} to @code{$1 0.5 -}.
+On a side-note, Gnuastro has features to extract the radial profile of an object from the image, see @ref{Generate radial profile}.
 
 
 @item --customtablehdu INT/STR
