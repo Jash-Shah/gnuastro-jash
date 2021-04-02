@@ -356,7 +356,7 @@ struct argp_option gal_commonopts_options[] =
       GAL_OPTIONS_KEY_MINMAPSIZE,
       "INT",
       0,
-      "Minimum bytes in array to not use ram RAM.",
+      "Min. bytes to avoid RAM automatically.",
       GAL_OPTIONS_GROUP_OPERATING_MODE,
       &cp->minmapsize,
       GAL_TYPE_SIZE_T,
