@@ -353,8 +353,10 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
         }
     }
 
-  /* If the user wants a CD linear matrix, do the conversion here. */
+  /* If the user wants a CD linear matrix, do the conversion here,
+     otherwise, make sure the PC matrix is used. */
   if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD) gal_wcs_to_cd(wcs);
+  else                          gal_wcs_decompose_pc_cdelt(wcs);
 
   /* Clean up and return. */
   status=0;
