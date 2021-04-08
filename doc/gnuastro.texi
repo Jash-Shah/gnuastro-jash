@@ -1658,10 +1658,11 @@ $ astmkprof -P
 [[[ ... Truncated lines ... ]]]
 
 # Columns, by info (see `--searchin'), or number (starting from 1):
- ccol         2           # Coordinate columns (one call for each dimension).
- ccol         3           # Coordinate columns (one call for each dimension).
- fcol         4           # sersic (1), moffat (2), gaussian (3),
-                          # point (4), flat (5), circumference (6).
+ ccol         2           # Coord. columns (one call for each dim.).
+ ccol         3           # Coord. columns (one call for each dim.).
+ fcol         4           # sersic (1), moffat (2), gaussian (3), point
+                          # (4), flat (5), circumference (6), distance (7),
+                          # radial-table (8).
  rcol         5           # Effective radius or FWHM in pixels.
  ncol         6           # Sersic index or Moffat beta.
  pcol         7           # Position angle.
@@ -1893,9 +1894,9 @@ astconvolve --kernel=0_"$base".fits "$base".fits
 # Scale the image back to the intended resolution.
 astwarp --scale=1/5 --centeroncorner "$base"_convolved.fits
 
-# Crop the edges out (dimmed during convolution). ‘--section’ accepts
-# inclusive coordinates, so the start of start of the section must be
-# one pixel larger than its end.
+# Crop the edges out (dimmed during convolution). ‘--section’
+# accepts inclusive coordinates, so the start of the section
+# must be one pixel larger than its end.
 st_edge=$(( edge + 1 ))
 astcrop "$base"_convolved_scaled.fits --zeroisnotblank \
         --mode=img --section=$st_edge:*-$edge,$st_edge:*-$edge
