@@ -1660,9 +1660,9 @@ $ astmkprof -P
 # Columns, by info (see `--searchin'), or number (starting from 1):
  ccol         2           # Coord. columns (one call for each dim.).
  ccol         3           # Coord. columns (one call for each dim.).
- fcol         4           # sersic (1), moffat (2), gaussian (3), point
-                          # (4), flat (5), circumference (6), distance (7),
-                          # radial-table (8).
+ fcol         4           # sersic (1), moffat (2), gaussian (3),
+                          # point (4), flat (5), circumference (6),
+                          # distance (7), radial-table (8).
  rcol         5           # Effective radius or FWHM in pixels.
  ncol         6           # Sersic index or Moffat beta.
  pcol         7           # Position angle.
