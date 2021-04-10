@@ -1147,6 +1147,139 @@ ui_preparations(struct cropparams *p)
 
 
 /**************************************************************/
+/*********             Parser ds9 file             ************/
+/**************************************************************/
+size_t ui_ds9_coordinates_number(char *line)
+{
+  char *token;
+  char delimiters[] = "(,)\n";
+  size_t quantity = 0;
+  char *var;
+  
+  /* Copy the line to another variable to inspect it. */
+  var = malloc ((strlen(line) + 1) * sizeof(*var));
+  strcpy(var, line);
+  
+  /* Get the first token (the geometry of the region). */
+  token = strtok(var, delimiters);
+  
+  /* The rest of the tokens are coordinates. So go through them and count. */
+  while(token != NULL)
+  {
+    ++quantity;
+    token = strtok(NULL, delimiters);
+  }
+  
+  free(var);  
+  
+  /* Check if quantity is zero to avoid returning -1. */
+  if(quantity==0)
+    ++quantity;
+  return(quantity-1);
+}
+
+
+void ui_read_ds9_file(struct cropparams *p)
+{
+  FILE *fp;
+  size_t linesize, lineno, coordno;
+  char *line, *token, *coordmode, delimiters[] = "(,)\n";
+  int modecmp, modecmp2, polygoncmp, coordinatesit;
+  double *coordinates = NULL;
+  struct gal_data_t *newpolygon;
+    
+  /* Allocate size to the lines on the file and check if it was sucessfull.
+     The getline function reallocs the necessary memory. */
+  linesize=10;
+  line = malloc(linesize * sizeof(*line));
+  errno=0;
+  if(line == NULL)
+    error(EXIT_FAILURE, errno, "Given polygon file and coordinates! Choose" 
+          "one.");
+ 
+  /* Open the file and checks if it's not null. */
+  fp = fopen(p->polygonname, "r");
+  if(fp == NULL)
+    error(EXIT_FAILURE, errno, "The polygon file is blank.");
+ 
+  /* Get the lines on the file. */
+  lineno=0;
+  while(getline(&line, &linesize, fp)!=-1)
+    {
+      ++lineno;  
+      /* Line 3 has the type of the coordinates. */
+      if(lineno==3)
+        {
+          /* Check if the mode on the file is consistent with the mode
+             selected to crop. */
+          coordmode = strtok(line, "\n");
+          modecmp = strcmp(coordmode, "fk5");
+          modecmp2 = strcmp(coordmode, "image");
+          if((!modecmp && p->mode!=IMGCROP_MODE_WCS) || 
+             (!modecmp2 && p->mode!=IMGCROP_MODE_IMG))
+              error(EXIT_FAILURE, errno, "The program coordinates mode is" 
+              " different from the file mode.\nThe mode in the file is: %s",
+              coordmode);
+        }
+      /* Line 4 has the geometry and the coordinates. */ 
+      if(lineno == 4)
+        {
+          /* Gets the number of coordinates given. */
+          coordno = ui_ds9_coordinates_number(line);
+          /* Checks if its a polygon and if the number of coordinates is 
+             valid (divisible by two, because we are dealing with 2d, and if
+             its greater than zero. */
+          token = strtok(line, delimiters);
+          polygoncmp = strcmp(token, "polygon");
+          if(polygoncmp==0 && coordno>0 && coordno%2==0)
+            {
+              /* Allocate size to the coordinates and set it. */
+              coordinates = malloc ((coordno + 1) * sizeof(*coordinates));
+              token = strtok(NULL, delimiters);
+              *coordinates = atof(token);
+              token = strtok(NULL, delimiters);
+              coordinatesit=1;
+              while(token != NULL)
+                {
+                    *(coordinates + coordinatesit) = atof(token);
+                    ++coordinatesit;
+                    token = strtok(NULL, delimiters);
+                }
+              }
+          else
+            error(EXIT_FAILURE, errno, "It's not a polygon or the number"
+                  " of coordinates is invalid: %ld found.",coordno);
+        }
+    }
+    /* Create the polygon structure and points the main parameter to it. */
+    newpolygon = gal_data_alloc(coordinates, GAL_TYPE_FLOAT64, 1, &coordno,
+                                NULL, 0, -1, 1, NULL, NULL, NULL);
+    p->polygon = newpolygon;
+    /* Free the space used. */
+    free(line);
+    fclose(fp);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**************************************************************/
 /************         Set the parameters          *************/
 /**************************************************************/
 
@@ -1177,7 +1310,19 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct cropparams *p)
   errno=0;
   if(argp_parse(&thisargp, argc, argv, 0, 0, p))
     error(EXIT_FAILURE, errno, "parsing arguments");
-
+  
+  
+  /* If it's a polygon file from ds9, we adjust the polygon parameter to 
+     hold the values in the file. */
+  if(p->polygonname!=NULL)
+    {
+      if(p->polygon == NULL)
+          ui_read_ds9_file(p);
+      else
+          error(EXIT_FAILURE, errno, "Given polygon file and coordinates!"
+                " Choose one.");
+    }
+  
 
   /* Read the configuration files and set the common values. */
   gal_options_read_config_set(&p->cp);
