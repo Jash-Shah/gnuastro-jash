@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <string.h>
 
+#include <gnuastro/ds9.h>
 #include <gnuastro/wcs.h>
 #include <gnuastro/list.h>
 #include <gnuastro/fits.h>
@@ -269,119 +270,45 @@ ui_parse_coordinate_mode(struct argp_option *option, char *arg,
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
+
+/* Do polygon-related sanity checks that can be very low-level. */
 static void
-ui_polygon_from_ds9_reg(struct cropparams *p)
+ui_check_polygon_from_ds9(struct cropparams *p)
 {
-  FILE *fp;
-  char *polygonstr;
-  size_t commacounter=0;
-  int coordmode=IMGCROP_MODE_INVALID;
-  size_t plinelen, linesize=10, lineno=0;
-  char *c, *line, *ds9regstart="# Region file format: DS9";
-  char *polygonformaterr="It is expected for the line to have "
-    "this format: 'polygon(AAA,BBB,...)'. Where 'AAA' and 'BBB' "
-    "are numbers and '...' signifies that any number of points "
-    "are possible";
+  int ds9regmode;
 
-  /* Allocate size to the lines on the file and check if it was sucessfull.
-     The getline function reallocs the necessary memory. */
-  errno=0;
-  line = malloc(linesize * sizeof(*line));
-  if(line == NULL)
-    error(EXIT_FAILURE, errno, "%s: %zu bytes for line buffer",
-          __func__, linesize * sizeof(*line));
-
-  /* Open the file and checks if it's not null. */
-  errno=0;
-  fp = fopen(p->polygonname, "r");
-  if(fp == NULL)
-    error(EXIT_FAILURE, errno, "The polygon file is blank");
-
-  /* Get the lines on the file. */
-  while(getline(&line, &linesize, fp)!=-1)
+  /* This is only relevant when a region file is actually given. */
+  if(p->polygonname)
     {
-      /* To have line-counters starting from 1. */
-      ++lineno;
-
-      /* The first line should start with a fixed string. */
-      if(lineno==1)
+      /* These two options cannot be called together. */
+      if(p->polygon)
+        error(EXIT_FAILURE, errno, "'--polygon' and '--polygonname' "
+              "cannot be given together. With the first you specify the "
+              "polygon vertices directly on the command-line. With the "
+              "second, you give a DS9 region file and the polygon "
+              "vertices are read from that.");
+      else
         {
-          if( strncmp(line, ds9regstart, 25) )
-            error(EXIT_FAILURE, 0, "%s: doesn't appear to be a DS9 "
-                  "region file! We assume that DS9 region files begin "
-                  "with this string in their first line: '%s'",
-                  p->polygonname, ds9regstart);
-          continue;
+          /* Extract the polygon and the coordinate mode. */
+          p->polygon=gal_ds9_reg_read_polygon(p->polygonname,
+                                              &ds9regmode);
+          switch(ds9regmode)
+            {
+            case GAL_DS9_COORD_MODE_IMG: p->mode=IMGCROP_MODE_IMG; break;
+            case GAL_DS9_COORD_MODE_WCS: p->mode=IMGCROP_MODE_WCS; break;
+            default:
+              error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                    "'%s' to fix the problem. The output coordinate mode "
+                    "of 'gal_ds9_reg_read_polygon' (%d) isn't recognized "
+                    "by this function", __func__, PACKAGE_BUGREPORT,
+                    ds9regmode);
+            }
         }
 
-      /* If we are on the coordinate mode line, then set the mode of Crop
-         based on it. */
-      if( !strcmp(line, "fk5\n") || !strcmp(line, "image\n") )
-        {
-          /* Make sure it hasn't been called more than once. */
-          if(coordmode!=IMGCROP_MODE_INVALID)
-            error_at_line(EXIT_FAILURE, 0, p->polygonname, lineno,
-                          "more than one coordinate line defined");
-
-          /* Set the proper mode. */
-          if(!strcmp(line, "fk5\n")) coordmode=IMGCROP_MODE_WCS;
-          else                       coordmode=IMGCROP_MODE_IMG;
-
-          /* Stop parsing the file if the polygon has also been found by
-             this point (we don't need any more information, no need to
-             waste the user's CPU and time). */
-          if(p->polygon) break;
-        }
-
-      /* The line containing the polygon information starts with
-         'polygon('. */
-      if( !strncmp(line, "polygon(", 8) )
-        {
-          /* Get the line length and check if it is indeed in the proper
-             format. If so, remove the last parenthesis. */
-          plinelen=strlen(line);
-          if(line[plinelen-2]==')')
-            line[plinelen-2]='\0';
-          else
-            error_at_line(EXIT_FAILURE, 0, p->polygonname, lineno,
-                          "line with polygon vertices doesn't end "
-                          "with ')'. %s", polygonformaterr);
-
-          /* Convert the string to the expected format (with ':' separating
-             each vertice). Note how we are ignoring the first 8 characters
-             that contain 'polygon('. */
-          polygonstr=&line[8];
-          for(c=polygonstr; *c!='\0'; ++c)
-            if(*c==',' && (++commacounter % 2) == 0 ) *c=':';
-
-          /* Read the coordinates within the line. */
-          p->polygon=gal_options_parse_colon_sep_csv_raw(polygonstr,
-                                                         p->polygonname,
-                                                         lineno);
-
-          /* Stop parsing the file if the coordinate mode has also been
-             found by this point (we don't need any more information, no
-             need to waste the user's CPU and time). */
-          if(coordmode!=IMGCROP_MODE_INVALID) break;
-        }
+      /* Clean up. */
+      free(p->polygonname);
+      p->polygonname=NULL;
     }
-
-  /* If no coordinate mode was found in the file, print an error. */
-  if(coordmode==IMGCROP_MODE_INVALID)
-    error(EXIT_FAILURE, 0, "%s: no coordinate mode found! "
-          "We expect one line to be either 'fk5' or 'image'",
-          p->polygonname);
-
-  /* If no polygon line was in the file, abort with an error. */
-  if(p->polygon==NULL)
-    error(EXIT_FAILURE, 0, "%s: no polygon statement found! We expect "
-          "one line in the format of 'polygon(AAA,BBB,...)' in the "
-          "file given to '--polygonname' option. %s", p->polygonname,
-          polygonformaterr);
-
-  /* Free the space used. */
-  free(line);
-  fclose(fp);
 }
 
 
@@ -399,22 +326,7 @@ ui_read_check_only_options(struct cropparams *p)
   /* If a DS9 region file should be used for the polygon, read it. This is
      done first for two reasons. 1) It can change the value of '--mode'. 2)
      It will set the '--polygon' option's value. */
-  if(p->polygonname)
-    {
-      if(p->polygon)
-        error(EXIT_FAILURE, errno, "'--polygon' and '--polygonname' "
-              "cannot be given together. With the first you specify the "
-              "polygon vertices directly on the command-line. With the "
-              "second, you give a DS9 region file and the polygon "
-              "vertices are read from that.");
-      else
-        {
-          ui_polygon_from_ds9_reg(p);
-          free(p->polygonname);
-          p->polygonname=NULL;
-        }
-    }
-
+  ui_check_polygon_from_ds9(p);
 
   /* Make sure that only one of the crop definitions is given. */
   checksum = ( (p->center!=NULL)
