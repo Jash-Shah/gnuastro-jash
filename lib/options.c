@@ -1387,8 +1387,9 @@ gal_options_parse_name_and_float64s(struct argp_option *option, char *arg,
 /* Parse strings like this: 'num1,num2:num3,n4:num5,num6' and return it as
    a data container array: all elements are simply placed after each other
    in the array. */
-static gal_data_t *
-options_parse_colon_sep_csv(char *instring, char *filename, size_t lineno)
+gal_data_t *
+gal_options_parse_colon_sep_csv_raw(char *instring, char *filename,
+                                    size_t lineno)
 {
   char *tailptr;
   gal_data_t *out;
@@ -1529,7 +1530,7 @@ gal_options_parse_colon_sep_csv(struct argp_option *option, char *arg,
                       "given to '--%s'", option->name);
 
       /* Parse the desired format and put it in this option's pointer. */
-      dataset=options_parse_colon_sep_csv(arg, filename, lineno);
+      dataset=gal_options_parse_colon_sep_csv_raw(arg, filename, lineno);
 
       /* Add the given dataset to the end of an existing dataset. */
       existing = *(gal_data_t **)(option->value);
