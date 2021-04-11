@@ -1401,6 +1401,10 @@ When it is a last character in a line (the next character is a new-line characte
 
 @end itemize
 
+This is not a convention, but a bi-product of the PDF building process of the manual:
+In the PDF version of this manual, a single quote (or apostrophe) character in the commands or codes is shown like this: @code{'}.
+Single quotes are sometimes necessary in combination with commands like @code{awk} or @code{sed}, or when using Column arithmetic in Gnuastro's own Table (see @ref{Column arithmetic}).
+Therefore when typing (recommended) or copy-pasting (not recommented) the commands that have a @code{'}, please correct it to the single-quote (or apostrophe) character, otherwise the command will fail.
 
 
 @node Acknowledgments,  , Conventions, Introduction
@@ -2242,6 +2246,15 @@ astfits flat-ir/xdf-f160w.fits --skycoverage --quiet
 The second row is the coverage range along RA and Dec (compare with the outputs before using @option{--quiet}).
 We can thus simply subtract the second from the first column and multiply it with the difference of the fourth and third columns to calculate the image area.
 We'll also multiply each by 60 to have the area in arc-minutes squared.
+
+@iftex
+@cartouche
+@noindent
+@strong{Single quotes in PDF format:} in the PDF version of this manual, a single quote (or apostrophe) character in the commands or codes is shown like this: @code{'}.
+Single quotes are sometimes necessary in combination with commands like @code{awk} or @code{sed} (like the command below), or when using Column arithmetic in Gnuastro's own Table (see @ref{Column arithmetic}).
+Therefore when typing (recommended) or copy-pasting (not recommented) the commands that have a @code{'}, please correct it to the single-quote (or apostrophe) character, otherwise the command will fail.
+@end cartouche
+@end iftex
 
 @example
 astfits flat-ir/xdf-f160w.fits --skycoverage --quiet \
