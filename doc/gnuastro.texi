@@ -3098,7 +3098,7 @@ We are now ready to finally run NoiseChisel on the three filters and keep the ou
 $ rm *.fits
 $ mkdir nc
 $ for f in f105w f125w f160w; do \
-    astnoisechisel flat-ir/xdf-$f.fits --output=nc/xdf-$f.fits
+    astnoisechisel flat-ir/xdf-$f.fits --output=nc/xdf-$f.fits; \
   done
 @end example
 
