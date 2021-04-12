@@ -529,6 +529,14 @@ MakeCatalog
 * Adding new columns to MakeCatalog::  How to add new columns.
 * Invoking astmkcatalog::       Options and arguments to MakeCatalog.
 
+Quantifying measurement limits
+
+* Magnitude measurement error of each detection::  Derivation of mag error equation
+* Completeness limit of each detection::  Possibility of detecting similar objects?
+* Upper limit magnitude of each detection::  How reliable is your magnitude?
+* Surface brightness limit of image::  How deep is your data?
+* Upper limit magnitude of image::  How deep is your data for certain footprint?
+
 Invoking MakeCatalog
 
 * MakeCatalog inputs and basic settings::  Input files and basic settings.
@@ -17061,9 +17069,16 @@ Depending on the higher-level analysis, there are more tests that must be done, 
 In astronomy, it is common to use the magnitude (a unit-less scale) and physical units, see @ref{Brightness flux magnitude}.
 Therefore the measurements discussed here are commonly used in units of magnitudes.
 
-@table @asis
+@menu
+* Magnitude measurement error of each detection::  Derivation of mag error equation
+* Completeness limit of each detection::  Possibility of detecting similar objects?
+* Upper limit magnitude of each detection::  How reliable is your magnitude?
+* Surface brightness limit of image::  How deep is your data?
+* Upper limit magnitude of image::  How deep is your data for certain footprint?
+@end menu
 
-@item Magnitude measurement error (of each detection)
+@node Magnitude measurement error of each detection, Completeness limit of each detection, Quantifying measurement limits, Quantifying measurement limits
+@subsubsection Magnitude measurement error of each detection
 The raw error in measuring the magnitude is only meaningful when the object's magnitude is brighter than the upper-limit magnitude (see below).
 As discussed in @ref{Brightness flux magnitude}, the magnitude (@mymath{M}) of an object with brightness @mymath{B} and zero point magnitude @mymath{z} can be written as:
 
@@ -17087,7 +17102,8 @@ But, @mymath{\Delta{B}/B} is just the inverse of the Signal-to-noise ratio (@mym
 MakeCatalog uses this relation to estimate the magnitude errors.
 The signal-to-noise ratio is calculated in different ways for clumps and objects (see @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}), but this single equation can be used to estimate the measured magnitude error afterwards for any type of target.
 
-@item Completeness limit (of each detection)
+@node Completeness limit of each detection, Upper limit magnitude of each detection, Magnitude measurement error of each detection, Quantifying measurement limits
+@subsubsection Completeness limit of each detection
 @cindex Completeness
 As the surface brightness of the objects decreases, the ability to detect them will also decrease.
 An important statistic is thus the fraction of objects of similar morphology and brightness that will be detected with our detection algorithm/parameters in a given image.
@@ -17108,7 +17124,8 @@ However in such a study we must be really careful to choose model profiles as si
 
 
 
-@item Upper limit magnitude (of each detection)
+@node Upper limit magnitude of each detection, Surface brightness limit of image, Completeness limit of each detection, Quantifying measurement limits
+@subsubsection Upper limit magnitude of each detection
 Due to the noisy nature of data, it is possible to get arbitrarily low values for a faint object's brightness (or arbitrarily high @emph{magnitudes}).
 Given the scatter caused by the dataset's noise, values fainter than a certain level are meaningless: another similar depth observation will give a radically different value.
 
@@ -17148,13 +17165,23 @@ You can get the full list of upper-limit related columns of MakeCatalog with thi
 $ astmkcatalog --help | grep -- --upperlimit
 @end example
 
-@item Surface brightness limit (of whole dataset)
+@node Surface brightness limit of image, Upper limit magnitude of image, Upper limit magnitude of each detection, Quantifying measurement limits
+@subsubsection Surface brightness limit of image
 @cindex Surface brightness
-As we make more observations on one region of the sky, and add/combine the observations into one dataset, the signal increases much faster than the noise:
+As we make more observations on one region of the sky and add/combine the observations into one dataset, both the signal and the noise increase.
+However, the signal increases much faster than the noise:
 Assuming you add @mymath{N} datasets with equal exposure times, the signal will increases as a multiple of @mymath{N}, while noise increases as @mymath{\sqrt{N}}.
 Therefore the signal-to-noise ratio increases by a factor of @mymath{\sqrt{N}}.
-Qualitatively, fainter (per pixel) parts of the objects/signal in the image will become more visible/detectable.
+Visually, fainter (per pixel) parts of the objects/signal in the image will become more visible/detectable.
 The noise-level is known as the dataset's surface brightness limit.
+
+You can think of the noise as muddy water that is completely covering a flat ground@footnote{The ground is the sky value in this analogy, see @ref{Sky value}.
+Note that this analogy only holds for a flat sky value across the surface of the image or ground.}.
+The signal (coming from astronomical objects in real data) will be summits/hills that start from the flat sky level (under the muddy water) and their summits can sometimes reach above the muddy water.
+Let's assume that in your first observation the muddy water has just been stirred and except a few small peaks, you can't see anything through the mud.
+As you wait and make more observations/exposures, the mud settles down and the @emph{depth} of the transparent water increases.
+As a result, more and more summits become visible and the lower parts of the hills (parts with lower surface brightness) can be seen more clearly.
+In this analogy@footnote{Note that this muddy water analogy is not perfect, because while the water-level remains the same all over a peak, in data analysis, the Poisson noise increases with the level of data.}, height (from the ground) is the @emph{surface brightness} and the height of the muddy water at the moment you combine your data, is your @emph{surface brightness limit} for that moment.
 
 @cindex Data's depth
 The outputs of NoiseChisel include the Sky standard deviation (@mymath{\sigma}) on every group of pixels (a tile) that were calculated from the undetected pixels in each tile, see @ref{Tessellation} and @ref{NoiseChisel output}.
@@ -17211,12 +17238,18 @@ But this only happens in individual exposures: reduced data will have correlated
 A more accurate measure which will provide a realistic value for every labeled region is known as the @emph{upper-limit magnitude}, which is discussed below.
 
 
-@item Upper limit magnitude (of full dataset)
+@node Upper limit magnitude of image,  , Surface brightness limit of image, Quantifying measurement limits
+@subsubsection Upper limit magnitude of image
 As mentioned above, the upper-limit magnitude will depend on the shape of each object's footprint.
 Therefore we can measure the dataset's upper-limit magnitude using standard shapes.
 Traditionally a circular aperture of a fixed size (in arcseconds) has been used.
-For a full example of implementing this, see @ref{Image surface brightness limit}.
-@end table
+For a full example of implementing this, see the respective section in the tutorial (@ref{Image surface brightness limit}).
+
+
+
+
+
+
 
 
 
@@ -17593,7 +17626,8 @@ The sigma-clipping parameters when any of the sigma-clipping related columns are
 
 This option takes two values: the first is the multiple of @mymath{\sigma}, and the second is the termination criteria.
 If the latter is larger than 1, it is read as an integer number and will be the number of times to clip.
-If it is smaller than 1, it is interpreted as the tolerance level to stop clipping. See @ref{Sigma clipping} for a complete explanation.
+If it is smaller than 1, it is interpreted as the tolerance level to stop clipping.
+See @ref{Sigma clipping} for a complete explanation.
 
 @item --fracmax=FLT[,FLT]
 The fractions (one or two) of maximum value in objects or clumps to be used in the related columns, for example @option{--fracmaxarea1}, @option{--fracmaxsum1} or @option{--fracmaxradius1}, see @ref{MakeCatalog measurements}.
