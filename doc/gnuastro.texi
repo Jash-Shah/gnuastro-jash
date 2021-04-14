@@ -25784,6 +25784,7 @@ In the equatorial and ecliptic coordinates, @code{B1950} stands for the Besselia
 
 @deffn  Macro GAL_WCS_LINEAR_MATRIX_PC
 @deffnx Macro GAL_WCS_LINEAR_MATRIX_CD
+@deffnx Macro GAL_WCS_LINEAR_MATRIX_INVALID
 Identifiers of the linear transformation matrix: either in the @code{PCi_j} or the @code{CDi_j} formalism.
 For more, see the description of @option{--wcslinearmatrix} in @ref{Input output options}.
 @end deffn

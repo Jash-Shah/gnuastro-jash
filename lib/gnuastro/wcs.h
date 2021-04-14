@@ -73,20 +73,20 @@ enum gal_wcs_distortions
 /* Macros to identify coordinate system for convesions. */
 enum gal_wcs_coordsys
 {
-  GAL_WCS_COORDSYS_INVALID,         /* Invalid (=0 by C standard).    */
+  GAL_WCS_COORDSYS_INVALID,           /* Invalid (=0 by C standard).    */
 
-  GAL_WCS_COORDSYS_EQB1950,         /* Equatorial B1950 */
-  GAL_WCS_COORDSYS_EQJ2000,         /* Equatorial J2000 */
-  GAL_WCS_COORDSYS_ECB1950,         /* Ecliptic B1950 */
-  GAL_WCS_COORDSYS_ECJ2000,         /* Ecliptic J2000 */
-  GAL_WCS_COORDSYS_GALACTIC,        /* Galactic */
-  GAL_WCS_COORDSYS_SUPERGALACTIC,   /* Super-galactic */
+  GAL_WCS_COORDSYS_EQB1950,           /* Equatorial B1950 */
+  GAL_WCS_COORDSYS_EQJ2000,           /* Equatorial J2000 */
+  GAL_WCS_COORDSYS_ECB1950,           /* Ecliptic B1950 */
+  GAL_WCS_COORDSYS_ECJ2000,           /* Ecliptic J2000 */
+  GAL_WCS_COORDSYS_GALACTIC,          /* Galactic */
+  GAL_WCS_COORDSYS_SUPERGALACTIC,     /* Super-galactic */
 };
 
 /* Macros to identify the type of distortion for conversions. */
 enum gal_wcs_linear_matrix
 {
-  GAL_WCS_MATRIX_INVALID,            /* Invalid (=0 by C standard).    */
+  GAL_WCS_LINEAR_MATRIX_INVALID,      /* Invalid (=0 by C standard).    */
 
   GAL_WCS_LINEAR_MATRIX_PC,
   GAL_WCS_LINEAR_MATRIX_CD,
