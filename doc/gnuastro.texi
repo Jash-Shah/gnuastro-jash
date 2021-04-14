@@ -3202,7 +3202,18 @@ The clumps are not affected by the hard-to-deblend and low signal-to-noise diffu
 From this step onward, we'll continue with clumps.
 
 Having localized the regions of interest in the dataset, we are ready to do measurements on them with @ref{MakeCatalog}.
-Besides the IDs, we want to measure (in this order) the Right Ascension (with @option{--ra}), Declination (@option{--dec}), magnitude (@option{--magnitude}), and signal-to-noise ratio (@option{--sn}) of the objects and clumps.
+MakeCatalog is specialized and optimized for doing measurements over labeled regions of an image.
+In other words, through MakeCatalog, you can ``reduce'' an image to a table (catalog of certain properties of objects in the image).
+Each requested measurement (over each label) will be given a column in the output table.
+To see the full set of available measurements run it with @option{--help} like below (and scroll up), note that measurements are classified by context.
+
+@example
+$ astmkcatalog --help
+@end example
+
+So let's select the properties we want to measure in this tutorial.
+First of all, we need to know which measurement belongs to which object or clump, so we'll start with the @option{--ids} (read as: IDs@footnote{This option is plural because we need two ID columns for identifying ``clumps'' in the clumps catalog/table: the first column will be the ID of the host ``object'', and the second one will be the ID of the clump within that object. In the ``objects'' catalog/table, only a single column will be returned for this option.}).
+We also want to measure (in this order) the Right Ascension (with @option{--ra}), Declination (@option{--dec}), magnitude (@option{--magnitude}), and signal-to-noise ratio (@option{--sn}) of the objects and clumps.
 Furthermore, as mentioned above, we also want measurements on clumps, so we also need to call @option{--clumpscat}.
 The following command will make these measurements on Segment's F160W output and write them in a catalog for each object and clump in a FITS table.
 
@@ -3243,9 +3254,10 @@ However, the measurements of each column are also done on different pixels: the 
 Please open them and focus on one object to see for your self.
 This can bias the result, if you match catalogs.
 
-An accurate color calculation can only be done when magnitudes are measured from the same pixels on both images.
-Fortunately in these images, the Point spread function (PSF) are very similar, allowing us to do this directly@footnote{When the PSFs between two images differ largely, you would have to PSF-match the images before using the same pixels for measurements.}.
-You can do this with MakeCatalog and is one of the reasons that NoiseChisel or Segment don't generate a catalog at all (to give you the freedom of selecting the pixels to do catalog measurements on).
+An accurate color calculation can only be done when magnitudes are measured from the same pixels on all images and this can be done easily with MakeCatalog.
+Infact this is one of the reasons that NoiseChisel or Segment don't generate a catalog like most other detection/segmentation software.
+This gives you the freedom of selecting the pixels for measurement in any way you like (from other filters, other software, manually, and etc).
+Fortunately in these images, the Point spread function (PSF) is very similar, allowing us to use a single labeled image output for all filters@footnote{When the PSFs between two images differ largely, you would have to PSF-match the images before using the same pixels for measurements.}.
 
 The F160W image is deeper, thus providing better detection/segmentation, and redder, thus observing smaller/older stars and representing more of the mass in the galaxies.
 We will thus use the F160W filter as a reference and use its segment labels to identify which pixels to use for which objects/clumps.
@@ -3263,8 +3275,9 @@ $ astmkcatalog seg/xdf-f160w.fits --ids --ra --dec --magnitude --sn \
 @end example
 
 After running the commands above, look into what MakeCatalog printed on the command-line.
-You can see that (as requested) the object and clump labels for both were taken from the respective extensions in @file{seg/xdf-f160w.fits}, while the values and Sky standard deviation were taken from @file{nc/xdf-f105w.fits} and @file{nc/xdf-f125w.fits}.
-Since we used the same labeled image on both filters, the number of rows in both catalogs are now identical.
+You can see that (as requested) the object and clump pixel labels in both were taken from the respective extensions in @file{seg/xdf-f160w.fits}.
+However, the pixel values and pixel Sky standard deviation were respectively taken from @file{nc/xdf-f105w.fits} and @file{nc/xdf-f125w.fits}.
+Since we used the same labeled image on all filters, the number of rows in both catalogs are now identical.
 Let's have a look:
 
 @example
@@ -3273,11 +3286,12 @@ $ asttable cat/xdf-f125w-on-f160w-lab.fits -hCLUMPS -i
 $ asttable cat/xdf-f160w.fits -hCLUMPS -i
 @end example
 
-Finally, the comments in MakeCatalog's output (@code{COMMENT} keywords in the FITS headers, or lines starting with @code{#} in plain text) contain some important information about the input datasets and other useful info (for example pixel area or per-pixel surface brightness limit).
-You can see them with this command:
+Finally, MakeCatalog also does basic calculations on the full dataset (independent of each labeled region but related to whole data), for example pixel area or per-pixel surface brightness limit.
+They are stored as keywords in the FITS headers (or lines starting with @code{#} in plain text).
+You can see them with this command (for more, see @ref{Image surface brightness limit} in the next tutorial):
 
 @example
-$ astfits cat/xdf-f160w.fits -h1 | grep COMMENT
+$ astfits cat/xdf-f160w.fits -h1
 @end example
 
 
@@ -4962,7 +4976,7 @@ To address these questions, you can use @ref{Segment} to identify all the ``clum
 
 @example
 $ astsegment r_detected.fits --output=r_segmented.fits
-ds9 -mecube r_segmented.fits -cmap sls -zoom to fit -scale limits 0 2
+$ ds9 -mecube r_segmented.fits -cmap sls -zoom to fit -scale limits 0 2
 @end example
 
 @cindex DS9
