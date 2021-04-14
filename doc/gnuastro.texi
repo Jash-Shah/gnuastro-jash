@@ -107,7 +107,7 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 
 * astscript-sort-by-night: (gnuastro)Invoking astscript-sort-by-night. Options to this script
 
-* astscript-make-ds9-reg: (gnuastro)Invoking astscript-make-ds9-reg. Options to this script
+* astscript-ds9-region: (gnuastro)Invoking astscript-ds9-region. Options to this script
 
 @end direntry
 
@@ -620,7 +620,7 @@ Generate radial profile
 
 SAO DS9 region files from table
 
-* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
+* Invoking astscript-ds9-region::  How to call astscript-ds9-region
 
 Library
 
@@ -4819,14 +4819,14 @@ astmkcatalog lab.fits -h1 --zeropoint=$zeropoint -osbl.fits \
 But where do all the random apertures of the upper-limit measurement fall on the image?
 It is good to actually inspect their location to get a better understanding for the process and also detect possible bugs/biases.
 When MakeCatalog is run with the @option{--checkuplim} option, it will print all the random locations and their measured brightness as a table in a file with the suffix @file{_upcheck.fits}.
-With the first command below you can use Gnuastro's @command{asttable} and @command{astscript-make-ds9-reg} to convert the successful aperture locations into a DS9 region file, and with the second can load the region file into the detections and sky-subtracted image to visually see where they are.
+With the first command below you can use Gnuastro's @command{asttable} and @command{astscript-ds9-region} to convert the successful aperture locations into a DS9 region file, and with the second can load the region file into the detections and sky-subtracted image to visually see where they are.
 
 @example
 ## Create a DS9 region file from the check table (activated
 ## with '--checkuplim')
 asttable lab_upcheck.fits --noblank=RANDOM_SUM \
-         | astscript-make-ds9-reg -c1,2 --mode=img \
-                                  --radius=$r_pixel
+         | astscript-ds9-region -c1,2 --mode=img \
+                                --radius=$r_pixel
 
 ## Have a look at the regions in relation with NoiseChisel's
 ## detections.
@@ -5002,11 +5002,11 @@ set -u	   # Stop execution when a variable is not initialized.
 # Default output is `$1_cat.fits'.
 astmkcatalog $1.fits --clumpscat --ids --ra --dec
 
-# Use Gnuastro's Table and astscript-make-ds9-reg to build the DS9
+# Use Gnuastro's Table and astscript-ds9-region to build the DS9
 # region file (a circle of radius 1 arcseconds on each point).
 asttable $1"_cat.fits" -hCLUMPS -cRA,DEC \
-         | astscript-make-ds9-reg -c1,2 --mode=wcs --radius=1 \
-                                  --output=$1.reg
+         | astscript-ds9-region -c1,2 --mode=wcs --radius=1 \
+                                --output=$1.reg
 
 # Show the image (with the requested color scale) and the region file.
 ds9 -geometry 1800x3000 -mecube $1.fits -zoom to fit                   \
@@ -21129,11 +21129,11 @@ In this section we describe a simple installed script that is provided within Gn
 SAO DS9@footnote{@url{https://sites.google.com/cfa.harvard.edu/saoimageds9}} is one of the most common FITS image vizualization tools in astronomy and is free software.
 
 @menu
-* Invoking astscript-make-ds9-reg::  How to call astscript-make-ds9-reg
+* Invoking astscript-ds9-region::  How to call astscript-ds9-region
 @end menu
 
-@node Invoking astscript-make-ds9-reg,  , SAO DS9 region files from table, SAO DS9 region files from table
-@subsection Invoking astscript-make-ds9-reg
+@node Invoking astscript-ds9-region,  , SAO DS9 region files from table, SAO DS9 region files from table
+@subsection Invoking astscript-ds9-region
 
 This installed script will read two positional columns within an input table and generate an SAO DS9 region file to visualize the position of the given objects over an image.
 For more on installed scripts please see (see @ref{Installed scripts}).
@@ -21141,23 +21141,23 @@ This script can be used with the following general template:
 
 @example
 ## Use the RA and DEC columns of 'table.fits' for the region file.
-$ astscript-make-ds9-reg table.fits --column=RA,DEC \
-                          --output=ds9.reg
+$ astscript-ds9-region table.fits --column=RA,DEC \
+                       --output=ds9.reg
 
 ## Select objects with a magnitude between 18 to 20, and generate the
 ## region file directly (through a pipe), each region with radius of
 ## 0.5 arcseconds.
 $ asttable table.fits --range=MAG,18:20 --column=RA,DEC \
-      | astscript-make-ds9-reg --column=1,2 --radius=0.5
+      | astscript-ds9-region --column=1,2 --radius=0.5
 
 ## With the first command, select objects with a magnitude of 25 to 26
 ## as red regions in 'bright.reg'. With the second command, select
 ## objects with a magnitude between 28 to 29 as a green region and
 ## show both.
 $ asttable cat.fits --range=MAG_F160W,25:26 -cRA,DEC \
-      | ./astscript-make-ds9-reg -c1,2 --color=red -obright.reg
+      | ./astscript-ds9-region -c1,2 --color=red -obright.reg
 $ asttable cat.fits --range=MAG_F160W,28:29 -cRA,DEC \
-      | ./astscript-make-ds9-reg -c1,2 --color=green \
+      | ./astscript-ds9-region -c1,2 --color=green \
                     --command="ds9 image.fits -regions bright.reg"
 @end example
 
@@ -31376,7 +31376,7 @@ in a special way), are done with installed Bash scripts (all prefixed with
 similarly (with minor differences, see @ref{Installed scripts}).
 
 @table @code
-@item astscript-make-ds9-reg
+@item astscript-ds9-region
 (See @ref{SAO DS9 region files from table}) Given a table (either as a file or from standard input), create an SAO DS9 region file from the requested positional columns (WCS or image coordinates).
 
 @item astscript-radial-profile

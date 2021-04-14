@@ -8,14 +8,14 @@ See the end of the file for license conditions.
 ** New features
 
   New program:
-   - astscript-make-ds9-reg: Given a table (either as a file or from
+   - astscript-ds9-region: Given a table (either as a file or from
      standard input), create an SAO DS9 region file from the requested
      positional columns (WCS or image coordinates). For example with the
      command below you can select certain rows of a given table, and show
      them over an image:
-        asttable table.fits --range=MAG,18:20 --column=RA,DEC \
-            | astscript-make-ds9-reg --column=1,2 --radius=0.5 \
-                                     --command="ds9 image.fits"
+        asttable table.fits --range=MAGNITUDE,18:20 --column=RA,DEC \
+            | astscript-ds9-region --column=1,2 --radius=0.5 \
+                                   --command="ds9 image.fits"
    - astscript-radial-profile: Measure the radial profile of an object on
      an image. The profile can be centered anywhere in the image and any
      circular, or elliptical distance can be defined. The output is a table

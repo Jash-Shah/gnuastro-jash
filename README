@@ -109,7 +109,7 @@ running a program in a special way), Gnuastro also installs Bash scripts
 (all prefixed with 'astscript-'). They can be run like a program and behave
 very similarly (with minor differences, as explained in the book).
 
-  - astscript-make-ds9-reg: Given a table (either as a file or from
+  - astscript-ds9-region: Given a table (either as a file or from
     standard input), create an SAO DS9 region file from the requested
     positional columns (WCS or image coordinates).
 

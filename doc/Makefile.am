@@ -153,7 +153,7 @@ dist_man_MANS = $(MAYBE_ARITHMETIC_MAN) $(MAYBE_BUILDPROG_MAN) \
   $(MAYBE_MKCATALOG_MAN) $(MAYBE_MKNOISE_MAN) $(MAYBE_MKPROF_MAN) \
   $(MAYBE_NOISECHISEL_MAN) $(MAYBE_QUERY_MAN) $(MAYBE_SEGMENT_MAN) \
   $(MAYBE_STATISTICS_MAN) $(MAYBE_TABLE_MAN) $(MAYBE_WARP_MAN) \
-  man/astscript-make-ds9-reg.1 man/astscript-radial-profile.1 \
+  man/astscript-ds9-region.1 man/astscript-radial-profile.1 \
   man/astscript-sort-by-night.1
 
 
@@ -250,13 +250,13 @@ man/astwarp.1: $(top_srcdir)/bin/warp/args.h  $(ALLMANSDEP)
 
 
 # The Scripts:
-man/astscript-make-ds9-reg.1: $(top_srcdir)/bin/script/make-ds9-reg.in   \
-                               $(ALLMANSDEP)
+man/astscript-ds9-region.1: $(top_srcdir)/bin/script/ds9-region.in   \
+                            $(ALLMANSDEP)
 	$(MAYBE_HELP2MAN) -n "Create an SAO DS9 region file from a table" \
-	                  --libtool $(toputildir)/script/astscript-make-ds9-reg
+	                  --libtool $(toputildir)/script/astscript-ds9-region
 
 man/astscript-radial-profile.1: $(top_srcdir)/bin/script/radial-profile.in   \
-                               $(ALLMANSDEP)
+                                $(ALLMANSDEP)
 	$(MAYBE_HELP2MAN) -n "Create a radial profile of an object in an image" \
 	                  --libtool $(toputildir)/script/astscript-radial-profile
 
