@@ -70,6 +70,7 @@ struct queryparams
   char                *ra_name;  /* Name of RA column.                 */
   char               *dec_name;  /* Name of Dec columns.               */
   char           *finalcommand;  /* The final command used.            */
+  int                   usetap;  /* If a TAP-download should be used.  */
 
   /* Output: */
   time_t               rawtime;  /* Starting time of the program.      */

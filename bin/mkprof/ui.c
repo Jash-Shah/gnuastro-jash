@@ -1359,6 +1359,10 @@ ui_prepare_wcs(struct mkprofparams *p)
   if(status)
     error(EXIT_FAILURE, 0, "wcsset error %d: %s", status,
           wcs_errmsg[status]);
+
+  /* Convert it to CD if the user wanted it. */
+  if(p->cp.wcslinearmatrix==GAL_WCS_LINEAR_MATRIX_CD)
+    gal_wcs_to_cd(wcs);
 }
 
 
@@ -1384,7 +1388,8 @@ ui_prepare_canvas(struct mkprofparams *p)
          the background image and the number of its dimensions. So
          'ndim==0' and what 'dsize' points to is irrelevant. */
       tdsize=gal_fits_img_info_dim(p->backname, p->backhdu, &tndim);
-      p->wcs=gal_wcs_read(p->backname, p->backhdu, 0, 0, &p->nwcs);
+      p->wcs=gal_wcs_read(p->backname, p->backhdu, p->cp.wcslinearmatrix,
+                          0, 0, &p->nwcs);
       tndim=gal_dimension_remove_extra(tndim, tdsize, p->wcs);
       free(tdsize);
       if(p->nomerged==0)

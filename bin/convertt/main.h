@@ -83,6 +83,7 @@ struct converttparams
   struct gal_options_common_params cp;   /* Common parameters.         */
   gal_list_str_t          *inputnames;   /* The names of input files.  */
   gal_list_str_t                *hdus;   /* The names of input hdus.   */
+  char           *globalhdu;  /* Global HDU (for all inputs).          */
   uint8_t           quality;  /* Quality of JPEG image.                */
   float           widthincm;  /* Width in centimeters.                 */
   uint32_t      borderwidth;  /* Width of border in PostScript points. */

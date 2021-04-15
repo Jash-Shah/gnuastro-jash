@@ -587,7 +587,8 @@ ui_preparations_read_input(struct noisechiselparams *p)
                                            NULL, GAL_TYPE_FLOAT32,
                                            p->cp.minmapsize,
                                            p->cp.quietmmap);
-  p->input->wcs = gal_wcs_read(p->inputname, p->cp.hdu, 0, 0,
+  p->input->wcs = gal_wcs_read(p->inputname, p->cp.hdu,
+                               p->cp.wcslinearmatrix, 0, 0,
                                &p->input->nwcs);
   p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
                                             p->input->dsize,

@@ -855,8 +855,9 @@ ui_preparations_to_img_mode(struct cropparams *p)
   size_t i;
   int nwcs;
   double *darr, *pixscale;
-  struct wcsprm *wcs=gal_wcs_read(p->inputs->v, p->cp.hdu, p->hstartwcs,
-                                  p->hendwcs, &nwcs);
+  struct wcsprm *wcs=gal_wcs_read(p->inputs->v, p->cp.hdu,
+                                  p->cp.wcslinearmatrix,
+                                  p->hstartwcs, p->hendwcs, &nwcs);
 
   /* Make sure a WCS actually exists. */
   if(wcs==NULL)
@@ -1018,8 +1019,8 @@ ui_preparations(struct cropparams *p)
       tmpfits=gal_fits_hdu_open_format(img->name, p->cp.hdu, 0);
       gal_fits_img_info(tmpfits, &p->type, &img->ndim, &img->dsize,
                         NULL, NULL);
-      img->wcs=gal_wcs_read_fitsptr(tmpfits, p->hstartwcs, p->hendwcs,
-                                    &img->nwcs);
+      img->wcs=gal_wcs_read_fitsptr(tmpfits, p->cp.wcslinearmatrix,
+                                    p->hstartwcs, p->hendwcs, &img->nwcs);
       if(img->wcs)
         {
           gal_wcs_decompose_pc_cdelt(img->wcs);

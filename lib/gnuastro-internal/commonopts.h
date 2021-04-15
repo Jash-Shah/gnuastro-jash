@@ -276,6 +276,20 @@ struct argp_option gal_commonopts_options[] =
       gal_options_read_tableformat
     },
     {
+      "wcslinearmatrix",
+      GAL_OPTIONS_KEY_WCSLINEARMATRIX,
+      "STR",
+      0,
+      "WCS linear matrix of output ('pc' or 'cd').",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &cp->wcslinearmatrix,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_read_wcslinearmatrix
+    },
+    {
       "dontdelete",
       GAL_OPTIONS_KEY_DONTDELETE,
       0,
@@ -342,7 +356,7 @@ struct argp_option gal_commonopts_options[] =
       GAL_OPTIONS_KEY_MINMAPSIZE,
       "INT",
       0,
-      "Minimum bytes in array to not use ram RAM.",
+      "Min. bytes to avoid RAM automatically.",
       GAL_OPTIONS_GROUP_OPERATING_MODE,
       &cp->minmapsize,
       GAL_TYPE_SIZE_T,

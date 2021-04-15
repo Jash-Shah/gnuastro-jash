@@ -377,7 +377,8 @@ ui_preparations(struct arithmeticparams *p)
       dsize=gal_fits_img_info_dim(p->wcsfile, p->wcshdu, &ndim);
 
       /* Read the WCS. */
-      p->refdata.wcs=gal_wcs_read(p->wcsfile, p->wcshdu, 0, 0,
+      p->refdata.wcs=gal_wcs_read(p->wcsfile, p->wcshdu,
+                                  p->cp.wcslinearmatrix, 0, 0,
                                   &p->refdata.nwcs);
       if(p->refdata.wcs)
         {

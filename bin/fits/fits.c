@@ -323,7 +323,8 @@ fits_pixelscale(struct fitsparams *p)
   double multip, *pixelscale;
 
   /* Read the desired WCS. */
-  wcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
+  wcs=gal_wcs_read(p->input->v, p->cp.hdu, p->cp.wcslinearmatrix,
+                   0, 0, &nwcs);
 
   /* If a WCS doesn't exist, let the user know and return. */
   if(wcs)
@@ -474,7 +475,8 @@ fits_skycoverage(struct fitsparams *p)
         }
 
       /* For the range type of coverage. */
-      wcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
+      wcs=gal_wcs_read(p->input->v, p->cp.hdu, p->cp.wcslinearmatrix,
+                       0, 0, &nwcs);
       printf("\nSky coverage by range along dimensions:\n");
       for(i=0;i<ndim;++i)
         printf("  %-8s %-15.10g%-15.10g\n", gal_wcs_dimension_name(wcs, i),

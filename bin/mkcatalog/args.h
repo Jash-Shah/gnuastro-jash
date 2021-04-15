@@ -1229,6 +1229,20 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
+      "upperlimitsb",
+      UI_KEY_UPPERLIMITSB,
+      0,
+      0,
+      "Upper-limit surface brightness (mag/arcsec^2).",
+      UI_GROUP_COLUMNS_BRIGHTNESS,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
       "upperlimitonesigma",
       UI_KEY_UPPERLIMITONESIGMA,
       0,

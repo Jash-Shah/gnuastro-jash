@@ -50,6 +50,9 @@ astron_sanity_checks(struct queryparams *p)
           gal_checkset_allocate_copy("tgssadr.main", &p->datasetstr);
         }
     }
+
+  /* Currently we assume ASTRON only uses TAP. */
+  p->usetap=1;
 }
 
 
@@ -59,7 +62,7 @@ astron_sanity_checks(struct queryparams *p)
 void
 astron_prepare(struct queryparams *p)
 {
-  /* NED-specific. */
+  /* ASTRON-specific. */
   astron_sanity_checks(p);
 
   /* Set the URLs, note that this is a simply-linked list, so we need to

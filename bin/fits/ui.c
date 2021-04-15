@@ -120,6 +120,7 @@ ui_initialize_options(struct fitsparams *p,
         case GAL_OPTIONS_KEY_SEARCHIN:
         case GAL_OPTIONS_KEY_IGNORECASE:
         case GAL_OPTIONS_KEY_TYPE:
+        case GAL_OPTIONS_KEY_WCSLINEARMATRIX:
         case GAL_OPTIONS_KEY_DONTDELETE:
         case GAL_OPTIONS_KEY_LOG:
         case GAL_OPTIONS_KEY_NUMTHREADS:
@@ -324,7 +325,7 @@ ui_read_check_only_options(struct fitsparams *p)
   if( p->date || p->comment || p->history || p->asis || p->keyvalue
       || p->delete || p->rename || p->update || p->write || p->verify
       || p->printallkeys || p->copykeys || p->datetosec
-      || p->wcsdistortion )
+      || p->wcscoordsys || p->wcsdistortion )
     {
       /* Check if a HDU is given. */
       if(p->cp.hdu==NULL)
@@ -339,15 +340,20 @@ ui_read_check_only_options(struct fitsparams *p)
       /* Keyword-related options that must be called alone. */
       checkkeys = ( (p->keyvalue!=NULL)
                     + (p->datetosec!=NULL)
+                    + (p->wcscoordsys!=NULL)
                     + (p->wcsdistortion!=NULL) );
       if( ( checkkeys
             && ( p->date || p->comment || p->history || p->asis
                  || p->delete || p->rename || p->update || p->write
                  || p->verify || p->printallkeys || p->copykeys ) )
           || checkkeys>1 )
-        error(EXIT_FAILURE, 0, "'--keyvalue', '--datetosec' and "
-              "'--wcsdistortion' cannot currently be called with "
-              "any other option");
+        error(EXIT_FAILURE, 0, "'--keyvalue', '--datetosec', "
+              "'--wcscoordsys' and '--wcsdistortion' cannot "
+              "currently be called with any other option");
+
+      /* Give an ID to recognized coordinate systems. */
+      if(p->wcscoordsys)
+        p->coordsysid=gal_wcs_coordsys_from_string(p->wcscoordsys);
 
       /* Identify the requested distortion. Note that this also acts as a
          sanity check because it will crash with an error if the given

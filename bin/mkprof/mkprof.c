@@ -32,6 +32,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/box.h>
 #include <gnuastro/git.h>
 #include <gnuastro/fits.h>
+#include <gnuastro/units.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/pointer.h>
 #include <gnuastro/dimension.h>
@@ -655,7 +656,7 @@ mkprof_write(struct mkprofparams *p)
                 break;
               case 2:
                 ((float *)(log->array))[ibq->id] =
-                  sum>0.0f ? -2.5f*log10(sum)+p->zeropoint : NAN;
+                  gal_units_counts_to_mag(sum, p->zeropoint);
                 break;
               case 1:
                 ((unsigned long *)(log->array))[ibq->id]=ibq->id+1;
@@ -883,7 +884,7 @@ mkprof(struct mkprofparams *p)
     }
 
   /* If a merged image was created, let the user know.... */
-  if(p->mergedimgname)
+  if(p->mergedimgname && p->cp.quiet==0)
     printf("  -- Output: %s\n", p->mergedimgname);
 
   /* Clean up. */

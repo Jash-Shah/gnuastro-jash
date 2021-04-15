@@ -53,14 +53,6 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* Static functions on for this file. */
-static void
-gal_wcs_to_cd(struct wcsprm *wcs);
-
-
-
-
-
 /*************************************************************
  ***********               Read WCS                ***********
  *************************************************************/
@@ -149,8 +141,8 @@ wcs_read_correct_pc_cd(struct wcsprm *wcs)
    Don't call this function within a thread or use a mutex.
 */
 struct wcsprm *
-gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
-                     int *nwcs)
+gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
+                     size_t hendwcs, int *nwcs)
 {
   /* Declaratins: */
   int sumcheck;
@@ -361,6 +353,11 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
         }
     }
 
+  /* If the user wants a CD linear matrix, do the conversion here,
+     otherwise, make sure the PC matrix is used. */
+  if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD) gal_wcs_to_cd(wcs);
+  else                          gal_wcs_decompose_pc_cdelt(wcs);
+
   /* Clean up and return. */
   status=0;
   if (fits_free_memory(fullheader, &status) )
@@ -374,8 +371,8 @@ gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
 
 
 struct wcsprm *
-gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
-             size_t hendwcs, int *nwcs)
+gal_wcs_read(char *filename, char *hdu, int linearmatrix,
+             size_t hstartwcs, size_t hendwcs, int *nwcs)
 {
   int status=0;
   fitsfile *fptr;
@@ -389,7 +386,8 @@ gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
   fptr=gal_fits_hdu_open_format(filename, hdu, 0);
 
   /* Read the WCS information: */
-  wcs=gal_wcs_read_fitsptr(fptr, hstartwcs, hendwcs, nwcs);
+  wcs=gal_wcs_read_fitsptr(fptr, linearmatrix, hstartwcs,
+                           hendwcs, nwcs);
 
   /* Close the FITS file and return. */
   fits_close_file(fptr, &status);
@@ -403,7 +401,8 @@ gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
 
 struct wcsprm *
 gal_wcs_create(double *crpix, double *crval, double *cdelt,
-               double *pc, char **cunit, char **ctype, size_t ndim)
+               double *pc, char **cunit, char **ctype,
+               size_t ndim, int linearmatrix)
 {
   size_t i;
   int status;
@@ -440,6 +439,10 @@ gal_wcs_create(double *crpix, double *crval, double *cdelt,
   if(status)
     error(EXIT_FAILURE, 0, "wcsset error %d: %s", status,
           wcs_errmsg[status]);
+
+  /* If a CD matrix is desired make it. */
+  if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD)
+    gal_wcs_to_cd(wcs);
 
   /* Return the output WCS. */
   return wcs;
@@ -497,15 +500,21 @@ void
 gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
 {
   char *wcsstr;
-  int tpvdist, status=0, nkeyrec;
+  int cdfordist, status=0, nkeyrec;
 
-  /* Prepare the main rotation matrix. Note that for TPV distortion, WCSLIB
-     versions 7.3 and before couldn't deal with the CDELT keys, so to be
-     safe, in such cases, we'll remove the effect of CDELT in the
-     'gal_wcs_to_cd' function. */
-  tpvdist=wcs->lin.disseq && !strcmp(wcs->lin.disseq->dtype[1], "TPV");
-  if( tpvdist ) gal_wcs_to_cd(wcs);
-  else          gal_wcs_decompose_pc_cdelt(wcs);
+  /* For the TPV, TNX and ZPX distortions, WCSLIB can't deal with the CDELT
+     keys properly and its better to use the CD matrix instead, so we'll
+     use the 'gal_wcs_to_cd' function. */
+  cdfordist = ( wcs->lin.disseq
+                && ( !strcmp(   wcs->lin.disseq->dtype[1], "TPV")
+                     || !strcmp(wcs->lin.disseq->dtype[1], "TNX")
+                     || !strcmp(wcs->lin.disseq->dtype[1], "ZPX") ) );
+
+  /* Finalize the linear transformation matrix. Note that some programs may
+     have worked on the WCS. So even if 'altlin' is already 2, we'll just
+     ensure that the final matrix is CD here. */
+  if(wcs->altlin==2 || cdfordist) gal_wcs_to_cd(wcs);
+  else                            gal_wcs_decompose_pc_cdelt(wcs);
 
   /* Clean up small errors in the PC matrix and CDELT values. */
   gal_wcs_clean_errors(wcs);
@@ -523,33 +532,33 @@ gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
   status=0;
 
    /* WCSLIB is going to write PC+CDELT keywords in any case. But when we
-      have a TPV distortion, it is cleaner to use a CD matrix. Also,
-      including and before version 7.3, WCSLIB wouldn't convert coordinates
-      properly if the PC matrix is used with the TPV distortion. So to help
-      users with WCSLIB 7.3 or earlier, we need to conver the PC matrix to
-      CD. 'gal_wcs_to_cd' function already made sure that CDELT=1, so
-      effectively the CD matrix and PC matrix are equivalent, we just need
-      to convert the keyword names and delete the CDELT keywords. Note that
-      zero-valued PC/CD elements may not be present, so we'll manually set
-      'status' to zero and not let CFITSIO crash.*/
+      have a TPV, TNX or ZPX distortion, it is cleaner to use a CD matrix
+      (WCSLIB can't convert coordinates properly if the PC matrix is used
+      with the TPV distortion). So to help users avoid the potential
+      problems with WCSLIB. 'gal_wcs_to_cd' function already made sure that
+      CDELTi=1.0, so effectively the CD matrix and PC matrix are
+      equivalent, we just need to convert the keyword names and delete the
+      CDELT keywords. Note that zero-valued PC/CD elements may not be
+      present, so we'll manually set 'status' to zero to avoid CFITSIO from
+      crashing. */
   if(wcs->altlin==2)
     {
+      status=0; fits_delete_str(fptr, "CDELT1", &status);
+      status=0; fits_delete_str(fptr, "CDELT2", &status);
       status=0; fits_modify_name(fptr, "PC1_1", "CD1_1", &status);
       status=0; fits_modify_name(fptr, "PC1_2", "CD1_2", &status);
       status=0; fits_modify_name(fptr, "PC2_1", "CD2_1", &status);
       status=0; fits_modify_name(fptr, "PC2_2", "CD2_2", &status);
-      status=0; fits_delete_str(fptr, "CDELT1", &status);
-      status=0; fits_delete_str(fptr, "CDELT2", &status);
+      if(wcs->naxis==3)
+        {
+          status=0; fits_delete_str(fptr, "CDELT3", &status);
+          status=0; fits_modify_name(fptr, "PC1_3", "CD1_3", &status);
+          status=0; fits_modify_name(fptr, "PC2_3", "CD2_3", &status);
+          status=0; fits_modify_name(fptr, "PC3_1", "CD3_1", &status);
+          status=0; fits_modify_name(fptr, "PC3_2", "CD3_2", &status);
+          status=0; fits_modify_name(fptr, "PC3_3", "CD3_3", &status);
+        }
       status=0;
-      fits_write_comment(fptr, "The CD matrix is used instead of the "
-                         "PC+CDELT due to conflicts with TPV distortion "
-                         "in WCSLIB 7.3 (released on 2020/06/03) and "
-                         "ealier. By default Gnuastro will write "
-                         "PC+CDELT matrices because the rotation (PC) and "
-                         "pixel-scale (CDELT) are separate; providing "
-                         "more physically relevant metadata for human "
-                         "readers (PC+CDELT is also the default format "
-                         "of WCSLIB).", &status);
     }
 }
 
@@ -605,6 +614,406 @@ gal_wcs_write(struct wcsprm *wcs, char *filename,
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************************************************************
+ ***********           Coordinate system           ***********
+ *************************************************************/
+int
+gal_wcs_coordsys_from_string(char *coordsys)
+{
+  if(      !strcmp(coordsys,"eq-j2000") ) return GAL_WCS_COORDSYS_EQJ2000;
+  else if( !strcmp(coordsys,"eq-b1950") ) return GAL_WCS_COORDSYS_EQB1950;
+  else if( !strcmp(coordsys,"ec-j2000") ) return GAL_WCS_COORDSYS_ECJ2000;
+  else if( !strcmp(coordsys,"ec-b1950") ) return GAL_WCS_COORDSYS_ECB1950;
+  else if( !strcmp(coordsys,"galactic") ) return GAL_WCS_COORDSYS_GALACTIC;
+  else if( !strcmp(coordsys,"supergalactic") )
+    return GAL_WCS_COORDSYS_SUPERGALACTIC;
+  else
+    error(EXIT_FAILURE, 0, "WCS coordinate system name '%s' not "
+          "recognized, currently recognized names are 'eq-j2000', "
+          "'eq-b1950', 'galactic' and 'supergalactic'", coordsys);
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return GAL_WCS_COORDSYS_INVALID;
+}
+
+
+
+
+/* Identify the coordinate system of the WCS. */
+int
+gal_wcs_coordsys_identify(struct wcsprm *wcs)
+{
+  /* Equatorial (we are keeping the dash ('-') to make sure it is a
+     standard). */
+  if ( !strncmp(wcs->ctype[0], "RA---", 5)
+       && !strncmp(wcs->ctype[1], "DEC--", 5) )
+    {
+      if ( !strncmp(wcs->radesys, "FK4", 3) )
+        return GAL_WCS_COORDSYS_EQB1950;
+      else if ( !strncmp(wcs->radesys, "FK5", 3) )
+        return GAL_WCS_COORDSYS_EQJ2000;
+      else
+        error(EXIT_FAILURE, 0, "%s: the '%s' value for 'RADESYS' is "
+              "not yet implemented! Please contact us at %s to "
+              "implement it", __func__, wcs->radesys, PACKAGE_BUGREPORT);
+    }
+
+  /* Ecliptic. */
+  else if ( !strncmp(wcs->ctype[0], "ELON-", 5)
+            && !strncmp(wcs->ctype[1], "ELAT-", 5) )
+    if ( !strncmp(wcs->radesys, "FK4", 3) )
+      return GAL_WCS_COORDSYS_ECB1950;
+    else if ( !strncmp(wcs->radesys, "FK5", 3) )
+      return GAL_WCS_COORDSYS_ECJ2000;
+    else
+      error(EXIT_FAILURE, 0, "%s: the '%s' value for 'RADESYS' is "
+            "not yet implemented! Please contact us at %s to "
+            "implement it", __func__, wcs->radesys, PACKAGE_BUGREPORT);
+
+  /* Galactic. */
+  else if ( !strncmp(wcs->ctype[0], "GLON-", 5)
+            && !strncmp(wcs->ctype[1], "GLAT-", 5) )
+    return GAL_WCS_COORDSYS_GALACTIC;
+
+  /* SuperGalactic. */
+  else if ( !strncmp(wcs->ctype[0], "SLON-", 5)
+            && !strncmp(wcs->ctype[1], "SLAT-", 5) )
+    return GAL_WCS_COORDSYS_SUPERGALACTIC;
+
+  /* Other. */
+  else
+    error(EXIT_FAILURE, 0, "%s: the CTYPE values '%s' and '%s' are "
+          "not yet implemented! Please contact us at %s to "
+          "implement it", __func__, wcs->ctype[0], wcs->ctype[1],
+          PACKAGE_BUGREPORT);
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix the "
+        "problem. Control should not reach the end of this function",
+        __func__, PACKAGE_BUGREPORT);
+  return GAL_WCS_COORDSYS_INVALID;
+}
+
+
+
+
+
+/* Set the pole coordinates (current values taken from the WCSLIB
+   manual.
+      lng2p1: pole of input  (1) system in output (2) system's logitude.
+      lat2p1: pole of input  (1) system in output (2) system's latitude.
+      lng1p2: pole of output (2) system in input  (1) system's longitude.
+
+   Values from NED (inspired by WCSLIB manual's example).
+   https://ned.ipac.caltech.edu/coordinate_calculator
+
+        longi (deg)  latit (deg)  OUTPUT                 INPUT
+        -----        -----        ------                 -----
+      (------------, -----------) B1950 equ.  coords. of B1950 equ.  pole.
+      (180.31684301, 89.72174782) J2000 equ.  coords. of B1950 equ.  pole.
+      (90.000000000, 66.55421111) B1950 ecl.  coords. of B1950 equ.  pole.
+      (90.699521110, 66.56068919) J2000 ecl.  coords. of B1950 equ.  pole.
+      (123.00000000, 27.40000000) Galactic    coords. of B1950 equ.  pole.
+      (26.731537070, 15.64407736) Supgalactic coords. of B1950 equ.  pole.
+
+      (359.68621044, 89.72178502) B1950 equ.  coords. of J2000 equ.  pole.
+      (------------, -----------) J2000 equ.  coords. of J2000 equ.  pole.
+      (89.300755510, 66.55417728) B1950 ecl.  coords. of J2000 equ.  pole.
+      (90.000000000, 66.56070889) J2000 ecl.  coords. of J2000 equ.  pole.
+      (122.93200023, 27.12843056) Galactic    coords. of J2000 equ.  pole.
+      (26.450516650, 15.70886131) Supgalactic coords. of J2000 equ.  pole.
+
+      (270.00000000, 66.55421111) B1950 equ.  coords. of B1950 ecl.  pole.
+      (269.99920697, 66.55421892) J2000 equ.  coords. of B1950 ecl.  pole.
+      (------------, -----------) B1950 ecl.  coords. of B1950 ecl.  pole.
+      (267.21656404, 89.99350237) J2000 ecl.  coords. of B1950 ecl.  pole.
+      (96.376479150, 29.81195400) Galactic    coords. of B1950 ecl.  pole.
+      (33.378919140, 38.34766498) Supgalactic coords. of B1950 ecl.  pole.
+
+      (270.00099211, 66.56069675) B1950 equ.  coords. of J2000 ecl.  pole.
+      (270.00000000, 66.56070889) J2000 equ.  coords. of J2000 ecl.  pole.
+      (86.517962160, 89.99350236) B1950 ecl.  coords. of J2000 ecl.  pole.
+      (------------, -----------) J2000 ecl.  coords. of J2000 ecl.  pole.
+      (96.383958840, 29.81163604) Galactic    coords. of J2000 ecl.  pole.
+      (33.376119480, 38.34154959) Supgalactic coords. of J2000 ecl.  pole.
+
+      (192.25000000, 27.40000000) B1950 equ.  coords. of Galactic    pole.
+      (192.85949646, 27.12835323) J2000 equ.  coords. of Galactic    pole.
+      (179.32094769, 29.81195400) B1950 ecl.  coords. of Galactic    pole.
+      (180.02317894, 29.81153742) J2000 ecl.  coords. of Galactic    pole.
+      (------------, -----------) Galactic    coords. of Galactic    pole.
+      (90.000000000, 6.320000000) Supgalactic coords. of Galactic    pole.
+
+      (283.18940711, 15.64407736) B1950 equ.  coords. of SupGalactic pole.
+      (283.75420420, 15.70894043) J2000 equ.  coords. of SupGalactic pole.
+      (286.26975051, 38.34766498) B1950 ecl.  coords. of SupGalactic pole.
+      (286.96654469, 38.34158720) J2000 ecl.  coords. of SupGalactic pole.
+      (47.370000000, 6.320000000) Galactic    coords. of SupGalactic pole.
+      (------------, -----------) Supgalactic coords. of SupGalactic pole.
+ */
+static void
+wcs_coordsys_insys_pole_in_outsys(int insys, int outsys, double *lng2p1,
+                                  double *lat2p1, double *lng1p2)
+{
+  switch( insys )
+    {
+    case GAL_WCS_COORDSYS_EQB1950:
+      switch( outsys)
+        {
+        case GAL_WCS_COORDSYS_EQB1950:
+          *lng2p1=NAN;          *lat2p1=NAN;         *lng1p2=NAN;          return;
+        case GAL_WCS_COORDSYS_EQJ2000:
+          *lng2p1=180.31684301; *lat2p1=89.72174782; *lng1p2=359.68621044; return;
+        case GAL_WCS_COORDSYS_ECB1950:
+          *lng2p1=90.000000000; *lat2p1=66.55421111; *lng1p2=270.00000000; return;
+        case GAL_WCS_COORDSYS_ECJ2000:
+          *lng2p1=90.699521110; *lat2p1=66.56068919; *lng1p2=270.00099211; return;
+        case GAL_WCS_COORDSYS_GALACTIC:
+          *lng2p1=123.00000000; *lat2p1=27.40000000; *lng1p2=192.25000000; return;
+        case GAL_WCS_COORDSYS_SUPERGALACTIC:
+          *lng2p1=26.731537070; *lat2p1=15.64407736; *lng1p2=283.18940711; return;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The code '%d' isn't a recognized WCS "
+                "coordinate system ID for 'outsys' (input EQB1950)", __func__,
+                PACKAGE_BUGREPORT, outsys);
+        }
+      break;
+    case GAL_WCS_COORDSYS_EQJ2000:
+      switch( outsys)
+        {
+        case GAL_WCS_COORDSYS_EQB1950:
+          *lng2p1=359.68621044; *lat2p1=89.72178502; *lng1p2=180.31684301; return;
+        case GAL_WCS_COORDSYS_EQJ2000:
+          *lng2p1=NAN;          *lat2p1=NAN;         *lng1p2=NAN;          return;
+        case GAL_WCS_COORDSYS_ECB1950:
+          *lng2p1=89.300755510; *lat2p1=66.55417728; *lng1p2=269.99920697; return;
+        case GAL_WCS_COORDSYS_ECJ2000:
+          *lng2p1=90.000000000; *lat2p1=66.56070889; *lng1p2=270.00000000; return;
+        case GAL_WCS_COORDSYS_GALACTIC:
+          *lng2p1=122.93200023; *lat2p1=27.12843056; *lng1p2=192.85949646; return;
+        case GAL_WCS_COORDSYS_SUPERGALACTIC:
+          *lng2p1=26.450516650; *lat2p1=15.70886131; *lng1p2=283.75420420; return;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The code '%d' isn't a recognized WCS "
+                "coordinate system ID for 'outsys' (input EQJ2000)", __func__,
+                PACKAGE_BUGREPORT, outsys);
+        }
+      break;
+    case GAL_WCS_COORDSYS_ECB1950:
+      switch( outsys)
+        {
+        case GAL_WCS_COORDSYS_EQB1950:
+          *lng2p1=270.00000000; *lat2p1=66.55421111; *lng1p2=90.000000000; return;
+        case GAL_WCS_COORDSYS_EQJ2000:
+          *lng2p1=269.99920697; *lat2p1=66.55421892; *lng1p2=89.300755510; return;
+        case GAL_WCS_COORDSYS_ECB1950:
+          *lng2p1=NAN;          *lat2p1=NAN;         *lng1p2=NAN;          return;
+        case GAL_WCS_COORDSYS_ECJ2000:
+          *lng2p1=267.21656404; *lat2p1=89.99350237; *lng1p2=86.517962160; return;
+        case GAL_WCS_COORDSYS_GALACTIC:
+          *lng2p1=96.383958840; *lat2p1=29.81163604; *lng1p2=179.32094769; return;
+        case GAL_WCS_COORDSYS_SUPERGALACTIC:
+          *lng2p1=33.378919140; *lat2p1=38.34766498; *lng1p2=286.26975051; return;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The code '%d' isn't a recognized WCS "
+                "coordinate system ID for 'outsys' (input ECB1950)", __func__,
+                PACKAGE_BUGREPORT, outsys);
+        }
+      break;
+    case GAL_WCS_COORDSYS_ECJ2000:
+      switch( outsys)
+        {
+        case GAL_WCS_COORDSYS_EQB1950:
+          *lng2p1=270.00099211; *lat2p1=66.56069675; *lng1p2=90.699521110; return;
+        case GAL_WCS_COORDSYS_EQJ2000:
+          *lng2p1=270.00000000; *lat2p1=66.56070889; *lng1p2=90.000000000; return;
+        case GAL_WCS_COORDSYS_ECB1950:
+          *lng2p1=86.517962160; *lat2p1=89.99350236; *lng1p2=267.21656404; return;
+        case GAL_WCS_COORDSYS_ECJ2000:
+          *lng2p1=NAN;          *lat2p1=NAN;         *lng1p2=NAN;          return;
+        case GAL_WCS_COORDSYS_GALACTIC:
+          *lng2p1=96.383958840; *lat2p1=29.81163604; *lng1p2=180.02317894; return;
+        case GAL_WCS_COORDSYS_SUPERGALACTIC:
+          *lng2p1=33.376119480; *lat2p1=38.34154959; *lng1p2=286.96654469; return;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The code '%d' isn't a recognized WCS "
+                "coordinate system ID for 'outsys' (input ECJ2000)", __func__,
+                PACKAGE_BUGREPORT, outsys);
+        }
+      break;
+    case GAL_WCS_COORDSYS_GALACTIC:
+      switch( outsys)
+        {
+        case GAL_WCS_COORDSYS_EQB1950:
+          *lng2p1=192.25000000; *lat2p1=27.40000000; *lng1p2=123.00000000; return;
+        case GAL_WCS_COORDSYS_EQJ2000:
+          *lng2p1=192.85949646; *lat2p1=27.12835323; *lng1p2=122.93200023; return;
+        case GAL_WCS_COORDSYS_ECB1950:
+          *lng2p1=179.32094769; *lat2p1=29.81195400; *lng1p2=96.376479150; return;
+        case GAL_WCS_COORDSYS_ECJ2000:
+          *lng2p1=180.02317894; *lat2p1=29.81153742; *lng1p2=96.383958840; return;
+        case GAL_WCS_COORDSYS_GALACTIC:
+          *lng2p1=NAN;          *lat2p1=NAN;         *lng1p2=NAN;          return;
+        case GAL_WCS_COORDSYS_SUPERGALACTIC:
+          *lng2p1=90.000000000; *lat2p1=6.320000000; *lng1p2=47.370000000; return;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The code '%d' isn't a recognized WCS "
+                "coordinate system ID for 'outsys' (input GALACTIC)", __func__,
+                PACKAGE_BUGREPORT, outsys);
+        }
+      break;
+    case GAL_WCS_COORDSYS_SUPERGALACTIC:
+      switch( outsys)
+        {
+        case GAL_WCS_COORDSYS_EQB1950:
+          *lng2p1=283.18940711; *lat2p1=15.64407736; *lng1p2=26.731537070; return;
+        case GAL_WCS_COORDSYS_EQJ2000:
+          *lng2p1=283.75420420; *lat2p1=15.70894043; *lng1p2=26.450516650; return;
+        case GAL_WCS_COORDSYS_ECB1950:
+          *lng2p1=286.26975051; *lat2p1=38.34766498; *lng1p2=33.378919140; return;
+        case GAL_WCS_COORDSYS_ECJ2000:
+          *lng2p1=286.96654469; *lat2p1=38.34158720; *lng1p2=33.376119480; return;
+        case GAL_WCS_COORDSYS_GALACTIC:
+          *lng2p1=47.370000000; *lat2p1=6.320000000; *lng1p2=90.000000000; return;
+        case GAL_WCS_COORDSYS_SUPERGALACTIC:
+          *lng2p1=NAN;          *lat2p1=NAN;         *lng1p2=NAN;          return;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The code '%d' isn't a recognized WCS "
+                "coordinate system ID for 'outsys' (input SUPERGALACTIC)", __func__,
+                PACKAGE_BUGREPORT, outsys);
+        }
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+            "fix the problem. The code '%d' isn't a recognized WCS "
+            "coordinate system ID for 'insys'", __func__,
+            PACKAGE_BUGREPORT, insys);
+    }
+
+}
+
+
+
+
+
+static void
+wcs_coordsys_ctypes(int coordsys, char **clng, char **clat, char **radesys)
+{
+  switch( coordsys)
+    {
+    case GAL_WCS_COORDSYS_EQB1950:
+      *clng="RA";   *clat="DEC";  *radesys="FK4"; break;
+    case GAL_WCS_COORDSYS_EQJ2000:
+      *clng="RA";   *clat="DEC";  *radesys="FK5"; break;
+    case GAL_WCS_COORDSYS_ECB1950:
+      *clng="ELON"; *clat="ELAT"; *radesys="FK4"; break;
+    case GAL_WCS_COORDSYS_ECJ2000:
+      *clng="ELON"; *clat="ELAT"; *radesys="FK5"; break;
+    case GAL_WCS_COORDSYS_GALACTIC:
+      *clng="GLON"; *clat="GLAT"; *radesys=NULL;  break;
+    case GAL_WCS_COORDSYS_SUPERGALACTIC:
+      *clng="SLON"; *clat="SLAT"; *radesys=NULL;  break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+            "fix the problem. The code '%d' isn't a recognized WCS "
+            "coordinate system ID for 'coordsys'", __func__,
+            PACKAGE_BUGREPORT, coordsys);
+    }
+}
+
+
+
+
+/* Convert the coordinate system. */
+struct wcsprm *
+gal_wcs_coordsys_convert(struct wcsprm *wcs, int outcoordsys)
+{
+  int incoordsys;
+  char *alt=NULL;                 /* Only concerned with primary wcs. */
+  double equinox=0.0f;            /* To preserve current value.       */
+  struct wcsprm *out=NULL;
+  char *clng, *clat, *radesys;
+  double lng2p1=NAN, lat2p1=NAN, lng1p2=NAN;
+
+
+  /* Just incase the input is a NULL pointer. */
+  if(wcs==NULL) return NULL;
+
+  /* Get the input's coordinate system and see if it should be converted at
+     all or not (if the output coordinate system is different). If its the
+     same, just copy the input and return. */
+  incoordsys=gal_wcs_coordsys_identify(wcs);
+  if(incoordsys==outcoordsys)
+    {
+      out=gal_wcs_copy(wcs);
+      return out;
+    }
+
+  /* Find the necessary pole coordinates. Note that we have already
+     accounted for the fact that the input and output coordinate systems
+     may be the same above, so the NaN outputs will never occur here. */
+  wcs_coordsys_insys_pole_in_outsys(incoordsys, outcoordsys,
+                                    &lng2p1, &lat2p1, &lng1p2);
+
+  /* Find the necessary CTYPE names of the output. */
+  wcs_coordsys_ctypes(outcoordsys, &clng, &clat, &radesys);
+
+  /* Convert the WCS's coordinate system (if 'wcsccs' is available). */
+#if GAL_CONFIG_HAVE_WCSLIB_WCSCCS
+  out=gal_wcs_copy(wcs);
+  wcsccs(out, lng2p1, lat2p1, lng1p2, clng, clat, radesys, equinox, alt);
+#else
+
+  /* Just to avoid compiler warnings for 'equinox' and 'alt'. */
+  if(alt) lng2p1+=equinox;
+
+  /* Print error message and abort. */
+  error(EXIT_FAILURE, 0, "%s: the 'wcsccs' function isn't available "
+        "in the version of WCSLIB that this Gnuastro was built with "
+        "('wcsccs' was first available in WCSLIB 7.5, released on "
+        "March 2021). Therefore, Gnuastro can't preform the WCS "
+        "coordiante system conversion in the WCS. Please update your "
+        "WCSLIB and re-build Gnuastro with it to use this feature. "
+        "You can follow the instructions here to install the latest "
+        "version of WCSLIB:\n"
+        "   https://www.gnu.org/software/gnuastro/manual/html_node/"
+        "WCSLIB.html\n"
+        "And then re-build Gnuastro as described here:\n"
+        "   https://www.gnu.org/software/gnuastro/manual/"
+        "html_node/Quick-start.html\n\n",
+        __func__);
+#endif
+
+  /* Return. */
+  return out;
+}
 
 
 
@@ -1307,7 +1716,7 @@ gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs)
 
 
 /* Set the WCS structure to use the CD matrix. */
-static void
+void
 gal_wcs_to_cd(struct wcsprm *wcs)
 {
   size_t i, j, naxis;
@@ -1551,10 +1960,9 @@ gal_wcs_pixel_area_arcsec2(struct wcsprm *wcs)
   double out;
   double *pixscale;
 
-  /* A small sanity check. Later, when higher dimensions are necessary, we
-     can find which ones correlate to RA and Dec and use them to find the
-     pixel area in arcsec^2. */
-  if(wcs->naxis!=2) return NAN;
+  /* Some basic sanity checks. */
+  if(wcs==NULL) return NAN;
+  if(wcs->naxis==1) return NAN;
 
   /* Check if the units of the axis are degrees or not. Currently all FITS
      images I have worked with use 'deg' for degrees. If other alternatives
@@ -1589,8 +1997,10 @@ gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
   size_t i, ndim, *dsize=NULL, numrows;
   double *x=NULL, *y=NULL, *z=NULL, *min, *max, *center, *width;
 
-  /* Read the desired WCS. */
-  wcs=gal_wcs_read(filename, hdu, 0, 0, &nwcs);
+  /* Read the desired WCS (note that the linear matrix is irrelevant here,
+     we'll just select PC because its the default WCS mode. */
+  wcs=gal_wcs_read(filename, hdu, GAL_WCS_LINEAR_MATRIX_PC,
+                   0, 0, &nwcs);
 
   /* If a WCS doesn't exist, return NULL. */
   if(wcs==NULL) return 0;

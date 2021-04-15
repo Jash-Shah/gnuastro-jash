@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 
+#include <gnuastro/wcs.h>
 #include <gnuastro/git.h>
 #include <gnuastro/txt.h>
 #include <gnuastro/fits.h>
@@ -465,6 +466,54 @@ gal_options_read_searchin(struct argp_option *option, char *arg,
                       "return to the command-line):\n\n"
                       "    $ info gnuastro \"Selecting table columns\"\n",
                       arg, option->name);
+
+      /* For no un-used variable warning. This function doesn't need the
+         pointer.*/
+      return junk=NULL;
+    }
+}
+
+
+
+
+
+void *
+gal_options_read_wcslinearmatrix(struct argp_option *option, char *arg,
+                                 char *filename, size_t lineno, void *junk)
+{
+  char *str;
+  uint8_t value=GAL_WCS_LINEAR_MATRIX_INVALID;
+  if(lineno==-1)
+    {
+      /* The output must be an allocated string (will be 'free'd later). */
+      value=*(uint8_t *)(option->value);
+      switch(value)
+        {
+        case GAL_WCS_LINEAR_MATRIX_PC: gal_checkset_allocate_copy("pc", &str);
+          break;
+        case GAL_WCS_LINEAR_MATRIX_CD: gal_checkset_allocate_copy("cd", &str);
+          break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+                "to fix the problem. %u is not a recognized WCS rotation "
+                "matrix code", __func__, PACKAGE_BUGREPORT, value);
+        }
+      return str;
+    }
+  else
+    {
+      /* If the option is already set, just return. */
+      if(option->set) return NULL;
+
+      /* Read the value. */
+      if(      !strcmp(arg, "pc") ) value = GAL_WCS_LINEAR_MATRIX_PC;
+      else if( !strcmp(arg, "cd") ) value = GAL_WCS_LINEAR_MATRIX_CD;
+      else
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value "
+                      "to '%s' option) couldn't be recognized as a known "
+                      "WCS rotation matrix. Acceptable values are 'pc' "
+                      "or 'cd'", arg, option->name);
+      *(uint8_t *)(option->value)=value;
 
       /* For no un-used variable warning. This function doesn't need the
          pointer.*/

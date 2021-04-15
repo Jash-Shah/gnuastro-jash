@@ -63,8 +63,10 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /***************************************************************/
 /*************          Internal functions         *************/
 /***************************************************************/
-#define SET_NUM_OP(CTYPE) {                                \
-    CTYPE a=*(CTYPE *)(numpop->array); if(a>0) return a;    }
+#define SET_NUM_OP(CTYPE) {            \
+    CTYPE a=*(CTYPE *)(numpop->array); \
+    gal_data_free(numpop);             \
+    if(a>0) return a;    }
 
 static size_t
 pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,

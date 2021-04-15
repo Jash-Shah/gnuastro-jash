@@ -70,6 +70,28 @@ enum gal_wcs_distortions
   GAL_WCS_DISTORTION_WAT,             /* The WAT polynomial distortion. */
 };
 
+/* Macros to identify coordinate system for convesions. */
+enum gal_wcs_coordsys
+{
+  GAL_WCS_COORDSYS_INVALID,           /* Invalid (=0 by C standard).    */
+
+  GAL_WCS_COORDSYS_EQB1950,           /* Equatorial B1950 */
+  GAL_WCS_COORDSYS_EQJ2000,           /* Equatorial J2000 */
+  GAL_WCS_COORDSYS_ECB1950,           /* Ecliptic B1950 */
+  GAL_WCS_COORDSYS_ECJ2000,           /* Ecliptic J2000 */
+  GAL_WCS_COORDSYS_GALACTIC,          /* Galactic */
+  GAL_WCS_COORDSYS_SUPERGALACTIC,     /* Super-galactic */
+};
+
+/* Macros to identify the type of distortion for conversions. */
+enum gal_wcs_linear_matrix
+{
+  GAL_WCS_LINEAR_MATRIX_INVALID,      /* Invalid (=0 by C standard).    */
+
+  GAL_WCS_LINEAR_MATRIX_PC,
+  GAL_WCS_LINEAR_MATRIX_CD,
+};
+
 
 
 
@@ -78,16 +100,17 @@ enum gal_wcs_distortions
  ***********               Read WCS                ***********
  *************************************************************/
 struct wcsprm *
-gal_wcs_read_fitsptr(fitsfile *fptr, size_t hstartwcs, size_t hendwcs,
-                     int *nwcs);
+gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
+                     size_t hendwcs, int *nwcs);
 
 struct wcsprm *
-gal_wcs_read(char *filename, char *hdu, size_t hstartwcs,
+gal_wcs_read(char *filename, char *hdu, int linearmatrix, size_t hstartwcs,
              size_t hendwcs, int *nwcs);
 
 struct wcsprm *
 gal_wcs_create(double *crpix, double *crval, double *cdelt,
-               double *pc, char **cunit, char **ctype, size_t ndim);
+               double *pc, char **cunit, char **ctype, size_t ndim,
+               int linearmatrix);
 
 char *
 gal_wcs_dimension_name(struct wcsprm *wcs, size_t dimension);
@@ -105,6 +128,19 @@ gal_wcs_write(struct wcsprm *wcs, char *filename,
 void
 gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs);
 
+
+
+/*************************************************************
+ ***********              Distortions              ***********
+ *************************************************************/
+int
+gal_wcs_coordsys_from_string(char *coordsys);
+
+int
+gal_wcs_coordsys_identify(struct wcsprm *inwcs);
+
+struct wcsprm *
+gal_wcs_coordsys_convert(struct wcsprm *inwcs, int coordsysid);
 
 
 
@@ -148,6 +184,9 @@ gal_wcs_clean_errors(struct wcsprm *wcs);
 
 void
 gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs);
+
+void
+gal_wcs_to_cd(struct wcsprm *wcs);
 
 double
 gal_wcs_angular_distance_deg(double r1, double d1, double r2, double d2);

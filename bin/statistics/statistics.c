@@ -832,7 +832,8 @@ histogram_2d(struct statisticsparams *p)
       cunit[0] = p->input->unit;      cunit[1] = p->input->next->unit;
       ctype[0] = histogram_2d_set_ctype(p->input->name, "X");
       ctype[1] = histogram_2d_set_ctype(p->input->next->name, "Y");
-      img->wcs=gal_wcs_create(crpix, crval, cdelt, pc, cunit, ctype, 2);
+      img->wcs=gal_wcs_create(crpix, crval, cdelt, pc, cunit, ctype, 2,
+                              p->cp.wcslinearmatrix);
 
       /* Write the output. */
       output=statistics_output_name(p, suf, &isfits);

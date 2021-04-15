@@ -8,20 +8,35 @@ See the end of the file for license conditions.
 ** New features
 
   New program:
-   - astscript-make-ds9-reg: Given a table (either as a file or from
+   - astscript-ds9-region: Given a table (either as a file or from
      standard input), create an SAO DS9 region file from the requested
      positional columns (WCS or image coordinates). For example with the
      command below you can select certain rows of a given table, and show
      them over an image:
-        asttable table.fits --range=MAG,18:20 --column=RA,DEC \
-            | astscript-make-ds9-reg --column=1,2 --radius=0.5 \
-                                     --command="ds9 image.fits"
+        asttable table.fits --range=MAGNITUDE,18:20 --column=RA,DEC \
+            | astscript-ds9-region --column=1,2 --radius=0.5 \
+                                   --command="ds9 image.fits"
+   - astscript-radial-profile: Measure the radial profile of an object on
+     an image. The profile can be centered anywhere in the image and any
+     circular, or elliptical distance can be defined. The output is a table
+     with the profile's value in one column and any requested measure in
+     the other columns (any MakeCatalog measurement is possible).
+
+  All programs:
+   --wcslinearmatrix: new option in all programs that lets you select the
+     output WCS linear matrix format. It takes one of two values: 'pc' (for
+     the 'PCi_j' formalism) and 'cd' (for 'CDi_j'). Until now, the outputs
+     were always stored in the 'PCi_j' formalism (which is still the
+     recommended format).
+
+  Book:
+   - New "Image surface brightness limit" section added to the third
+     tutorial (on "Detecting large extended targets"). It describes the
+     different ways to measure a dataset's surface brightness limit and
+     upper-limit surface brightness, while discussing their differences.
 
   Arithmetic:
-   - New operators (the trigonometric/hyperbolic functions were previously
-     only avaialble in Table's column arithmetic, but they have been moved
-     into the Gnuastro library and are thus now available on images within
-     Arithmetic also):
+   - New operators (all also available in Table's column arithmetic):
      - sin: Trigonometric sine (input in degrees).
      - cos: Trigonometric cosine (input in degrees).
      - tan: Trigonometric tangent (input in degrees).
@@ -33,22 +48,65 @@ See the end of the file for license conditions.
      - tanh: Hyperbolic tangent.
      - asinh: Inverse of hyperbolic sine.
      - acosh: Inverse of hyperbolic cosine.
-     - atabh: Inverse of hyperbolic tangent.
+     - atanh: Inverse of hyperbolic tangent.
+     - counts-to-mag: Convert counts to magnitudes with given zero point.
+     - counts-to-jy: Convert counts to Janskys through a zero point based
+          on AB magnitudes.
+
+  ConvertType:
+   --globalhdu: Use a single HDU identifier for all the input files
+     files. Its operation is identical to the similarly named option in
+     Arithmetic. Until now it was necessary to call '--hdu' three times if
+     you had three input FITS files with input in the same HDU.
+
+  Fits:
+   --wcscoordsys: convert the WCS coordinate system of the input into any
+     recognized coordinate system. It currently supports: equatorial
+     (J2000, B1950), ecliptic (J2000, B1950), Galactic and
+     Supergalactic. For example if 'image.fits' is in galactic coordinates,
+     you can use this command to convert its WCS to equatorial (J2000):
+          astfits image.fits --wcscoordsys=eq-j2000
+     This option only works with WCSLIB 7.5 and above (released in March
+     2021), otherwise it will abort with an informative warning.
+
+  MakeCatalog:
+   - Newly added measurement columns:
+     --upperlimitsb: upper-limit surface brightness for the given label
+       (object or clump). This is useful for measuring a dataset's
+       realistic surface brightness level for each labeled region by random
+       positioning of its footprint over undetected regions (not
+       extrapolated from the single-pixel noise level like the "surface
+       brightness limit").
+
+  NoiseChisel:
+   - Can now work on 3D datacubes. Since the configuration parameters are
+     different from images, it is recommended to manually set the 3D
+     configuration (the '...' can be the input image and options):
+         astnoisechisel --config=/usr/local/etc/astnoisechisel-3d.conf ...
+     Alternatively, you can set an 'astnoisechisel-3d' alias like below and
+     always easily run 'astnoisechisel-3d' on cubes.
+         alias astnoisechisel-3d="astnoisechisel --config=/usr/local/etc/astnoisechisel-3d.conf"
+
+  Segment:
+   - Can now work on 3D datacubes. Similar to NoiseChisel, it requires a
+     separate set of default configurations, so please see the note under
+     NoiseChisel above.
 
   Table:
    - When given a value of '_all', the '--noblank' option (that will remove
      all rows with a blank value in the given columns) will check all
      columns of the final output table. This is handy when you want a
      "clean" (no NaN values in any column) table, but the table has many
-     columns.
+     columns. Until now, '--noblank' needed the name/number of each column
+     to "clean".
    --rowlimit: new option to specify the positional interval of rows to
-     show. Until now the '--head' or '--tail' options would just allow
-     seeing the first or last few rows. You can use this to view a
-     contiguous set of rows in the middle of the table.
+     show. Until now, the '--head' or '--tail' options would just allow
+     seeing the first or last few rows. You can use this new option to view
+     a contiguous set of rows in the middle of the table.
    --rowrandom: Make a random selection of the rows. This option is useful
-     when you have a large dataset and just want to see a random sub-set of
+     when you have a large table and just want to see a random sub-set of
      the rows. It takes an integer, selects that many rows from the input
-     randomly.
+     randomly and returns them.
    - New column arithmetic operators:
      - 'set-AAA' operator (which allows storing the popped operand into a
        named variable for easy usage in complex operations) is also usable
@@ -57,17 +115,28 @@ See the end of the file for license conditions.
      - 'date-to-sec' Convert FITS date format ('YYYY-MM-DDThh:mm:ss') into
        seconds from the Unix epoch (1970-01-01,00:00:00 UTC). This can be
        very useful in combination with the new '--keyvalue' option of the
-       Fits program to sort your FITS images based on observation time.
+       Fits program to operate on FITS dates (for example sort your FITS
+       images based on observation time).
 
   Fits:
    --keyvalue: Print only the values of the FITS keywords given to this
-     option in separate columns. This option can take multiple values and
-     many FITS files. Thus generating a table of keyword values (with one
-     row per file). Its output can thus either be piped to the Table
-     program for selecting a certain sub-set of your FITS files, or sorting
-     them for example.
+     option in separate columns. This option can take multiple keyword
+     names and many FITS files. Thus generating a table of keyword values
+     (with one row per file where the first column is the file name). Its
+     output can thus be written as a Table file or be piped to the Table
+     program for selecting a certain sub-set of your FITS files based on
+     key values, or sorting them for example.
+
+  Query:
+   - The Galactic extinction calculator of the NASA/IPAC Extragalactic
+     Database (NED) is now available for any coordinate with a command like
+     below. For more, see the manual (the description of the 'extinction'
+     dataset of NED in the "Available datasets" section).
+         astquery ned --dataset=extinction --center=49.9507,41.5116
 
   Library:
+   - gal_units_counts_to_mag: Convert counts to magnitudes.
+   - gal_units_counts_to_jy: Convert counts to Janskys.
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
      - GAL_ARITHMETIC_OP_SIN: sine (input in deg).
      - GAL_ARITHMETIC_OP_COS: cosine (input in deg).
@@ -82,6 +151,17 @@ See the end of the file for license conditions.
      - GAL_ARITHMETIC_OP_ASINH: Inverse hyperbolic sine.
      - GAL_ARITHMETIC_OP_ACOSH: Inverse hyperbolic cosine.
      - GAL_ARITHMETIC_OP_ATANH: Inverse hyperbolic tangent.
+     - GAL_ARITHMETIC_OP_COUNTS_TO_JY: Convert counts to Janskys.
+   - WCS coordinate system identifiers:
+     - GAL_WCS_COORDSYS_EQB1950: 1950.0 (Besselian-year) equatorial coords.
+     - GAL_WCS_COORDSYS_EQJ2000: 2000.0 (Julian-year) equatorial coords.
+     - GAL_WCS_COORDSYS_ECB1950: 1950.0 (Besselian-year) ecliptic coords.
+     - GAL_WCS_COORDSYS_ECJ2000: 2000.0 (Julian-year) ecliptic coords.
+     - GAL_WCS_COORDSYS_GALACTIC: Galactic coordinates.
+     - GAL_WCS_COORDSYS_SUPERGALACTIC: Supergalactic coordinates.
+   - gal_wcs_coordsys_from_string: WCS coordinate system from string.
+   - gal_wcs_coordsys_identify: Parse WCS struct to find  coordinate system.
+   - gal_wcs_coordsys_convert: Convert the coordinate system of the WCS.
 
 ** Removed features
 
@@ -96,15 +176,31 @@ See the end of the file for license conditions.
      9:00a.m. But in some cases, calibration images may be taken after
      that. So to be safer in general it was incremented by 2 hours.
 
+  MakeCatalog:
+   - Surface brightness limit (SBL) calculations are now written as
+     standard FITS keywords in the output catalog/table. Until now, they
+     were simply stored as 'COMMENT' keywords with no name so it was hard
+     to parse them automatically. From this version, the following keywords
+     are also written into the output table(s), see the "MakeCatalog
+     output" section of the book for more: 'SBLSTD', 'SBLNSIG', 'SBLMAGPX',
+     'SBLAREA', 'SBLMAG'.
+   - Upper-limit (UP) settings are also written into the output tables as
+     keywords (like surface brightness limit numbers above): 'UPNSIGMA',
+     'UPNUMBER', 'UPRNGNAM', 'UPRNGSEE', 'UPSCMLTP', 'UPSCTOL'.
+
   Library:
    - gal_fits_key_write_wcsstr: also takes WCS structure as argument.
    - gal_fits_key_read_from_ptr: providing a numerical datatype for the
      desired keyword's value is no longer mandatory. When not given, the
      smallest numeric datatype that can keep the value will be found and
      used.
+   - gal_wcs_read: allows specifying the linear matrix of the WCS.
+   - gal_wcs_read_fitsptr: allows specifying the linear matrix of the WCS.
 
 ** Bugs fixed
   bug #60082: Arithmetic library crash for integer operators like modulo
+  bug #60121: Arithmetic segfault when multi-operand output given to set-
+  bug #60368: CosmicCalculator fails --setdirconf when redshift isn't given
 
 
 

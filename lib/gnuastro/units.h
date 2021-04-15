@@ -62,16 +62,22 @@ gal_units_extract_decimal(char *convert, const char *delimiter,
                           double *args, size_t n);
 
 double
-gal_units_ra_to_degree (char *convert);
+gal_units_ra_to_degree(char *convert);
 
 double
-gal_units_dec_to_degree (char *convert);
+gal_units_dec_to_degree(char *convert);
 
 char *
-gal_units_degree_to_ra (double decimal, int usecolon);
+gal_units_degree_to_ra(double decimal, int usecolon);
 
 char *
-gal_units_degree_to_dec (double decimal, int usecolon);
+gal_units_degree_to_dec(double decimal, int usecolon);
+
+double
+gal_units_counts_to_mag(double counts, double zeropoint);
+
+double
+gal_units_counts_to_jy(double counts, double zeropoint_ab);
 
 __END_C_DECLS    /* From C++ preparations */
 

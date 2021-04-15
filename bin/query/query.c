@@ -284,36 +284,49 @@ query_output_data(struct queryparams *p)
 
 
 void
-query_check_download(struct queryparams *p)
+query_output_finalize(struct queryparams *p)
 {
   size_t len;
-  int status=0;
+  int isxml=0;
   char *logname;
   fitsfile *fptr;
+  int gooddownload=0, status=0;
 
-  /* Open the FITS file and if the status value is still zero, it means
-     everything worked properly. */
-  fits_open_file(&fptr, p->downloadname, READONLY, &status);
-  if(status==0)
+  /* See if its a FITS file or a VOTable. */
+  len=strlen(p->downloadname);
+  if( !strcmp(&p->downloadname[len-4], ".xml") )
+    { isxml=1; gooddownload=1; }
+  else
     {
-      /* Close the FITS file pointer. */
-      fits_close_file(fptr, &status);
+      /* Open the FITS file and if the status value is still zero, it means
+         everything worked properly. */
+      fits_open_file(&fptr, p->downloadname, READONLY, &status);
+      if(status==0)
+        {
+          gooddownload=1;
+          fits_close_file(fptr, &status);
+        }
+    }
 
+  /* If the downloaded file is good, do the preparations. */
+  if(gooddownload)
+    {
       /* Prepare the output dataset. */
       if(p->information)
         {
           if(p->datasetstr)  query_output_meta_dataset(p);
           else               query_output_meta_database(p);
         }
-      else               query_output_data(p);
+      else if(isxml==0)      query_output_data(p);
 
       /* Delete the raw downloaded file if necessary. */
       if(p->keeprawdownload==0) remove(p->downloadname);
     }
+
+  /* If there was an error */
   else
     {
       /* Add a '.log' suffix to the output filename. */
-      len=strlen(p->downloadname);
       logname=gal_pointer_allocate(GAL_TYPE_STRING, len+10, 1,
                                    __func__, "logname");
       sprintf(logname, "%s.log", p->downloadname);
@@ -326,8 +339,8 @@ query_check_download(struct queryparams *p)
             "retrieved! For more, please see '%s'", logname);
     }
 
-  /* Add the query keywords to the first extension (if the output was a
-     FITS file). */
+  /* Add the query keywords to the first extension of the output (if the
+     output was a FITS file). */
   if( p->information==0 && gal_fits_name_is_fits(p->cp.output) )
     {
       gal_fits_key_list_title_add_end(&p->cp.okeys,
@@ -360,12 +373,12 @@ query(struct queryparams *p)
     }
 
   /* Download the requested query. */
-  tap_download(p);
+  if(p->usetap) tap_download(p);
 
   /* Make sure that the result is a readable FITS file, otherwise, abort
      with an error. */
   if(p->dryrun==0)
-    query_check_download(p);
+    query_output_finalize(p);
 
   /* Let the user know that things went well. */
   if(p->dryrun==0 && p->cp.quiet==0)
@@ -379,12 +392,7 @@ query(struct queryparams *p)
           printf("Query's raw downloaded file: %s\n", p->downloadname);
         }
       if(p->information==0)
-        {
-          printf("Query's final output: %s\n", p->cp.output);
-          printf("TIP: use the command below for more on the "
-                 "downloaded table:\n"
-                 "   asttable %s --info\n", p->cp.output);
-        }
+        printf("Query's output written: %s\n", p->cp.output);
     }
 
   /* Clean up. */

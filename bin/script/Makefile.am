@@ -26,10 +26,13 @@
 ## 'prefix/bin' directory ('bin_SCRIPTS'), files necessary to distribute
 ## with the tarball ('EXTRA_DIST') and output files (to be cleaned with
 ## 'make clean').
-bin_SCRIPTS = astscript-make-ds9-reg \
+bin_SCRIPTS = astscript-ds9-region \
+              astscript-radial-profile \
               astscript-sort-by-night
 
-EXTRA_DIST = make-ds9-reg.in sort-by-night.in
+EXTRA_DIST = ds9-region.in \
+             radial-profile.in \
+             sort-by-night.in
 
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -45,11 +48,15 @@ do_subst = sed -e 's,[@]VERSION[@],$(VERSION),g' \
 
 
 
-## Rules to build the scripts
-astscript-sort-by-night: sort-by-night.in Makefile
-	$(do_subst) < $(srcdir)/sort-by-night.in > $@
+## Rules to install the scripts.
+astscript-ds9-region: ds9-region.in Makefile
+	$(do_subst) < $(srcdir)/ds9-region.in > $@
 	chmod +x $@
 
-astscript-make-ds9-reg: make-ds9-reg.in Makefile
-	$(do_subst) < $(srcdir)/make-ds9-reg.in > $@
+astscript-radial-profile: radial-profile.in Makefile
+	$(do_subst) < $(srcdir)/radial-profile.in > $@
+	chmod +x $@
+
+astscript-sort-by-night: sort-by-night.in Makefile
+	$(do_subst) < $(srcdir)/sort-by-night.in > $@
 	chmod +x $@

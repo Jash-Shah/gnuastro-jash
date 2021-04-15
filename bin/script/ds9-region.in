@@ -5,6 +5,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
+#     Samane Raji <samaneraji@protonmail.com>
 # Copyright (C) 2021 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -32,11 +33,11 @@ set -e
 # command-line).
 hdu=1
 col=""
-name=""
 width=1
 mode=wcs
 radius=""
 command=""
+namecol=""
 out=ds9.reg
 color=green
 dontdelete=0
@@ -82,6 +83,7 @@ $scriptname options:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -c, --column=STR,STR    Columns to use as coordinates (name or number).
   -m, --mode=wcs|img      Coordinates in WCS or image (default: $mode)
+  -n, --namecol=STR       ID of each region (name or number of a column)
 
  Output:
   -C, --color             Color for the regions (read by DS9).
@@ -189,6 +191,9 @@ do
         -m|--mode)          mode="$2";                           check_v "$1" "$mode";  shift;shift;;
         -m=*|--mode=*)      mode="${1#*=}";                      check_v "$1" "$mode";  shift;;
         -m*)                mode=$(echo "$1"  | sed -e's/-m//'); check_v "$1" "$mode";  shift;;
+        -n|--namecol)       namecol="$2";                        check_v "$1" "$namecol"; shift;shift;;
+        -n=*|--namecol=*)   namecol="${1#*=}";                   check_v "$1" "$namecol"; shift;;
+        -n*)                namecol=$(echo "$1"  | sed -e's/-n//'); check_v "$1" "$namecol"; shift;;
 
         # Output parameters
         -C|--color)         color="$2";                            check_v "$1" "$color";   shift;shift;;
@@ -244,7 +249,7 @@ if [ x$col = x ]; then
 else
     ncols=$(echo $col | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$ncols != x2 ]; then
-        echo "$scriptname: only two columns should be given, but $ncols were given"
+        echo "$scriptname: only two columns should be given with '--column' (or '-c'), but $ncols were given"
         exit 1
     fi
 fi
@@ -262,6 +267,15 @@ fi
 if [ -f $out ]; then
     if [ $dontdelete = 1 ]; then
         echo "$scriptname: '$out' already exists! Aborting due to '--dontdelete'"
+        exit 1
+    fi
+fi
+
+# Make sure a single column is given to '--namecol':
+if [ x"$namecol" != x ]; then
+    ncols=$(echo $namecol | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$ncols != x1 ]; then
+        echo "$scriptname: only one column should be given to '--namecol'"
         exit 1
     fi
 fi
@@ -288,8 +302,11 @@ if [ x$mode = x"wcs" ]; then unit="\""; else unit=""; fi
 # Write the metadata in the output.
 printf "# Region file format: DS9 version 4.1\n" > $out
 printf "# Created by $scriptname (GNU Astronomy Utilities) $version\n" >> $out
-printf "# Input: $input (hdu $hdu)\n" >> $out
+printf "# Input file: $input (hdu $hdu)\n" >> $out
 printf "# Columns: $col\n" >> $out
+if [ x"$namecol" != x ]; then
+    printf "# Region name (or label) column: $namecol\n" >> $out
+fi
 printf "global color=%s width=%d\n" $color $width >> $out
 if [ $mode = "wcs" ]; then  printf "fk5\n" >> $out
 else                        printf "image\n" >> $out;   fi
@@ -300,27 +317,44 @@ else                        printf "image\n" >> $out;   fi
 
 # Write each region's results (when no input file is given, read from the
 # standard input).
-if [ x"$input" = x ]; then
-    cat /dev/stdin \
-        | asttable $input --column=$col \
-        | while read a b; do \
-            printf "circle(%g,%g,%g%s)\n" $a $b $radius $unit >> $out; \
-          done
+if [ x"$namecol" = x ]; then
+    if [ x"$input" = x ]; then
+        cat /dev/stdin \
+            | asttable $input --column=$col \
+            | while read a b; do \
+                  printf "circle(%g,%g,%g%s)\n" \
+                         $a $b $radius $unit >> $out; \
+              done
+    else
+        asttable $input --column=$col \
+            | while read a b; do \
+                  printf "circle(%g,%g,%g%s)\n" \
+                         $a $b $radius $unit >> $out; \
+              done
+    fi
 else
-    asttable $input --column=$col \
-        | while read a b; do \
-            printf "circle(%g,%g,%g%s)\n" $a $b $radius $unit >> $out; \
-    done
+    if [ x"$input" = x ]; then
+        cat /dev/stdin \
+            | asttable $input --column=$col --column=$namecol \
+            | while read a b c; do \
+                  printf "circle(%g,%g,%g%s) # text={%g}\n" \
+                         $a $b $radius $unit $c >> $out; \
+              done
+    else
+        asttable $input --column=$col --column=$namecol \
+            | while read a b c; do \
+                  printf "circle(%g,%g,%g%s) # text={%g}\n" \
+                         $a $b $radius $unit $c >> $out; \
+              done
+    fi
 fi
 
 
 
 
 
-# Run ds9 with the desired region over-plotted.
-if [ x"$command" = x ]; then
-    junk=1
-else
+# Run the user's command (while appending the region).
+if [ x"$command" != x ]; then
     $command -regions $out
     if [ $dontdelete = 0 ]; then rm $out; fi
 fi

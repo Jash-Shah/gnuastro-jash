@@ -266,9 +266,9 @@ ui_read_check_only_options(struct queryparams *p)
 {
   size_t i;
   double *darray;
-  char *basename;
   gal_data_t *tmp;
   int keepinputdir;
+  char *suffix, *rdsuffix, *basename;
 
   /* See if database has been specified. */
   if(p->databasestr==NULL)
@@ -405,26 +405,65 @@ ui_read_check_only_options(struct queryparams *p)
   gal_checkset_writable_remove(p->cp.output, p->cp.keep,
                                p->cp.dontdelete);
 
+  /* Set the suffix of the default names. */
+  if( p->database==QUERY_DATABASE_NED
+      && !strcmp(p->datasetstr, "extinction") )
+    {
+      suffix=".xml";
+      rdsuffix="-raw-download.xml";
+    }
+  else
+    {
+      suffix=".fits";
+      rdsuffix="-raw-download.fits";
+    }
+
+  /* Currently Gnuastro doesn't read or write XML files (VOTable). So if
+     the downloaded file is an XML file but the user hasn't given an XML
+     suffix, abort and inform the user. */
+  if(p->cp.output)
+    {
+      if( !strcmp(suffix,".xml")
+          && strcmp(&p->cp.output[strlen(p->cp.output)-4], ".xml") )
+        error(EXIT_FAILURE, 0, "this dataset's output is a VOTable (with "
+              "an '.xml' suffix). However, Gnuastro doesn't yet support "
+              "VOTable, so it won't do any checks and corrections on "
+              "the downloaded file. Please give an output name with an "
+              "'.xml' suffix to continue");
+    }
+
   /* Set the name for the downloaded and final output name. These are due
      to an internal low-level processing that will be done on the raw
      downloaded file. */
-  if(p->cp.output==NULL)
+  else
     {
-      basename=gal_checkset_malloc_cat(p->databasestr, ".fits");
-      p->cp.output=gal_checkset_make_unique_suffix(basename, ".fits");
+      basename=gal_checkset_malloc_cat(p->databasestr, suffix);
+      p->cp.output=gal_checkset_make_unique_suffix(basename, suffix);
       free(basename);
     }
 
-  /* Make sure the output name doesn't exist (and report an error if
-     '--dontdelete' is called. Just note that for the automatic output, we
-     are basing that on the output, not the input. So we are temporarily
-     activating 'keepinputdir'. */
-  keepinputdir=p->cp.keepinputdir;
-  p->cp.keepinputdir=1;
-  gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
-  p->downloadname=gal_checkset_automatic_output(&p->cp, p->cp.output,
-                                                "-raw-download.fits");
-  p->cp.keepinputdir=keepinputdir;
+  /* Currently we don't interally process VOTable (in '.xml' suffix) files,
+     so to keep the next steps un-affected, we'll set Query to not delete
+     the raw download and copy the name of the output into the raw
+     download. */
+  if( !strcmp(suffix, ".xml") )
+    {
+      p->keeprawdownload=1;
+      gal_checkset_allocate_copy(p->cp.output, &p->downloadname);
+    }
+  else
+    {
+      /* Make sure the output name doesn't exist (and report an error if
+         '--dontdelete' is called. Just note that for the automatic output,
+         we are basing that on the output, not the input. So we are
+         temporarily activating 'keepinputdir'. */
+      keepinputdir=p->cp.keepinputdir;
+      p->cp.keepinputdir=1;
+      gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
+      p->downloadname=gal_checkset_automatic_output(&p->cp, p->cp.output,
+                                                    rdsuffix);
+      p->cp.keepinputdir=keepinputdir;
+    }
 }
 
 

@@ -1513,6 +1513,11 @@ txt_write_keys(FILE *fp, struct gal_fits_list_key_t **keylist)
                   tmp->title);
           if(tmp->tfree) free(tmp->title);
         }
+      else if (tmp->fullcomment)
+        {
+          fprintf(fp, "# %s\n", tmp->fullcomment);
+          if(tmp->fcfree) free(tmp->fullcomment);
+        }
       else
         {
           /* For a string type, we need to return a pointer to the

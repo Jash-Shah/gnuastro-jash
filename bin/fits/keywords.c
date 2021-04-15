@@ -438,7 +438,7 @@ keywords_date_to_seconds(struct fitsparams *p, fitsfile *fptr)
 
 
 static void
-keywords_distortion_wcs(struct fitsparams *p)
+keywords_wcs_convert(struct fitsparams *p)
 {
   int nwcs;
   size_t ndim, *insize;
@@ -463,16 +463,17 @@ keywords_distortion_wcs(struct fitsparams *p)
     }
 
   /* Read the input's WCS and make sure one exists. */
-  inwcs=gal_wcs_read(p->input->v, p->cp.hdu, 0, 0, &nwcs);
+  inwcs=gal_wcs_read(p->input->v, p->cp.hdu, p->cp.wcslinearmatrix,
+                     0, 0, &nwcs);
   if(inwcs==NULL)
     error(EXIT_FAILURE, 0, "%s (hdu %s): doesn't have any WCS structure "
-          "for converting its distortion",
+          "for converting its coordinate system or distortion",
           p->input->v, p->cp.hdu);
 
   /* In case there is no dataset and the conversion is between TPV to SIP,
      we need to set a default size and use that for the conversion, but we
      also need to warn the user. */
-  if(data==NULL)
+  if(p->wcsdistortion && data==NULL)
     {
       if( !p->cp.quiet
           && gal_wcs_distortion_identify(inwcs)==GAL_WCS_DISTORTION_TPV
@@ -491,14 +492,22 @@ keywords_distortion_wcs(struct fitsparams *p)
   else dsize=data->dsize;
 
   /* Do the conversion. */
-  outwcs=gal_wcs_distortion_convert(inwcs, p->distortionid, dsize);
+  if(p->wcscoordsys)
+    outwcs=gal_wcs_coordsys_convert(inwcs, p->coordsysid);
+  else if(p->wcsdistortion)
+    outwcs=gal_wcs_distortion_convert(inwcs, p->distortionid, dsize);
+  else
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+          "the problem. The requested mode for this function is not "
+          "recognized", __func__, PACKAGE_BUGREPORT);
 
   /* Set the output filename. */
   if(p->cp.output)
     output=p->cp.output;
   else
     {
-      if( asprintf(&suffix, "-%s.fits", p->wcsdistortion)<0 )
+      if( asprintf(&suffix, "-%s.fits",
+                   p->wcsdistortion ? p->wcsdistortion : p->wcscoordsys)<0 )
         error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
       output=gal_checkset_automatic_output(&p->cp, p->input->v, suffix);
     }
@@ -781,10 +790,10 @@ keywords_value(struct fitsparams *p)
   size_t i, ii=0, ninput, nkeys;
   gal_data_t *out=NULL, *keysll=NULL;
 
-  /* Count how many inputs there are and allocate the first column with the
-     name. */
+  /* Count how many inputs there are, and allocate the first column with
+     the name. */
   ninput=gal_list_str_number(p->input);
-  if(ninput>1)
+  if(ninput>1 || p->cp.quiet==0)
     out=gal_data_alloc(NULL, GAL_TYPE_STRING, 1, &ninput, NULL, 0,
                        p->cp.minmapsize, p->cp.quietmmap, "FILENAME",
                        "name", "Name of input file.");
@@ -1034,8 +1043,8 @@ keywords(struct fitsparams *p)
     }
 
   /* Convert the input's distortion to the desired output distortion. */
-  if(p->wcsdistortion)
-    keywords_distortion_wcs(p);
+  if(p->wcsdistortion || p->wcscoordsys)
+    keywords_wcs_convert(p);
 
   /* Return. */
   return r;

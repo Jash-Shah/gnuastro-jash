@@ -1273,7 +1273,7 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct tableparams *p)
       printf("Parameters used for '--randomrows':\n");
       printf("  - Random number generator name: %s\n", p->rng_name);
       printf("  - Random number generator seed: %lu\n", p->rng_seed);
-      printf("(use '--quiet' to supress this starting message)\n");
+      printf("(use '--quiet' to suppress this starting message)\n");
     }
 }
 
