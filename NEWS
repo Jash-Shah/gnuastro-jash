@@ -23,7 +23,7 @@ See the end of the file for license conditions.
      the other columns (any MakeCatalog measurement is possible).
 
   All programs:
-   --wcslinearmatrix: new option in all programs that let's you select the
+   --wcslinearmatrix: new option in all programs that lets you select the
      output WCS linear matrix format. It takes one of two values: 'pc' (for
      the 'PCi_j' formalism) and 'cd' (for 'CDi_j'). Until now, the outputs
      were always stored in the 'PCi_j' formalism (which is still the
@@ -33,7 +33,7 @@ See the end of the file for license conditions.
    - New "Image surface brightness limit" section added to the third
      tutorial (on "Detecting large extended targets"). It describes the
      different ways to measure a dataset's surface brightness limit and
-     upper-limit surface brightness level on the dataset of this tutorial.
+     upper-limit surface brightness, while discussing their differences.
 
   Arithmetic:
    - New operators (all also available in Table's column arithmetic):
@@ -48,7 +48,7 @@ See the end of the file for license conditions.
      - tanh: Hyperbolic tangent.
      - asinh: Inverse of hyperbolic sine.
      - acosh: Inverse of hyperbolic cosine.
-     - atabh: Inverse of hyperbolic tangent.
+     - atanh: Inverse of hyperbolic tangent.
      - counts-to-mag: Convert counts to magnitudes with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
@@ -61,35 +61,38 @@ See the end of the file for license conditions.
 
   Fits:
    --wcscoordsys: convert the WCS coordinate system of the input into any
-     recognized coordinate system (currently supports: equatorial (J2000,
-     B1950), ecliptic (J2000, B1950), Galactic and Supergalactic. For
-     example if 'image.fits' is in galactic coordinates, you can use this
-     command to convert its WCS to equatorial (J2000):
+     recognized coordinate system. It currently supports: equatorial
+     (J2000, B1950), ecliptic (J2000, B1950), Galactic and
+     Supergalactic. For example if 'image.fits' is in galactic coordinates,
+     you can use this command to convert its WCS to equatorial (J2000):
           astfits image.fits --wcscoordsys=eq-j2000
      This option only works with WCSLIB 7.5 and above (released in March
-     2021), otherwise it will not work (abort with an informative warning).
+     2021), otherwise it will abort with an informative warning.
 
   MakeCatalog:
    - Newly added measurement columns:
      --upperlimitsb: upper-limit surface brightness for the given label
        (object or clump). This is useful for measuring a dataset's
-       realistic surface-brightness limit (not extrapolated like the
-       surface brightness limit, but using the actual object footprint).
+       realistic surface brightness level for each labeled region by random
+       positioning of its footprint over undetected regions (not
+       extrapolated from the single-pixel noise level like the "surface
+       brightness limit").
 
   Table:
    - When given a value of '_all', the '--noblank' option (that will remove
      all rows with a blank value in the given columns) will check all
      columns of the final output table. This is handy when you want a
      "clean" (no NaN values in any column) table, but the table has many
-     columns.
+     columns. Until now, '--noblank' needed the name/number of each column
+     to "clean".
    --rowlimit: new option to specify the positional interval of rows to
-     show. Until now the '--head' or '--tail' options would just allow
-     seeing the first or last few rows. You can use this to view a
-     contiguous set of rows in the middle of the table.
+     show. Until now, the '--head' or '--tail' options would just allow
+     seeing the first or last few rows. You can use this new option to view
+     a contiguous set of rows in the middle of the table.
    --rowrandom: Make a random selection of the rows. This option is useful
-     when you have a large dataset and just want to see a random sub-set of
+     when you have a large table and just want to see a random sub-set of
      the rows. It takes an integer, selects that many rows from the input
-     randomly.
+     randomly and returns them.
    - New column arithmetic operators:
      - 'set-AAA' operator (which allows storing the popped operand into a
        named variable for easy usage in complex operations) is also usable
@@ -98,21 +101,23 @@ See the end of the file for license conditions.
      - 'date-to-sec' Convert FITS date format ('YYYY-MM-DDThh:mm:ss') into
        seconds from the Unix epoch (1970-01-01,00:00:00 UTC). This can be
        very useful in combination with the new '--keyvalue' option of the
-       Fits program to sort your FITS images based on observation time.
+       Fits program to operate on FITS dates (for example sort your FITS
+       images based on observation time).
 
   Fits:
    --keyvalue: Print only the values of the FITS keywords given to this
-     option in separate columns. This option can take multiple values and
-     many FITS files. Thus generating a table of keyword values (with one
-     row per file). Its output can thus either be piped to the Table
-     program for selecting a certain sub-set of your FITS files, or sorting
-     them for example.
+     option in separate columns. This option can take multiple keyword
+     names and many FITS files. Thus generating a table of keyword values
+     (with one row per file where the first column is the file name). Its
+     output can thus be written as a Table file or be piped to the Table
+     program for selecting a certain sub-set of your FITS files based on
+     key values, or sorting them for example.
 
   Query:
-   - NED's Galactic extinction calculator is now available for any
-     coordinate with a command like below. See the description of the
-     'extinction' dataset of NED in the "Available datasets" section of the
-     manual.
+   - The Galactic extinction calculator of the NASA/IPAC Extragalactic
+     Database (NED) is now available for any coordinate with a command like
+     below. For more, see the manual (the description of the 'extinction'
+     dataset of NED in the "Available datasets" section).
          astquery ned --dataset=extinction --center=49.9507,41.5116
 
   Library:
@@ -158,13 +163,14 @@ See the end of the file for license conditions.
      that. So to be safer in general it was incremented by 2 hours.
 
   MakeCatalog:
-   - Surface brightness limit calculations are now written as standard FITS
-     keywords in the output catalog/table. Until now, they were simply
-     stored as 'COMMENT' keywords with no name so it was hard to parse
-     them. From this version, the following keywords are also written into
-     the output table(s), see the "MakeCatalog output" section of the book
-     for more: 'SBLSTD', 'SBLNSIG', 'SBLMAGPX', 'SBLAREA', 'SBLMAG'.
-   - Upper-limit settings are also written into the output tables as
+   - Surface brightness limit (SBL) calculations are now written as
+     standard FITS keywords in the output catalog/table. Until now, they
+     were simply stored as 'COMMENT' keywords with no name so it was hard
+     to parse them automatically. From this version, the following keywords
+     are also written into the output table(s), see the "MakeCatalog
+     output" section of the book for more: 'SBLSTD', 'SBLNSIG', 'SBLMAGPX',
+     'SBLAREA', 'SBLMAG'.
+   - Upper-limit (UP) settings are also written into the output tables as
      keywords (like surface brightness limit numbers above): 'UPNSIGMA',
      'UPNUMBER', 'UPRNGNAM', 'UPRNGSEE', 'UPSCMLTP', 'UPSCTOL'.
 
