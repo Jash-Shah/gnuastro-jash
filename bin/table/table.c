@@ -661,7 +661,7 @@ table_select_by_position(struct tableparams *p)
         error(EXIT_SUCCESS, 0, "'--rowrandom' not activated because "
               "the number of rows in the table at this stage (%zu) "
               "is smaller than the number of requested random rows "
-              "(%zu). You can supress this message with '--quiet'",
+              "(%zu). You can suppress this message with '--quiet'",
               p->table->size, p->rowrandom);
       return;
     }
