@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <string.h>
 
+#include <gnuastro/ds9.h>
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/table.h>
@@ -221,6 +222,44 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
+/* Do polygon-related sanity checks */
+static void
+ui_check_polygon_from_ds9(struct tableparams *p)
+{
+  int ds9regmode;
+
+  /* This is only relevant when a region file is actually given. */
+  if(p->polygonname)
+    {
+      if(p->polygon)
+      /* These two options cannot be called together. */
+       error(EXIT_FAILURE, errno, "'--polygon' and '--polygonname' "
+              "cannot be given together. With the first you specify the "
+              "polygon vertices directly on the command-line. With the "
+              "second, you give a DS9 region file and the polygon "
+              "vertices are read from that.");
+      else
+        {
+          /* Extract the polygon and the coordinate mode. */
+          p->polygon=gal_ds9_reg_read_polygon(p->polygonname,
+                                              &ds9regmode);
+
+          /* Check if the coordinate's mode in the file is valid. */
+          if(ds9regmode!=GAL_DS9_COORD_MODE_IMG &&
+             ds9regmode!=GAL_DS9_COORD_MODE_WCS)
+            error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                  "'%s' to fix the problem. The output coordinate mode "
+                  "of 'gal_ds9_reg_read_polygon' (%d) isn't recognized "
+                  "by this function", __func__, PACKAGE_BUGREPORT,
+                  ds9regmode);
+        }
+
+      /* Clean up. */
+      free(p->polygonname);
+      p->polygonname=NULL;
+    }
+}
+
 /* Read and check ONLY the options. When arguments are involved, do the
    check in 'ui_check_options_and_arguments'. */
 static void
@@ -228,6 +267,10 @@ ui_read_check_only_options(struct tableparams *p)
 {
   double *darr;
   gal_data_t *tmp;
+
+  /* If a polygon filename is given, use it. This is done first because it
+     can set the '--polygon' option's value. */
+  ui_check_polygon_from_ds9(p);
 
   /* Check if the format of the output table is valid, given the type of
      the output. */

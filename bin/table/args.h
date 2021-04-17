@@ -236,6 +236,19 @@ struct argp_option program_options[] =
       gal_options_parse_colon_sep_csv
     },
     {
+      "polygonname",
+      UI_KEY_POLYGONNAME,
+      "REG",
+      0,
+      "Polygon filename for '--inpolygon' or '--outpolygon'.",
+      UI_GROUP_OUTROWS,
+      &p->polygonname,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "equal",
       UI_KEY_EQUAL,
       "STR,FLT[,...]",

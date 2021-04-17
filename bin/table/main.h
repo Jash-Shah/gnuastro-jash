@@ -98,6 +98,7 @@ struct tableparams
   gal_data_t       *inpolygon;  /* Columns to check if inside polygon.  */
   gal_data_t      *outpolygon;  /* Columns to check if outside polygon. */
   gal_data_t         *polygon;  /* Values of vertices of the polygon.   */
+  char           *polygonname;  /* Name of input polygon file           */
   gal_data_t           *equal;  /* Values to keep in output.            */
   gal_data_t        *notequal;  /* Values to not include in output.     */
   char                  *sort;  /* Column name or number for sorting.   */
