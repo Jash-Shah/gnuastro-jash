@@ -673,6 +673,7 @@ Gnuastro library
 * Unit conversion library (@file{units.h})::  Convert between units.
 * Spectral lines library::      Functions for operating on Spectral lines.
 * Cosmology library::           Cosmological calculations.
+* DS9 library::                 DS9 files operations.
 
 Multithreaded programming (@file{threads.h})
 
@@ -10728,6 +10729,10 @@ This option is very similar to the @option{--inpolygon} option, so see the descr
 The polygon to use for the @code{--inpolygon} and @option{--outpolygon} options.
 The values to this option is parsed in the same way that the Crop program, see its description there for more: @ref{Crop options}.
 
+@item --polygonname=REG
+The filename of the polygon region to use for the @code{--inpolygon} and @option{--outpolygon} options.
+The file format is in the same way that the Crop program, see its description there for more: @ref{Crop options}.
+
 @item -e STR,INT/FLT,...
 @itemx --equal=STR,INT/FLT,...
 Only output rows that are equal to the given number(s) in the given column.
@@ -11750,26 +11755,10 @@ $ astcrop --mode=wcs desired-filter-image(s).fits           \
    --polygon="53.187414,-27.779152 : 53.159507,-27.759633 : \
               53.134517,-27.787144 : 53.161906,-27.807208"
 @end example
-@cindex SAO DS9
+
 In other cases, you have an image and want to define the polygon yourself (it isn't already published like the example above).
-As the number of vertices increases, checking the vertex coordinates on a FITS viewer (for example SAO ds9) and typing them in one by one can be very tedious and prone to typo errors.
-
-You can take the following steps to avoid the frustration and possible typos: Open the image with ds9 and activate its ``region'' mode with @clicksequence{Edit@click{}Region}.
-Then define the region as a polygon with @clicksequence{Region@click{}Shape@click{}Polygon}.
-Click on the approximate center of the region you want and a small square will appear.
-By clicking on the vertices of the square you can shrink or expand it, clicking and dragging anywhere on the edges will enable you to define a new vertex.
-After the region has been nicely defined, save it as a file with @clicksequence{Region@click{}Save Regions}.
-You can then select the name and address of the output file, keep the format as @command{REG} and press ``OK''.
-In the next window, keep format as ``ds9'' and ``Coordinate System'' as ``fk5''.
-A plain text file (let's call it @file{ds9.reg}) is now created.
-
-You can now convert this plain text file to Crop's polygon format with this command (when typing on the command-line, ignore the ``@key{\}'' at the end of the first and second lines along with the extra spaces, these are only for nice printing):
-
-@example
-$ v=$(awk 'NR==4' ds9.reg | sed -e's/polygon(//'        \
-           -e's/\([^,]*,[^,]*\),/\1:/g' -e's/)//' )
-$ astcrop --mode=wcs image.fits --polygon=$v
-@end example
+As the number of vertices increases, checking the vertex coordinates on a FITS viewer (for example SAO ds9) and typing them in one by one can be very tedious and prone to typo errors. Then, you can use the @option{--polygonname} option to give the name of a @command{REG} file (made in SAO ds9).
+Check the description for more.
 
 @item --polygonout
 Keep all the regions outside the polygon and mask the inner ones with blank pixels (see @ref{Blank pixels}).
@@ -11801,6 +11790,29 @@ By contrast, a convex polygon is one where an inner angle may be more than 180 d
                /       |           \             |
               A--------B             A ----------B
 @end example
+
+@item -t REG
+@itemx --polygonname=REG
+File name of the region containing the vertices from a polygon.
+We assume that the @command{REG} file begins with ``# Region file format: DS9'' and it has, at least, two more lines: one containing the mode of the coordinates (``fk5'' or ``image'') and other with the polygon vertices folowing this format: ``polygon(AAA,BBB,...)'' where ``AAA'' and ``BBB'' are numbers and ``...'' signifies that any number of points are possible:
+
+@example
+# Region file format: DS9
+fk5
+polygon(53.187414,-27.779152,53.159507,-27.759633,53.134517,-27.787144,63.161906,-27.807208)
+@end example
+
+@cindex SAO DS9
+You can take the following steps to make a @command{REG} file that automatically uses the above syntax using SAO ds9: Open the image with ds9 and activate its ``region'' mode with @clicksequence{Edit@click{}Region}.
+Then define the region as a polygon with @clicksequence{Region@click{}Shape@click{}Polygon}.
+Click on the approximate center of the region you want and a small square will appear.
+By clicking on the vertices of the square you can shrink or expand it, clicking and dragging anywhere on the edges will enable you to define a new vertex.
+After the region has been nicely defined, save it as a file with @clicksequence{Region@click{}Save Regions}.
+You can then select the name and address of the output file, keep the format as @command{REG} and press ``OK''.
+In the next window, keep format as ``ds9'' and ``Coordinate System'' as ``fk5''.
+A plain text file (let's call it @file{ds9.reg}) is now created. Then, you can run Crop with @command{--polygonname=ds9.reg}.
+
+The mode that Crop will use is defined by the mode on the file. So, if you have ``fk5'' on the file, there is no need to call @command{--mode=wcs}.
 
 @item -s STR
 @itemx --section=STR
@@ -22234,6 +22246,7 @@ If you use the Info version of this manual (see @ref{Info}), you don't have to w
 * Unit conversion library (@file{units.h})::  Convert between units.
 * Spectral lines library::      Functions for operating on Spectral lines.
 * Cosmology library::           Cosmological calculations.
+* DS9 library::                 DS9 files operations.
 @end menu
 
 @node Configuration information, Multithreaded programming, Gnuastro library, Gnuastro library
@@ -29430,7 +29443,7 @@ emitted from (assuming its a specific spectra line, identified with
 
 
 
-@node Cosmology library,  , Spectral lines library, Gnuastro library
+@node Cosmology library, DS9 library, Spectral lines library, Gnuastro library
 @subsection Cosmology library (@file{cosmology.h})
 
 This library does the main cosmological calculations that are commonly
@@ -29491,6 +29504,40 @@ Return the velocity (in km/s) corresponding to the given redshift (@code{z}).
 
 @deftypefun double gal_cosmology_z_from_velocity (double @code{v})
 Return the redshift corresponding to the given velocity (@code{v} in km/s).
+@end deftypefun
+
+
+
+
+
+@node DS9 library,  , Cosmology library, Gnuastro library
+@subsection DS9 library (@file{ds9.h})
+
+This library operates on ds9 output files that Crop and Table can use.
+The function in this section can be used to parse a ds9 Region file (@code{REG}), provided that the region is a polygon.
+
+@deffn Macro GAL_DS9_COORD_MODE_INVALID
+Used for sanity checks (for example, to know if the mode is already selected).
+@end deffn
+
+@deffn Macro GAL_DS9_COORD_MODE_IMG
+The coordinates on the DS9 file are in the ``image'' mode.
+@end deffn
+
+@deffn Macro GAL_DS9_COORD_MODE_WCS
+The coordinates on the DS9 file are in the ``fk5'' mode.
+@end deffn
+
+@deftypefun {gal_data_t *} gal_ds9_reg_read_polygon(char @code{*filename}, int @code{*coordmode})
+Returns an allocated generic data container @code{gal_data_t} containing the vertices of a polygon on the ds9 region file given by @code{*filename}.
+The @code{*coordmode} is set as one of the Macros above accordingly to the coordinates on the file.
+It's important to note that the @code{REG} file is assumed to begin with ``# Region file format: DS9'' and it has, at least, two more lines: one containing the mode of the coordinates (``fk5'' or ``image'') and other with the polygon vertices folowing this format: ``polygon(AAA,BBB,...)'' where ``AAA'' and ``BBB'' are numbers and ``...'' signifies that any number of points are possible:
+
+@example
+# Region file format: DS9
+fk5
+polygon(53.187414,-27.779152,53.159507,-27.759633,53.134517,-27.787144,63.161906,-27.807208)
+@end example
 @end deftypefun
 
 @node Library demo programs,  , Gnuastro library, Library
