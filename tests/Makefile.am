@@ -127,11 +127,11 @@ if COND_FITS
 endif
 if COND_MATCH
   MAYBE_MATCH_TESTS = match/positions.sh match/merged-cols.sh \
-  match/kdtree-match.sh
+  match/kdtree.sh
 
+  match/kdtree.sh: prepconf.sh.log
   match/positions.sh: prepconf.sh.log
   match/merged-cols.sh: prepconf.sh.log
-  match/kdtree-match.sh: prepconf.sh.log
 endif
 if COND_MKCATALOG
   MAYBE_MKCATALOG_TESTS = mkcatalog/detections.sh mkcatalog/simple-3d.sh   \

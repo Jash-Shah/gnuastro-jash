@@ -256,8 +256,8 @@ ui_read_check_only_options(struct matchparams *p)
 static void
 ui_check_options_and_arguments(struct matchparams *p)
 {
-  /* When '--coord' is given, there should be no second catalog
-     (argument). */
+  /* When '--coord' is given, or we are in k-d tree building mode, there
+     should be no second catalog (argument). */
   if(p->coord || p->kdtreemode==MATCH_KDTREE_BUILD)
     {
       /* Make sure no second argument is given. */
@@ -278,7 +278,7 @@ ui_check_options_and_arguments(struct matchparams *p)
         }
     }
 
-  /* '--coord' is not given. */
+  /* We need two input catalogs. */
   else
     {
       /* Without 'coord' atleast one input is necessary. */
@@ -297,7 +297,6 @@ ui_check_options_and_arguments(struct matchparams *p)
           p->input1name=NULL;
         }
     }
-
 
   /* If the first input is a FITS file, make sure its HDU is also given. */
   if( p->input1name
