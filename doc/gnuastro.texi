@@ -29375,7 +29375,7 @@ When the aperture is an ellipse, distances between the points are also calculate
 
 
 
-@deftypefun {gal_data_t *} gal_match_coordinates (gal_data_t @code{*coord1}, gal_data_t @code{*coord2}, double @code{*aperture}, int @code{sorted_by_first}, int @code{inplace}, size_t @code{minmapsize}, int @code{quietmmap}, size_t @code{*nummatched})
+@deftypefun {gal_data_t *} gal_match_sort_based (gal_data_t @code{*coord1}, gal_data_t @code{*coord2}, double @code{*aperture}, int @code{sorted_by_first}, int @code{inplace}, size_t @code{minmapsize}, int @code{quietmmap}, size_t @code{*nummatched})
 
 Use a basic sort-based match to find the matching points of two input coordinates.
 See the descriptions above on the format of the inputs and outputs.

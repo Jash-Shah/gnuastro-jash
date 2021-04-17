@@ -5,6 +5,7 @@ Match is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
 Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -497,7 +498,7 @@ match_catalog_kdtree_auto(struct matchparams *p)
 
 
 /* Wrapper over the k-d tree library to return an output in the same format
-   as 'gal_match_coordinates'. */
+   as 'gal_match_sort_based'. */
 static gal_data_t *
 match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
 {
@@ -563,7 +564,7 @@ match_catalog(struct matchparams *p)
      place. Incase it was decided not to use a k-d tree at all
      (in 'automatic' mode), then we need to use the classic mode. */
   if(mcols==NULL)
-    mcols=gal_match_coordinates(p->cols1, p->cols2, p->aperture->array,
+    mcols=gal_match_sort_based(p->cols1, p->cols2, p->aperture->array,
                                 0, 1, p->cp.minmapsize, p->cp.quietmmap,
                                 &nummatched);
 
@@ -618,7 +619,7 @@ match_catalog(struct matchparams *p)
       mcols=tmp;
 
       /* We also want everything to be incremented by one. In a C
-         program, counting starts with zero, so 'gal_match_coordinates'
+         program, counting starts with zero, so 'gal_match_sort_based'
          will return indexs starting from zero. But outside a C
          program, on the command-line people expect counting to start
          from 1 (for example with AWK). */

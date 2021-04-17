@@ -5,6 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
 Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -45,7 +46,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 gal_data_t *
-gal_match_coordinates(gal_data_t *coord1, gal_data_t *coord2,
+gal_match_sort_based(gal_data_t *coord1, gal_data_t *coord2,
                       double *aperture, int sorted_by_first,
                       int inplace, size_t minmapsize, int quietmmap,
                       size_t *nummatched);

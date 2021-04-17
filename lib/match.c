@@ -5,6 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
 Copyright (C) 2017-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -47,7 +48,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 /**********************************************************************/
-/*****************   Coordinate match custom list   *******************/
+/*****************   Sort-Based match custom list   *******************/
 /**********************************************************************/
 struct match_sfll
 {
@@ -501,12 +502,12 @@ gal_match_output(gal_data_t *A, gal_data_t *B, size_t *A_perm,
 
 
 /********************************************************************/
-/*************            Coordinate matching           *************/
+/*************            Sort-Based matching           *************/
 /********************************************************************/
 /* Since these checks are repetative, its easier to have a separate
    function for both inputs. */
 static void
-match_coordinate_sanity_check_columns(gal_data_t *coord, char *info,
+match_sort_based_sanity_check_columns(gal_data_t *coord, char *info,
                                       int inplace, int *allf64)
 {
   gal_data_t *tmp;
@@ -545,7 +546,7 @@ match_coordinate_sanity_check_columns(gal_data_t *coord, char *info,
 
 /* To keep the main function clean, we'll do the sanity checks here. */
 static void
-match_coordinates_sanity_check(gal_data_t *coord1, gal_data_t *coord2,
+match_sort_based_sanity_check(gal_data_t *coord1, gal_data_t *coord2,
                                double *aperture, int inplace, int *allf64)
 {
   size_t ncoord1=gal_list_data_number(coord1);
@@ -565,8 +566,8 @@ match_coordinates_sanity_check(gal_data_t *coord1, gal_data_t *coord2,
           "maximum of 3 dimensions", __func__, ncoord1);
 
   /* Check the column properties. */
-  match_coordinate_sanity_check_columns(coord1, "first", inplace, allf64);
-  match_coordinate_sanity_check_columns(coord2, "second", inplace, allf64);
+  match_sort_based_sanity_check_columns(coord1, "first", inplace, allf64);
+  match_sort_based_sanity_check_columns(coord2, "second", inplace, allf64);
 
   /* Check the aperture values. */
   if(aperture[0]<=0)
@@ -607,7 +608,7 @@ match_coordinates_sanity_check(gal_data_t *coord1, gal_data_t *coord2,
 /* To keep things clean, the sorting of each input array will be done in
    this function. */
 static size_t *
-match_coordinates_prepare_sort(gal_data_t *coords, size_t minmapsize)
+match_sort_based_prepare_sort(gal_data_t *coords, size_t minmapsize)
 {
   size_t i;
   double *darr;
@@ -662,7 +663,7 @@ match_coordinates_prepare_sort(gal_data_t *coords, size_t minmapsize)
 
 /* Do the preparations for matching of coordinates. */
 static void
-match_coordinates_prepare(gal_data_t *coord1, gal_data_t *coord2,
+match_sort_based_prepare(gal_data_t *coord1, gal_data_t *coord2,
                           int sorted_by_first, int inplace, int allf64,
                           gal_data_t **A_out, gal_data_t **B_out,
                           size_t **A_perm, size_t **B_perm,
@@ -714,8 +715,8 @@ match_coordinates_prepare(gal_data_t *coord1, gal_data_t *coord2,
         }
 
       /* Sort each dataset by the first coordinate. */
-      *A_perm = match_coordinates_prepare_sort(*A_out, minmapsize);
-      *B_perm = match_coordinates_prepare_sort(*B_out, minmapsize);
+      *A_perm = match_sort_based_prepare_sort(*A_out, minmapsize);
+      *B_perm = match_sort_based_prepare_sort(*B_out, minmapsize);
     }
 }
 
@@ -727,7 +728,7 @@ match_coordinates_prepare(gal_data_t *coord1, gal_data_t *coord2,
    catalog (catalog b) are within the acceptable distance of each record in
    the first (a). */
 static void
-match_coordinates_second_in_first(gal_data_t *A, gal_data_t *B,
+match_sort_based_second_in_first(gal_data_t *A, gal_data_t *B,
                                   double *aperture,
                                   struct match_sfll **bina)
 {
@@ -883,7 +884,7 @@ match_coordinates_second_in_first(gal_data_t *A, gal_data_t *B,
        Node 2: Second catalog index (counting from zero).
        Node 3: Distance between the match.                    */
 gal_data_t *
-gal_match_coordinates(gal_data_t *coord1, gal_data_t *coord2,
+gal_match_sort_based(gal_data_t *coord1, gal_data_t *coord2,
                       double *aperture, int sorted_by_first,
                       int inplace, size_t minmapsize, int quietmmap,
                       size_t *nummatched)
@@ -895,9 +896,9 @@ gal_match_coordinates(gal_data_t *coord1, gal_data_t *coord2,
 
   /* Do a small sanity check and make the preparations. After this point,
      we'll call the two arrays 'a' and 'b'.*/
-  match_coordinates_sanity_check(coord1, coord2, aperture, inplace,
+  match_sort_based_sanity_check(coord1, coord2, aperture, inplace,
                                  &allf64);
-  match_coordinates_prepare(coord1, coord2, sorted_by_first, inplace,
+  match_sort_based_prepare(coord1, coord2, sorted_by_first, inplace,
                             allf64, &A, &B, &A_perm, &B_perm,
                             minmapsize);
 
@@ -914,7 +915,7 @@ gal_match_coordinates(gal_data_t *coord1, gal_data_t *coord2,
 
 
   /* All records in 'b' that match each 'a' (possibly duplicate). */
-  match_coordinates_second_in_first(A, B, aperture, bina);
+  match_sort_based_second_in_first(A, B, aperture, bina);
 
 
   /* Two re-arrangings will fix the issue. */
