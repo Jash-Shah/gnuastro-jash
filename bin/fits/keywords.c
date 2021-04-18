@@ -444,7 +444,7 @@ keywords_wcs_convert(struct fitsparams *p)
   size_t ndim, *insize;
   char *suffix, *output;
   gal_data_t *data=NULL;
-  struct wcsprm *inwcs, *outwcs;
+  struct wcsprm *inwcs, *outwcs=NULL;
   size_t *dsize, defaultsize[2]={2000,2000};
 
   /* If the extension has any data, read it, otherwise just make an empty

@@ -959,9 +959,8 @@ gal_wcs_coordsys_convert(struct wcsprm *wcs, int outcoordsys)
   char *alt=NULL;                 /* Only concerned with primary wcs. */
   double equinox=0.0f;            /* To preserve current value.       */
   struct wcsprm *out=NULL;
-  char *clng, *clat, *radesys;
   double lng2p1=NAN, lat2p1=NAN, lng1p2=NAN;
-
+  char *clng=NULL, *clat=NULL, *radesys=NULL;
 
   /* Just incase the input is a NULL pointer. */
   if(wcs==NULL) return NULL;
