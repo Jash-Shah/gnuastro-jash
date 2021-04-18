@@ -1575,13 +1575,11 @@ options_sanity_check(struct argp_option *option, char *arg,
 {
   size_t dsize=1;
   char *message=NULL;
+  int mcflag=GAL_ARITHMETIC_FLAGS_BASIC;
   int operator1=GAL_ARITHMETIC_OP_INVALID;
   int operator2=GAL_ARITHMETIC_OP_INVALID;
   int multicheckop=GAL_ARITHMETIC_OP_INVALID;
   gal_data_t *value, *ref1=NULL, *ref2=NULL, *check1, *check2;
-  int mcflag = ( GAL_ARITHMETIC_NUMOK
-                 | GAL_ARITHMETIC_FREE
-                 | GAL_ARITHMETIC_INPLACE );
 
   /* Currently, this function is only for numeric types, so if the value is
      string type, or its 'range' field is 'GAL_OPTIONS_RANGE_ANY', then
@@ -1719,10 +1717,12 @@ options_sanity_check(struct argp_option *option, char *arg,
      'GAL_ARITHMETIC_INPLACE' flags. But we will do this when there are
      multiple checks so from the two check data structures, we only have
      one remaining. */
-  check1=gal_arithmetic(operator1, 1, GAL_ARITHMETIC_NUMOK, value, ref1);
+  check1=gal_arithmetic(operator1, 1, GAL_ARITHMETIC_FLAG_NUMOK,
+                        value, ref1);
   if(ref2)
     {
-      check2=gal_arithmetic(operator2, 1, GAL_ARITHMETIC_NUMOK, value, ref2);
+      check2=gal_arithmetic(operator2, 1, GAL_ARITHMETIC_FLAG_NUMOK,
+                            value, ref2);
       check1=gal_arithmetic(multicheckop, 1, mcflag, check1, check2);
     }
 

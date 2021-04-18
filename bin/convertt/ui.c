@@ -337,7 +337,8 @@ ui_read_check_only_options(struct converttparams *p)
 
   if(p->fluxhighstr && p->fluxlowstr)
     {
-      cond=gal_arithmetic(GAL_ARITHMETIC_OP_GT, 1, GAL_ARITHMETIC_NUMOK,
+      cond=gal_arithmetic(GAL_ARITHMETIC_OP_GT, 1,
+                          GAL_ARITHMETIC_FLAG_NUMOK,
                           p->fluxhigh, p->fluxlow);
 
       if( *((unsigned char *)cond->array) == 0 )

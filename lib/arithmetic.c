@@ -157,7 +157,7 @@ arithmetic_change_type(gal_data_t *data, int operator, int flags)
   out=gal_data_copy_to_new_type(data, type);
 
   /* Delete the input structure if the user asked for it. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     gal_data_free(data);
 
   /* Return */
@@ -212,7 +212,7 @@ arithmetic_not(gal_data_t *data, int flags)
     }
 
   /* Delete the input structure if the user asked for it. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     gal_data_free(data);
 
   /* Return */
@@ -248,7 +248,7 @@ arithmetic_bitwise_not(int flags, gal_data_t *in)
 
   /* If we want inplace output, set the output pointer to the input
      pointer, for every pixel, the operation will be independent. */
-  if(flags & GAL_ARITHMETIC_INPLACE)
+  if(flags & GAL_ARITHMETIC_FLAG_INPLACE)
     o = in;
   else
     o = gal_data_alloc(NULL, in->type, in->ndim, in->dsize, in->wcs,
@@ -288,7 +288,7 @@ arithmetic_bitwise_not(int flags, gal_data_t *in)
 
 
   /* Clean up (if necessary). */
-  if( (flags & GAL_ARITHMETIC_FREE) && o!=in)
+  if( (flags & GAL_ARITHMETIC_FLAG_FREE) && o!=in)
     gal_data_free(in);
 
   /* Return */
@@ -313,7 +313,7 @@ arithmetic_abs(int flags, gal_data_t *in)
   gal_data_t *out;
 
   /* Set the output array. */
-  if(flags & GAL_ARITHMETIC_INPLACE)
+  if(flags & GAL_ARITHMETIC_FLAG_INPLACE)
     out=in;
   else
     out = gal_data_alloc(NULL, in->type, in->ndim, in->dsize,
@@ -348,7 +348,7 @@ arithmetic_abs(int flags, gal_data_t *in)
     }
 
   /* Clean up and return */
-  if( (flags & GAL_ARITHMETIC_FREE) && out!=in)
+  if( (flags & GAL_ARITHMETIC_FLAG_FREE) && out!=in)
     gal_data_free(in);
   return out;
 }
@@ -505,7 +505,7 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
      operators is defined in the floating point space. So even if the input
      is integer type and user requested inplace opereation, if its not a
      floating point type, it will not be in-place. */
-  if( (flags & GAL_ARITHMETIC_INPLACE)
+  if( (flags & GAL_ARITHMETIC_FLAG_INPLACE)
       && ( in->type==GAL_TYPE_FLOAT32 || in->type==GAL_TYPE_FLOAT64 )
       && ( operator != GAL_ARITHMETIC_OP_RA_TO_DEGREE
       &&   operator != GAL_ARITHMETIC_OP_DEC_TO_DEGREE
@@ -597,7 +597,7 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
      types weren't compiled for binary operations, we can tell this from
      the pointers: if they are different from the original pointers, they
      were allocated. */
-  if( (flags & GAL_ARITHMETIC_FREE) && o!=in)
+  if( (flags & GAL_ARITHMETIC_FLAG_FREE) && o!=in)
     gal_data_free(in);
 
   /* Return */
@@ -613,7 +613,7 @@ static gal_data_t *
 arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
 {
   gal_data_t *out=NULL;
-  int ip=(flags & GAL_ARITHMETIC_INPLACE) || (flags & GAL_ARITHMETIC_FREE);
+  int ip=(flags & GAL_ARITHMETIC_FLAG_INPLACE) || (flags & GAL_ARITHMETIC_FLAG_FREE);
 
   switch(operator)
     {
@@ -631,7 +631,7 @@ arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
     }
 
   /* If the input is to be freed, then do so and return the output. */
-  if( flags & GAL_ARITHMETIC_FREE ) gal_data_free(input);
+  if( flags & GAL_ARITHMETIC_FLAG_FREE ) gal_data_free(input);
   return out;
 }
 
@@ -660,16 +660,13 @@ arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
 
 /* The size operator. Reports the size along a given dimension. */
 static gal_data_t *
-arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg,
-                   gal_data_t *envseed_in)
+arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
 {
   gsl_rng *rng;
-  uint8_t *envseed;
   const char *rng_name;
   double *d, *df, arg_v;
   unsigned long rng_seed;
   gal_data_t *out, *targ;
-
 
   /* Sanity checks. */
   if(arg->size!=1)
@@ -679,30 +676,11 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg,
           "has %zu elements, in %zu dimension(s)",
           gal_arithmetic_operator_string(operator), arg->size,
           arg->ndim);
-  if(envseed_in->size!=1)
-    error(EXIT_FAILURE, 0, "the third popped operand to the '%s' "
-          "operator should be a single number (with a value of 0 "
-          "or 1, specifying if the environment should be used for "
-          "the random number generator settings), but it has %zu "
-          "elements, in %zu dimension(s)",
-          gal_arithmetic_operator_string(operator), arg->size,
-          arg->ndim);
-  if(envseed_in->type!=GAL_TYPE_UINT8)
-    error(EXIT_FAILURE, 0, "the third popped operand to the '%s' "
-          "operator should have a type of 'uint8' (with "
-          "a value of 0 or 1, specifying if the environment should "
-          "be used for the random number generator settings), but "
-          "it has a type of '%s'",
-          gal_arithmetic_operator_string(operator),
-          gal_type_name(envseed_in->type, 1));
-  envseed=envseed_in->array;
-  if( *envseed>1 )
-    error(EXIT_FAILURE, 0, "the third popped operand to the '%s' "
-          "operator should only have a value of 0 or 1 (specifying "
-          "if the environment should be used for the random number "
-          "generator settings), but it has a value of %u",
-          gal_arithmetic_operator_string(operator), *envseed);
-
+  if(in->type==GAL_TYPE_STRING)
+    error(EXIT_FAILURE, 0, "the input dataset to the '%s' operator "
+          "should have a numerical data type (integer or float), but "
+          "it has a string type",
+          gal_arithmetic_operator_string(operator));
 
   /* Convert the input and argument into 'double' (and immediately free it
      if it is no longer necessary). */
@@ -710,13 +688,12 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg,
   else
     {
       out=gal_data_copy_to_new_type(in, GAL_TYPE_FLOAT64);
-      if(flags & GAL_ARITHMETIC_FREE)
+      if(flags & GAL_ARITHMETIC_FLAG_FREE)
         { gal_data_free(in); in=NULL; }
     }
   targ=gal_data_copy_to_new_type(arg, GAL_TYPE_FLOAT64);
   arg_v=((double *)(targ->array))[0];
   gal_data_free(targ);
-
 
   /* Make sure the noise identifier is positive. */
   if(arg_v<0)
@@ -724,10 +701,25 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg,
           "'mknoise-sigma' or background for 'mknoise-poisson') must "
           "be positive (it is %g)", arg_v);
 
+  /* Setup the random number generator. For 'envseed', we want to pass a
+     boolean value: either 0 or 1. However, when we say 'flags &
+     GAL_ARITHMETIC_ENVSEED', the returned value is the integer positioning
+     of the envseed bit (for example if its on the fourth bit, the value
+     will be 8). This can cause problems if it is on the 8th bit (or any
+     multiple of 8). So to avoid issues with the bit-positioning of the
+     'ENVSEED', we will return the conditional to see if the result of the
+     bit-wise '&' is larger than 0 or not (binary). */
+  rng=gal_checkset_gsl_rng( (flags & GAL_ARITHMETIC_FLAG_ENVSEED)>0,
+                            &rng_name, &rng_seed);
 
-  /* Setup the random number generator. */
-  rng=gal_checkset_gsl_rng(*envseed, &rng_name, &rng_seed);
-
+  /* Print the basic RNG information if requested. */
+  if( (flags & GAL_ARITHMETIC_FLAG_QUIET)==0 )
+    {
+      printf(" - Parameters used for '%s':\n",
+             gal_arithmetic_operator_string(operator));
+      printf("   - Random number generator name: %s\n", rng_name);
+      printf("   - Random number generator seed: %lu\n", rng_seed);
+    }
 
   /* Add the noise. */
   df=(d=out->array)+out->size;
@@ -748,11 +740,7 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg,
     }
 
   /* Clean up and return */
-  if(flags & GAL_ARITHMETIC_FREE)
-    {
-      gal_data_free(arg);
-      gal_data_free(envseed_in);
-    }
+  if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(arg);
   return out;
 }
 
@@ -798,7 +786,7 @@ arithmetic_size(int operator, int flags, gal_data_t *in, gal_data_t *arg)
   /* Convert 'arg' to 'size_t' and read it. Note that we can only free the
      'arg' array (while changing its type), when the freeing flag has been
      set. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     {
       arg=gal_data_copy_to_new_type_free(arg, GAL_TYPE_SIZE_T);
       arg_val=*(size_t *)(arg->array);
@@ -833,7 +821,7 @@ arithmetic_size(int operator, int flags, gal_data_t *in, gal_data_t *arg)
 
 
   /* Clean up and return */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     gal_data_free(in);
   return out;
 }
@@ -950,7 +938,7 @@ arithmetic_where(int flags, gal_data_t *out, gal_data_t *cond,
     }
 
   /* Clean up if necessary. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     {
       gal_data_free(cond);
       gal_data_free(iftrue);
@@ -1558,7 +1546,7 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
 
 
   /* Set the output data structure. */
-  if( (flags & GAL_ARITHMETIC_INPLACE) && otype==list->type)
+  if( (flags & GAL_ARITHMETIC_FLAG_INPLACE) && otype==list->type)
     out = list;                 /* The top element in the list. */
   else
     out = gal_data_alloc(NULL, otype, list->ndim, list->dsize,
@@ -1592,7 +1580,7 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
      before freeing each data structure. If we are on the designated output
      dataset, we should set its 'next' pointer to NULL so it isn't treated
      as a list any more by future functions. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     {
       tmp=list;
       while(tmp!=NULL)
@@ -1685,7 +1673,7 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
 
 
   /* Simple sanity check on the input sizes */
-  if( !( (flags & GAL_ARITHMETIC_NUMOK) && (l->size==1 || r->size==1))
+  if( !( (flags & GAL_ARITHMETIC_FLAG_NUMOK) && (l->size==1 || r->size==1))
       && gal_dimension_is_different(l, r) )
     error(EXIT_FAILURE, 0, "%s: the non-number inputs to '%s' don't "
           "have the same dimension/size", __func__,
@@ -1709,7 +1697,7 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
 
   /* If we want inplace output, set the output pointer to one input. Note
      that the output type can be different from both inputs.  */
-  if(flags & GAL_ARITHMETIC_INPLACE)
+  if(flags & GAL_ARITHMETIC_FLAG_INPLACE)
     {
       if     (l->type==otype && out_size==l->size)   o = l;
       else if(r->type==otype && out_size==r->size)   o = r;
@@ -1763,7 +1751,7 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
 
   /* Clean up if necessary. Note that if the operation was requested to be
      in place, then the output might be one of the inputs. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     {
       if     (o==l)       gal_data_free(r);
       else if(o==r)       gal_data_free(l);
@@ -1845,7 +1833,7 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
   int quietmmap=il->quietmmap && ir->quietmmap;
 
   /* Simple sanity check on the input sizes */
-  if( !( (flags & GAL_ARITHMETIC_NUMOK) && (il->size==1 || ir->size==1))
+  if( !( (flags & GAL_ARITHMETIC_FLAG_NUMOK) && (il->size==1 || ir->size==1))
       && gal_dimension_is_different(il, ir) )
     error(EXIT_FAILURE, 0, "%s: the input datasets don't have the same "
           "dimension/size", __func__);
@@ -1872,7 +1860,7 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
 
   /* If we want inplace output, set the output pointer to one input. Note
      that the output type can be different from both inputs.  */
-  if(flags & GAL_ARITHMETIC_INPLACE)
+  if(flags & GAL_ARITHMETIC_FLAG_INPLACE)
     {
       if     (l->type==final_otype && out_size==l->size)   o = l;
       else if(r->type==final_otype && out_size==r->size)   o = r;
@@ -1918,7 +1906,7 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
      types weren't compiled for binary operations, we can tell this from
      the pointers: if they are different from the original pointers, they
      were allocated. */
-  if(flags & GAL_ARITHMETIC_FREE)
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
     {
       /* Clean the main used (temporarily allocated) datasets. */
       if     (o==l)       gal_data_free(r);
@@ -2359,7 +2347,7 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_ISBLANK:
       d1 = va_arg(va, gal_data_t *);
       out = gal_blank_flag(d1);
-      if(flags & GAL_ARITHMETIC_FREE) gal_data_free(d1);
+      if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(d1);
       break;
 
     case GAL_ARITHMETIC_OP_WHERE:
@@ -2462,8 +2450,7 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);
-      d3 = va_arg(va, gal_data_t *);
-      out=arithmetic_mknoise(operator, flags, d1, d2, d3);
+      out=arithmetic_mknoise(operator, flags, d1, d2);
       break;
 
     /* Size operator */

@@ -59,9 +59,7 @@ convertt_change(struct converttparams *p)
 {
   gal_data_t *channel, *cond;
   struct change *change, *tmp;
-  unsigned char flags = ( GAL_ARITHMETIC_NUMOK
-                          | GAL_ARITHMETIC_FREE
-                          | GAL_ARITHMETIC_INPLACE );
+  unsigned char flags = GAL_ARITHMETIC_FLAGS_BASIC;
 
   /* In case there is no value to convert. */
   if(p->change==NULL) return;
@@ -72,8 +70,9 @@ convertt_change(struct converttparams *p)
       {
         /* Make a condition array: all pixels with a value equal to
            'change->from' will be set as 1 in this array. */
-        cond=gal_arithmetic(GAL_ARITHMETIC_OP_EQ, 1, GAL_ARITHMETIC_NUMOK,
-                            channel, change->from);
+        cond=gal_arithmetic(GAL_ARITHMETIC_OP_EQ, 1,
+                            GAL_ARITHMETIC_FLAG_NUMOK, channel,
+                            change->from);
 
         /* Now, use the condition array to set the proper values. */
         channel=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, flags, channel,
@@ -99,12 +98,13 @@ convertt_trunc_function(int operator, gal_data_t *data, gal_data_t *value)
 
 
   /* Note that we need the fluxlow and fluxhigh values later. */
-  unsigned char flags = ( GAL_ARITHMETIC_NUMOK | GAL_ARITHMETIC_INPLACE );
+  unsigned char flags = ( GAL_ARITHMETIC_FLAG_NUMOK
+                          | GAL_ARITHMETIC_FLAG_INPLACE );
 
 
   /* Make a condition array: all pixels with a value equal to
      'change->from' will be set as 1 in this array. */
-  cond=gal_arithmetic(operator, 1, GAL_ARITHMETIC_NUMOK, data, value);
+  cond=gal_arithmetic(operator, 1, GAL_ARITHMETIC_FLAG_NUMOK, data, value);
 
 
   /* Now, use the condition array to set the proper values. */

@@ -60,14 +60,16 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 
-/* Arithmetic flags. */
-#define GAL_ARITHMETIC_INPLACE  0x1
-#define GAL_ARITHMETIC_FREE     0x2
-#define GAL_ARITHMETIC_NUMOK    0x4
+/* Arithmetic on-off bit flags (have to be powers of 2).  */
+#define GAL_ARITHMETIC_FLAG_INPLACE  1
+#define GAL_ARITHMETIC_FLAG_FREE     2
+#define GAL_ARITHMETIC_FLAG_NUMOK    4
+#define GAL_ARITHMETIC_FLAG_ENVSEED  8
+#define GAL_ARITHMETIC_FLAG_QUIET    16
 
-#define GAL_ARITHMETIC_FLAGS_ALL ( GAL_ARITHMETIC_INPLACE        \
-                                   | GAL_ARITHMETIC_FREE         \
-                                   | GAL_ARITHMETIC_NUMOK )
+#define GAL_ARITHMETIC_FLAGS_BASIC ( GAL_ARITHMETIC_FLAG_INPLACE   \
+                                     | GAL_ARITHMETIC_FLAG_FREE    \
+                                     | GAL_ARITHMETIC_FLAG_NUMOK )
 
 
 /* Identifiers for each operator. */

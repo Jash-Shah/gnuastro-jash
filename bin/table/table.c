@@ -133,8 +133,8 @@ table_selection_range(struct tableparams *p, gal_data_t *col)
 {
   size_t one=1;
   double *darr;
-  int numok=GAL_ARITHMETIC_NUMOK;
-  int inplace=GAL_ARITHMETIC_INPLACE;
+  int numok=GAL_ARITHMETIC_FLAG_NUMOK;
+  int inplace=GAL_ARITHMETIC_FLAG_INPLACE;
   gal_data_t *min=NULL, *max=NULL, *tmp, *ltmin, *gemax=NULL;
 
   /* First, make sure everything is OK. */
@@ -304,8 +304,8 @@ table_selection_equal_or_notequal(struct tableparams *p, gal_data_t *col,
   void *varr;
   char **strarr;
   size_t i, one=1;
-  int numok=GAL_ARITHMETIC_NUMOK;
-  int inplace=GAL_ARITHMETIC_INPLACE;
+  int numok=GAL_ARITHMETIC_FLAG_NUMOK;
+  int inplace=GAL_ARITHMETIC_FLAG_INPLACE;
   gal_data_t *eq, *out=NULL, *value=NULL;
   gal_data_t *arg = e0n1 ? p->notequal : p->equal;
 
@@ -395,7 +395,7 @@ table_select_by_value(struct tableparams *p)
   struct list_select *tmp;
   uint8_t *u, *uf, *ustart;
   size_t i, *s, ngood=0;
-  int inplace=GAL_ARITHMETIC_INPLACE;
+  int inplace=GAL_ARITHMETIC_FLAG_INPLACE;
   gal_data_t *mask, *blmask, *addmask=NULL;
 
   /* Allocate datasets for the necessary numbers and write them in. */

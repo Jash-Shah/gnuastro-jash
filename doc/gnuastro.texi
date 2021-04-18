@@ -26177,33 +26177,40 @@ It can take an arbitrary number of arguments as operands (depending on the opera
 Its first two arguments are integers specifying the flags and operator.
 So first we will review the constants for the recognized flags and operators and discuss them, then introduce the actual function.
 
-@deffn  Macro GAL_ARITHMETIC_INPLACE
-@deffnx Macro GAL_ARITHMETIC_FREE
-@deffnx Macro GAL_ARITHMETIC_NUMOK
-@deffnx Macro GAL_ARITHMETIC_FLAGS_ALL
+@deffn  Macro GAL_ARITHMETIC_FLAG_INPLACE
+@deffnx Macro GAL_ARITHMETIC_FLAG_FREE
+@deffnx Macro GAL_ARITHMETIC_FLAG_NUMOK
+@deffnx Macro GAL_ARITHMETIC_FLAG_ENVSEED
+@deffnx Macro GAL_ARITHMETIC_FLAG_QUIET
+@deffnx Macro GAL_ARITHMETIC_FLAGS_BASIC
 @cindex Bitwise Or
-Bit-wise flags to pass onto @code{gal_arithmetic} (see below). To pass
-multiple flags, use the bitwise-or operator, for example
-@code{GAL_ARITHMETIC_INPLACE |
-GAL_ARITHMETIC_FREE}. @code{GAL_ARITHMETIC_FLAGS_ALL} is a combination of
-all flags to shorten your code if you want all flags activated. Each flag
-is described below:
+Bit-wise flags to pass onto @code{gal_arithmetic} (see below).
+To pass multiple flags, use the bitwise-or operator, for example @code{GAL_ARITHMETIC_FLAG_INPLACE | GAL_ARITHMETIC_FLAG_NUMOK}.
+Each flag is described below:
+
 @table @code
-@item GAL_ARITHMETIC_INPLACE
-Do the operation in-place (in the input dataset, thus modifying it) to
-improve CPU and memory usage. If this flag is used, after
-@code{gal_arithmetic} finishes, the input dataset will be modified. It is
-thus useful if you have no more need for the input after the operation.
+@item GAL_ARITHMETIC_FLAG_INPLACE
+Do the operation in-place (in the input dataset, thus modifying it) to improve CPU and memory usage. If this flag is used, after @code{gal_arithmetic} finishes, the input dataset will be modified. It is thus useful if you have no more need for the input after the operation.
 
-@item GAL_ARITHMETIC_FREE
-Free (all the) input dataset(s) after the operation is done. Hence the
-inputs are no longer usable after @code{gal_arithmetic}.
+@item GAL_ARITHMETIC_FLAG_FREE
+Free (all the) input dataset(s) after the operation is done.
+Hence the inputs are no longer usable after @code{gal_arithmetic}.
 
-@item GAL_ARITHMETIC_NUMOK
-It is acceptable to use a number and an array together. For example if you
-want to add all the pixels in an image with a single number you can pass
-this flag to avoid having to allocate a constant array the size of the
-image (with all the pixels having the same number).
+@item GAL_ARITHMETIC_FLAG_NUMOK
+It is acceptable to use a number and an array together.
+For example if you want to add all the pixels in an image with a single number you can pass this flag to avoid having to allocate a constant array the size of the image (with all the pixels having the same number).
+
+@item GAL_ARITHMETIC_FLAG_ENVSEED
+Use the pre-defined environment variable for setting the random number generator seed when an operator needs it (for example @code{mknoise-sigma}).
+For more on random number generation in Gnuastro see @ref{Generating random numbers}.
+
+@item GAL_ARITHMETIC_FLAG_QUIET
+Don't print any warnings or messages for operators that may benefit from it.
+For example by default the @code{mknoise-sigma} operator prints the random number generator function and seed that it used (in case the user wants to reproduce this result later).
+By activating this bit flag to the call, that extra information is not printed on the command-line.
+
+@item GAL_ARITHMETIC_FLAGS_BASIC
+A wrapper for activating all three of @code{GAL_ARITHMETIC_FLAG_INPLACE}, @code{GAL_ARITHMETIC_FLAG_FREE} and @code{GAL_ARITHMETIC_FLAG_NUMOK}.
 @end table
 @end deffn
 
@@ -26384,10 +26391,15 @@ for the rest it will be @code{GAL_TYPE_FLOAT32}.
 @deffn  Macro GAL_ARITHMETIC_OP_MKNOISE_SIGMA
 @deffnx Macro GAL_ARITHMETIC_OP_MKNOISE_POISSON
 Add noise to the input dataset.
-Both operators take three arguments: the first is the input data set (can have any dimensionality or number of elements.
+Both operators take two arguments: the first is the input data set (can have any dimensionality or number of elements.
 The second argument is the noise specifier (a single element, of any type): for a fixed-sigma noise, it is the Gaussian standard deviation, for the Poisson noise, it is the background (see @ref{Photon counting noise}).
-The third argument should a dataset with only one element, a @code{GAL_TYPE_UINT8} type and only two acceptable values 0 (to signifiy that the random number generator, RNG, seed can be automatically set for each run) and 1 (to signify that the RNG seed should be read from the @code{GAL_RNG_SEED} environment variable for a reproducible result).
-For more on setting the RNG seed, see @ref{Generating random numbers}.
+
+By default, a separate random number generator seed will be used on each separate run of these operators.
+Therefore two identical runs on the same input will produce different results.
+You can get reproducible results by setting the @code{GAL_RNG_SEED} environment variable and activating the @code{GAL_ARITHMETIC_FLAG_ENVSEED} flag.
+For more on random number generation in Gnuastro, see @ref{Generating random numbers}.
+
+By default these operators will print the random number generator function and seed (in case the user wants to reproduce the result later), but this can be disabled by activating the bit-flag @code{GAL_ARITHMETIC_FLAG_QUIET} described above.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_SIZE
@@ -26462,7 +26474,7 @@ multiple threads, the number of threads can be specified with
 @code{numthreads}. When the operator is single-threaded, @code{numthreads}
 will be ignored. Special conditions can also be specified with the
 @code{flag} operator (a bit-flag with bits described above, for example
-@code{GAL_ARITHMETIC_INPLACE} or @code{GAL_ARITHMETIC_FREE}). The
+@code{GAL_ARITHMETIC_FLAG_INPLACE} or @code{GAL_ARITHMETIC_FLAG_FREE}). The
 acceptable values for @code{operator} are also defined in the macros above.
 
 @code{gal_arithmetic} is a multi-argument function (like C's

@@ -43,7 +43,7 @@ contour_pixels(gal_data_t *input, double level, size_t minmapsize,
 {
   size_t one=1;
   uint8_t *b, *a, *af;
-  int flags=GAL_ARITHMETIC_NUMOK;
+  int flags=GAL_ARITHMETIC_FLAG_NUMOK;
   gal_data_t *number, *thresh, *eroded;
 
   /* Allocate the single-element dataset to use in arithmetic.*/

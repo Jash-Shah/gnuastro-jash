@@ -141,8 +141,6 @@ See the end of the file for license conditions.
          astquery ned --dataset=extinction --center=49.9507,41.5116
 
   Library:
-   - gal_units_counts_to_mag: Convert counts to magnitudes.
-   - gal_units_counts_to_jy: Convert counts to Janskys.
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
      - GAL_ARITHMETIC_OP_SIN: sine (input in deg).
      - GAL_ARITHMETIC_OP_COS: cosine (input in deg).
@@ -157,7 +155,12 @@ See the end of the file for license conditions.
      - GAL_ARITHMETIC_OP_ASINH: Inverse hyperbolic sine.
      - GAL_ARITHMETIC_OP_ACOSH: Inverse hyperbolic cosine.
      - GAL_ARITHMETIC_OP_ATANH: Inverse hyperbolic tangent.
+     - GAL_ARITHMETIC_OP_MKNOISE_SIGMA: Add fixed-sigma noise.
+     - GAL_ARITHMETIC_OP_MKNOISE_POISSON: Add Poisson noise.
      - GAL_ARITHMETIC_OP_COUNTS_TO_JY: Convert counts to Janskys.
+   - New arithmetic flag macros:
+     - GAL_ARITHMETIC_FLAG_ENVSEED: read random number generator seed from env.
+     - GAL_ARITHMETIC_FLAG_QUIET: don't print any warnings by some operators.
    - WCS coordinate system identifiers:
      - GAL_WCS_COORDSYS_EQB1950: 1950.0 (Besselian-year) equatorial coords.
      - GAL_WCS_COORDSYS_EQJ2000: 2000.0 (Julian-year) equatorial coords.
@@ -165,6 +168,8 @@ See the end of the file for license conditions.
      - GAL_WCS_COORDSYS_ECJ2000: 2000.0 (Julian-year) ecliptic coords.
      - GAL_WCS_COORDSYS_GALACTIC: Galactic coordinates.
      - GAL_WCS_COORDSYS_SUPERGALACTIC: Supergalactic coordinates.
+   - gal_units_counts_to_mag: Convert counts to magnitudes.
+   - gal_units_counts_to_jy: Convert counts to Janskys.
    - gal_wcs_coordsys_from_string: WCS coordinate system from string.
    - gal_wcs_coordsys_identify: Parse WCS struct to find  coordinate system.
    - gal_wcs_coordsys_convert: Convert the coordinate system of the WCS.
@@ -195,6 +200,10 @@ See the end of the file for license conditions.
      'UPNUMBER', 'UPRNGNAM', 'UPRNGSEE', 'UPSCMLTP', 'UPSCTOL'.
 
   Library:
+   - GAL_ARITHMETIC_FLAG_FREE new name for GAL_ARITHMETIC_FREE.
+   - GAL_ARITHMETIC_FLAG_NUMOK new name for GAL_ARITHMETIC_NUMOK.
+   - GAL_ARITHMETIC_FLAG_INPLACE new name for GAL_ARITHMETIC_INPLACE.
+   - GAL_ARITHMETIC_FLAGS_BASIC new name for GAL_ARITHMETIC_FLAGS_ALL.
    - gal_fits_key_write_wcsstr: also takes WCS structure as argument.
    - gal_fits_key_read_from_ptr: providing a numerical datatype for the
      desired keyword's value is no longer mandatory. When not given, the

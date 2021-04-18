@@ -587,9 +587,9 @@ static void
 ui_out_of_range_to_blank(struct statisticsparams *p)
 {
   size_t one=1;
-  unsigned char flags=GAL_ARITHMETIC_NUMOK;
-  unsigned char flagsor = ( GAL_ARITHMETIC_INPLACE
-                            | GAL_ARITHMETIC_NUMOK );
+  unsigned char flags=GAL_ARITHMETIC_FLAG_NUMOK;
+  unsigned char flagsor = ( GAL_ARITHMETIC_FLAG_INPLACE
+                            | GAL_ARITHMETIC_FLAG_NUMOK );
   gal_data_t *tmp, *tmp2, *cond_g=NULL, *cond_l=NULL, *cond, *blank, *ref;
 
 
@@ -953,13 +953,11 @@ ui_read_columns(struct statisticsparams *p)
 void
 ui_preparations(struct statisticsparams *p)
 {
-  unsigned char flagsor = ( GAL_ARITHMETIC_FREE
-                            | GAL_ARITHMETIC_INPLACE
-                            | GAL_ARITHMETIC_NUMOK );
   int keepinputdir=p->cp.keepinputdir;
   gal_data_t *check, *flag1, *flag2, *flag;
   struct gal_options_common_params *cp=&p->cp;
   struct gal_tile_two_layer_params *tl=&cp->tl;
+  unsigned char flagsor = GAL_ARITHMETIC_FLAGS_BASIC;
   char *checkbasename = p->cp.output ? p->cp.output : p->inputname;
 
   /* Change 'keepinputdir' based on if an output name was given. */

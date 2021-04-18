@@ -769,10 +769,12 @@ arithmetic_operator_run(struct tableparams *p,
                         struct gal_arithmetic_set_params *setprm,
                         gal_data_t **stack)
 {
-  size_t one=1;
+  int flags=GAL_ARITHMETIC_FLAGS_BASIC;
   gal_data_t *d1=NULL, *d2=NULL, *d3=NULL;
-  int flags = ( GAL_ARITHMETIC_INPLACE | GAL_ARITHMETIC_FREE
-                | GAL_ARITHMETIC_NUMOK );
+
+  /* Set the operating-mode flags if necessary. */
+  if(p->cp.quiet) flags |= GAL_ARITHMETIC_FLAG_QUIET;
+  if(p->envseed)  flags |= GAL_ARITHMETIC_FLAG_ENVSEED;
 
   /* When 'num_operands!=0', the operator is in the library. */
   if(token->num_operands)
@@ -811,17 +813,6 @@ arithmetic_operator_run(struct tableparams *p,
                 "counter (with '%s')", __func__, PACKAGE_BUGREPORT,
                 token->num_operands,
                 arithmetic_operator_name(token->operator));
-        }
-
-      /* Save 'envseed' as third operand if necessary. */
-      switch(token->operator)
-        {
-        case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
-        case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
-          d3=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL, 0, -1, 1,
-                            NULL, NULL, NULL);
-          ((uint8_t *)(d3->array))[0]=p->envseed;
-          break;
         }
 
       /* Run the arithmetic operation. Note that 'gal_arithmetic' is a
