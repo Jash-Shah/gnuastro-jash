@@ -49,9 +49,15 @@ See the end of the file for license conditions.
      - asinh: Inverse of hyperbolic sine.
      - acosh: Inverse of hyperbolic cosine.
      - atanh: Inverse of hyperbolic tangent.
+     - mknoise-sigma: Add Gaussian noise with the fixed sigma.
+     - mknoise-poisson: Add Poisson noise with the given background.
      - counts-to-mag: Convert counts to magnitudes with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
+   --envseed: new option to get random number generator settings for the
+     new 'mknoise-sigma' and 'mknoise-poisson' operators from the
+     environment for reproducibility (see "Generating random numbers"
+     section in manual).
 
   ConvertType:
    --globalhdu: Use a single HDU identifier for all the input files

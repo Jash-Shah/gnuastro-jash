@@ -148,6 +148,9 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN,/* Sigma-clipped median of mult. arrays.*/
   GAL_ARITHMETIC_OP_SIGCLIP_STD,  /* Sigma-clipped STD of multiple arrays. */
 
+  GAL_ARITHMETIC_OP_MKNOISE_SIGMA,/* Fixed-sigma noise to every element.   */
+  GAL_ARITHMETIC_OP_MKNOISE_POISSON,/* Poission noise on every element.    */
+
   GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
 
   GAL_ARITHMETIC_OP_TO_UINT8,     /* Convert to uint8_t.                   */

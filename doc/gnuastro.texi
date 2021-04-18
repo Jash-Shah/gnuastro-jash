@@ -12789,6 +12789,47 @@ The internal conversion of C will be used.
 Convert the type of the popped operand to 64-bit (double precision) floating point (see @ref{Numeric data types}).
 The internal conversion of C will be used.
 
+@item mknoise-sigma
+Add a fixed noise (Gaussian standard deviation) to each element of the input dataset.
+This operator takes two arguments: the top/first popped operand is the noise standard deviation, the next popped operand is the dataset that the noise should be added to.
+You can use the @option{--envseed} option to fix the random number generator seed (and thus get a reproducible result).
+For more on @option{--envseed}, see @ref{Generating random numbers}.
+
+For example with the first command below, @file{image.fits} will be degraded by a noise of standard deviation 3 units.
+@example
+$ astarithmetic image.fits 3 mknoise-sigma
+@end example
+
+Alternatively, you can use this operator within column arithmetic in the Table program, to generate a random number like below (centered on 0, with @mymath{\sigma=3}) like the first command below.
+With the second command, you can put it into a shell variable for later usage.
+
+@example
+$ echo 0 | asttable -c'arith $1 3 mknoise-sigma'
+$ value=$(echo 0 | asttable -c'arith $1 3 mknoise-sigma')
+$ echo $value
+@end example
+
+You can also use this operator in combination with AWK to easily generate an arbitrarily large table with random columns.
+In the example below, we'll create a two column table with 20 rows.
+The first column will be centered on 5 and @mymath{\sigma_1=2}, the second will be centered on 10 and @mymath{\sigma_2=3}:
+
+@example
+$ echo 5 10 \
+       | awk '@{for(i=0;i<20;++i) print $1, $2@}' \
+       | asttable -c'arith $1 2 mknoise-sigma' \
+                  -c'arith $2 3 mknoise-sigma'
+@end example
+
+By adding an extra @option{--output=random.fits}, the table will be saved into a file called @file{random.fits}, and you can change the @code{i<20} to @code{i<5000} to have 5000 rows instead.
+Of course, if your input table has different values in the desired column the noisy distribution will be centered on each input element, but all will have the same scatter/sigma.
+
+@item mknoise-poisson
+Add Poisson noise to each element of the input dataset (see @ref{Photon counting noise}).
+This operator takes two arguments: the top/first popped operand is the background, the next popped operand is the dataset that the noise should be added to.
+
+Except for the noise-model, this operator is very similar to @code{mknoise-sigma} and the examples there apply here too.
+The main difference with @code{mknoise-sigma} is that in a Poisson distribution the scatter/sigma will depend on each element's value.
+
 @item size
 Size of the dataset along a given FITS/Fortran dimension (counting from 1).
 The desired dimension should be the first popped operand and the dataset must be the second popped operand.
@@ -12985,6 +13026,10 @@ $ astarithmetic data.fits --wcsfile=other.fits -ofinal.fits
 @itemx --wcshdu STR
 HDU/extension to read the WCS within the file given to @option{--wcsfile}.
 For more, see the description of @option{--wcsfile}.
+
+@item --envseed
+Use the environment for the random number generator settings in operators that need them (for example @code{mknoise-sigma}).
+This is very important for obtaining reproducible results, for more see @ref{Generating random numbers}.
 
 @item -O
 @itemx --onedasimage
@@ -19907,33 +19952,31 @@ The subsequent programs which use GSL's random number generators will hence fort
 In case you want to set fixed values for these parameters every time you use the GSL random number generator, you can add these two lines to your @file{.bashrc} startup script@footnote{Don't forget that if you are going to give your scripts (that use the GSL random number generator) to others you have to make sure you also tell them to set these environment variable separately.
 So for scripts, it is best to keep all such variable definitions within the script, even if they are within your @file{.bashrc}.}, see @ref{Installation directory}.
 
-@cartouche
-@noindent
-@strong{NOTE:} If the two environment variables @code{GSL_RNG_TYPE} and @code{GSL_RNG_SEED} are defined, GSL will report them by default, even if you don't use the @option{--envseed} option.
-For example you can see the top few lines of the output of MakeProfiles:
+@strong{IMPORTANT NOTE:} If the two environment variables @code{GSL_RNG_TYPE} and @code{GSL_RNG_SEED} are defined, GSL will report them by default, even if you don't use the @option{--envseed} option.
+For example, see this call to MakeProfiles:
 
 @example
-$ export GSL_RNG_TYPE="taus"
+$ export GSL_RNG_TYPE=taus
 $ export GSL_RNG_SEED=345
-$ astmkprof -s1 --kernel=gaussian,2,5 --envseed
+$ astmkprof -s1 --kernel=gaussian,2,5
 GSL_RNG_TYPE=taus
 GSL_RNG_SEED=345
-MakeProfiles A.B started on DDD MMM DD HH:MM:SS YYYY
+MakeProfiles V.VV started on DDD MMM DDD HH:MM:SS YYYY
   - Building one gaussian kernel
-  - Random number generator (RNG) type: ranlxs1
-  - RNG seed for all profiles: 345
+  - Random number generator (RNG) type: taus
+  - Basic RNG seed: 1618960836
   ---- ./kernel.fits created.
-MakeProfiles finished in 0.111271 seconds
+  -- Output: ./kernel.fits
+MakeProfiles finished in 0.068945 seconds
 @end example
 
 @noindent
 @cindex Seed, Random number generator
 @cindex Random number generator, Seed
-The first two output lines (showing the names of the environment variables) are printed by GSL before MakeProfiles actually starts generating random numbers.
-The Gnuastro programs will report the values they use independently, you should check them for the final values used.
-For example if @option{--envseed} is not given, @code{GSL_RNG_SEED} will not be used and the last line shown above will not be printed.
-In the case of MakeProfiles, each profile will get its own seed value.
-@end cartouche
+The first two output lines (showing the names and values of the GSL environment variables) are printed by GSL before MakeProfiles actually starts generating random numbers.
+Gnuastro's programs will report the actual values they use independently (after the name of the program), you should check them for the final values used, not GSL's printed values.
+In the example above, did you notice how the random number generator seed above is different between GSL and MakeProfiles?
+However, if @option{--envseed} was given, both printed seeds would be the same.
 
 
 @node Invoking astmknoise,  , Noise basics, MakeNoise
@@ -26120,35 +26163,19 @@ description of @code{gal_wcs_world_to_img} for more details.
 @node Arithmetic on datasets, Tessellation library, World Coordinate System, Gnuastro library
 @subsection Arithmetic on datasets (@file{arithmetic.h})
 
-When the dataset's type and other information are already known, any
-programming language (including C) provides some very good tools for
-various operations (including arithmetic operations like addition) on the
-dataset with a simple loop. However, as an author of a program, making
-assumptions about the type of data, its dimensions and other basic
-characteristics will come with a large processing burden.
+When the dataset's type and other information are already known, any programming language (including C) provides some very good tools for various operations (including arithmetic operations like addition) on the dataset with a simple loop.
+However, as an author of a program, making assumptions about the type of data, its dimensions and other basic characteristics will come with a large processing burden.
 
-For example if you always read your data as double precision floating
-points for a simple operation like addition with an integer constant, you
-will be wasting a lot of CPU and memory when the input dataset is
-@code{int32} type for example (see @ref{Numeric data types}). This overhead
-may be small for small images, but as you scale your process up and work
-with hundred/thousands of files that can be very large, this overhead will
-take a significant portion of the processing power. The functions and
-macros in this section are designed precisely for this purpose: to allow
-you to do any of the defined operations on any dataset with no overhead (in
-the native type of the dataset).
+For example if you always read your data as double precision floating points for a simple operation like addition with an integer constant, you will be wasting a lot of CPU and memory when the input dataset is @code{int32} type for example (see @ref{Numeric data types}).
+This overhead may be small for small images, but as you scale your process up and work with hundred/thousands of files that can be very large, this overhead will take a significant portion of the processing power.
+The functions and macros in this section are designed precisely for this purpose: to allow you to do any of the defined operations on any dataset with no overhead (in the native type of the dataset).
 
-Gnuastro's Arithmetic program uses the functions and macros of this
-section, so please also have a look at the @ref{Arithmetic} program and in
-particular @ref{Arithmetic operators} for a better description of the
-operators discussed here.
+Gnuastro's Arithmetic program uses the functions and macros of this section, so please also have a look at the @ref{Arithmetic} program and in particular @ref{Arithmetic operators} for a better description of the operators discussed here.
 
-The main function of this library is @code{gal_arithmetic} that is
-described below. It can take an arbitrary number of arguments as operands
-(depending on the operator, similar to @code{printf}). Its first two
-arguments are integers specifying the flags and operator. So first we will
-review the constants for the recognized flags and operators and discuss
-them, then introduce the actual function.
+The main function of this library is @code{gal_arithmetic} that is described below.
+It can take an arbitrary number of arguments as operands (depending on the operator, similar to @code{printf}).
+Its first two arguments are integers specifying the flags and operator.
+So first we will review the constants for the recognized flags and operators and discuss them, then introduce the actual function.
 
 @deffn  Macro GAL_ARITHMETIC_INPLACE
 @deffnx Macro GAL_ARITHMETIC_FREE
@@ -26352,6 +26379,15 @@ element in the parameters list is the multiple of sigma and the second is
 the termination criteria (see @ref{Sigma clipping}). The output type of
 @code{GAL_ARITHMETIC_OP_SIGCLIP_NUMBER} will be @code{GAL_TYPE_UINT32} and
 for the rest it will be @code{GAL_TYPE_FLOAT32}.
+@end deffn
+
+@deffn  Macro GAL_ARITHMETIC_OP_MKNOISE_SIGMA
+@deffnx Macro GAL_ARITHMETIC_OP_MKNOISE_POISSON
+Add noise to the input dataset.
+Both operators take three arguments: the first is the input data set (can have any dimensionality or number of elements.
+The second argument is the noise specifier (a single element, of any type): for a fixed-sigma noise, it is the Gaussian standard deviation, for the Poisson noise, it is the background (see @ref{Photon counting noise}).
+The third argument should a dataset with only one element, a @code{GAL_TYPE_UINT8} type and only two acceptable values 0 (to signifiy that the random number generator, RNG, seed can be automatically set for each run) and 1 (to signify that the RNG seed should be read from the @code{GAL_RNG_SEED} environment variable for a reproducible result).
+For more on setting the RNG seed, see @ref{Generating random numbers}.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_SIZE

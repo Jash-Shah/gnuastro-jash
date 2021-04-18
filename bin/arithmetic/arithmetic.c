@@ -1217,7 +1217,7 @@ static void
 arithmetic_operator_run(struct arithmeticparams *p, int operator,
                         char *operator_string, size_t num_operands)
 {
-  size_t i;
+  size_t i, one=1;
   unsigned int numop;
   gal_data_t *d1=NULL, *d2=NULL, *d3=NULL;
   int flags = ( GAL_ARITHMETIC_INPLACE | GAL_ARITHMETIC_FREE
@@ -1265,6 +1265,17 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
                 "the problem. '%zu' is not recognized as an operand "
                 "counter (with '%s')", __func__, PACKAGE_BUGREPORT,
                 num_operands, operator_string);
+        }
+
+      /* Save 'envseed' as third operand if necessary. */
+      switch(operator)
+        {
+        case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
+        case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
+          d3=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &one, NULL, 0, -1, 1,
+                            NULL, NULL, NULL);
+          ((uint8_t *)(d3->array))[0]=p->envseed;
+          break;
         }
 
       /* Run the arithmetic operation. Note that 'gal_arithmetic'

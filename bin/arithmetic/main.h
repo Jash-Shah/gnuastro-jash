@@ -87,6 +87,7 @@ struct arithmeticparams
   int        wcs_collapsed;  /* If the internal WCS is already collapsed.*/
 
   /* Internal: */
+  uint8_t          envseed;  /* To setup the random number generator.   */
   struct operand *operands;  /* The operands linked list.               */
   time_t           rawtime;  /* Starting time of the program.           */
 };

@@ -29,6 +29,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
+
 #include <gnuastro/list.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/units.h>
@@ -39,6 +42,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/statistics.h>
 #include <gnuastro/arithmetic.h>
 
+#include <gnuastro-internal/checkset.h>
 #include <gnuastro-internal/arithmetic-internal.h>
 
 /* Headers for each binary operator. Since they heavily involve macros,
@@ -632,6 +636,125 @@ arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***********************************************************************/
+/***************               Adding noise               **************/
+/***********************************************************************/
+
+/* The size operator. Reports the size along a given dimension. */
+static gal_data_t *
+arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg,
+                   gal_data_t *envseed_in)
+{
+  gsl_rng *rng;
+  uint8_t *envseed;
+  const char *rng_name;
+  double *d, *df, arg_v;
+  unsigned long rng_seed;
+  gal_data_t *out, *targ;
+
+
+  /* Sanity checks. */
+  if(arg->size!=1)
+    error(EXIT_FAILURE, 0, "the first popped operand to the '%s' "
+          "operator should be a single number (specifying the fixed "
+          "sigma, or background level for Poisson noise), but it "
+          "has %zu elements, in %zu dimension(s)",
+          gal_arithmetic_operator_string(operator), arg->size,
+          arg->ndim);
+  if(envseed_in->size!=1)
+    error(EXIT_FAILURE, 0, "the third popped operand to the '%s' "
+          "operator should be a single number (with a value of 0 "
+          "or 1, specifying if the environment should be used for "
+          "the random number generator settings), but it has %zu "
+          "elements, in %zu dimension(s)",
+          gal_arithmetic_operator_string(operator), arg->size,
+          arg->ndim);
+  if(envseed_in->type!=GAL_TYPE_UINT8)
+    error(EXIT_FAILURE, 0, "the third popped operand to the '%s' "
+          "operator should have a type of 'uint8' (with "
+          "a value of 0 or 1, specifying if the environment should "
+          "be used for the random number generator settings), but "
+          "it has a type of '%s'",
+          gal_arithmetic_operator_string(operator),
+          gal_type_name(envseed_in->type, 1));
+  envseed=envseed_in->array;
+  if( *envseed>1 )
+    error(EXIT_FAILURE, 0, "the third popped operand to the '%s' "
+          "operator should only have a value of 0 or 1 (specifying "
+          "if the environment should be used for the random number "
+          "generator settings), but it has a value of %u",
+          gal_arithmetic_operator_string(operator), *envseed);
+
+
+  /* Convert the input and argument into 'double' (and immediately free it
+     if it is no longer necessary). */
+  if(in->type==GAL_TYPE_FLOAT64) out=in;
+  else
+    {
+      out=gal_data_copy_to_new_type(in, GAL_TYPE_FLOAT64);
+      if(flags & GAL_ARITHMETIC_FREE)
+        { gal_data_free(in); in=NULL; }
+    }
+  targ=gal_data_copy_to_new_type(arg, GAL_TYPE_FLOAT64);
+  arg_v=((double *)(targ->array))[0];
+  gal_data_free(targ);
+
+
+  /* Make sure the noise identifier is positive. */
+  if(arg_v<0)
+    error(EXIT_FAILURE, 0, "the noise identifier (sigma for "
+          "'mknoise-sigma' or background for 'mknoise-poisson') must "
+          "be positive (it is %g)", arg_v);
+
+
+  /* Setup the random number generator. */
+  rng=gal_checkset_gsl_rng(*envseed, &rng_name, &rng_seed);
+
+
+  /* Add the noise. */
+  df=(d=out->array)+out->size;
+  switch(operator)
+    {
+    case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
+      do *d += gsl_ran_gaussian(rng, arg_v); while(++d<df);
+      break;
+    case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
+      do
+        *d += arg_v + gsl_ran_gaussian(rng, sqrt( arg_v + *d ));
+      while(++d<df);
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+            "fix the problem. The operator code %d isn't recognized "
+            "in this function", __func__, PACKAGE_BUGREPORT, operator);
+    }
+
+  /* Clean up and return */
+  if(flags & GAL_ARITHMETIC_FREE)
+    {
+      gal_data_free(arg);
+      gal_data_free(envseed_in);
+    }
+  return out;
+}
 
 
 
@@ -2009,6 +2132,12 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "sigclip-std"))
     { op=GAL_ARITHMETIC_OP_SIGCLIP_STD;       *num_operands=-1; }
 
+  /* Adding noise operators. */
+  else if (!strcmp(string, "mknoise-sigma"))
+    { op=GAL_ARITHMETIC_OP_MKNOISE_SIGMA;     *num_operands=2; }
+  else if (!strcmp(string, "mknoise-poisson"))
+    { op=GAL_ARITHMETIC_OP_MKNOISE_POISSON;   *num_operands=2; }
+
   /* The size operator */
   else if (!strcmp(string, "size"))
     { op=GAL_ARITHMETIC_OP_SIZE;              *num_operands=2;  }
@@ -2164,6 +2293,9 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN:  return "sigclip-median";
     case GAL_ARITHMETIC_OP_SIGCLIP_MEAN:    return "sigclip-mean";
     case GAL_ARITHMETIC_OP_SIGCLIP_STD:     return "sigclip-number";
+
+    case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:   return "mknoise-sigma";
+    case GAL_ARITHMETIC_OP_MKNOISE_POISSON: return "mknoise-poisson";
 
     case GAL_ARITHMETIC_OP_SIZE:            return "size";
 
@@ -2323,6 +2455,15 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_BITNOT:
       d1 = va_arg(va, gal_data_t *);
       out=arithmetic_bitwise_not(flags, d1);
+      break;
+
+    /* Adding noise. */
+    case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
+    case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      d3 = va_arg(va, gal_data_t *);
+      out=arithmetic_mknoise(operator, flags, d1, d2, d3);
       break;
 
     /* Size operator */

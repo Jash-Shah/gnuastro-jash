@@ -46,6 +46,7 @@ enum option_keys_enum
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
+  UI_KEY_ENVSEED         = 1000,
 };
 
 
