@@ -81,6 +81,13 @@ See the end of the file for license conditions.
      Arithmetic. Until now it was necessary to call '--hdu' three times if
      you had three input FITS files with input in the same HDU.
 
+  Crop:
+   --polygonfile: Draw your polygon in SAO DS9, save it as a "region" file
+     and feed it into Crop with this option. Until now, the only way to
+     define the polygon was to give all the polygon vertice coordinates to
+     the '--polygon' option (which was tedious and buggy when the vertice
+     coordinates aren't defined a-priori).
+
   Fits:
    --hastablehdu: print 1 if at least one table HDU exists in file.
    --hasimagehdu: print 1 if at least one image HDU exists in file.
@@ -130,17 +137,15 @@ See the end of the file for license conditions.
      "clean" (no NaN values in any column) table, but the table has many
      columns. Until now, '--noblank' needed the name/number of each column
      to "clean".
-
    --rowlimit: new option to specify the positional interval of rows to
      show. Until now, the '--head' or '--tail' options would just allow
      seeing the first or last few rows. You can use this new option to view
      a contiguous set of rows in the middle of the table.
-
    --rowrandom: Make a random selection of the rows. This option is useful
      when you have a large table and just want to see a random sub-set of
      the rows. It takes an integer, selects that many rows from the input
-     randomly and returns them.
-
+     randomly.
+   --polygonfile: Similar to same option in Crop (mentioned above).
    - New column arithmetic operators:
      - 'set-AAA' operator (which allows storing the popped operand into a
        named variable for easy usage in complex operations) is also usable
@@ -170,6 +175,9 @@ See the end of the file for license conditions.
      This feature was suggested by Ignacio Trujillo.
 
   Library:
+   - gal_ds9_reg_read_polygon: Parse the polygon from an SAO DS9 region file.
+   - gal_units_counts_to_mag: Convert counts to magnitudes.
+   - gal_units_counts_to_jy: Convert counts to Janskys.
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
      - GAL_ARITHMETIC_OP_SIN: sine (input in deg).
      - GAL_ARITHMETIC_OP_COS: cosine (input in deg).

@@ -34,6 +34,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro-internal/options.h>
 
 
+
+
+
 /* Read the polygon specified in the given DS9 region file and parse it in
    the standard format. */
 gal_data_t *
@@ -146,7 +149,7 @@ gal_ds9_reg_read_polygon(char *filename, int *coordmode)
   if(out==NULL)
     error(EXIT_FAILURE, 0, "%s: no polygon statement found! We expect "
           "one line in the format of 'polygon(AAA,BBB,...)' in the "
-          "file given to '--polygonname' option. %s", filename,
+          "file given to '--polygonfile' option. %s", filename,
           polygonformaterr);
 
   /* Clean up and return. */

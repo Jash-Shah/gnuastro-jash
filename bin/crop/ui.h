@@ -45,7 +45,7 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a d e f g i j k m r u v y
+   a d e f g i j k m r t u v y
    A B E G H J L Q R W X Y
 */
 enum option_keys_enum
@@ -62,7 +62,6 @@ enum option_keys_enum
   UI_KEY_WIDTH          = 'w',
   UI_KEY_CENTER         = 'c',
   UI_KEY_COORDCOL       = 'x',
-  UI_KEY_POLYGONNAME    = 't',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
@@ -71,6 +70,7 @@ enum option_keys_enum
   UI_KEY_HENDWCS,
   UI_KEY_POLYGONOUT,
   UI_KEY_POLYGONSORT,
+  UI_KEY_POLYGONFILE,
   UI_KEY_CHECKCENTER,
   UI_KEY_PRIMARYIMGHDU,
 };

@@ -278,11 +278,11 @@ ui_check_polygon_from_ds9(struct cropparams *p)
   int ds9regmode;
 
   /* This is only relevant when a region file is actually given. */
-  if(p->polygonname)
+  if(p->polygonfile)
     {
       /* These two options cannot be called together. */
       if(p->polygon)
-        error(EXIT_FAILURE, errno, "'--polygon' and '--polygonname' "
+        error(EXIT_FAILURE, errno, "'--polygon' and '--polygonfile' "
               "cannot be given together. With the first you specify the "
               "polygon vertices directly on the command-line. With the "
               "second, you give a DS9 region file and the polygon "
@@ -290,7 +290,7 @@ ui_check_polygon_from_ds9(struct cropparams *p)
       else
         {
           /* Extract the polygon and the coordinate mode. */
-          p->polygon=gal_ds9_reg_read_polygon(p->polygonname,
+          p->polygon=gal_ds9_reg_read_polygon(p->polygonfile,
                                               &ds9regmode);
           switch(ds9regmode)
             {
@@ -306,8 +306,8 @@ ui_check_polygon_from_ds9(struct cropparams *p)
         }
 
       /* Clean up. */
-      free(p->polygonname);
-      p->polygonname=NULL;
+      free(p->polygonfile);
+      p->polygonfile=NULL;
     }
 }
 
@@ -325,7 +325,7 @@ ui_read_check_only_options(struct cropparams *p)
 
   /* If a DS9 region file should be used for the polygon, read it. This is
      done first for two reasons. 1) It can change the value of '--mode'. 2)
-     It will set the '--polygon' option's value. */
+     It will set the '--polygon' option's value (if not set). */
   ui_check_polygon_from_ds9(p);
 
   /* Make sure that only one of the crop definitions is given. */
