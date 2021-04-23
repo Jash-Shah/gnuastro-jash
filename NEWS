@@ -16,11 +16,15 @@ See the end of the file for license conditions.
         asttable table.fits --range=MAGNITUDE,18:20 --column=RA,DEC \
             | astscript-ds9-region --column=1,2 --radius=0.5 \
                                    --command="ds9 image.fits"
+     This script was written by Samane Raji.
+
    - astscript-radial-profile: Measure the radial profile of an object on
      an image. The profile can be centered anywhere in the image and any
      circular, or elliptical distance can be defined. The output is a table
      with the profile's value in one column and any requested measure in
-     the other columns (any MakeCatalog measurement is possible).
+     the other columns (any MakeCatalog measurement is possible). This
+     script was written by Raúl Infante Sainz.
+
 
   All programs:
    - FITS files that don't have a recognized FITS suffix (e.g., '.fits',
@@ -30,17 +34,22 @@ See the end of the file for license conditions.
      file and checking the contents to conform with the FITS standard), but
      when you are given such a file (by someone else), this new feature can
      be handy. Suggested by Clotilde Laigle and Leigh Smith.
+
    --wcslinearmatrix: new option in all programs that lets you select the
      output WCS linear matrix format. It takes one of two values: 'pc' (for
      the 'PCi_j' formalism) and 'cd' (for 'CDi_j'). Until now, the outputs
      were always stored in the 'PCi_j' formalism (which is still the
      recommended format).
 
+
   Book:
    - New "Image surface brightness limit" section added to the third
      tutorial (on "Detecting large extended targets"). It describes the
      different ways to measure a dataset's surface brightness limit and
-     upper-limit surface brightness, while discussing their differences.
+     upper-limit surface brightness, while discussing their
+     differences. This tutorial was written with the help of Ignacio
+     Trujillo and Raúl Infante Sainz.
+
 
   Arithmetic:
    - New operators (all also available in Table's column arithmetic):
@@ -73,14 +82,18 @@ See the end of the file for license conditions.
      you had three input FITS files with input in the same HDU.
 
   Fits:
+
    --wcscoordsys: convert the WCS coordinate system of the input into any
      recognized coordinate system. It currently supports: equatorial
      (J2000, B1950), ecliptic (J2000, B1950), Galactic and
      Supergalactic. For example if 'image.fits' is in galactic coordinates,
      you can use this command to convert its WCS to equatorial (J2000):
+
           astfits image.fits --wcscoordsys=eq-j2000
+
      This option only works with WCSLIB 7.5 and above (released in March
-     2021), otherwise it will abort with an informative warning.
+     2021), otherwise it will abort with an informative warning. This was
+     done with the help of Mark Calabretta.
 
   MakeCatalog:
    - Newly added measurement columns:
@@ -112,14 +125,17 @@ See the end of the file for license conditions.
      "clean" (no NaN values in any column) table, but the table has many
      columns. Until now, '--noblank' needed the name/number of each column
      to "clean".
+
    --rowlimit: new option to specify the positional interval of rows to
      show. Until now, the '--head' or '--tail' options would just allow
      seeing the first or last few rows. You can use this new option to view
      a contiguous set of rows in the middle of the table.
+
    --rowrandom: Make a random selection of the rows. This option is useful
      when you have a large table and just want to see a random sub-set of
      the rows. It takes an integer, selects that many rows from the input
      randomly and returns them.
+
    - New column arithmetic operators:
      - 'set-AAA' operator (which allows storing the popped operand into a
        named variable for easy usage in complex operations) is also usable
@@ -146,6 +162,7 @@ See the end of the file for license conditions.
      below. For more, see the manual (the description of the 'extinction'
      dataset of NED in the "Available datasets" section).
          astquery ned --dataset=extinction --center=49.9507,41.5116
+     This feature was suggested by Ignacio Trujillo.
 
   Library:
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
@@ -192,6 +209,7 @@ See the end of the file for license conditions.
      above), the efficiency of this script has improved dramatically (from
      19 seconds to 0.42 seconds for about 650 FITS files used in the
      test!).
+
    - The default end to a "night" is set to 11:00a.m. Until now it was
      9:00a.m. But in some cases, calibration images may be taken after
      that. So to be safer in general it was incremented by 2 hours.
@@ -204,6 +222,7 @@ See the end of the file for license conditions.
      are also written into the output table(s), see the "MakeCatalog
      output" section of the book for more: 'SBLSTD', 'SBLNSIG', 'SBLMAGPX',
      'SBLAREA', 'SBLMAG'.
+
    - Upper-limit (UP) settings are also written into the output tables as
      keywords (like surface brightness limit numbers above): 'UPNSIGMA',
      'UPNUMBER', 'UPRNGNAM', 'UPRNGSEE', 'UPSCMLTP', 'UPSCTOL'.
