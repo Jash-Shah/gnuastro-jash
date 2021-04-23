@@ -113,7 +113,7 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
 
           /* See if a HDU must be read or not. */
           if(filename != NULL
-             && ( gal_fits_name_is_fits(filename)
+             && ( gal_fits_file_recognized(filename)
                   || gal_tiff_name_is_tiff(filename) ) )
             {
               /* Set the HDU for this filename. */

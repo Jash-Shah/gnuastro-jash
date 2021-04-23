@@ -1412,7 +1412,7 @@ reversepolish(struct arithmeticparams *p)
       else if( !strncmp(token->v, GAL_ARITHMETIC_SET_PREFIX,
                         GAL_ARITHMETIC_SET_PREFIX_LENGTH) )
         gal_arithmetic_set_name(&p->setprm, token->v);
-      else if(    gal_array_name_recognized(token->v)
+      else if(    gal_array_file_recognized(token->v)
                || gal_arithmetic_set_is_name(p->setprm.named, token->v) )
         operands_add(p, token->v, NULL);
       else if( (data=gal_data_copy_string_to_number(token->v)) )
@@ -1460,7 +1460,7 @@ reversepolish(struct arithmeticparams *p)
       /* Read the desired image and report it if necessary. */
       hdu=p->operands->hdu;
       filename=p->operands->filename;
-      if( gal_fits_name_is_fits(filename) )
+      if( gal_fits_file_recognized(filename) )
         {
           /* Read the data, note that the WCS has already been set. */
           p->operands->data=gal_array_read_one_ch(filename, hdu, NULL,

@@ -42,7 +42,69 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 /*************************************************************
- **************      Acceptable JPEG names      **************
+ **************       Basic access settings       ************
+ *************************************************************/
+#ifdef HAVE_LIBJPEG
+
+/* Read the example.c in libjpeg's source code to understand the
+   details of what is going on here.  */
+struct my_error_mgr
+{
+  struct jpeg_error_mgr pub;        /* "public" fields */
+  jmp_buf setjmp_buffer;            /* for return to caller */
+};
+
+typedef struct my_error_mgr *my_error_ptr;
+
+
+METHODDEF(void)
+jpeg_error_exit(j_common_ptr cinfo)
+{
+  /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+  my_error_ptr myerr = (my_error_ptr) cinfo->err;
+
+  /* Always display the message. */
+  /* We could postpone this until after returning, if we chose. */
+  (*cinfo->err->output_message) (cinfo);
+
+  /* Return control to the setjmp point */
+  longjmp(myerr->setjmp_buffer, 1);
+}
+
+#else
+
+static void
+jpeg_error_no_libjpeg(char *func)
+{
+  error(EXIT_FAILURE, 0, "%s: libjpeg was not found during the "
+        "configuration of %s on this system. To read from JPEG files, "
+        "libjpeg is required. Please install libjpeg and configure, make "
+        "and install %s again", func, PACKAGE_STRING, PACKAGE_STRING);
+}
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************************************************************
+ ************** JPEG name and file identification ************
  *************************************************************/
 int
 gal_jpeg_name_is_jpeg(char *name)
@@ -114,37 +176,8 @@ gal_jpeg_suffix_is_jpeg(char *name)
  **************        Read a JPEG image        **************
  *************************************************************/
 #ifdef HAVE_LIBJPEG
-/* Read the example.c in libjpeg's source code to understand the
-   details of what is going on here.  */
-struct my_error_mgr
-{
-  struct jpeg_error_mgr pub;        /* "public" fields */
-  jmp_buf setjmp_buffer;            /* for return to caller */
-};
-
-typedef struct my_error_mgr *my_error_ptr;
-
-
-METHODDEF(void)
-jpeg_error_exit(j_common_ptr cinfo)
-{
-  /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
-  my_error_ptr myerr = (my_error_ptr) cinfo->err;
-
-  /* Always display the message. */
-  /* We could postpone this until after returning, if we chose. */
-  (*cinfo->err->output_message) (cinfo);
-
-  /* Return control to the setjmp point */
-  longjmp(myerr->setjmp_buffer, 1);
-}
-
-
-
-
-
 static void
-makejsample(JSAMPLE **a, size_t size)
+jpeg_jsample_make(JSAMPLE **a, size_t size)
 {
   JSAMPLE *jsarr;
 
@@ -168,9 +201,9 @@ makejsample(JSAMPLE **a, size_t size)
 
 
 static unsigned char **
-readjpg(char *inname, size_t *outs0, size_t *outs1, size_t *numcolors)
+jpeg_read_to_array(char *inname, size_t *outs0, size_t *outs1, size_t *numcolors)
 {
-  FILE * infile;
+  FILE *infile;
   JSAMPROW jrow;
   JSAMPLE *jsamp;
   int rowstride, c;
@@ -207,7 +240,7 @@ readjpg(char *inname, size_t *outs0, size_t *outs1, size_t *numcolors)
   size=s0*s1;
   nc=*numcolors=cinfo.output_components;
   rowstride=s1*nc;
-  makejsample(&jsamp, size*nc);
+  jpeg_jsample_make(&jsamp, size*nc);
 
   /* Allocate all the arrays for each color: */
   errno=0;
@@ -265,7 +298,7 @@ gal_jpeg_read(char *filename, size_t minmapsize, int quietmmap)
   size_t i, s0, s1, numcolors;
 
   /* Read the JPEG image into the all array. */
-  allcolors=readjpg(filename, &s0, &s1, &numcolors);
+  allcolors=jpeg_read_to_array(filename, &s0, &s1, &numcolors);
 
   /* Add the arrays to the linked list. */
   for(i=0;i<numcolors;++i)
@@ -289,10 +322,7 @@ gal_jpeg_read(char *filename, size_t minmapsize, int quietmmap)
   /* Return the number of color channels. */
   return out;
 #else
-  error(EXIT_FAILURE, 0, "%s: libjpeg was not found during the "
-        "configuration of %s on this system. To read from JPEG files, "
-        "libjpeg is required. Please install libjpeg and configure, make "
-        "and install %s again", __func__, PACKAGE_STRING, PACKAGE_STRING);
+  jpeg_error_no_libjpeg(__func__);
   return NULL;
 #endif
 }

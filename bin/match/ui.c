@@ -267,7 +267,7 @@ ui_check_options_and_arguments(struct matchparams *p)
 
   /* If the first input is a FITS file, make sure its HDU is also given. */
   if( p->input1name
-      && gal_fits_name_is_fits(p->input1name)
+      && gal_fits_file_recognized(p->input1name)
       && p->cp.hdu==NULL )
     error(EXIT_FAILURE, 0, "no HDU for first input. When the input is "
           "a FITS file, a HDU must also be specified, you can use the "
@@ -275,7 +275,7 @@ ui_check_options_and_arguments(struct matchparams *p)
           "from zero), extension name, or anything acceptable by "
           "CFITSIO");
   if( p->input2name
-      && gal_fits_name_is_fits(p->input2name)
+      && gal_fits_file_recognized(p->input2name)
       && p->hdu2==NULL )
     error(EXIT_FAILURE, 0, "no HDU for second input. Please use "
           "the '--hdu2' ('-H') option and give it the HDU number "
@@ -316,7 +316,7 @@ ui_set_mode(struct matchparams *p)
      'NULL'), then we go into catalog mode because currently we assume
      standard input is only for plain text and WCS matching is not defined
      on plain text. */
-  if( p->input1name && gal_fits_name_is_fits(p->input1name) )
+  if( p->input1name && gal_fits_file_recognized(p->input1name) )
     {
       tin1=gal_fits_hdu_format(p->input1name, p->cp.hdu);
       p->mode = (tin1 == IMAGE_HDU) ? MATCH_MODE_WCS : MATCH_MODE_CATALOG;
@@ -340,7 +340,7 @@ ui_set_mode(struct matchparams *p)
      file.*/
   if(p->input2name)
     {
-      if(gal_fits_name_is_fits(p->input2name))
+      if(gal_fits_file_recognized(p->input2name))
         {
           tin2=gal_fits_hdu_format(p->input2name, p->hdu2);
           if(tin1==IMAGE_HDU && tin2!=IMAGE_HDU)

@@ -121,6 +121,9 @@ gal_fits_name_is_fits(char *name);
 int
 gal_fits_suffix_is_fits(char *suffix);
 
+int
+gal_fits_file_recognized(char *filename);
+
 char *
 gal_fits_name_save_as_string(char *filename, char *hdu);
 

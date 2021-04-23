@@ -454,7 +454,7 @@ ui_check_options_and_arguments(struct mkcatalogparams *p)
      and if it was a FITS file, that a HDU is also given. */
   if(p->objectsfile)
     {
-      if( gal_fits_name_is_fits(p->objectsfile) && p->cp.hdu==NULL )
+      if( gal_fits_file_recognized(p->objectsfile) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified. When the input is a FITS "
               "file, a HDU must also be specified, you can use the '--hdu' "
               "('-h') option and give it the HDU number (starting from "

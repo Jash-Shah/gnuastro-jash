@@ -234,7 +234,7 @@ ui_read_check_only_options(struct arithmeticparams *p)
 {
   if(p->wcsfile && strcmp(p->wcsfile,"none"))
     {
-      if(gal_fits_name_is_fits(p->wcsfile)==0)
+      if(gal_fits_file_recognized(p->wcsfile)==0)
         error(EXIT_FAILURE, 0, "%s: file given to '--wcsfile' must be in "
               "FITS format with a recognizable FITS format suffix.",
               p->wcsfile);

@@ -759,7 +759,7 @@ table_catcolumn(struct tableparams *p)
   for(filell=p->catcolumnfile; filell!=NULL; filell=filell->next)
     {
       /* Set the HDU (not necessary for non-FITS tables). */
-      if(gal_fits_name_is_fits(filell->v))
+      if(gal_fits_file_recognized(filell->v))
         {
           if(hdull) { hdu=hdull->v; hdull=hdull->next; }
           else

@@ -436,7 +436,7 @@ ui_read_check_only_options(struct statisticsparams *p)
               p->meanmedqdiff);
 
       /* If a kernel name has been given, we need the HDU. */
-      if(p->kernelname && gal_fits_name_is_fits(p->kernelname)
+      if(p->kernelname && gal_fits_file_recognized(p->kernelname)
          && p->khdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified for the kernel image. When "
               "A HDU is necessary for FITS files. You can use the '--khdu' "
@@ -540,7 +540,7 @@ ui_check_options_and_arguments(struct statisticsparams *p)
   if(p->inputname)
     {
       /* If input is FITS. */
-      if( (p->isfits=gal_fits_name_is_fits(p->inputname)) )
+      if( (p->isfits=gal_fits_file_recognized(p->inputname)) )
         {
           /* Check if a HDU is given. */
           if( p->cp.hdu==NULL )

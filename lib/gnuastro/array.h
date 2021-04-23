@@ -58,6 +58,9 @@ gal_array_name_recognized(char *name);
 int
 gal_array_name_recognized_multiext(char *name);
 
+int
+gal_array_file_recognized(char *name);
+
 gal_data_t *
 gal_array_read(char *filename, char *extension, gal_list_str_t *lines,
                size_t minmapsize, int quietmmap);

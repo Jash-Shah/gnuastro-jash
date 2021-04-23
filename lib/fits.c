@@ -91,7 +91,7 @@ gal_fits_io_error(int status, char *message)
 
 
 /*************************************************************
- **************           FITS names           ***************
+ ************** FITS name and file identification ************
  *************************************************************/
 /* IMPORTANT NOTE: if other compression suffixes are add to this function,
    include them in 'gal_checkset_automatic_output', so the compression
@@ -172,6 +172,54 @@ gal_fits_name_save_as_string(char *filename, char *hdu)
       else gal_checkset_allocate_copy(filename, &name);
     }
   return name;
+}
+
+
+
+
+
+int
+gal_fits_file_recognized(char *filename)
+{
+  FILE *tmpfile;
+  fitsfile *fptr;
+  int out=0, status=0;
+
+  /* Opening a FITS file can be CPU intensive (for example when its
+     compressed). So if the name has the correct suffix, we'll trust the
+     suffix. In this way, if the file name is correct, but the contents
+     doesn't follow the FITS standard, the opening function will complain
+     if its not a FITS file when trying to open it for its usage. */
+  if( gal_fits_name_is_fits(filename) ) return 1;
+
+  /* CFITSIO has some special conventions for file names (for example if
+     its '-', which can happen in the Arithmetic program). So before
+     passing to CFITSIO, we'll check if a file is actually associated with
+     the string. */
+  errno=0;
+  tmpfile = fopen(filename, "r");
+  if(tmpfile) /* The file existed and opened. */
+    {
+      /* Close the opened filed. */
+      if(fclose(tmpfile)==EOF)
+        error(EXIT_FAILURE, errno, "%s", filename);
+
+      /* Open the file with CFITSIO to see if its actually a FITS file. */
+      fits_open_file(&fptr, filename, READONLY, &status);
+
+      /* If it opened successfully then status will be zero and we can
+         safely close the file. Otherwise, this is not a recognized FITS
+         file for CFITSIO and we should just return 0. */
+      if(status==0)
+        {
+          if( fits_close_file(fptr, &status) )
+            gal_fits_io_error(status, NULL);
+          out=1;
+        }
+    }
+
+  /* Return the final value. */
+  return out;
 }
 
 

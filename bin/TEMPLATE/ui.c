@@ -224,7 +224,7 @@ ui_check_options_and_arguments(struct TEMPLATEparams *p)
       gal_checkset_check_file(p->inputname);
 
       /* If it is FITS, a HDU is also mandatory. */
-      if( gal_fits_name_is_fits(p->inputname) && p->cp.hdu==NULL )
+      if( gal_fits_file_recognized(p->inputname) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified. When the input is a FITS "
               "file, a HDU must also be specified, you can use the '--hdu' "
               "('-h') option and give it the HDU number (starting from "

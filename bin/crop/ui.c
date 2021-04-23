@@ -350,7 +350,7 @@ ui_read_check_only_options(struct cropparams *p)
               "best for this option to have a value", p->catname);
 
       /* If it is a FITS file, we need the HDU. */
-      if( gal_fits_name_is_fits(p->catname) && p->cathdu==NULL )
+      if( gal_fits_file_recognized(p->catname) && p->cathdu==NULL )
         error(EXIT_FAILURE, 0, "%s: no hdu given. Please use the '--cathdu' "
               "option to specify which extension contains the table",
               p->catname);

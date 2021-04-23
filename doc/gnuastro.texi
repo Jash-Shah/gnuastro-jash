@@ -6900,13 +6900,19 @@ In Gnuastro, arguments are almost exclusively used as the input data file names.
 Please consult the first few paragraph of the ``Invoking ProgramName'' section for each program for a description of what it expects as input, how many arguments, or input data, it accepts, or in what order.
 Everything particular about how a program treats arguments, is explained under the ``Invoking ProgramName'' section for that program.
 
-Generally, if there is a standard file name extension for a particular format, that filename extension is used to separate the kinds of arguments.
-The list below shows the data formats that are recognized in Gnuastro's programs based on their file name endings.
-Any argument that doesn't end with the specified extensions below is considered to be a text file (usually catalogs, see @ref{Tables}).
-In some cases, a program can accept specific formats, for example @ref{ConvertType} also accepts @file{.jpg} images.
+@cindex Filename suffix
+@cindex Suffix (filename)
+@cindex FITS filename suffixes
+Generally, if there is a standard file name suffix for a particular format, that filename extension is checked to identify their format.
+In astronomy (and thus Gnuastro), FITS is the preferred format for inputs and outputs, so the focus here and throughout this book is on FITS.
+However, other formats are also accepted in special cases, for example @ref{ConvertType} also accepts JPEG or TIFF inputs, and writes JPEG, EPS or PDF files.
+The recognized suffixes for these formats are listed there.
 
-@cindex Astronomical data suffixes
-@cindex Suffixes, astronomical data
+The list below shows the recognized suffixes for FITS data files in Gnuastro's programs.
+However, in some scenarios FITS writers may not append a suffix to the file, or use a non-recognized suffix (not in the list below).
+Therefore if a FITS file is expected, but it doesn't have any of these suffixes, Gnuastro programs will look into the contents of the file and if it does conform with the FITS standard, the file will be used.
+Just note that checking about 5 characters at the end of a name string is much more efficient than opening and checking the contents of a file, so it is generally recommended to have a recognized FITS suffix.
+
 @itemize
 
 @item
@@ -24500,6 +24506,11 @@ types for reading arrays which may contain multiple extensions (for example
 FITS or TIFF) formats.
 @end deftypefun
 
+@deftypefun int gal_array_file_recognized (char @code{*filename})
+Similar to @code{gal_array_name_recognized}, but for FITS files, it will also check the contents of the file if the recognized file name suffix is not found.
+See the description of @code{gal_fits_file_recognized} for more (@ref{FITS macros errors filenames}).
+@end deftypefun
+
 @deftypefun gal_data_t gal_array_read (char @code{*filename}, char @code{*extension}, gal_list_str_t @code{*lines}, size_t @code{minmapsize}, int @code{quietmmap})
 Read the array within the given extension (@code{extension}) of
 @code{filename}, or the @code{lines} list (see below). If the array is
@@ -24842,6 +24853,13 @@ CFITSIO.
 Similar to @code{gal_fits_name_is_fits}, but only for the suffix. The
 suffix doesn't have to start with `@key{.}': this function will return
 @code{1} (one) for both @code{fits} and @code{.fits}.
+@end deftypefun
+
+@deftypefun in gal_fits_file_recognized (char @code{*name})
+Return @code{1} if the given file name (possibly including its contents) is a FITS file.
+This is necessary in when the contents of a FITS file do follow the FITS standard, but it the file doesn't have a Gnuastro-recognized FITS suffix.
+Therefore, it will first call @code{gal_fits_name_is_fits}, if the result is negative, then this function will attept to open the file with CFITSIO and if it works, it will close it again and return 1.
+In the process of opening the file, CFITSIO will just to open the file, no reading will take place, so it should have minimal CPU footprint.
 @end deftypefun
 
 @deftypefun {char *} gal_fits_name_save_as_string (char @code{*filename}, char @code{*hdu})

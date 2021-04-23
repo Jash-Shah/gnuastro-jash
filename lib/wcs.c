@@ -379,7 +379,7 @@ gal_wcs_read(char *filename, char *hdu, int linearmatrix,
   struct wcsprm *wcs;
 
   /* Make sure we are dealing with a FITS file. */
-  if( gal_fits_name_is_fits(filename) == 0 )
+  if( gal_fits_file_recognized(filename) == 0 )
     return NULL;
 
   /* Check HDU for realistic conditions: */
@@ -579,7 +579,7 @@ gal_wcs_write(struct wcsprm *wcs, char *filename,
   /* Small sanity checks */
   if(wcs==NULL)
     error(EXIT_FAILURE, 0, "%s: input WCS is NULL", __func__);
-  if( gal_fits_name_is_fits(filename)==0 )
+  if( gal_fits_file_recognized(filename)==0 )
     error(EXIT_FAILURE, 0, "%s: not a FITS suffix", filename);
 
   /* Open the file for writing */

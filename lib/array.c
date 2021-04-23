@@ -83,6 +83,19 @@ gal_array_name_recognized_multiext(char *name)
 
 
 
+int
+gal_array_file_recognized(char *name)
+{
+  if(       gal_fits_file_recognized(name) ) return 1;
+  else if ( gal_jpeg_name_is_jpeg(name)    ) return 1;
+  else if ( gal_tiff_name_is_tiff(name)    ) return 1;
+  else                                       return 0;
+}
+
+
+
+
+
 /* Read (all the possibly existing) color channels within each
    extension/dir of the given file. */
 gal_data_t *
@@ -92,7 +105,7 @@ gal_array_read(char *filename, char *extension, gal_list_str_t *lines,
   size_t ext;
 
   /* FITS  */
-  if( gal_fits_name_is_fits(filename) )
+  if( gal_fits_file_recognized(filename) )
     return gal_fits_img_read(filename, extension, minmapsize, quietmmap);
 
   /* TIFF */

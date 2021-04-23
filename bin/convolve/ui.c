@@ -252,7 +252,7 @@ ui_check_options_and_arguments(struct convolveparams *p)
   if(p->filename)
     {
       /* If input is FITS. */
-      if( (p->isfits=gal_fits_name_is_fits(p->filename)) )
+      if( (p->isfits=gal_fits_file_recognized(p->filename)) )
         {
           /* Check if a HDU is given. */
           if( p->cp.hdu==NULL )
@@ -275,7 +275,7 @@ ui_check_options_and_arguments(struct convolveparams *p)
   if(p->kernelname)
     {
       /* If input is FITS. */
-      if( gal_fits_name_is_fits(p->kernelname) )
+      if( gal_fits_file_recognized(p->kernelname) )
         {
           /* Check if a HDU is given. */
           if( p->khdu==NULL )

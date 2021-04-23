@@ -46,8 +46,23 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 /*************************************************************
- **************      Acceptable TIFF names      **************
+ ************** TIFF name and file identification ************
  *************************************************************/
+#ifndef HAVE_LIBTIFF
+static void
+tiff_error_no_litiff(char *func)
+{
+  error(EXIT_FAILURE, 0, "%s: libtiff was not found during the "
+        "configuration of %s on this system. To read from TIFF files, "
+        "libtiff is required. Please install libtiff, then configure, make "
+        "and install %s again", func, PACKAGE_STRING, PACKAGE_STRING);
+}
+#endif
+
+
+
+
+
 int
 gal_tiff_name_is_tiff(char *name)
 {
@@ -608,10 +623,7 @@ gal_tiff_read(char *filename, size_t dir, size_t minmapsize, int quietmmap)
   TIFFClose(tif);
   return out;
 #else
-  error(EXIT_FAILURE, 0, "%s: libtiff was not found during the "
-        "configuration of %s on this system. To read from TIFF files, "
-        "libtiff is required. Please install libtiff, then configure, make "
-        "and install %s again", __func__, PACKAGE_STRING, PACKAGE_STRING);
+  tiff_error_no_litiff(__func__);
   return NULL;
 #endif  /* HAVE_LIBTIFF */
 }

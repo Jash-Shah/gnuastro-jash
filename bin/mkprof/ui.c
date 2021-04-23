@@ -578,7 +578,7 @@ ui_check_options_and_arguments(struct mkprofparams *p)
     {
       if(p->catname)
         {
-          if( gal_fits_name_is_fits(p->catname) && p->cp.hdu==NULL)
+          if( gal_fits_file_recognized(p->catname) && p->cp.hdu==NULL)
             error(EXIT_FAILURE, 0, "no 'hdu' specified for the input FITS "
                   "table '%s', to ", p->catname);
         }

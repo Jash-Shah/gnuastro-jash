@@ -266,7 +266,7 @@ ui_read_check_only_options(struct segmentparams *p)
       gal_checkset_check_file(p->kernelname);
 
       /* If its FITS, see if a HDU has been provided. */
-      if( gal_fits_name_is_fits(p->kernelname) && p->khdu==NULL )
+      if( gal_fits_file_recognized(p->kernelname) && p->khdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified for kernel. When the "
               "kernel is a FITS file, a HDU must also be specified. You "
               "can use the '--khdu' option and give it the HDU number "
@@ -305,7 +305,7 @@ ui_check_options_and_arguments(struct segmentparams *p)
       gal_checkset_check_file(p->inputname);
 
       /* If it is FITS, a HDU is also mandatory. */
-      if( gal_fits_name_is_fits(p->inputname) && p->cp.hdu==NULL )
+      if( gal_fits_file_recognized(p->inputname) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified. When the input is a FITS "
               "file, a HDU must also be specified, you can use the '--hdu' "
               "('-h') option and give it the HDU number (starting from "

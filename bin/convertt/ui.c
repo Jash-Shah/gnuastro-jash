@@ -516,7 +516,7 @@ ui_make_channels_ll(struct converttparams *p)
       if(strcmp(name->v, "blank")) gal_checkset_check_file(name->v);
 
       /* FITS: */
-      if( gal_fits_name_is_fits(name->v) )
+      if( gal_fits_file_recognized(name->v) )
         {
           /* Get the HDU value for this channel. */
           if(p->globalhdu)

@@ -23,6 +23,13 @@ See the end of the file for license conditions.
      the other columns (any MakeCatalog measurement is possible).
 
   All programs:
+   - FITS files that don't have a recognized FITS suffix (e.g., '.fits',
+     '.fit', '.fits.gz', etc) will also be recognized. Generally, it is
+     good practice to keep a suffix to be more human and computer friendly
+     (checking three or four characters is much faster than opening the
+     file and checking the contents to conform with the FITS standard), but
+     when you are given such a file (by someone else), this new feature can
+     be handy. Suggested by Clotilde Laigle and Leigh Smith.
    --wcslinearmatrix: new option in all programs that lets you select the
      output WCS linear matrix format. It takes one of two values: 'pc' (for
      the 'PCi_j' formalism) and 'cd' (for 'CDi_j'). Until now, the outputs
@@ -161,13 +168,15 @@ See the end of the file for license conditions.
    - New arithmetic flag macros:
      - GAL_ARITHMETIC_FLAG_ENVSEED: read random number generator seed from env.
      - GAL_ARITHMETIC_FLAG_QUIET: don't print any warnings by some operators.
-   - WCS coordinate system identifiers:
+   - WCS coordinate system macros:
      - GAL_WCS_COORDSYS_EQB1950: 1950.0 (Besselian-year) equatorial coords.
      - GAL_WCS_COORDSYS_EQJ2000: 2000.0 (Julian-year) equatorial coords.
      - GAL_WCS_COORDSYS_ECB1950: 1950.0 (Besselian-year) ecliptic coords.
      - GAL_WCS_COORDSYS_ECJ2000: 2000.0 (Julian-year) ecliptic coords.
      - GAL_WCS_COORDSYS_GALACTIC: Galactic coordinates.
      - GAL_WCS_COORDSYS_SUPERGALACTIC: Supergalactic coordinates.
+   - gal_array_file_recognized: For FITS images, check contents also.
+   - gal_fits_file_recognized: Check the file contents when suffix isn't FITS.
    - gal_units_counts_to_mag: Convert counts to magnitudes.
    - gal_units_counts_to_jy: Convert counts to Janskys.
    - gal_wcs_coordsys_from_string: WCS coordinate system from string.

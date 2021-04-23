@@ -339,7 +339,7 @@ ui_check_options_and_arguments(struct warpparams *p)
   if(p->inputname)
     {
       /* Make sure a HDU is given. */
-      if( gal_fits_name_is_fits(p->inputname) && p->cp.hdu==NULL )
+      if( gal_fits_file_recognized(p->inputname) && p->cp.hdu==NULL )
         error(EXIT_FAILURE, 0, "no HDU specified, you can use the '--hdu' "
               "('-h') option and give it the HDU number (starting from "
               "zero), or extension name (generally, anything acceptable "

@@ -64,7 +64,7 @@ gal_table_info(char *filename, char *hdu, gal_list_str_t *lines,
                size_t *numcols, size_t *numrows, int *tableformat)
 {
   /* Get the table format and size (number of columns and rows). */
-  if(filename && gal_fits_name_is_fits(filename))
+  if(filename && gal_fits_file_recognized(filename))
     return gal_fits_tab_info(filename, hdu, numcols, numrows, tableformat);
   else
     {

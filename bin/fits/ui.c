@@ -176,7 +176,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
     /* Read the non-option tokens (arguments): */
     case ARGP_KEY_ARG:
       /* Only FITS files are acceptable. */
-      if( gal_fits_name_is_fits(arg) )
+      if( gal_fits_file_recognized(arg) )
         gal_list_str_add(&p->input, arg, 1);
       else
         argp_error(state, "%s is not a recognized FITS file", arg);
