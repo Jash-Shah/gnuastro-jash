@@ -27,23 +27,27 @@
 
 # Exit the script in the case of failure
 set -e
-
+set -x
 
 
 
 
 # Default option values (can be changed with options on the command-line).
+sn=""
 hdu=1
 rmax=""
 quiet=""
+instd=""
 center=""
 tmpdir=""
 output=""
+stdhdu=""
 keeptmp=0
 mode="img"
 measure=""
 axisratio=1
 sigmaclip=""
+measuretmp=""
 oversample=""
 positionangle=0
 version=@VERSION@
@@ -98,12 +102,18 @@ $scriptname options:
   -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
   -o, --output            Output table with the radial profile.
   -v, --oversample        Oversample for higher resolution radial profile.
+      --instd=FLT/STR     Sky standard deviation as a single number or as the
+                          filename containing the dataset with different values
+			  per pixel.
+      --stdhdu=STR        HDU/extension of the sky standard deviation image.
 
  Operating mode:
   -?, --help              Print this help list.
       --cite              BibTeX citation for this program.
   -q, --quiet             Don't print the list.
   -V, --version           Print program version.
+  -n, --sn                The signal to noise ratio of the profile is calculated
+                          according to instd and stdhdu.
 
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
@@ -222,6 +232,8 @@ do
         -v|--oversample)  oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
         -v=*|--oversample=*) oversample="${1#*=}";                  check_v "$1" "$oversample"; shift;;
         -v*)              oversample=$(echo "$1" | sed -e's/-v//'); check_v "$1" "$oversample"; shift;;
+        --instd=*)        instd="${1#*=}";                          check_v "$1" "$instd"; shift;;
+        --stdhdu=*)       stdhdu="${1#*=}";                         check_v "$1" "$stdhdu"; shift;;
 
         # Non-operating options.
         -q|--quiet)       quiet="--quiet"; shift;;
@@ -232,6 +244,7 @@ do
         -V*|--version=*)  on_off_option_error --version -V;;
         --cite)           astfits --cite; exit 0;;
         --cite=*)         on_off_option_error --cite;;
+        --sn)             sn=1; shift;;
 
         # Unrecognized option:
         -*) echo "$scriptname: unknown option '$1'"; exit 1;;
@@ -247,6 +260,7 @@ do
         if [ x"$measure" = x ]; then measure=$measuretmp;
         else                         measure="$measure,$measuretmp";
         fi
+        measuretmp=""
     fi
 done
 
@@ -257,7 +271,7 @@ done
 # Basic sanity checks
 # ===================
 
-# If an input image is given at all.
+# If an input image is not given at all.
 if [ x"$inputs" = x ]; then
     echo "$scriptname: no input FITS image files."
     echo "Run with '--help' for more information on how to run."
@@ -265,7 +279,7 @@ if [ x"$inputs" = x ]; then
 fi
 
 # If a '--center' has been given, make sure it only has two numbers.
-if [ x"$center" = x ]; then
+if [ x"$center" != x ]; then
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$ncenter != x2 ]; then
         echo "$scriptname: '--center' (or '-c') only take two values, but $ncenter were given"
@@ -284,6 +298,38 @@ fi
 # If no specific measurement has been requested, use the mean.
 if [ x"$measure" = x ]; then measure=mean; fi
 
+
+
+
+
+# Check and set of SNR parameters and variables
+# -----------------------------------------------------
+#
+# --sn  --instd  --stdhdu  instdtype
+#   yes   no       yes       file (same as input image)
+#   yes   yes      yes       file (independent file)
+#   yes   no       no        error
+#   yes   yes      no        number (std value)
+
+if [ x"$sn" != x ]; then
+    finalsn="--sn "
+    if [ x"$stdhdu" != x ]; then
+        instdtype="file"
+        if [ x"$instd" = x ]; then instd=$inputs; fi
+    else
+        if [ x"$instd" != x ]; then
+            instdtype="number"
+        else
+            echo "No stdhdu has been entered \
+                  neither a numerical value for instd."
+            exit 1
+        fi
+    fi
+    finalinstd="--instd=$instd "
+else
+   finalsn=""
+   finalinstd=""
+fi
 
 
 
@@ -388,11 +434,12 @@ if [ -d $tmpdir ]; then junk=1; else mkdir $tmpdir; fi
 
 
 
-# Crop image
-# ----------
+# Crop image and instd
+# --------------------
 #
-# Crop the input image around the desired point so we can continue
-# processing only on those pixels (we do not need the other pixels).
+# Crop the input image and instd, if --sn is requested, around the desired
+# point so we can continue processing only on those pixels (we do not need the
+# other pixels).
 #
 # The crop's output always has the range of pixels from the original image
 # used in the `ICF1PIX' keyword value. So, to find the new center
@@ -404,6 +451,17 @@ crop=$tmpdir/crop.fits
 cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$xcenter,$ycenter --mode=img \
         --width=$cropwidth --output=$crop $quiet
+
+if [ x"$sn" != x ]; then
+    if [ "$instdtype" = "file" ]; then
+        cropstd=$tmpdir/cropstd.fits
+        astcrop $instd -h$stdhdu --center=$xcenter,$ycenter \
+                --mode=img --width=$cropwidth --output=$cropstd $quiet
+        finalinstd="--instd=$cropstd "
+    fi
+fi
+
+
 dxy=$(astfits $crop -h1 \
           | grep ICF1PIX \
           | sed -e"s/'/ /g" -e's/\:/ /g' -e's/,/ /' \
@@ -427,6 +485,10 @@ else
     xcenter=$(echo $xcenter | awk '{print '$oversample'*$1}')
     ycenter=$(echo $ycenter | awk '{print '$oversample'*$1}')
     rmax=$(echo    $rmax    | awk '{print '$oversample'*$1}')
+    if [ x"$sn" != x ] && [ $instdtype = "file" ]; then
+        astwarp $cropstd --scale=$oversample,$oversample -o$stdvalues
+        finalinstd="--instd="$stdvalues" "
+    fi
 fi
 
 
@@ -510,8 +572,9 @@ fi
 # elliptical apertures) and the original input image for measuring the
 # values.
 cat=$tmpdir/catalog.fits
-astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 \
-             --ids $finalmeasure $finalsigmaclip --output=$cat \
+astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
+             $finalsn $finalinstd $finalmeasure $finalsigmaclip \
+	     --stdhdu=1 --output=$cat \
              $quiet
 
 

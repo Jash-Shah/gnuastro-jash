@@ -21176,9 +21176,8 @@ $ astscript-radial-profile image.fits
 
 ## Generate the radial profile centered at x=44 and y=37 (in pixels),
 ## up to  a radial distance of 19 pixels, use the mean value.
-$ astscript-radial-profile image.fits     \
-                           --xcenter=44   \
-                           --ycenter=37   \
+$ astscript-radial-profile image.fits      \
+                           --center=44,37 \
                            --rmax=19
 
 ## Generate the radial profile centered at x=44 and y=37 (in pixels),
@@ -21186,8 +21185,7 @@ $ astscript-radial-profile image.fits     \
 ## mean and standard deviation (sigclip-mean and sigclip-std) using
 ## 3 sigma and 10 iterations.
 $ astscript-radial-profile image.fits       \
-                           --xcenter=44     \
-                           --ycenter=37     \
+                           --center=44,37  \
                            --rmax=100       \
                            --sigmaclip=3,10 \
                            --measure=sigclip-mean,sigclip-std
@@ -21196,13 +21194,41 @@ $ astscript-radial-profile image.fits       \
 ## DEC=0.9454292263, up to a radial distance of 88 pixels,
 ## axis ratio equal to 0.32, and position angle of 148 deg.
 ## Name the output table as `radial-profile.fits'
-$ astscript-radial-profile image.fits --mode=wcs   \
-                           --xcenter=20.53751695   \
-                           --ycenter=0.9454292263  \
-                           --rmax=88               \
-                           --axisratio=0.32        \
+$ astscript-radial-profile image.fits --mode=wcs             \
+                           --center=20.53751695,0.9454292263 \
+                           --rmax=88                         \
+                           --axisratio=0.32                  \
                            --positionangle=148 -oradial-profile.fits
 
+## Generate the radial profile centered at RA=40.062675270971,
+## DEC=-8.1511992735126, up to a radial distance of 20 pixels,
+## and calculate the SNR using the INPUT-NO-SKY and SKY-STD
+## extensions of the astnoisechisel output file.
+$ astscript-radial-profile  image_detected.fits -hINPUT-NO-SKY        \
+                            --mode=wcs                                \
+                            --center=40.062675270971,-8.1511992735126 \
+                            --rmax=20                                 \
+                            --sn --stdhdu=SKY_STD
+
+## Generate the radial profile centered at RA=40.062675270971,
+## DEC=-8.1511992735126, up to a radial distance of 20 pixels,
+## and compute the SNR with a fixed value for std, std=10.
+$ astscript-radial-profile  image.fits -h1                            \
+                            --mode=wcs                                \
+                            --rmax=20                                 \
+                            --center=40.062675270971,-8.1511992735126 \
+                            --sn --instd=10
+
+## Generate the radial profile centered at X=1201, Y=1201 pixels, up
+## to a radial distance of 20 pixels and compute the median and the
+## SNR using the first extension of sky-std.fits as the dataset for std
+## values.
+$ astscript-radial-profile image.fits -h1                             \
+                           --mode=img                                 \
+                           --rmax=20                                  \
+                           --center=1201,1201                         \
+                           --measure=median                           \
+                           --sn --instd=sky-std.fits --stdhdu=1
 @end example
 
 This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
