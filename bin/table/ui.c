@@ -222,37 +222,6 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
-/* Do polygon-related sanity checks */
-static void
-ui_check_polygon_from_ds9(struct tableparams *p)
-{
-  int ds9regmode;
-
-  /* This is only relevant when a region file is actually given. */
-  if(p->polygonfile)
-    {
-      /* These two options cannot be called together. */
-      if(p->polygon)
-       error(EXIT_FAILURE, errno, "'--polygon' and '--polygonfile' "
-              "cannot be given together. With the first you specify the "
-              "polygon vertices directly on the command-line. With the "
-              "second, you give a DS9 region file and the polygon "
-              "vertices are read from that.");
-
-      /* Extract the polygon and the coordinate mode. */
-      else
-        p->polygon=gal_ds9_reg_read_polygon(p->polygonfile, &ds9regmode);
-
-      /* Clean up. */
-      free(p->polygonfile);
-      p->polygonfile=NULL;
-    }
-}
-
-
-
-
-
 /* Read and check ONLY the options. When arguments are involved, do the
    check in 'ui_check_options_and_arguments'. */
 static void
@@ -260,10 +229,6 @@ ui_read_check_only_options(struct tableparams *p)
 {
   double *darr;
   gal_data_t *tmp;
-
-  /* If a polygon filename is given, use it. This is done first because it
-     can set the '--polygon' option's value. */
-  ui_check_polygon_from_ds9(p);
 
   /* Check if the format of the output table is valid, given the type of
      the output. */

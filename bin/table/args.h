@@ -224,7 +224,7 @@ struct argp_option program_options[] =
     {
       "polygon",
       UI_KEY_POLYGON,
-      "FLT:FLT[,...]",
+      "STR,FLT:FLT[,...]",
       0,
       "Polygon for '--inpolygon' or '--outpolygon'.",
       UI_GROUP_OUTROWS,
@@ -234,19 +234,6 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
       gal_options_parse_colon_sep_csv
-    },
-    {
-      "polygonfile",
-      UI_KEY_POLYGONFILE,
-      "REG",
-      0,
-      "Polygon filename for '--inpolygon' or '--outpolygon'.",
-      UI_GROUP_OUTROWS,
-      &p->polygonfile,
-      GAL_TYPE_STRING,
-      GAL_OPTIONS_RANGE_ANY,
-      GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET
     },
     {
       "equal",

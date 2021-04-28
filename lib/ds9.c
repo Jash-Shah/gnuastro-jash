@@ -40,21 +40,19 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Read the polygon specified in the given DS9 region file and parse it in
    the standard format. */
 gal_data_t *
-gal_ds9_reg_read_polygon(char *filename, int *coordmode)
+gal_ds9_reg_read_polygon(char *filename)
 {
   FILE *fp;
   char *polygonstr;
   gal_data_t *out=NULL;
   size_t commacounter=0;
   size_t plinelen, linesize=10, lineno=0;
+  int coordmode=GAL_DS9_COORD_MODE_INVALID;
   char *c, *line, *ds9regstart="# Region file format: DS9";
   char *polygonformaterr="It is expected for the line to have "
     "this format: 'polygon(AAA,BBB,...)'. Where 'AAA' and 'BBB' "
     "are numbers and '...' signifies that any number of points "
     "are possible";
-
-  /* Initialize 'coordmode'. */
-  *coordmode=GAL_DS9_COORD_MODE_INVALID;
 
   /* Allocate size to the lines on the file and check if it was sucessfull.
      The getline function reallocs the necessary memory. */
@@ -92,13 +90,13 @@ gal_ds9_reg_read_polygon(char *filename, int *coordmode)
       if( !strcmp(line, "fk5\n") || !strcmp(line, "image\n") )
         {
           /* Make sure it hasn't been called more than once. */
-          if(*coordmode!=GAL_DS9_COORD_MODE_INVALID)
+          if(coordmode!=GAL_DS9_COORD_MODE_INVALID)
             error_at_line(EXIT_FAILURE, 0, filename, lineno,
                           "more than one coordinate line defined");
 
           /* Set the proper mode. */
-          if(!strcmp(line, "fk5\n")) *coordmode=GAL_DS9_COORD_MODE_WCS;
-          else                       *coordmode=GAL_DS9_COORD_MODE_IMG;
+          if(!strcmp(line, "fk5\n")) coordmode=GAL_DS9_COORD_MODE_WCS;
+          else                       coordmode=GAL_DS9_COORD_MODE_IMG;
 
           /* Stop parsing the file if the polygon has also been found by
              this point (we don't need any more information, no need to
@@ -135,12 +133,12 @@ gal_ds9_reg_read_polygon(char *filename, int *coordmode)
           /* Stop parsing the file if the coordinate mode has also been
              found by this point (we don't need any more information, no
              need to waste the user's CPU and time). */
-          if(*coordmode!=GAL_DS9_COORD_MODE_INVALID) break;
+          if(coordmode!=GAL_DS9_COORD_MODE_INVALID) break;
         }
     }
 
   /* If no coordinate mode was found in the file, print an error. */
-  if(*coordmode==GAL_DS9_COORD_MODE_INVALID)
+  if(coordmode==GAL_DS9_COORD_MODE_INVALID)
     error(EXIT_FAILURE, 0, "%s: no coordinate mode found! "
           "We expect one line to be either 'fk5' or 'image'",
           filename);
@@ -151,6 +149,9 @@ gal_ds9_reg_read_polygon(char *filename, int *coordmode)
           "one line in the format of 'polygon(AAA,BBB,...)' in the "
           "file given to '--polygonfile' option. %s", filename,
           polygonformaterr);
+
+  /* Write the coordinate mode into the status component. */
+  out->status = coordmode;
 
   /* Clean up and return. */
   free(line);

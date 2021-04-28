@@ -31,6 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/wcs.h>
 #include <gnuastro/git.h>
 #include <gnuastro/txt.h>
+#include <gnuastro/ds9.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/list.h>
 #include <gnuastro/data.h>
@@ -1529,8 +1530,13 @@ gal_options_parse_colon_sep_csv(struct argp_option *option, char *arg,
         error_at_line(EXIT_FAILURE, 0, filename, lineno, "no value "
                       "given to '--%s'", option->name);
 
-      /* Parse the desired format and put it in this option's pointer. */
-      dataset=gal_options_parse_colon_sep_csv_raw(arg, filename, lineno);
+      /* Check if the argument is a string (it contains a ':' or a ',') or
+         a filename. Then parse the desired format and put it in this
+         option's pointer. */
+      if( strchr(arg, ',')==NULL && strchr(arg, ':')==NULL )
+        dataset=gal_ds9_reg_read_polygon(arg);
+      else
+        dataset=gal_options_parse_colon_sep_csv_raw(arg, filename, lineno);
 
       /* Add the given dataset to the end of an existing dataset. */
       existing = *(gal_data_t **)(option->value);

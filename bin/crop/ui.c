@@ -270,51 +270,6 @@ ui_parse_coordinate_mode(struct argp_option *option, char *arg,
 /**************************************************************/
 /***************       Sanity Check         *******************/
 /**************************************************************/
-
-/* Do polygon-related sanity checks that can be very low-level. */
-static void
-ui_check_polygon_from_ds9(struct cropparams *p)
-{
-  int ds9regmode;
-
-  /* This is only relevant when a region file is actually given. */
-  if(p->polygonfile)
-    {
-      /* These two options cannot be called together. */
-      if(p->polygon)
-        error(EXIT_FAILURE, errno, "'--polygon' and '--polygonfile' "
-              "cannot be given together. With the first you specify the "
-              "polygon vertices directly on the command-line. With the "
-              "second, you give a DS9 region file and the polygon "
-              "vertices are read from that.");
-      else
-        {
-          /* Extract the polygon and the coordinate mode. */
-          p->polygon=gal_ds9_reg_read_polygon(p->polygonfile,
-                                              &ds9regmode);
-          switch(ds9regmode)
-            {
-            case GAL_DS9_COORD_MODE_IMG: p->mode=IMGCROP_MODE_IMG; break;
-            case GAL_DS9_COORD_MODE_WCS: p->mode=IMGCROP_MODE_WCS; break;
-            default:
-              error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
-                    "'%s' to fix the problem. The output coordinate mode "
-                    "of 'gal_ds9_reg_read_polygon' (%d) isn't recognized "
-                    "by this function", __func__, PACKAGE_BUGREPORT,
-                    ds9regmode);
-            }
-        }
-
-      /* Clean up. */
-      free(p->polygonfile);
-      p->polygonfile=NULL;
-    }
-}
-
-
-
-
-
 /* Read and check ONLY the options. When arguments are involved, do the
    check in 'ui_check_options_and_arguments'. */
 static void
@@ -323,10 +278,23 @@ ui_read_check_only_options(struct cropparams *p)
   double *darray;
   int i, checksum;
 
-  /* If a DS9 region file should be used for the polygon, read it. This is
-     done first for two reasons. 1) It can change the value of '--mode'. 2)
-     It will set the '--polygon' option's value (if not set). */
-  ui_check_polygon_from_ds9(p);
+  /* If it's on the polygon mode and a filename was passed to polygon, then
+     we have to set the mode. It can change the value of '--mode', so this
+     is checked first. */
+  if(p->polygon && p->polygon->status)
+    {
+      switch(p->polygon->status)
+        {
+          case GAL_DS9_COORD_MODE_IMG: p->mode=IMGCROP_MODE_IMG; break;
+          case GAL_DS9_COORD_MODE_WCS: p->mode=IMGCROP_MODE_WCS; break;
+          default:
+            error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                  "'%s' to fix the problem. The output coordinate mode "
+                  "of 'gal_ds9_reg_read_polygon' (%d) isn't recognized "
+                  "by this function", __func__, PACKAGE_BUGREPORT,
+                  p->polygon->status);
+        }
+    }
 
   /* Make sure that only one of the crop definitions is given. */
   checksum = ( (p->center!=NULL)

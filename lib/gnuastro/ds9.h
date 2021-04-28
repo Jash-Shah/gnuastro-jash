@@ -63,7 +63,7 @@ enum gal_ds9_coord_modes
 
 
 gal_data_t *
-gal_ds9_reg_read_polygon(char *filename, int *coordmode);
+gal_ds9_reg_read_polygon(char *filename);
 
 
 

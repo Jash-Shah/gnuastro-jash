@@ -307,19 +307,6 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
-    {
-      "polygonfile",
-      UI_KEY_POLYGONFILE,
-      "REG",
-      0,
-      "Input polygon filename made in DS9.",
-      UI_GROUP_REGION,
-      &p->polygonfile,
-      GAL_TYPE_STRING,
-      GAL_OPTIONS_RANGE_ANY,
-      GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET
-    },
 
 
 
