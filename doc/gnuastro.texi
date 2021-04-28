@@ -10725,14 +10725,8 @@ We are working on other options for this.
 Only return rows where the given coordinates are outside the polygon specified by the @option{--polygon} option.
 This option is very similar to the @option{--inpolygon} option, so see the description there for more.
 
-@item --polygon=FLT:FLT,...
+@item --polygon=STR,FLT:FLT,...
 The polygon to use for the @code{--inpolygon} and @option{--outpolygon} options.
-This option behaves identically to the same option in the Crop program, so for more information on how to use it, see @ref{Crop options}.
-
-@item --polygonfile=STR
-@cindex SAO DS9 region file
-@cindex Region file (SAO DS9)
-The filename of the SAO DS9 polygon region file to use for the @code{--inpolygon} and @option{--outpolygon} options.
 This option behaves identically to the same option in the Crop program, so for more information on how to use it, see @ref{Crop options}.
 
 @item -e STR,INT/FLT,...
@@ -11725,12 +11719,13 @@ If you want an even sided crop, you can run Crop afterwards with @option{--secti
 
 @item -l STR
 @itemx --polygon=STR
-String of vertices to define a polygon to crop.
+String of vertices or the filename of a SAO DS9 region file to define a polygon to crop.
 The vertices are used to define the polygon in the same order given to this option.
 When the vertices are not necessarily ordered in the proper order (for example one vertice in a square comes after its diagonal opposite), you can add the @option{--polygonsort} option which will attempt to sort the vertices before cropping.
 Note that for concave polygons, sorting is not recommended because there is no unique solution, for more, see the description under @option{--polygonsort}.
 
 This option can be used both in the image and WCS modes, see @ref{Crop modes}.
+If a SAO DS9 region file is used, the coordinate mode of Crop will be determined by the contents of the file and any value given to @code{--mode} is ignored.
 The cropped image will be the size of the rectangular region that completely encompasses the polygon.
 By default all the pixels that are outside of the polygon will be set as blank values (see @ref{Blank pixels}).
 However, if @option{--polygonout} is called all pixels internal to the vertices will be set to blank.
@@ -11762,19 +11757,7 @@ $ astcrop --mode=wcs desired-filter-image(s).fits           \
 @cindex Region file (SAO DS9)
 More generally, you have an image and want to define the polygon yourself (it isn't already published like the example above).
 As the number of vertices increases, checking the vertex coordinates on a FITS viewer (for example SAO DS9) and typing them in, one by one, can be very tedious and prone to typo errors.
-In such cases, you can make a polygon ``region'' in DS9 and using your mouse, easily define (and visually see) it.
-Afterwards, you can save the ``region'' into a DS9 region file and pass its name to the @option{--polygonfile} option
-Check the description of @option{--polygonfile} for more.
-
-@item --polygonfile=STR
-@cindex SAO DS9
-@cindex SAO DS9 region file
-@cindex Region file (SAO DS9)
-File name of the SAO DS9 region file containing the vertices from a polygon.
-This option is only parsed if @option{--polygon} hasn't been called.
-When used, the coordinate mode of Crop will be determined by the contents of this file and any value given to @code{--mode} is ignored.
-
-Given that SAO DS9 has a graphic user interface (GUI), if you don't have the polygon vertices before-hand, it is much more easier build your polygon there and pass it onto Crop through the region file.
+In such cases, you can make a polygon ``region'' in DS9 and using your mouse, easily define (and visually see) it. Given that SAO DS9 has a graphic user interface (GUI), if you don't have the polygon vertices before-hand, it is much more easier build your polygon there and pass it onto Crop through the region file.
 
 You can take the following steps to make an SAO DS9 region file containing your polygon.
 Open your desired FITS image with SAO DS9 and activate its ``region'' mode with @clicksequence{Edit@click{}Region}.
@@ -11784,7 +11767,7 @@ By clicking on the vertices of the square you can shrink or expand it, clicking 
 After the region has been nicely defined, save it as a file with @clicksequence{Region@click{}``Save Regions''}.
 You can then select the name and address of the output file, keep the format as @command{REG (*.reg)} and press the ``OK'' button.
 In the next window, keep format as ``ds9'' and ``Coordinate System'' as ``fk5'' for RA and Dec (or ``Image'' for pixel coordinates).
-A plain text file is now created (let's call it @file{ds9.reg}) which you can pass onto Crop with @command{--polygonfile=ds9.reg}.
+A plain text file is now created (let's call it @file{ds9.reg}) which you can pass onto Crop with @command{--polygon=ds9.reg}.
 
 For the expected format of the region file, see the description of @code{gal_ds9_reg_read_polygon} in @ref{SAO DS9 library}.
 However, since SAO DS9 makes this file for you, you don't usually need to worry about its internal format unless something un-expected happens and you find a bug.
