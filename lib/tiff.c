@@ -292,7 +292,7 @@ tiff_read_contig_strip_data(TIFF *tif, char *filename, size_t dir,
   unsigned char *buf;
   uint32_t row, rowsperstrip = (uint32_t)-1;
   size_t nrow=0, scanline=TIFFScanlineSize(tif);
-  uint32 h=out->ndim==2?out->dsize[0]:out->dsize[1];
+  uint32_t h=out->ndim==2?out->dsize[0]:out->dsize[1];
 
   /* Allocate the buffer. */
   errno=0;
@@ -342,7 +342,7 @@ tiff_read_separate_strip_data(TIFF* tif, char *filename, size_t dir,
   uint32_t rowsperstrip=(uint32_t)-1;
   size_t nrow=0, scanline=TIFFScanlineSize(tif);
   size_t ostart=0, numch=gal_list_data_number(out);
-  uint32 row, h=out->ndim==2?out->dsize[0]:out->dsize[1];
+  uint32_t row, h=out->ndim==2?out->dsize[0]:out->dsize[1];
 
   /* Allocate the buffer. */
   errno=0;
