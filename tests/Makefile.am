@@ -200,11 +200,12 @@ if COND_WARP
 endif
 
 # Script tests.
-SCRIPT_TESTS = script/list-by-night.sh
+SCRIPT_TESTS = script/list-by-night.sh \
+               script/radial-profile.sh
 
 # We want to have several FITS files as input for this script.
 script/list-by-night.sh: mkcatalog/aperturephot.sh.log
-
+script/radial-profile.sh: mkprof/mosaic2.sh.log
 
 
 
