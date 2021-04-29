@@ -94,7 +94,7 @@ $scriptname options:
       --command="STR"     DS9 command to run after making region.
 
  Operating mode:
-  -h, --help              Print this help list.
+  -?, --help              Print this help list.
       --cite              BibTeX citation for this program.
   -V, --version           Print program version.
 
@@ -302,7 +302,9 @@ if [ x$mode = x"wcs" ]; then unit="\""; else unit=""; fi
 # Write the metadata in the output.
 printf "# Region file format: DS9 version 4.1\n" > $out
 printf "# Created by $scriptname (GNU Astronomy Utilities) $version\n" >> $out
-printf "# Input file: $input (hdu $hdu)\n" >> $out
+if [ x"$input" = x ]; then printf "# Input from stdin\n" >> $out
+else          printf "# Input file: $input (hdu $hdu)\n" >> $out
+fi
 printf "# Columns: $col\n" >> $out
 if [ x"$namecol" != x ]; then
     printf "# Region name (or label) column: $namecol\n" >> $out
@@ -320,13 +322,13 @@ else                        printf "image\n" >> $out;   fi
 if [ x"$namecol" = x ]; then
     if [ x"$input" = x ]; then
         cat /dev/stdin \
-            | asttable $input --column=$col \
+            | asttable --column=$col \
             | while read a b; do \
                   printf "circle(%g,%g,%g%s)\n" \
                          $a $b $radius $unit >> $out; \
               done
     else
-        asttable $input --column=$col \
+        asttable $input --hdu=$hdu --column=$col \
             | while read a b; do \
                   printf "circle(%g,%g,%g%s)\n" \
                          $a $b $radius $unit >> $out; \
@@ -335,13 +337,13 @@ if [ x"$namecol" = x ]; then
 else
     if [ x"$input" = x ]; then
         cat /dev/stdin \
-            | asttable $input --column=$col --column=$namecol \
+            | asttable --column=$col --column=$namecol \
             | while read a b c; do \
                   printf "circle(%g,%g,%g%s) # text={%g}\n" \
                          $a $b $radius $unit $c >> $out; \
               done
     else
-        asttable $input --column=$col --column=$namecol \
+        asttable $input --hdu=$hdu --column=$col --column=$namecol \
             | while read a b c; do \
                   printf "circle(%g,%g,%g%s) # text={%g}\n" \
                          $a $b $radius $unit $c >> $out; \

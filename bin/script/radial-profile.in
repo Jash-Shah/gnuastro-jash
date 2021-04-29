@@ -100,7 +100,7 @@ $scriptname options:
   -v, --oversample        Oversample for higher resolution radial profile.
 
  Operating mode:
-  -h, --help              Print this help list.
+  -?, --help              Print this help list.
       --cite              BibTeX citation for this program.
   -q, --quiet             Don't print the list.
   -V, --version           Print program version.

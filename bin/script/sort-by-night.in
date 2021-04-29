@@ -94,7 +94,7 @@ $scriptname options:
   -p, --prefix=STR        Prefix for outputs of '--copy' and '--link'.
 
  Operating mode:
-  -h, --help              Print this help list.
+  -?, --help              Print this help list.
       --cite              BibTeX citation for this program.
   -q, --quiet             Don't print the list.
   -V, --version           Print program version.
