@@ -10725,7 +10725,8 @@ We are working on other options for this.
 Only return rows where the given coordinates are outside the polygon specified by the @option{--polygon} option.
 This option is very similar to the @option{--inpolygon} option, so see the description there for more.
 
-@item --polygon=STR,FLT:FLT,...
+@item --polygon=STR
+@itemx --polygon=FLT,FLT:FLT,FLT:...
 The polygon to use for the @code{--inpolygon} and @option{--outpolygon} options.
 This option behaves identically to the same option in the Crop program, so for more information on how to use it, see @ref{Crop options}.
 
@@ -11718,9 +11719,11 @@ For example if you want the width of your crop to be 3 by 5 arcseconds along RA 
 If you want an even sided crop, you can run Crop afterwards with @option{--section=":*-1,:*-1"} or @option{--section=2:,2:} (depending on which side you don't need), see @ref{Crop section syntax}.
 
 @item -l STR
+@itemx -l FLT:FLT,...
 @itemx --polygon=STR
-String of vertices or the filename of a SAO DS9 region file to define a polygon to crop.
-The vertices are used to define the polygon in the same order given to this option.
+@itemx --polygon=FLT,FLT:FLT,FLT:...
+Polygon vertice coordinates (when value is in @option{FLT,FLT:FLT,FLT:...} format) or the filename of a SAO DS9 region file (when the value has no @file{,} or @file{:} characters).
+The vertices are used to define the polygon: in the same order given to this option.
 When the vertices are not necessarily ordered in the proper order (for example one vertice in a square comes after its diagonal opposite), you can add the @option{--polygonsort} option which will attempt to sort the vertices before cropping.
 Note that for concave polygons, sorting is not recommended because there is no unique solution, for more, see the description under @option{--polygonsort}.
 
@@ -29517,13 +29520,13 @@ Their names are sufficiently descriptive.
 The last one (@code{INVALID}) is for sanity checks (for example, to know if the mode is already selected).
 @end deffn
 
-@deftypefun {gal_data_t *} gal_ds9_reg_read_polygon (char @code{*filename}, int @code{*coordmode})
+@deftypefun {gal_data_t *} gal_ds9_reg_read_polygon (char @code{*filename})
 @cindex SAO DS9 region file
 @cindex Region file (SAO DS9)
 Returns an allocated generic data container (@code{gal_data_t}, with an array of @code{GAL_TYPE_FLOAT64}) containing the vertices of a polygon within the SAO DS9 region file given by @code{*filename}.
 Since SAO DS9 region files are 2 dimensional, if there are @mymath{N} vertices in the SAO DS9 region file, the returned dataset will have @mymath{2\times N} elements (first two elements belonging to first vertice, and etc).
 
-The mode to interpret the vertice coordiantes is also read from the SAO DS9 region file and written into the space that @code{*coordmode} points to.
+The mode to interpret the vertice coordiantes is also read from the SAO DS9 region file and written into the @code{status} attribute of the output @code{gal_data_t}.
 The coordinate mode can be one of the @code{GAL_DS9_COORD_MODE_*} macros, mentioned above.
 
 It is assumed that the file begins with @code{# Region file format: DS9} and it has two more lines (at least):

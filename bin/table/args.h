@@ -224,9 +224,9 @@ struct argp_option program_options[] =
     {
       "polygon",
       UI_KEY_POLYGON,
-      "STR,FLT:FLT[,...]",
+      "FLT,FLT[:...]",
       0,
-      "Polygon for '--inpolygon' or '--outpolygon'.",
+      "Polygon vertices, also a DS9 region file.",
       UI_GROUP_OUTROWS,
       &p->polygon,
       GAL_TYPE_STRING,

@@ -82,11 +82,14 @@ See the end of the file for license conditions.
      you had three input FITS files with input in the same HDU.
 
   Crop:
-   --polygonfile: Draw your polygon in SAO DS9, save it as a "region" file
-     and feed it into Crop with this option. Until now, the only way to
-     define the polygon was to give all the polygon vertice coordinates to
-     the '--polygon' option (which was tedious and buggy when the vertice
-     coordinates aren't defined a-priori).
+   --polygon: now also accepts an SAO DS9 region file as input (as well as
+     coordinates). This enables you to draw your polygon over the image
+     through the GUI interface of SAO DS9, save your polygon as a "region"
+     file, and feed the region file into Crop directly. Until now, the only
+     way to define the polygon was to give all the polygon vertice
+     coordinates, one-by-one to the '--polygon' option (which was tedious
+     and buggy), but is still possible. This was implemented by Natáli
+     Anzanello.
 
   Fits:
    --hastablehdu: print 1 if at least one table HDU exists in file.
@@ -145,7 +148,7 @@ See the end of the file for license conditions.
      when you have a large table and just want to see a random sub-set of
      the rows. It takes an integer, selects that many rows from the input
      randomly.
-   --polygonfile: Similar to same option in Crop (mentioned above).
+   --polygon: Similar to same option in Crop (mentioned above).
    - New column arithmetic operators:
      - 'set-AAA' operator (which allows storing the popped operand into a
        named variable for easy usage in complex operations) is also usable
