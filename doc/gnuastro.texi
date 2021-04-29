@@ -19624,8 +19624,8 @@ This option may also be used to create a 3D kernel.
 To do that, two small modifications are necessary: add a @code{-3d} (or @code{-3D}) to the profile name (for example @code{moffat-3d}) and add a number (axis-ratio along the third dimension) to the end of the parameters for all profiles except @code{point}.
 The main reason behind providing an axis ratio in the third dimension is that in 3D astronomical datasets, commonly the third dimension doesn't have the same nature (units/sampling) as the first and second.
 
-For example in IFU datacubes, the first and second dimensions are angularpositions (like RA and Dec) but the third is in units of Angstroms for wavelength.
-Because of this different nature (which also affects theprocessing), it may be necessary for the kernel to have a different extent in that direction.
+For example in IFU (optical) or Radio datacubes, the first and second dimensions are commonly spatial/angular positions (like RA and Dec) but the third dimension is wavelength or frequency (in units of Angstroms for Herz).
+Because of this different nature (which also affects the processing), it may be necessary for the kernel to have a different extent in that direction.
 
 If the 3rd dimension axis ratio is equal to @mymath{1.0}, then the kernel will be a spheroid.
 If its smaller than @mymath{1.0}, the kernel will be button-shaped: extended less in the third dimension.
