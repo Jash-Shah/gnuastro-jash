@@ -2184,7 +2184,7 @@ options_lastconfig_has_been_called(struct argp_option *coptions)
 
 static void
 options_parse_file(char *filename,  struct gal_options_common_params *cp,
-                   int enoent_abort)
+                   int warning)
 {
   FILE *fp;
   char *line, *name, *arg;
@@ -2201,7 +2201,13 @@ options_parse_file(char *filename,  struct gal_options_common_params *cp,
      ignore the configuration file and return. */
   errno=0;
   fp=fopen(filename, "r");
-  if(fp==NULL) return;
+  if(fp==NULL)
+    {
+      /* Print a warning  */
+      if(warning && cp->quiet==0)
+        error(EXIT_SUCCESS, errno, "%s", filename);
+      return;
+    }
 
 
   /* If necessary, print the configuration file name. */

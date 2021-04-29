@@ -7361,9 +7361,11 @@ No program will actually start its processing when this option is called.
 The otherwise mandatory arguments for each program (for example input image or catalog files) are no longer required when you call this option.
 
 @item --config=STR
-Parse @option{STR} as a configuration file immediately when this option is confronted (see @ref{Configuration files}).
+Parse @option{STR} as a configuration file name, immediately when this option is confronted (see @ref{Configuration files}).
 The @option{--config} option can be called multiple times in one run of any Gnuastro program on the command-line or in the configuration files.
 In any case, it will be immediately read (before parsing the rest of the options on the command-line, or lines in a configuration file).
+If the given file doesn't exist or can't be read for any reason, the program will print a warning and continue its processing.
+The warning can be suppressed with @option{--quiet}.
 
 Note that by definition, options on the command-line still take precedence over those in any configuration file, including the file(s) given to this option if they are called before it.
 Also see @option{--lastconfig} and @option{--onlyversion} on how this option can be used for reproducible results.
