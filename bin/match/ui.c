@@ -239,9 +239,17 @@ ui_check_options_and_arguments(struct matchparams *p)
         error(EXIT_FAILURE, 0, "only one argument can be given with the "
               "'--coord' option");
 
-      /* No need for 'p->input2name' or 'p->ccol2'. */
-      gal_data_free(p->ccol2);
-      p->ccol2=NULL;
+      /* In case '--ccol2' is given. */
+      if(p->ccol2 && p->cp.quiet==0)
+        {
+          /* Print a warning to let the user know the option will not be
+             used (the user had probably confused things if they have given
+             it). */
+          error(EXIT_SUCCESS, 0, "WARNING: with '--coord' you only need "
+                "to set '--ccol1' (for the table), '--ccol2' (for the "
+                "'--coord') is not needed because you are directly "
+                "giving the coordinates in any order you want");
+        }
     }
 
   /* '--coord' is not given. */
