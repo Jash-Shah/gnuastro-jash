@@ -9052,6 +9052,28 @@ It is thus useful in scripts, for example when you need to do check the number o
 For a complete list of basic meta-data on the extensions in a FITS file, don't use any of the options in this section or in @ref{Keyword inspection and manipulation}.
 For more, see @ref{Invoking astfits}.
 
+@item --hastablehdu
+Print @code{1} (on standard output) if at least one table HDU (ASCII or binary) exists in the FITS file.
+Otherwise (when no table HDU exists in the file), print @code{0}.
+
+@item --listtablehdus
+Print the names or numbers (when a name doesn't exist, counting from zero) of HDUs that contain a table (ASCII or Binary) on standard output, one per line.
+Otherwise (when no table HDU exists in the file) nothing will be printed.
+
+@item --hasimagehdu
+Print @code{1} (on standard output) if at least one image HDU exists in the FITS file.
+Otherwise (when no image HDU exists in the file), print @code{0}.
+
+In the FITS standard, any array with any dimensions is called an ``image'', therefore this option includes 1, 3 and 4 dimensional arrays too.
+However, an image HDU with zero dimensions (which is usually the first extension and only contains metadata) is not counted here.
+
+@item --listimagehdus
+Print the names or numbers (when a name doesn't exist, counting from zero) of HDUs that contain an image on standard output, one per line.
+Otherwise (when no image HDU exists in the file) nothing will be printed.
+
+In the FITS standard, any array with any dimensions is called an ``image'', therefore this option includes 1, 3 and 4 dimensional arrays too.
+However, an image HDU with zero dimensions (which is usually the first extension and only contains metadata) is not counted here.
+
 @item --pixelscale
 Print the HDU's pixel-scale (change in world coordinate for one pixel along each dimension) and pixel area or voxel volume.
 Without the @option{--quiet} option, the output of @option{--pixelscale} has multiple lines and explanations, thus being more human-friendly.

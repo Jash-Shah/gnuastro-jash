@@ -495,6 +495,122 @@ fits_skycoverage(struct fitsparams *p)
 
 
 
+static char *
+fits_list_certain_hdu_string(fitsfile *fptr, int hduindex)
+{
+  size_t i;
+  int status=0;
+  char *out, extname[80];
+
+  /* See if an 'EXTNAME' keyword exists for this HDU. */
+  fits_read_keyword(fptr, "EXTNAME", extname, NULL, &status);
+
+  /* If EXTNAME doesn't exist, write the HDU index (counting from zero),
+     but if it does, remove the ending single quotes and possible extra
+     space characters (the staring single quote will be removed when
+     copying the name into 'out'). */
+  if(status) sprintf(extname, "%d", hduindex);
+  else
+    {
+      for(i=strlen(extname)-1; i>0; --i)
+        if(extname[i]!='\'' && extname[i]!=' ')
+          { extname[i+1]='\0'; break; }
+    }
+
+  /* Put the value into the allocated 'out' string. */
+  gal_checkset_allocate_copy(status ? extname : extname+1, &out);
+  return out;
+}
+
+
+
+
+static void
+fits_certain_hdu(struct fitsparams *p, int list1has0,
+                 int table1image0)
+{
+  fitsfile *fptr;
+  gal_list_str_t *names=NULL;
+  int has=0, naxis, hducounter=1, hdutype, status=0;
+
+  /* Open the FITS file. */
+  fits_open_file(&fptr, p->input->v, READONLY, &status);
+  gal_fits_io_error(status, NULL);
+
+  /* Start by moving to the first HDU (counting from 1) and then parsing
+     through them. */
+  fits_movabs_hdu(fptr, hducounter, &hdutype, &status);
+  while(status==0)
+    {
+      /* Check the HDU type. */
+      switch(hdutype)
+        {
+
+        /* Tables are easy. */
+        case BINARY_TBL:
+        case ASCII_TBL:
+          if(table1image0)
+            {
+              if(list1has0)
+                gal_list_str_add(&names,
+                                 fits_list_certain_hdu_string(fptr,
+                                                              hducounter-1),
+                                 0);
+              else has=1;
+            }
+          break;
+
+        /* For images, we need to check there is actually any data. */
+        case IMAGE_HDU:
+          if(table1image0==0)
+            {
+              fits_get_img_dim(fptr, &naxis, &status);
+              gal_fits_io_error(status, NULL);
+              if(naxis>0)
+                {
+                  if(list1has0)
+                    gal_list_str_add(&names,
+                                     fits_list_certain_hdu_string(fptr,
+                                                                  hducounter-1),
+                                     0);
+                  else has=1;
+                }
+            }
+          break;
+
+        /* Just to avoid bad bugs. */
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+                "to fix the problem. The value %d is not recognized "
+                "for 'hdutype'", __func__, PACKAGE_BUGREPORT, hdutype);
+        }
+
+      /* Move to the next HDU. */
+      fits_movabs_hdu(fptr, ++hducounter, &hdutype, &status);
+
+      /* If we are in "has" mode and the first HDU has already been found,
+         then there is no need to continue parsing the HDUs, so set
+         'status' to 1 to stop the 'while' above. */
+      if( list1has0==0 && has==1 ) status=1;
+    }
+
+  /* Close the file. */
+  status=0;
+  fits_close_file(fptr, &status);
+
+  /* Print the result. */
+  if( list1has0 )
+    {
+      gal_list_str_print(names);
+      gal_list_str_free(names, 1);
+    }
+  else printf("%d\n", has);
+}
+
+
+
+
+
 static void
 fits_hdu_remove(struct fitsparams *p, int *r)
 {
@@ -623,9 +739,13 @@ fits(struct fitsparams *p)
 
       /* Options that must be called alone. */
       if(p->numhdus) fits_hdu_number(p);
-      else if(p->datasum) fits_datasum(p);
-      else if(p->pixelscale) fits_pixelscale(p);
-      else if(p->skycoverage) fits_skycoverage(p);
+      else if(p->datasum)       fits_datasum(p);
+      else if(p->pixelscale)    fits_pixelscale(p);
+      else if(p->skycoverage)   fits_skycoverage(p);
+      else if(p->hasimagehdu)   fits_certain_hdu(p, 0, 0);
+      else if(p->hastablehdu)   fits_certain_hdu(p, 0, 1);
+      else if(p->listimagehdus) fits_certain_hdu(p, 1, 0);
+      else if(p->listtablehdus) fits_certain_hdu(p, 1, 1);
 
       /* Options that can be called together. */
       else

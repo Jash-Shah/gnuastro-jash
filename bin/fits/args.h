@@ -88,6 +88,59 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "hastablehdu",
+      UI_KEY_HASTABLEHDU,
+      0,
+      0,
+      "File has at least one table HDU.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->hastablehdu,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "hasimagehdu",
+      UI_KEY_HASIMAGEHDU,
+      0,
+      0,
+      "File has at least one image HDU.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->hasimagehdu,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "listtablehdus",
+      UI_KEY_LISTTABLEHDUS,
+      0,
+      0,
+      "List all table HDUs within the file.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->listtablehdus,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "listimagehdus",
+      UI_KEY_LISTIMAGEHDUS,
+      0,
+      0,
+      "List all image HDUs within the file.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->listimagehdus,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
 
 
 
