@@ -1,12 +1,30 @@
 #!/bin/bash
-
-# Bash autocompletion to Gnuastro. This shell script is intended to load
-# itself automatically from the '~/.bashrc' file, modified during
-# installation. For more details, see the 'autocomplete feature' under the
-# 'developing' chapter of Gnuastro's manual and the comments below.
 #
-# To debug/test this script, you can simply 'source' it into your running
-# terminal.
+# Common funcitons of Bash auto-completion in Gnuastro. For more details on
+# completion, see the "autocomplete feature" section under the "Developing"
+# chapter of Gnuastro's manual and the comments below.
+#
+# This script contains generic functions that can be used by all the
+# programs. Each program also has its own '*-complete.bash' file that will
+# use the generic functions here and define all the internal variables that
+# these functions take as input/output. During the installation, all those
+# '*-complete.bash' files will be appended to this (and installed as one
+# file to be loaded into the user's '.bashrc').
+#
+# Because the combined file is loaded into the user's Bash environment
+# every time, we don't want to complicate the user's environment with
+# global environment variables. As a result, all the functions used in the
+# Bash auto-completion should be 'local' (to that particular function and
+# the functions it calls).
+#
+# To debug/test this script, you can take these steps:
+#    1) Append the program's '-complete.bash' file into this one.
+#    2) Set 'gnuastro_prefix' variable within '_gnuastro_autocomplete_*'
+#       function of the program. This is the location that Gnuastro is
+#       installed in your OS (usually '/usr/local/bin').
+#    3) Activate it by executing this command in the terminal you are
+#       testing:
+#          source gnuastro-complete.bash
 #
 # Original author:
 #     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
@@ -30,15 +48,10 @@
 
 
 
+
 #######################################################################
 ############      Options and general operating mode       ############
 #######################################################################
-
-# GLOBAL VARIABLES
-_gnuastro_prefix="/usr/local/bin";
-
-
-
 
 # Basic initialization.
 _gnuastro_autocomplete_initialize(){
@@ -302,8 +315,8 @@ _gnuastro_autocomplete_read_option_value(){
 # opened). Note that FITS files have many possible extensions (see the
 # 'gal_fits_name_is_fits' function in 'lib/fits.c').
 _gnuastro_autocomplete_is_fits(){
-    if "$_gnuastro_prefix"/astfits "$1" -h0 &> /dev/null; then return 0;
-    else                                                       return 1;
+    if "$gnuastro_prefix"/astfits "$1" -h0 &> /dev/null; then return 0;
+    else                                                      return 1;
     fi
 }
 
@@ -314,7 +327,7 @@ _gnuastro_autocomplete_is_fits(){
 # Return successfully if argument (a FITS file) has a image HDU.
 _gnuastro_autocomplete_fits_has_image(){
     if _gnuastro_autocomplete_is_fits "$1"; then
-        if [ $("$_gnuastro_prefix"/astfits "$1" --hasimagehdu) = 1 ]; then
+        if [ $("$gnuastro_prefix"/astfits "$1" --hasimagehdu) = 1 ]; then
             return 0
         fi
     fi
@@ -328,7 +341,7 @@ _gnuastro_autocomplete_fits_has_image(){
 # Return successfully if argument (a FITS file) has a table HDU.
 _gnuastro_autocomplete_fits_has_table(){
     if _gnuastro_autocomplete_is_fits "$1"; then
-        if [ $("$_gnuastro_prefix"/astfits "$1" --hastablehdu) = 1 ]; then
+        if [ $("$gnuastro_prefix"/astfits "$1" --hastablehdu) = 1 ]; then
             return 0
         fi
     fi
@@ -366,7 +379,7 @@ _gnuastro_autocomplete_is_plaintext_table(){
             # lines, because we don't want to waste computational power
             # here.
             if awk '!/^#/ && NF>0 {print; exit 0}' "$1" \
-                    | "$_gnuastro_prefix"/asttable &> /dev/null; then
+                    | "$gnuastro_prefix"/asttable &> /dev/null; then
                 return 0
             else
                 return 1
@@ -659,7 +672,7 @@ _gnuastro_autocomplete_compreply_fits_images(){
 #    2) Name of file.
 _gnuastro_autocomplete_compreply_hdus(){
     if _gnuastro_autocomplete_is_fits "$2"; then
-        for h in $("$_gnuastro_prefix"/astfits "$2" --list"$1"hdus); do
+        for h in $("$gnuastro_prefix"/astfits "$2" --list"$1"hdus); do
             COMPREPLY+=("$h")
         done
     fi
@@ -716,8 +729,8 @@ _gnuastro_autocomplete_compreply_table_columns(){
     # might start with numbers. If so, there will be an unwanted '(hdu:'
     # printed in the results. Here, 'awk' will print the second column in
     # lines that start with a number.
-    columns=$("$_gnuastro_prefix"/asttable --information \
-                                 "$table_file" $hdu_option \
+    columns=$("$gnuastro_prefix"/asttable --information \
+                                "$table_file" $hdu_option \
                   | awk 'NR>2 && /^[0-9]/ { \
                             if($2=="n/a") print $1; else print $2 \
                          }' \
@@ -726,175 +739,3 @@ _gnuastro_autocomplete_compreply_table_columns(){
     # Add the columns into the completion replies.
     for c in $columns; do COMPREPLY+=("$c"); done
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#######################################################################
-############         Only for Table (this program)         ############
-#######################################################################
-
-# Dealing with arguments: Table only takes one argument/file. So if a table
-# has been previously given on the command-line only print option names.
-_gnuastro_autocomplete_asttable_arguments(){
-    local given_file=""
-    if _gnuastro_autocomplete_first_in_arguments table; then
-        _gnuastro_autocomplete_compreply_options_all ""
-    else
-        _gnuastro_autocomplete_compreply_tables "$argument"
-    fi
-}
-
-
-
-
-
-# Fill option value (depends on option).
-_gnuastro_autocomplete_asttable_option_value(){
-
-    # Internal variables.
-    local fits_file=""
-    local given_hdu=""
-    local given_file=""
-
-    # Keep this in the same order as the output of '--help', for options
-    # with similar operations, keep the order within the '|'s.
-    case "$option_name" in
-
-        # Options that need a column from the main argument.
-        -b|--noblank|-c|--column|--inpolygon|--outpolygon)
-            _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-            ;;
-
-        # Options that take the column name as first component of value.
-        -m|--colmetadata|-e|--equal|-n|--notequal)
-
-            # Get the main argument's name (and possible HDU).
-            _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-
-            # Since these options take a column name as first value and the
-            # user should continue with other details, we need to disable
-            # the extra space on the command-line after the successful
-            # match.
-            compopt -o nospace
-            ;;
-
-        -C|--catcolumns)
-            _gnuastro_autocomplete_given_file_and_hdu \
-                table --catcolumnfile --catcolumnhdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-            ;;
-
-        -h|--hdu)
-            _gnuastro_autocomplete_given_file table ""
-            _gnuastro_autocomplete_compreply_hdus table "$given_file"
-            ;;
-
-        -L|--catcolumnfile)
-            _gnuastro_autocomplete_compreply_tables "$current"
-            ;;
-
-        --searchin)
-            _gnuastro_autocomplete_compreply_searchin
-            ;;
-
-        -u|--catcolumnhdu)
-            _gnuastro_autocomplete_given_file table --catcolumnfile
-            _gnuastro_autocomplete_compreply_hdus table "$given_file"
-            ;;
-
-        -w|--wcsfile)
-            _gnuastro_autocomplete_compreply_fits_images "$current"
-            ;;
-
-        -W|--wcshdu)
-            _gnuastro_autocomplete_given_file image --wcsfile
-            _gnuastro_autocomplete_compreply_hdus image "$given_file"
-            ;;
-
-        --tableformat)
-            _gnuastro_autocomplete_compreply_tableformat
-            ;;
-    esac
-}
-
-
-
-
-
-_gnuastro_autocomplete_asttable(){
-
-    # Basic initialization. The variables we want to remain inside this
-    # function are given a 'local' here and set inside the 'initialize'
-    # function. The variables are defined above the function that gives
-    # them a value.
-    local prev=""
-    local current=""
-    local argument=""
-    _gnuastro_autocomplete_initialize
-
-    # For a check
-    #echo
-    #echo "prev:     $prev"
-    #echo "current:  $current"
-    #echo "argument: $argument"
-
-    # Extract the current mode (if the user is giving an argument, option
-    # name, or option value). See the description above this function on
-    # how the mode is set.
-    local options_all=""
-    local option_name=""
-    local option_value=""
-    local option_name_complete=0
-    _gnuastro_autocomplete_mode
-
-    # For a check
-    #echo
-    #echo "argument:             $argument"
-    #echo "option_name:          $option_name"
-    #echo "option_name_complete: $option_name_complete"
-    #echo "option_value:         $option_value"
-
-    # If 'option_name_complete==1', then we are busy filling in the option
-    # value.
-    if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_asttable_option_value
-
-    # When 'option_name' is not empty (and not yet complete), we are busy
-    # filling in the option name.
-    elif [ x$option_name != x ]; then
-        _gnuastro_autocomplete_compreply_options_all "$option_name"
-
-    # In the case of "none-of-the-above", it is an argument.
-    else
-        _gnuastro_autocomplete_asttable_arguments
-    fi
-}
-
-
-
-
-
-# Define the completion specification, or COMPSPEC: -o bashdefault: Use
-# Bash default completions if nothing is found.  -F function: Use this
-# 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_asttable asttable
