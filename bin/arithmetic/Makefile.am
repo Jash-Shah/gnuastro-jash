@@ -36,7 +36,8 @@ astarithmetic_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
 
 astarithmetic_SOURCES = main.c ui.c arithmetic.c operands.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h arithmetic.h operands.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h arithmetic.h operands.h \
+             astarithmetic-complete.bash
 
 
 

@@ -40,6 +40,8 @@ BUILT_SOURCES = $(top_srcdir)/AUTHORS
 
 
 
+
+
 ## Directories to check:
 ## =====================
 ##
@@ -49,6 +51,7 @@ BUILT_SOURCES = $(top_srcdir)/AUTHORS
 ## Gnulib tests have been done.
 if COND_ARITHMETIC
   MAYBE_ARITHMETIC = bin/arithmetic
+  MAYBE_ARITHMETIC_COMPLETE = bin/arithmetic/astarithmetic-complete.bash
 endif
 if COND_BUILDPROG
   MAYBE_BUILDPROG = bin/buildprog
@@ -94,6 +97,7 @@ if COND_STATISTICS
 endif
 if COND_TABLE
   MAYBE_TABLE = bin/table
+  MAYBE_TABLE_COMPLETE = bin/table/asttable-complete.bash
 endif
 #if COND_TEMPLATE
 #  MAYBE_TEMPLATE = bin/TEMPLATE
@@ -104,6 +108,8 @@ endif
 if COND_GNULIBCHECK
   MAYBE_GNULIBCHECK = bootstrapped/tests
 endif
+
+
 
 
 
@@ -125,9 +131,13 @@ SUBDIRS = bootstrapped/lib $(MAYBE_GNULIBCHECK) lib $(MAYBE_ARITHMETIC) \
 
 
 
+
+
 ## Add m4/ to the list of directories to search for m4 files
 ## =========================================================
 ACLOCAL_AMFLAGS = -I bootstrapped/m4
+
+
 
 
 
@@ -137,9 +147,13 @@ dist_doc_DATA = README
 
 
 
+
+
 # Installed system configuration files
 # ====================================
 dist_sysconf_DATA = bin/gnuastro.conf
+
+
 
 
 
@@ -149,8 +163,70 @@ dist_sysconf_DATA = bin/gnuastro.conf
 ## Note that 'COPYING' (containing the GNU GPL) is included in the
 ## distribution tarball by default in Automake, but not other license
 ## files, so we have to manually add 'COPYING.FDL'.
+##
+## The completion files for each program ('*-complete.bash') are added to
+## EXTRA_DIST within each program's directory.
 EXTRA_DIST = COPYING.FDL genauthors .dir-locals.el .version \
-             developer-build bootstrapped/README .autom4te.cfg
+             developer-build bootstrapped/README .autom4te.cfg \
+             bin/completion.bash.in
+
+
+
+
+
+## Bash auto-completion
+## ====================
+##
+## Besides the default '.bash.in' files, for some programs (like
+## Arithmetic), its necessary to parse the source (for list of all
+## operators).
+pkgdata_DATA = bin/completion.bash
+bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
+        # Delete any existing output file.
+	rm -f $@ $@-arith.tmp $@.tmp
+
+        # Extract the arithmetic library operators into a '-arith.tmp' file (
+	echo "" > $@-arith.tmp
+	for op in $$($(AWK) '/^gal_arithmetic_operator_string/{parse=1} \
+	                     /^\}/{parse=0} \
+	                     parse==1 && /GAL_ARITHMETIC_OP/{print $$NF}' \
+	                     $(top_srcdir)/lib/arithmetic.c \
+	                    | $(SED) -e's|"||g' -e's|;||'); do \
+	    ops="$$ops $$op"; \
+	done; \
+	echo "_gnuastro_autocomplete_compreply_arithmetic_lib(){" >> $@-arith.tmp; \
+	echo "arithmetic_lib_operators=\"$$ops\"" >> $@-arith.tmp; \
+	echo "}" >> $@-arith.tmp
+
+        # Extract the arithmetic program operators.
+	echo "" >> $@-arith.tmp
+	for op in $$($(AWK) '/^arithmetic_set_operator/{parse=1} \
+	                     /^\}/{parse=0} \
+	                     parse==1 && /strcmp\(string/{print $$NF}' \
+	                     $(top_srcdir)/bin/arithmetic/arithmetic.c \
+	                    | $(SED) -e's|"||g' -e's|))||'); do \
+	    ops="$$ops $$op"; \
+	done; \
+	echo "_gnuastro_autocomplete_compreply_arithmetic_prog(){" >> $@-arith.tmp; \
+	echo "arithmetic_prog_operators=\"$$ops\"" >> $@-arith.tmp; \
+	echo "}" >> $@-arith.tmp
+
+        # Copy the low-level common functions to all programs, then put the
+        # arithmetic functions inside of it. We are keeping the arithmetic
+        # operators separate to help in debugging when necessary (they can
+        # be 'source'd into each program's completion script).
+	cp $(top_srcdir)/bin/completion.bash.in $@.tmp
+	cat $@-arith.tmp >> $@.tmp
+
+        # Copy each program's source.
+	for f in $(MAYBE_ARITHMETIC_COMPLETE) \
+	         $(MAYBE_TABLE_COMPLETE); do \
+	  $(SED) -e 's|@PREFIX[@]|$(bindir)|g' $(top_srcdir)/$$f >> $@.tmp; \
+	done
+	chmod a-w $@.tmp
+	mv $@.tmp $@
+
+
 
 
 
@@ -183,7 +259,7 @@ all-local:
 	fi
 
         # Print a message if requested.
-	@if [ "X$(MAKECMDGOALS)" = "Xall-am" ] && [ x$(GUIDEMESSAGE) = xyes ]; then    \
+	@if [ "X$(MAKECMDGOALS)" = "Xall-am" ] && [ x$(GUIDEMESSAGE) = xyes ]; then  \
 	 echo;                                                                       \
 	 echo "==================================================================="; \
 	 echo "==================================================================="; \
@@ -198,6 +274,10 @@ all-local:
 	 echo "==================================================================="; \
 	 echo;                                                                       \
 	fi
+
+
+
+
 
 ## We cannot do the writing persmission test at configure time. Here is a
 ## quote from the generated ./configure script: The prefix variables...
@@ -239,6 +319,10 @@ check-local:
 	 echo;                                                                       \
 	fi
 
+
+
+
+
 ## Note that the '\' characters in the GNU head here are not printed on the
 ## command line. So we have to consider them. The ASCII GNU head is taken
 ## from: https://www.gnu.org/graphics/gnu-ascii.html
@@ -272,11 +356,15 @@ install-exec-local:
 	 echo "(for an intro, run 'info gnuastro \"Installation directory\"')";      \
 	 echo;                                                                       \
 	 echo;                                                                       \
+	 echo "Bash completion (auto-fill arguments and options with TAB):";         \
+	 echo "  - 'source $(pkgdatadir)/completion.bash' in '~/.bashrc':"; \
+	 echo;                                                                       \
+	 echo;                                                                       \
 	 echo "To stay up to date with future releases, please subscribe to: ";      \
 	 echo "    https://lists.gnu.org/mailman/listinfo/info-gnuastro";            \
 	 echo;                                                                       \
 	 echo;                                                                       \
-	 echo "(The following lines can be ignored.)";                               \
+	 echo "(Any lines following this message can be ignored.)";                  \
 	 echo "==================================================================="; \
 	 echo "==================================================================="; \
 	 echo;                                                                       \

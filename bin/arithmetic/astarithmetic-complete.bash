@@ -1,10 +1,9 @@
-# Bash autocompletion to Gnuastro's Table program. See the comments above
-# 'bin/completion.bash.in' for more.
+# Bash autocompletion to Gnuastro's Arithmetic program. See the comments
+# above 'bin/completion.bash.in' for more.
 #
 # Original author:
-#     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
-# Contributing author(s):
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Contributing author(s):
 # Copyright (C) 2021 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -38,15 +37,42 @@
 ############         Only for Table (this program)         ############
 #######################################################################
 
-# Dealing with arguments: Table only takes one argument/file. So if a table
-# has been previously given on the command-line only print option names.
-_gnuastro_autocomplete_asttable_arguments(){
-    local given_file=""
-    if _gnuastro_autocomplete_first_in_arguments table; then
-        _gnuastro_autocomplete_compreply_options_all ""
-    else
-        _gnuastro_autocomplete_compreply_tables "$argument"
-    fi
+# Dealing with arguments: Arithmetic only takes array/image files.
+_gnuastro_autocomplete_astarithmetic_arguments(){
+
+    # Local variables to be filled by functions.
+    local arithmetic_lib_operators=""
+    local arithmetic_prog_operators=""
+
+    # Print all accessible images.
+    _gnuastro_autocomplete_compreply_fits_images "$argument"
+
+    # If atleast one image has already been given, an then print the
+    # arithmetic operators with the file names.
+#    if _gnuastro_autocomplete_first_in_arguments image; then
+#
+#        # Get the list of operators as variables.
+#        _gnuastro_autocomplete_compreply_arithmetic_lib
+#        _gnuastro_autocomplete_compreply_arithmetic_prog
+#
+#        # Limit the operators to those that start with the already given
+#        # portion.
+#        if [ x"$argument" = x ]; then
+#            for f in $arithmetic_lib_operators $arithmetic_prog_operators; do
+#                COMPREPLY+=("$f");
+#            done
+#        else
+#            # We aren't using 'grep' because it can confuse the '--XXX' with
+#            # its own options on some systems (and placing a '--' before the
+#            # search string may not be portable).
+#            for f in $(echo $arithmetic_lib_operators $arithmetic_prog_operators \
+#                           | awk '{for(i=1;i<=NF;++i) \
+#                                     if($i ~ /^'$argument'/) print $i}'); do
+#                COMPREPLY+=("$f");
+#            done
+#        fi
+#
+#    fi
 }
 
 
@@ -54,7 +80,7 @@ _gnuastro_autocomplete_asttable_arguments(){
 
 
 # Fill option value (depends on option).
-_gnuastro_autocomplete_asttable_option_value(){
+_gnuastro_autocomplete_astarithmetic_option_value(){
 
     # Internal variables.
     local fits_file=""
@@ -65,65 +91,31 @@ _gnuastro_autocomplete_asttable_option_value(){
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        # Options that need a column from the main argument.
-        -b|--noblank|-c|--column|--inpolygon|--outpolygon)
-            _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-            ;;
-
-        # Options that take the column name as first component of value.
-        -m|--colmetadata|-e|--equal|-n|--notequal)
-
-            # Get the main argument's name (and possible HDU).
-            _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-
-            # Since these options take a column name as first value and the
-            # user should continue with other details, we need to disable
-            # the extra space on the command-line after the successful
-            # match.
-            compopt -o nospace
-            ;;
-
-        -C|--catcolumns)
-            _gnuastro_autocomplete_given_file_and_hdu \
-                table --catcolumnfile --catcolumnhdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-            ;;
-
-        -h|--hdu)
-            _gnuastro_autocomplete_given_file table ""
-            _gnuastro_autocomplete_compreply_hdus table "$given_file"
-            ;;
-
-        -L|--catcolumnfile)
-            _gnuastro_autocomplete_compreply_tables "$current"
-            ;;
-
-        --searchin)
-            _gnuastro_autocomplete_compreply_searchin
-            ;;
-
-        -u|--catcolumnhdu)
-            _gnuastro_autocomplete_given_file table --catcolumnfile
-            _gnuastro_autocomplete_compreply_hdus table "$given_file"
+        -h|--hdu|-g|--globalhdu|-w|--wcshdu)
+            _gnuastro_autocomplete_given_file image ""
+            _gnuastro_autocomplete_compreply_hdus image "$given_file"
             ;;
 
         -w|--wcsfile)
             _gnuastro_autocomplete_compreply_fits_images "$current"
             ;;
 
-        -W|--wcshdu)
-            _gnuastro_autocomplete_given_file image --wcsfile
-            _gnuastro_autocomplete_compreply_hdus image "$given_file"
+        --interpmetric)
+            for v in radial manhattan; do COMPREPLY+=("$v"); done
             ;;
 
         --tableformat)
             _gnuastro_autocomplete_compreply_tableformat
             ;;
+
+        --wcslinearmatrix)
+            for v in cd pc; do COMPREPLY+=("$v"); done
+            ;;
+
+        --numthreads)
+            _gnuastro_autocomplete_compreply_numthreads
+            ;;
+
     esac
 }
 
@@ -131,7 +123,7 @@ _gnuastro_autocomplete_asttable_option_value(){
 
 
 
-_gnuastro_autocomplete_asttable(){
+_gnuastro_autocomplete_astarithmetic(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
@@ -174,7 +166,7 @@ _gnuastro_autocomplete_asttable(){
     # If 'option_name_complete==1', then we are busy filling in the option
     # value.
     if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_asttable_option_value
+        _gnuastro_autocomplete_astarithmetic_option_value
 
     # When 'option_name' is not empty (and not yet complete), we are busy
     # filling in the option name.
@@ -183,7 +175,7 @@ _gnuastro_autocomplete_asttable(){
 
     # In the case of "none-of-the-above", it is an argument.
     else
-        _gnuastro_autocomplete_asttable_arguments
+        _gnuastro_autocomplete_astarithmetic_arguments
     fi
 }
 
@@ -194,4 +186,4 @@ _gnuastro_autocomplete_asttable(){
 # Define the completion specification, or COMPSPEC: -o bashdefault: Use
 # Bash default completions if nothing is found.  -F function: Use this
 # 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_asttable asttable
+complete -o bashdefault -F _gnuastro_autocomplete_astarithmetic astarithmetic

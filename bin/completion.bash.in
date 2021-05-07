@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # Common funcitons of Bash auto-completion in Gnuastro. For more details on
 # completion, see the "autocomplete feature" section under the "Developing"
 # chapter of Gnuastro's manual and the comments below.
@@ -17,14 +15,25 @@
 # Bash auto-completion should be 'local' (to that particular function and
 # the functions it calls).
 #
-# To debug/test this script, you can take these steps:
-#    1) Append the program's '-complete.bash' file into this one.
-#    2) Set 'gnuastro_prefix' variable within '_gnuastro_autocomplete_*'
-#       function of the program. This is the location that Gnuastro is
-#       installed in your OS (usually '/usr/local/bin').
-#    3) Activate it by executing this command in the terminal you are
-#       testing:
-#          source gnuastro-complete.bash
+# To debug/test this script, you can take these steps after building
+# Gnuastro in the program's 'bin/progname/astprogname-complete.bash'
+# file. Building Gnuastro is necessary because one of the files
+#
+#    1. Uncomment the two 'source' lines in the program's completion
+#       script.
+#    2. Correct the un-commented locations. Note that the second is an
+#       automatically built file (it is not under version control or in the
+#       source directory). So in case you have defined a separate build
+#       directory, give that directory. If you are building within your
+#       source (which is generally a bad idea!), it will be the same
+#       directory.
+#    3. Give a value to the 'gnuastro_prefix' variable within
+#       '_gnuastro_autocomplete_astprogname'. This is the location that
+#       Gnuastro is installed in your OS (usually '/usr/local/bin').
+#    4. Activate the program's script with this command in the terminal you
+#       are testing: 'source bin/progname/astprogname-complete.bash' (here
+#       assuming you are in the top Gnuastro source directory, you can run
+#       it from anywhere, just correct the locatation).
 #
 # Original author:
 #     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
@@ -315,8 +324,8 @@ _gnuastro_autocomplete_read_option_value(){
 # opened). Note that FITS files have many possible extensions (see the
 # 'gal_fits_name_is_fits' function in 'lib/fits.c').
 _gnuastro_autocomplete_is_fits(){
-    if "$gnuastro_prefix"/astfits "$1" -h0 &> /dev/null; then return 0;
-    else                                                      return 1;
+    if "$gnuastro_prefix"/astfits "$1" &> /dev/null; then return 0;
+    else                                                  return 1;
     fi
 }
 
@@ -586,6 +595,17 @@ _gnuastro_autocomplete_compreply_tableformat(){
 
 
 
+# Add completion replies for the values to '--numthreads'.
+_gnuastro_autocomplete_compreply_numthreads(){
+    if nproc &> /dev/null; then
+        for v in $(seq $(nproc)); do COMPREPLY+=("$v"); done
+    fi
+}
+
+
+
+
+
 # Add matching options to the completion replies.
 _gnuastro_autocomplete_compreply_options_all(){
 
@@ -600,7 +620,7 @@ _gnuastro_autocomplete_compreply_options_all(){
 
     # Limit the options to those that start with the already given portion.
     if [ x$1 = x ]; then
-        options_match=$options_all
+        options_match="$options_all"
     else
         # We aren't using 'grep' because it can confuse the '--XXX' with
         # its own options on some systems (and placing a '--' before the
@@ -653,7 +673,9 @@ _gnuastro_autocomplete_compreply_fits_images(){
     # Parse the list of files and add it when it is a directory or it can
     # be read as a table.
     for f in ${files[*]} ; do
-        if [ -d "$f" ]; then COMPREPLY+=("${f#$1}/");
+        if [ -d "$f" ]; then
+            COMPREPLY+=("$f/")
+            compopt -o nospace
         elif _gnuastro_autocomplete_fits_has_image "$f"; then
             _gnuastro_autocomplete_compreply_file "$1" "$f"
         fi
@@ -693,7 +715,9 @@ _gnuastro_autocomplete_compreply_tables(){
     # Parse the list of files and add it when it is a directory or it can
     # be read as a table.
     for f in ${files[*]} ; do
-        if [ -d "$f" ]; then COMPREPLY+=("${f#$1}/");
+        if [ -d "$f" ]; then
+            COMPREPLY+=("$f/")
+            compopt -o nospace
         elif _gnuastro_autocomplete_is_table "$f"; then
             _gnuastro_autocomplete_compreply_file "$1" "$f"
         fi

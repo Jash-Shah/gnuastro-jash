@@ -338,6 +338,7 @@ Command-line
 
 * Arguments and options::       Different ways to specify inputs and configuration.
 * Common options::              Options that are shared between all programs.
+* Shell TAB completion::        Customized TAB completion in Gnuastro.
 * Standard input::              Using output of another program as input.
 
 Arguments and options
@@ -846,6 +847,7 @@ $ ./configure
 $ make -j8                         # Replace 8 with no. CPU threads.
 $ make check
 $ sudo make install
+$ echo "source /usr/local/share/gnuastro/completion.bash" > ~/.bashrc
 @end example
 
 @noindent
@@ -6835,6 +6837,7 @@ Afterwards, in @ref{Common options}, we'll go into the detailed list of all the 
 @menu
 * Arguments and options::       Different ways to specify inputs and configuration.
 * Common options::              Options that are shared between all programs.
+* Shell TAB completion::        Customized TAB completion in Gnuastro.
 * Standard input::              Using output of another program as input.
 @end menu
 
@@ -7064,7 +7067,7 @@ But if it is in the middle of the command, it will take the text of the next opt
 You can assume by default that counting starts from 1, if it starts from 0 for a special option, it will be explicitly mentioned.
 @end cartouche
 
-@node Common options, Standard input, Arguments and options, Command-line
+@node Common options, Shell TAB completion, Arguments and options, Command-line
 @subsection Common options
 
 @cindex Options common to all programs
@@ -7477,8 +7480,39 @@ In others, this option will be ignored.
 
 
 
+@node Shell TAB completion, Standard input, Common options, Command-line
+@subsection Shell TAB completion (highly customized)
 
-@node Standard input,  , Common options, Command-line
+@cindex Bash auto-complete
+@cindex Completion in the shell
+@cindex Shell programmable completion
+@cindex Autocomplete (in the shell/Bash)
+Bash provides a built-in feature called @emph{programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} (also known as TAB completion, bash completion, auto-completion, or word completion) to help increase interactive workflow efficiency (minimize the number of key-strokes @emph{and} the need to memorize things).
+Completion is activated by pressing @key{[TAB]} while you are typing a command.
+For file arguments this is the default behavior already and you have probably used it a lot with any command-line program.
+
+Besides this simple/default mode, Bash also enables a high level of customization features for its completion.
+These features have been extensively used in Gnuastro to improve your work efficiency.
+For example if you are running @code{asttable} (which only accepts files containing a table), and you press @key{[TAB]}, it will only suggest files containing such tables.
+As another example, if an option needs image HDUs within a FITS file, pressing @key{[TAB]} will suggest them (and not other possibly existing HDUs that contain tables, or just metadata).
+
+To activate Bash's TAB completion, you need to put the following line in one of your Bash startup files (for example @file{~/.bashrc}).
+For a list of (and discussion on) Bash startup files and installation directories see @ref{Installation directory}.
+Of course, if Gnuastro was installed in a custom location, replace the `@file{/usr/local}' part of the line below to the value that was given to @option{--prefix} during Gnuastro's configuration@footnote{In case you don't know the installation directory of Gnuastro on your system, you can find out with this command: @code{which astfits | sed -e"s|/bin/astfits||"}}.
+
+@example
+# Enable Gnuastro's TAB completion
+source /usr/local/share/gnuastro/completion.bash
+@end example
+
+After adding the line above in a Bash startup file, TAB completion will always be activated in any new terminal.
+To see if it has been activated, try it out with @command{asttable [TAB][TAB]} and @command{astarithmetic [TAB][TAB]} in a directory that contains tables and images.
+It will work with any Gnuastro program's arguments and long option names.
+Therefore as a side-effect your commands will be far more human-readable with the same number of key strokes of a short option name (if one exists).
+
+
+
+@node Standard input,  , Shell TAB completion, Command-line
 @subsection Standard input
 
 @cindex Standard input
@@ -30437,7 +30471,7 @@ This value must be directly returned by @code{main}, so it has to be an @code{in
 This header file keeps the global variable for the program authors and its BibTeX record for citation.
 They are used in the outputs of the common options @option{--version} and @option{--cite}, see @ref{Operating mode options}.
 
-@item completion.bash
+@item progname-complete.bash
 @cindex GNU Bash
 @cindex Bash auto-complete
 @cindex Completion in the shell
@@ -30789,9 +30823,8 @@ were produced by other tests.
 @cindex Completion in the shell
 @cindex Shell programmable completion
 @cindex Autocomplete (in the shell/Bash)
-Gnuastro uses Bash's @i{Programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} to decrease the necessary keystrokes by users, and help them spend less time on figuring out the option names and values.
-Bash's programmable completion, also known as bash completion, auto-completion, or word completion, is a GNU Bash built-in feature that helps increase workflow efficiency.
-You can activate word completion by pressing the @key{[TAB]} key while typing a command.
+Gnuastro provides Programmable completion facilities in Bash.
+This greatly helps users reach their desired result with minimal keystrokes, and helps them spend less time on figuring out the option names and values their acceptable values.
 Gnuastro's completion script not only completes the half-written commands, but also prints suggestions based on previous arguments.
 
 Imagine a scenario where we need to download three columns containing the right ascension, declination, and parallax from the GAIA EDR3 dataset.

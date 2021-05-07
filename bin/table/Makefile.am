@@ -36,7 +36,8 @@ asttable_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
 
 asttable_SOURCES = main.c ui.c arithmetic.c table.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h arithmetic.h table.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h arithmetic.h table.h \
+             asttable-complete.bash
 
 
 

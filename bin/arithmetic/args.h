@@ -74,7 +74,7 @@ struct argp_option program_options[] =
       UI_KEY_ENVSEED,
       0,
       0,
-      "Use GSL_RNG_SEED env. for '--rowrandom'.",
+      "Use GSL_RNG_SEED env. for mknoise operator.",
       GAL_OPTIONS_GROUP_INPUT,
       &p->envseed,
       GAL_OPTIONS_NO_ARG_TYPE,
