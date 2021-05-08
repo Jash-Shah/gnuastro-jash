@@ -376,7 +376,7 @@ _gnuastro_autocomplete_is_plaintext(){
 _gnuastro_autocomplete_is_plaintext_table(){
 
     # Only do the check if the file exists.
-    if [ -f $1 ]; then
+    if [ -f "$1" ]; then
 
         # If the file is not plain-text, it will contain an 'executable' or
         # 'binary' in the output of the 'file' command.
@@ -409,9 +409,9 @@ _gnuastro_autocomplete_is_plaintext_table(){
 
 # Return successfully if the first argument is a table.
 _gnuastro_autocomplete_is_table(){
-    if   _gnuastro_autocomplete_fits_has_table     $1; then return 0
-    elif _gnuastro_autocomplete_is_plaintext_table $1; then return 0
-    else                                                    return 1
+    if   _gnuastro_autocomplete_fits_has_table     "$1"; then return 0
+    elif _gnuastro_autocomplete_is_plaintext_table "$1"; then return 0
+    else                                                      return 1
     fi
 }
 
@@ -496,7 +496,7 @@ _gnuastro_autocomplete_first_in_arguments(){
 
 
 
-# Find the requested table from the entered command-line.
+# Find the requested file from the existing tokens on the command-line.
 #
 # INPUT ARGUMENTS:
 #    1) Mode of file ('table' or 'image').
@@ -509,17 +509,34 @@ _gnuastro_autocomplete_given_file(){
     # Set inputs (for each readability).
     local mode="$1"
     local name="$2"
+    local read_option_value=""
 
     # If 'name' is emtpy, we should look in the arguments, otherwise, we
-    # should loook into the options.
+    # should look into the options.
     if [ x"$name" = x ]; then
         if _gnuastro_autocomplete_first_in_arguments $mode; then
             # given_file is written by the function as a side-effect.
             local just_a_place_holder=1
         fi
+
+    # We are looking for a certain option.
     else
+        # Read the given option's value.
         _gnuastro_autocomplete_read_option_value "$name"
-        given_file="$read_option_value"
+
+        # If we are in image-mode, and the found file has an image, then
+        # put the name in 'given_file' (final output). Same for tables.
+        if [ x"$mode" = ximage ]; then
+            if _gnuastro_autocomplete_fits_has_image \
+                   "$read_option_value"; then
+                given_file="$read_option_value"
+            fi
+        elif [ x"$mode" = xtable ]; then
+            if _gnuastro_autocomplete_is_table \
+                   "$read_option_value"; then
+                given_file="$read_option_value"
+            fi
+        fi
     fi
 
 }
@@ -588,10 +605,37 @@ _gnuastro_autocomplete_given_file_and_hdu(){
 #######################################################################
 ############               Completion replies              ############
 #######################################################################
+# Given a set of strings, select the one that matches the first argument
+_gnuastro_autocomplete_compreply_from_string(){
+
+    # Internal variables (for easy reading).
+    local string="$1"
+    local match="$2"
+
+    # When there isn't any match string, just add everything.
+    if [ x"$match" = x ]; then
+        for v in $string; do COMPREPLY+=("$v"); done
+
+    # When there is a match, limit it. We aren't using 'grep' because it
+    # can confuse a possible '--XXX', with its own options on some systems
+    # (and placing a '--' before the search string may not be portable).
+    else
+        for v in $(echo $string \
+                       | awk '{for(i=1;i<=NF;++i) \
+                                 if($i ~ /^'$match'/) print $i}'); do
+            COMPREPLY+=("$v");
+        done
+    fi
+}
+
+
+
+
 
 # Add completion replies for the values to '--searchin'.
 _gnuastro_autocomplete_compreply_searchin(){
-    for v in name unit comment; do COMPREPLY+=("$v"); done
+    _gnuastro_autocomplete_compreply_from_string \
+        "name unit comment" "$1"
 }
 
 
@@ -600,7 +644,8 @@ _gnuastro_autocomplete_compreply_searchin(){
 
 # Add completion replies for the values to '--searchin'.
 _gnuastro_autocomplete_compreply_tableformat(){
-    for v in fits-ascii fits-binary txt; do COMPREPLY+=("$v"); done
+    _gnuastro_autocomplete_compreply_from_string \
+        "fits-ascii fits-binary txt" "$1"
 }
 
 
@@ -612,6 +657,27 @@ _gnuastro_autocomplete_compreply_numthreads(){
     if nproc &> /dev/null; then
         for v in $(seq $(nproc)); do COMPREPLY+=("$v"); done
     fi
+}
+
+
+
+
+
+# Values to the common '--interpmetric' option.
+_gnuastro_autocomplete_compreply_interpmetric(){
+    _gnuastro_autocomplete_compreply_from_string \
+        "radial manhattan" "$1"
+}
+
+
+
+
+
+# Values to the common '--type' option.
+_gnuastro_autocomplete_compreply_numbertype(){
+    _gnuastro_autocomplete_compreply_from_string \
+        "uint8 int8 uint16 int16 uint32 int32 uint64 int64 float32 float64" \
+        "$1"
 }
 
 
@@ -680,11 +746,23 @@ _gnuastro_autocomplete_compreply_file(){
 # INPUT ARGUMENTS
 #    1) Mode of file ('table' or 'image').
 #    2) Name of file.
+#    3) Existing argument.
 _gnuastro_autocomplete_compreply_hdus(){
-    if _gnuastro_autocomplete_is_fits "$2"; then
-        for h in $("$gnuastro_prefix"/astfits "$2" --list"$1"hdus); do
-            COMPREPLY+=("$h")
-        done
+
+    # Local variables (for easy reading)
+    local mode="$1"
+    local given_file="$2"
+    local matchstr="$3"
+
+    if _gnuastro_autocomplete_is_fits "$given_file"; then
+
+        # Get list of the file's HDUs.
+        hdus=$("$gnuastro_prefix"/astfits "$given_file" \
+                                 --list"$mode"hdus)
+
+        # Add the matching ones into COMPREPLY.
+        _gnuastro_autocomplete_compreply_from_string \
+            "$hdus" "$matchstr"
     fi
 }
 
@@ -733,6 +811,53 @@ _gnuastro_autocomplete_compreply_directories(){
     fi
 }
 
+
+
+
+
+# Fill the replies with all image formats (note that the 'image' of
+# '_gnuastro_autocomplete_compreply_files_certain' is only FITS files)
+_gnuastro_autocomplete_compreply_images_all(){
+
+    # Local variables to be filled by functions.
+    local arg="$1"
+    local ls_in=""
+    local files=""
+    local suffixes_jpeg=""
+    local suffixes_tiff=""
+
+    # Get the FITS images.
+    _gnuastro_autocomplete_compreply_files_certain image "$arg"
+
+    # If the given name doesn't have a suffix, then search for desired
+    # suffixes.
+    if [ x"$arg" = x"$(echo $arg | cut -d. -f1)" ]; then
+
+        # Since the other formats are checked by suffix and there are many
+        # suffixes, its easier to just call 'ls' once.
+        _gnuastro_autocomplete_compreply_suffixes_jpeg
+        _gnuastro_autocomplete_compreply_suffixes_tiff
+        for s in $suffixes_jpeg $suffixes_tiff; do
+            ls_in="$ls_in "$arg"*$s"
+        done
+
+    # The given argument already contains a suffix. So you can safely
+    # ignore the matched suffixes.
+    else
+        ls_in=$arg"*"
+    fi
+
+    # Find the matching files and add them to the replies.
+    files=($(ls -d $ls_in 2> /dev/null))
+    for f in ${files[*]}; do
+        if [ -d "$f" ]; then
+            COMPREPLY+=("$f/")
+            compopt -o nospace
+        else
+            _gnuastro_autocomplete_compreply_file "$arg" "$f"
+        fi
+    done
+}
 
 
 
@@ -792,14 +917,29 @@ _gnuastro_autocomplete_compreply_table_columns(){
     # Inputs
     local table_file="$1"
     local table_hdu="$2"
-    local tomatch="$3"
+    local fullmatch="$3"
+    local continuematch="$4"
 
     # Internal
+    local tomatch=""
     local columns=""
     local hdu_option=""
 
+    # If no file has been given, don't set anything, just return.
+    if [ x"$table_file" = x ]; then return 0; fi
+
     # If a HDU is given, then add it to the options.
     if [ x"$table_hdu" != x ]; then hdu_option="--hdu=$table_hdu"; fi
+
+    # Columns can usually be given in series (for example
+    # '--column=A,B,C'). In this case, the caller will give a non-empty
+    # value to the fourth argument ('continuematch'). To deal with it, we
+    # will take the last component of the comma-separated list.
+    if [ x"$continuematch" = x ]; then
+        tomatch="$fullmatch"
+    else
+        tomatch=$(echo $fullmatch | awk 'BEGIN{FS=","} {print $NF}')
+    fi
 
     # Get the list of columns from the output of '--information': the
     # column names are the second column of the lines that start with a
@@ -818,5 +958,35 @@ _gnuastro_autocomplete_compreply_table_columns(){
                   | grep ^$tomatch)
 
     # Add the columns into the completion replies.
-    for c in $columns; do COMPREPLY+=("$c"); done
+    if [ x"$continuematch" = x ]; then
+        for c in $columns; do COMPREPLY+=("$c"); done
+    else
+        # If there is only one match, include the previously specified
+        # columns in the final filled value and append an ',' to let the
+        # user specify more columns.
+        if [ $(echo $columns | wc -w) = 1 ]; then
+
+            # In the continue-mode we don't want the final value to be
+            # appended with a space.
+            compopt -o nospace
+
+            # When 'fullmatch' and 'tomatch' are the same, this was the
+            # first requested column, so we can safely just print it.
+            if [ x"$fullmatch" = x"$tomatch" ]; then
+                COMPREPLY+=("$columns,")
+
+            # This was not the first column, so we need to add the old ones
+            # as a prefix. But we first need to remove any possible start
+            # of the current column.
+            else
+                local oldcols=$(echo "$fullmatch" | sed -e's|'$tomatch'$||')
+                COMPREPLY+=("$oldcols$columns,")
+            fi
+
+        # There was more than one matching column, so continue suggesting
+        # with only the column names.
+        else
+            for c in $columns; do COMPREPLY+=("$c"); done
+        fi
+    fi
 }

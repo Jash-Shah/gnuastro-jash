@@ -65,26 +65,29 @@ _gnuastro_autocomplete_asttable_option_value(){
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        # Options that need a column from the main argument.
-        -b|--noblank|-c|--column|--inpolygon|--outpolygon)
+        # Options that take a columns from the main argument.
+        --column|--noblank|--inpolygon|--outpolygon|--colmetadata|--equal|--notequal)
+
+            # The '--column' and '--noblank' options can (and usually
+            # will!) take more than one column name as value.
+            local continuematch=""
+            case "$option_name" in
+                --column|--noblank) continuematch=yes;;
+            esac
+
+            # Find the suggestions.
             _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
             _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-            ;;
+                "$given_file" "$given_hdu" "$current" "$continuematch"
 
-        # Options that take the column name as first component of value.
-        -m|--colmetadata|-e|--equal|-n|--notequal)
-
-            # Get the main argument's name (and possible HDU).
-            _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-
-            # Since these options take a column name as first value and the
-            # user should continue with other details, we need to disable
-            # the extra space on the command-line after the successful
-            # match.
-            compopt -o nospace
+            # These options take a column name as first value, and the user
+            # should continue with other details. So when there is only one
+            # match, we need to disable the extra space that is printed by
+            # default and also add a ',' to prepare the user for entering
+            # other points.
+            case "$option_name" in
+                --colmetadata|--equal|--notequal) compopt -o nospace;;
+            esac
             ;;
 
         -C|--catcolumns)
@@ -96,7 +99,8 @@ _gnuastro_autocomplete_asttable_option_value(){
 
         -h|--hdu)
             _gnuastro_autocomplete_given_file table ""
-            _gnuastro_autocomplete_compreply_hdus table "$given_file"
+            _gnuastro_autocomplete_compreply_hdus \
+                table "$given_file" "$current"
             ;;
 
         -L|--catcolumnfile)
@@ -104,12 +108,13 @@ _gnuastro_autocomplete_asttable_option_value(){
             ;;
 
         --searchin)
-            _gnuastro_autocomplete_compreply_searchin
+            _gnuastro_autocomplete_compreply_searchin "$current"
             ;;
 
         -u|--catcolumnhdu)
             _gnuastro_autocomplete_given_file table --catcolumnfile
-            _gnuastro_autocomplete_compreply_hdus table "$given_file"
+            _gnuastro_autocomplete_compreply_hdus \
+                table "$given_file" "$current"
             ;;
 
         -w|--wcsfile)
@@ -118,7 +123,8 @@ _gnuastro_autocomplete_asttable_option_value(){
 
         -W|--wcshdu)
             _gnuastro_autocomplete_given_file image --wcsfile
-            _gnuastro_autocomplete_compreply_hdus image "$given_file"
+            _gnuastro_autocomplete_compreply_hdus \
+                image "$given_file" "$current"
             ;;
 
         --tableformat)
@@ -138,7 +144,7 @@ _gnuastro_autocomplete_asttable(){
     # requested installation directory. Ff you are debugging, please
     # correct it yourself (usually to '/usr/local/bin', but don't commit
     # this particular change).
-    local gnuastro_prefix="@PREFIX@";
+    local gnuastro_prefix="@PREFIX@"
 
     # Basic initialization. The variables we want to remain inside this
     # function are given a 'local' here and set inside the 'initialize'

@@ -201,7 +201,7 @@ struct argp_option gal_commonopts_options[] =
     {
       "interpmetric",
       GAL_OPTIONS_KEY_INTERPMETRIC,
-      "INT",
+      "STR",
       0,
       "Interpolation metric (radial, manhattan).",
       GAL_OPTIONS_GROUP_TESSELLATION,

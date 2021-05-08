@@ -47,31 +47,18 @@ _gnuastro_autocomplete_astarithmetic_arguments(){
     # Print all accessible images.
     _gnuastro_autocomplete_compreply_files_certain image "$argument"
 
-    # If atleast one image has already been given, an then print the
+    # If atleast one image has already been given, also print the
     # arithmetic operators with the file names.
     if _gnuastro_autocomplete_first_in_arguments image; then
 
-        # Get the list of operators as variables.
+        # Fill the variables.
         _gnuastro_autocomplete_compreply_arithmetic_lib
         _gnuastro_autocomplete_compreply_arithmetic_prog
 
-        # Limit the operators to those that start with the already given
-        # portion.
-        if [ x"$argument" = x ]; then
-            for f in $arithmetic_lib_operators $arithmetic_prog_operators; do
-                COMPREPLY+=("$f");
-            done
-        else
-            # We aren't using 'grep' because it can confuse the '--XXX' with
-            # its own options on some systems (and placing a '--' before the
-            # search string may not be portable).
-            for f in $(echo $arithmetic_lib_operators $arithmetic_prog_operators \
-                           | awk '{for(i=1;i<=NF;++i) \
-                                     if($i ~ /^'$argument'/) print $i}'); do
-                COMPREPLY+=("$f");
-            done
-        fi
-
+        # Add them to COMPREPLY
+        _gnuastro_autocomplete_compreply_from_string \
+            "$arithmetic_lib_operators $arithmetic_prog_operators" \
+            "$argument"
     fi
 }
 
@@ -93,7 +80,8 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
 
         -h|--hdu|-g|--globalhdu|-w|--wcshdu)
             _gnuastro_autocomplete_given_file image ""
-            _gnuastro_autocomplete_compreply_hdus image "$given_file"
+            _gnuastro_autocomplete_compreply_hdus \
+                image "$given_file" "$current"
             ;;
 
         -w|--wcsfile)
@@ -109,7 +97,7 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
             ;;
 
         --wcslinearmatrix)
-            for v in cd pc; do COMPREPLY+=("$v"); done
+            _gnuastro_autocomplete_compreply_from_string "cd pc" "$current"
             ;;
 
         --numthreads)
@@ -130,7 +118,7 @@ _gnuastro_autocomplete_astarithmetic(){
     # requested installation directory. Ff you are debugging, please
     # correct it yourself (usually to '/usr/local/bin', but don't commit
     # this particular change).
-    local gnuastro_prefix="@PREFIX@";
+    local gnuastro_prefix="@PREFIX@"
 
     # Basic initialization. The variables we want to remain inside this
     # function are given a 'local' here and set inside the 'initialize'

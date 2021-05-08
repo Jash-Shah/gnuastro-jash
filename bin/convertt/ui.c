@@ -235,14 +235,17 @@ ui_colormap_sanity_check(struct converttparams *p)
   size_t nparams=0;
   int ccode=COLOR_INVALID;
 
-  /* See how many parameters are necessary. */
+  /* See how many parameters are necessary.
+     Notes for TAB completion:
+        1. Keep 'gray' and 'grey' in the same line.
+        2. Keep a space after the ',' before the strings.   */
   strarr=p->colormap->array;
-  if     ( !strcmp(strarr[0],"hsv"))     { ccode=COLOR_HSV;     nparams=2; }
-  else if( !strcmp(strarr[0],"sls"))     { ccode=COLOR_SLS;     nparams=0; }
-  else if( !strcmp(strarr[0],"viridis")) { ccode=COLOR_VIRIDIS; nparams=0; }
-  else if( !strcmp(strarr[0],"gray") || !strcmp(strarr[0],"grey"))
-                                      { ccode=COLOR_GRAY; nparams=0; }
-  else if( !strcmp(strarr[0],"sls-inverse"))
+  if     ( !strcmp(strarr[0], "hsv"))     { ccode=COLOR_HSV;     nparams=2; }
+  else if( !strcmp(strarr[0], "sls"))     { ccode=COLOR_SLS;     nparams=0; }
+  else if( !strcmp(strarr[0], "viridis")) { ccode=COLOR_VIRIDIS; nparams=0; }
+  else if( !strcmp(strarr[0], "gray") || !strcmp(strarr[0], "grey"))
+                                         { ccode=COLOR_GRAY; nparams=0; }
+  else if( !strcmp(strarr[0], "sls-inverse"))
     { ccode=COLOR_SLS_INVERSE; nparams=0; }
   else
     error(EXIT_FAILURE, 0, "'%s' not recognized as a colormap given "

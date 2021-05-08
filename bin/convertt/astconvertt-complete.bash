@@ -1,4 +1,4 @@
-# Bash autocompletion to Gnuastro's BuildProgram. See the comments above
+# Bash autocompletion to Gnuastro's ConvertType. See the comments above
 # 'bin/completion.bash.in' for more.
 #
 # Original author:
@@ -34,28 +34,16 @@
 
 
 #######################################################################
-############     Only for BuildProgram (this program)      ############
+############      Only for ConvertType (this program)      ############
 #######################################################################
 
-# Fill the replies with available C compilers
-_gnuastro_autocomplete_compreply_c_compiler(){
-    for f in gcc clang cc $CC; do
-        if which $f &> /dev/null; then COMPREPLY+=("$f"); fi
-    done
-}
-
-
-
-
-
-# Dealing with arguments: BuildProgram currently only takes C source files.
-_gnuastro_autocomplete_astbuildprog_arguments(){
-    local given_file=""
-    if _gnuastro_autocomplete_first_in_arguments source_c; then
-        _gnuastro_autocomplete_compreply_options_all ""
-    else
-        _gnuastro_autocomplete_compreply_files_certain source_c "$argument"
-    fi
+# Dealing with arguments: ConvertType can take multiple images as arguments
+# (so unlike other programs, there is no option to print options). One way
+# would be to calculate how many color channels there are in each input and
+# look at the desired output format and its necessary color channels. But
+# that is too complicated for now.
+_gnuastro_autocomplete_astconvertt_arguments(){
+    _gnuastro_autocomplete_compreply_images_all "$argument"
 }
 
 
@@ -63,41 +51,43 @@ _gnuastro_autocomplete_astbuildprog_arguments(){
 
 
 # Fill option value (depends on option).
-_gnuastro_autocomplete_astbuildprog_option_value(){
+_gnuastro_autocomplete_astconvertt_option_value(){
 
     # Internal variables.
-    local junk=1
     local fits_file=""
     local given_hdu=""
     local given_file=""
+    local convertt_colormaps=""
 
     # Keep this in the same order as the output of '--help', for options
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        -a|--la)
-            _gnuastro_autocomplete_compreply_files_certain source_la "$current"
+        -h|--hdu|-g|--globalhdu)
+            _gnuastro_autocomplete_given_file image ""
+            _gnuastro_autocomplete_compreply_hdus \
+                image "$given_file" "$current"
             ;;
 
-        -c|--cc)
-            _gnuastro_autocomplete_compreply_c_compiler
+        --colormap)
+            _gnuastro_autocomplete_compreply_convertt_colormap
+            _gnuastro_autocomplete_compreply_from_string \
+                "$convertt_colormaps" "$current"
             ;;
 
-        -I|--includedir|-L|--linkdir)
-            _gnuastro_autocomplete_compreply_directories "$current"
+        -u|--quality)
+            _gnuastro_autocomplete_compreply_from_string \
+                "$(seq 100)" "$current"
             ;;
 
-        -l|--linklib|-t|--tag|-W|--warning)
-            # There is no easy way to guess which libraries the user wants
-            # to link with, or the tag, or the warning level.
-            junk=1
+        --wcslinearmatrix)
+            _gnuastro_autocomplete_compreply_from_string "cd pc" "$current"
             ;;
 
-        -O|--optimize)
-            for f in $(printf "0\n1\n2\n3" | grep ^"$current"); do
-                COMPREPLY+=("$f");
-            done
+        --numthreads)
+            _gnuastro_autocomplete_compreply_numthreads
             ;;
+
 
     esac
 }
@@ -106,7 +96,7 @@ _gnuastro_autocomplete_astbuildprog_option_value(){
 
 
 
-_gnuastro_autocomplete_astbuildprog(){
+_gnuastro_autocomplete_astconvertt(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
@@ -149,7 +139,7 @@ _gnuastro_autocomplete_astbuildprog(){
     # If 'option_name_complete==1', then we are busy filling in the option
     # value.
     if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_astbuildprog_option_value
+        _gnuastro_autocomplete_astconvertt_option_value
 
     # When 'option_name' is not empty (and not yet complete), we are busy
     # filling in the option name.
@@ -158,7 +148,7 @@ _gnuastro_autocomplete_astbuildprog(){
 
     # In the case of "none-of-the-above", it is an argument.
     else
-        _gnuastro_autocomplete_astbuildprog_arguments
+        _gnuastro_autocomplete_astconvertt_arguments
     fi
 }
 
@@ -169,4 +159,4 @@ _gnuastro_autocomplete_astbuildprog(){
 # Define the completion specification, or COMPSPEC: -o bashdefault: Use
 # Bash default completions if nothing is found.  -F function: Use this
 # 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_astbuildprog astbuildprog
+complete -o bashdefault -F _gnuastro_autocomplete_astconvertt astconvertt

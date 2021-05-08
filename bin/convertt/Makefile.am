@@ -36,7 +36,8 @@ astconvertt_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
 
 astconvertt_SOURCES = main.c ui.c convertt.c color.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h convertt.h color.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h convertt.h color.h \
+             astconvertt-complete.bash
 
 
 

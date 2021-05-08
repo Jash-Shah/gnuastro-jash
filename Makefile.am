@@ -55,12 +55,15 @@ if COND_ARITHMETIC
 endif
 if COND_BUILDPROG
   MAYBE_BUILDPROG = bin/buildprog
+  MAYBE_BUILDPROG_COMPLETE = bin/buildprog/astbuildprog-complete.bash
 endif
 if COND_CONVERTT
   MAYBE_CONVERTT = bin/convertt
+  MAYBE_CONVERTT_COMPLETE = bin/convertt/astconvertt-complete.bash
 endif
 if COND_CONVOLVE
   MAYBE_CONVOLVE = bin/convolve
+  MAYBE_CONVOLVE_COMPLETE = bin/convolve/astconvolve-complete.bash
 endif
 if COND_COSMICCAL
   MAYBE_COSMICCAL = bin/cosmiccal
@@ -186,7 +189,7 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	rm -f $@ $@.built $@.tmp
 
         # Extract the arithmetic library operators into a '.built' file.
-	echo "" > $@.built
+	echo "" >> $@.built
 	for op in $$($(AWK) '/^gal_arithmetic_operator_string/{parse=1} \
 	                     /^\}/{parse=0} \
 	                     parse==1 && /GAL_ARITHMETIC_OP/{print $$NF}' \
@@ -211,6 +214,40 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	echo "arithmetic_prog_operators=\"$$ops\"" >> $@.built; \
 	echo "}" >> $@.built
 
+        # Extract recognized file-format suffixes.
+	for form in jpeg tiff; do \
+	  sufs=""; \
+	  echo "" >> $@.built; \
+	  for suf in $$($(AWK) '/^gal_'$$form'_name_is_'$$form'/{parse=1} \
+	                        /^\}/{parse=0} \
+	                        parse==1 && /strcmp\(&name/{ \
+	                           for(i=1;i<=NF;++i) if($$i ~ /^"/) print $$i; \
+	                        }' $(top_srcdir)/lib/$$form.c \
+	                       | $(SED) -e's|"||g' -e's|)||g'); do \
+	    sufs="$$sufs $$suf"; \
+	  done; \
+	  echo "_gnuastro_autocomplete_compreply_suffixes_$$form(){" >> $@.built; \
+	  echo "suffixes_$$form=\"$$sufs\"" >> $@.built; \
+	  echo "}" >> $@.built; \
+	done
+
+        # Extract color-map values for ConvertType.
+        vals=""
+	echo "" >> $@.built
+	for val in $$($(AWK) '/^ui_colormap_sanity_check/{parse=1} \
+	                     /^\}/{parse=0} \
+	                     parse==1 && /strcmp\(strarr/{ \
+	                           for(i=1;i<=NF;++i) if($$i ~ /^"/) { \
+	                             print $$i; break}  \
+	                        }' $(top_srcdir)/bin/convertt/ui.c \
+	                    | $(SED) -e's|"||g' -e's|)\+||'); do \
+	    vals="$$vals $$val"; \
+	done; \
+	echo "_gnuastro_autocomplete_compreply_convertt_colormap(){" >> $@.built; \
+	echo "convertt_colormaps=\"$$vals\"" >> $@.built; \
+	echo "}" >> $@.built
+
+
         # Copy the low-level common functions to all programs, then put the
         # arithmetic functions inside of it. We are keeping the arithmetic
         # operators separate to help in debugging when necessary (they can
@@ -220,6 +257,9 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 
         # Copy each program's source.
 	for f in $(MAYBE_ARITHMETIC_COMPLETE) \
+	         $(MAYBE_BUILDPROG_COMPLETE) \
+	         $(MAYBE_CONVERTT_COMPLETE) \
+	         $(MAYBE_CONVOLVE_COMPLETE) \
 	         $(MAYBE_TABLE_COMPLETE); do \
 	  $(SED) -e 's|@PREFIX[@]|$(bindir)|g' $(top_srcdir)/$$f >> $@.tmp; \
 	done
@@ -245,7 +285,11 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 ## only print its message when 'make' was called with no options. Make will
 ## set MAKECMDGOALS to blank if there are no arguments, however, the way
 ## Automake works, its value is set to "all-am".
-all-local:
+##
+## 'bin/completion.bash' has been set as a pre-requisite of this because if
+## we don't do this, the completion script will be created after printing
+## the message (making the message hard to notice for a user).
+all-local: bin/completion.bash
 
         # If we are in static linking mode, correct the 'lib_dependencies'
         # variable of 'libgnuastro.la'. Because by default it will not

@@ -71,7 +71,7 @@ gal_tiff_name_is_tiff(char *name)
   if(name)
     {
       len=strlen(name);
-      if ( ( len>=3 && strcmp(&name[len-3], "tif") == 0 )
+      if (    ( len>=3 && strcmp(&name[len-3], "tif") == 0 )
            || ( len>=3 && strcmp(&name[len-3], "TIF") == 0 )
            || ( len>=4 && strcmp(&name[len-4], "tiff") == 0 )
            || ( len>=4 && strcmp(&name[len-4], "TIFF") == 0 ) )
