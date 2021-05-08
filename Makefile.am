@@ -183,10 +183,10 @@ EXTRA_DIST = COPYING.FDL genauthors .dir-locals.el .version \
 pkgdata_DATA = bin/completion.bash
 bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
         # Delete any existing output file.
-	rm -f $@ $@-arith.tmp $@.tmp
+	rm -f $@ $@.built $@.tmp
 
-        # Extract the arithmetic library operators into a '-arith.tmp' file (
-	echo "" > $@-arith.tmp
+        # Extract the arithmetic library operators into a '.built' file.
+	echo "" > $@.built
 	for op in $$($(AWK) '/^gal_arithmetic_operator_string/{parse=1} \
 	                     /^\}/{parse=0} \
 	                     parse==1 && /GAL_ARITHMETIC_OP/{print $$NF}' \
@@ -194,12 +194,12 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	                    | $(SED) -e's|"||g' -e's|;||'); do \
 	    ops="$$ops $$op"; \
 	done; \
-	echo "_gnuastro_autocomplete_compreply_arithmetic_lib(){" >> $@-arith.tmp; \
-	echo "arithmetic_lib_operators=\"$$ops\"" >> $@-arith.tmp; \
-	echo "}" >> $@-arith.tmp
+	echo "_gnuastro_autocomplete_compreply_arithmetic_lib(){" >> $@.built; \
+	echo "arithmetic_lib_operators=\"$$ops\"" >> $@.built; \
+	echo "}" >> $@.built
 
-        # Extract the arithmetic program operators.
-	echo "" >> $@-arith.tmp
+        # Extract the arithmetic program operators into the '.built' file.
+	echo "" >> $@.built
 	for op in $$($(AWK) '/^arithmetic_set_operator/{parse=1} \
 	                     /^\}/{parse=0} \
 	                     parse==1 && /strcmp\(string/{print $$NF}' \
@@ -207,16 +207,16 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	                    | $(SED) -e's|"||g' -e's|))||'); do \
 	    ops="$$ops $$op"; \
 	done; \
-	echo "_gnuastro_autocomplete_compreply_arithmetic_prog(){" >> $@-arith.tmp; \
-	echo "arithmetic_prog_operators=\"$$ops\"" >> $@-arith.tmp; \
-	echo "}" >> $@-arith.tmp
+	echo "_gnuastro_autocomplete_compreply_arithmetic_prog(){" >> $@.built; \
+	echo "arithmetic_prog_operators=\"$$ops\"" >> $@.built; \
+	echo "}" >> $@.built
 
         # Copy the low-level common functions to all programs, then put the
         # arithmetic functions inside of it. We are keeping the arithmetic
         # operators separate to help in debugging when necessary (they can
         # be 'source'd into each program's completion script).
 	cp $(top_srcdir)/bin/completion.bash.in $@.tmp
-	cat $@-arith.tmp >> $@.tmp
+	cat $@.built >> $@.tmp
 
         # Copy each program's source.
 	for f in $(MAYBE_ARITHMETIC_COMPLETE) \
@@ -326,7 +326,7 @@ check-local:
 ## Note that the '\' characters in the GNU head here are not printed on the
 ## command line. So we have to consider them. The ASCII GNU head is taken
 ## from: https://www.gnu.org/graphics/gnu-ascii.html
-install-exec-local:
+install-data-hook:
 	@if [ x$(GUIDEMESSAGE) = xyes ]; then                                        \
 	 echo;                                                                       \
 	 echo "==================================================================="; \

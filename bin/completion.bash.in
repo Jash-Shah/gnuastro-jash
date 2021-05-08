@@ -419,9 +419,10 @@ _gnuastro_autocomplete_is_table(){
 
 
 
-# If a table is already given in the previous tokens, return successfully
-# (with zero), and will put its name in 'given_file'. Otherwise, return a
-# failure (1) and 'given_file' will be untouched.
+# If a certain file (image, table, or certain other files) is already given
+# in the previous tokens, return successfully (with zero), and will put its
+# name in 'given_file'. Otherwise, return a failure (1) and 'given_file'
+# will be untouched.
 _gnuastro_autocomplete_first_in_arguments(){
 
     # Inputs
@@ -451,20 +452,31 @@ _gnuastro_autocomplete_first_in_arguments(){
             # checked.
             if _gnuastro_autocomplete_string_is_valued_option $previous; then
                 local just_a_place_holder=1
-            else
 
-                # Based on the mode, do the proper check.
-                if [ $mode = table ]; then
-                    if _gnuastro_autocomplete_is_table $word; then
-                        given_file=$word
-                        return 0;
-                    fi
-                else
-                    if _gnuastro_autocomplete_fits_has_image $word; then
-                        given_file=$word
-                        return 0;
-                    fi
-                fi
+            # Previous word was not a valued option, do the operation based
+            # on the mode.
+            else
+                case "$mode" in
+                    table)
+                        if _gnuastro_autocomplete_is_table $word; then
+                            given_file=$word
+                            return 0;
+                        fi
+                        ;;
+                    image)
+                        if _gnuastro_autocomplete_fits_has_image $word; then
+                            given_file=$word
+                            return 0;
+                        fi
+                        ;;
+                    source_c)
+                        if $(echo $word | grep "\.c$" &> /dev/null) \
+                                && [ -f $word ]; then
+                            given_file=$word
+                            return 0;
+                        fi
+                        ;;
+                esac
             fi
         fi
 
@@ -662,30 +674,6 @@ _gnuastro_autocomplete_compreply_file(){
 
 
 
-# Add all the FITS files that contain an image in the location pointed to
-# by first argument into the completion replies.
-_gnuastro_autocomplete_compreply_fits_images(){
-
-    # Get list of matching files.
-    #   with '-d' we are telling 'ls' to not go into sub-directories.
-    local files=($(ls -d "$1"* 2> /dev/null))
-
-    # Parse the list of files and add it when it is a directory or it can
-    # be read as a table.
-    for f in ${files[*]} ; do
-        if [ -d "$f" ]; then
-            COMPREPLY+=("$f/")
-            compopt -o nospace
-        elif _gnuastro_autocomplete_fits_has_image "$f"; then
-            _gnuastro_autocomplete_compreply_file "$1" "$f"
-        fi
-    done
-}
-
-
-
-
-
 # Add all the HDUs that contain a table/image in the first argument (a FITS
 # file) into the completion replies.
 #
@@ -704,22 +692,91 @@ _gnuastro_autocomplete_compreply_hdus(){
 
 
 
-# Add all the tables in the location pointed to by first argument into the
-# completion replies.
-_gnuastro_autocomplete_compreply_tables(){
+# Fill the replies with certain files.
+_gnuastro_autocomplete_compreply_directories(){
 
-    # Get list of matching files.
-    #   with '-d' we are telling 'ls' to not go into sub-directories.
-    local files=($(ls -d "$1"* 2> /dev/null))
+    # For easy reading.
+    local arg=$1
+
+    # Get the list of directories (all ending with '/', with '-d' we are
+    # telling 'ls' to not go into sub-directories).
+    local directs=($(ls -d "$arg"*/ 2> /dev/null))
+
+    # If a directory exists at all.
+    if [ x"${directs[0]}" != x ]; then
+
+        # If there is only one match.
+        if [ x"${directs[1]}" = x ]; then
+
+            # If there are sub-directories, then keep the ending '/' and
+            # don't add space (the user may want to add sub-directories).
+            if $(ls -d "${directs[0]}"/*/ &> /dev/null); then
+                COMPREPLY+=("$d")
+                compopt -o nospace
+
+            # There are no sub-directories. In this case, remove the ending
+            # '/' and let Bash add a space after the matched name.
+            else
+                COMPREPLY+=($(echo "${directs[0]}" | sed -e's|/$||'))
+            fi
+
+        # More than one match: go over all the matches and add them. we
+        # should avoid printing a space (so the sub-directories continue in
+        # the same token). Also RECALL THAT '$d' ALREADY ENDS WITH A '/'
+        # HERE.
+        else
+            for d in ${directs[*]}; do
+                COMPREPLY+=("$d")
+                compopt -o nospace
+            done
+        fi
+    fi
+}
+
+
+
+
+
+# Fill the replies with certain files.
+_gnuastro_autocomplete_compreply_files_certain(){
+
+    # For easy reading.
+    local arg=$2
+    local mode=$1
+
+    # Get list of matching files (with '-d' we are telling 'ls' to not go
+    # into sub-directories).
+    local files=($(ls -d "$arg"* 2> /dev/null))
 
     # Parse the list of files and add it when it is a directory or it can
     # be read as a table.
-    for f in ${files[*]} ; do
+    for f in ${files[*]}; do
         if [ -d "$f" ]; then
             COMPREPLY+=("$f/")
             compopt -o nospace
-        elif _gnuastro_autocomplete_is_table "$f"; then
-            _gnuastro_autocomplete_compreply_file "$1" "$f"
+        else
+            case "$mode" in
+                image)
+                    if _gnuastro_autocomplete_fits_has_image "$f"; then
+                        _gnuastro_autocomplete_compreply_file "$arg" "$f"
+                    fi
+                    ;;
+                table)
+                    if _gnuastro_autocomplete_is_table "$f"; then
+                        _gnuastro_autocomplete_compreply_file "$arg" "$f"
+                    fi
+                    ;;
+                source_c)
+                    if $(echo $f | grep "\.c$" &> /dev/null); then
+                        _gnuastro_autocomplete_compreply_file "$arg" "$f"
+                    fi
+                    ;;
+                source_la)
+                    if $(echo $f | grep "\.la$" &> /dev/null); then
+                        _gnuastro_autocomplete_compreply_file "$arg" "$f"
+                    fi
+                    ;;
+            esac
         fi
     done
 }

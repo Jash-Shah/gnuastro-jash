@@ -1,5 +1,5 @@
-# Bash autocompletion to Gnuastro's Arithmetic program. See the comments
-# above 'bin/completion.bash.in' for more.
+# Bash autocompletion to Gnuastro's BuildProgram. See the comments above
+# 'bin/completion.bash.in' for more.
 #
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
@@ -34,44 +34,27 @@
 
 
 #######################################################################
-############       Only for Arithmetic (this program)      ############
+############     Only for BuildProgram (this program)      ############
 #######################################################################
 
-# Dealing with arguments: Arithmetic only takes array/image files.
-_gnuastro_autocomplete_astarithmetic_arguments(){
+# Fill the replies with available C compilers
+_gnuastro_autocomplete_compreply_c_compiler(){
+    for f in gcc clang cc $CC; do
+        if which $f &> /dev/null; then COMPREPLY+=("$f"); fi
+    done
+}
 
-    # Local variables to be filled by functions.
-    local arithmetic_lib_operators=""
-    local arithmetic_prog_operators=""
 
-    # Print all accessible images.
-    _gnuastro_autocomplete_compreply_files_certain image "$argument"
 
-    # If atleast one image has already been given, an then print the
-    # arithmetic operators with the file names.
-    if _gnuastro_autocomplete_first_in_arguments image; then
 
-        # Get the list of operators as variables.
-        _gnuastro_autocomplete_compreply_arithmetic_lib
-        _gnuastro_autocomplete_compreply_arithmetic_prog
 
-        # Limit the operators to those that start with the already given
-        # portion.
-        if [ x"$argument" = x ]; then
-            for f in $arithmetic_lib_operators $arithmetic_prog_operators; do
-                COMPREPLY+=("$f");
-            done
-        else
-            # We aren't using 'grep' because it can confuse the '--XXX' with
-            # its own options on some systems (and placing a '--' before the
-            # search string may not be portable).
-            for f in $(echo $arithmetic_lib_operators $arithmetic_prog_operators \
-                           | awk '{for(i=1;i<=NF;++i) \
-                                     if($i ~ /^'$argument'/) print $i}'); do
-                COMPREPLY+=("$f");
-            done
-        fi
-
+# Dealing with arguments: BuildProgram currently only takes C source files.
+_gnuastro_autocomplete_astbuildprog_arguments(){
+    local given_file=""
+    if _gnuastro_autocomplete_first_in_arguments source_c; then
+        _gnuastro_autocomplete_compreply_options_all ""
+    else
+        _gnuastro_autocomplete_compreply_files_certain source_c "$argument"
     fi
 }
 
@@ -80,9 +63,10 @@ _gnuastro_autocomplete_astarithmetic_arguments(){
 
 
 # Fill option value (depends on option).
-_gnuastro_autocomplete_astarithmetic_option_value(){
+_gnuastro_autocomplete_astbuildprog_option_value(){
 
     # Internal variables.
+    local junk=1
     local fits_file=""
     local given_hdu=""
     local given_file=""
@@ -91,29 +75,28 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        -h|--hdu|-g|--globalhdu|-w|--wcshdu)
-            _gnuastro_autocomplete_given_file image ""
-            _gnuastro_autocomplete_compreply_hdus image "$given_file"
+        -a|--la)
+            _gnuastro_autocomplete_compreply_files_certain source_la "$current"
             ;;
 
-        -w|--wcsfile)
-            _gnuastro_autocomplete_compreply_files_certain image "$current"
+        -c|--cc)
+            _gnuastro_autocomplete_compreply_c_compiler
             ;;
 
-        --interpmetric)
-            for v in radial manhattan; do COMPREPLY+=("$v"); done
+        -I|--includedir|-L|--linkdir)
+            _gnuastro_autocomplete_compreply_directories "$current"
             ;;
 
-        --tableformat)
-            _gnuastro_autocomplete_compreply_tableformat
+        -l|--linklib|-t|--tag|-W|--warning)
+            # There is no easy way to guess which libraries the user wants
+            # to link with, or the tag, or the warning level.
+            junk=1
             ;;
 
-        --wcslinearmatrix)
-            for v in cd pc; do COMPREPLY+=("$v"); done
-            ;;
-
-        --numthreads)
-            _gnuastro_autocomplete_compreply_numthreads
+        -O|--optimize)
+            for f in $(printf "0\n1\n2\n3" | grep ^"$current"); do
+                COMPREPLY+=("$f");
+            done
             ;;
 
     esac
@@ -123,7 +106,7 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
 
 
 
-_gnuastro_autocomplete_astarithmetic(){
+_gnuastro_autocomplete_astbuildprog(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
@@ -166,7 +149,7 @@ _gnuastro_autocomplete_astarithmetic(){
     # If 'option_name_complete==1', then we are busy filling in the option
     # value.
     if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_astarithmetic_option_value
+        _gnuastro_autocomplete_astbuildprog_option_value
 
     # When 'option_name' is not empty (and not yet complete), we are busy
     # filling in the option name.
@@ -175,7 +158,7 @@ _gnuastro_autocomplete_astarithmetic(){
 
     # In the case of "none-of-the-above", it is an argument.
     else
-        _gnuastro_autocomplete_astarithmetic_arguments
+        _gnuastro_autocomplete_astbuildprog_arguments
     fi
 }
 
@@ -186,4 +169,4 @@ _gnuastro_autocomplete_astarithmetic(){
 # Define the completion specification, or COMPSPEC: -o bashdefault: Use
 # Bash default completions if nothing is found.  -F function: Use this
 # 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_astarithmetic astarithmetic
+complete -o bashdefault -F _gnuastro_autocomplete_astbuildprog astbuildprog

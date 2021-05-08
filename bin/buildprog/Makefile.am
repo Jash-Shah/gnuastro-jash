@@ -45,7 +45,8 @@ astbuildprog_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
 astbuildprog_SOURCES = main.c ui.c buildprog.c
 
 # Extra files that must be distributed in the tarball.
-EXTRA_DIST = main.h authors-cite.h args.h ui.h buildprog.h astbuildprog.conf.in
+EXTRA_DIST = main.h authors-cite.h args.h ui.h buildprog.h \
+             astbuildprog-complete.bash astbuildprog.conf.in
 
 
 

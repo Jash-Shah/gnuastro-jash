@@ -28,7 +28,7 @@
 #
 # See the description in 'bin/completion.bash.in'.
 #source /PATH/TO/GNUASTRO/SRC/bin/completion.bash.in
-#source /PATH/TO/GNUASTRO/BUILD/bin/completion.bash-arith.tmp
+#source /PATH/TO/GNUASTRO/BUILD/bin/completion.bash.built
 
 
 
@@ -45,7 +45,7 @@ _gnuastro_autocomplete_asttable_arguments(){
     if _gnuastro_autocomplete_first_in_arguments table; then
         _gnuastro_autocomplete_compreply_options_all ""
     else
-        _gnuastro_autocomplete_compreply_tables "$argument"
+        _gnuastro_autocomplete_compreply_files_certain table "$argument"
     fi
 }
 
@@ -100,7 +100,7 @@ _gnuastro_autocomplete_asttable_option_value(){
             ;;
 
         -L|--catcolumnfile)
-            _gnuastro_autocomplete_compreply_tables "$current"
+            _gnuastro_autocomplete_compreply_files_certain table "$current"
             ;;
 
         --searchin)
@@ -113,7 +113,7 @@ _gnuastro_autocomplete_asttable_option_value(){
             ;;
 
         -w|--wcsfile)
-            _gnuastro_autocomplete_compreply_fits_images "$current"
+            _gnuastro_autocomplete_compreply_files_certain image "$current"
             ;;
 
         -W|--wcshdu)
