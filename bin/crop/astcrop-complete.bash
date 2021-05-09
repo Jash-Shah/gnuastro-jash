@@ -1,5 +1,5 @@
-# Bash autocompletion to Gnuastro's Arithmetic program. See the comments
-# above 'bin/completion.bash.in' for more.
+# Bash autocompletion to Gnuastro's Crop program. See the comments above
+# 'bin/completion.bash.in' for more.
 #
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
@@ -34,32 +34,13 @@
 
 
 #######################################################################
-############       Only for Arithmetic (this program)      ############
+############          Only for Crop (this program)         ############
 #######################################################################
 
-# Dealing with arguments: Arithmetic only takes array/image files.
-_gnuastro_autocomplete_astarithmetic_arguments(){
-
-    # Local variables to be filled by functions.
-    local arithmetic_lib_operators=""
-    local arithmetic_prog_operators=""
-
-    # Print all accessible images.
+# Dealing with arguments: Crop can take any number of images, so don't
+# suggest options
+_gnuastro_autocomplete_astcrop_arguments(){
     _gnuastro_autocomplete_compreply_files_certain image "$argument"
-
-    # If atleast one image has already been given, also print the
-    # arithmetic operators with the file names.
-    if _gnuastro_autocomplete_first_in_arguments image; then
-
-        # Fill the variables.
-        _gnuastro_autocomplete_compreply_arithmetic_lib
-        _gnuastro_autocomplete_compreply_arithmetic_prog
-
-        # Add them to COMPREPLY
-        _gnuastro_autocomplete_compreply_from_string \
-            "$arithmetic_lib_operators $arithmetic_prog_operators" \
-            "$argument"
-    fi
 }
 
 
@@ -67,7 +48,7 @@ _gnuastro_autocomplete_astarithmetic_arguments(){
 
 
 # Fill option value (depends on option).
-_gnuastro_autocomplete_astarithmetic_option_value(){
+_gnuastro_autocomplete_astcrop_option_value(){
 
     # Internal variables.
     local fits_file=""
@@ -78,26 +59,40 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        -h|--hdu|-g|--globalhdu|-w|--wcshdu)
+        -h|--hdu)
             _gnuastro_autocomplete_given_file image ""
             _gnuastro_autocomplete_compreply_hdus \
                 image "$given_file" "$current"
             ;;
 
-        -w|--wcsfile)
-            _gnuastro_autocomplete_compreply_files_certain image "$current"
+        -O|--mode)
+            _gnuastro_autocomplete_compreply_from_string \
+                "img wcs" "$current"
             ;;
 
-        --interpmetric)
-            for v in radial manhattan; do COMPREPLY+=("$v"); done
-            ;;
-
-        --tableformat)
-            _gnuastro_autocomplete_compreply_tableformat
+        -T|--type)
+            _gnuastro_autocomplete_compreply_numbertype "$current"
             ;;
 
         --wcslinearmatrix)
             _gnuastro_autocomplete_compreply_wcslinearmatrix "$current"
+            ;;
+
+        --cathdu)
+            _gnuastro_autocomplete_given_file table "--catalog"
+            _gnuastro_autocomplete_compreply_hdus \
+                table "$given_file" "$current"
+            ;;
+
+        --catalog)
+            _gnuastro_autocomplete_compreply_files_certain table "$current"
+            ;;
+
+        --namecol|--coordcol)
+            _gnuastro_autocomplete_given_file_and_hdu \
+                table "--catalog" "--hdu"
+            _gnuastro_autocomplete_compreply_table_columns \
+                "$given_file" "$given_hdu" "$current"
             ;;
 
         --numthreads)
@@ -111,7 +106,7 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
 
 
 
-_gnuastro_autocomplete_astarithmetic(){
+_gnuastro_autocomplete_astcrop(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
@@ -154,7 +149,7 @@ _gnuastro_autocomplete_astarithmetic(){
     # If 'option_name_complete==1', then we are busy filling in the option
     # value.
     if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_astarithmetic_option_value
+        _gnuastro_autocomplete_astcrop_option_value
 
     # When 'option_name' is not empty (and not yet complete), we are busy
     # filling in the option name.
@@ -163,7 +158,7 @@ _gnuastro_autocomplete_astarithmetic(){
 
     # In the case of "none-of-the-above", it is an argument.
     else
-        _gnuastro_autocomplete_astarithmetic_arguments
+        _gnuastro_autocomplete_astcrop_arguments
     fi
 }
 
@@ -174,4 +169,4 @@ _gnuastro_autocomplete_astarithmetic(){
 # Define the completion specification, or COMPSPEC: -o bashdefault: Use
 # Bash default completions if nothing is found.  -F function: Use this
 # 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_astarithmetic astarithmetic
+complete -o bashdefault -F _gnuastro_autocomplete_astcrop astcrop

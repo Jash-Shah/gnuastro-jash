@@ -1,5 +1,5 @@
-# Bash autocompletion to Gnuastro's Arithmetic program. See the comments
-# above 'bin/completion.bash.in' for more.
+# Bash autocompletion to Gnuastro's CosmicCalculator program. See the
+# comments above 'bin/completion.bash.in' for more.
 #
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
@@ -34,32 +34,13 @@
 
 
 #######################################################################
-############       Only for Arithmetic (this program)      ############
+############    Only for CosmicCalculator (this program)   ############
 #######################################################################
 
-# Dealing with arguments: Arithmetic only takes array/image files.
-_gnuastro_autocomplete_astarithmetic_arguments(){
-
-    # Local variables to be filled by functions.
-    local arithmetic_lib_operators=""
-    local arithmetic_prog_operators=""
-
-    # Print all accessible images.
-    _gnuastro_autocomplete_compreply_files_certain image "$argument"
-
-    # If atleast one image has already been given, also print the
-    # arithmetic operators with the file names.
-    if _gnuastro_autocomplete_first_in_arguments image; then
-
-        # Fill the variables.
-        _gnuastro_autocomplete_compreply_arithmetic_lib
-        _gnuastro_autocomplete_compreply_arithmetic_prog
-
-        # Add them to COMPREPLY
-        _gnuastro_autocomplete_compreply_from_string \
-            "$arithmetic_lib_operators $arithmetic_prog_operators" \
-            "$argument"
-    fi
+# Dealing with arguments: CosmicCalculator doesn't take any arguments, so
+# show the use the list of options immediately.
+_gnuastro_autocomplete_astcosmiccal_arguments(){
+    _gnuastro_autocomplete_compreply_options_all ""
 }
 
 
@@ -67,43 +48,37 @@ _gnuastro_autocomplete_astarithmetic_arguments(){
 
 
 # Fill option value (depends on option).
-_gnuastro_autocomplete_astarithmetic_option_value(){
+_gnuastro_autocomplete_astcosmiccal_option_value(){
 
     # Internal variables.
-    local fits_file=""
-    local given_hdu=""
-    local given_file=""
+    local specline_names=""
 
     # Keep this in the same order as the output of '--help', for options
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        -h|--hdu|-g|--globalhdu|-w|--wcshdu)
-            _gnuastro_autocomplete_given_file image ""
-            _gnuastro_autocomplete_compreply_hdus \
-                image "$given_file" "$current"
+        --obsline)
+            # Put the list of spectral lines in 'specline_names'.
+            _gnuastro_autocomplete_compreply_specline_names
+
+            # Add them to the replies.
+            _gnuastro_autocomplete_compreply_from_string \
+                "$specline_names" "$current"
+
+            # If this is the only suggestion, then add a ',' (to let the
+            # user easily type-in their observed value at this line.
+            if [        x"${COMPREPLY[0]}" != x ] \
+                   && [ x"${COMPREPLY[1]}"  = x ]; then
+                COMPREPLY[0]="${COMPREPLY[0]},";
+                compopt -o nospace
+            fi
             ;;
 
-        -w|--wcsfile)
-            _gnuastro_autocomplete_compreply_files_certain image "$current"
+        --lineatz)
+            _gnuastro_autocomplete_compreply_specline_names
+            _gnuastro_autocomplete_compreply_from_string \
+                "$specline_names" "$current"
             ;;
-
-        --interpmetric)
-            for v in radial manhattan; do COMPREPLY+=("$v"); done
-            ;;
-
-        --tableformat)
-            _gnuastro_autocomplete_compreply_tableformat
-            ;;
-
-        --wcslinearmatrix)
-            _gnuastro_autocomplete_compreply_wcslinearmatrix "$current"
-            ;;
-
-        --numthreads)
-            _gnuastro_autocomplete_compreply_numthreads "$current"
-            ;;
-
     esac
 }
 
@@ -111,7 +86,7 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
 
 
 
-_gnuastro_autocomplete_astarithmetic(){
+_gnuastro_autocomplete_astcosmiccal(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
@@ -154,7 +129,7 @@ _gnuastro_autocomplete_astarithmetic(){
     # If 'option_name_complete==1', then we are busy filling in the option
     # value.
     if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_astarithmetic_option_value
+        _gnuastro_autocomplete_astcosmiccal_option_value
 
     # When 'option_name' is not empty (and not yet complete), we are busy
     # filling in the option name.
@@ -163,7 +138,7 @@ _gnuastro_autocomplete_astarithmetic(){
 
     # In the case of "none-of-the-above", it is an argument.
     else
-        _gnuastro_autocomplete_astarithmetic_arguments
+        _gnuastro_autocomplete_astcosmiccal_arguments
     fi
 }
 
@@ -174,4 +149,4 @@ _gnuastro_autocomplete_astarithmetic(){
 # Define the completion specification, or COMPSPEC: -o bashdefault: Use
 # Bash default completions if nothing is found.  -F function: Use this
 # 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_astarithmetic astarithmetic
+complete -o bashdefault -F _gnuastro_autocomplete_astcosmiccal astcosmiccal

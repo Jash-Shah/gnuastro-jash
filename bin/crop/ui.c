@@ -280,11 +280,12 @@ ui_read_check_only_options(struct cropparams *p)
   switch(checksum)
     {
     case 0:
-      error(EXIT_FAILURE, 0, "no crop definition. You can use any of the "
-            "following options to define the crop(s): '--center', "
-            "'--catalog', '--section', or '--polygon'. Please run this "
-            "command for more information:\n\n"
-            "    $ info gnuastro \"Crop modes\"\n");
+      if(p->cp.printparams==0)
+        error(EXIT_FAILURE, 0, "no crop definition. You can use any of "
+              "the following options to define the crop(s): '--center', "
+              "'--catalog', '--section', or '--polygon'. Please run this "
+              "command for more information:\n\n"
+              "    $ info gnuastro \"Crop modes\"\n");
     case 1:
       /* Everything is ok, just ignore the switch structure. */
       break;
@@ -875,9 +876,17 @@ ui_preparations_to_img_mode(struct cropparams *p)
           "will get wrong results. You can suppress this warning "
           "with '--quiet'", p->inputs->v, p->cp.hdu);
 
-  /* Convert the given coordinates. */
+  /* Convert the given width into pixels. */
   if(p->center || p->catname)
     {
+      /* This function may be called before the formal sanity checks are
+         complete. So we need to check for the presence of '--width' again
+         here. */
+      if(p->width==NULL)
+        error(EXIT_FAILURE, 0, "no crop width specified. When crops are "
+              "defined by their center (with '--center' or '--catalog') a "
+              "width is necessary (using the '--width' option)");
+
       /* Check the requested width and convert it to pixels. */
       darr=p->width->array;
       if(wcs->naxis<p->width->size)
@@ -987,6 +996,7 @@ ui_preparations(struct cropparams *p)
       internalimgmode=1;
       ui_preparations_to_img_mode(p);
     }
+
 
   /* For polygon and section, there should be no center checking. */
   if(p->polygon || p->section)

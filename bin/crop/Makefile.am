@@ -36,7 +36,8 @@ astcrop_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
 
 astcrop_SOURCES = main.c ui.c crop.c wcsmode.c onecrop.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h crop.h wcsmode.h onecrop.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h crop.h wcsmode.h onecrop.h \
+             astcrop-complete.bash
 
 
 

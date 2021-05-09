@@ -62,7 +62,6 @@ _gnuastro_autocomplete_astconvolve_option_value(){
     local fits_file=""
     local given_hdu=""
     local given_file=""
-    local convertt_colormaps=""
 
     # Keep this in the same order as the output of '--help', for options
     # with similar operations, keep the order within the '|'s.
@@ -117,7 +116,7 @@ _gnuastro_autocomplete_astconvolve_option_value(){
             ;;
 
         --wcslinearmatrix)
-            _gnuastro_autocomplete_compreply_from_string "cd pc" "$current"
+            _gnuastro_autocomplete_compreply_wcslinearmatrix "$current"
             ;;
 
         -d|--domain)
@@ -126,7 +125,7 @@ _gnuastro_autocomplete_astconvolve_option_value(){
             ;;
 
         --numthreads)
-            _gnuastro_autocomplete_compreply_numthreads
+            _gnuastro_autocomplete_compreply_numthreads "$current"
             ;;
 
 

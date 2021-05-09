@@ -36,7 +36,8 @@ astcosmiccal_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
 
 astcosmiccal_SOURCES = main.c ui.c cosmiccal.c
 
-EXTRA_DIST = main.h authors-cite.h args.h ui.h cosmiccal.h
+EXTRA_DIST = main.h authors-cite.h args.h ui.h cosmiccal.h \
+             astcosmiccal-complete.bash
 
 
 

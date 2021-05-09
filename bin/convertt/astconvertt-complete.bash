@@ -81,11 +81,11 @@ _gnuastro_autocomplete_astconvertt_option_value(){
             ;;
 
         --wcslinearmatrix)
-            _gnuastro_autocomplete_compreply_from_string "cd pc" "$current"
+            _gnuastro_autocomplete_compreply_wcslinearmatrix "$current"
             ;;
 
         --numthreads)
-            _gnuastro_autocomplete_compreply_numthreads
+            _gnuastro_autocomplete_compreply_numthreads "$current"
             ;;
 
 

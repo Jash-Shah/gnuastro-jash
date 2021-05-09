@@ -51,25 +51,27 @@ BUILT_SOURCES = $(top_srcdir)/AUTHORS
 ## Gnulib tests have been done.
 if COND_ARITHMETIC
   MAYBE_ARITHMETIC = bin/arithmetic
-  MAYBE_ARITHMETIC_COMPLETE = bin/arithmetic/astarithmetic-complete.bash
+  MAYBE_COMPLETE_ARITHMETIC = bin/arithmetic/astarithmetic-complete.bash
 endif
 if COND_BUILDPROG
   MAYBE_BUILDPROG = bin/buildprog
-  MAYBE_BUILDPROG_COMPLETE = bin/buildprog/astbuildprog-complete.bash
+  MAYBE_COMPLETE_BUILDPROG = bin/buildprog/astbuildprog-complete.bash
 endif
 if COND_CONVERTT
   MAYBE_CONVERTT = bin/convertt
-  MAYBE_CONVERTT_COMPLETE = bin/convertt/astconvertt-complete.bash
+  MAYBE_COMPLETE_CONVERTT = bin/convertt/astconvertt-complete.bash
 endif
 if COND_CONVOLVE
   MAYBE_CONVOLVE = bin/convolve
-  MAYBE_CONVOLVE_COMPLETE = bin/convolve/astconvolve-complete.bash
+  MAYBE_COMPLETE_CONVOLVE = bin/convolve/astconvolve-complete.bash
 endif
 if COND_COSMICCAL
   MAYBE_COSMICCAL = bin/cosmiccal
+  MAYBE_COMPLETE_COSMICCAL = bin/cosmiccal/astcosmiccal-complete.bash
 endif
 if COND_CROP
   MAYBE_CROP = bin/crop
+  MAYBE_COMPLETE_CROP = bin/crop/astcrop-complete.bash
 endif
 if COND_FITS
   MAYBE_FITS = bin/fits
@@ -100,7 +102,7 @@ if COND_STATISTICS
 endif
 if COND_TABLE
   MAYBE_TABLE = bin/table
-  MAYBE_TABLE_COMPLETE = bin/table/asttable-complete.bash
+  MAYBE_COMPLETE_TABLE = bin/table/asttable-complete.bash
 endif
 #if COND_TEMPLATE
 #  MAYBE_TEMPLATE = bin/TEMPLATE
@@ -247,6 +249,17 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	echo "convertt_colormaps=\"$$vals\"" >> $@.built; \
 	echo "}" >> $@.built
 
+        # Extract the spectral line names for CosmicCalculator.
+	names=""
+	echo "" >> $@.built
+	for name in $$($(AWK) '/GAL_SPECLINES_NAME/{print $$NF}' \
+	                      $(top_srcdir)/lib/gnuastro/speclines.h \
+	                      | $(SED) -e's|"||g'); do \
+	  names="$$names $$name"; \
+	done; \
+	echo "_gnuastro_autocomplete_compreply_specline_names(){" >> $@.built; \
+	echo "specline_names=\"$$names\"" >> $@.built; \
+	echo "}" >> $@.built
 
         # Copy the low-level common functions to all programs, then put the
         # arithmetic functions inside of it. We are keeping the arithmetic
@@ -256,11 +269,13 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	cat $@.built >> $@.tmp
 
         # Copy each program's source.
-	for f in $(MAYBE_ARITHMETIC_COMPLETE) \
-	         $(MAYBE_BUILDPROG_COMPLETE) \
-	         $(MAYBE_CONVERTT_COMPLETE) \
-	         $(MAYBE_CONVOLVE_COMPLETE) \
-	         $(MAYBE_TABLE_COMPLETE); do \
+	for f in $(MAYBE_COMPLETE_ARITHMETIC) \
+	         $(MAYBE_COMPLETE_BUILDPROG) \
+	         $(MAYBE_COMPLETE_CONVERTT) \
+	         $(MAYBE_COMPLETE_CONVOLVE) \
+	         $(MAYBE_COMPLETE_COSMICCAL) \
+	         $(MAYBE_COMPLETE_CROP) \
+	         $(MAYBE_COMPLETE_TABLE); do \
 	  $(SED) -e 's|@PREFIX[@]|$(bindir)|g' $(top_srcdir)/$$f >> $@.tmp; \
 	done
 	chmod a-w $@.tmp

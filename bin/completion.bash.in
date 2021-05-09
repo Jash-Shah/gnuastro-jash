@@ -655,7 +655,9 @@ _gnuastro_autocomplete_compreply_tableformat(){
 # Add completion replies for the values to '--numthreads'.
 _gnuastro_autocomplete_compreply_numthreads(){
     if nproc &> /dev/null; then
-        for v in $(seq $(nproc)); do COMPREPLY+=("$v"); done
+        local numthreads="$(seq $(nproc))"
+        _gnuastro_autocomplete_compreply_from_string \
+            "$numthreads" "$1"
     fi
 }
 
@@ -678,6 +680,16 @@ _gnuastro_autocomplete_compreply_numbertype(){
     _gnuastro_autocomplete_compreply_from_string \
         "uint8 int8 uint16 int16 uint32 int32 uint64 int64 float32 float64" \
         "$1"
+}
+
+
+
+
+
+# Values to the common '--wcslinearmatrix' option.
+_gnuastro_autocomplete_compreply_wcslinearmatrix(){
+    _gnuastro_autocomplete_compreply_from_string \
+        "cd pc" "$1"
 }
 
 
