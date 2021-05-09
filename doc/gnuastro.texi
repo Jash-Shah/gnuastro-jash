@@ -433,6 +433,7 @@ Invoking Crop
 
 * Crop options::                A list of all the options with explanation.
 * Crop output::                 The outputs of Crop.
+* Crop known issues::           Known issues in running Crop.
 
 Arithmetic
 
@@ -11640,6 +11641,7 @@ This has no effect on each output, see @ref{Finding reddest clumps and visual in
 @menu
 * Crop options::                A list of all the options with explanation.
 * Crop output::                 The outputs of Crop.
+* Crop known issues::           Known issues in running Crop.
 @end menu
 
 @node Crop options, Crop output, Invoking astcrop, Invoking astcrop
@@ -11885,7 +11887,7 @@ The value must either be @option{img} or @option{wcs}, see @ref{Crop modes} for 
 
 
 
-@node Crop output,  , Crop options, Invoking astcrop
+@node Crop output, Crop known issues, Crop options, Invoking astcrop
 @subsubsection Crop output
 
 The string given to @option{--output} option will be interpreted depending
@@ -11930,9 +11932,34 @@ A @code{0} if the central few pixels (value to the @option{--checkcenter} option
 When the crop was not defined by its center (see @ref{Crop modes}), or @option{--checkcenter} was given a value of 0 (see @ref{Invoking astcrop}), the center will not be checked and this column will be given a value of @code{-1}.
 @end enumerate
 
+@node Crop known issues,  , Crop output, Invoking astcrop
+@subsubsection Crop known issues
 
+When running Crop, you may encounter strange errors and bugs.
+In these cases, please report a bug and we will try to fix it as soon as possible, see @ref{Report a bug}.
+However, some things are beyond our control, or may take too long to fix directly.
+In this section we list such known issues that may occur in known cases and suggest the hack (or work-around) to fix the problem:
 
+@table @asis
+@item Crash with @samp{Killed} when cropping catalog from @file{.fits.gz}
+This happens because CFISTIO (that reads and writes FITS files) will internally decompress the file in a temporary place (possibly in the RAM), then start reading from it.
+On the other hand, by default when given a catalog (with many crops) and not specifying @option{--numthreads}, Crop will use the maximum number of threads available on your system to do each crop faster.
+On an normal (not compressed) file, parallel access will not cause a problem, however, when attempting parallel access with the maximum number of threads on a compressed file, CFITSIO crashes with @code{Killed}.
+Therefore the following solutions can be used to fix this crash:
 
+@itemize
+@item
+Decrease the number of threads (at the minimum, set @option{--numthreads=1}).
+Since this solution doesn't attempt to change any of your previous Crop command components or doesn't change your local file structure, it is the preferred way.
+
+@item
+Decompress the file (with the command below) and feed the @file{.fits} file into Crop without changing the number of threads.
+
+@example
+$ gunzip -k image.fits.gz
+@end example
+@end itemize
+@end table
 
 
 
