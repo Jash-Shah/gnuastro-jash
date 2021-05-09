@@ -141,7 +141,7 @@ _gnuastro_autocomplete_asttable(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
-    # requested installation directory. Ff you are debugging, please
+    # requested installation directory. If you are debugging, please
     # correct it yourself (usually to '/usr/local/bin', but don't commit
     # this particular change).
     local gnuastro_prefix="@PREFIX@"

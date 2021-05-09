@@ -735,7 +735,7 @@ Developing
 * Documentation::               Documentation is an integral part of Gnuastro.
 * Building and debugging::      Build and possibly debug during development.
 * Test scripts::                Understanding the test scripts.
-* Shell programmable completion::  Auto-completions for better user experience.
+* Bash programmable completion::  Auto-completions for better user experience.
 * Developer's checklist::       Checklist to finalize your changes.
 * Gnuastro project webpage::    Central hub for Gnuastro activities.
 * Developing mailing lists::    Stay up to date with Gnuastro's development.
@@ -746,10 +746,10 @@ Program source
 * Mandatory source code files::  Description of files common to all programs.
 * The TEMPLATE program::        Template for easy creation of a new program.
 
-Shell programmable completion
+Bash programmable completion
 
-* Bash auto-completion tutorial::  Fast tutorial to get you started on concepts.
-* Auto-completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
+* Bash TAB completion tutorial::  Fast tutorial to get you started on concepts.
+* Implemeting TAB completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
 
 Contributing to Gnuastro
 
@@ -832,7 +832,7 @@ $ cd TOPGNUASTRO
 ## Also works on `tar.gz'. GNU Tar recognizes both formats.
 $ tar xf gnuastro-latest.tar.lz
 
-## Only when previous command fails.
+## Only when the previous command fails.
 $ lzip -d gnuastro-latest.tar.lz
 $ tar xf gnuastro-latest.tar
 @end example
@@ -840,25 +840,26 @@ $ tar xf gnuastro-latest.tar
 Gnuastro has three mandatory dependencies and some optional dependencies for extra functionality, see @ref{Dependencies} for the full list.
 In @ref{Dependencies from package managers} we have prepared the command to easily install Gnuastro's dependencies using the package manager of some operating systems.
 When the mandatory dependencies are ready, you can configure, compile, check and install Gnuastro on your system with the following commands.
+See @ref{Known issues} if you confront any complications.
 
 @example
 $ cd gnuastro-X.X                  # Replace X.X with version number.
 $ ./configure
 $ make -j8                         # Replace 8 with no. CPU threads.
-$ make check
+$ make check -j8                   # Replace 8 with no. CPU threads.
 $ sudo make install
-$ echo "source /usr/local/share/gnuastro/completion.bash" > ~/.bashrc
+$ echo "source /usr/local/share/gnuastro/completion.bash" >> ~/.bashrc
 @end example
 
 @noindent
-See @ref{Known issues} if you confront any complications.
+The last command is to enable Gnuastro's custom TAB completion in Bash.
+For more on this useful feature, see @ref{Shell TAB completion}).
+
 For each program there is an `Invoke ProgramName' sub-section in this book which explains how the programs should be run on the command-line (for example @ref{Invoking asttable}).
-You can read the same section on the command-line by running @command{$ info astprogname} (for example @command{info asttable}).
-The `Invoke ProgramName' sub-section starts with a few examples of each program and goes on to explain the invocation details.
-See @ref{Getting help} for all the options you have to get help.
-In @ref{Tutorials} some real life examples of how these programs might be used are given.
 
-
+Some complete Tutorials are also available in this book with common Gnuastro usage scenarios in astronomical research.
+They even contain links to download the necessary data, and thoroughly describe every step of the process (the science, statistics and optimal usage of the command-line).
+We therefore strongly recommend to follow the tutorials before starting to use Gnuastro, see @ref{Tutorials}.
 
 
 
@@ -7485,18 +7486,25 @@ In others, this option will be ignored.
 
 @cindex Bash auto-complete
 @cindex Completion in the shell
-@cindex Shell programmable completion
+@cindex Bash programmable completion
 @cindex Autocomplete (in the shell/Bash)
-Bash provides a built-in feature called @emph{programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} (also known as TAB completion, bash completion, auto-completion, or word completion) to help increase interactive workflow efficiency (minimize the number of key-strokes @emph{and} the need to memorize things).
+Bash provides a built-in feature called @emph{programmable completion}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html}} to help increase interactive workflow efficiency and minimize the number of key-strokes @emph{and} the need to memorize things.
+It is also known as TAB completion, bash completion, auto-completion, or word completion.
 Completion is activated by pressing @key{[TAB]} while you are typing a command.
 For file arguments this is the default behavior already and you have probably used it a lot with any command-line program.
 
 Besides this simple/default mode, Bash also enables a high level of customization features for its completion.
-These features have been extensively used in Gnuastro to improve your work efficiency.
-For example if you are running @code{asttable} (which only accepts files containing a table), and you press @key{[TAB]}, it will only suggest files containing such tables.
-As another example, if an option needs image HDUs within a FITS file, pressing @key{[TAB]} will suggest them (and not other possibly existing HDUs that contain tables, or just metadata).
+These features have been extensively used in Gnuastro to improve your work efficiency@footnote{To learn how Gnuastro implements TAB completion in Bash, see @ref{Bash programmable completion}.}.
+For example if you are running @code{asttable} (which only accepts files containing a table), and you press @key{[TAB]}, it will only suggest files containing tables.
+As another example, if an option needs image HDUs within a FITS file, pressing @key{[TAB]} will only suggest the image HDUs (and not other possibly existing HDUs that contain tables, or just metadata).
+Just note that the file name has to be already given on the command-line before reaching such options (that look into the contents of a file).
 
-To activate Bash's TAB completion, you need to put the following line in one of your Bash startup files (for example @file{~/.bashrc}).
+But TAB completion is not limited to file types or contents.
+Arguments/Options that take certain fixed string values will directly suggest those strings with TAB, and completely ignore the file structre (for example spectral line names in @ref{Invoking astcosmiccal})!
+As another example, the option @option{--numthreads} option (to specify the number of threads to use by the program), will find the number of available threads on the system, and suggest the possible numbers with a TAB!
+
+To activate Gnuastro's custom TAB completion in Bash, you need to put the following line in one of your Bash startup files (for example @file{~/.bashrc}).
+If you installed Gnuastro using the steps of @ref{Quick start}, you should have already done this (the command just after @command{sudo make install}).
 For a list of (and discussion on) Bash startup files and installation directories see @ref{Installation directory}.
 Of course, if Gnuastro was installed in a custom location, replace the `@file{/usr/local}' part of the line below to the value that was given to @option{--prefix} during Gnuastro's configuration@footnote{In case you don't know the installation directory of Gnuastro on your system, you can find out with this command: @code{which astfits | sed -e"s|/bin/astfits||"}}.
 
@@ -7507,9 +7515,16 @@ source /usr/local/share/gnuastro/completion.bash
 
 After adding the line above in a Bash startup file, TAB completion will always be activated in any new terminal.
 To see if it has been activated, try it out with @command{asttable [TAB][TAB]} and @command{astarithmetic [TAB][TAB]} in a directory that contains tables and images.
-It will work with any Gnuastro program's arguments and long option names.
-Therefore as a side-effect your commands will be far more human-readable with the same number of key strokes of a short option name (if one exists).
+The first will only suggest the files with a table, and the second, only those with an image.
 
+@cartouche
+@noindent
+@strong{TAB completion only works with long option names:}
+As described above, short options are much more complex to generalize, therefore TAB completion is only available for long options.
+But don't worry!
+TAB completion also involves option names, so if you just type @option{--a[TAB][TAB]}, you will get the list of options that start with an @option{--a}.
+Therefore as a side-effect of TAB completion, your commands will be far more human-readable with minimal key strokes.
+@end cartouche
 
 
 @node Standard input,  , Shell TAB completion, Command-line
@@ -29820,7 +29835,7 @@ development and get involved in @ref{Gnuastro project webpage},
 * Documentation::               Documentation is an integral part of Gnuastro.
 * Building and debugging::      Build and possibly debug during development.
 * Test scripts::                Understanding the test scripts.
-* Shell programmable completion::  Auto-completions for better user experience.
+* Bash programmable completion::  Auto-completions for better user experience.
 * Developer's checklist::       Checklist to finalize your changes.
 * Gnuastro project webpage::    Central hub for Gnuastro activities.
 * Developing mailing lists::    Stay up to date with Gnuastro's development.
@@ -30475,10 +30490,13 @@ They are used in the outputs of the common options @option{--version} and @optio
 @cindex GNU Bash
 @cindex Bash auto-complete
 @cindex Completion in the shell
-@cindex Shell programmable completion
+@cindex Bash programmable completion
 @cindex Autocomplete (in the shell/Bash)
 This shell script is used for implementing auto-completion features when running Gnuastro's programs within GNU Bash.
-For more on the concept of shell auto-completion and how it is managed in Gnuastro, see @ref{Shell programmable completion}.
+For more on the concept of shell auto-completion and how it is managed in Gnuastro, see @ref{Bash programmable completion}.
+
+These files assume a set of common shell functions that have the prefix @code{_gnuastro_autocomplete_} in their name and are defined in @file{bin/complete.bash.in} (of the source directory, and under version control) and @file{bin/complete.bash.built} (built during the building of Gnuastro in the build directory).
+During Gnuastro's build, all these Bash completion files are merged into one file that is installed and the user can @code{source} them into their Bash startup file, for example see @ref{Quick start}.
 
 @end vtable
 
@@ -30764,7 +30782,7 @@ guide after you have read the separate introductions.
 
 
 
-@node Test scripts, Shell programmable completion, Building and debugging, Developing
+@node Test scripts, Bash programmable completion, Building and debugging, Developing
 @section Test scripts
 
 @cindex Test scripts
@@ -30817,11 +30835,11 @@ be prefixed with that variable. This is also true for images or files that
 were produced by other tests.
 
 
-@node Shell programmable completion, Developer's checklist, Test scripts, Developing
-@section Shell programmable completion
+@node Bash programmable completion, Developer's checklist, Test scripts, Developing
+@section Bash programmable completion
 @cindex Bash auto-complete
 @cindex Completion in the shell
-@cindex Shell programmable completion
+@cindex Bash programmable completion
 @cindex Autocomplete (in the shell/Bash)
 Gnuastro provides Programmable completion facilities in Bash.
 This greatly helps users reach their desired result with minimal keystrokes, and helps them spend less time on figuring out the option names and values their acceptable values.
@@ -30855,12 +30873,12 @@ After pressing @key{[TAB]}, a full list of gaia edr3 dataset column names will b
 Typing the first key of the desired column and pressing @key{[TAB]} again will limit the displayed list to only the matching ones until the desired column is found.
 
 @menu
-* Bash auto-completion tutorial::  Fast tutorial to get you started on concepts.
-* Auto-completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
+* Bash TAB completion tutorial::  Fast tutorial to get you started on concepts.
+* Implemeting TAB completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
 @end menu
 
-@node Bash auto-completion tutorial, Auto-completion in Gnuastro, Shell programmable completion, Shell programmable completion
-@subsection Bash auto-completion tutorial
+@node Bash TAB completion tutorial, Implemeting TAB completion in Gnuastro, Bash programmable completion, Bash programmable completion
+@subsection Bash TAB completion tutorial
 When a user presses the @key{[TAB]} key while typing commands, Bash will inspect the input to find a relevant ``completion specification'', or @command{compspec}.
 If available, the @command{compspec} will generate a list of possible suggestions to complete the current word.
 A custom @command{compsec} can be generated for any command using @i{bash completion builtins}@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion-Builtins.html}} and the bash variables that start with the @code{COMP} keyword@footnote{@url{https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html}}.
@@ -30986,21 +31004,12 @@ COMPREPLY=( $(compgen -W "foo bar bAr" -- "$2") )
 Here, the @samp{--} instructs @command{compgen} to only reply with a list of words that match @command{$2}, i.e. the current word being completed.
 That is why when you type the letter @samp{b}, @command{complete} will reply only with its matches (@samp{bar} and @samp{bAr}), and will exclude @samp{foo}.
 
-@node Auto-completion in Gnuastro,  , Bash auto-completion tutorial, Shell programmable completion
-@subsection Auto-completion in Gnuastro
-The basics of Bash auto-completion was reviewed in @ref{Bash auto-completion tutorial}.
-All Gnuastro programs contain a @file{completion.bash} script within their source (see @ref{Program source} for more on the fixed files of each program).
-This file contains all the programmable completion features unique to that program.
-However, many useful functions can be shared between various programs.
-Therefore under the @file{bin/} directory, we also have a @file{completion.bash}.
-The @file{bin/completion.bash} file will be loaded before the completion script of the programs, so it is safe to assume the function definitions there within each program's @file{completion.bash}.
+Let's get a little more realistic, and develop a very basic completion script for one of Gnuastro's programs.
+Since the @option{--help} option will list all the options available in Gnuastro's programs, we are going to use its output and create a very basic TAB completion for it.
+Note that the actual TAB completion in Gnuastro is a little more complex than this and fully described in @ref{Implemeting TAB completion in Gnuastro}.
+But this is a good exercise to get started.
 
-Below, we'll develop smarter completions for Gnuastro's programs.
-If you have followed the Gnuastro conventions for designing your program, then you have already designed a @command{--help} option for it.
-Since this option will tell users all the options available, we are going to reuse this command to our advantage.
-
-We'll use @command{asttable} as an example here.
-The goal is to suggest all options that this program has to offer.
+We'll use @command{asttable} as the demo, and the goal is to suggest all options that this program has to offer.
 You can print all of them (with a lot of extra information) with this command:
 
 @example
@@ -31011,24 +31020,28 @@ Let's write an @command{awk} script that prints all of the long options.
 When printing the option names we can safely ignore the short options because if a user knows about the short options, s/he already knows exactly what they want!
 Also, due to their single-character length, they will be too cryptic without their descriptions.
 
-One way to catch the long options might be using the @samp{--} at the beginning of every long option.
-For more information about @command{awk} syntax and @i{regular expressions} or @i{regex} in short, please refer to relevant manuals@footnote{Such as: @url{https://www.gnu.org/software/gawk/manual/html_node/Regexp.html}}.
+One way to catch the long options is through @command{awk} as shown below.
+We only keep the lines that 1) starting with an empty space, 2) their first no-white character is @samp{-} and that have the format of @samp{--} followed by any number of numbers or characters.
+Within those lines, if the first word ends in a comma (@samp{,}), the first word is the short option, so we want the second word (which is the long option).
+Otherwise, the first word is the long option.
+But for options that take a value, this will also include the format of the value (for example @option{--column=STR}).
+So with a @command{sed} command, we remove everything that is after the equal sign, but keep the equal sign itself (to highlight to the user that this option should have a value).
 
-@verbatim
+@example
 $ asttable --help \
-           | awk -v regex=" --+[a-zA-Z0-9]*=?" \
-                 'match($0, regex) {print substr($0, RSTART, RLENGTH)}'
-@end verbatim
+           | awk '/^  / && $1 ~ /^-/ && /--+[a-zA-Z0-9]*/ @{ \
+                    if($1 ~ /,$/) name=$2; \
+                    else          name=$1; \
+                    print name@}' \
+           | sed -e's|=.*|=|'
+@end example
 
-If we wanted to show all the options to the user, we could feed all these options to @command{compgen} and @command{COMPREPLY} subsequently.
-But, we need smarter completions.
-That means, we want to offer suggestions based on the previous option already typed in.
-For that, the @command{case} function can be pretty useful.
-
-Beware!
+If we wanted to show all the options to the user, we could simply feed the values of the command above to @command{compgen} and @command{COMPREPLY} subsequently.
+But, we need @emph{smarter} completions: we want to offer suggestions based on the previous options that have already been typed in.
+Just Beware!
 Sometimes the program might not be acting as you expected.
-In that case, using @b{debug messages} can clear things up.
-You can add a @command{printf} command before the completion function ends, and check all current variables.
+In that case, using debug messages can clear things up.
+You can add a @command{echo} command before the completion function ends, and check all current variables.
 This can save a lot of headaches, since things can get complex.
 
 Take the option @code{--wcsfile=} for example.
@@ -31037,9 +31050,9 @@ Usually, the user is trying to feed a FITS file from the current directory.
 So it would be nice if we could help them and print only a list of FITS files sitting in the current directory -- or whatever directory they have typed-in so far.
 
 But there's a catch.
-Bash will consider @samp{=} a separate word.
+When splitting the user's input line, Bash will consider @samp{=} as a separate word.
 To avoid getting caught in changing the @command{IFS} or @command{WORDBREAKS} values, we will simply check for @samp{=} and act accordingly.
-That is, if the previous word is a @samp{=}, just ignore it and take the word before that as the previous word.
+That is, if the previous word is a @samp{=}, we'll ignore it and take the word before that as the previous word.
 Also, if the current word is a @samp{=}, ignore it completely.
 Taking all of that into consideration, the code below might serve well:
 
@@ -31054,7 +31067,7 @@ _asttable(){
     fi
 
     case "$prev" in
-      -w|--wcsfile)
+      --wcsfile)
         COMPREPLY=( $(compgen -f -X "!*.[fF][iI][tT][sS]" -- "$word") )
       ;;
     esac
@@ -31062,19 +31075,88 @@ _asttable(){
 complete -o nospace -F _asttable asttable
 @end verbatim
 
-The code above checks if the previous word matches any of the upcoming patterns.
-As you can see, we also took the short option @code{-w} into account.
-We do not show the short options as suggestions, but we @b{do} recognize them as valid options.
+@noindent
+To test the code above, write it into @file{asttable-tutorial.sh}, and load it into your running terminal with this command:
+
+@example
+$ source asttable-tutorial.sh
+@end example
+
+If you then go to a directory that has at least one FITS file (with a @file{.fits} suffix, among other files), you can checkout the function by typing the following command.
+You will see that only files ending in @file{.fits} are shown, not any other file.
+
+@example
+asttable --wcsfile=[TAB][TAB]
+@end example
+
+The code above first identifies the current and previous words.
+It then checks if the previous word is equal to @code{--wcsfile} and if so, fills @code{COMPREPLY} array with the necessary suggestions.
+We are using @code{case} here (instead of @code{if}) because in a real scenario, we need to check many more values and @code{case} is far better suited for such cases (cleaner and more efficient code).
 
 The @option{-f} option in @command{compgen} indicates we're looking for a file.
 The @option{-X} option @emph{filters out} the filenames that match the next regular expression pattern.
 Therefore we should start the regular expression with @samp{!} if we want the files matching the regular expression.
 The @code{-- "$word"} component collects only filenames that match the current word being typed.
-And last but not least, the @samp{-o nospace} option in the @command{complete} command instructs the completion script to @b{not} append a white space after each suggestion.
-That is important because the long option and its argument must stick together only with an @samp{=} sign.
+And last but not least, the @samp{-o nospace} option in the @command{complete} command instructs the completion script to @emph{not} append a white space after each suggestion.
+That is important because the long format of an option, its value is more clear when it sticks to the option name with a @samp{=} sign.
+
+You have now written a very basic and working TAB completion script that can easily be generalized to include more options (and be good for a single/simple program).
+However, Gnuastro has many programs that share many similar things and the options are not independent.
+Also, complex situations do often come up: for example some people use a @file{.fit} suffix for FITS files and others don't even use a suffix at all!
+So in practice, things need to get a little more complicated, but the core concept is what you learnt in this section.
+We just modularize the process (breaking logically independent steps into separate functions to use in different situations).
+In @ref{Implemeting TAB completion in Gnuastro}, we will review the generalities of Gnuastro's implementation of Bash TAB completion.
 
 
-@node Developer's checklist, Gnuastro project webpage, Shell programmable completion, Developing
+
+
+
+@node Implemeting TAB completion in Gnuastro,  , Bash TAB completion tutorial, Bash programmable completion
+@subsection Implemeting TAB completion in Gnuastro
+The basics of Bash auto-completion was reviewed in @ref{Bash TAB completion tutorial}.
+Gnuastro is a very complex package of many programs, that have many similar features, so implementing those principles in an easy to maintain manner requires a modular solution.
+As a result, Bash's TAB completion is implemented as multiple files in Gnuastro:
+
+@table @asis
+@item @file{bin/completion.bash.built} (in build directory, automatically created)
+This file contains the values of all Gnuastro options or arguments that take fixed strings as values (not file names).
+For example the names of Arithmetic's operators (see @ref{Arithmetic operators}), or spectral line names (like @option{--obsline} in @ref{CosmicCalculator input options}).
+
+This file is created automatically during the building of Gnuastro.
+The recipe to build it is available in Gnuastro's top-level @file{Makefile.am} (under the target @code{bin/completion.bash}).
+It parses the respective Gnuastro source file that contains the necessary user-specified strings.
+All the acceptable values values are then stored as shell variables (within a function).
+
+@item @file{bin/completion.bash.in} (in source directory, under version control)
+All the low-level completion functions that are common to all programs are stored here.
+It thus contains functions that will parse the command-line or files, or suggest the completion replies.
+
+@item @file{PROGNAME-complete.bash} (in source directory, under version control)
+All Gnuastro programs contain a @file{PROGNAME-complete.bash} script within their source (for more on the fixed files of each program, see @ref{Program source}).
+This file contains the very high-level (program-specific) Bash programmable completion features that are almost always defined in Gnuastro-generic Bash completion file (@file{bin/completion.bash.in}).
+
+The top-level function that is called by Bash should be called @code{_gnuastro_autocomplete_PROGNAME} and its last line should be the @command{complete} command of Bash which calls this function.
+The contents of @code{_gnuastro_autocomplete_PROGNAME} are almost identical for all the programs, it is just a very high-level function that either calls @code{_gnuastro_autocomplete_PROGNAME_arguments} to manage suggestions for the program's arguments or @code{_gnuastro_autocomplete_PROGNAME_option_value} to manage suggestions for the program's option values.
+
+@end table
+
+@noindent
+The scripts above follow the following conventions.
+After reviewing the list, please also look into the functions for examples of each point.
+@itemize
+@item
+No global shell variables in any completion script: the contents of the files above are directly loaded into the user's environment.
+So to keep the user's environment clean and avoid annoyance to the users, everything should be defined as shell functions, and any variable within the functions should be set as @code{local}.
+
+@item
+All the function names should start with `@code{_gnuastro_autocomplete_}', again to avoid populating the user's function name-space with possibly conflicting names.
+
+@item
+Outputs of functions should be written in the @code{local} variables of the higher-level functions tht called them.
+@end itemize
+
+
+@node Developer's checklist, Gnuastro project webpage, Bash programmable completion, Developing
 @section Developer's checklist
 This is a checklist of things to do after applying your changes/additions
 in Gnuastro:
@@ -31086,7 +31168,7 @@ If the change is non-trivial, write test(s) in the @file{tests/progname/} direct
 Then add their file names to @file{tests/Makefile.am}.
 
 @item
-If your change involves a change in command-line behavior of a Gnuastro program or script (for example, adding a new option or argument), create or update the respective @file{bin/PROGNAME/completion.sh} file described under the @ref{Shell programmable completion} section.
+If your change involves a change in command-line behavior of a Gnuastro program or script (for example, adding a new option or argument), create or update the respective @file{bin/PROGNAME/completion.sh} file described under the @ref{Bash programmable completion} section.
 
 @item
 Run @command{$ make check} to make sure everything is working correctly.
