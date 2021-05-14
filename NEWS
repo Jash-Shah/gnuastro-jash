@@ -251,6 +251,7 @@ See the end of the file for license conditions.
   bug #60368: CosmicCalculator fails --setdirconf when redshift isn't given
   bug #60483: No warning when file given to '--config' doesn't exist
   bug #60484: Match crashes when called with --coord and --ccol2 (together)
+  bug #60603: Table crashes with an empty input and --range
 
 
 

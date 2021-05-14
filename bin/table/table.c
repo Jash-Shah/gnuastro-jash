@@ -398,6 +398,10 @@ table_select_by_value(struct tableparams *p)
   int inplace=GAL_ARITHMETIC_FLAG_INPLACE;
   gal_data_t *mask, *blmask, *addmask=NULL;
 
+  /* It may happen that the input table is empty! In such cases, just
+     return and don't bother with this step. */
+  if(p->table->dsize==NULL) return;
+
   /* Allocate datasets for the necessary numbers and write them in. */
   mask=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, p->table->dsize, NULL, 1,
                       p->cp.minmapsize, p->cp.quietmmap, NULL, NULL, NULL);

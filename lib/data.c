@@ -141,9 +141,10 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
 
 
   /* Allocate space for the dsize array, only if the data are to have any
-     dimensions. Note that in our convention, a number has a 'ndim=1' and
-     'dsize[0]=1', A 1D array also has 'ndim=1', but 'dsize[0]>1'. */
-  if(ndim)
+     dimensions or size along the dimensions. Note that in our convention,
+     a number has a 'ndim=1' and 'dsize[0]=1', A 1D array also has
+     'ndim=1', but 'dsize[0]>1'. */
+  if(ndim && dsize)
     {
       /* Allocate dsize. */
       errno=0;
