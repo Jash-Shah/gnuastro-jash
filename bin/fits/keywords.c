@@ -273,7 +273,7 @@ keywords_print_all_keys(struct fitsparams *p, fitsfile **fptr)
   int nkeys, status=0;
   char *fullheader, *c, *cf;
 
-  /* Conver the header into a contiguous string. */
+  /* Convert the header into a contiguous string. */
   if( fits_hdr2str(*fptr, 0, NULL, 0, &fullheader, &nkeys, &status) )
     gal_fits_io_error(status, NULL);
 
@@ -295,6 +295,33 @@ keywords_print_all_keys(struct fitsparams *p, fitsfile **fptr)
   if (fits_free_memory(fullheader, &status) )
     gal_fits_io_error(status, "problem in header.c for freeing "
                       "the memory used to keep all the headers");
+}
+
+
+
+
+
+static void
+keywords_list_key_names(struct fitsparams *p, fitsfile *fptr)
+{
+  size_t i=0;
+  int status=0;
+  char keyname[FLEN_CARD], value[FLEN_CARD], *comment=NULL;
+
+  /* Initialize 'keyname' so the first one (that is blank) isn't
+     printed. */
+  keyname[0]='\0';
+
+  /* Go through all the keywords until you reach 'END'. */
+  while( strcmp(keyname, "END") )
+      {
+        /* Print the most recent keyword: this is placed before reading the
+           keyword because we want to stop upon reading 'END'. */
+        if( strlen(keyname) ) printf("%s\n", keyname);
+
+        /* Read the next keyword. */
+        fits_read_keyn(fptr, i++, keyname, value, comment, &status);
+      }
 }
 
 
@@ -1029,6 +1056,12 @@ keywords(struct fitsparams *p)
       keywords_date_to_seconds(p, fptr);
     }
 
+  /* List all keyword names. */
+  if(p->printkeynames)
+    {
+      keywords_open(p, &fptr, READONLY);
+      keywords_list_key_names(p, fptr);
+    }
 
   /* Close the FITS file */
   if(fptr && fits_close_file(fptr, &status))

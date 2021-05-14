@@ -457,22 +457,27 @@ _gnuastro_autocomplete_first_in_arguments(){
             # on the mode.
             else
                 case "$mode" in
-                    table)
-                        if _gnuastro_autocomplete_is_table $word; then
-                            given_file=$word
-                            return 0;
+                    fits)
+                        if _gnuastro_autocomplete_is_fits "$word"; then
+                            given_file="$word"
                         fi
                         ;;
                     image)
-                        if _gnuastro_autocomplete_fits_has_image $word; then
-                            given_file=$word
+                        if _gnuastro_autocomplete_fits_has_image "$word"; then
+                            given_file="$word"
+                            return 0;
+                        fi
+                        ;;
+                    table)
+                        if _gnuastro_autocomplete_is_table "$word"; then
+                            given_file="$word"
                             return 0;
                         fi
                         ;;
                     source_c)
-                        if $(echo $word | grep "\.c$" &> /dev/null) \
-                                && [ -f $word ]; then
-                            given_file=$word
+                        if $(echo "$word" | grep "\.c$" &> /dev/null) \
+                                && [ -f "$word" ]; then
+                            given_file="$word"
                             return 0;
                         fi
                         ;;
@@ -499,7 +504,7 @@ _gnuastro_autocomplete_first_in_arguments(){
 # Find the requested file from the existing tokens on the command-line.
 #
 # INPUT ARGUMENTS:
-#    1) Mode of file ('table' or 'image').
+#    1) Mode of file ('table', 'image', 'fits').
 #    2) Name of option containing file names.
 #
 # WRITTEN VARIABLES (should be defined before this function).
@@ -526,17 +531,25 @@ _gnuastro_autocomplete_given_file(){
 
         # If we are in image-mode, and the found file has an image, then
         # put the name in 'given_file' (final output). Same for tables.
-        if [ x"$mode" = ximage ]; then
-            if _gnuastro_autocomplete_fits_has_image \
-                   "$read_option_value"; then
-                given_file="$read_option_value"
-            fi
-        elif [ x"$mode" = xtable ]; then
-            if _gnuastro_autocomplete_is_table \
-                   "$read_option_value"; then
-                given_file="$read_option_value"
-            fi
-        fi
+        case $mode in
+            fits)
+                if _gnuastro_autocomplete_is_fits "$read_option_value"; then
+                    given_file="$read_option_value"
+                fi
+                ;;
+            image)
+                if _gnuastro_autocomplete_fits_has_image \
+                       "$read_option_value"; then
+                    given_file="$read_option_value"
+                fi
+                ;;
+            table)
+                if _gnuastro_autocomplete_is_table \
+                       "$read_option_value"; then
+                    given_file="$read_option_value"
+                fi
+                ;;
+        esac
     fi
 
 }
@@ -545,8 +558,8 @@ _gnuastro_autocomplete_given_file(){
 
 
 
-# Find the requested table within the already entered command-line. This
-# option needs two arguments:
+# Find the requested filename and HDU within the already entered
+# command-line. This option needs three arguments:
 #
 # INPUT ARGUMENTS
 #    1) Mode of file ('table' or 'image').
@@ -625,6 +638,57 @@ _gnuastro_autocomplete_compreply_from_string(){
                                  if($i ~ /^'$match'/) print $i}'); do
             COMPREPLY+=("$v");
         done
+    fi
+}
+
+
+
+
+# Some options take multiple values, separated by a comma (for example
+# '--option=A,B,C'). Once the possible solutions have been found by the
+# caller function, this function will decide how to print the suggestions:
+# add a comma or not.
+_gnuastro_autocomplete_compreply_comma_when_matched(){
+
+    # Input arguments:
+    local replies="$1"
+    local tomatch="$2"
+    local fullmatch="$3"
+    local continuematch="$4"
+
+    # Add the completion replies.
+    if [ x"$continuematch" = x ]; then
+        for c in $replies; do COMPREPLY+=("$c"); done
+    else
+        # If there is only one match, include the previously specified
+        # replies in the final filled value and append an ',' to let the
+        # user specify more values to the option.
+        if [ $(echo $replies | wc -w) = 1 ]; then
+
+            # In the continue-mode we don't want the final value to be
+            # appended with a space.
+            compopt -o nospace
+
+            # When 'fullmatch' and 'tomatch' are the same, this was the
+            # first requested reply, so we can safely just print it with a
+            # comma.
+            if [ x"$fullmatch" = x"$tomatch" ]; then
+                COMPREPLY+=("$replies,")
+
+            # This was not the first reply, so we need to add the old ones
+            # as a prefix. But we first need to remove any possible start
+            # of the current reply.
+            else
+                local oldreps=$(echo "$fullmatch" | sed -e's|'$tomatch'$||')
+                COMPREPLY+=("$oldreps$replies,")
+            fi
+
+        # There was more than one matching reply, so continue suggesting
+        # with only the column names.
+        else
+            local oldreps=$(echo "$fullmatch" | sed -e's|'$tomatch'$||')
+            for c in $replies; do COMPREPLY+=("$oldreps$c"); done
+        fi
     fi
 }
 
@@ -756,7 +820,7 @@ _gnuastro_autocomplete_compreply_file(){
 # file) into the completion replies.
 #
 # INPUT ARGUMENTS
-#    1) Mode of file ('table' or 'image').
+#    1) Mode of file ('table', 'image', or 'all').
 #    2) Name of file.
 #    3) Existing argument.
 _gnuastro_autocomplete_compreply_hdus(){
@@ -776,6 +840,50 @@ _gnuastro_autocomplete_compreply_hdus(){
         _gnuastro_autocomplete_compreply_from_string \
             "$hdus" "$matchstr"
     fi
+}
+
+
+
+
+
+# Add all the keywords in current HDU to the replies.
+#
+# INPUT ARGUMENTS:
+#    1) FITS file name.
+#    2) HDU within the FITS file.
+#    3) Existing argument (to match).
+#    4) If a comma should be appended in case of match.
+_gnuastro_autocomplete_compreply_keys(){
+
+    # Input arguments.
+    local given_file="$1"
+    local given_hdu="$2"
+    local fullmatch="$3"
+    local continuematch="$4"
+
+    # Local variables.
+    local keys=""
+    local tomatch=""
+
+    # Keywords can sometimes be given in series (for example
+    # '--keyvalue=A,B,C'). In this case, the caller will give a non-empty
+    # value to the fourth argument ('continuematch'). We therefore need to
+    # will take the last component of the comma-separated list for the
+    # matching of the next element.
+    if [ x"$continuematch" = x ]; then
+        tomatch="$fullmatch"
+    else
+        tomatch=$(echo $fullmatch | awk 'BEGIN{FS=","} {print $NF}')
+    fi
+
+    # Get list of keywords.
+    keys=$("$gnuastro_prefix"/astfits "$given_file" \
+                             --hdu="$given_hdu" \
+                             --printkeynames \
+               | grep ^$tomatch)
+
+    _gnuastro_autocomplete_compreply_comma_when_matched \
+        "$keys" "$tomatch" "$fullmatch" "$continuematch"
 }
 
 
@@ -893,6 +1001,11 @@ _gnuastro_autocomplete_compreply_files_certain(){
             compopt -o nospace
         else
             case "$mode" in
+                fits)
+                    if _gnuastro_autocomplete_is_fits "$f"; then
+                        _gnuastro_autocomplete_compreply_file "$arg" "$f"
+                    fi
+                    ;;
                 image)
                     if _gnuastro_autocomplete_fits_has_image "$f"; then
                         _gnuastro_autocomplete_compreply_file "$arg" "$f"
@@ -945,8 +1058,9 @@ _gnuastro_autocomplete_compreply_table_columns(){
 
     # Columns can usually be given in series (for example
     # '--column=A,B,C'). In this case, the caller will give a non-empty
-    # value to the fourth argument ('continuematch'). To deal with it, we
-    # will take the last component of the comma-separated list.
+    # value to the fourth argument ('continuematch'). We therefore need to
+    # will take the last component of the comma-separated list for the
+    # matching of the next element.
     if [ x"$continuematch" = x ]; then
         tomatch="$fullmatch"
     else
@@ -969,36 +1083,7 @@ _gnuastro_autocomplete_compreply_table_columns(){
                          }' \
                   | grep ^$tomatch)
 
-    # Add the columns into the completion replies.
-    if [ x"$continuematch" = x ]; then
-        for c in $columns; do COMPREPLY+=("$c"); done
-    else
-        # If there is only one match, include the previously specified
-        # columns in the final filled value and append an ',' to let the
-        # user specify more columns.
-        if [ $(echo $columns | wc -w) = 1 ]; then
-
-            # In the continue-mode we don't want the final value to be
-            # appended with a space.
-            compopt -o nospace
-
-            # When 'fullmatch' and 'tomatch' are the same, this was the
-            # first requested column, so we can safely just print it.
-            if [ x"$fullmatch" = x"$tomatch" ]; then
-                COMPREPLY+=("$columns,")
-
-            # This was not the first column, so we need to add the old ones
-            # as a prefix. But we first need to remove any possible start
-            # of the current column.
-            else
-                local oldcols=$(echo "$fullmatch" | sed -e's|'$tomatch'$||')
-                COMPREPLY+=("$oldcols$columns,")
-            fi
-
-        # There was more than one matching column, so continue suggesting
-        # with only the column names.
-        else
-            for c in $columns; do COMPREPLY+=("$c"); done
-        fi
-    fi
+    # Add the necessary columns in a comma-separated manner.
+    _gnuastro_autocomplete_compreply_comma_when_matched \
+        "$columns" "$tomatch" "$fullmatch" "$continuematch"
 }

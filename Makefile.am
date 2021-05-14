@@ -75,6 +75,7 @@ if COND_CROP
 endif
 if COND_FITS
   MAYBE_FITS = bin/fits
+  MAYBE_COMPLETE_FITS = bin/fits/astfits-complete.bash
 endif
 if COND_MATCH
   MAYBE_MATCH = bin/match
@@ -261,6 +262,23 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	echo "specline_names=\"$$names\"" >> $@.built; \
 	echo "}" >> $@.built
 
+        # Extract the WCS coordinate system strings for Fits.
+	vals=""
+	echo "" >> $@.built
+	for val in $$($(AWK) '/^gal_wcs_coordsys_from_string/{parse=1} \
+	                     /^\}/{parse=0} \
+	                     parse==1 && /strcmp\(coordsys/{ \
+	                           for(i=1;i<=NF;++i) if($$i ~ /"/) { \
+	                             print $$i; break}  \
+	                        }' $(top_srcdir)/lib/wcs.c \
+	                    | $(SED) -e's|"||g' -e's|)||' \
+	                    | $(AWK) 'BEGIN{FS=","} {print $$NF}'  ); do \
+	    vals="$$vals $$val"; \
+	done; \
+	echo "_gnuastro_autocomplete_compreply_wcs_coordsys(){" >> $@.built; \
+	echo "wcs_coordsys=\"$$vals\"" >> $@.built; \
+	echo "}" >> $@.built
+
         # Copy the low-level common functions to all programs, then put the
         # arithmetic functions inside of it. We are keeping the arithmetic
         # operators separate to help in debugging when necessary (they can
@@ -275,6 +293,7 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 	         $(MAYBE_COMPLETE_CONVOLVE) \
 	         $(MAYBE_COMPLETE_COSMICCAL) \
 	         $(MAYBE_COMPLETE_CROP) \
+	         $(MAYBE_COMPLETE_FITS) \
 	         $(MAYBE_COMPLETE_TABLE); do \
 	  $(SED) -e 's|@PREFIX[@]|$(bindir)|g' $(top_srcdir)/$$f >> $@.tmp; \
 	done

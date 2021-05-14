@@ -68,8 +68,10 @@ struct fitsparams
   uint8_t       hasimagehdu;   /* File has atleast one image HDU.       */
   uint8_t     listtablehdus;   /* List all table HDUs within the file.  */
   uint8_t     listimagehdus;   /* List all image HDUs within the file.  */
+  uint8_t       listallhdus;   /* List all HDUs within the file.        */
   uint8_t     primaryimghdu;   /* Copy/cut HDU into primary HDU.        */
   uint8_t      printallkeys;   /* Print all the header keywords.        */
+  uint8_t     printkeynames;   /* List all keyword names.               */
   uint8_t              date;   /* Set DATE to current time.             */
   gal_list_str_t      *asis;   /* Strings to write asis.                */
   gal_list_str_t  *keyvalue;   /* Strings to write asis.                */

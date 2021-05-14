@@ -612,6 +612,42 @@ fits_certain_hdu(struct fitsparams *p, int list1has0,
 
 
 static void
+fits_list_all_hdus(struct fitsparams *p)
+{
+  fitsfile *fptr;
+  gal_list_str_t *names=NULL;
+  int hducounter=1, hdutype, status=0;
+
+  /* Open the FITS file. */
+  fits_open_file(&fptr, p->input->v, READONLY, &status);
+  gal_fits_io_error(status, NULL);
+
+  /* Start by moving to the first HDU (counting from 1) and then parsing
+     through them. */
+  fits_movabs_hdu(fptr, hducounter, &hdutype, &status);
+  while(status==0)
+    {
+      gal_list_str_add(&names,
+                       fits_list_certain_hdu_string(fptr,
+                                                    hducounter-1),
+                       0);
+      fits_movabs_hdu(fptr, ++hducounter, &hdutype, &status);
+    }
+
+  /* Close the file. */
+  status=0;
+  fits_close_file(fptr, &status);
+
+  /* Print the result. */
+  gal_list_str_print(names);
+  gal_list_str_free(names, 1);
+}
+
+
+
+
+
+static void
 fits_hdu_remove(struct fitsparams *p, int *r)
 {
   char *hdu;
@@ -746,6 +782,7 @@ fits(struct fitsparams *p)
       else if(p->hastablehdu)   fits_certain_hdu(p, 0, 1);
       else if(p->listimagehdus) fits_certain_hdu(p, 1, 0);
       else if(p->listtablehdus) fits_certain_hdu(p, 1, 1);
+      else if(p->listallhdus)   fits_list_all_hdus(p);
 
       /* Options that can be called together. */
       else

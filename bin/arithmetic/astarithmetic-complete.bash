@@ -93,7 +93,7 @@ _gnuastro_autocomplete_astarithmetic_option_value(){
             ;;
 
         --tableformat)
-            _gnuastro_autocomplete_compreply_tableformat
+            _gnuastro_autocomplete_compreply_tableformat "$current"
             ;;
 
         --wcslinearmatrix)

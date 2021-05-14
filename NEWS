@@ -84,8 +84,10 @@ See the end of the file for license conditions.
   Fits:
    --hastablehdu: print 1 if at least one table HDU exists in file.
    --hasimagehdu: print 1 if at least one image HDU exists in file.
+   --listallhdus: print all HDU names (or numbers when no name exists).
    --listtablehdus: print table HDU names (or numbers when no name exists).
    --listimagehdus: print image HDU names (or numbers when no name exists).
+   --printkeynames: Print all keyword names in current HDU.
    --wcscoordsys: convert the WCS coordinate system of the input into any
      recognized coordinate system. It currently supports: equatorial
      (J2000, B1950), ecliptic (J2000, B1950), Galactic and

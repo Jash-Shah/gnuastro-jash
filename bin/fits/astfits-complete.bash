@@ -1,10 +1,9 @@
-# Bash autocompletion to Gnuastro's Table program. See the comments above
+# Bash autocompletion to Gnuastro's Fits program. See the comments above
 # 'bin/completion.bash.in' for more.
 #
 # Original author:
-#     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
-# Contributing author(s):
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Contributing author(s):
 # Copyright (C) 2021 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -35,18 +34,13 @@
 
 
 #######################################################################
-############         Only for Table (this program)         ############
+############          Only for Fits (this program)         ############
 #######################################################################
 
-# Dealing with arguments: Table only takes one argument/file. So if a table
-# has been previously given on the command-line only print option names.
-_gnuastro_autocomplete_asttable_arguments(){
-    local given_file=""
-    if _gnuastro_autocomplete_first_in_arguments table; then
-        _gnuastro_autocomplete_compreply_options_all ""
-    else
-        _gnuastro_autocomplete_compreply_files_certain table "$argument"
-    fi
+# Dealing with arguments: Fits can take any number of images, so don't
+# suggest options
+_gnuastro_autocomplete_astfits_arguments(){
+    _gnuastro_autocomplete_compreply_files_certain fits "$argument"
 }
 
 
@@ -54,84 +48,75 @@ _gnuastro_autocomplete_asttable_arguments(){
 
 
 # Fill option value (depends on option).
-_gnuastro_autocomplete_asttable_option_value(){
+_gnuastro_autocomplete_astfits_option_value(){
 
     # Internal variables.
     local fits_file=""
     local given_hdu=""
     local given_file=""
+    local wcs_coordsys=""
 
     # Keep this in the same order as the output of '--help', for options
     # with similar operations, keep the order within the '|'s.
     case "$option_name" in
 
-        # Options that take a columns from the main argument.
-        --column|--noblank|--inpolygon|--outpolygon|--colmetadata|--equal|--notequal)
-
-            # The '--column' and '--noblank' options can (and usually
-            # will!) take more than one column name as value.
-            local continuematch=""
-            case "$option_name" in
-                --column|--noblank) continuematch=yes;;
-            esac
-
-            # Find the suggestions.
-            _gnuastro_autocomplete_given_file_and_hdu table "" --hdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current" "$continuematch"
-
-            # These options take a column name as first value, and the user
-            # should continue with other details. So when there is only one
-            # match, we need to disable the extra space that is printed by
-            # default and also add a ',' to prepare the user for entering
-            # other points.
-            case "$option_name" in
-                --colmetadata|--equal|--notequal) compopt -o nospace;;
-            esac
-            ;;
-
-        -C|--catcolumns)
-            _gnuastro_autocomplete_given_file_and_hdu \
-                table --catcolumnfile --catcolumnhdu
-            _gnuastro_autocomplete_compreply_table_columns \
-                "$given_file" "$given_hdu" "$current"
-            ;;
-
-        -h|--hdu)
-            _gnuastro_autocomplete_given_file table ""
+        --hdu|--copy|--cut|--remove)
+            _gnuastro_autocomplete_given_file fits ""
             _gnuastro_autocomplete_compreply_hdus \
-                table "$given_file" "$current"
+                all "$given_file" "$current"
             ;;
 
-        -L|--catcolumnfile)
-            _gnuastro_autocomplete_compreply_files_certain table "$current"
-            ;;
-
-        --searchin)
-            _gnuastro_autocomplete_compreply_searchin "$current"
-            ;;
-
-        -u|--catcolumnhdu)
-            _gnuastro_autocomplete_given_file table --catcolumnfile
+        --outhdu)
+            _gnuastro_autocomplete_given_file fits "--output"
             _gnuastro_autocomplete_compreply_hdus \
-                table "$given_file" "$current"
+                all "$given_file" "$current"
             ;;
 
-        -w|--wcsfile)
-            _gnuastro_autocomplete_compreply_files_certain image "$current"
-            ;;
-
-        -W|--wcshdu)
-            _gnuastro_autocomplete_given_file image --wcsfile
-            _gnuastro_autocomplete_compreply_hdus \
-                image "$given_file" "$current"
+        --output)
+            _gnuastro_autocomplete_compreply_files_certain fits "$current"
             ;;
 
         --tableformat)
             _gnuastro_autocomplete_compreply_tableformat "$current"
             ;;
 
-        --copy)
+        --delete|--datetosec)
+            _gnuastro_autocomplete_given_file_and_hdu fits "" "--hdu"
+            _gnuastro_autocomplete_compreply_keys "$given_file" \
+                                                  "$given_hdu" "$current"
+            ;;
+
+        --keyvalue)
+            _gnuastro_autocomplete_given_file_and_hdu fits "" "--hdu"
+            _gnuastro_autocomplete_compreply_keys "$given_file" \
+                                                  "$given_hdu" "$current" \
+                                                  "yes"
+            ;;
+
+        --rename|--update)
+            # Find the match.
+            _gnuastro_autocomplete_given_file_and_hdu fits "" "--hdu"
+            _gnuastro_autocomplete_compreply_keys "$given_file" \
+                                                  "$given_hdu" "$current"
+
+            # If there is the only one suggestion, then add a ',' (to let
+            # the user easily type-in the new name.
+            if [        x"${COMPREPLY[0]}" != x ] \
+                   && [ x"${COMPREPLY[1]}"  = x ]; then
+                COMPREPLY[0]="${COMPREPLY[0]},";
+                compopt -o nospace
+            fi
+            ;;
+
+        --wcscoordsys)
+            _gnuastro_autocomplete_compreply_wcs_coordsys
+            _gnuastro_autocomplete_compreply_from_string \
+                "$wcs_coordsys" "$current"
+            ;;
+
+        --wcsdistortion)
+            _gnuastro_autocomplete_compreply_from_string \
+                "SIP TPV" "$current"
             ;;
     esac
 }
@@ -140,7 +125,7 @@ _gnuastro_autocomplete_asttable_option_value(){
 
 
 
-_gnuastro_autocomplete_asttable(){
+_gnuastro_autocomplete_astfits(){
 
     # The installation directory of Gnuastro. The '@PREFIX@' part will be
     # replaced automatically during 'make install', with the user's given
@@ -183,7 +168,7 @@ _gnuastro_autocomplete_asttable(){
     # If 'option_name_complete==1', then we are busy filling in the option
     # value.
     if [ $option_name_complete = 1 ]; then
-        _gnuastro_autocomplete_asttable_option_value
+        _gnuastro_autocomplete_astfits_option_value
 
     # When 'option_name' is not empty (and not yet complete), we are busy
     # filling in the option name.
@@ -192,7 +177,7 @@ _gnuastro_autocomplete_asttable(){
 
     # In the case of "none-of-the-above", it is an argument.
     else
-        _gnuastro_autocomplete_asttable_arguments
+        _gnuastro_autocomplete_astfits_arguments
     fi
 }
 
@@ -203,4 +188,4 @@ _gnuastro_autocomplete_asttable(){
 # Define the completion specification, or COMPSPEC: -o bashdefault: Use
 # Bash default completions if nothing is found.  -F function: Use this
 # 'function' to generate the given program's completion.
-complete -o bashdefault -F _gnuastro_autocomplete_asttable asttable
+complete -o bashdefault -F _gnuastro_autocomplete_astfits astfits

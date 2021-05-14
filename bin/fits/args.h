@@ -140,6 +140,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "listallhdus",
+      UI_KEY_LISTALLHDUS,
+      0,
+      0,
+      "List all HDUs within the file.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->listallhdus,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 
@@ -254,7 +267,7 @@ struct argp_option program_options[] =
     {
       "rename",
       UI_KEY_RENAME,
-      "STR",
+      "STR,STR",
       0,
       "Rename keyword, keeping value and comments.",
       UI_GROUP_KEYWORD,
@@ -267,7 +280,7 @@ struct argp_option program_options[] =
     {
       "update",
       UI_KEY_UPDATE,
-      "STR",
+      "STR,STR",
       0,
       "Update a keyword value or comments.",
       UI_GROUP_KEYWORD,
@@ -350,6 +363,19 @@ struct argp_option program_options[] =
       "Print all keywords in the selected HDU.",
       UI_GROUP_KEYWORD,
       &p->printallkeys,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "printkeynames",
+      UI_KEY_PRINTKEYNAMES,
+      0,
+      0,
+      "Print all keyword names.",
+      UI_GROUP_KEYWORD,
+      &p->printkeynames,
       GAL_OPTIONS_NO_ARG_TYPE,
       GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,

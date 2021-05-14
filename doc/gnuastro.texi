@@ -9130,6 +9130,9 @@ Otherwise (when no image HDU exists in the file) nothing will be printed.
 In the FITS standard, any array with any dimensions is called an ``image'', therefore this option includes 1, 3 and 4 dimensional arrays too.
 However, an image HDU with zero dimensions (which is usually the first extension and only contains metadata) is not counted here.
 
+@item --listallhdus
+Print the names or numbers (when a name doesn't exist, counting from zero) of all HDUs within the input file on the standard output, one per line.
+
 @item --pixelscale
 Print the HDU's pixel-scale (change in world coordinate for one pixel along each dimension) and pixel area or voxel volume.
 Without the @option{--quiet} option, the output of @option{--pixelscale} has multiple lines and explanations, thus being more human-friendly.
@@ -9395,9 +9398,9 @@ All keywords given will be removed from the headers in the same given order.
 If the keyword doesn't exist, Fits will give a warning and return with a non-zero value, but will not stop.
 To stop as soon as an error occurs, run with @option{--quitonerror}.
 
-@item -r STR
-@itemx --rename=STR
-Rename a keyword to a new value.
+@item -r STR,STR
+@itemx --rename=STR,STR
+Rename a keyword to a new value (for example @option{--rename=OLDNAME,NEWNAME}.
 @option{STR} contains both the existing and new names, which should be separated by either a comma (@key{,}) or a space character.
 Note that if you use a space character, you have to put the value to this option within double quotation marks (@key{"}) so the space character is not interpreted as an option separator.
 Multiple instances of @option{--rename} can be given in one command.
@@ -9571,9 +9574,13 @@ To stop as soon as an error occurs, run with @option{--quitonerror}.
 
 @item -p
 @itemx --printallkeys
-Print all the keywords in the specified FITS extension (HDU) on the command-line.
+Print the full meta data (keywords, values, units and comments) in the specified FITS extension (HDU).
 If this option is called along with any of the other keyword editing commands, as described above, all other editing commands take precedence to this.
 Therefore, it will print the final keywords after all the editing has been done.
+
+@item --printkeynames
+Print only the keyword names of the specified FITS extension (HDU), one line per name.
+This option must be called alone.
 
 @item -v
 @itemx --verify
@@ -17846,7 +17853,7 @@ Therefore if the input standard deviation (or variance) image also contains the 
 The HDU of the Sky value standard deviation image.
 
 @item --variance
-The dataset given to @option{--stdfile} (and @option{--stdhdu} has the Sky variance of every pixel, not the Sky standard deviation.
+The dataset given to @option{--instd} (and @option{--stdhdu} has the Sky variance of every pixel, not the Sky standard deviation.
 
 @item --forcereadstd
 Read the input STD image even if it is not required by any of the requested columns.

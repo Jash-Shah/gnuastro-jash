@@ -324,7 +324,7 @@ ui_read_check_only_options(struct fitsparams *p)
      mode flag to keyword-mode. */
   if( p->date || p->comment || p->history || p->asis || p->keyvalue
       || p->delete || p->rename || p->update || p->write || p->verify
-      || p->printallkeys || p->copykeys || p->datetosec
+      || p->printallkeys || p->printkeynames || p->copykeys || p->datetosec
       || p->wcscoordsys || p->wcsdistortion )
     {
       /* Check if a HDU is given. */
@@ -340,6 +340,7 @@ ui_read_check_only_options(struct fitsparams *p)
       /* Keyword-related options that must be called alone. */
       checkkeys = ( (p->keyvalue!=NULL)
                     + (p->datetosec!=NULL)
+                    + (p->printkeynames!=0)
                     + (p->wcscoordsys!=NULL)
                     + (p->wcsdistortion!=NULL) );
       if( ( checkkeys
@@ -360,6 +361,11 @@ ui_read_check_only_options(struct fitsparams *p)
          string isn't recognized. */
       if(p->wcsdistortion)
         p->distortionid=gal_wcs_distortion_from_string(p->wcsdistortion);
+
+      /* Make sure the value of '--keyvalue' is actually present. */
+      if(p->keyvalue && p->keyvalue->v[0]=='\0')
+        error(EXIT_FAILURE, 0, "the '--keyvalue' option requires a value: "
+              "the name(s) of keywords you want the value of");
 
       /* Set the operating mode. */
       p->mode=FITS_MODE_KEY;
