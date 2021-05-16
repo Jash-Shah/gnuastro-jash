@@ -256,15 +256,16 @@ parse_opt(int key, char *arg, struct argp_state *state)
   /* Set the key to this option. */
   switch(key)
     {
-
     /* Read the non-option tokens (arguments): */
     case ARGP_KEY_ARG:
+      /* The user may give a shell variable that is empty! In that case
+         'arg' will be an empty string! We don't want to account for such
+         cases (and give a clear error that no input has been given). */
       if(p->catname)
         argp_error(state, "only one argument (input catalog) may be given");
       else
-        p->catname=arg;
+        if(arg[0]!='\0') p->catname=arg;
       break;
-
 
     /* This is an option, set its value. */
     default:

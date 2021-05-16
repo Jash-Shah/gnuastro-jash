@@ -177,11 +177,14 @@ parse_opt(int key, char *arg, struct argp_state *state)
   /* Set the key to this option. */
   switch(key)
     {
-
     /* Read the non-option tokens (arguments): */
     case ARGP_KEY_ARG:
-      argp_error(state, "currently %s doesn't take any arguments",
-                 PROGRAM_NAME);
+      /* The user may give a shell variable that is empty! In that case
+         'arg' will be an empty string! We don't want to account for such
+         cases (and give a clear error that no input has been given). */
+      if(arg[0]!='\0')
+        argp_error(state, "currently %s doesn't take any arguments",
+                   PROGRAM_NAME);
       break;
 
 

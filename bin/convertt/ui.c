@@ -190,12 +190,13 @@ parse_opt(int key, char *arg, struct argp_state *state)
   /* Set the key to this option. */
   switch(key)
     {
-
     /* Read the non-option tokens (arguments): */
     case ARGP_KEY_ARG:
-      gal_list_str_add(&p->inputnames, arg, 0);
+      /* The user may give a shell variable that is empty! In that case
+         'arg' will be an empty string! We don't want to account for such
+         cases (and give a clear error that no input has been given). */
+      if(arg[0]!='\0') gal_list_str_add(&p->inputnames, arg, 0);
       break;
-
 
     /* This is an option, set its value. */
     default:

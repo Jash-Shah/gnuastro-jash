@@ -172,14 +172,18 @@ parse_opt(int key, char *arg, struct argp_state *state)
   /* Set the key to this option. */
   switch(key)
     {
-
-    /* Read the non-option tokens (arguments): */
+    /* Read the non-option tokens (arguments). */
     case ARGP_KEY_ARG:
-      /* Only FITS files are acceptable. */
-      if( gal_fits_file_recognized(arg) )
-        gal_list_str_add(&p->input, arg, 1);
-      else
-        argp_error(state, "%s is not a recognized FITS file", arg);
+      /* The user may give a shell variable that is empty! In that case
+         'arg' will be an empty string! We don't want to account for such
+         cases (and give a clear error that no input has been given). */
+      if(arg[0]!='\0')
+        {
+          if( gal_fits_file_recognized(arg) )
+            gal_list_str_add(&p->input, arg, 1);
+          else
+            argp_error(state, "%s is not a recognized FITS file", arg);
+        }
       break;
 
 

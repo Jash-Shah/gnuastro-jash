@@ -163,19 +163,21 @@ parse_opt(int key, char *arg, struct argp_state *state)
   /* Set the key to this option. */
   switch(key)
     {
-
-    /* Read the non-option tokens (arguments): */
+    /* Read the non-option tokens (arguments). */
     case ARGP_KEY_ARG:
+      /* The user may give a shell variable that is empty! In that case
+         'arg' will be an empty string! We don't want to account for such
+         cases (and give a clear error that no input has been given). */
       if(p->input1name)
         {
           if(p->input2name)
-            argp_error(state, "only two arguments (input files) should be "
-                       "given, not any more");
+            argp_error(state, "only two arguments (input files) "
+                       "should be given, not any more");
           else
-            p->input2name=arg;
+            { if(arg[0]!='\0') p->input2name=arg; }
         }
       else
-        p->input1name=arg;
+        { if(arg[0]!='\0') p->input1name=arg; }
       break;
 
 
