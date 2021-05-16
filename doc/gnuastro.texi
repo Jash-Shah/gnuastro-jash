@@ -21176,17 +21176,13 @@ $ astscript-radial-profile image.fits
 
 ## Generate the radial profile centered at x=44 and y=37 (in pixels),
 ## up to  a radial distance of 19 pixels, use the mean value.
-$ astscript-radial-profile image.fits      \
-                           --center=44,37  \
-                           --rmax=19
+$ astscript-radial-profile image.fits --center=44,37 --rmax=19
 
 ## Generate the radial profile centered at x=44 and y=37 (in pixels),
 ## up to a radial distance of 100 pixels, compute sigma clipped
 ## mean and standard deviation (sigclip-mean and sigclip-std) using
 ## 3 sigma and 10 iterations.
-$ astscript-radial-profile image.fits       \
-                           --center=44,37   \
-                           --rmax=100       \
+$ astscript-radial-profile image.fits --center=44,37 --rmax=100 \
                            --sigmaclip=3,10 \
                            --measure=sigclip-mean,sigclip-std
 
@@ -21194,41 +21190,34 @@ $ astscript-radial-profile image.fits       \
 ## DEC=0.9454292263, up to a radial distance of 88 pixels,
 ## axis ratio equal to 0.32, and position angle of 148 deg.
 ## Name the output table as `radial-profile.fits'
-$ astscript-radial-profile image.fits --mode=wcs             \
+$ astscript-radial-profile image.fits --mode=wcs \
                            --center=20.53751695,0.9454292263 \
-                           --rmax=88                         \
-                           --axisratio=0.32                  \
+                           --rmax=88 --axisratio=0.32 \
                            --positionangle=148 -oradial-profile.fits
 
 ## Generate the radial profile centered at RA=40.062675270971,
 ## DEC=-8.1511992735126, up to a radial distance of 20 pixels,
 ## and calculate the SNR using the INPUT-NO-SKY and SKY-STD
 ## extensions of the NoiseChisel output file.
-$ astscript-radial-profile  image_detected.fits -hINPUT-NO-SKY        \
-                            --mode=wcs                                \
-                            --center=40.062675270971,-8.1511992735126 \
-                            --rmax=20                                 \
-                            --sn --stdhdu=SKY_STD
+$ astscript-radial-profile image_detected.fits -hINPUT-NO-SKY \
+                           --mode=wcs --measure=sn \
+                           --center=40.062675270971,-8.1511992735126 \
+                           --rmax=20 --stdhdu=SKY_STD
 
 ## Generate the radial profile centered at RA=40.062675270971,
 ## DEC=-8.1511992735126, up to a radial distance of 20 pixels,
 ## and compute the SNR with a fixed value for std, std=10.
-$ astscript-radial-profile  image.fits -h1                            \
-                            --mode=wcs                                \
-                            --rmax=20                                 \
-                            --center=40.062675270971,-8.1511992735126 \
-                            --sn --instd=10
+$ astscript-radial-profile image.fits -h1 --mode=wcs --rmax=20 \
+                           --center=40.062675270971,-8.1511992735126 \
+                           --measure=sn --instd=10
 
 ## Generate the radial profile centered at X=1201, Y=1201 pixels, up
 ## to a radial distance of 20 pixels and compute the median and the
 ## SNR using the first extension of sky-std.fits as the dataset for std
 ## values.
-$ astscript-radial-profile image.fits -h1                             \
-                           --mode=img                                 \
-                           --rmax=20                                  \
-                           --center=1201,1201                         \
-                           --measure=median                           \
-                           --sn --instd=sky-std.fits --stdhdu=1
+$ astscript-radial-profile image.fits -h1 --mode=img --rmax=20 \
+                           --center=1201,1201 --measure=median,sn \
+                           --instd=sky-std.fits
 @end example
 
 This installed script will read a FITS image and will use it as the basis for constructing the radial profile.
@@ -21310,10 +21299,14 @@ By default, it is @option{--pangle=0}, which means that the semi-major axis of t
 @itemx --measure=STR
 The operator for measuring the values over each radial distance.
 The values given to this option will be directly passed to @ref{MakeCatalog}.
-As a consequence, all MakeCatalog measurements like the median, mean, std, sigclip-mean, sigclip-number, etc. can be used here.
+As a consequence, all MakeCatalog measurements like the magnitude, magnitude error, median, mean, signal-to-noise ratio (S/N), std, surface brightness, sigclip-mean, sigclip-number, etc. can be used here.
 For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
 Multiple values can be given to this option, each separated by a comma.
 This option can also be called multiple times.
+
+Some measurements by MakeCatalog require a per-pixel sky standard deviation (for example magnitude error or S/N).
+Therefore when asking for such measurements, use the @option{--instd} option (described below) to specify the per-pixel sky standard deviation over each pixel.
+For other measurements like the magnitude or surface brightness, MakeCatalog will need a Zeropoint, which you can set with the @option{--zeropoint} option.
 
 For example, by setting @option{--measure=mean,sigclip-mean --measure=median}, the mean, sigma-clipped mean and median values will be computed.
 The output radial profile will have 4 columns in this order: radial distance, mean, sigma-clipped and median.
@@ -21331,6 +21324,10 @@ To see the default value of this option in MakeCatalog, you can run this command
 $ astmkcatalog -P | grep " sigmaclip "
 @end example
 
+@item --zeropoint=FLT
+The Zeropoint of the input dataset.
+This is necessary when you request measurements like Magnitude, or Surface brightess.
+
 @item -v INT
 @itemx --oversample=INT
 Oversample the input dataset to the fraction given to this option.
@@ -21338,14 +21335,12 @@ Therefore if you set @option{--rmax=20} for example and @option{--oversample=5},
 Unless the object is heavily undersampled (the pixels are larger than the actual object), this method provides a much more accurate result and there are sufficient number of pixels to get the profile accurately.
 
 @item --instd=FLT/STR
-Sky standard deviation as a single number (FLT) or as the filename (STR) containing the image with the std value for each pixel. Only relevant if @option{--sn} is requested.
+Sky standard deviation as a single number (FLT) or as the filename (STR) containing the image with the std value for each pixel (the HDU within the file should be given to the @option{--stdhdu} option mentioned below).
+This is only necessary when the requested measurement (value given to @option{--measure}) by MakeCatalog needs the Standard deviation (for example the signal-to-noise ratio or magnitude error).
+If your measurements don't require a standard deviation, it is best to ignore this option (because it will slow down the script).
 
 @item --stdhdu=STR
-HDU/extension of the sky standard deviation image specified with @option{--instd}. Only relevant if @option{--sn} is requested.
-
-@item  -n
-@item --sn
-Compute the signal to noise ratio for each radius of the profile according to @option{--instd} and @option{--stdhdu}. A new column named SN is added to the output radial profile.
+HDU/extension of the sky standard deviation image specified with @option{--instd}.
 
 @item -t STR
 @itemx --tmpdir=STR

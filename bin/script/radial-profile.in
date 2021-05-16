@@ -33,7 +33,6 @@ set -e
 
 
 # Default option values (can be changed with options on the command-line).
-sn=""
 hdu=1
 rmax=""
 quiet=""
@@ -46,6 +45,7 @@ keeptmp=0
 mode="img"
 measure=""
 axisratio=1
+zeropoint=""
 sigmaclip=""
 measuretmp=""
 oversample=""
@@ -95,6 +95,7 @@ $scriptname options:
   -Q, --axisratio=FLT     Axis ratio for ellipse profiles (A/B).
   -p, --positionangle=FLT Position angle for ellipse profiles.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
+      --zeropoint=FLT     Zeropoint magnitude of input dataset.
 
  Output:
   -t, --tmpdir            Directory to keep temporary files.
@@ -112,8 +113,6 @@ $scriptname options:
       --cite              BibTeX citation for this program.
   -q, --quiet             Don't print the list.
   -V, --version           Print program version.
-  -n, --sn                The signal to noise ratio of the profile is calculated
-                          according to instd and stdhdu.
 
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
@@ -216,6 +215,7 @@ do
         -s|--sigmaclip)     sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*) sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
+        --zeropoint=*)      zeropoint="${1#*=}";                       check_v "$1" "$zeropoint";  shift;;
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
@@ -244,7 +244,6 @@ do
         -V*|--version=*)  on_off_option_error --version -V;;
         --cite)           astfits --cite; exit 0;;
         --cite=*)         on_off_option_error --cite;;
-        --sn)             sn=1; shift;;
 
         # Unrecognized option:
         -*) echo "$scriptname: unknown option '$1'"; exit 1;;
@@ -302,39 +301,6 @@ if [ x"$measure" = x ]; then measure=mean; fi
 
 
 
-# Check and set SNR parameters and variables
-# ------------------------------------------
-#
-# --sn  --instd  --stdhdu  instdtype
-#   yes   no       yes       file (same as input image)
-#   yes   yes      yes       file (independent file)
-#   yes   no       no        error
-#   yes   yes      no        number (std value)
-
-if [ x"$sn" != x ]; then
-    finalsn="--sn "
-    if [ x"$stdhdu" != x ]; then
-        instdtype="file"
-        if [ x"$instd" = x ]; then instd=$inputs; fi
-    else
-        if [ x"$instd" != x ]; then
-            instdtype="number"
-        else
-            echo "No stdhdu has been entered \
-                  neither a numerical value for instd."
-            exit 1
-        fi
-    fi
-    finalinstd="--instd=$instd "
-else
-   finalsn=""
-   finalinstd=""
-fi
-
-
-
-
-
 # Finalize the center value
 # -------------------------
 #
@@ -351,26 +317,24 @@ if [ x"$center" = x ]; then
     xcenter=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS1/{print $3/2+0.5}')
     ycenter=$(astfits $inputs --hdu=$hdu | awk '/^NAXIS2/{print $3/2+0.5}')
 
+# A center is given.
 else
 
+    # The central position is in image mode; we should just separate each
+    # coordinate.
     if [ $mode = img ]; then
-
-        # A center has been given, we should just separate them.
         xcenter=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
         ycenter=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 
+    # The center is in WCS coordinates. We should thus convert them to
+    # image coordinates at this point. To do that, WCS information from the
+    # input header image is used.
     else
-
-        # WCS coordinates have been given. We should thus convert them to
-        # image coordinates at this point. To do that, WCS information from
-        # the input header image is used.
         xy=$(echo "$center" \
-                  | sed 's/,/ /' \
                   | asttable -c'arith $1 $2 wcstoimg' \
                              --wcsfile=$inputs --wcshdu=$hdu)
         xcenter=$(echo $xy | awk '{print $1}');
         ycenter=$(echo $xy | awk '{print $2}');
-
     fi
 fi
 
@@ -448,21 +412,29 @@ if [ -d $tmpdir ]; then junk=1; else mkdir $tmpdir; fi
 # and third value of that string, and convert to the cropped coordinate
 # system. Note that because FITS pixel couting starts from 1, we need to
 # subtract `1'.
+#
+# For the standard deviation, besides being empty or not, we first need to
+# make sure it is actually a file (note that it can also be a number). If
+# its a file, we'll crop it and set 'instd' to be the new cropped file.
 crop=$tmpdir/crop.fits
+cropstd=$tmpdir/crop-std.fits
 cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$xcenter,$ycenter --mode=img \
         --width=$cropwidth --output=$crop $quiet
-
-if [ x"$sn" != x ]; then
-    if [ "$instdtype" = "file" ]; then
-        cropstd=$tmpdir/cropstd.fits
-        astcrop $instd -h$stdhdu --center=$xcenter,$ycenter \
-                --mode=img --width=$cropwidth --output=$cropstd $quiet
-        finalinstd="--instd=$cropstd "
+if [ x"$instd" != x ] && [ -f "$instd" ]; then
+    if [ x"$stdhdu" = x ]; then instdhduopt="";
+    else                        instdhduopt="--hdu=$stdhdu";
     fi
+    astcrop "$instd" "$instdhduopt" --center=$xcenter,$ycenter \
+            --mode=img --width=$cropwidth --output=$cropstd $quiet
 fi
 
 
+
+
+
+# Correct the central position (to cropped image)
+# -----------------------------------------------
 dxy=$(astfits $crop -h1 \
           | grep ICF1PIX \
           | sed -e"s/'/ /g" -e's/\:/ /g' -e's/,/ /' \
@@ -485,16 +457,19 @@ ycenter=$(echo "$ycenter $cropwidth $dxy" \
 # is over-sampled. This is only done if the user request this with the
 # option --oversample.
 values=$tmpdir/values.fits
+valuesstd=$tmpdir/valuesstd.fits
 if [ x$oversample = x ]; then
     ln -fs $crop $values
+    if [ x"$instd" != x ] && [ -f "$instd" ]; then
+        ln -fs $cropstd $valuesstd
+    fi
 else
-    astwarp $crop --scale=$oversample,$oversample -o$values
     xcenter=$(echo $xcenter | awk '{print '$oversample'*$1}')
     ycenter=$(echo $ycenter | awk '{print '$oversample'*$1}')
     rmax=$(echo    $rmax    | awk '{print '$oversample'*$1}')
-    if [ x"$sn" != x ] && [ $instdtype = "file" ]; then
-        astwarp $cropstd --scale=$oversample,$oversample -o$stdvalues
-        finalinstd="--instd="$stdvalues" "
+    astwarp $crop --scale=$oversample,$oversample -o$values
+    if [ x"$instd" != x ] && [ -f "$instd" ]; then
+        astwarp $cropstd --scale=$oversample,$oversample -o$valuesstd
     fi
 fi
 
@@ -557,15 +532,16 @@ finalmeasure=$(echo "$measure" \
 
 
 
-# Set the used sigma-clipping parameters
-# --------------------------------------
+# MakeCatalog configuration options
+# ---------------------------------
 #
-# If not given, don't use anything and just use MakeCatalog's default
+# If not given, don't use anything and just let MakeCatalog use its default
 # values.
-if [ x"$sigmaclip" = x ]; then
-    finalsigmaclip=""
-else
-    finalsigmaclip="--sigmaclip=$sigmaclip";
+if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
+else                           finalsigmaclip="--sigmaclip=$sigmaclip";
+fi
+if [ x"$zeropoint" = x ]; then finalzp=""
+else                           finalzp="--zeropoint=$zeropoint";
 fi
 
 
@@ -581,9 +557,8 @@ fi
 # values.
 cat=$tmpdir/catalog.fits
 astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
-             $finalsn $finalinstd $finalmeasure $finalsigmaclip \
-	     --stdhdu=1 --output=$cat \
-             $quiet
+             $finalinstd $finalmeasure $finalsigmaclip $finalzp \
+	     --stdhdu=1 --output=$cat $quiet
 
 
 
@@ -612,11 +587,11 @@ fi
 
 
 
-# Remove temporal files
-# ---------------------
+# Remove temporary files
+# ----------------------
 #
 # If the user does not specify to keep the temporal files with the option
 # `--keeptmp', then remove the whole directory.
 if [ $keeptmp = 0 ]; then
-    rm -rf $tmpdir
+    rm -r $tmpdir
 fi

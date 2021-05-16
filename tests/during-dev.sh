@@ -181,6 +181,21 @@ if make -j$numjobs -C "$builddir"; then
     echo ""               >> .gnuastro/gnuastro.conf
     echo " lastconfig 1"  >> .gnuastro/gnuastro.conf
 
+    # A script can call any of the Gnuastro programs, we need to add this
+    # installation's programs in the PATH and add all configuration files.
+    if [ x"$longprefix" = x"script" ]; then
+        addpath=""
+        for f in "$builddir"/bin/*; do
+            if [ -d $f ]; then
+                if [ x"$addpath" = x ]; then addpath="$f"
+                else                         addpath="$f:$addpath"
+                fi
+            fi
+        done
+        export PATH="$addpath:$PATH"
+        cp "$srcdir"/bin/*/*.conf .gnuastro/
+    fi
+
     # Run the built utility with the given arguments and options.
     "$utility" $arguments $options $extraopts
 
