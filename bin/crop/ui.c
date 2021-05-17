@@ -919,7 +919,7 @@ ui_preparations_to_img_mode_values(struct cropparams *p)
 
   int i, status, *stat=NULL;
   gal_data_t *tmp, *coords=NULL;
-  size_t ndim=wcs->naxis, plysize=p->nvertices;
+  size_t ndim=p->imgs[0].ndim, plysize=p->nvertices;
   double *phi=NULL, *theta=NULL, *pixcrd=NULL, *imgcrd=NULL;
 
   /* When central coordinates (either from '--center' or '--catalog' are
