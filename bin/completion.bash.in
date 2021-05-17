@@ -807,9 +807,29 @@ _gnuastro_autocomplete_compreply_options_all(){
 # string before saving string (which is standard in autocomplete (the user
 # has already given it and it is just annoying!).
 _gnuastro_autocomplete_compreply_file(){
-    if [ x$1 != x ] && [ -d $1 ]; then COMPREPLY+=("${2#$1}")
-    else                               COMPREPLY+=("$2")
-    fi
+
+    # For some reason, when there are multiple matches in a sub-directory,
+    # removing the directory removes the whole thing that the user has
+    # already typed! So the part below (which was the main purpose of this
+    # function is currently commented). Until that bug is fixed, we'll just
+    # return the full file name. Here is how you can reproduce the problem
+    # (with the MAIN FUNCTION below uncommented and the WORK AROUND
+    # commented):
+    #
+    #    $ ls
+    #    image.fits
+    #    $ mkdir subdir
+    #    $ mv image.fits subdir/ab-123.fits
+    #    $ cp subdir/ab-123.fits subdir/ab-456.fits
+    #    $ astcrop subdir/ab-[TAB]
+
+    # MAIN FUNCTION
+    #if [ x$1 != x ] && [ -d $1 ]; then COMPREPLY+=("${2#$1}")
+    #else                               COMPREPLY+=("$2")
+    #fi
+
+    # WORK AROUND
+    COMPREPLY+=("$2")
 }
 
 
