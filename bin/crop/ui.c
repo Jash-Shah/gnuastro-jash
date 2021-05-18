@@ -915,10 +915,9 @@ ui_preparations_to_img_mode(struct cropparams *p)
 static void
 ui_preparations_to_img_mode_values(struct cropparams *p)
 {
-  struct wcsprm *wcs=p->imgs[0].wcs;
-
   int i, status, *stat=NULL;
   gal_data_t *tmp, *coords=NULL;
+  struct wcsprm *wcs=p->imgs[0].wcs;
   size_t ndim=p->imgs[0].ndim, plysize=p->nvertices;
   double *phi=NULL, *theta=NULL, *pixcrd=NULL, *imgcrd=NULL;
 

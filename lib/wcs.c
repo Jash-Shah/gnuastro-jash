@@ -145,9 +145,9 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
                      size_t hendwcs, int *nwcs)
 {
   /* Declaratins: */
-  int sumcheck;
   size_t i, fulllen;
   int nkeys=0, status=0;
+  int sumcheck, nocomments;
   struct wcsprm *wcs=NULL;
   char *fullheader, *to, *from;
   int fixstatus[NWCSFIX]={0};/* For the various wcsfix checks.          */
@@ -158,8 +158,16 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
   void *fixnaxis = NULL;     /* For now disable cylfix() with this      */
                              /* (because it depends on image size).     */
 
+  /* In case the user has asked to limit the HDU keyword cards to use for
+     WCS reading, also count comment/history/empty lines (so the lines here
+     correspond to the output of 'astfits image.fits -h1'). But if no
+     limitation is requested, avoid those lines to make the processing
+     easier for WCSLIB. */
+  nocomments = hendwcs>hstartwcs ? 0 : 1;
+
   /* CFITSIO function: */
-  if( fits_hdr2str(fptr, 1, NULL, 0, &fullheader, &nkeys, &status) )
+  if( fits_hdr2str(fptr, nocomments, NULL, 0, &fullheader,
+                   &nkeys, &status) )
     gal_fits_io_error(status, NULL);
 
   /* Only consider the header keywords in the current range: */
@@ -167,11 +175,10 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
     {
       /* Mark the last character in the desired region. */
       fullheader[hendwcs*(FLEN_CARD-1)]='\0';
-      /*******************************************************/
-      /******************************************************
+
+      /* For a check:
       printf("%s\n", fullheader);
-      ******************************************************/
-      /*******************************************************/
+      */
 
       /* Shift all the characters to the start of the string. */
       if(hstartwcs)                /* hstartwcs!=0 */
@@ -183,20 +190,19 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
 
       nkeys=hendwcs-hstartwcs;
 
-      /*******************************************************/
-      /******************************************************
+      /* For a check:
       printf("\n\n\n###############\n\n\n\n\n\n");
       printf("%s\n", &fullheader[1*(FLEN_CARD-1)]);
       exit(0);
-      ******************************************************/
-      /*******************************************************/
+      */
     }
 
   /* WCSlib function to parse the FITS headers. */
   status=wcspih(fullheader, nkeys, relax, ctrl, &nreject, nwcs, &wcs);
   if(status)
     {
-      fprintf(stderr, "\n##################\n"
+      fprintf(stderr,"\n"
+              "##################\n"
               "WCSLIB Warning: wcspih ERROR %d: %s.\n"
               "##################\n",
               status, wcs_errmsg[status]);
@@ -1386,7 +1392,6 @@ gal_wcs_remove_dimension(struct wcsprm *wcs, size_t fitsdim)
     }
 #endif
   /**************************************************/
-
 
   /* First loop over the arrays. */
   for(i=0;i<naxis;++i)

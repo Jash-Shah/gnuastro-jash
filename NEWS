@@ -253,6 +253,7 @@ See the end of the file for license conditions.
   bug #60484: Match crashes when called with --coord and --ccol2 (together)
   bug #60603: Table crashes with an empty input and --range
   bug #60619: Crop crashes with differing image and WCS dimension
+  bug #60634: Crop's '--hstartwcs' and '--hendwcs' wrong with comment keys
 
 
 

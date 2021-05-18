@@ -11667,12 +11667,19 @@ Input image parameters:
 @table @option
 
 @item --hstartwcs=INT
-@cindex CANDELS survey
 Specify the first keyword card (line number) to start finding the input image world coordinate system information.
-Distortions were only recently included in WCSLIB (from version 5).
-Therefore until now, different telescope would apply their own specific set of WCS keywords and put them into the image header along with those that WCSLIB does recognize.
-So now that WCSLIB recognizes most of the standard distortion parameters, they will get confused with the old ones and give completely wrong results.
-For example in the CANDELS-GOODS South images@footnote{@url{https://archive.stsci.edu/pub/hlsp/candels/goods-s/gs-tot/v1.0/}}.
+This is useful when certain header keywords of the input may cause bad conflicts with your crop (see an example described below).
+To get line numbers of the header keywords, you can pipe the fully printed header into @command{cat -n} like below:
+
+@example
+$ astfits image.fits -h1 | cat -n
+@end example
+
+@cindex CANDELS survey
+For example, distortions have only been present in WCSLIB from version 5.15 (released in mid 2016).
+Therefore some pipelines still apply their own specific set of WCS keywords for distortions and put them into the image header along with those that WCSLIB does recognize.
+So now that WCSLIB recognizes most of the standard distortion parameters, they will get confused with the old ones and give wrong results.
+For example in the CANDELS-GOODS South images that were created before WCSLIB 5.15@footnote{@url{https://archive.stsci.edu/pub/hlsp/candels/goods-s/gs-tot/v1.0/}}.
 
 The two @option{--hstartwcs} and @option{--hendwcs} are thus provided so when using older datasets, you can specify what region in the FITS headers you want to use to read the WCS keywords.
 Note that this is only relevant for reading the WCS information, basic data information like the image size are read separately.
