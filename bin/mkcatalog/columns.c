@@ -2028,7 +2028,7 @@ columns_brightness_error(struct mkcatalogparams *p, double *row, int o0c1)
 {
   double V = row[ o0c1 ? CCOL_SUM_VAR : OCOL_SUM_VAR ];
   double OV = (o0c1 && row[ CCOL_RIV_NUM ]) ? row[ CCOL_RIV_SUM_VAR ] : 0.0;
-  return sqrt(V+OV);
+  return sqrt( (V+OV)*p->cpscorr );
 }
 
 
@@ -2050,7 +2050,7 @@ columns_sn(struct mkcatalogparams *p, double *row, int o0c1)
                : 0.0 );
 
   /* Return the derived value. */
-  return sqrt(1/p->cpscorr) * (I-O) / columns_brightness_error(p, row, o0c1);
+  return (I-O) / columns_brightness_error(p, row, o0c1);
 }
 
 

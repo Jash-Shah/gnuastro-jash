@@ -1425,7 +1425,7 @@ ui_preparations_read_keywords(struct mkcatalogparams *p)
 
           /* If the two keywords couldn't be read. We don't want to slow
              down the user for the median (which needs sorting). So we'll
-             just calculate if if '--forcereadstd' is called. However, we
+             just calculate it if '--forcereadstd' is called. However, we
              need the minimum for 'p->cpscorr'. */
           if(keys[1].status)
             {

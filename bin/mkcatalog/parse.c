@@ -681,6 +681,7 @@ parse_objects(struct mkcatalog_passparams *pp)
               /* Sky standard deviation based measurements.*/
               if(p->std)
                 {
+                  /* Calculate the variance and save it in the output if necessary. */
                   sval = pp->st_std ? *ST : (p->std->size>1?std[tid]:std[0]);
                   var = p->variance ? sval : sval*sval;
                   if(oif[ OCOL_SUMVAR ] && (!isnan(var)))
@@ -688,6 +689,7 @@ parse_objects(struct mkcatalog_passparams *pp)
                       oi[ OCOL_NUMVAR  ]++;
                       oi[ OCOL_SUMVAR  ] += var;
                     }
+
                   /* For each pixel, we have a sky contribution to the
                      counts and the signal's contribution. The standard
                      deviation in the sky is simply 'sval', but the
@@ -701,7 +703,8 @@ parse_objects(struct mkcatalog_passparams *pp)
                   if(oif[ OCOL_SUM_VAR ] && goodvalue)
                     {
                       varval=p->variance ? var : sval;
-                      if(!isnan(varval)) oi[ OCOL_SUM_VAR ] += varval + fabs(*V);
+                      if(!isnan(varval))
+                        oi[ OCOL_SUM_VAR ] += varval + fabs(*V);
                     }
                 }
             }
