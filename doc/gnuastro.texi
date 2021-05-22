@@ -15188,37 +15188,49 @@ Therefore all such approaches that try to approximate the sky value prior to det
 @node Quantifying signal in a tile,  , Sky value misconceptions, Sky value
 @subsubsection Quantifying signal in a tile
 
+In order to define detection thresholds on the image, or calibrate it for measurements (subtract the signal of the background sky and define errors), we need some basic measurements.
+For example the quantile threshold in NoiseChisel (@option{--qthresh} option), or the mean of the undetected regions (Sky) and the Sky standard deviation (Sky STD) which are the output of NoiseChisel and Statistics.
+But astronomical images will contain a lot of stars and galaxies that will bias those measurements if not properly accounted for.
+Quantifying where signal is present is thus a very important step in the usage of a dataset: for example if the Sky level is over-estimated, your target object's brightness will be under-estimated.
+
 @cindex Data
 @cindex Noise
 @cindex Signal
 @cindex Gaussian distribution
-Put simply, noise can be characterized with a certain spread about the measured value.
-In the Gaussian distribution (most commonly used to model noise) the spread is defined by the standard deviation about the characteristic mean.
+Let's start by clarifying some definitions:
+@emph{Signal} is defined as the non-random source of flux in each pixel (you can think of this as the mean in a Gaussian or Poisson distribution).
+In astronomical images, signal is mostly photons coming of a star or galaxy, and counted in each pixel.
+@emph{Noise} is defined as the random source of flux in each pixel (or the standard deviation of a Gaussian or Poisson distribution).
+Noise is mainly due to counting errors in the detector electronics upon data collection.
+@emph{Data} is defined as the combination of signal and noise (so a noisy image of a galaxy is one @emph{data}set).
 
-Let's start by clarifying some definitions first: @emph{Data} is defined as the combination of signal and noise (so a noisy image is one @emph{data}set).
-@emph{Signal} is defined as the mean of the noise on each element.
-We'll also assume that the @emph{background} (see @ref{Sky value definition}) is subtracted and is zero.
-
-When a dataset doesn't have any signal (only noise), the mean, median and mode of the distribution are equal within statistical errors and approximately equal to the background value.
+When a dataset doesn't have any signal (for example you take an image with a closed shutter, producing an image that only contains noise), the mean, median and mode of the distribution are equal within statistical errors.
 Signal from emitting objects, like astronomical targets, always has a positive value and will never become negative, see Figure 1 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
-Therefore, as more signal is added, the mean, median and mode of the dataset shift to the positive.
-The mean's shift is the largest.
-The median shifts less, since it is defined based on an ordered distribution and so is not affected by a small number of outliers.
-The distribution's mode shifts the least to the positive.
+Therefore, when signal is added to the data (you take an image with an open shutter pointing to a galaxy for example), the mean, median and mode of the dataset shift to the positive, creating a positively skewed distribution.
+The shift of the mean is the largest.
+The median shifts less, since it is defined after ordering all the elements/pixels (the median is the value at a quantile of 0.5), thus it is not affected by outliers.
+Finally, the mode's shift to the positive is the least.
 
 @cindex Mean
 @cindex Median
 @cindex Quantile
-Inverting the argument above gives us a robust method to quantify the significance of signal in a dataset.
-Namely, when the mean and median of a distribution are approximately equal, or the mean's quantile is around 0.5, we can argue that there is no significant signal.
+Inverting the argument above gives us a robust method to quantify the significance of signal in a dataset: when the mean and median of a distribution are approximately equal we can argue that there is no significant signal.
+In other words: when the quantile of the mean (@mymath{q_{mean}}) is around 0.5.
 
-To allow for gradients (which are commonly present in raw exposures, or when there are large foreground galaxies in the field), we consider the image to be made of a grid of tiles@footnote{The options to customize the tessellation are discussed in @ref{Processing options}.} (see @ref{Tessellation}).
-Hence, from the difference of the mean and median on each tile, we can estimate the significance of signal in it.
-The median of a distribution is defined to be the value of the distribution's middle point after sorting (or 0.5 quantile).
-Thus, to estimate the presence of signal, we just have to estimate the quantile of the mean (@mymath{q_{mean}}).
-If a tile's @mymath{|q_{mean}-0.5|} is larger than the value given to the @option{--meanmedqdiff} option, that tile will be considered to have significant signal and ignored for the next steps.
+@cindex Signal-to-noise ratio
+However, in an astronomical image, some of the pixels will contain more signal than the rest, so we can't simply check @mymath{q_{mean}} on the whole dataset.
+For example if we only look at the patch of pixels that are placed under the central parts of the brightest stars in the field of view, @mymath{q_{mean}} will be very high.
+The signal in other parts of the image will be weaker, and in some parts it will be much smaller than the noise (for example 1/100-th of the noise level).
+When the signal-to-noise ratio is very small, we can generally assume no signal (because its effectively impossible to measure it) and @mymath{q_{mean}} will be approximately 0.5.
+
+To address this problem, we break the image into a grid of tiles@footnote{The options to customize the tessellation are discussed in @ref{Processing options}.} (see @ref{Tessellation}).
+For example a tile can be a square box of size @mymath{30\times30} pixels.
+By measuring @mymath{q_{mean}} on each tile, we can find which tiles that contain significant signal and ignore them.
+Technically, if a tile's @mymath{|q_{mean}-0.5|} is larger than the value given to the @option{--meanmedqdiff} option, that tile will be ignored for the next steps.
 You can read this option as ``mean-median-quantile-difference''.
 
+@cindex Skewness
+@cindex Convolution
 The raw dataset's pixel distribution (in each tile) is noisy, to decrease the noise/error in estimating @mymath{q_{mean}}, we convolve the image before tessellation (see @ref{Convolution process}.
 Convolution decreases the range of the dataset and enhances its skewness, See Section 3.1.1 and Figure 4 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
 This enhanced skewness can be interpreted as an increase in the Signal to noise ratio of the objects buried in the noise.
@@ -15231,16 +15243,18 @@ Also, since they don't occupy too many pixels, they don't affect the mode and me
 But their very high values can greatly bias the calculation of the mean (recall how the mean shifts the fastest in the presence of outliers), for example see Figure 15 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa (2015)}.
 The effect of outliers like cosmic rays on the mean and standard deviation can be removed through @mymath{\sigma}-clipping, see @ref{Sigma clipping} for a complete explanation.
 
-Therefore, after asserting that the mean and median are approximately equal in a tile (see @ref{Tessellation}), the measurements on the tile are determined after @mymath{\sigma}-clipping with the @option{--sigmaclip} option.
-In the end, some of the tiles will pass the mean and median quantile difference test and will be given a value.
+Therefore, after asserting that the mean and median are approximately equal in a tile (see @ref{Tessellation}), the Sky and its STD are measured on each tile after @mymath{\sigma}-clipping with the @option{--sigmaclip} option (see @ref{Sigma clipping}).
+In the end, some of the tiles will pass the test and will be given a value.
 Others (that had signal in them) will just be assigned a NaN (not-a-number) value.
-So we need to use interpolation and assign a value to all the tiles.
+But we need a measurement over each tile (and thus pixel).
+We will therefore use interpolation to assign a value to the NaN tiles.
 
 However, prior to interpolating over the failed tiles, another point should be considered: large and extended galaxies, or bright stars, have wings which sink into the noise very gradually.
-In some cases, the gradient over these wings can be on scales that is larger than the tiles and mean-median distance test will be successful.
-This will cause a footprint of such objects after the interpolation see @ref{Detecting large extended targets}.
+In some cases, the gradient over these wings can be on scales that is larger than the tiles (for example the pixel value changes by @mymath{0.1\sigma} after 100 pixels, but the tile has a width of 30 pixels).
 
-These tiles (on the wings of large foreground galaxies for example) actually have signal in them and the mean-median difference isn't enough (due to the ``small'' size of the tiles).
+In such cases, the @mymath{q_{mean}} test will be successful, even though there is signal.
+Recall that @mymath{q_{mean}} is a measure of skewness.
+If we don't identify (and thus set to NaN) such outlier tiles before the interpolation, the photons of the outskirts of the objects will leak into the detection thresholds or Sky and Sky STD measurements and bias our result, see @ref{Detecting large extended targets}.
 Therefore, the final step of ``quantifying signal in a tile'' is to look at this distribution of successful tiles and remove the outliers.
 @mymath{\sigma}-clipping is a good solution for removing a few outliers, but the problem with outliers of this kind is that there may be many such tiles (depending on the large/bright stars/galaxies in the image).
 We therefore apply the following local outlier rejection strategy.
@@ -15249,7 +15263,7 @@ For each tile, we find the nearest @mymath{N_{ngb}} tiles that had a usable valu
 We then sort them and find the difference between the largest and second-to-smallest elements (The minimum isn't used because the scatter can be large).
 Let's call this the tile's @emph{slope} (measured from its neighbors).
 All the tiles that are on a region of flat noise will have similar slope values, but if a few tiles fall on the wings of a bright star or large galaxy, their slope will be significantly larger than the tiles with no signal.
-We just have to find the smallest tile slope value that is an outlier compared to the rest and reject all tiles with a slope larger than that.
+We just have to find the smallest tile slope value that is an outlier compared to the rest, and reject all tiles with a slope larger than that.
 
 @cindex Outliers
 @cindex Identifying outliers
@@ -15259,7 +15273,7 @@ We sort them in increasing order based on their @emph{slope} (defined above).
 So the array of tile slopes can be written as @mymath{@{s[0], s[1], ..., s[N]@}}, where @mymath{s[0]<s[1]} and so on.
 We then start from element @mymath{M} and calculate the distances between all two adjacent values before it: @mymath{@{s[1]-s[0], s[2]-s[1], s[M-1]-s[M-2]@}}.
 
-The @mymath{\sigma}-clipped median and standard deviation of this distribution is then found (@mymath{\sigma}-clipping is configured with @option{--outliersclip} which takes two values, see @ref{Sigma clipping}).
+The @mymath{\sigma}-clipped median and standard deviation of this distribution are then found (this @mymath{\sigma}-clipping is configured with @option{--outliersclip} which takes two values, see @ref{Sigma clipping}).
 If the distance between the element and its previous element is more than @option{--outliersigma} multiples of the @mymath{\sigma}-clipped standard deviation added with the @mymath{\sigma}-clipped median, that element is considered an outlier and all tiles larger than that value are ignored.
 
 Formally, if we assume there are @mymath{N} elements.
@@ -15270,14 +15284,24 @@ If the value given to @option{--outliersigma} is displayed with @mymath{s}, the 
 
 @dispmath{{(v_i-v_{i-1})-m\over \sigma}>s}
 
+@noindent
 Since @mymath{i} begins from the @mymath{N/3}-th element in the sorted array (a quantile of @mymath{1/3=0.33}), the outlier has to be larger than the @mymath{0.33} quantile value of the dataset.
 
-Once the outlying tiles have been successfully removed we use nearest neighbor interpolation to give a value to all tiles in the image.
-During interpolation, the median of the @mymath{N_{ngb}} nearest neighbors of each tile is found and given to the tile (@mymath{N_{ngb}} is the value given to  @option{--interpnumngb}).
-Once all the tiles are given a value, a smoothing step is implemented to remove the sharp value contrast that can happen between some tiles.
+@cindex Bicubic interpolation
+@cindex Interpolation, bicubic
+@cindex Nearest-neighbor interpolation
+@cindex Interpolation, nearest-neighbor
+Once the outlying tiles have been successfully identified and set to NaN, we use nearest-neighbor interpolation to give a value to all tiles in the image.
+We don't use parametric interpolation methods (like bicubic), because they will effectively extrapolate on the edges, creating strong artifacts.
+Nearest-neighbor interpolation is very simple: for each tile, we find the @mymath{N_{ngb}} nearest tiles that had a good value, the tile's value is found by estimating the median.
+You can set @mymath{N_{ngb}} through the @option{--interpnumngb} option.
+Once all the tiles are given a value, a smoothing step is implemented to remove the sharp value contrast that can happen on the edges of tiles.
 The size of the smoothing box is set with the @option{--smoothwidth} option.
 
-You can use the check images to inspect the steps and see which tiles have been discarded as outliers prior to interpolation (@option{--checksky} in the Statistics program or @option{--checkqthresh} in NoiseChisel).
+As mentioned above, the process above is used for any of the basic measurements (for example identifying the quantile-based thresholds in NoiseChisel, or the Sky value in Statistics).
+You can use the check-image feature of NoiseChisel or Statistisc to inspect the steps and visually see each step (all the options that start with @option{--check}).
+For example, as mentioned in the @ref{NoiseChisel optimization} tutorial, when given a dataset from a new instrument (with differing noise properties), we highly recommend to use @option{--checkqthresh} in your first call and visually inspect how the parameters above affect the final quantile threshold (e.g., have the wings of bright sources leaked into the threshold?).
+The same goes for the @option{--checksky} option of Statistics or NoiseChisel.
 
 
 
