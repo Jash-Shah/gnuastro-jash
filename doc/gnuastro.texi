@@ -12960,6 +12960,20 @@ This operator takes two arguments: the top/first popped operand is the backgroun
 Except for the noise-model, this operator is very similar to @code{mknoise-sigma} and the examples there apply here too.
 The main difference with @code{mknoise-sigma} is that in a Poisson distribution the scatter/sigma will depend on each element's value.
 
+@item mknoise-uniform
+Add uniform noise to each element of the input dataset.
+This operator takes two arguments: the top/first popped operand is the width of the interval, the second popped operand is the dataset that the noise should be added to (each element will be the center of the interval).
+The returned random values may happen to be the minimum interval value, but will never be the maximum.
+Except for the noise-model, this operator behaves very similar to @code{mknoise-sigma}, see the explanation there for more.
+
+For example with the command below, a random value will be selected between 10 to 14 (centered on 12, which is the only input data element, with a total width of 4).
+
+@example
+echo 12 | asttable -c'arith $1 4 mknoise-uniform'
+@end example
+
+Similar to the example in @code{mknoise-sigma}, you can pipe the output of @command{echo} to @command{awk} before passing it to @command{asttable} to generate a full column of uniformly selected values within the same interval.
+
 @item size
 Size of the dataset along a given FITS/Fortran dimension (counting from 1).
 The desired dimension should be the first popped operand and the dataset must be the second popped operand.
@@ -26588,9 +26602,10 @@ for the rest it will be @code{GAL_TYPE_FLOAT32}.
 
 @deffn  Macro GAL_ARITHMETIC_OP_MKNOISE_SIGMA
 @deffnx Macro GAL_ARITHMETIC_OP_MKNOISE_POISSON
+@deffnx Macro GAL_ARITHMETIC_OP_MKNOISE_UNIFORM
 Add noise to the input dataset.
-Both operators take two arguments: the first is the input data set (can have any dimensionality or number of elements.
-The second argument is the noise specifier (a single element, of any type): for a fixed-sigma noise, it is the Gaussian standard deviation, for the Poisson noise, it is the background (see @ref{Photon counting noise}).
+These operators take two arguments: the first is the input data set (can have any dimensionality or number of elements.
+The second argument is the noise specifier (a single element, of any type): for a fixed-sigma noise, it is the Gaussian standard deviation, for the Poisson noise, it is the background (see @ref{Photon counting noise}) and for the uniform distribution it is the width of the interval around each element of the input dataset.
 
 By default, a separate random number generator seed will be used on each separate run of these operators.
 Therefore two identical runs on the same input will produce different results.

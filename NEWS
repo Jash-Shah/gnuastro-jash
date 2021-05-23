@@ -65,6 +65,7 @@ See the end of the file for license conditions.
      - atanh: Inverse of hyperbolic tangent.
      - mknoise-sigma: Add Gaussian noise with the fixed sigma.
      - mknoise-poisson: Add Poisson noise with the given background.
+     - mknoise-uniform: Add uniform noise around existing value.
      - counts-to-mag: Convert counts to magnitudes with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.

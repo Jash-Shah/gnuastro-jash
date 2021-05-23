@@ -152,6 +152,7 @@ enum gal_arithmetic_operators
 
   GAL_ARITHMETIC_OP_MKNOISE_SIGMA,/* Fixed-sigma noise to every element.   */
   GAL_ARITHMETIC_OP_MKNOISE_POISSON,/* Poission noise on every element.    */
+  GAL_ARITHMETIC_OP_MKNOISE_UNIFORM,/* Uniform noise on every element.     */
 
   GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
 

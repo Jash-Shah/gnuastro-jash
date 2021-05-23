@@ -698,8 +698,9 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
   /* Make sure the noise identifier is positive. */
   if(arg_v<0)
     error(EXIT_FAILURE, 0, "the noise identifier (sigma for "
-          "'mknoise-sigma' or background for 'mknoise-poisson') must "
-          "be positive (it is %g)", arg_v);
+          "'mknoise-sigma', background for 'mknoise-poisson', or "
+          "range for 'mknoise-uniform') must be positive (it is %g)",
+          arg_v);
 
   /* Setup the random number generator. For 'envseed', we want to pass a
      boolean value: either 0 or 1. However, when we say 'flags &
@@ -731,6 +732,11 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
     case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
       do
         *d += arg_v + gsl_ran_gaussian(rng, sqrt( arg_v + *d ));
+      while(++d<df);
+      break;
+    case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM:
+      do
+        *d += ( (gsl_rng_uniform(rng)*arg_v) - (arg_v/2) );
       while(++d<df);
       break;
     default:
@@ -2125,6 +2131,8 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
     { op=GAL_ARITHMETIC_OP_MKNOISE_SIGMA;     *num_operands=2; }
   else if (!strcmp(string, "mknoise-poisson"))
     { op=GAL_ARITHMETIC_OP_MKNOISE_POISSON;   *num_operands=2; }
+  else if (!strcmp(string, "mknoise-uniform"))
+    { op=GAL_ARITHMETIC_OP_MKNOISE_UNIFORM;   *num_operands=2; }
 
   /* The size operator */
   else if (!strcmp(string, "size"))
@@ -2284,6 +2292,7 @@ gal_arithmetic_operator_string(int operator)
 
     case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:   return "mknoise-sigma";
     case GAL_ARITHMETIC_OP_MKNOISE_POISSON: return "mknoise-poisson";
+    case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM: return "mknoise-uniform";
 
     case GAL_ARITHMETIC_OP_SIZE:            return "size";
 
@@ -2448,6 +2457,7 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     /* Adding noise. */
     case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
     case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
+    case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM:
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);
       out=arithmetic_mknoise(operator, flags, d1, d2);
