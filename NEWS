@@ -7,7 +7,7 @@ See the end of the file for license conditions.
 
 ** New features
 
-  New program:
+  New programs:
    - astscript-ds9-region: Given a table (either as a file or from
      standard input), create an SAO DS9 region file from the requested
      positional columns (WCS or image coordinates). For example with the
@@ -16,15 +16,14 @@ See the end of the file for license conditions.
         asttable table.fits --range=MAGNITUDE,18:20 --column=RA,DEC \
             | astscript-ds9-region --column=1,2 --radius=0.5 \
                                    --command="ds9 image.fits"
-     This script was written by Samane Raji.
-
+     This script was written with the help of Samane Raji.
    - astscript-radial-profile: Measure the radial profile of an object on
      an image. The profile can be centered anywhere in the image and any
      circular, or elliptical distance can be defined. The output is a table
      with the profile's value in one column and any requested measure in
      the other columns (any MakeCatalog measurement is possible). This
-     script was written by Raúl Infante Sainz.
-
+     script was written and is maintained by Raúl Infante Sainz. Zahra
+     Sharbaf and Carlos Morales Socorro also contributed.
 
   All programs:
    - FITS files that don't have a recognized FITS suffix (e.g., '.fits',
@@ -41,7 +40,6 @@ See the end of the file for license conditions.
      were always stored in the 'PCi_j' formalism (which is still the
      recommended format).
 
-
   Book:
    - New "Image surface brightness limit" section added to the third
      tutorial (on "Detecting large extended targets"). It describes the
@@ -50,9 +48,9 @@ See the end of the file for license conditions.
      differences. This tutorial was written with the help of Ignacio
      Trujillo and Raúl Infante Sainz.
 
-
   Arithmetic:
-   - New operators (all also available in Table's column arithmetic):
+   - New operators (all also available in Table's column
+     arithmetic).
      - sin: Trigonometric sine (input in degrees).
      - cos: Trigonometric cosine (input in degrees).
      - tan: Trigonometric tangent (input in degrees).
@@ -70,6 +68,7 @@ See the end of the file for license conditions.
      - counts-to-mag: Convert counts to magnitudes with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
+     Trigonometric operators proposed by Zahra Sharbaf and Samane Raji.
    --envseed: new option to get random number generator settings for the
      new 'mknoise-sigma' and 'mknoise-poisson' operators from the
      environment for reproducibility (see "Generating random numbers"
@@ -109,6 +108,14 @@ See the end of the file for license conditions.
      This option only works with WCSLIB 7.5 and above (released in March
      2021), otherwise it will abort with an informative warning. This was
      done with the help of Mark Calabretta.
+   --keyvalue: Print only the values of the FITS keywords given to this
+     option in separate columns. This option can take multiple keyword
+     names and many FITS files. Thus generating a table of keyword values
+     (with one row per file where the first column is the file name). Its
+     output can thus be written as a Table file or be piped to the Table
+     program for selecting a certain sub-set of your FITS files based on
+     key values, or sorting them for example. This was added after a
+     discussion with Alberto Madrigal.
 
   MakeCatalog:
    - Newly added measurement columns:
@@ -160,22 +167,14 @@ See the end of the file for license conditions.
        Fits program to operate on FITS dates (for example sort your FITS
        images based on observation time).
 
-  Fits:
-   --keyvalue: Print only the values of the FITS keywords given to this
-     option in separate columns. This option can take multiple keyword
-     names and many FITS files. Thus generating a table of keyword values
-     (with one row per file where the first column is the file name). Its
-     output can thus be written as a Table file or be piped to the Table
-     program for selecting a certain sub-set of your FITS files based on
-     key values, or sorting them for example.
-
   Query:
    - The Galactic extinction calculator of the NASA/IPAC Extragalactic
      Database (NED) is now available for any coordinate with a command like
      below. For more, see the manual (the description of the 'extinction'
      dataset of NED in the "Available datasets" section).
          astquery ned --dataset=extinction --center=49.9507,41.5116
-     This feature was suggested by Ignacio Trujillo.
+     This feature was suggested by Ignacio Trujillo and implemented with
+     the help of Joseph Mazzarella.
 
   Library:
    - gal_ds9_reg_read_polygon: Parse the polygon from an SAO DS9 region file.
@@ -259,10 +258,13 @@ See the end of the file for license conditions.
 ** Bugs fixed
   bug #60082: Arithmetic library crash for integer operators like modulo
   bug #60121: Arithmetic segfault when multi-operand output given to set-
-  bug #60368: CosmicCalculator fails --setdirconf when redshift isn't given
-  bug #60483: No warning when file given to '--config' doesn't exist
+  bug #60368: CosmicCalculator fails --setdirconf when redshift isn't given,
+              reported by Sepideh Eskandarlou
+  bug #60483: No warning when file given to '--config' doesn't exist,
+              reported by Sepideh Eskandarlou
   bug #60484: Match crashes when called with --coord and --ccol2 (together)
-  bug #60603: Table crashes with an empty input and --range
+  bug #60603: Table crashes with an empty input and --range,
+              reported by Sepideh Eskandarlou.
   bug #60619: Crop crashes with differing image and WCS dimension
   bug #60634: Crop's '--hstartwcs' and '--hendwcs' wrong with comment keys
   bug #60644: MakeCatalog's Brightness error over-estimated in images with
