@@ -668,6 +668,10 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
   unsigned long rng_seed;
   gal_data_t *out, *targ;
 
+  /* Column counter in case '--envseed' is given and we have multiple
+     columns. */
+  static unsigned long colcounter=0;
+
   /* Sanity checks. */
   if(arg->size!=1)
     error(EXIT_FAILURE, 0, "the first popped operand to the '%s' "
@@ -712,6 +716,14 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
      bit-wise '&' is larger than 0 or not (binary). */
   rng=gal_checkset_gsl_rng( (flags & GAL_ARITHMETIC_FLAG_ENVSEED)>0,
                             &rng_name, &rng_seed);
+
+  /* If '--envseed' was called, we need to add the column counter to the
+     requested seed. */
+  if(flags & GAL_ARITHMETIC_FLAG_ENVSEED)
+    {
+      rng_seed += colcounter++;
+      gsl_rng_set(rng, rng_seed);
+    }
 
   /* Print the basic RNG information if requested. */
   if( (flags & GAL_ARITHMETIC_FLAG_QUIET)==0 )

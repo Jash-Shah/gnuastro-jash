@@ -12922,8 +12922,10 @@ The internal conversion of C will be used.
 @item mknoise-sigma
 Add a fixed noise (Gaussian standard deviation) to each element of the input dataset.
 This operator takes two arguments: the top/first popped operand is the noise standard deviation, the next popped operand is the dataset that the noise should be added to.
-You can use the @option{--envseed} option to fix the random number generator seed (and thus get a reproducible result).
-For more on @option{--envseed}, see @ref{Generating random numbers}.
+
+When @option{--quiet} isn't given, a statement will be printed on each invocation of this operator (if there are multiple calls to the @code{mknoise-*}, the statement will be printed multiple times).
+It will show the random number generator function and seed that was used in that invocation, see @ref{Generating random numbers}.
+Reproducibility of the outputs can be ensured with the @option{--envseed} option, see below for more.
 
 For example with the first command below, @file{image.fits} will be degraded by a noise of standard deviation 3 units.
 @example
@@ -12952,6 +12954,14 @@ $ echo 5 10 \
 
 By adding an extra @option{--output=random.fits}, the table will be saved into a file called @file{random.fits}, and you can change the @code{i<20} to @code{i<5000} to have 5000 rows instead.
 Of course, if your input table has different values in the desired column the noisy distribution will be centered on each input element, but all will have the same scatter/sigma.
+
+You can use the @option{--envseed} option to fix the random number generator seed (and thus get a reproducible result).
+For more on @option{--envseed}, see @ref{Generating random numbers}.
+When using column arithmetic in Table, it may happen that multiple columns need random numbers (with any of the @code{mknoise-*} operators) in one call of @command{asttable}.
+In such cases, the value given to @code{GSL_RNG_SEED} is incremented by one on every call to the @code{mknoise-*} operators.
+Without this increment, when the column values are the same (happens a lot, for no-noised datasets), the returned values for all columns will be identical.
+But this feature has a side-effect: that if the order of calling the @code{mknoise-*} operators changes, the seeds used for each operator will change@footnote{We have defined @url{https://savannah.gnu.org/task/?15971, Task 15971} in Gnuastro's project management system to address this.
+If you need this feature please send us an email at @code{bug-gnuastro@@gnu.org} (to motivate us in its implementation).}.
 
 @item mknoise-poisson
 Add Poisson noise to each element of the input dataset (see @ref{Photon counting noise}).
