@@ -12225,14 +12225,24 @@ These operators take a single operand.
 Convert counts (usually CCD outputs) to magnitudes using the given zeropoint.
 The zero point is the first popped operand and the count value is the second.
 For example assume you have measured the standard deviation of the noise in an image to be @code{0.1}, and the image's zero point is @code{22.5}.
-You can therefore measure the @emph{per-pixel} surface brightness limit of the dataset (which is the magnitude of the noise standrard deviation) with this simple command below.
-Note that because the output is a simple number, we are using @option{--quiet} to avoid printing extra information.
+You can therefore measure the @emph{per-pixel} surface brightness limit of the dataset (which is the magnitude of the noise standrard deviation) with this simple command below (for more on surface brightness see @ref{Brightness flux magnitude}).
+Note that because the output is a single number, we are using @option{--quiet} to avoid printing extra information.
 
 @example
-astarithmetic 0.1 22.5 counts-to-mag --quiet
+$ astarithmetic 0.1 22.5 counts-to-mag --quiet
 @end example
 
 Of course, you can also convert every pixel in an image (or table column in Table's @ref{Column arithmetic}) with this operator if you replace the second popped operand with an image/column.
+
+@item mag-to-counts
+Convert magnitudes to counts (usually CCD outputs) using the given zeropoint.
+The zero point is the first popped operand and the magnitude value is the second.
+For example if an object has a magnitude of 20, you can estimate the counts corresponding to it (when the image has a zeropoint of 24.8) with this command:
+Note that because the output is a single number, we are using @option{--quiet} to avoid printing extra information.
+
+@example
+$ astarithmetic 20 24.8 mag-to-counts --quiet
+@end example
 
 @item counts-to-jy
 @cindex AB magnitude
@@ -12964,11 +12974,24 @@ But this feature has a side-effect: that if the order of calling the @code{mknoi
 If you need this feature please send us an email at @code{bug-gnuastro@@gnu.org} (to motivate us in its implementation).}.
 
 @item mknoise-poisson
+@cindex Poisson noise
 Add Poisson noise to each element of the input dataset (see @ref{Photon counting noise}).
-This operator takes two arguments: the top/first popped operand is the background, the next popped operand is the dataset that the noise should be added to.
+This operator takes two arguments: the top/first popped operand is the background value (in units of electron counts), the next popped operand is the dataset that the noise should be added to.
 
 Except for the noise-model, this operator is very similar to @code{mknoise-sigma} and the examples there apply here too.
 The main difference with @code{mknoise-sigma} is that in a Poisson distribution the scatter/sigma will depend on each element's value.
+
+For example, let's assume you have made a mock image called @file{mock.fits} with @ref{MakeProfiles} and its assumed zeropoint is 22.5 (for more on the zero point, see @ref{Brightness flux magnitude}).
+Let's assume the background level for the Poisson noise has a value of 19 magnitudes.
+You can first use the @code{mag-to-counts} operator to convert this background magnitude into counts, then feed the background value in counts to @code{mknoise-poisson} operator:
+
+@example
+$ astarithmetic mock.fits 19 22.5 mag-to-counts \
+                mknoise-poisson
+@end example
+
+Try changing the background value from 19 to 10 to see the effect!
+Recall that the tutorial @ref{Sufi simulates a detection} shows how you can use MakeProfiles to build mock images.
 
 @item mknoise-uniform
 Add uniform noise to each element of the input dataset.

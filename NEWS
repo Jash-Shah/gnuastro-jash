@@ -67,6 +67,7 @@ See the end of the file for license conditions.
      - mknoise-poisson: Add Poisson noise with the given background.
      - mknoise-uniform: Add uniform noise around existing value.
      - counts-to-mag: Convert counts to magnitudes with given zero point.
+     - mag-to-counts: Convert magnitudes to counts with given zero point.
      - counts-to-jy: Convert counts to Janskys through a zero point based
           on AB magnitudes.
      Trigonometric operators proposed by Zahra Sharbaf and Samane Raji.
@@ -178,9 +179,6 @@ See the end of the file for license conditions.
      the help of Joseph Mazzarella.
 
   Library:
-   - gal_ds9_reg_read_polygon: Parse the polygon from an SAO DS9 region file.
-   - gal_units_counts_to_mag: Convert counts to magnitudes.
-   - gal_units_counts_to_jy: Convert counts to Janskys.
    - New arithmetic operator macros (for the 'gal_arithmetic' function):
      - GAL_ARITHMETIC_OP_SIN: sine (input in deg).
      - GAL_ARITHMETIC_OP_COS: cosine (input in deg).
@@ -209,8 +207,10 @@ See the end of the file for license conditions.
      - GAL_WCS_COORDSYS_GALACTIC: Galactic coordinates.
      - GAL_WCS_COORDSYS_SUPERGALACTIC: Supergalactic coordinates.
    - gal_array_file_recognized: For FITS images, check contents also.
+   - gal_ds9_reg_read_polygon: Parse the polygon from an SAO DS9 region file.
    - gal_fits_file_recognized: Check the file contents when suffix isn't FITS.
    - gal_units_counts_to_mag: Convert counts to magnitudes.
+   - gal_units_mag_to_counts: Convert magnitudes to counts.
    - gal_units_counts_to_jy: Convert counts to Janskys.
    - gal_wcs_coordsys_from_string: WCS coordinate system from string.
    - gal_wcs_coordsys_identify: Parse WCS struct to find  coordinate system.

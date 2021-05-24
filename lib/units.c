@@ -368,6 +368,16 @@ gal_units_counts_to_mag(double counts, double zeropoint)
 
 
 
+/* Convert magnitude to counts using the given zeropoint. */
+double
+gal_units_mag_to_counts(double mag, double zeropoint)
+{
+  return pow(10, (mag - zeropoint)/(-2.5f));
+}
+
+
+
+
 /* Convert Pixel values to Janskys with an AB-magnitude based
    zero-point. See the "Brightness, Flux, Magnitude and Surface
    brightness". */

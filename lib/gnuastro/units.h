@@ -77,6 +77,9 @@ double
 gal_units_counts_to_mag(double counts, double zeropoint);
 
 double
+gal_units_mag_to_counts(double mag, double zeropoint);
+
+double
 gal_units_counts_to_jy(double counts, double zeropoint_ab);
 
 __END_C_DECLS    /* From C++ preparations */
