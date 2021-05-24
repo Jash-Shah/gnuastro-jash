@@ -289,11 +289,31 @@ ui_read_check_only_options(struct noisechiselparams *p)
      '0.0001'. We were thus fully confused with the output (an extremely
      low value) and thought its a bug, while it wasn't! */
   if(p->snquant<0.1)
-    fprintf(stderr, "\nWARNING: Value of '--snquant' ('-c') is %g. Note "
-            "that this is not a contamination rate (where lower is "
-            "better), it is a purity rate (where higher is better). If you "
-            "intentionally asked for such a low purity level, please "
-            "ignore this warning\n\n", p->snquant);
+    error(EXIT_SUCCESS, 0, "\nWARNING: Value of '--snquant' ('-c') is "
+          "%g. Note that this is not a contamination rate (where lower "
+          "is better), it is a purity rate (where higher is better). If "
+          "you intentionally asked for such a low purity level, please "
+          "ignore this warning\n\n", p->snquant);
+
+  /* Make sure a reasonable value is given to '--meanmedqdiff'. */
+  if(p->meanmedqdiff>0.5)
+    error(EXIT_FAILURE, 0, "%g is not acceptable for '--meanmedqdiff'! "
+          "This option is the quantile-difference between the quantile "
+          "of the mean and 0.5 (the quantile of the median). Since the "
+          "range of quantile is from 0.0 to 1.0, the maximum difference "
+          "can therefore be 0.5. For more on this option, please see "
+          "the \"Quantifying signal in a tile\" section of the Gnuastro "
+          "book (with this command: 'info gnuastro \"Quantifying "
+          "signal in a tile\"'", p->meanmedqdiff);
+  if(p->meanmedqdiff>0.3 && p->cp.quiet==0)
+    error(EXIT_SUCCESS, 0, "WARNING: %g is very high for "
+          "'--meanmedqdiff'! This option is the quantile-difference "
+          "between the quantile of the mean and 0.5 (the quantile of "
+          "the median). For more on this option, please see the "
+          "\"Quantifying signal in a tile\" section of the Gnuastro "
+          "book (with this command: 'info gnuastro \"Quantifying "
+          "signal in a tile\"'. To suppress this warning, please use "
+          "the '--quiet' option", p->meanmedqdiff);
 }
 
 

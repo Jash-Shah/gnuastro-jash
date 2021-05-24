@@ -430,11 +430,25 @@ ui_read_check_only_options(struct statisticsparams *p)
               "'--interpmetric' and '--interpnumngb' are mandatory when "
               "requesting Sky measurement ('--sky')");
 
-      /* If mode and median distance is a reasonable value. */
+      /* Make sure a reasonable value is given to '--meanmedqdiff'. */
       if(p->meanmedqdiff>0.5)
-        error(EXIT_FAILURE, 0, "%f not acceptable for '--meanmedqdiff'. It "
-              "cannot take values larger than 0.5 (quantile of median)",
-              p->meanmedqdiff);
+        error(EXIT_FAILURE, 0, "%g is not acceptable for '--meanmedqdiff'! "
+              "This option is the quantile-difference between the quantile "
+              "of the mean and 0.5 (the quantile of the median). Since the "
+              "range of quantile is from 0.0 to 1.0, the maximum difference "
+              "can therefore be 0.5. For more on this option, please see "
+              "the \"Quantifying signal in a tile\" section of the Gnuastro "
+              "book (with this command: 'info gnuastro \"Quantifying "
+              "signal in a tile\"'", p->meanmedqdiff);
+      if(p->meanmedqdiff>0.3 && p->cp.quiet==0)
+        error(EXIT_SUCCESS, 0, "WARNING: %g is very high for "
+              "'--meanmedqdiff'! This option is the quantile-difference "
+              "between the quantile of the mean and 0.5 (the quantile "
+              "of the median). For more on this option, please see the "
+              "\"Quantifying signal in a tile\" section of the Gnuastro "
+              "book (with this command: 'info gnuastro \"Quantifying "
+              "signal in a tile\"'. To suppress this warning, please use "
+              "the '--quiet' option", p->meanmedqdiff);
 
       /* If a kernel name has been given, we need the HDU. */
       if(p->kernelname && gal_fits_file_recognized(p->kernelname)
