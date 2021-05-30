@@ -3,6 +3,20 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 Copyright (C) 2015-2021 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
+* Noteworthy changes in release 0.XX (library XX.0.0) (XXXX-XX-XX) [stable]
+
+** New features
+
+** Removed features
+
+** Changed features
+
+** Bugs fixed
+
+
+
+
+
 * Noteworthy changes in release 0.15 (library 13.0.0) (2021-05-30) [stable]
 
 ** New features
@@ -225,7 +239,6 @@ See the end of the file for license conditions.
      above), the efficiency of this script has improved dramatically (from
      19 seconds to 0.42 seconds for about 650 FITS files used in the
      test!).
-
    - The default end to a "night" is set to 11:00a.m. Until now it was
      9:00a.m. But in some cases, calibration images may be taken after
      that. So to be safer in general it was incremented by 2 hours.
@@ -238,7 +251,6 @@ See the end of the file for license conditions.
      are also written into the output table(s), see the "MakeCatalog
      output" section of the book for more: 'SBLSTD', 'SBLNSIG', 'SBLMAGPX',
      'SBLAREA', 'SBLMAG'.
-
    - Upper-limit (UP) settings are also written into the output tables as
      keywords (like surface brightness limit numbers above): 'UPNSIGMA',
      'UPNUMBER', 'UPRNGNAM', 'UPRNGSEE', 'UPSCMLTP', 'UPSCTOL'.
