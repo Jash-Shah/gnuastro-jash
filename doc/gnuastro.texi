@@ -29329,6 +29329,12 @@ Convert counts to magnitudes through the given zero point.
 For more on the equation, see @ref{Brightness flux magnitude}.
 @end deftypefun
 
+@deftypefun double gal_units_mag_to_counts (double @code{mag}, double @code{zeropoint})
+@cindex Magnitude
+Convert magnitudes to counts through the given zero point.
+For more on the equation, see @ref{Brightness flux magnitude}.
+@end deftypefun
+
 @deftypefun double gal_units_counts_to_jy (double @code{counts}, double @code{zeropoint_ab})
 @cindex Jansky (Jy)
 @cindex AB Magnitude
