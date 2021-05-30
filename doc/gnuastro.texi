@@ -751,7 +751,7 @@ Program source
 Bash programmable completion
 
 * Bash TAB completion tutorial::  Fast tutorial to get you started on concepts.
-* Implemeting TAB completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
+* Implementing TAB completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
 
 Contributing to Gnuastro
 
@@ -1423,7 +1423,7 @@ When it is a last character in a line (the next character is a new-line characte
 This is not a convention, but a bi-product of the PDF building process of the manual:
 In the PDF version of this manual, a single quote (or apostrophe) character in the commands or codes is shown like this: @code{'}.
 Single quotes are sometimes necessary in combination with commands like @code{awk} or @code{sed}, or when using Column arithmetic in Gnuastro's own Table (see @ref{Column arithmetic}).
-Therefore when typing (recommended) or copy-pasting (not recommented) the commands that have a @code{'}, please correct it to the single-quote (or apostrophe) character, otherwise the command will fail.
+Therefore when typing (recommended) or copy-pasting (not recommended) the commands that have a @code{'}, please correct it to the single-quote (or apostrophe) character, otherwise the command will fail.
 
 
 @node Acknowledgments,  , Conventions, Introduction
@@ -1474,6 +1474,7 @@ Alexey Dokuchaev,
 Pierre-Alain Duc,
 Elham Eftekhari,
 Paul Eggert,
+Sepideh Eskandarlou,
 Gaspar Galaz,
 Andr@'es García-Serra Romero,
 Th@'er@`ese Godefroy,
@@ -1491,19 +1492,23 @@ Mohammad-Reza Khellat,
 Johan Knapen,
 Geoffry Krouchi,
 Martin Kuemmel,
+Clotilde Laigle,
 Floriane Leclercq,
 Alan Lefor,
 Javier Licandro,
 Sebasti@'an Luna Valero,
 Alberto Madrigal,
 Guillaume Mahler,
+Juan Miro,
 Alireza Molaeinezhad,
 Javier Moldon,
 Juan Molina Tobar,
 Francesco Montanari,
 Raphael Morales,
 Carlos Morales Socorro,
+Sylvain Mottet,
 Dmitrii Oparin,
+Fran@,{c}ois Ochsenbein,
 Bertrand Pain,
 William Pence,
 Mamta Pommier,
@@ -1511,14 +1516,14 @@ Marcel Popescu,
 Bob Proulx,
 Joseph Putko,
 Samane Raji,
-Francois Ochsenbein,
 Teymoor Saifollahi,
 Joanna Sakowska,
 Elham Saremi,
 Yahya Sefidbakht,
 Alejandro Serrano Borlaff,
 Zahra Sharbaf,
-David Shupe
+David Shupe,
+Leigh Smith,
 Jenny Sorce,
 Lee Spitler,
 Richard Stallman,
@@ -1531,6 +1536,7 @@ Juan C. Tello,
 Ignacio Trujillo,
 David Valls-Gabaud,
 Aaron Watkins,
+Richard Wilbur,
 Michael H.F. Wilkinson,
 Christopher Willmer,
 Xiuqin Wu,
@@ -2271,7 +2277,7 @@ We'll also multiply each by 60 to have the area in arc-minutes squared.
 @noindent
 @strong{Single quotes in PDF format:} in the PDF version of this manual, a single quote (or apostrophe) character in the commands or codes is shown like this: @code{'}.
 Single quotes are sometimes necessary in combination with commands like @code{awk} or @code{sed} (like the command below), or when using Column arithmetic in Gnuastro's own Table (see @ref{Column arithmetic}).
-Therefore when typing (recommended) or copy-pasting (not recommented) the commands that have a @code{'}, please correct it to the single-quote (or apostrophe) character, otherwise the command will fail.
+Therefore when typing (recommended) or copy-pasting (not recommended) the commands that have a @code{'}, please correct it to the single-quote (or apostrophe) character, otherwise the command will fail.
 @end cartouche
 @end iftex
 
@@ -3266,7 +3272,7 @@ Please open them and focus on one object to see for your self.
 This can bias the result, if you match catalogs.
 
 An accurate color calculation can only be done when magnitudes are measured from the same pixels on all images and this can be done easily with MakeCatalog.
-Infact this is one of the reasons that NoiseChisel or Segment don't generate a catalog like most other detection/segmentation software.
+In fact this is one of the reasons that NoiseChisel or Segment don't generate a catalog like most other detection/segmentation software.
 This gives you the freedom of selecting the pixels for measurement in any way you like (from other filters, other software, manually, and etc).
 Fortunately in these images, the Point spread function (PSF) is very similar, allowing us to use a single labeled image output for all filters@footnote{When the PSFs between two images differ largely, you would have to PSF-match the images before using the same pixels for measurements.}.
 
@@ -4078,7 +4084,7 @@ Think of the comments as an email to your future-self and always put a well-writ
 
 The example above was very basic and mostly redundant series of commands, to show the basic concepts behind scripts.
 You can put any (arbitrarily long and complex) series of commands in a script by following the two rules: 1) add a shebang, and 2) enable the executable flag.
-Infact, as you continue your own research projects, you will find that any time you are dealing with more than two or three commands, keeping them in a script (and modifying that script, and running it) is much more easier, and future-proof, then typing the commands directly on the command-line and relying on things like @command{history}. Here are some tips that will come in handy when you are writing your scripts:
+In fact, as you continue your own research projects, you will find that any time you are dealing with more than two or three commands, keeping them in a script (and modifying that script, and running it) is much more easier, and future-proof, then typing the commands directly on the command-line and relying on things like @command{history}. Here are some tips that will come in handy when you are writing your scripts:
 
 As a more realistic example, let's have a look at a script that will do the steps of @ref{Setup and data download} and @ref{Dataset inspection and cropping}.
 In particular note how often we are using variables to avoid repeating fixed strings of characters (usually file/directory names).
@@ -4625,7 +4631,7 @@ So even when they are implemented, we would strongly recommend quality checks fo
 @cindex Surface brightness limit
 @cindex Limit, surface brightness
 In @ref{NoiseChisel optimization} we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
-When presenting your detection results in a paper or scientific conference, usually the first thing that someone will ask (if you don't explicity say it!), is the dataset's @emph{surface brightness limit} (a standard measure of the noise level), and your target's surface brightness (a measure of the signal, either in the center or outskirts, depending on context).
+When presenting your detection results in a paper or scientific conference, usually the first thing that someone will ask (if you don't explicitly say it!), is the dataset's @emph{surface brightness limit} (a standard measure of the noise level), and your target's surface brightness (a measure of the signal, either in the center or outskirts, depending on context).
 For more on the basics of these important concepts please see @ref{Quantifying measurement limits}).
 Here, we'll measure these values for this image.
 
@@ -4760,13 +4766,13 @@ This is necessary in scenarios where your image has multiple depths and during y
 @end cartouche
 
 We have successfully measured the image's @mymath{3\sigma} surface brightness limiting magnitude over 25 arcsec@mymath{^2}.
-However, as discussed in @ref{Quantifying measurement limits} this value is just an extrapolation of the per-pixel standard deviaiton.
+However, as discussed in @ref{Quantifying measurement limits} this value is just an extrapolation of the per-pixel standard deviation.
 Issues like correlated noise will cause the real noise over a large area to be different.
 So for a more robust measurement, let's use the upper-limit magnitude of similarly sized region.
 For more on the upper-limit magnitude, see the respective item in @ref{Quantifying measurement limits}.
 
 In summary, the upper-limit measurements involve randomly placing the footprint of an object in undetected parts of the image many times.
-This resuls in a random distribution of brightness measurements, the standard deviation of that distribution is then converted into magnitudes.
+This results in a random distribution of brightness measurements, the standard deviation of that distribution is then converted into magnitudes.
 To be comparable with the results above, let's make a circular aperture that has an area of 25 arcsec@mymath{^2} (thus with a radius of @mymath{2.82095} arcsec).
 
 @example
@@ -4794,7 +4800,7 @@ astmkcatalog lab.fits -h1 --zeropoint=$zeropoint -osbl.fits \
 @end example
 
 The @file{sbl.fits} catalog now contains the upper-limit surface brightness for a circle with an area of 25 arcsec@mymath{^2}.
-You can check the value with the command below, but the great thing is that now you have both the surface brightness limiting magnitude in the headers discussed above, and the upper-limit surface brigthness within the table.
+You can check the value with the command below, but the great thing is that now you have both the surface brightness limiting magnitude in the headers discussed above, and the upper-limit surface brightness within the table.
 You can also add more profiles with different shapes and sizes if necessary.
 Of course, you can also use @option{--upperlimitsb} in your actual science objects and clumps to get an object-specific or clump-specific value.
 
@@ -4966,7 +4972,7 @@ We have thus reached an outer surface brightness of @mymath{25.70} magnitudes/ar
 This is very similar to the surface brightness limit measured in @ref{Image surface brightness limit} (which is a big achievement!).
 But another point in the result above is very interesting: the total S/N of the edge is @mymath{55.24} with a total edge magnitude@footnote{You can run MakeCatalog on @file{only-m51.fits} instead of @file{edge.fits} to see the full magnitude of the M51 group in this image.} of 15.90!!!
 This very large for such a faint signal (recall that the mean S/N per pixel was 0.32) and shows a very important point in the study of galaxies:
-While the per-pixel signal in their outer edges may be very faint (and invisible to the eye in noise), a lot of signal hides deeply burried in the noise.
+While the per-pixel signal in their outer edges may be very faint (and invisible to the eye in noise), a lot of signal hides deeply buried in the noise.
 
 In interpreting this value, you should just have in mind that NoiseChisel works based on the contiguity of signal in the pixels.
 Therefore the larger the object, the deeper NoiseChisel can carve it out of the noise (for the same outer surface brightness).
@@ -4982,7 +4988,7 @@ However, after finding the pixels with signal, you are most likely interested in
 For example how many star forming regions (those bright dots along the spiral arms) of M51 are within this image?
 What are the colors of each of these star forming regions?
 In the outer most wings of M51, which pixels belong to background galaxies and foreground stars?
-And many more similar qustions.
+And many more similar questions.
 To address these questions, you can use @ref{Segment} to identify all the ``clumps'' and ``objects'' over the detection.
 
 @example
@@ -7512,7 +7518,7 @@ As another example, if an option needs image HDUs within a FITS file, pressing @
 Just note that the file name has to be already given on the command-line before reaching such options (that look into the contents of a file).
 
 But TAB completion is not limited to file types or contents.
-Arguments/Options that take certain fixed string values will directly suggest those strings with TAB, and completely ignore the file structre (for example spectral line names in @ref{Invoking astcosmiccal})!
+Arguments/Options that take certain fixed string values will directly suggest those strings with TAB, and completely ignore the file structure (for example spectral line names in @ref{Invoking astcosmiccal})!
 As another example, the option @option{--numthreads} option (to specify the number of threads to use by the program), will find the number of available threads on the system, and suggest the possible numbers with a TAB!
 
 To activate Gnuastro's custom TAB completion in Bash, you need to put the following line in one of your Bash startup files (for example @file{~/.bashrc}).
@@ -10805,7 +10811,7 @@ Therefore, @code{--rowlimit=5,7} will return 3 of the input rows, row 5, 6 and 7
 This option will abort if any of the given values is larger than the total number of rows in the table.
 
 With the @option{--head} or @option{--tail} options you can only see the top or bottom few rows.
-However, with this option, you can limit the returned rows to a contiugous set of rows in the middle of the table.
+However, with this option, you can limit the returned rows to a contiguous set of rows in the middle of the table.
 Therefore this option cannot be called with @option{--head}, @option{--tail}, or @option{--rowrandom}.
 
 @item --rowrandom=INT
@@ -12235,7 +12241,7 @@ These operators take a single operand.
 Convert counts (usually CCD outputs) to magnitudes using the given zeropoint.
 The zero point is the first popped operand and the count value is the second.
 For example assume you have measured the standard deviation of the noise in an image to be @code{0.1}, and the image's zero point is @code{22.5}.
-You can therefore measure the @emph{per-pixel} surface brightness limit of the dataset (which is the magnitude of the noise standrard deviation) with this simple command below (for more on surface brightness see @ref{Brightness flux magnitude}).
+You can therefore measure the @emph{per-pixel} surface brightness limit of the dataset (which is the magnitude of the noise standard deviation) with this simple command below (for more on surface brightness see @ref{Brightness flux magnitude}).
 Note that because the output is a single number, we are using @option{--quiet} to avoid printing extra information.
 
 @example
@@ -12262,7 +12268,8 @@ The top-popped operand is assumed to be the AB-magnitude zero point and the seco
 For the full equation and basic definitions, see @ref{Brightness flux magnitude}.
 
 @cindex SDSS
-For example SDSS images are calibrated in units of nano-maggies, with a fixed zero point magnitude of 22.5.
+@cindex Nanomaggy
+For example SDSS images are calibrated in units of nanomaggies, with a fixed zero point magnitude of 22.5.
 Therefore you can convert the units of SDSS image pixels to Janskys with the command below:
 
 @example
@@ -14624,7 +14631,7 @@ In such cases, you can use the @option{--centeroncorner} option which will shift
 @item -a
 @itemx --align
 Align the image and celestial (WCS) axes given in the input.
-After it, the  vertical image direction (when viewed in SAO DS9) corresponds to thedeclination and the horizontal axis is the inverse of the Right Ascension (RA).
+After it, the  vertical image direction (when viewed in SAO DS9) corresponds to the declination and the horizontal axis is the inverse of the Right Ascension (RA).
 The inverse of the RA is chosen so the image can correspond to what you would actually see on the sky and is common in most survey images.
 
 Align is internally treated just like a rotation (@option{--rotation}), but uses the input image's WCS to find the rotation angle.
@@ -15360,7 +15367,7 @@ Once all the tiles are given a value, a smoothing step is implemented to remove 
 The size of the smoothing box is set with the @option{--smoothwidth} option.
 
 As mentioned above, the process above is used for any of the basic measurements (for example identifying the quantile-based thresholds in NoiseChisel, or the Sky value in Statistics).
-You can use the check-image feature of NoiseChisel or Statistisc to inspect the steps and visually see each step (all the options that start with @option{--check}).
+You can use the check-image feature of NoiseChisel or Statistics to inspect the steps and visually see each step (all the options that start with @option{--check}).
 For example, as mentioned in the @ref{NoiseChisel optimization} tutorial, when given a dataset from a new instrument (with differing noise properties), we highly recommend to use @option{--checkqthresh} in your first call and visually inspect how the parameters above affect the final quantile threshold (e.g., have the wings of bright sources leaked into the threshold?).
 The same goes for the @option{--checksky} option of Statistics or NoiseChisel.
 
@@ -16149,7 +16156,7 @@ $ astnoisechisel-3d --numchannels=3,3,1 cube.fits
 In the sections below, NoiseChisel's options are classified into three general classes to help in easy navigation.
 @ref{NoiseChisel input} mainly discusses the options relating to input and those that are shared in both detection and segmentation.
 Options to configure the detection are described in @ref{Detection options} and @ref{Segmentation options} we discuss how you can fine-tune the segmentation of the detections.
-Finallyin @ref{NoiseChisel output} the format of NoiseChisel's output is discussed.
+Finally, in @ref{NoiseChisel output} the format of NoiseChisel's output is discussed.
 The order of options here follow the same logical order that the respective action takes place within NoiseChisel (note that the output of @option{--help} is sorted alphabetically).
 
 Below, we'll discuss NoiseChisel's options, classified into two general classes, to help in easy navigation.
@@ -18478,7 +18485,7 @@ For more on the S@'ersic profile and @mymath{r_e}, please see @ref{Galaxies}.
 Therefore, when @mymath{r_e} is meaningful for the target (the target is elliptically symmetric and can be parameterized as a S@'ersic profile), @mymath{r_e} should be derived from fitting the profile with a S@'ersic function which has been convolved with the PSF.
 But from the equation above, you see that this radius is derived from the raw image's labeled values (after convolution, with no parametric profile), so this column's value will generally be (much) smaller than @mymath{r_e}, depending on the PSF, depth of the dataset, the morphology, or if a fraction of the profile falls on the edge of the image.
 
-In other words, this option can only be interpretted as an effective radius if there is no noise and no PSF and the profile within the image extends to infinity (or a very large multiple of the effective radius) and it not near the edge of the image.
+In other words, this option can only be interpreted as an effective radius if there is no noise and no PSF and the profile within the image extends to infinity (or a very large multiple of the effective radius) and it not near the edge of the image.
 
 @item --fracmaxarea1
 @itemx --fracmaxarea2
@@ -18851,7 +18858,7 @@ But when using @option{--outcols}, you can't give @code{bRA}, or @code{b25}.
 @itemx --logasoutput
 The output file will have the contents of the log file: indexes in the two catalogs that match with each other along with their distance, see description of the log file above.
 
-When this option is called, a separate log file will not be created and the output will not contain any of the input columns (either as two tables containing the re-arranged columns of each input, or a single table mixing columns), only their indexs in the log format.
+When this option is called, a separate log file will not be created and the output will not contain any of the input columns (either as two tables containing the re-arranged columns of each input, or a single table mixing columns), only their indices in the log format.
 
 @item --notmatched
 Write the non-matching rows into the outputs, not the matched ones.
@@ -21356,7 +21363,7 @@ The HDU/extension of the input image to use.
 @item -o STR
 @itemx --output=STR
 Filename of measured radial profile.
-It can be either a FITS table, or plain-text table (determied from your given file name suffix).
+It can be either a FITS table, or plain-text table (determined from your given file name suffix).
 
 @item -c FLT[,FLT[,...]]
 @itemx --center=FLT[,FLT[,...]]
@@ -21420,7 +21427,7 @@ $ astmkcatalog -P | grep " sigmaclip "
 
 @item --zeropoint=FLT
 The Zeropoint of the input dataset.
-This is necessary when you request measurements like Magnitude, or Surface brightess.
+This is necessary when you request measurements like Magnitude, or Surface brightness.
 
 @item -v INT
 @itemx --oversample=INT
@@ -21479,7 +21486,7 @@ Once your desired catalog (containing the positions of some objects) is created 
 For example you want to see their positions relative to each other.
 
 In this section we describe a simple installed script that is provided within Gnuastro for converting your given columns to an SAO DS9 region file to help in this process.
-SAO DS9@footnote{@url{http://ds9.si.edu}} is one of the most common FITS image vizualization tools in astronomy and is free software.
+SAO DS9@footnote{@url{http://ds9.si.edu}} is one of the most common FITS image visualization tools in astronomy and is free software.
 
 @menu
 * Invoking astscript-ds9-region::  How to call astscript-ds9-region
@@ -21515,7 +21522,7 @@ $ asttable cat.fits --range=MAG_F160W,28:29 -cRA,DEC \
 @end example
 
 The input can either be passed as a named file, or from standard input (a pipe).
-Only the @option{--column} option is mandatory (to specify the input table columns): two colums from the input table must be specified, either by name (recommended) or number.
+Only the @option{--column} option is mandatory (to specify the input table columns): two columns from the input table must be specified, either by name (recommended) or number.
 You can optionally also specify the region's radius, width and color of the regions with the @option{--radius}, @option{--width} and @option{--color} options, otherwise default values will be used for these (described under each option).
 
 The created region file will be written into the file name given to @option{--output}.
@@ -21536,7 +21543,7 @@ For more on this option, see @ref{Input output options}.
 @item -c STR,STR
 @itemx --column=STR,STR
 Identifiers of the two positional columns to use in the DS9 region file from the table.
-They can either be in WCS (RA and Dec) or image (pixel) coordiantes.
+They can either be in WCS (RA and Dec) or image (pixel) coordinates.
 The mode can be specified with the @option{--mode} option, described below.
 
 @item -n STR
@@ -21580,7 +21587,7 @@ Also, don't delete the created region file when @option{--command} is given (by 
 @item -o STR
 @itemx --output=STR
 Write the created SAO DS9 region file into the name given to this option.
-If not explicity given on the command-line, a default name of @file{ds9.reg} will be used.
+If not explicitly given on the command-line, a default name of @file{ds9.reg} will be used.
 If the file already exists, it will be over-written, you can avoid the deletion (or over-writing) of an existing file with the @option{--dontdelete}.
 
 @item --command="STR"
@@ -22514,7 +22521,7 @@ struct gal_threads_params
 @{
   size_t            id; /* Id of this thread.                  */
   void         *params; /* User-identified pointer.            */
-  size_t       *indexs; /* Target indexs given to this thread. */
+  size_t       *indexs; /* Target indices given to this thread. */
   pthread_barrier_t *b; /* Barrier for all threads.            */
 @};
 @end example
@@ -22592,7 +22599,7 @@ Therefore, creating @mymath{A} threads is not the best way to address such a pro
 The most efficient way to manage the actions is such that only @mymath{T} threads are created, and each thread works on a list of actions identified for it in series (one after the other).
 This way your CPU will get all the actions done with minimal overhead.
 
-The purpose of this function is to do what we explained above: each row in the @code{indexs} array contains the indexs of actions which must be done by one thread (so it has @code{numthreads} rows with @code{*icols} columns).
+The purpose of this function is to do what we explained above: each row in the @code{indexs} array contains the indices of actions which must be done by one thread (so it has @code{numthreads} rows with @code{*icols} columns).
 However, when using @code{indexs}, you don't have to know the number of columns.
 It is guaranteed that all the rows finish with @code{GAL_BLANK_SIZE_T} (see @ref{Library blank values}).
 The @code{GAL_BLANK_SIZE_T} macro plays a role very similar to a string's @code{\0}: every row finishes with this macro, so can easily stop parsing the indexes in the row as soon as you confront @code{GAL_BLANK_SIZE_T}.
@@ -24581,7 +24588,7 @@ contains some nodes, the new nodes will be added on top of them.
 @node Doubly linked ordered list of size_t, List of gal_data_t, Ordered list of size_t, Linked lists
 @subsubsection Doubly linked ordered list of @code{size_t}
 
-An ordered list of indexs is required in many contexts, one example was
+An ordered list of indices is required in many contexts, one example was
 discussed at the beginning of @ref{Ordered list of size_t}. But the list
 that was introduced there only has one point of entry: you can always only
 parse the list from smallest to largest. In this section, the doubly-linked
@@ -24953,7 +24960,7 @@ columns that matched each input column will be stored in each element.
 @end deftypefun
 
 @deftypefun {gal_list_sizet_t *} gal_table_list_of_indexs (gal_list_str_t @code{*cols}, gal_data_t @code{*allcols}, size_t @code{numcols}, int @code{searchin}, int @code{ignorecase}, char @code{*filename}, char @code{*hdu}, size_t @code{*colmatch})
-Returns a list of indexs (starting from 0) of the input columns that match
+Returns a list of indices (starting from 0) of the input columns that match
 the names/numbers given to @code{cols}. This is a low-level operation which
 is called by @code{gal_table_read} (described above), see there for more on
 each argument's description. @code{allcols} is the returned array of
@@ -25097,7 +25104,7 @@ suffix doesn't have to start with `@key{.}': this function will return
 @deftypefun in gal_fits_file_recognized (char @code{*name})
 Return @code{1} if the given file name (possibly including its contents) is a FITS file.
 This is necessary in when the contents of a FITS file do follow the FITS standard, but it the file doesn't have a Gnuastro-recognized FITS suffix.
-Therefore, it will first call @code{gal_fits_name_is_fits}, if the result is negative, then this function will attept to open the file with CFITSIO and if it works, it will close it again and return 1.
+Therefore, it will first call @code{gal_fits_name_is_fits}, if the result is negative, then this function will attempt to open the file with CFITSIO and if it works, it will close it again and return 1.
 In the process of opening the file, CFITSIO will just to open the file, no reading will take place, so it should have minimal CPU footprint.
 @end deftypefun
 
@@ -25353,7 +25360,7 @@ The advantage of working with the Unix epoch time is that you don't have to worr
 
 Read the list of keyword values from a FITS pointer.
 The input should be a linked list of Gnuastro's generic data container (@code{gal_data_t}).
-Before calling this function, you just have to set the @code{name}, and optinally, the desired @code{type} of the value of each keyword.
+Before calling this function, you just have to set the @code{name}, and optionally, the desired @code{type} of the value of each keyword.
 The given @code{name} value will be directly passed to CFITSIO to read the desired keyword name.
 This function will allocate space to keep the value.
 If no pre-defined type is requested for a certain keyword's value, the smallest possible type to host the value will be found and used.
@@ -25838,7 +25845,7 @@ For more one @code{minmapsize} and @code{quietmmap}, see the description under t
 It will mostly be the output of @code{gal_txt_stdin_read}, which is used to read the program's input as separate lines from the standard input (see below).
 Note that @code{filename} and @code{lines} are mutually exclusive and one of them must be @code{NULL}.
 
-Note that this is a low-level function, so the output data list is the inverse of the input indexs linked list.
+Note that this is a low-level function, so the output data list is the inverse of the input indices linked list.
 It is recommended to use @code{gal_table_read} for generic reading of tables in any format, see @ref{Table input output}.
 @end deftypefun
 
@@ -26289,7 +26296,7 @@ the rotation.
 @deftypefun void gal_wcs_to_cd (struct wcsprm @code{*wcs})
 Make sure that the WCS structure's @code{PCi_j} and @code{CDi_j} keywords have the same value and that the @code{CDELTi} keywords have a value of 1.0.
 Also, set the @code{wcs->altlin=2} (for the @code{CDi_j} formalism).
-With these changes @code{gal_wcs_write_in_fitsptr} (and thus @code{gal_wcs_write} and @code{gal_fits_img_write} and its derivates) will have an output file in the format of @code{CDi_j}.
+With these changes @code{gal_wcs_write_in_fitsptr} (and thus @code{gal_wcs_write} and @code{gal_fits_img_write} and its derivatives) will have an output file in the format of @code{CDi_j}.
 @end deftypefun
 
 @deftypefun int gal_wcs_coordsys_from_string (char @code{*coordsys})
@@ -26380,7 +26387,7 @@ return @code{NULL}.
 
 @deftypefun double gal_wcs_pixel_area_arcsec2 (struct wcsprm @code{*wcs})
 Return the pixel area of @code{wcs} in arc-second squared.
-This only works when the input dataset has atleast two dimensions and the units of the first two dimensions (@code{CUNIT} keywords) are @code{deg} (for degrees).
+This only works when the input dataset has at least two dimensions and the units of the first two dimensions (@code{CUNIT} keywords) are @code{deg} (for degrees).
 In other cases, this function will return a NaN.
 @end deftypefun
 
@@ -26882,7 +26889,7 @@ position within @code{tile->block}, not the allocated space.
 @end deftypefun
 
 @deftypefun {void *} gal_tile_start_end_ind_inclusive (gal_data_t @code{*tile}, gal_data_t @code{*work}, size_t @code{*start_end_inc})
-Put the indexs of the first/start and last/end pixels (inclusive) in a tile
+Put the indices of the first/start and last/end pixels (inclusive) in a tile
 into the @code{start_end} array (that must have two elements). NOTE: this
 function stores the index of each point, not its coordinates. It will then
 return the pointer to the start of the tile in the @code{work} data
@@ -27516,7 +27523,7 @@ The input vertices can have practically any order.
 The input (@code{in}) is an array containing the coordinates (two values) of each vertice.
 @code{n} is the number of corners.
 So @code{in} should have @code{2*n} elements.
-The output (@code{ordinds}) is an array with @code{n} elements specifying the indexs in order.
+The output (@code{ordinds}) is an array with @code{n} elements specifying the indices in order.
 This array must have been allocated before calling this function.
 The indexes are output for more generic usage, for example in a homographic transform (necessary in warping an image, see @ref{Warping basics}), the necessary order of vertices is the same for all the pixels.
 In other words, only the positions of the vertices change, not the way they need to be ordered.
@@ -27592,7 +27599,7 @@ Note that the vertices of both polygons have to be sorted in an anti-clock-wise 
 @end deftypefun
 
 @deftypefun void gal_polygon_vertices_sort (double @code{*vertices}, size_t @code{n}, size_t @code{*ordinds})
-Sort the indexs of the un-ordered @code{vertices} array to a counter-clockwise polygon in the already allocated space of @code{ordinds}.
+Sort the indices of the un-ordered @code{vertices} array to a counter-clockwise polygon in the already allocated space of @code{ordinds}.
 It is assumed that there are @code{n} vertices, and thus that @code{vertices} contains @code{2*n} elements where the two coordinates of the first vertice occupy the first two elements of the array and so on.
 
 The polygon can be both concave and convex (see the start of this section).
@@ -27640,7 +27647,7 @@ decreasing).
 The first class of functions below (with @code{TYPE} in their names) can be
 used for sorting a simple numeric array. Just replace @code{TYPE} with the
 dataset's numeric datatype. The second set of functions can be used to sort
-indexs (leave the actual numbers untouched). To use the second set of
+indices (leave the actual numbers untouched). To use the second set of
 functions, a global variable or structure are also necessary as described
 below.
 
@@ -27652,13 +27659,13 @@ a reference in @code{gal_qsort_index_single_TYPE_d} or
 @code{gal_qsort_index_single_TYPE_i}, see the explanation of these
 functions for more. Note that if @emph{more than one} array is to be sorted
 in a multi-threaded operation, these functions will not work as
-expected. However, when all the threads just sort the indexs based on a
+expected. However, when all the threads just sort the indices based on a
 @emph{single array}, this global variable can safely be used in a
 multi-threaded scenario.
 @end deffn
 
 @deftp {Type (C @code{struct})} gal_qsort_index_multi
-Structure to get the sorted indexs of multiple datasets on multiple threads
+Structure to get the sorted indices of multiple datasets on multiple threads
 with @code{gal_qsort_index_multi_d} or @code{gal_qsort_index_multi_i}. Note
 that the @code{values} array will not be changed by these functions, it is
 only read. Therefore all the @code{values} elements in the (to be sorted)
@@ -27728,14 +27735,14 @@ increasing order.
 @deftypefun int gal_qsort_index_multi_d (const void @code{*a}, const void @code{*b})
 When passed to @code{qsort} with an array of @code{gal_qsort_index_multi},
 this function will sort the array based on the values of the given
-indexs. The sorting will be ordered according to the @code{values} pointer
+indices. The sorting will be ordered according to the @code{values} pointer
 of @code{gal_qsort_index_multi}. Note that @code{values} must point to the
 same place in all the structures of the @code{gal_qsort_index_multi} array.
 
-This function is only useful when the indexs of multiple arrays on
+This function is only useful when the indices of multiple arrays on
 multiple threads are to be sorted. If your program is single threaded, or
-all the indexs belong to a single array (sorting different sub-sets of
-indexs in a single array on multiple threads), it is recommended to use
+all the indices belong to a single array (sorting different sub-sets of
+indices in a single array on multiple threads), it is recommended to use
 @code{gal_qsort_index_single_d}.
 @end deftypefun
 
@@ -28644,9 +28651,9 @@ be labeled). Blank pixels in the input will also be blank in the output.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_binary_connected_indexs(gal_data_t @code{*binary}, int @code{connectivity})
-Build a @code{gal_data_t} linked list, where each node of the list contains an array with indexs of the connected regions.
+Build a @code{gal_data_t} linked list, where each node of the list contains an array with indices of the connected regions.
 Therefore the arrays of each node can have a different size.
-Note that the indexs will only be calculated on the pixels with a value of 1 and internally, it will temporarily change the values to 2 (and return them back to 1 in the end).
+Note that the indices will only be calculated on the pixels with a value of 1 and internally, it will temporarily change the values to 2 (and return them back to 1 in the end).
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_binary_connected_adjacency_matrix (gal_data_t @code{*adjacency}, size_t @code{*numconnected})
@@ -28762,11 +28769,11 @@ Each of the labeled regions are independent of each other (the labels
 specify different classes of targets). Therefore, especially in large
 datasets, it is often useful to process each label on independent CPU
 threads in parallel rather than in series. Therefore the functions of this
-section actually use an array of pixel/element indexs (belonging to each
-label/class) as the main identifier of a region. Using indexs will also
+section actually use an array of pixel/element indices (belonging to each
+label/class) as the main identifier of a region. Using indices will also
 allow processing of overlapping labels (for example in deblending
 problems). Just note that overlapping labels are not yet implemented, but
-planned. You can use @code{gal_label_indexs} to generate lists of indexs
+planned. You can use @code{gal_label_indexs} to generate lists of indices
 belonging to separate classes from the labeled input.
 
 @deffn  Macro GAL_LABEL_INIT
@@ -28782,7 +28789,7 @@ classification in the labeled datasets.
 @deftypefun {gal_data_t *} gal_label_indexs (gal_data_t @code{*labels}, size_t @code{numlabs}, size_t @code{minmapsize}, int @code{quietmmap})
 
 Return an array of @code{gal_data_t} containers, each containing the pixel
-indexs of the respective label (see @ref{Generic data
+indices of the respective label (see @ref{Generic data
 container}). @code{labels} contains the label of each element and has to
 have an @code{GAL_TYPE_INT32} type (see @ref{Library data types}). Only
 positive (greater than zero) values in @code{labels} will be used/indexed,
@@ -28792,7 +28799,7 @@ Meaningful labels start from @code{1} and not @code{0}, therefore the
 output array of @code{gal_data_t} will contain @code{numlabs+1} elements.
 The first (zero-th) element of the output (@code{indexs[0]} in the example
 below) will be initialized to a dataset with zero elements. This will allow
-easy (non-confusing) access to the indexs of each (meaningful) label.
+easy (non-confusing) access to the indices of each (meaningful) label.
 
 @code{numlabs} is the number of labels in the dataset. If it is given a
 value of zero, then the maximum value in the input (largest label) will be
@@ -28804,7 +28811,7 @@ optimized/checked environment.
 For example, if the returned array is called @code{indexs}, then
 @code{indexs[10].size} contains the number of elements that have a label of
 @code{10} in @code{labels} and @code{indexs[10].array} is an array (after
-casting to @code{size_t *}) containing the indexs of each one of those
+casting to @code{size_t *}) containing the indices of each one of those
 elements/pixels.
 
 By @emph{index} we mean the 1D position: the input number of dimensions is
@@ -28833,7 +28840,7 @@ to write the index of each clump's local extrema, otherwise, it is ignored.
 
 The @code{values} dataset must have a 32-bit floating point type
 (@code{GAL_TYPE_FLOAT32}, see @ref{Library data types}) and will only be
-read by this function. @code{indexs} must contain the indexs of the
+read by this function. @code{indexs} must contain the indices of the
 elements/pixels that will be over-segmented by this function and have a
 @code{GAL_TYPE_SIZE_T} type, see the description of
 @code{gal_label_indexs}, above. The final labels will be written in the
@@ -28842,7 +28849,7 @@ respective positions of @code{labels}, which must have a
 
 When @code{indexs} is already sorted, this function will ignore
 @code{min0_max1}. To judge if the dataset is sorted or not (by the values
-the indexs correspond to in @code{values}, not the actual indexs), this
+the indices correspond to in @code{values}, not the actual indices), this
 function will look into the bits of @code{indexs->flag}, for the respective
 bit flags, see @ref{Generic data container}. If @code{indexs} is not
 already sorted, this function will sort it according to the values of the
@@ -28948,12 +28955,12 @@ All pixels that aren't directly touching a labeled pixel just get pushed back to
 This is because in a generic scenario some of the indexed pixels might not be reachable through other indexed pixels.
 
 The next major difference with over-segmentation is that when there is only one label in growth region(s), it is not mandatory for @code{indexs} to be sorted by values.
-If there are multiple labeled regions in growth region(s), then values are important and you can use @code{qsort} with @code{gal_qsort_index_single_d} to sort the indexs by values in a separate array (see @ref{Qsort functions}).
+If there are multiple labeled regions in growth region(s), then values are important and you can use @code{qsort} with @code{gal_qsort_index_single_d} to sort the indices by values in a separate array (see @ref{Qsort functions}).
 
 This function looks for positive-valued neighbors of each pixel in @code{indexs} and will label a pixel if it touches one.
 Therefore, it is very important that only pixels/labels that are intended for growth have positive values in @code{labels} before calling this function.
 Any non-positive (zero or negative) value will be ignored as a label by this function.
-Thus, it is recommended that while filling in the `indexs' array values, you initialize all the pixels that are in @code{indexs} with @code{GAL_LABEL_INIT}, and set non-labeled pixels that you don't want to grow to @code{0}.
+Thus, it is recommended that while filling in the @code{indexs} array values, you initialize all the pixels that are in @code{indexs} with @code{GAL_LABEL_INIT}, and set non-labeled pixels that you don't want to grow to @code{0}.
 
 This function will write into both the input datasets.
 After this function, some of the non-positive @code{labels} pixels will have a new positivelabel and the number of useful elements in @code{indexs} will have decreased.
@@ -29586,12 +29593,12 @@ The last one (@code{INVALID}) is for sanity checks (for example, to know if the 
 Returns an allocated generic data container (@code{gal_data_t}, with an array of @code{GAL_TYPE_FLOAT64}) containing the vertices of a polygon within the SAO DS9 region file given by @code{*filename}.
 Since SAO DS9 region files are 2 dimensional, if there are @mymath{N} vertices in the SAO DS9 region file, the returned dataset will have @mymath{2\times N} elements (first two elements belonging to first vertice, and etc).
 
-The mode to interpret the vertice coordiantes is also read from the SAO DS9 region file and written into the @code{status} attribute of the output @code{gal_data_t}.
+The mode to interpret the vertice coordinates is also read from the SAO DS9 region file and written into the @code{status} attribute of the output @code{gal_data_t}.
 The coordinate mode can be one of the @code{GAL_DS9_COORD_MODE_*} macros, mentioned above.
 
 It is assumed that the file begins with @code{# Region file format: DS9} and it has two more lines (at least):
 a line containing the mode of the coordinates (the line should only contain either @code{fk5} or @code{image}),
-a line with the polygon vertices folowing this format: @code{polygon(V1X,V1Y,V2X,V2Y,...)} where @code{V1X} and @code{V1Y} are the horizontal and vertical coordinates of the first vertice, and so on.
+a line with the polygon vertices following this format: @code{polygon(V1X,V1Y,V2X,V2Y,...)} where @code{V1X} and @code{V1Y} are the horizontal and vertical coordinates of the first vertice, and so on.
 
 For example, here is a minimal acceptable SAO DS9 region file:
 
@@ -31084,10 +31091,10 @@ Typing the first key of the desired column and pressing @key{[TAB]} again will l
 
 @menu
 * Bash TAB completion tutorial::  Fast tutorial to get you started on concepts.
-* Implemeting TAB completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
+* Implementing TAB completion in Gnuastro::  How Gnuastro uses Bash auto-completion features.
 @end menu
 
-@node Bash TAB completion tutorial, Implemeting TAB completion in Gnuastro, Bash programmable completion, Bash programmable completion
+@node Bash TAB completion tutorial, Implementing TAB completion in Gnuastro, Bash programmable completion, Bash programmable completion
 @subsection Bash TAB completion tutorial
 When a user presses the @key{[TAB]} key while typing commands, Bash will inspect the input to find a relevant ``completion specification'', or @command{compspec}.
 If available, the @command{compspec} will generate a list of possible suggestions to complete the current word.
@@ -31121,7 +31128,7 @@ $ myprogram foo
 
 @noindent
 However, nothing will happen if you type @samp{b} and press @key{[TAB]} only @i{once}.
-This is because of the ambiguity: there isn't enough information to figure out which suggetion you want: @code{bar} or @code{bAr}?
+This is because of the ambiguity: there isn't enough information to figure out which suggestion you want: @code{bar} or @code{bAr}?
 So, if you press @key{[TAB]} twice, it will print out all the options that start with @samp{b}:
 
 @example
@@ -31216,7 +31223,7 @@ That is why when you type the letter @samp{b}, @command{complete} will reply onl
 
 Let's get a little more realistic, and develop a very basic completion script for one of Gnuastro's programs.
 Since the @option{--help} option will list all the options available in Gnuastro's programs, we are going to use its output and create a very basic TAB completion for it.
-Note that the actual TAB completion in Gnuastro is a little more complex than this and fully described in @ref{Implemeting TAB completion in Gnuastro}.
+Note that the actual TAB completion in Gnuastro is a little more complex than this and fully described in @ref{Implementing TAB completion in Gnuastro}.
 But this is a good exercise to get started.
 
 We'll use @command{asttable} as the demo, and the goal is to suggest all options that this program has to offer.
@@ -31315,14 +31322,14 @@ However, Gnuastro has many programs that share many similar things and the optio
 Also, complex situations do often come up: for example some people use a @file{.fit} suffix for FITS files and others don't even use a suffix at all!
 So in practice, things need to get a little more complicated, but the core concept is what you learnt in this section.
 We just modularize the process (breaking logically independent steps into separate functions to use in different situations).
-In @ref{Implemeting TAB completion in Gnuastro}, we will review the generalities of Gnuastro's implementation of Bash TAB completion.
+In @ref{Implementing TAB completion in Gnuastro}, we will review the generalities of Gnuastro's implementation of Bash TAB completion.
 
 
 
 
 
-@node Implemeting TAB completion in Gnuastro,  , Bash TAB completion tutorial, Bash programmable completion
-@subsection Implemeting TAB completion in Gnuastro
+@node Implementing TAB completion in Gnuastro,  , Bash TAB completion tutorial, Bash programmable completion
+@subsection Implementing TAB completion in Gnuastro
 The basics of Bash auto-completion was reviewed in @ref{Bash TAB completion tutorial}.
 Gnuastro is a very complex package of many programs, that have many similar features, so implementing those principles in an easy to maintain manner requires a modular solution.
 As a result, Bash's TAB completion is implemented as multiple files in Gnuastro:
@@ -31362,7 +31369,7 @@ So to keep the user's environment clean and avoid annoyance to the users, everyt
 All the function names should start with `@code{_gnuastro_autocomplete_}', again to avoid populating the user's function name-space with possibly conflicting names.
 
 @item
-Outputs of functions should be written in the @code{local} variables of the higher-level functions tht called them.
+Outputs of functions should be written in the @code{local} variables of the higher-level functions that called them.
 @end itemize
 
 
@@ -31786,7 +31793,7 @@ was implemented. So we usually start this part of the commit body
 with "With this commit ...". Again, you don't need to go into the
 details that can be seen from the 'git diff' command (like the
 file names that have been changed or the code that has been
-implemented). The imprtant thing here is the things that aren't
+implemented). The important thing here is the things that aren't
 immediately obvious from looking into the code.
 
 You can continue the explanation and it is encouraged to be very

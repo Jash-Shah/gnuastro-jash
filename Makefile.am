@@ -180,6 +180,18 @@ EXTRA_DIST = COPYING.FDL genauthors .dir-locals.el .version \
 
 
 
+# Files that must be cleaned
+# ==========================
+#
+# When the user runs 'make clean' no built products should remain. Since
+# the Bash TAB completion feature is not a standard C program, we need to
+# specify the files to clean manually.
+CLEANFILES = bin/completion.bash bin/completion.bash.built
+
+
+
+
+
 ## Bash auto-completion
 ## ====================
 ##
@@ -283,8 +295,7 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
         # arithmetic functions inside of it. We are keeping the arithmetic
         # operators separate to help in debugging when necessary (they can
         # be 'source'd into each program's completion script).
-	cp $(top_srcdir)/bin/completion.bash.in $@.tmp
-	cat $@.built >> $@.tmp
+	cat $(top_srcdir)/bin/completion.bash.in $@.built > $@.tmp
 
         # Copy each program's source.
 	for f in $(MAYBE_COMPLETE_ARITHMETIC) \
