@@ -1,6 +1,6 @@
 # Map different emails to people in Git.
 #
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2021 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -9,6 +9,7 @@
 
 Boud Roukema <boud@cosmo.torun.pl>
 Mohammad Akhlaghi <mohammad@akhlaghi.org>
+Carlos Morales-Socorro <cmorsoc@gmail.com>
 <mohammad@akhlaghi.org> <akhlaghi@gnu.org>
 Lucas MacQuarrie <macquarrielucas@gmail.com>
 <mohammad@akhlaghi.org> <makhlaghi@gmail.com>

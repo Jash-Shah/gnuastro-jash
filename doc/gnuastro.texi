@@ -30160,7 +30160,7 @@ discontinuities and replacements of a few Java components which were first
 declared as becoming @emph{deprecated}, and removed from later versions.
 
 @cindex Reproducibility
-This stems from the core principles of high-level languages like Python of
+This stems from the core principles of high-level languages like Python or
 Java: that they evolve significantly on the scale of roughly 5 to 10
 years. They are therefore useful when you want to solve a short-term
 problem and you are ready to pay the high cost of keeping your software up
