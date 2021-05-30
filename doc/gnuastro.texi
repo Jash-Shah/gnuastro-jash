@@ -7486,6 +7486,16 @@ In others, this option will be ignored.
 @node Shell TAB completion, Standard input, Common options, Command-line
 @subsection Shell TAB completion (highly customized)
 
+@cartouche
+@noindent
+@strong{Under development:} Gnuastro's TAB completion in Bash already greatly improves usage of Gnuastro on the command-line, but still under development and not yet complete.
+If you are interested to try it out, please go ahead and activate it (as described below), we encourage this.
+But please have in mind that there are known issues@footnote{@url{http://savannah.gnu.org/bugs/index.php?group=gnuastro&category_id=128}} and you may find new issues.
+If you do, please get in touch with us as described in @ref{Report a bug}.
+TAB completion is currently only implemented in the following programs: Arithmetic, BuildProgram, ConvertType, Convolve, CosmicCalculator, Crop, Fits and Table.
+For progress on this task, please see Task 15799@footnote{@url{https://savannah.gnu.org/task/?15799}}.
+@end cartouche
+
 @cindex Bash auto-complete
 @cindex Completion in the shell
 @cindex Bash programmable completion
@@ -31032,6 +31042,11 @@ were produced by other tests.
 
 @node Bash programmable completion, Developer's checklist, Test scripts, Developing
 @section Bash programmable completion
+
+@cartouche
+@strong{Under development:} While work on TAB completion is ongoing, it is not yet fully ready, please see the notice at the start of @ref{Shell TAB completion}.
+@end cartouche
+
 @cindex Bash auto-complete
 @cindex Completion in the shell
 @cindex Bash programmable completion
