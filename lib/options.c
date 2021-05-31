@@ -482,7 +482,7 @@ void *
 gal_options_read_wcslinearmatrix(struct argp_option *option, char *arg,
                                  char *filename, size_t lineno, void *junk)
 {
-  char *str;
+  char *str=NULL;
   uint8_t value=GAL_WCS_LINEAR_MATRIX_INVALID;
   if(lineno==-1)
     {

@@ -153,7 +153,7 @@ tap_query_construct_spatial(struct queryparams *p)
 {
   size_t ndim;
   double width2, *center, *darray;
-  char *regionstr, *spatialstr=NULL;
+  char *regionstr=NULL, *spatialstr=NULL;
   double *ocenter=NULL, *owidth=NULL, *omin=NULL, *omax=NULL;
 
   /* If the user wanted an overlap with an image, then calculate it. */
