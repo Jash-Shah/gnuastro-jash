@@ -12,6 +12,7 @@ See the end of the file for license conditions.
 ** Changed features
 
 ** Bugs fixed
+  bug #60725: MakeCatalog doesn't put comment on --halfsumsb column.
 
 
 

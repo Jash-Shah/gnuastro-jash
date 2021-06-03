@@ -1780,7 +1780,7 @@ columns_define_alloc(struct mkcatalogparams *p)
         case UI_KEY_HALFMAXSB:
           name           = "HALF_MAX_SB";
           unit           = "mag/arcsec^2";
-          ocomment       = "Brightness within half the maximum, divided by its area.";
+          ocomment       = "Surface brightness for pixels above half the maximum.";
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
@@ -1795,7 +1795,8 @@ columns_define_alloc(struct mkcatalogparams *p)
         case UI_KEY_HALFSUMSB:
           name           = "HALF_SUM_SB";
           unit           = "mag/arcsec^2";
-          ocomment       = "Half the brightness, divided by its area.";
+          ocomment       = "Surface brightness for pixels above half the sum of all labeled pixels.";
+          ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
@@ -1812,7 +1813,6 @@ columns_define_alloc(struct mkcatalogparams *p)
                              ? "FRAC_MAX_SUM_1"
                              : "FRAC_MAX_SUM_2" );
           unit           = MKCATALOG_NO_UNIT;
-          ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
           disp_fmt       = 0;
@@ -1830,6 +1830,7 @@ columns_define_alloc(struct mkcatalogparams *p)
               ocomment = "Sum of pixels brighter than 2nd fraction of maximum.";
               oiflag[ OCOL_FRACMAX2SUM ] = ciflag[ CCOL_FRACMAX2SUM ] = 1;
             }
+          ccomment = ocomment;
           break;
 
         case UI_KEY_FRACMAXAREA1:
@@ -1906,6 +1907,7 @@ columns_define_alloc(struct mkcatalogparams *p)
               ocomment = "Radius derived from area of 2nd fraction of maximum.";
               break;
             }
+          ccomment = ocomment;
           break;
 
         default:
