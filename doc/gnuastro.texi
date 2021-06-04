@@ -105,8 +105,9 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 * Warp: (gnuastro)Warp. Warp a dataset to a new grid.
 * astwarp: (gnuastro)Invoking astwarp. Options to Warp.
 
+* astscript: (gnuastro)Installed scripts. Gnuastro's installed scripts.
 * astscript-sort-by-night: (gnuastro)Invoking astscript-sort-by-night. Options to this script
-
+* astscript-radial-profile: (gnuastro)Invoking astscript-radial-profile. Options to this script
 * astscript-ds9-region: (gnuastro)Invoking astscript-ds9-region. Options to this script
 
 @end direntry
