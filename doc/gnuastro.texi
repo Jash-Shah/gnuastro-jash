@@ -21283,9 +21283,9 @@ $ astscript-radial-profile image.fits --center=44,37 --rmax=19
 ## Generate the radial profile centered at x=44 and y=37 (in pixels),
 ## up to a radial distance of 100 pixels, compute sigma clipped
 ## mean and standard deviation (sigclip-mean and sigclip-std) using
-## 3 sigma and 10 iterations.
+## 5 sigma and 0.1 tolerance (default is 3 sigma and 0.2 tolerance).
 $ astscript-radial-profile image.fits --center=44,37 --rmax=100 \
-                           --sigmaclip=3,10 \
+                           --sigmaclip=5,0.1 \
                            --measure=sigclip-mean,sigclip-std
 
 ## Generate the radial profile centered at RA=20.53751695,
