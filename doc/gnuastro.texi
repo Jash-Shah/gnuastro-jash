@@ -5410,8 +5410,8 @@ In that case use the following URL for the HTTP protocol instead (for Autoconf a
 @example
 $ DEVDIR=/home/yourname/Development
 $ cd $DEVDIR
-$ git clone git://git.sv.gnu.org/gnulib.git
-$ git clone git://git.sv.gnu.org/autoconf-archive.git
+$ git clone https://git.savannah.gnu.org/git/gnulib.git
+$ git clone https://git.savannah.gnu.org/git/autoconf-archive.git
 @end example
 
 @noindent
