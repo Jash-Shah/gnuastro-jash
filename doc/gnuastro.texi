@@ -6429,7 +6429,7 @@ However, since the built files are mixed with the source files and can have a la
 @cindex tmpfs file system
 @cindex file systems, tmpfs
 One solution to address both these problems is to use the @url{https://en.wikipedia.org/wiki/Tmpfs, tmpfs file system}.
-Any file in tmpfs is actually stored in the RAM (and possibly SAWP), not on HDDs or SSDs.
+Any file in tmpfs is actually stored in the RAM (and possibly SWAP), not on HDDs or SSDs.
 The RAM is built for extensive and fast I/O.
 Therefore the large number of file I/Os associated with configuring and building will not harm the HDDs or SSDs.
 Due to the volatile nature of RAM, files in the tmpfs file-system will be permanently lost after a power-off.
