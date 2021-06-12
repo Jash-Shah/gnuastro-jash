@@ -49,7 +49,7 @@ if [ -d $1/.git ]; then
     # in the top source directory not from the 'doc' directory, or if a
     # symbolic link was already created), we won't do any copying.
     if [ -e .mailmap ]; then keepmailmap=1;
-    else                     keepmailmap=0; ln -s $1/.mailmap .mailmap;
+    else                     keepmailmap=0; cp $1/.mailmap .mailmap;
     fi
 
     # Do NOT test if authors.texi is newer than ../.git.  In some cases the
