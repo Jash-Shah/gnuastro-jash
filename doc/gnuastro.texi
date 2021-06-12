@@ -5792,6 +5792,9 @@ These automatically generated files are included in the distributed tar ball for
 However from the perspective of version control, they are just bloatware and sources of confusion (since they are not changed by Gnuastro developers).
 
 The process of automatically building and importing necessary files into the cloned directory is known as @emph{bootstrapping}.
+After bootstrapping is done you are ready to follow the default GNU build steps that you normally run on the tarball (@command{./configure && make} for example, described more in @ref{Quick start}).
+Some known issues with bootstrapping may occur during the process, to see how to fix them, please see @ref{Known issues}.
+
 All the instructions for an automatic bootstrapping are available in @file{bootstrap} and configured using @file{bootstrap.conf}.
 @file{bootstrap} and @file{COPYING} (which contains the software copyright notice) are the only files not written by Gnuastro developers but under version control to enable simple bootstrapping and legal information on usage immediately after cloning.
 @file{bootstrap.conf} is maintained by the GNU Portability Library (Gnulib) and this file is an identical copy, so do not make any changes in this file since it will be replaced when Gnulib releases an update.
@@ -5823,7 +5826,6 @@ Please note that the address given to @option{--gnulib-srcdir} has to be an abso
 $ cd $TOPGNUASTRO/gnuastro
 $ ./bootstrap --copy --gnulib-srcdir=$DEVDIR/gnulib
 @end example
-
 
 @cindex GNU Texinfo
 @cindex GNU Libtool
@@ -6753,19 +6755,6 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
 You can also add more directories by using a colon `@code{:}' to separate them.
 See @ref{Installation directory} and @ref{Linking} to learn more on the @code{PATH} variables and dynamic linking respectively.
 
-@cindex Tests, error in converting images
-@item
-@command{$ make check}: @emph{There is an error with converting images} The error might be as follows:
-@code{convert: attempt to perform an operation not allowed by the security policy `gs' @ error/delegate.c/ExternalDelegateCommand/378.}
-This error is a known issue@footnote{@url{https://wiki.archlinux.org/title/ImageMagick}} with @code{ImageMagick} security policies, which states:
-@code{imagemagick} uses Ghostscript for PDF, EPS, PS and XPS parsing.
-Because there have been multiple vulnerabilities with Ghostscript@footnote{@url{https://security.archlinux.org/package/ghostscript}}, it is compiled without Ghostscript library.
-It would fall back to gs command instead, but that is, by default, disabled in @code{/etc/ImageMagick-7/policy.xml} with the following line:
-
-@example
-<policy domain="delegate" rights="none" pattern="gs" />
-@end example
-
 @cindex GPL Ghostscript
 @item
 @command{$ make check}: @emph{The tests relying on external programs (for example @file{fitstopdf.sh} fail.)} This is probably due to the fact that the version number of the external programs is too old for the tests we have preformed.
@@ -6787,6 +6776,28 @@ In the default configuration@footnote{If you configure Gnuastro with the @option
 Therefore, to run successfully before and after installation, linking modifications need to be made by GNU Libtool at installation time.
 @command{make install} does this internally, but a simple copy might give linking errors when you run it.
 If you need to copy the executables, you can do so after installation.
+
+@cindex Tests, error in converting images
+@item
+@command{$ make} (when bootstrapping): After you have bootstrapped Gnuastro from the version-controlled source, you may confront the following (or a similar) error when converting images (for more on bootrapping, see @ref{Bootstrapping}):
+
+@example
+@code{convert: attempt to perform an operation not allowed by the
+security policy `gs' @ error/delegate.c/ExternalDelegateCommand/378.}
+@end example
+
+This error is a known issue@footnote{@url{https://wiki.archlinux.org/title/ImageMagick}} with @code{ImageMagick} security policies in some operating systems.
+In short, @code{imagemagick} uses Ghostscript for PDF, EPS, PS and XPS parsing.
+However, because some security vulnerabilities have been found in Ghostscript@footnote{@url{https://security.archlinux.org/package/ghostscript}}, by default, ImageMagick may be compiled without Ghostscript library.
+In such cases, if allowed, ImageMagick will fall back to the external @command{gs} command instead of the library.
+But this may be disabled with the following (or a similar) lines in @code{/etc/ImageMagick-7/policy.xml} (anything related to PDF, PS, or GhostScript).
+
+@example
+<policy domain="delegate" rights="none" pattern="gs" />
+<policy domain="module" rights="none" pattern="@{PS,PDF,XPS@}" />
+@end example
+
+To fix this problem, simply comment such lines (by placing a @code{<!--} before each statement/line and @code{-->} at the end of that statement/line).
 
 @end itemize
 
