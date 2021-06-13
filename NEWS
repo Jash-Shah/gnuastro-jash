@@ -13,8 +13,10 @@ See the end of the file for license conditions.
 
 ** Bugs fixed
   bug #60725: MakeCatalog doesn't put comment on --halfsumsb column.
+  bug #60776: Radial profile script not using standard deviation image,
+              this bug was fixed by Zahra Sharbaf.
   bug #60778: Brightness error not NaN when all STD pixels are blank,
-              This bug was reported by Zahra Sharbaf.
+              this bug was reported by Zahra Sharbaf.
 
 
 

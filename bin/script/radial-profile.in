@@ -477,6 +477,35 @@ fi
 
 
 
+# Define the standard deviation option to MakeCatalog
+# ---------------------------------------------------
+#
+# The standard deviation input can be a file or a single number. If it is a
+# file, it has been cropped or warped (in the oversample scenario) in the
+# previous blocks of the code. In this part, we set the option string to
+# pass onto MakeCatalog in all possibilities (being a single number, a file
+# or not defined).
+#
+# If the user has not given 'instd', then just pass an empty string to
+# MakeCatalog.
+if [ x"$instd" = x ]; then
+    finalinstd=""
+else
+     # When 'instd' is a file, put the 'valuesstd' as the option value
+     # (which has been warped/cropped and created in the previous section).
+     if [ -f "$instd" ]; then
+         finalinstd="--instd=$valuesstd"
+
+     # When 'instd' is a number, simply give the number as the value.
+     else
+         finalinstd="--instd=$instd"
+     fi
+fi
+
+
+
+
+
 # Generate the apertures image
 # ----------------------------
 #
