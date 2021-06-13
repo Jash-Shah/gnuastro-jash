@@ -704,7 +704,10 @@ parse_objects(struct mkcatalog_passparams *pp)
                     {
                       varval=p->variance ? var : sval;
                       if(!isnan(varval))
-                        oi[ OCOL_SUM_VAR ] += varval + fabs(*V);
+                        {
+                          oi[ OCOL_SUM_VAR_NUM  ]++;
+                          oi[ OCOL_SUM_VAR      ] += varval + fabs(*V);
+                        }
                     }
                 }
             }
@@ -1078,7 +1081,10 @@ parse_clumps(struct mkcatalog_passparams *pp)
                         {
                           varval=p->variance ? var : sval;
                           if(!isnan(varval))
-                            ci[ CCOL_SUM_VAR ] += varval + fabs(*V);
+                            {
+                              ci[ CCOL_SUM_VAR_NUM ]++;
+                              ci[ CCOL_SUM_VAR     ] += varval + fabs(*V);
+                            }
                         }
                     }
                 }

@@ -76,6 +76,7 @@ enum objectcols
     OCOL_NUMXY,          /* Number of values in the first two dims.   */
     OCOL_SUM,            /* Sum of (value-sky) in object.             */
     OCOL_SUM_VAR,        /* Variance including values (not just sky). */
+    OCOL_SUM_VAR_NUM,    /* Number of pixels used for OCOL_SUM_VAR.   */
     OCOL_MEDIAN,         /* Median of values in object.               */
     OCOL_MAXIMUM,        /* Maximum value in object.                  */
     OCOL_SIGCLIPNUM,     /* Sigma-clipped mean of this object.        */
@@ -142,6 +143,7 @@ enum clumpcols
     CCOL_NUMXY,          /* Number of values only in first two dims.  */
     CCOL_SUM,            /* River subtracted brightness.              */
     CCOL_SUM_VAR,        /* Variance including values (not just sky). */
+    CCOL_SUM_VAR_NUM,    /* Number of pixels used for CCOL_SUM_VAR.   */
     CCOL_MEDIAN,         /* Median of values in clump.                */
     CCOL_MAXIMUM,        /* Maximum value in clump.                   */
     CCOL_SIGCLIPNUM,     /* Sigma-clipped mean of this clump.         */

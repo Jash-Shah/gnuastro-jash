@@ -18290,7 +18290,11 @@ So the sum of all the clumps brightness in the clump catalog will be smaller tha
 If no usable pixels are present over the clump or object (for example they are all blank), the returned value will be NaN (note that zero is meaningful).
 
 @item --brightnesserr
-The (@mymath{1\sigma}) error in measuring the brightness of objects or clumps.
+The (@mymath{1\sigma}) error in measuring the brightness of a label (objects or clumps).
+
+The returned value will be NaN when the label covers only NaN pixels in the values image, or a pixel is NaN in the @option{--instd} image, but non-NaN in the values image.
+The latter situation usually happens when there is a bug in the previous steps of your analysis, and is important because those pixels with a NaN in the @option{--instd} image may contribute significantly to the final error.
+If you want to ignore those pixels in the error measurement, set them to zero (which is a meaningful number in such scenarios).
 
 @item --clumpbrightness
 [Objects] The total brightness of the clumps within an object.
@@ -18347,6 +18351,11 @@ Note that until now this error assumes uncorrelated pixel values and also does n
 
 For now these factors have to be found by other means.
 @url{https://savannah.gnu.org/task/index.php?14124, Task 14124} has been defined for work on adding these sources of error too.
+
+The returned value will be NaN when the label covers only NaN pixels in the values image, or a pixel is NaN in the @option{--instd} image, but non-NaN in the values image.
+The latter situation usually happens when there is a bug in the previous steps of your analysis, and is important because those pixels with a NaN in the @option{--instd} image may contribute significantly to the final error.
+If you want to ignore those pixels in the error measurement, set them to zero (which is a meaningful number in such scenarios).
+
 
 @item --clumpsmagnitude
 [Objects] The magnitude of all clumps in this object, see @option{--clumpbrightness}.
@@ -18405,6 +18414,10 @@ So note that this value is @emph{not} sky subtracted.
 @itemx --sn
 The Signal to noise ratio (S/N) of all clumps or objects.
 See Akhlaghi and Ichikawa (2015) for the exact equations used.
+
+The returned value will be NaN when the label covers only NaN pixels in the values image, or a pixel is NaN in the @option{--instd} image, but non-NaN in the values image.
+The latter situation usually happens when there is a bug in the previous steps of your analysis, and is important because those pixels with a NaN in the @option{--instd} image may contribute significantly to the final error.
+If you want to ignore those pixels in the error measurement, set them to zero (which is a meaningful number).
 
 @item --sky
 The sky flux (per pixel) value under this object or clump.
