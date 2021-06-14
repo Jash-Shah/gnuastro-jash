@@ -398,6 +398,15 @@ fits_pixelscale(struct fitsparams *p)
                              "%g (arcsec^2*A)\n", multip, multip*3600*3600,
                              multip*3600*3600*1e10);
                   }
+
+              /* Higher-dimensional data are not yet supported. */
+              if(ndim>=4 && p->cp.quiet==0)
+                error(EXIT_SUCCESS, 0, "WARNING: the '--pixelscale' "
+                      "option only prints area/volume information for "
+                      "2 or 3 dimensional datasets, this dataset is "
+                      "%zu dimensions! If you need this feature, please "
+                      "contact '%s'. To suppress this warning, please "
+                      "run with '--quiet'", ndim, PACKAGE_BUGREPORT);
             }
         }
     }
@@ -413,6 +422,7 @@ fits_pixelscale(struct fitsparams *p)
         {
         case 2: printf("%g\n", multip); break;
         case 3: printf("%g %g\n", pixelscale[0]*pixelscale[1], multip); break;
+        default: printf("\n");
         }
     }
 

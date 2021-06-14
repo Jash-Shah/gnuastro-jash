@@ -9187,6 +9187,7 @@ These numbers are followed by the pixel area (in the raw WCS units).
 For 3D datasets, this will be area on each 2D slice.
 Finally, for 3D datasets, a final number (the voxel volume) is printed.
 As a summary, in @option{--quiet} mode, for 2D datasets three numbers are printed and for 3D datasets, 5 numbers are printed.
+If the dataset has more than 3 dimensions, only the pixel-scale values are printed (no area or volume will be printed).
 
 @item --skycoverage
 @cindex Image's sky coverage
