@@ -5248,12 +5248,27 @@ $ cd cfitsio-X.XX                   # Replace X.XX with version
 $ ./configure --prefix=/usr/local --enable-sse2 --enable-reentrant
 $ make
 $ make utils
-$ ./testprog > testprog.lis
+$ ./testprog > testprog.lis         # See below if this has an errotr
 $ diff testprog.lis testprog.out    # Should have no output
 $ cmp testprog.fit testprog.std     # Should have no output
 $ rm cookbook fitscopy imcopy smem speed testprog
 $ sudo make install
 @end example
+
+In the @code{./testprog > testprog.lis} step, you may confront an error, complaining that it can't find @file{libcfitsio.so.AAA} (where @code{AAA} is an integer).
+This is the library that you just built and haven't yet installed.
+But unfrotunately some versions of CFISIO don't account for this on some OSs.
+To fix the problem, you need to tell your OS to also look into current CFITSIO build directory with the first command below, afterwards, the problematic command (second below) should run properly.
+
+@example
+$ export LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH"
+$ ./testprog > testprog.lis
+@end example
+
+Recall that the modification above is ONLY NECESSARY FOR THIS STEP.
+@emph{Don't} put the @code{LD_LIBRARY_PATH} modification command in a permanent place (like your bash startup file).
+After installing CFITSIO, close your terminal and continue working on a new terminal (so @code{LD_LIBRARY_PATH} has its default value).
+For more on @code{LD_LIBRARY_PATH}, see @ref{Installation directory}.
 
 
 
