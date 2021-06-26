@@ -1019,6 +1019,10 @@ arithmetic_tofile(struct arithmeticparams *p, char *token, int freeflag)
                            ? OPERATOR_PREFIX_LENGTH_TOFILEFREE
                            : OPERATOR_PREFIX_LENGTH_TOFILE     ];
 
+  /* Make sure that if the file exists, it is deleted. */
+  gal_checkset_writable_remove(filename, p->cp.keep,
+                               p->cp.dontdelete);
+
   /* Save it to a file. */
   popped->wcs=p->refdata.wcs;
   if(popped->ndim==1 && p->onedasimage==0)
@@ -1031,10 +1035,8 @@ arithmetic_tofile(struct arithmeticparams *p, char *token, int freeflag)
 
   /* Reset the WCS to NULL and put it back on the stack. */
   popped->wcs=NULL;
-  if(freeflag)
-    gal_data_free(popped);
-  else
-    operands_add(p, NULL, popped);
+  if(freeflag) gal_data_free(popped);
+  else         operands_add(p, NULL, popped);
 }
 
 

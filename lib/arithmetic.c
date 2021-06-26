@@ -32,6 +32,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
+#include <gnuastro/box.h>
 #include <gnuastro/list.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/units.h>
@@ -1956,6 +1957,77 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
 
 
 
+gal_data_t *
+arithmetic_box_around_ellipse(gal_data_t *d1, gal_data_t *d2,
+                              gal_data_t *d3, int operator, int flags)
+{
+  size_t i;
+  double *a, *b, *pa, out[2];
+  gal_data_t *a_data, *b_data, *pa_data;
+
+  /* Basic sanity check. */
+  if( d1->size != d2->size || d1->size != d3->size )
+    error(EXIT_FAILURE, 0, "%s: the three operands to this "
+          "function don't have the same number of elements",
+          __func__);
+
+  /* Convert the two inputs into double. Note that if the user doesn't want
+     to free the inputs, we should make a copy of 'a_data' and 'b_data'
+     because the output will also be written in them. */
+  a_data=( ( d1->type==GAL_TYPE_FLOAT64
+             || flags & GAL_ARITHMETIC_FLAG_FREE )
+           ? d1
+           : gal_data_copy_to_new_type(d1, GAL_TYPE_FLOAT64) );
+  b_data=( ( d2->type==GAL_TYPE_FLOAT64
+             || flags & GAL_ARITHMETIC_FLAG_FREE )
+           ? d2
+           : gal_data_copy_to_new_type(d2, GAL_TYPE_FLOAT64) );
+  pa_data=( d3->type==GAL_TYPE_FLOAT64
+            ? d3
+            : gal_data_copy_to_new_type(d3, GAL_TYPE_FLOAT64) );
+
+  /* Set the double pointers and do the calculation for each. */
+  a=a_data->array;
+  b=b_data->array;
+  pa=pa_data->array;
+  for(i=0;i<a_data->size;++i)
+    {
+      /* If the minor axis has a larger value, print a warning and set the
+         value to NaN. */
+      if(b[i]>a[i])
+        {
+          if( (flags & GAL_ARITHMETIC_FLAG_QUIET)==0 )
+            error(EXIT_SUCCESS, 0, "%s: the minor axis (%g) is larger "
+                  "than the major axis (%g), output for this element "
+                  "will be NaN", __func__, b[i], a[i]);
+          out[0]=out[1]=NAN;
+        }
+      else gal_box_bound_ellipse_extent(a[i], b[i], pa[i], out);
+
+      /* Write the output in the inputs (we don't need the inputs any
+         more). */
+      a[i]=out[0];
+      b[i]=out[1];
+    }
+
+  /* Clean up. */
+  gal_data_free(pa_data);
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
+    {
+      if(a_data !=d1) gal_data_free(d1);
+      if(b_data !=d2) gal_data_free(d2);
+      if(pa_data!=d3) gal_data_free(d3);
+    }
+
+  /* Make the output as a list and return it. */
+  b_data->next=a_data;
+  return b_data;
+}
+
+
+
+
+
 /* Make a new dataset. */
 gal_data_t *
 arithmetic_makenew(gal_data_t *sizes)
@@ -2214,6 +2286,10 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "float64"))
     { op=GAL_ARITHMETIC_OP_TO_FLOAT64;        *num_operands=1;  }
 
+  /* Surrounding box. */
+  else if (!strcmp(string, "box-around-ellipse"))
+    { op=GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE;*num_operands=3;  }
+
   /* New dataset. */
   else if (!strcmp(string, "makenew"))
     { op=GAL_ARITHMETIC_OP_MAKENEW;           *num_operands=-1;  }
@@ -2323,6 +2399,8 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_TO_INT64:        return "long";
     case GAL_ARITHMETIC_OP_TO_FLOAT32:      return "float32";
     case GAL_ARITHMETIC_OP_TO_FLOAT64:      return "float64";
+
+    case GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE: return "box-around-ellipse";
 
     case GAL_ARITHMETIC_OP_MAKENEW:         return "makenew";
 
@@ -2501,6 +2579,15 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_TO_FLOAT64:
       d1 = va_arg(va, gal_data_t *);
       out=arithmetic_change_type(d1, operator, flags);
+      break;
+
+    /* Calculate the width and height of a box surrounding an ellipse with
+       a certain major axis, minor axis and position angle. */
+    case GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      d3 = va_arg(va, gal_data_t *);
+      out=arithmetic_box_around_ellipse(d1, d2, d3, operator, flags);
       break;
 
     /* Build dataset from scratch. */

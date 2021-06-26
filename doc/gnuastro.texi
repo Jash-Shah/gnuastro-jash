@@ -13072,7 +13072,34 @@ The output will be a single unsigned integer (dimensions cannot be negative).
 For example, the following command will produce the size of the first extension/HDU (the default HDU) of @file{a.fits} along the second FITS axis.
 
 @example
-astarithmetic a.fits 2 size
+$ astarithmetic a.fits 2 size
+@end example
+
+@item box-around-ellipse
+Return the width (along horizontal) and height (along vertical) of a box that encompases an ellipse with the same center point.
+The top-popped operand is assumed to be the position angle (angle from the horizontal axis) in @emph{degrees}.
+The second and third popped operands are the minor and major axis lengths respectively.
+This operator outputs two operands on the general stack.
+The first one is the width and the second (which will be the top one when this operator finishes) is the height.
+
+If the value to the second popped operand (minor axis) is larger than the third (major axis), a NaN value will be written for both the width and height of that element and a warning will be printed (the warning can be disabled with the @option{--quiet} option).
+
+As an example, if your ellipse has a major axis length of 10 units, a minor axis length of 4 units and a position angle of 20 degrees, you can estimate the bounding box with this command:
+
+@example
+$ echo "10 4 20" \
+       | asttable -c'arith $1 $2 $3 box-around-ellipse'
+@end example
+
+Alternatively if your three values are in separate FITS arrays/images, you can use the command below to have the width and height in similarly sized fits arrays.
+In this example @file{a.fits} and @file{b.fits} are respectively the major and minor axis lengths and @file{pa.fits} is the position angle (in degrees).
+Also, in all three, we assume the first extension is used.
+After its done, the height of the box will be put in @file{h.fits} and the width will be in @file{w.fits}.
+Just note that because this operator has two output datasets, you need to first write the height (top output operand) into a file and free it with the @code{tofilefree-} operator, then write the width in the file given to @option{--output}.
+
+@example
+$ astarithmetic a.fits b.fits pa.fits box-around-ellipse \
+                tofilefree-h.fits -ow.fits -g1
 @end example
 
 @item makenew
@@ -26777,6 +26804,13 @@ just a wrapper over the @code{gal_data_copy_to_new_type} or
 datasets}. It accepts these operators only for completeness and easy usage
 in @ref{Arithmetic}. So in your programs, it might be preferable to
 directly use those functions.
+@end deffn
+
+@deffn Macro GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
+Return the width (along horizontal) and height (along vertical) of a box that encompases an ellipse with the same center point.
+For more on the three input operands to this operator see the description of @code{box-around-ellipse}.
+This function returns two datasets as a @code{gal_data_t} linked list.
+The top element of the list is the height and its next element is the width.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_MAKENEW

@@ -79,12 +79,61 @@ operands_num(struct arithmeticparams *p)
 /**********************************************************************/
 /************      Adding to and popping from stack     ***************/
 /**********************************************************************/
+/* When the operand to be added is a list, we don't have to worry about
+   filenames (external datasets) because lists can only be added */
+static void
+operands_add_list(struct arithmeticparams *p, gal_data_t *data)
+{
+  gal_data_t *tmp;
+  struct operand *newnode;
+
+  /* First, reverse the list so when we add them, they have the proper
+     order. */
+  gal_list_data_reverse(&data);
+
+  /* Go over the list and add them to the stack. */
+  while(data)
+    {
+      /* Shift the 'data' pointer to the next element. */
+      tmp=data;
+      data=data->next;
+
+      /* Allocate space for the new operand. */
+      errno=0;
+      newnode=malloc(sizeof *newnode);
+      if(newnode==NULL)
+        error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'newnode'",
+              __func__, sizeof *newnode);
+
+      /* Set the basic parameters. */
+      newnode->data=tmp;
+      newnode->hdu=NULL;
+      newnode->filename=NULL;
+
+      /* Add this dataset to the top of the stack. */
+      newnode->next=p->operands;
+      p->operands=newnode;
+    }
+}
+
+
+
+
+
 void
 operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
 {
   int readwcs;
   size_t ndim, *dsize;
   struct operand *newnode;
+
+  /* In case 'data' is a list then there is no file name or HDU involved,
+     the given datasets were produced internally, so things are easier. */
+  if(data && data->next)
+    {
+      operands_add_list(p, data);
+      return;
+    }
 
   /* Some operators might not actually return any dataset (data=NULL), in
      such cases filename will also be NULL (since the operand was not added
