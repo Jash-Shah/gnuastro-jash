@@ -156,10 +156,8 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
                              size_t **numcolmatch)
 {
   int hasall=0;
-  size_t origsize;
   gal_data_t *tmp, *cat;
   gal_list_str_t *cols, *tcol;
-  gal_list_void_t *arrays=NULL;
 
   char *hdu              = (f1s2==1) ? p->cp.hdu     : p->hdu2;
   gal_list_str_t *incols = (f1s2==1) ? p->acols      : p->bcols;
@@ -190,7 +188,6 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
       else
         cols=incols;
 
-
       /* When the output contains columns from both inputs, we need to keep
          the number of columns matched against each column identifier. */
       *numcolmatch=gal_pointer_allocate(GAL_TYPE_SIZE_T,
@@ -208,36 +205,40 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
                        p->cp.quietmmap, *numcolmatch);
   else
     cat=match_cat_from_coord(p, cols, *numcolmatch);
-  origsize = cat ? cat->size : 0;
-
 
   /* Go over each column and permute its contents. */
   if(permutation)
-    for(tmp=cat; tmp!=NULL; tmp=tmp->next)
-      {
-        /* Do the permutation. */
-        gal_permutation_apply(tmp, permutation);
-
-        /* Correct the size of the array so only the matching columns are
-           saved as output. This is only Gnuastro's convention, it has no
-           effect on later freeing of the array in the memory. */
-        if(p->notmatched)
+    {
+      /* When we are in no-match AND outcols mode, we don't need to touch
+         the rows of the first input catalog (we want all of them) */
+      if( (p->notmatched && p->outcols && f1s2==1) == 0 )
+        for(tmp=cat; tmp!=NULL; tmp=tmp->next)
           {
-            /* Add the original array pointer to a list (we need to reset it
-               later). */
-            gal_list_void_add(&arrays, tmp->array);
+            /* Do the permutation. */
+            gal_permutation_apply(tmp, permutation);
 
-            /* Reset the data structure's array element to start where the
-               non-matched elements start. */
-            tmp->array=gal_pointer_increment(tmp->array, nummatched,
-                                             tmp->type);
+            /* Correct the size of the array so only the
+               matching/no-matching columns are saved as output. Note that
+               the 'size' element is only for Gnuastro, it has no effect on
+               later freeing of the array in the memory (we are not
+               'realloc'ing). */
+            if(p->notmatched)
+              {
+                /* Move the non-matched rows after permutation to the top
+                   set of rows. */
+                memcpy(tmp->array,
+                        gal_pointer_increment(tmp->array, nummatched,
+                                              tmp->type),
+                        nummatched*gal_type_sizeof(tmp->type));
 
-            /* Correct the size of the tile. */
-            tmp->size = tmp->dsize[0] = tmp->size - nummatched;
+                /* Correct the size of the tile. */
+                tmp->size = tmp->dsize[0] = tmp->size - nummatched;
+              }
+            else
+              tmp->size = tmp->dsize[0] = nummatched;
           }
-        else
-          tmp->size=tmp->dsize[0]=nummatched;
-      }
+    }
+
   /* If no match was found ('permutation==NULL'), and the matched columns
      are requested, empty all the columns that are to be written (only
      keeping the meta-data). */
@@ -262,25 +263,6 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
       gal_table_write(cat, NULL, NULL, p->cp.tableformat, outname,
                       extname, 0);
 
-      /* Correct arrays and sizes (when 'notmatched' was called). The
-         'array' element has to be corrected for later freeing.
-
-         IMPORTANT: '--notmatched' cannot be called with '--outcols'. So
-         you don't have to worry about the checks here being done later. */
-      if(p->notmatched)
-        {
-          /* Reverse the list of array pointers to write them back in. */
-          gal_list_void_reverse(&arrays);
-
-          /* Correct the array and size pointers. */
-          for(tmp=cat; tmp!=NULL; tmp=tmp->next)
-            {
-              tmp->array=gal_list_void_pop(&arrays);
-              tmp->size=tmp->dsize[0]=origsize;
-              tmp->block=NULL;
-            }
-        }
-
       /* Clean up. */
       gal_list_data_free(cat);
     }
@@ -292,15 +274,86 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
 
 
 
+/* When merging is to be done by rows (the non-matched rows of the second
+   catalog get merged into the first for the same columns). */
+static void
+match_catalog_write_one_row(struct matchparams *p, gal_data_t *a,
+                            gal_data_t *b)
+{
+  size_t dsize=a->size+b->size;
+  gal_data_t *ta, *tb, *cat=NULL;
+
+  /* A small sanity check. */
+  if( gal_list_data_number(a) != gal_list_data_number(b) )
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+          "fix it. The number of columns in the two catalogs are not "
+          "equal (%zu and %zu respectively)", __func__,
+          PACKAGE_BUGREPORT, gal_list_data_number(a),
+          gal_list_data_number(b));
+
+  /* Check if there is actually any row to add? */
+  if(b->size>0)
+    {
+      /* Go over the columns of the first and make the final output columns
+         with new sizes, but same types and metadata as the first input.*/
+      tb=b;
+      for(ta=a; ta!=NULL; ta=ta->next)
+        {
+          /* Make sure both have the same type. */
+          if(ta->type!=tb->type)
+            error(EXIT_FAILURE, 0, "when '--notmatched' and '--outcols' "
+                  "are used together, the each column given to '--outcols' "
+                  "must have the same datatype in both tables. However, "
+                  "the first input has a type of '%s' for one of the "
+                  "columns, while the second has a type of '%s'",
+                  gal_type_name(ta->type, 1), gal_type_name(tb->type, 1));
+
+          /* Allocate the necessary space. */
+          gal_list_data_add_alloc(&cat, NULL, ta->type, ta->ndim,
+                                  &dsize, NULL, 0, p->cp.minmapsize,
+                                  p->cp.quietmmap, ta->name, ta->unit,
+                                  ta->comment);
+
+          /* Copy the data of the first input in output. */
+          memcpy(cat->array, ta->array,
+                 ta->size*gal_type_sizeof(ta->type));
+
+          /* Copy the data of the second input in output. */
+          memcpy(gal_pointer_increment(cat->array, ta->size, cat->type),
+                 tb->array, tb->size*gal_type_sizeof(tb->type));
+
+          /* Increment 'tb'. */
+          tb=tb->next;
+        }
+
+      /* Reverse the table and write it out. */
+      gal_list_data_reverse(&cat);
+      gal_table_write(cat, NULL, NULL, p->cp.tableformat, p->out1name,
+                      "MATCHED", 0);
+      gal_list_data_free(cat);
+    }
+
+  /* There wasn't any row to add, just write the 'a' columns and don't free
+     it ('a' will be freed in the higher-level function). */
+  else
+    gal_table_write(a, NULL, NULL, p->cp.tableformat, p->out1name,
+                    "MATCHED", 0);
+}
+
+
+
+
+
 /* When specific columns from both inputs are requested, this function
    will write them out into a single table. */
 static void
-match_catalog_write_one(struct matchparams *p, gal_data_t *a, gal_data_t *b,
-                        size_t *acolmatch, size_t *bcolmatch)
+match_catalog_write_one_col(struct matchparams *p, gal_data_t *a,
+                            gal_data_t *b, size_t *acolmatch,
+                            size_t *bcolmatch)
 {
   gal_data_t *cat=NULL;
-  size_t i, j, k, ac=0, bc=0, npop;
   char **strarr=p->outcols->array;
+  size_t i, j, k, ac=0, bc=0, npop;
 
   /* Go over the initial list of strings. */
   for(i=0; i<p->outcols->size; ++i)
@@ -343,6 +396,7 @@ match_catalog_write_one(struct matchparams *p, gal_data_t *a, gal_data_t *b,
   gal_list_data_reverse(&cat);
   gal_table_write(cat, NULL, NULL, p->cp.tableformat, p->out1name,
                   "MATCHED", 0);
+  gal_list_data_free(cat);
 }
 
 
@@ -382,12 +436,22 @@ match_catalog(struct matchparams *p)
       if(p->outcols)
         {
           /* Arrange the columns and write the output. */
-          match_catalog_write_one(p, a, b, acolmatch, bcolmatch);
+          if(p->notmatched)
+            match_catalog_write_one_row(p, a, b);
+          else
+            {
+              match_catalog_write_one_col(p, a, b, acolmatch, bcolmatch);
+              a=b=NULL; /*They are freed in function above. */
+            }
 
           /* Clean up. */
           if(acolmatch) free(acolmatch);
           if(bcolmatch) free(bcolmatch);
         }
+
+      /* Clean up. */
+      if(a) gal_list_data_free(a);
+      if(b) gal_list_data_free(b);
     }
 
   /* Write the raw information in a log file if necessary.  */

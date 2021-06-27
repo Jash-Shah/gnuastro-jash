@@ -18848,6 +18848,14 @@ $ astmatch --aperture=2 input1.txt input2.fits
 $ astmatch --aperture=2 input1.txt input2.fits                   \
            --outcols=a1,aRA,aDEC,b/^MAG/,bBRG,a10
 
+## Assuming both inputs have the same column metadata (same name
+## and numeric type), the output will contain all the rows of the
+## first input, appended with the non-matching rows of the second
+## input (good when you need to merge multiple catalogs that
+## may have matching items, which you don't want to repeat).
+$ astmatch input1.fits input2.fits --ccol1=RA,DEC --ccol2=RA,DEC \
+           --aperture=1/3600 --notmatched --outcols=_all
+
 ## Match the two catalogs within an elliptical aperture of 1 and 2
 ## arc-seconds along RA and Dec respectively.
 $ astmatch --aperture=1/3600,2/3600 in1.fits in2.txt
@@ -18906,9 +18914,15 @@ The extension/HDU of the second input if it is a FITS file.
 When it isn't a FITS file, this option's value is ignored.
 For the first input, the common option @option{--hdu} must be used.
 
-@item --outcols=STR
+@item --outcols=STR[,STR,[...]]
 Columns (from both inputs) to write into a single matched table output.
-The value to @code{--outcols} must be a comma-separated list of strings.
+The value to @code{--outcols} must be a comma-separated list of column identifiers (number or name, see @ref{Selecting table columns}).
+The expected format depends on @option{--notmatched} and explained below.
+By default (when @option{--nomatched} is not called), the number of rows in the output will be euqal to the number of matches.
+However, when @option{--notmatched} is called, all the rows (from the requested columns) of the first input are placed in the output, and the not-matched rows of the second input are inserted afterwards (useful when you want to merge unique entries of multiple catalogs into one).
+
+@table @asis
+@item Default (only matching rows)
 The first character of each string specifies the input catalog: @option{a} for the first and @option{b} for the second.
 The rest of the characters of the string will be directly used to identify the proper column(s) in the respective table.
 See @ref{Selecting table columns} for how columns can be specified in Gnuastro.
@@ -18935,6 +18949,25 @@ So column names aren't defined and you can only request integer column numbers t
 For example if you want to find the row matching RA of 1.2345 and Dec of 6.7890, then you should use @option{--coord=1.2345,6.7890}.
 But when using @option{--outcols}, you can't give @code{bRA}, or @code{b25}.
 
+@item With @option{--notmatched}
+Only the column names/numbers should be given (for example @option{--outcols=RA,DEC,MAGNITUDE}).
+It is assumed that both input tables have the requested column(s) and that the numerical datatypes of each column in each input (with same name) is the same as the corresponding column in the other.
+Therefore if one input has a @code{MAGNITUDE} column with a 32-bit floating point type, but the @code{MAGNITUDE} column of the other is 64-bit floating point, Match will crash with an error.
+The metadata of the columns will come from the first input.
+
+As an example, let's assume @file{input1.txt} and @file{input2.fits} each have a different number of columns and rows.
+However, they both have the @code{RA} (64-bit floating point), @code{DEC} (64-bit floating point) and @code{MAGNITUDE} (32-bit floating point) columns.
+If @file{input1.txt} has 100 rows and @file{input2.fits} has 300 rows (such that 50 of them match within 1 arcsec of the first), then the output of the command above will have @mymath{100+(300-50)=350} rows and only three columns.
+Other columns in each catalog, which may be different, are ignored.
+
+@example
+$ astmatch input1.txt  --ccol1=RA,DEC \
+           input2.fits --ccol2=RA,DEC \
+           --aperture=1/3600 \
+           --notmatched --outcols=RA,DEC,MAGNITUDE
+@end example
+@end table
+
 @item -l
 @itemx --logasoutput
 The output file will have the contents of the log file: indexes in the two catalogs that match with each other along with their distance, see description of the log file above.
@@ -18943,9 +18976,9 @@ When this option is called, a separate log file will not be created and the outp
 
 @item --notmatched
 Write the non-matching rows into the outputs, not the matched ones.
-Note that with this option, the two output tables will not necessarily have the same number of rows.
-Therefore, this option cannot be called with @option{--outcols}.
-@option{--outcols} prints mixed columns from both inputs, so they must all have the same number of elements and must correspond to each other.
+By default, this will produce two output tables, that will not necessarily have the same number of rows.
+However, when called with @option{--outcols}, its possible to import non-matching rows of the second into the first.
+See the description of @option{--outcols} for more.
 
 @item -c INT/STR[,INT/STR]
 @itemx --ccol1=INT/STR[,INT/STR]

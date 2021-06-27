@@ -212,16 +212,13 @@ parse_opt(int key, char *arg, struct argp_state *state)
 /***************       Sanity Check         *******************/
 /**************************************************************/
 /* Read and check ONLY the options. When arguments are involved, do the
-   check in 'ui_check_options_and_arguments'. */
+   check in 'ui_check_options_and_arguments'.
 static void
 ui_read_check_only_options(struct matchparams *p)
 {
-  if(p->outcols && p->notmatched)
-    error(EXIT_FAILURE, 0, "'--outcols' and '--notmatched' cannot be called "
-          "at the same time. The former is only for cases when the matches "
-          "are required");
-}
 
+}
+*/
 
 
 
@@ -794,56 +791,71 @@ ui_preparations_out_cols(struct matchparams *p)
      proper list. */
   for(i=0;i<p->outcols->size;++i)
     {
+      /* For easy reading. */
       col=strarr[i];
-      switch(col[0])
+
+      /* In no-match mode, then the same column will be used from both
+         catalogs so things are easier. */
+      if(p->notmatched)
         {
-        case 'a': gal_list_str_add(&p->acols, col+1, 0); break;
-        case 'b':
-          /* With '--coord', only numbers that are smaller than the number
-             of the dimensions are acceptable. */
-          if(p->coord)
-            {
-              goodvalue=0;
-              rptr=gal_type_string_to_number(col+1, &readtype);
-              if(rptr)
-                {
-                  read=gal_data_alloc(rptr, readtype, 1, &one, NULL, 0, -1,
-                                      1, NULL, NULL, NULL);
-                  if(gal_type_is_int(readtype))
-                    {
-                      read=gal_data_copy_to_new_type_free(read,GAL_TYPE_LONG);
-                      if( *((long *)(read->array)) <= ndim )
-                        goodvalue=1;
-                    }
-                  gal_data_free(read);
-                }
-              if(goodvalue==0)
-                error(EXIT_FAILURE, 0, "bad value to second catalog "
-                      "column (%s) of '--outcols'.\n\n"
-                      "With the '--coord' option, the second catalog is "
-                      "assumed to have a single row and the given number "
-                      "of columns. Therefore when using '--outcols', only "
-                      "integers that are less than the number of "
-                      "dimensions (%zu in this case) are acceptable", col+1,
-                      ndim);
-            }
-          gal_list_str_add(&p->bcols, col+1, 0);
-          break;
-        default:
-          error(EXIT_FAILURE, 0, "'%s' is not a valid value for "
-                "'--outcols'.\n\n"
-                "The first character of each value to this option must be "
-                "either 'a' or 'b'. The former specifies a column from the "
-                "first input and the latter a column from the second. The "
-                "characters after them can be any column identifier (number, "
-                "name, or regular expression). For more on column selection, "
-                "please run this command:\n\n"
-                "    $ info gnuastro \"Selecting table columns\"\n",
-                col);
+          gal_list_str_add(&p->acols, col, 0);
+          gal_list_str_add(&p->bcols, col, 0);
         }
+
+      /* In match mode, we need to know which column should come from which
+         catalog. */
+      else
+        switch(col[0])
+          {
+          case 'a': gal_list_str_add(&p->acols, col+1, 0); break;
+          case 'b':
+            /* With '--coord', only numbers that are smaller than the
+               number of the dimensions are acceptable. */
+            if(p->coord)
+              {
+                goodvalue=0;
+                rptr=gal_type_string_to_number(col+1, &readtype);
+                if(rptr)
+                  {
+                    read=gal_data_alloc(rptr, readtype, 1, &one, NULL, 0,
+                                        -1, 1, NULL, NULL, NULL);
+                    if(gal_type_is_int(readtype))
+                      {
+                        read=gal_data_copy_to_new_type_free(read,
+                                                            GAL_TYPE_LONG);
+                        if( *((long *)(read->array)) <= ndim )
+                          goodvalue=1;
+                      }
+                    gal_data_free(read);
+                  }
+                if(goodvalue==0)
+                  error(EXIT_FAILURE, 0, "bad value to second catalog "
+                        "column (%s) of '--outcols'.\n\n"
+                        "With the '--coord' option, the second catalog "
+                        "is assumed to have a single row and the given "
+                        "number of columns. Therefore when using "
+                        "'--outcols', only integers that are less than "
+                        "the number of dimensions (%zu in this case) "
+                        "are acceptable", col+1, ndim);
+              }
+            gal_list_str_add(&p->bcols, col+1, 0);
+            break;
+          default:
+            error(EXIT_FAILURE, 0, "'%s' is not a valid value for "
+                  "'--outcols'.\n\n"
+                  "The first character of each value to this option "
+                  "must be either 'a' or 'b'. The former specifies a "
+                  "column from the first input and the latter a "
+                  "column from the second. The characters after them "
+                  "can be any column identifier (number, name, or "
+                  "regular expression). For more on column selection, "
+                  "please run this command:\n\n"
+                  "    $ info gnuastro \"Selecting table columns\"\n",
+                  col);
+          }
     }
 
-  /* Revere the lists so they correspond to the input order. */
+  /* Reverse the lists so they correspond to the input order. */
   gal_list_str_reverse(&p->acols);
   gal_list_str_reverse(&p->bcols);
 }
@@ -969,12 +981,13 @@ ui_preparations(struct matchparams *p)
 
   /* Currently Match only works on catalogs. */
   if(p->mode==MATCH_MODE_WCS)
-    error(EXIT_FAILURE, 0, "currently Match only works on catalogs, we will "
-          "implement the WCS matching routines later");
+    error(EXIT_FAILURE, 0, "currently Match only works on catalogs, "
+          "we will implement the WCS matching routines later");
   else
     {
       ui_read_columns(p);
-      if(p->outcols) ui_preparations_out_cols(p);
+      if(p->outcols)
+        ui_preparations_out_cols(p);
     }
 
   /* Set the output filename. */
@@ -1034,8 +1047,9 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct matchparams *p)
 
 
   /* Read the options into the program's structure, and check them and
-     their relations prior to printing. */
+     their relations prior to printing.
   ui_read_check_only_options(p);
+  */
 
 
   /* Print the option values if asked. Note that this needs to be done
@@ -1093,8 +1107,11 @@ ui_free_report(struct matchparams *p, struct timeval *t1)
   free(p->cp.output);
   gal_data_free(p->ccol1);
   gal_data_free(p->ccol2);
+  gal_data_free(p->outcols);
   gal_list_data_free(p->cols1);
   gal_list_data_free(p->cols2);
+  gal_list_str_free(p->acols, 0);
+  gal_list_str_free(p->bcols, 0);
   gal_list_str_free(p->stdinlines, 1);
 
   /* Print the final message.

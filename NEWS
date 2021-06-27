@@ -11,6 +11,13 @@ See the end of the file for license conditions.
    - New operands (also available in Table's column arithmetic):
      - box-around-ellipse: width and height of the box covering an ellipse.
 
+  Match:
+   - When called with '--notmatched --outcols=AAA,BBB', Match will now
+     append non-matching rows of second table into first table's rows (for
+     columns 'AAA' and 'BBB' in example above). This allows easy/clean
+     merging of two catalogs that may have some repetition (the output will
+     only contain unique rows). See description of '--outcols' for more.
+
   Library:
    - Arithmetic macros:
      - GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
@@ -18,6 +25,12 @@ See the end of the file for license conditions.
 ** Removed features
 
 ** Changed features
+
+  Match:
+   - The two '--notmatched' and '--outcols' can be called together (to
+     create a single catalog that appends the non-matching rows of second
+     table with the rows of the first. Until this version, this would cause
+     an error.
 
 ** Bugs fixed
   bug #60725: MakeCatalog doesn't put comment on --halfsumsb column.
