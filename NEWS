@@ -12,11 +12,13 @@ See the end of the file for license conditions.
      - box-around-ellipse: width and height of the box covering an ellipse.
 
   Match:
-   - When called with '--notmatched --outcols=AAA,BBB', Match will now
-     append non-matching rows of second table into first table's rows (for
-     columns 'AAA' and 'BBB' in example above). This allows easy/clean
-     merging of two catalogs that may have some repetition (the output will
-     only contain unique rows). See description of '--outcols' for more.
+   - When called with '--notmatched --outcols=AAA,BBB', Match will append
+     non-matching rows of second table into first table's rows (for columns
+     'AAA' and 'BBB' in example above, which are assumed to exist in both
+     inputs, with same numeric datatype). This allows easy/clean merging of
+     two catalogs that may have matching objects into one catalog without
+     repetition. See description of '--outcols' in the Match manual for
+     more. This feature was proposed by Juan Molina Tobar and Leslie Hunt.
 
   Library:
    - Arithmetic macros:

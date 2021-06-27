@@ -1,5 +1,6 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Leslie Hunt
 Juan Molina Tobar
 Zahra Sharbaf
 Aaron Watkins
