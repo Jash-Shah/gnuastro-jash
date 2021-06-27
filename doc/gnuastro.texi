@@ -12280,16 +12280,18 @@ These operators take a single operand.
 
 @item counts-to-mag
 Convert counts (usually CCD outputs) to magnitudes using the given zeropoint.
-The zero point is the first popped operand and the count value is the second.
-For example assume you have measured the standard deviation of the noise in an image to be @code{0.1}, and the image's zero point is @code{22.5}.
-You can therefore measure the @emph{per-pixel} surface brightness limit of the dataset (which is the magnitude of the noise standard deviation) with this simple command below (for more on surface brightness see @ref{Brightness flux magnitude}).
-Note that because the output is a single number, we are using @option{--quiet} to avoid printing extra information.
+The zero point is the first popped operand and the count image or value is the second popped operand.
+
+For example assume you have measured the standard deviation of the noise in an image to be @code{0.1} counts, and the image's zero point is @code{22.5} and you want to measure the @emph{per-pixel} surface brightness limit of the dataset@footnote{The @emph{per-pixel} surface brightness limit is the magnitude of the noise standard deviation. For more on surface brightness see @ref{Brightness flux magnitude}.
+In the example command, because the output is a single number, we are using @option{--quiet} to avoid printing extra information.}.
+To apply this operator on an image, simply replace @code{0.1} with the image name, as described below.
 
 @example
 $ astarithmetic 0.1 22.5 counts-to-mag --quiet
 @end example
 
-Of course, you can also convert every pixel in an image (or table column in Table's @ref{Column arithmetic}) with this operator if you replace the second popped operand with an image/column.
+Of course, you can also convert every pixel in an image (or table column in Table's @ref{Column arithmetic}) with this operator if you replace the second popped operand with an image/column name.
+For an example of applying this operator on an image, see the description of surface brightness in @ref{Brightness flux magnitude}, where we'll convert an image's pixel values to surface brightness.
 
 @item mag-to-counts
 Convert magnitudes to counts (usually CCD outputs) using the given zeropoint.
@@ -17456,6 +17458,35 @@ A common mistake is to follow the mag/arcsec@mymath{^2} unit literally, and divi
 But this is wrong because magnitude is a logarithmic scale while area is linear.
 It is the brightness that should be divided by the solid angle because both have linear scales.
 The magnitude of that ratio is then defined to be the surface brightness.
+
+A common scenario is to convert an image's pixel values to surface brightness, when you know its zeropoint.
+This can be done with the two simple commands below.
+First, we derive the pixel area (in arcsec@mymath{^2}) then we use Arithmetic to convert the pixels into surface brightness, see below for the details.
+
+@example
+$ pixarea=$(astfits image.fits --pixelscale --quiet \
+                    | awk '@{print $1*3600*$2*3600@}')
+$ astarithmetic image.fits abs 26.23 counts-to-mag \
+                $pixarea log10 2.5 x + \
+                --output=image-sb.fits
+@end example
+
+Within the Arithmetic call, first we apply the @code{abs} operator to convert all negative pixels to positive.
+This is done because magnitudes are defined in log scale, which is not defined in the negative.
+In a properly reduced image, negative pixels will be only due to noise and their fluctuations will be similar to positive noise pixels, so this is no problem.
+The result is then fed into Arithmetic's @code{counts-to-mag} operator with the zeropoint which will convert all pixels to magnitudes.
+Finally we calculate the extra @mymath{2.5\log_{10}(A)} term (with the `@code{$pixarea log10 2.5 x}' term) and add it (with `@code{+}') to each pixel of the magnitude image to have the pixel's surface brightness.
+See @ref{Reverse polish notation} for more on Arithmetic's notation and @ref{Arithmetic operators} for a description of each operator.
+
+@cartouche
+@noindent
+@strong{Don't warp or convolve magnitude or surface brightness images:} Warping an image involves calculating new pixel values (of the new pixel grid) from the old pixel values.
+Convolution is also a process of finding the weighted mean of pixel values.
+During these processes, many arithmetic operations are done on the original pixel values, for example addition or multiplication.
+However, @mymath{log_{10}(a+b)\ne log_{10}(a)+log_{10}(b)}.
+Therefore after calculating a magnitude or surface brightness image, do not apply any such operations on it!
+If you need to warp or convolve the image, do it @emph{before} the conversion.
+@end cartouche
 @end table
 
 
@@ -17624,7 +17655,8 @@ Recall that a larger magnitude corresponds to less brightness, see @ref{Brightne
 The low-level magnitude/pixel measurement above is only useful when all the datasets you want to use, or compare, have the same pixel size.
 However, you will often find yourself using, or comparing, datasets from various instruments with different pixel scales (projected pixel width, in arc-seconds).
 If we know the pixel scale, we can obtain a more easily comparable surface brightness limit in units of: magnitude/arcsec@mymath{^2}.
-But another complication is that astronomical objects are usually larger than 1 arcsec@mymath{^2}, so its common to measure the surface brightness depth over a larger (but fixed, depending on context) area.
+But another complication is that astronomical objects are usually larger than 1 arcsec@mymath{^2}.
+As a result, it is common to measure the surface brightness limit over a larger (but fixed, depending on context) area.
 
 Let's assume that every pixel is @mymath{p} arcsec@mymath{^2} and we want the surface brightness limit for an object covering A arcsec@mymath{^2} (so @mymath{A/p} is the number of pixels that cover an area of @mymath{A} arcsec@mymath{^2}).
 On the other hand, noise is added in RMS@footnote{If you add three datasets with noise @mymath{\sigma_1}, @mymath{\sigma_2} and @mymath{\sigma_3}, the resulting noise level is @mymath{\sigma_t=\sqrt{\sigma_1^2+\sigma_2^2+\sigma_3^2}}, so when @mymath{\sigma_1=\sigma_2=\sigma_3\equiv\sigma}, then @mymath{\sigma_t=\sigma\sqrt{3}}.
