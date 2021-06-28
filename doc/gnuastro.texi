@@ -13104,6 +13104,20 @@ $ astarithmetic a.fits b.fits pa.fits box-around-ellipse \
                 tofilefree-h.fits -ow.fits -g1
 @end example
 
+Finally, if you need to treat the width and height separately for further processing, you can call the @code{set-} operator two times afterwards like below.
+Recall that the @code{set-} operator will pop the top operand, and put it in memory with a certain name, bringing the next operand to the top of the stack.
+
+For example let's assume @file{catalog.fits} has atleast three columns @code{MAJOR}, @code{MINOR} and @code{PA} which specify the major axis, minor axis and position angle respectively.
+But you want the final width and height in 32-bit floating point numbers (not the default 64-bit, which may be too much precision in many scenarios).
+You can do this with the command below (note you can also break lines with @key{\}, within the single-quote environment)
+
+@example
+$ asttable catalog.fits \
+           -c'arith MAJOR MINOR PA box-around-ellipse \
+                    set-height set-width \
+                    width float32 height float32'
+@end example
+
 @item makenew
 Create a new dataset that only has zero values.
 The number of dimensions is read as the first popped operand and the number of elements along each dimension are the next popped operand (in reverse of the popping order).
