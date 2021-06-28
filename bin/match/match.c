@@ -156,7 +156,9 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
                              size_t **numcolmatch)
 {
   int hasall=0;
+  char **strarr;
   gal_data_t *tmp, *cat;
+  size_t i, numnotmatched;
   gal_list_str_t *cols, *tcol;
 
   char *hdu              = (f1s2==1) ? p->cp.hdu     : p->hdu2;
@@ -224,18 +226,52 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
                'realloc'ing). */
             if(p->notmatched)
               {
-                /* Move the non-matched rows after permutation to the top
-                   set of rows. */
+                /* We want to move the non-matched rows after permutation
+                   to the top set of rows. But when we have strings, the
+                   strings that will be over-written need to be freed
+                   first. */
+                numnotmatched = tmp->size - nummatched;
+                if(tmp->type==GAL_TYPE_STRING)
+                  {
+                    strarr=tmp->array;
+                    for(i=0;i<nummatched;++i)
+                      if(strarr[i]) free(strarr[i]);
+                  }
+
+                /* Move the non-matched elements up to the top. */
                 memcpy(tmp->array,
-                        gal_pointer_increment(tmp->array, nummatched,
-                                              tmp->type),
-                        nummatched*gal_type_sizeof(tmp->type));
+                       gal_pointer_increment(tmp->array, nummatched,
+                                             tmp->type),
+                       numnotmatched*gal_type_sizeof(tmp->type));
+
+                /* If we are on a string, the pointers at the bottom (that
+                   have been moved to the top), should not be set to NULL
+                   to avoid any potential double freeing. */
+                if(tmp->type==GAL_TYPE_STRING)
+                  {
+                    strarr=tmp->array;
+                    for(i=numnotmatched; i<tmp->size;++i) strarr[i]=NULL;
+                  }
 
                 /* Correct the size of the tile. */
-                tmp->size = tmp->dsize[0] = tmp->size - nummatched;
+                tmp->size = tmp->dsize[0] = numnotmatched;
               }
+
+            /* This is a normal match (not not-match). */
             else
-              tmp->size = tmp->dsize[0] = nummatched;
+              {
+                /* If we are on a string column, free the allocated space
+                   for each element that should be removed. */
+                if(tmp->type==GAL_TYPE_STRING)
+                  {
+                    strarr=tmp->array;
+                    for(i=nummatched;i<tmp->size;++i)
+                      if(strarr[i]) { free(strarr[i]); strarr[i]=NULL; }
+                  }
+
+                /* Correct the size. */
+                tmp->size = tmp->dsize[0] = nummatched;
+              }
           }
     }
 
@@ -280,8 +316,9 @@ static void
 match_catalog_write_one_row(struct matchparams *p, gal_data_t *a,
                             gal_data_t *b)
 {
-  size_t dsize=a->size+b->size;
+  char **strarr;
   gal_data_t *ta, *tb, *cat=NULL;
+  size_t i, dsize=a->size+b->size;
 
   /* A small sanity check. */
   if( gal_list_data_number(a) != gal_list_data_number(b) )
@@ -314,13 +351,20 @@ match_catalog_write_one_row(struct matchparams *p, gal_data_t *a,
                                   p->cp.quietmmap, ta->name, ta->unit,
                                   ta->comment);
 
-          /* Copy the data of the first input in output. */
+          /* Copy the data of the first and second inputs in output. */
           memcpy(cat->array, ta->array,
                  ta->size*gal_type_sizeof(ta->type));
-
-          /* Copy the data of the second input in output. */
           memcpy(gal_pointer_increment(cat->array, ta->size, cat->type),
                  tb->array, tb->size*gal_type_sizeof(tb->type));
+
+          /* If we have a string column, the allocated spaces of each row
+             should now only be freed within the 'cat' column, so set the
+             values within 'a' and 'b' to NULL. */
+          if(ta->type==GAL_TYPE_STRING)
+            {
+              strarr=ta->array; for(i=0;i<ta->size;++i) strarr[i]=NULL;
+              strarr=tb->array; for(i=0;i<tb->size;++i) strarr[i]=NULL;
+            }
 
           /* Increment 'tb'. */
           tb=tb->next;
@@ -328,8 +372,8 @@ match_catalog_write_one_row(struct matchparams *p, gal_data_t *a,
 
       /* Reverse the table and write it out. */
       gal_list_data_reverse(&cat);
-      gal_table_write(cat, NULL, NULL, p->cp.tableformat, p->out1name,
-                      "MATCHED", 0);
+      gal_table_write(cat, NULL, NULL, p->cp.tableformat,
+                      p->out1name, "MATCHED", 0);
       gal_list_data_free(cat);
     }
 

@@ -853,7 +853,8 @@ gal_match_coordinates_output(gal_data_t *A, gal_data_t *B, size_t *A_perm,
   exit(0);
   */
 
-  /* Return the output. */
+  /* Clean up and return. */
+  free(Bmatched);
   return out;
 }
 
