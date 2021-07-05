@@ -44,36 +44,47 @@ ned_sanity_checks(struct queryparams *p)
   /* Set the summarized names. */
   if(p->datasetstr)
     {
+      /* Correct the dataset name if 'objdir' is given. */
       if( !strcmp(p->datasetstr, "objdir") )
         {
           free(p->datasetstr);
           gal_checkset_allocate_copy("NEDTAP.objdir", &p->datasetstr);
         }
-    }
 
-  /* Database-specific checks. For example, if we should use TAP or
-     not. Note that the user may give 'NEDTAP.objdir', so we can't use the
-     'if' above (for expanding summarized names). */
-  if( !strcmp(p->datasetstr, "NEDTAP.objdir") )
-    p->usetap=1;
-  else if( !strcmp(p->datasetstr, "extinction") )
-    {
-      /* Crash for options that are not compatible with extinction. */
-      if( p->radius || p->width || p->range || p->noblank || p->columns
-          || p->head!=GAL_BLANK_SIZE_T || p->sort )
-        error(EXIT_FAILURE, 0, "NED's extinction calculator returns "
-              "the galactic extinction for a single point (in multiple "
-              "filters), therefore the following options are not "
-              "acceptable with it: '--radius', '--width', '--range', "
-              "'--noblank', '--column', '--head' and '--sort'");
+      /* Database-specific checks. For example, if we should use TAP or
+         not. Note that the user may give 'NEDTAP.objdir', so we can't use
+         the 'if' above (for expanding summarized names). */
+      if( !strcmp(p->datasetstr, "NEDTAP.objdir") )
+        p->usetap=1;
+      else if( !strcmp(p->datasetstr, "extinction") )
+        {
+          /* Crash for options that are not compatible with extinction. */
+          if( p->radius || p->width || p->range || p->noblank || p->columns
+              || p->head!=GAL_BLANK_SIZE_T || p->sort )
+            error(EXIT_FAILURE, 0, "NED's extinction calculator returns "
+                  "the galactic extinction for a single point (in multiple "
+                  "filters), therefore the following options are not "
+                  "acceptable with it: '--radius', '--width', '--range', "
+                  "'--noblank', '--column', '--head' and '--sort'");
 
-      /* Make sure that '--center' is given. */
-      if(p->center==NULL)
-        error(EXIT_FAILURE, 0, "no coordinate specified! Please use "
-              "'--center' to specify the RA and Dec (in J2000) of "
-              "your desired coordinate, for example "
-              "--center=10.68458,41.269166");
+          /* Make sure that '--center' is given. */
+          if(p->center==NULL)
+            error(EXIT_FAILURE, 0, "no coordinate specified! Please use "
+                  "'--center' to specify the RA and Dec (in J2000) of "
+                  "your desired coordinate, for example "
+                  "--center=10.68458,41.269166");
+        }
     }
+  else
+    error(EXIT_FAILURE, 0, "no dataset specified! Query only recognizes "
+          "two datasets for NED: 'objdir' and 'extinction'. 'objdir' "
+          "is in the IVOA Table Access Protocol (TAP) format, so you "
+          "can see its available columns before downloading the actual "
+          "data (to only download the small sub-set you need) with this "
+          "command: 'astquery %s --dataset=objdir --info'. However, the "
+          "'extinction' catalog isn't TAP-based, so the '--info' option "
+          "isn't supported (but by its nature, the size of the "
+          "extinction catalog is very small)", p->databasestr);
 
   /* Currently NED only has a single table for TAP access, so warn the
      users about this if they ask for any other table. */

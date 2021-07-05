@@ -41,7 +41,7 @@ See the end of the file for license conditions.
   bug #60778: Brightness error not NaN when all STD pixels are blank,
               this bug was reported by Zahra Sharbaf.
   bug #60826: Arithmetic won't delete existing file with tofile operators.
-
+  bug #60881: Query segmentation fault when NED is called without a dataset.
 
 
 

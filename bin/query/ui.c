@@ -406,8 +406,10 @@ ui_read_check_only_options(struct queryparams *p)
   gal_checkset_writable_remove(p->cp.output, p->cp.keep,
                                p->cp.dontdelete);
 
-  /* Set the suffix of the default names. */
+  /* Set the suffix of the default download names for NED (since extinction
+     is given only in VOTable, with an '.xml' suffix). */
   if( p->database==QUERY_DATABASE_NED
+      && p->datasetstr
       && !strcmp(p->datasetstr, "extinction") )
     {
       suffix=".xml";
