@@ -7,6 +7,15 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Book:
+   - New section added to ConvertType's documentation for annotating the
+     PDF output images with coordinates on the edges of the images, or
+     tangential size at certain redshift. This is done using the PGFPlots
+     package of LaTeX, directly with the same fonts and graphical settings
+     as your paper/slide, while being in vector graphics quality, and not
+     requiring hundreds of dependencies (only LaTeX is necessary beyond
+     Gnuastro).
+
   Arithmetic:
    - New operands (also available in Table's column arithmetic):
      - box-around-ellipse: width and height of the box covering an ellipse.

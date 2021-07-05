@@ -404,7 +404,12 @@ ConvertType
 * Recognized file formats::     Recognized file formats
 * Color::                       Some explanations on color.
 * Aligning images with small WCS offsets::  When the WCS slightly differs.
+* Annotations for figure in paper::  Adding coordinates or physical scale.
 * Invoking astconvertt::        Options and arguments to ConvertType.
+
+Annotations for figure in paper
+
+* Full script of annotations on figure::
 
 Table
 
@@ -5013,8 +5018,8 @@ Also note that if you are copying from the PDF version of this book, fix the sin
 
 @example
 #! /bin/bash
-set -e	   # Stop execution when there is an error.
-set -u	   # Stop execution when a variable is not initialized.
+set -e     # Stop execution when there is an error.
+set -u     # Stop execution when a variable is not initialized.
 
 # Run MakeCatalog to write the coordinates into a FITS table.
 # Default output is `$1_cat.fits'.
@@ -9799,6 +9804,7 @@ So before explaining the options and arguments (in @ref{Invoking astconvertt}), 
 * Recognized file formats::     Recognized file formats
 * Color::                       Some explanations on color.
 * Aligning images with small WCS offsets::  When the WCS slightly differs.
+* Annotations for figure in paper::  Adding coordinates or physical scale.
 * Invoking astconvertt::        Options and arguments to ConvertType.
 @end menu
 
@@ -10002,7 +10008,7 @@ But thanks to the JPEG compression algorithms, when all the pixels of one channe
 Therefore a Grayscale image and a CMYK image that has only the K-channel filled are approximately the same file size.
 
 
-@node Aligning images with small WCS offsets, Invoking astconvertt, Color, ConvertType
+@node Aligning images with small WCS offsets, Annotations for figure in paper, Color, ConvertType
 @subsection Aligning images with small WCS offsets
 
 In order to have nice color images, it is important that the images be properly aligned.
@@ -10062,7 +10068,415 @@ $ ./my-align.sh
 @noindent
 Of course, feel free to hack it and modify it to fit your datasets, like the rest of Gnuastro, this script is released under GNU GPLv.3 and above, see @ref{Your rights}.
 
-@node Invoking astconvertt,  , Aligning images with small WCS offsets, ConvertType
+@node Annotations for figure in paper, Invoking astconvertt, Aligning images with small WCS offsets, ConvertType
+@subsection Annotations for figure in paper
+
+@cindex Image annotation
+@cindex Annotation of images for paper
+To make a nice figure from your FITS images, it is important to show more than merely the raw image (converted to a printer friendly format like PDF or JPEG).
+Annotations (or visual metadata) over the raw image greatly help the readers clearly see your argument and put the image/result in a larger context.
+Examples include:
+@itemize
+@item
+Coordinates (Right Ascension and Declination) on the edges of the image, so viewers of your paper or presentation slides can get a physical feeling of the field's sky coverage.
+@item
+Thick line that has a fixed tangential size (for example in kilo parsecs) at the redshift/distance of interest.
+@item
+Contours over the image to show radio/X-ray emission, over an optical image for example.
+@item
+Text or arrows or etc, over certain parts of the image.
+@end itemize
+
+@cindex PGFPlots
+Because of the modular philosophy of Gnuastro, ConvertType is only focused on converting your FITS images to printer friendly formats like JPEG or PDF.
+But to present your results in a slide or paper, you will often need to annotate the raw JPEG or PDF with some of the features above.
+The good news is that there are many powerful plotting programs that you can use to add such annotations.
+As a result, there is no point in making a new one, specific to Gnuastro.
+In this section, we'll demonstrate this using the very powerful PGFPlots@footnote{@url{http://mirrors.ctan.org/graphics/pgf/contrib/pgfplots/doc/pgfplots.pdf}} package of @LaTeX{}.
+
+@cartouche
+@noindent
+@strong{Single script for easy running:} In this section we are reviewing the reason and details of every step which is good for educational purposes.
+But when you know the steps already, these separate code blocks can be annoying.
+Therefore the full script (except for the data download step) is available in @ref{Full script of annotations on figure}.
+@end cartouche
+
+@cindex TiKZ
+@cindex Matplotlib
+PGFPlots uses the same @LaTeX{} graphic engine that typesets your paper/slide.
+Therefore when you build your plots and figures using PGFPlots (and its underlying package PGF/TiKZ@footnote{@url{http://mirrors.ctan.org/graphics/pgf/base/doc/pgfmanual.pdf}}) your plots will blend beautifully within your text: same fonts, same colors, same line properties and etc.
+Since most papers (and presentation slides@footnote{To build slides, @LaTeX{} has packages like Beamer, see @url{http://mirrors.ctan.org/macros/latex/contrib/beamer/doc/beameruserguide.pdf}}) are made with @LaTeX{}, PGFPlots is therefore the best tool for those who use @LaTeX{} to create documents.
+PGFPlots also doesn't need any extra dependencies beyond a basic/minimal @TeX{}-live installation, so it is much more reliable than tools like Matplotlib in Python that have hundreds of fast-evolving dependencies@footnote{See Figure 1 of Alliez et al. 2020 at @url{https://arxiv.org/pdf/1905.11123.pdf}}.
+
+To demonstrate this, we'll create a surface brightness image of a galaxy in the F160W filter of the ABYSS survey@footnote{@url{http://research.iac.es/proyecto/abyss}}.
+In the code-block below, let's make a ``build'' directory to keep intermediate files and avoid populating the source.
+Afterwards, we'll download the full image and crop out a 20 arcmin wide image around the galaxy with the commands below.
+You can run these commands in an empty directory.
+
+@example
+$ mkdir build
+$ wget http://cdsarc.u-strasbg.fr/ftp/J/A+A/621/A133/fits/ah_f160w.fits
+$ astcrop ah_f160w.fits --center=53.1616278,-27.7802446 --mode=wcs \
+          --width=20/3600 --output=build/crop.fits
+@end example
+
+To better show the low surface brightness (LSB) outskirts, we'll warp the image, then convert the pixel units to surface brightness with the commands below.
+It is very important that the warping is done @emph{before} the conversion to surface brightness (in units of mag/arcsec@mymath{^2}), because the definition of surface brightness is non-linear.
+For more, see the Surface brightness topic of @ref{Brightness flux magnitude}.
+
+@example
+$ zeropoint=25.94
+$ astwarp build/crop.fits --centeroncorner --scale=1/3 \
+          --output=build/scaled.fits
+$ pixarea=$(astfits build/scaled.fits --pixelscale --quiet \
+                    | awk '@{print $1*3600*$2*3600@}')
+$ astarithmetic build/scaled.fits abs $zeropoint counts-to-mag \
+                $pixarea log10 2.5 x + --output=build/sb.fits
+@end example
+
+We are now ready to convert the surface brightness image into a PDF.
+To better show the LSB features, we'll also limit the color range with the @code{--fluxlow} and @option{--fluxhigh} options: all pixels with a surface brightness brighter than 22 mag/arcsec@mymath{^2} will be shown as black, and all pixels with a surface brightness fainter than 30 mag/arcsec@mymath{^2} will be white.
+These thresholds are being defined as variables, because we will also need them below (to pass into PGFPlots).
+We will also set @option{--borderwidth=0}, because the coordinate system we will add over the image will effectively be a border for the image (separating it from the background).
+
+@example
+sblow=22
+sbhigh=30
+$ astconvertt build/sb.fits --colormap=gray --borderwidth=0 \
+              --fluxhigh=$sbhigh --fluxlow=$sblow --output=build/sb.pdf
+@end example
+
+Please open @file{sb.pdf} and have a look.
+Also, please open @file{sb.fits} in DS9 (or any other FITS viewer) and play with the color range.
+Can the surface brightness limits be changed to better show the LSB structure?
+If so, you are free to change the limits above.
+
+We now have the printable PDF representation of the image, but as discussed above, its not enough for a paper.
+We'll add 1) a thick line showing the size of 20 kpc (kilo parsecs) at the redshift of the central galaxy, 2) coordinates and 3) a color bar, showing the surface brightness level of each grayscale level.
+
+To get the first job done, we first need to know the redshift of the central galaxy.
+To do this, we can use Gnuastro's Query program to look into all the objects in NED within this image (only asking for the RA, Dec and redshift columns).
+We will then use the Match program to find the NED entry that corresponds to our galaxy.
+
+@example
+$ astquery ned --dataset=objdir --overlapwith=build/sb.fits \
+           --column=ra,dec,z --output=ned.fits
+$ astmatch ned.fits -h1 --coord=53.1616278,-27.7802446 \
+           --ccol1=RA,Dec --aperture=1/3600
+$ redshift=$(asttable ned_matched.fits -cz)
+$ echo $redshift
+@end example
+
+Now that we know the redshift of the central object, we can define the coordinates of the thick line that will show the length of 20 kpc at that redshift.
+It will be a horizontal line (fixed Declination) across a range of RA.
+The start of this thick line will be located at the top edge of the image (at the 95-percent of the width and height of the image).
+With the commands below we'll find the three necessary parameters (one declination and two RAs).
+Just note that in astronmical images, RA increases to the left/east, which is the reason we are using the minimum and @code{+} to find the RA starting point.
+
+@example
+$ scalelineinkpc=20
+$ coverage=$(astfits build/sb.fits --skycoverage --quiet | awk 'NR==2')
+$ scalelinedec=$(echo      $coverage | awk '@{print $4-($4-$3)*0.05@}')
+$ scalelinerastart=$(echo  $coverage | awk '@{print $1+($2-$1)*0.05@}')
+$ scalelineraend=$(astcosmiccal --redshift=$redshift --arcsectandist \
+                      | awk '@{start='$scalelinerastart'; \
+                             width='$scalelineinkpc'/$1/3600; \
+                             print start+width@}')
+@end example
+
+To draw coordinates over the image, we need to feed these values into PGFPlots.
+But manually entering numbers into the PGFPlots source will be very furstrating and prone to many errors!
+Fortunately there is an easy way to do this: @LaTeX{} macros.
+New macros are defined by this @LaTeX{} command:
+@example
+\newcommand@{\macroname@}@{value@}
+@end example
+@noindent
+Anywhere that @LaTeX{} confronts @code{\macroname}, it will replace @code{value} when building the output.
+We will have one file called @file{macros.tex} in the build directory and define macros based on those values.
+We will use the shell's @code{printf} command to write these macro definition lines into the macro files.
+We just have to use double backslashes in the @code{printf} command, because backslash is a meaningful character for @code{printf}, but we want to keep one of them.
+Also, we put a @code{\n} at the end of each line, otherwise, all the commands will go into a single line of the output.
+We will also place the random `@code{ma}' string at the start of all our @LaTeX{} macros to help identify the macros for this plot.
+
+@example
+$ macros=build/macros.tex
+$ printf '\\newcommand@{\\maScaleDec@}'"@{$scalelinedec@}\n" > $macros
+$ printf '\\newcommand@{\\maScaleRAa@}'"@{$scalelinerastart@}\n" >> $macros
+$ printf '\\newcommand@{\\maScaleRAb@}'"@{$scalelineraend@}\n" >> $macros
+$ printf '\\newcommand@{\\maScaleKpc@}'"@{$scalelineinkpc@}\n" >> $macros
+$ printf '\\newcommand@{\\maCenterZ@}'"@{$redshift@}\n" >> $macros
+@end example
+
+Please open the macros file after these commands and have a look to see if they do conform to the expected format above.
+Another set of macros we will need to feed into PGFPlots is the coordiantes of the image corners.
+Fortunately the @code{coverage} variable found above is also useful here.
+We just need to extract each item before feeding it into the macros.
+To do this, we'll use AWK and keep each value with the temporary shell variable `@code{v}'.
+
+@example
+$ v=$(echo $coverage | awk '@{print $1@}')
+$ printf '\\newcommand@{\\maCropRAMin@}'"@{$v@}\n" >> $macros
+$ v=$(echo $coverage | awk '@{print $2@}')
+$ printf '\\newcommand@{\\maCropRAMax@}'"@{$v@}\n" >> $macros
+$ v=$(echo $coverage | awk '@{print $3@}')
+$ printf '\\newcommand@{\\maCropDecMin@}'"@{$v@}\n" >> $macros
+$ v=$(echo $coverage | awk '@{print $4@}')
+$ printf '\\newcommand@{\\maCropDecMax@}'"@{$v@}\n" >> $macros
+@end example
+
+Finally, we also need to pass some other numbers to PGFPlots: 1) the major tick distance (in the coordinate axes that will be printed on the edge of the image).
+We'll assume 7 ticks for this image.
+2) The minimum and maximum surface brightness values that we gave to ConvertType when making the PDF; PGFPlots will define its color-bar based on these two values.
+
+@example
+$ v=$(echo $coverage | awk '@{print ($2-$1)/7@}')
+$ printf '\\newcommand@{\\maTickDist@}'"@{$v@}\n" >> $macros
+$ printf '\\newcommand@{\\maSBlow@}'"@{$sblow@}\n" >> $macros
+$ printf '\\newcommand@{\\maSBhigh@}'"@{$sbhigh@}\n" >> $macros
+@end example
+
+All the necessary numbers are now ready.
+Please copy the contents below into a file called @file{my-figure.tex}.
+This is the PGFPlots source for this particular plot.
+Besides the coordinates and scale-line, we will also add some text over the image and an orange arrow pointing to the central object with its redshift printed over it.
+The parameters are generally human-readable, so you should be able to get a good feeling of every line.
+There are also comments which will show up as a different color when you copy this into a plain-text editor.
+
+@verbatim
+\begin{tikzpicture}
+
+  %% Define the coordinates and colorbar
+  \begin{axis}[
+      at={(0,0)},
+      axis on top,
+      x dir=reverse,
+      scale only axis,
+      width=\linewidth,
+      height=\linewidth,
+      minor tick num=10,
+      xmin=\maCropRAMin,
+      xmax=\maCropRAMax,
+      ymin=\maCropDecMin,
+      ymax=\maCropDecMax,
+      enlargelimits=false,
+      every tick/.style={black},
+      xtick distance=\maTickDist,
+      ytick distance=\maTickDist,
+      yticklabel style={rotate=90},
+      ylabel={Declination (degrees)},
+      xlabel={Right Ascension (degrees)},
+      ticklabel style={font=\small,
+        /pgf/number format/.cd, precision=4,/tikz/.cd},
+      x label style={at={(axis description cs:0.5,0.02)},
+        anchor=north,font=\small},
+      y label style={at={(axis description cs:0.07,0.5)},
+        anchor=south,font=\small},
+      colorbar,
+      colormap name=gray,
+      point meta min=\maSBlow,
+      point meta max=\maSBhigh,
+      colorbar style={
+        at={(1.01,1)},
+        ylabel={Surface brightness (mag/arcsec$^2$)},
+        yticklabel style={
+          /pgf/number format/.cd, precision=1, /tikz/.cd},
+        y label style={at={(axis description cs:5.3,0.5)},
+          anchor=south,font=\small},
+      },
+    ]
+
+    %% Put the image in the proper positions of the plot.
+    \addplot graphics[ xmin=\maCropRAMin,  xmax=\maCropRAMax,
+                       ymin=\maCropDecMin, ymax=\maCropDecMax]
+             {sb.pdf};
+
+    %% Draw the scale factor.
+    \addplot[black, line width=5, name=scaleline] coordinates
+            {(\maScaleRAa,\maScaleDec) (\maScaleRAb,\maScaleDec)}
+            node [anchor=north west] {\large $\maScaleKpc$ kpc};
+  \end{axis}
+
+  %% Add some text anywhere over the plot. The text is added two
+  %% times: the first time with a white background (that with a
+  %% certain opacity), the second time just the text with opacity.
+  \node[anchor=south west, fill=white, opacity=0.5]
+       at (0.01\linewidth,0.01\linewidth)
+       {(a) Text can be added here};
+  \node[anchor=south west]
+       at (0.01\linewidth,0.01\linewidth)
+       {(a) Text can be added here};
+
+  %% Add an arrow to highlight certain structures.
+  \draw [->, red!70!yellow, line width=5]
+  (0.35\linewidth,0.35\linewidth)
+  -- node [anchor=south, rotate=45]{$z=\maCenterZ$}
+  (0.45\linewidth,0.45\linewidth);
+\end{tikzpicture}
+@end verbatim
+
+Finally, we need another simple @LaTeX{} source for the main PDF ``report'' that will host this figure.
+This can actually be your paper or slides for example.
+Here, we'll suffice to the minimal working example.
+
+@verbatim
+\documentclass{article}
+
+%% Import the TiKZ package and activate its "external" feature.
+\usepackage{tikz}
+\usetikzlibrary{external}
+\tikzexternalize
+
+%% PGFPlots (which uses TiKZ).
+\usepackage{pgfplots}
+\pgfplotsset{axis line style={thick}}
+\pgfplotsset{
+  /pgfplots/colormap={gray}{rgb255=(0,0,0) rgb255=(255,255,255)}
+}
+
+%% Import the macros.
+\input{macros.tex}
+
+%% Start document.
+\begin{document}
+You can write anything here.
+
+%% Add the figure and its caption.
+\begin{figure}
+  \input{my-figure.tex}
+  \caption{A demo image.}
+\end{figure}
+
+%% Finish the document.
+\end{document}
+@end verbatim
+
+You are now ready to create the PDF.
+But @LaTeX{} creates many temporary files, so to avoid populating our top-level directory, we'll copy the two @file{.tex} files into the build directory, go there and run @LaTeX{}.
+Before running it though, we'll first delete all the files that have the name pattern @file{*-figure0*}, these are ``external'' files created by TiKZ+PGFPlots, including the actual PDF of the figure.
+
+@example
+$ cp report.tex my-figure.tex build
+$ cd build
+$ rm -f *-figure0*
+$ pdflatex -shell-escape -halt-on-error report.tex
+@end example
+
+You now have the full ``report'' in @file{build/report.pdf}.
+Try adding some extra text on top of the figure, or in the caption and re-running the last four commands.
+Also try changing the 20kpc scale line length to 50kpc, or try changing the redshift, to see how it will automatically change in the figure.
+But the good news is that you also have the raw PDF of the figure that you can use in other places.
+You can see that file in @file{build/report-figure0.pdf}.
+
+In a larger paper, you can add multiple such figures (with different @file{.tex} files that are placed in different @code{figure} environments with different captions.
+Each figure will get a number in the build directory.
+TiKZ also allows setting a file name for each ``external'' figure (to avoid such numbers that can be annoying if the image orders are changed).
+PGFPlots is also highly customizable, you can make a lot of changes and customizations.
+
+@menu
+* Full script of annotations on figure:: All the steps in one script
+@end menu
+
+@node Full script of annotations on figure,  , Annotations for figure in paper, Annotations for figure in paper
+@subsubsection Full script of annotations on figure
+
+In @ref{Annotations for figure in paper}, we each one of the steps to add annotations over an image were described in detail.
+So if you have understood the steps, but need to add annotations over an image, repeating those steps individually will be annoying.
+Therefore in this section, we'll summarize all the steps in a single script that you can simply copy-paste into a text editor, configure, and run.
+
+@cartouche
+@noindent
+@strong{Necessary files:} To run this script, you will need an image to crop your object from (here assuming its called @file{ah_f160w.fits} with a certain zeropoint) and two @file{my-figure.tex} and @file{report.tex} files that were fully included in @ref{Annotations for figure in paper}.
+Also, we have brought the redshift as a parameter here.
+But if the center of your image always points to your main object, you can also include the Query command to automatically find the object's redshift from NED.
+Alternatively, your image may already be cropped, in this case, you can remove the cropping step and
+@end cartouche
+
+@verbatim
+# Parameters.
+sblow=22                 # Minimum surface brightness.
+sbhigh=30                # Maximum surface brightness.
+bdir=build               # Build directory location on filesystem.
+numticks=7               # Number of major ticks in each axis.
+redshift=0.619           # Redshift of object of interest.
+zeropoint=25.94          # Zeropoint of input image.
+scalelineinkpc=20        # Length of scale-line (in kilo parsecs).
+input=ah_f160w.fits      # Name of input (to crop).
+
+# Stop the script in case of a crash.
+set -e
+
+# Build directory
+if ! [ -d $bdir ]; then mkdir $bdir; fi
+
+# Crop out the desired region.
+crop=$bdir/crop.fits
+astcrop $input --center=53.1616278,-27.7802446 --mode=wcs \
+        --width=20/3600 --output=$crop
+
+# Warp the image to larger pixels to show surface brightness better.
+scaled=$bdir/scaled.fits
+astwarp $crop --centeroncorner --scale=1/3 --output=$scaled
+
+# Calculate the pixel area and convert image to Surface brightness.
+sb=$bdir/sb.fits
+pixarea=$(astfits $scaled --pixelscale --quiet \
+              | awk '{print $1*3600*$2*3600}')
+astarithmetic $scaled abs $zeropoint counts-to-mag \
+              $pixarea log10 2.5 x + --output=$sb
+
+# Convert the Surface brightness image into PDF.
+sbpdf=$bdir/sb.pdf
+astconvertt $sb --colormap=gray --borderwidth=0 \
+	    --fluxhigh=$sbhigh --fluxlow=$sblow --output=$sbpdf
+
+# Specify the coordinates of the scale line (specifying a certain
+# width in kpc). We will put it on the top-right side of the image (5%
+# of the full width of the image away from the edge).
+coverage=$(astfits $sb --skycoverage --quiet | awk 'NR==2')
+scalelinedec=$(echo $coverage | awk '{print $4-($4-$3)*0.05}')
+scalelinerastart=$(echo  $coverage | awk '{print $1+($2-$1)*0.05}')
+scalelineraend=$(astcosmiccal --redshift=$redshift --arcsectandist \
+		     | awk '{start='$scalelinerastart'; \
+                             width='$scalelineinkpc'/$1/3600; \
+                             print start+width}')
+
+# Write the LaTeX macros to use in plot. Start with the thick line
+# showing tangential distance.
+macros=$bdir/macros.tex
+printf '\\newcommand{\\maScaleDec}'"{$scalelinedec}\n" > $macros
+printf '\\newcommand{\\maScaleRAa}'"{$scalelinerastart}\n" >> $macros
+printf '\\newcommand{\\maScaleRAb}'"{$scalelineraend}\n" >> $macros
+printf '\\newcommand{\\maScaleKpc}'"{$scalelineinkpc}\n" >> $macros
+printf '\\newcommand{\\maCenterZ}'"{$redshift}\n" >> $macros
+
+# Add image extrema for the coordinates.
+v=$(echo $coverage | awk '{print $1}')
+printf '\\newcommand{\maCropRAMin}'"{$v}\n" >> $macros
+v=$(echo $coverage | awk '{print $2}')
+printf '\\newcommand{\maCropRAMax}'"{$v}\n" >> $macros
+v=$(echo $coverage | awk '{print $3}')
+printf '\\newcommand{\maCropDecMin}'"{$v}\n" >> $macros
+v=$(echo $coverage | awk '{print $4}')
+printf '\\newcommand{\maCropDecMax}'"{$v}\n" >> $macros
+
+# Distance between each tick value.
+v=$(echo $coverage | awk '{print ($2-$1)/'$numticks'}')
+printf '\\newcommand{\maTickDist}'"{$v}\n" >> $macros
+printf '\\newcommand{\maSBlow}'"{$sblow}\n" >> $macros
+printf '\\newcommand{\maSBhigh}'"{$sbhigh}\n" >> $macros
+
+# Copy the LaTeX source into the build directory and go there to run
+# it and have all the temporary LaTeX files there.
+cp report.tex my-figure.tex $bdir
+cd $bdir
+rm -f *-figure0*
+pdflatex -shell-escape -halt-on-error report.tex
+@end verbatim
+
+
+
+@node Invoking astconvertt,  , Annotations for figure in paper, ConvertType
 @subsection Invoking ConvertType
 
 ConvertType will convert any recognized input file type to any specified output type.
@@ -28015,7 +28429,7 @@ main (void)
    * for each point, you can specify which columns to read by
    * name or number, see the documentation of 'gal_table_read'. */
   input=gal_table_read(inputfile, "1", NULL, NULL,
-		       GAL_TABLE_SEARCH_NAME, 0, -1, 0, NULL);
+                       GAL_TABLE_SEARCH_NAME, 0, -1, 0, NULL);
 
   /* Construct a k-d tree. The index of root is stored in `root` */
   kdtree=gal_kdtree_create(input, &root);
@@ -28025,9 +28439,9 @@ main (void)
   gal_fits_key_list_title_add(&keylist, "k-d tree parameters", 0);
   gal_fits_key_write_filename("KDTIN", inputfile, &keylist, 0);
   gal_fits_key_list_add_end(&keylist, GAL_TYPE_SIZE_T, keyname, 0,
-			    &root, 0, comment, 0, unit, 0);
+                            &root, 0, comment, 0, unit, 0);
   gal_table_write(kdtree, &keylist, NULL, GAL_TABLE_FORMAT_BFITS,
-		  kdtreefile, "kdtree", 0);
+                  kdtreefile, "kdtree", 0);
 
   /* Clean up and return. */
   gal_list_data_free(input);
@@ -31322,9 +31736,9 @@ Since the logic is getting more complex, let's write and save the commands below
 $ cat completion-tutorial.sh
 _echo(){
     if [ "$3" == "foo" ]; then
-	COMPREPLY=( $(ls | wc -l) )
+      COMPREPLY=( $(ls | wc -l) )
     else
-	COMPREPLY=( $(compgen -W "foo bar bAr" -- "$2") )
+      COMPREPLY=( $(compgen -W "foo bar bAr" -- "$2") )
     fi
 }
 complete -F _echo echo
