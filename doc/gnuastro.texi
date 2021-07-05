@@ -10140,8 +10140,8 @@ These thresholds are being defined as variables, because we will also need them 
 We will also set @option{--borderwidth=0}, because the coordinate system we will add over the image will effectively be a border for the image (separating it from the background).
 
 @example
-sblow=22
-sbhigh=30
+$ sblow=22
+$ sbhigh=30
 $ astconvertt build/sb.fits --colormap=gray --borderwidth=0 \
               --fluxhigh=$sbhigh --fluxlow=$sblow --output=build/sb.pdf
 @end example
@@ -10194,9 +10194,9 @@ New macros are defined by this @LaTeX{} command:
 @noindent
 Anywhere that @LaTeX{} confronts @code{\macroname}, it will replace @code{value} when building the output.
 We will have one file called @file{macros.tex} in the build directory and define macros based on those values.
-We will use the shell's @code{printf} command to write these macro definition lines into the macro files.
+We will use the shell's @code{printf} command to write these macro definition lines into the macro file.
 We just have to use double backslashes in the @code{printf} command, because backslash is a meaningful character for @code{printf}, but we want to keep one of them.
-Also, we put a @code{\n} at the end of each line, otherwise, all the commands will go into a single line of the output.
+Also, we put a @code{\n} at the end of each line, otherwise, all the commands will go into a single line of the macro file.
 We will also place the random `@code{ma}' string at the start of all our @LaTeX{} macros to help identify the macros for this plot.
 
 @example
@@ -10362,16 +10362,17 @@ $ rm -f *-figure0*
 $ pdflatex -shell-escape -halt-on-error report.tex
 @end example
 
-You now have the full ``report'' in @file{build/report.pdf}.
+You now have the full ``report'' in @file{report.pdf}.
 Try adding some extra text on top of the figure, or in the caption and re-running the last four commands.
-Also try changing the 20kpc scale line length to 50kpc, or try changing the redshift, to see how it will automatically change in the figure.
+Also try changing the 20kpc scale line length to 50kpc, or try changing the redshift, to see how the length and text of the thick scale-line will automatically change.
 But the good news is that you also have the raw PDF of the figure that you can use in other places.
-You can see that file in @file{build/report-figure0.pdf}.
+You can see that file in @file{report-figure0.pdf}.
 
-In a larger paper, you can add multiple such figures (with different @file{.tex} files that are placed in different @code{figure} environments with different captions.
+In a larger paper, you can add multiple such figures (with different @file{.tex} files that are placed in different @code{figure} environments with different captions).
 Each figure will get a number in the build directory.
 TiKZ also allows setting a file name for each ``external'' figure (to avoid such numbers that can be annoying if the image orders are changed).
 PGFPlots is also highly customizable, you can make a lot of changes and customizations.
+Both TiKZ@footnote{@url{http://mirrors.ctan.org/graphics/pgf/base/doc/pgfmanual.pdf}} and PGFPLots@footnote{@url{http://mirrors.ctan.org/graphics/pgf/contrib/pgfplots/doc/pgfplots.pdf}} have wonderful manuals, so have a look trough them.
 
 @menu
 * Full script of annotations on figure:: All the steps in one script
