@@ -12526,7 +12526,7 @@ For a concave polygon it will sort the vertices correctly, however for a convex 
 @cindex Polygons, Concave
 Polygons come in two classes: convex and concave (or generally, non-convex!), see below for a demonstration.
 Convex polygons are those where all inner angles are less than 180 degrees.
-By contrast, a convex polygon is one where an inner angle may be more than 180 degrees.
+By contrast, a concave polygon is one where an inner angle may be more than 180 degrees.
 
 @example
             Concave Polygon        Convex Polygon
@@ -15688,7 +15688,7 @@ The full list of modular warpings and the other options particular to Warp are d
 The values to the warping options (modular warpings as well as @option{--matrix}), are a sequence of at least one number.
 Each number in this sequence is separated from the next by a comma (@key{,}).
 Each number can also be written as a single fraction (with a forward-slash @key{/} between the numerator and denominator).
-Space and Tab characters arepermitted between any two numbers, just don't forget to quote the whole value.
+Space and Tab characters are permitted between any two numbers, just don't forget to quote the whole value.
 Otherwise, the value will not be fully passed onto the option.
 See the examples above as a demonstration.
 
@@ -15762,7 +15762,7 @@ The value(s) can also be written (on the command-line or in configuration files)
 @item -m STR
 @itemx --matrix=STR
 The warp/transformation matrix.
-All the elements in this matrix must be separated by comas(@key{,}) characters and as described above, you can also use fractions (a forward-slash between two numbers).
+All the elements in this matrix must be separated by commas(@key{,}) characters and as described above, you can also use fractions (a forward-slash between two numbers).
 The transformation matrix can be either a 2 by 2 (4 numbers), or a 3 by 3 (9 numbers) array.
 In the former case (if a 2 by 2 matrix is given), then it is put into a 3 by 3 matrix (see @ref{Warping basics}).
 
@@ -31184,7 +31184,7 @@ This is just intended to demonstrate how to use the @code{array} pointer of
 in real datasets you may also have blank pixels. In such cases, this
 program will return a NaN value (see @ref{Blank pixels}). So for general
 statistical information of a dataset, it is much better to use Gnuastro's
-@ref{Statistics} program which can deal with blank pixels any many other
+@ref{Statistics} program which can deal with blank pixels and many other
 issues in a generic dataset.
 
 @example

@@ -75,7 +75,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-/* Similar to 'nearestint_halflower' but:
+/* Similar to 'nearestint_halfhigher' but:
 
    nearestint_halflower(0.5f) --> 0.0f;
  */
@@ -183,7 +183,7 @@ warp_onthread(void *inparam)
       for(y=ystart;y<yend;++y)
         {
           /* If the pixel isn't in the image (note that the pixel
-             coordinates start from 1), contine to next. Note that the
+             coordinates start from 1), skip this pixel. Note that the
              pixel polygon should be counter clockwise. */
           if( y<1 || y>is0 ) continue;
           pcrn[1]=y-0.5f;      pcrn[3]=y-0.5f;

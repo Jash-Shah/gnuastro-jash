@@ -259,7 +259,7 @@ gal_pointer_allocate_ram_or_mmap(uint8_t type, size_t size, int clear,
         out=gal_pointer_mmap_allocate(type, size, clear,
                                       mmapname, quietmmap);
 
-      /* The 'errno' is re-set to zero just incase 'malloc'
+      /* The 'errno' is re-set to zero just in case 'malloc'
          changed it, which may cause problems later. */
       errno=0;
     }
