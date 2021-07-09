@@ -336,7 +336,7 @@ bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
 ## the message (making the message hard to notice for a user).
 all-local: bin/completion.bash
 
-        # If we are in static linking mode, correct the 'lib_dependencies'
+        # If we are in static linking mode, correct the 'dependency_libs'
         # variable of 'libgnuastro.la'. Because by default it will not
         # include static libraries!
 	@if [ "X$(MAKECMDGOALS)" = "Xall-am" ] && [ "X$(ENABLE_SHARED)" = "Xno" ]; then \

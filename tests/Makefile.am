@@ -85,8 +85,10 @@ if COND_CONVERTT
   convertt/fitstopdf.sh: crop/section.sh.log
 endif
 if COND_CONVOLVE
-  MAYBE_CONVOLVE_TESTS = convolve/spatial.sh convolve/frequency.sh
+  MAYBE_CONVOLVE_TESTS = convolve/spatial.sh convolve/frequency.sh \
+                         convolve/spectrum-1d.sh
 
+  convolve/spectrum-1d.sh: prepconf.sh.log
   convolve/spatial.sh: mkprof/mosaic1.sh.log
   convolve/frequency.sh: mkprof/mosaic1.sh.log
 endif
@@ -264,12 +266,23 @@ TESTS = prepconf.sh lib/multithread.sh $(MAYBE_CXX_TESTS)                  \
 
 
 
-# Files to distribute along with the tests.
-EXTRA_DIST = $(TESTS) during-dev.sh buildprog/simpleio.c crop/cat.txt     \
-  mkprof/3d-cat.txt match/positions-1.txt match/positions-2.txt           \
-  mkprof/mkprofcat1.txt mkprof/ellipticalmasks.txt mkprof/clearcanvas.txt \
-  mkprof/mkprofcat2.txt mkprof/mkprofcat3.txt mkprof/mkprofcat4.txt       \
-  mkprof/radeccat.txt statistics/stdin-input.txt table/table.txt
+# Files to distribute within the tarball (sorted alphabetically).
+EXTRA_DIST = $(TESTS) during-dev.sh \
+  buildprog/simpleio.c \
+  convolve/spectrum.txt \
+  crop/cat.txt \
+  mkprof/3d-cat.txt \
+  match/positions-1.txt \
+  match/positions-2.txt \
+  mkprof/mkprofcat1.txt \
+  mkprof/clearcanvas.txt \
+  mkprof/ellipticalmasks.txt \
+  mkprof/mkprofcat2.txt \
+  mkprof/mkprofcat3.txt \
+  mkprof/mkprofcat4.txt \
+  mkprof/radeccat.txt \
+  statistics/stdin-input.txt \
+  table/table.txt
 
 
 

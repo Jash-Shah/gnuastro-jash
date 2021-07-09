@@ -21795,6 +21795,13 @@ For example, with @option{--prefix=img-}, all the created file names in the curr
 
 @option{--prefix} can also be used to store the links/copies in another directory relative to the directory this script is being run (it must already exist).
 For example @code{--prefix=/path/to/processing/img-} will put all the links/copies in the @file{/path/to/processing} directory, and the files (in that directory) will all start with @file{img-}.
+
+@item --stdintimeout=INT
+Number of micro-seconds to wait for standard input within this script.
+This does not correspond to general inputs into the script, inputs to the script should always be given as a file.
+However, within the script, pipes are often used to pass the output of one program to another.
+The value given to this option will be passed to those internal pipes.
+When running this script, if you confront an error, saying ``No input!'', you should be able to fix it by giving a larger number to this option (the default value is 10000000 micro-seconds or 10 seconds).
 @end table
 
 

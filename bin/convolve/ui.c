@@ -326,14 +326,16 @@ ui_read_column(struct convolveparams *p, int i0k1)
   int tformat;
   char *source;
   gal_data_t *out, *cinfo;
-  gal_list_str_t *column=NULL;
+  gal_list_str_t *lines, *column=NULL;
   size_t ncols, nrows, counter=0;
   char *hdu        = i0k1==0 ? p->cp.hdu   : p->khdu;
   char *name       = i0k1==0 ? "input"     : "kernel";
   char *filename   = i0k1==0 ? p->filename : p->kernelname;
   char *columnname = i0k1==0 ? p->column   : p->kernelcolumn;
-  gal_list_str_t *lines = gal_options_check_stdin(filename,
-                                                  p->cp.stdintimeout, name);
+
+  /* Read input from standard input when necessary (only if 'filename' is
+     not given). */
+  lines=gal_options_check_stdin(filename, p->cp.stdintimeout, name);
 
   /* If no column is specified, Convolve will abort and an error will be
      printed when the table has more than one column. If there is only one
@@ -370,9 +372,8 @@ ui_read_column(struct convolveparams *p, int i0k1)
                 "    $ info gnuastro \"Selecting table columns\"\n",
                 ( filename
                   ? gal_checkset_dataset_name(filename, hdu)
-                  : "Standard input" ));
+                  : "standard input (pipe from another program)" ));
         }
-
     }
   gal_list_str_add(&column, columnname, 0);
 
@@ -382,8 +383,8 @@ ui_read_column(struct convolveparams *p, int i0k1)
                      NULL);
   gal_list_str_free(lines, 1);
 
-  /* Confirm if only one column was read (it is possible to match more than
-     one column). */
+  /* Confirm if only one column was read (it is possible that a regexp
+     '--searchin' value, gives a match to more than one column). */
   if(out->next!=NULL)
     {
       if(filename)
@@ -414,6 +415,10 @@ ui_read_column(struct convolveparams *p, int i0k1)
   if(filename==NULL)
     gal_checkset_allocate_copy("standard-input",
                                ( i0k1==0 ? &p->filename : &p->kernelname ));
+
+  /* One-dimensional convolution is only supported in spatial-mode
+     convolution. */
+  p->domain=CONVOLVE_DOMAIN_SPATIAL;
 
   /* Clean up and return. */
   gal_list_str_free(column, 0);

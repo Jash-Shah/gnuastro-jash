@@ -29,6 +29,11 @@ See the end of the file for license conditions.
      repetition. See description of '--outcols' in the Match manual for
      more. This feature was proposed by Juan Molina Tobar and Leslie Hunt.
 
+  Sort-by-night (installed script)
+   --stdintimeout: new option to set internal delay time for input from
+     pipes (standard input). This is not for inputs to the script (which
+     should always be files), but for the script's internal pipes.
+
   Library:
    - Arithmetic macros:
      - GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
@@ -36,6 +41,11 @@ See the end of the file for license conditions.
 ** Removed features
 
 ** Changed features
+
+  All programs:
+   --stdintimeout: default value changed from 0.1 seconds to 1.5 seconds to
+     avoid too many crashes when command before the pipe takes longer (thus
+     needing a manual change of this value).
 
   Match:
    - The two '--notmatched' and '--outcols' can be called together (to
@@ -51,6 +61,11 @@ See the end of the file for license conditions.
               this bug was reported by Zahra Sharbaf.
   bug #60826: Arithmetic won't delete existing file with tofile operators.
   bug #60881: Query segmentation fault when NED is called without a dataset.
+  bug #60901: sort-by-night crash during make check due to stdintimeout,
+              this bug was reported by Zahra Sharbaf.
+  bug #60903: Increasing value of stdintimeout not effective beyond 1000000,
+              this bug was reported by Zahra Sharbaf.
+
 
 
 

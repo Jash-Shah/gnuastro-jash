@@ -1206,12 +1206,16 @@ gal_txt_image_read(char *filename, gal_list_str_t *lines, size_t minmapsize,
 static int
 txt_stdin_has_contents(long timeout_microsec)
 {
+  int sout;
   fd_set fds;
   struct timeval tv;
 
-  /* Set the timeout time. */
-  tv.tv_sec  = 0;
-  tv.tv_usec = timeout_microsec;
+  /* Set the timeout time. We need to put the number of seconds in 'tv_sec'
+     and the remaining microseconds in 'tv_usec' (this cannot be larger
+     than one million, otherwise 'select' is going to abort with an
+     error). */
+  tv.tv_sec  = timeout_microsec/1000000;
+  tv.tv_usec = timeout_microsec%1000000;
 
   /* Initialize 'fd_set'. */
   FD_ZERO(&fds);
@@ -1219,14 +1223,29 @@ txt_stdin_has_contents(long timeout_microsec)
   /* Set standard input (STDIN_FILENO is 0) as the FD that must be read. */
   FD_SET(STDIN_FILENO, &fds);
 
-  /* 'select' takes the last file descriptor value + 1 in the fdset to
-     check, the fdset for reads, writes, and errors.  We are only passing
-     in reads.  the last parameter is the timeout.  select will return if
-     an FD is ready or the timeout has occurred. */
-  select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+  /* From Glibc: "The 'select' function blocks the calling process until
+     there is activity on any of the specified sets of file descriptors, or
+     until the timeout period has expired". 'select' takes the last file
+     descriptor value+1 in the 'FD_SET' above as first argument. If the
+     second (reading), third (writing) and fourth (exception) are not NULL,
+     then it will check for the respective property(s).
 
-  // return 0 if STDIN is not ready to be read.
-  return FD_ISSET(STDIN_FILENO, &fds);
+     When successful (file descriptor has input for the desired action),
+     'select' will return 1. When the timeout has been reached, it will
+     return 0 and when there was an error it will return -1. If there is an
+     error, we'll abort the program and ask the user to contact us (its a
+     bug).*/
+  errno=0;
+  sout=select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+  if(sout==-1)
+    error(EXIT_FAILURE, errno, "%s: a bug! Please contact us at '%s' "
+          "to fix the problem. The 'select' function has detected an "
+          "error", __func__, PACKAGE_BUGREPORT);
+
+  /* By this point, 'sout' only has a value of 1 (stdin is ready for
+     reading) or 0 (timeout was reached with no change, so it should't be
+     used). So simply return the value of 'sout'. */
+  return sout;
 }
 
 
@@ -1240,7 +1259,7 @@ gal_txt_stdin_read(long timeout_microsec)
   gal_list_str_t *out=NULL;
   size_t lineno=0, linelen=10;/* 'linelen' will be increased by 'getline'. */
 
-  /* If there is nothing  */
+  /* Only continue if standard input has any contents. */
   if( txt_stdin_has_contents(timeout_microsec) )
     {
       /* Allocate the space necessary to keep a copy of each line as we

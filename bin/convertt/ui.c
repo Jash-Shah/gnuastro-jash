@@ -738,11 +738,17 @@ ui_prepare_input_channels(struct converttparams *p)
   /* Make sure there are 1 (for grayscale), 3 (for RGB) or 4 (for CMYK)
      color channels. */
   if(p->numch!=1 && p->numch!=3 && p->numch!=4)
-    error(EXIT_FAILURE, 0, "the number of input color channels has to be "
-          "1 (for non image data, grayscale or only K channel in CMYK), "
-          "3 (for RGB) and 4 (for CMYK). You have given %zu color channels. "
-          "Note that some file formats (for example JPEG in RGB mode) can "
-          "contain more than one color channel", p->numch);
+    error(EXIT_FAILURE, 0, "the number of input color channels has to "
+          "be 1 (for non image data, grayscale or only K channel in "
+          "CMYK), 3 (for RGB) and 4 (for CMYK). You have given %zu "
+          "color channels. Note 1: some file formats (for example "
+          "JPEG in RGB mode) can contain more than one color channel, "
+          "if such a file is given all its channels are read, so "
+          "separate them first. Note 2: if your first input channel "
+          "was given through the standard input (piped from another "
+          "program) you can fix this error by giving a larger value "
+          "to the '--stdintimeout' option (currently %ld "
+          "micro-seconds)", p->numch, p->cp.stdintimeout);
 
 
   /* If there are multiple color channels, then ignore the monotocolor

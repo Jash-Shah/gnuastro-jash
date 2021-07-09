@@ -39,6 +39,7 @@ quiet=0
 key=DATE
 prefix=./
 version=@VERSION@
+stdintime=10000000
 scriptname=@SCRIPT_NAME@
 
 
@@ -98,6 +99,8 @@ $scriptname options:
       --cite              BibTeX citation for this program.
   -q, --quiet             Don't print the list.
   -V, --version           Print program version.
+      --stdintimeout      Micro-seconds to wait for standard input
+                          (used for operations within this script).
 
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
@@ -198,6 +201,10 @@ do
         -p=*|--prefix=*)  prefix="${1#*=}";                     check_v "$1" "$prefix"; shift;;
         -p*)              prefix=$(echo "$1" | sed -e's/-p//'); check_v "$1" "$prefix"; shift;;
 
+        # Operating mode options
+        --stdintimeout)   stdintime="$2";                       check_v "$1" "$stdintime"; shift;shift;;
+        --stdintimeout=*) stdintime="${1#*=}";                  check_v "$1" "$stdintime"; shift;;
+
         # Non-operating options.
         -q|--quiet)       quiet=1; shift;;
         -q*|--quiet=*)    on_off_option_error --quiet -q;;
@@ -263,8 +270,9 @@ list=$(astfits --keyvalue=$key --hdu=$hdu $inputs --colinfoinstdout \
                                      day 1 - \
                                    where' \
                           --colmetadata=ARITH_8,NIGHT,counter,"Observing night." \
-                          --colinfoinstdout \
-               | asttable --sort=UNIXSEC --colinfoinstdout)
+                          --colinfoinstdout --stdintimeout=$stdintime \
+               | asttable --sort=UNIXSEC --colinfoinstdout \
+                          --stdintimeout=$stdintime)
 
 
 
@@ -287,8 +295,13 @@ list=$(astfits --keyvalue=$key --hdu=$hdu $inputs --colinfoinstdout \
 #
 # We are using 'asttable' here to avoid issues with spaces in
 # directory names in the first line.
-unique=$(echo "$list" | asttable -cNIGHT | sort | uniq | cat -n)
+unique=$(echo "$list" \
+             | asttable --stdintimeout=$stdintime -cNIGHT \
+             | sort \
+             | uniq \
+             | cat -n)
 #echo "check: $unique"; exit 1
+
 
 
 
@@ -301,7 +314,8 @@ echo "$unique" | while read l; do
     night_to=$(echo $l | awk '{print $1}')
     night_from=$(echo $l | awk '{print $2}')
     in_this_night=$(echo "$list" \
-                         | asttable -cFILENAME --equal=NIGHT,$night_from)
+                        | asttable --stdintimeout=$stdintime \
+                                   -cFILENAME --equal=NIGHT,$night_from)
 
     # Now that we know this night's files, sorted by time, we can take
     # the proper action (simply list, or copy or make links).

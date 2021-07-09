@@ -825,7 +825,8 @@ ui_read_columns(struct statisticsparams *p)
   size_t size, ncols, nrows, counter=0;
   gal_list_str_t *incols, *columnlist=NULL;
   gal_list_str_t *lines=gal_options_check_stdin(p->inputname,
-                                                p->cp.stdintimeout, "input");
+                                                p->cp.stdintimeout,
+                                                "input");
 
   /* Merge possibly multiple calls to '-c' (each possibly separated by a
      coma) into one list. */
