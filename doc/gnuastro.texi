@@ -32207,69 +32207,39 @@ help you.
 @node Copyright assignment, Commit guidelines, Contributing to Gnuastro, Contributing to Gnuastro
 @subsection Copyright assignment
 
-Gnuastro's copyright is owned by the FSF. Professor Eben Moglen, of the
-Columbia University Law School has given a nice summary of the reasons for
-this at @url{https://www.gnu.org/licenses/why-assign}. Below we are copying
-it verbatim for self consistency (in case you are offline or reading in
-print).
+@cindex Free Software Foundation
+Gnuastro's copyright is owned by the Free Software Foundation (FSF) to ensure that Gnuastro always remains free.
+The FSF has also provided a @url{https://www.fsf.org/licensing/contributor-faq, Contributor FAQ} to further clarify the reasons, so we encourage you to read it.
+Professor Eben Moglen, of the Columbia University Law School has given a nice summary of the reasons for this at @url{https://www.gnu.org/licenses/why-assign}.
+Below we are copying it verbatim for self consistency (in case you are offline or reading in print).
 
 @quotation
-Under US copyright law, which is the law under which most free
-software programs have historically been first published, there are
-very substantial procedural advantages to registration of
-copyright. And despite the broad right of distribution conveyed by the
-GPL, enforcement of copyright is generally not possible for
-distributors: only the copyright holder or someone having assignment
-of the copyright can enforce the license. If there are multiple
-authors of a copyrighted work, successful enforcement depends on
-having the cooperation of all authors.
+Under US copyright law, which is the law under which most free software programs have historically been first published, there are very substantial procedural advantages to registration of copyright.
+And despite the broad right of distribution conveyed by the GPL, enforcement of copyright is generally not possible for distributors: only the copyright holder or someone having assignment of the copyright can enforce the license.
+If there are multiple authors of a copyrighted work, successful enforcement depends on having the cooperation of all authors.
 
-In order to make sure that all of our copyrights can meet the
-record keeping and other requirements of registration, and in order to
-be able to enforce the GPL most effectively, FSF requires that each
-author of code incorporated in FSF projects provide a copyright
-assignment, and, where appropriate, a disclaimer of any work-for-hire
-ownership claims by the programmer's employer. That way we can be sure
-that all the code in FSF projects is free code, whose freedom we can
-most effectively protect, and therefore on which other developers can
-completely rely.
+In order to make sure that all of our copyrights can meet the record keeping and other requirements of registration, and in order to be able to enforce the GPL most effectively, FSF requires that each author of code incorporated in FSF projects provide a copyright assignment, and, where appropriate, a disclaimer of any work-for-hire ownership claims by the programmer's employer.
+That way we can be sure that all the code in FSF projects is free code, whose freedom we can most effectively protect, and therefore on which other developers can completely rely.
 @end quotation
 
-Please get in touch with the Gnuastro maintainer (currently Mohammad
-Akhlaghi, mohammad -at- akhlaghi -dot- org) to follow the procedures. It is
-possible to do this for each change (good for for a single contribution),
-and also more generally for all the changes/additions you do in the future
-within Gnuastro. So if you have already assigned the copyright of your work
-on another GNU software to the FSF, it should be done again for
-Gnuastro. The FSF has staff working on these legal issues and the
-maintainer will get you in touch with them to do the paperwork. The
-maintainer will just be informed in the end so your contributions can be
-merged within the Gnuastro source code.
+Please get in touch with the Gnuastro maintainer (currently Mohammad Akhlaghi, mohammad -at- akhlaghi -dot- org) to follow the procedures.
+It is possible to do this for each change (good for for a single contribution), and also more generally for all the changes/additions you do in the future within Gnuastro.
+So if you have already assigned the copyright of your work on another GNU software to the FSF, it should be done again for Gnuastro.
+The FSF has staff working on these legal issues and the maintainer will get you in touch with them to do the paperwork.
+The maintainer will just be informed in the end so your contributions can be merged within the Gnuastro source code.
 
-Gnuastro will gratefully acknowledge (see @ref{Acknowledgments}) all the
-people who have assigned their copyright to the FSF and have thus helped to
-guarantee the freedom and reliability of Gnuastro. The Free Software
-Foundation will also acknowledge your copyright contributions in the Free
-Software Supporter: @url{https://www.fsf.org/free-software-supporter} which
-will circulate to a very large community (222,882 people in January 2021).
-See the archives for some examples and subscribe to receive
-interesting updates. The very active code contributors (or developers) will
-also be recognized as project members on the Gnuastro project web page (see
-@ref{Gnuastro project webpage}) and can be given a @code{gnu.org} email
-address. So your very valuable contribution and copyright assignment will
-not be forgotten and is highly appreciated by a very large community. If
-you are reluctant to sign an assignment, a disclaimer is also acceptable.
+Gnuastro will gratefully acknowledge (see @ref{Acknowledgments}) all the people who have assigned their copyright to the FSF and have thus helped to guarantee the freedom and reliability of Gnuastro.
+The Free Software Foundation will also acknowledge your copyright contributions in the Free Software Supporter: @url{https://www.fsf.org/free-software-supporter} which will circulate to a very large community (225,910 people in July 2021).
+See the archives for some examples and subscribe to receive interesting updates.
+The very active code contributors (or developers) will also be recognized as project members on the Gnuastro project web page (see @ref{Gnuastro project webpage}) and can be given a @code{gnu.org} email address.
+So your very valuable contribution and copyright assignment will not be forgotten and is highly appreciated by a very large community.
+If you are reluctant to sign an assignment, a disclaimer is also acceptable.
 
 @cartouche
 @noindent
-@strong{Do I need a disclaimer from my university or employer?} It depends
-on the contract with your university or employer. From the FSF's
-@file{/gd/gnuorg/conditions.text}: ``If you are employed to do programming,
-or have made an agreement with your employer that says it owns programs you
-write, we need a signed piece of paper from your employer disclaiming
-rights to'' Gnuastro. The FSF's copyright clerk will kindly help you
-decide, please consult the following email address: ``assign -at- gnu -dot-
-org''.
+@strong{Do I need a disclaimer from my university or employer?} It depends on the contract with your university or employer.
+From the FSF's @file{/gd/gnuorg/conditions.text}: ``If you are employed to do programming, or have made an agreement with your employer that says it owns programs you write, we need a signed piece of paper from your employer disclaiming rights to'' Gnuastro.
+The FSF's copyright clerk will kindly help you decide, please consult the following email address: ``assign -at- gnu -dot- org''.
 @end cartouche
 
 
