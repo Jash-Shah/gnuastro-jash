@@ -1,0 +1,16 @@
+# Test spectrum for 1D convolution
+5
+3
+6
+3
+2
+8
+20
+10
+5
+4
+6
+2
+5
+4
+1
