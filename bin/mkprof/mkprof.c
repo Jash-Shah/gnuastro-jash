@@ -162,7 +162,7 @@ saveindividual(struct mkonthread *mkp)
         crpix[i] = ((double *)(p->crpix->array))[i] - os*(mkp->fpixel_i[i]-1);
 
       /* Write the image. */
-      gal_fits_img_write_corr_wcs_str(ibq->image, filename, p->wcsheader,
+      gal_fits_img_write_corr_wcs_str(ibq->image, filename, p->wcsstr,
                                       p->wcsnkeyrec, crpix, NULL,
                                       PROGRAM_NAME);
     }

@@ -124,6 +124,24 @@ wcs_read_correct_pc_cd(struct wcsprm *wcs)
 
 
 
+/* For the TPV, TNX and ZPX distortions, WCSLIB can't deal with the CDELT
+   keys properly and its better to use the CD matrix instead, this function
+   will check for this and return 1 if a CD matrix should be used
+   (over-riding the user's desired matrix if necessary). */
+static int
+wcs_use_cd_for_distortion(struct wcsprm *wcs)
+{
+  return ( wcs
+           && wcs->lin.disseq
+           && ( !strcmp(   wcs->lin.disseq->dtype[1], "TPV")
+                || !strcmp(wcs->lin.disseq->dtype[1], "TNX")
+                || !strcmp(wcs->lin.disseq->dtype[1], "ZPX") ) );
+}
+
+
+
+
+
 /* Read the WCS information from the header. Unfortunately, WCS lib is
    not thread safe, so it needs a mutex. In case you are not using
    multiple threads, just pass a NULL pointer as the mutex.
@@ -369,10 +387,12 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
         }
     }
 
-  /* If the user wants a CD linear matrix, do the conversion here,
-     otherwise, make sure the PC matrix is used. */
-  if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD) gal_wcs_to_cd(wcs);
-  else                          gal_wcs_decompose_pc_cdelt(wcs);
+  /* If the distortion requires a CD matrix, or if the user wants it, do
+     the conversion here, otherwise, make sure the PC matrix is used. */
+  if(wcs_use_cd_for_distortion(wcs) \
+     || linearmatrix==GAL_WCS_LINEAR_MATRIX_CD)
+    gal_wcs_to_cd(wcs);
+  else gal_wcs_decompose_pc_cdelt(wcs);
 
   /* Clean up and return. */
   status=0;
@@ -512,70 +532,53 @@ gal_wcs_dimension_name(struct wcsprm *wcs, size_t dimension)
 /*************************************************************
  ***********               Write WCS               ***********
  *************************************************************/
-void
-gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
+char *
+gal_wcs_write_wcsstr(struct wcsprm *wcs, int *nkeyrec)
 {
   char *wcsstr;
-  int cdfordist, status=0, nkeyrec;
-
-  /* For the TPV, TNX and ZPX distortions, WCSLIB can't deal with the CDELT
-     keys properly and its better to use the CD matrix instead, so we'll
-     use the 'gal_wcs_to_cd' function. */
-  cdfordist = ( wcs->lin.disseq
-                && ( !strcmp(   wcs->lin.disseq->dtype[1], "TPV")
-                     || !strcmp(wcs->lin.disseq->dtype[1], "TNX")
-                     || !strcmp(wcs->lin.disseq->dtype[1], "ZPX") ) );
+  int status=0;
 
   /* Finalize the linear transformation matrix. Note that some programs may
      have worked on the WCS. So even if 'altlin' is already 2, we'll just
      ensure that the final matrix is CD here. */
-  if(wcs->altlin==2 || cdfordist) gal_wcs_to_cd(wcs);
-  else                            gal_wcs_decompose_pc_cdelt(wcs);
+  if(wcs->altlin==2 || wcs_use_cd_for_distortion(wcs)) gal_wcs_to_cd(wcs);
+  else gal_wcs_decompose_pc_cdelt(wcs);
 
   /* Clean up small errors in the PC matrix and CDELT values. */
   gal_wcs_clean_errors(wcs);
 
-  /* Convert the WCS information to text. */
-  status=wcshdo(WCSHDO_safe, wcs, &nkeyrec, &wcsstr);
+  /* Convert the WCS information to text. If there was an error, then free
+     any allocated space and put zero on 'nkeyrec'. */
+  status=wcshdo(WCSHDO_safe, wcs, nkeyrec, &wcsstr);
   if(status)
-    error(0, 0, "%s: WARNING: WCSLIB error, no WCS in output.\n"
-          "wcshdu ERROR %d: %s", __func__, status, wcs_errmsg[status]);
-  else
     {
-      gal_fits_key_write_wcsstr(fptr, wcs, wcsstr, nkeyrec);
-      free(wcsstr);
+      error(0, 0, "%s: WARNING: WCSLIB error, no WCS in output.\n"
+            "wcshdo ERROR %d: %s", __func__, status, wcs_errmsg[status]);
+      if(wcsstr) free(wcsstr);
+      *nkeyrec=0;
+      wcsstr=NULL;
     }
-  status=0;
 
-   /* WCSLIB is going to write PC+CDELT keywords in any case. But when we
-      have a TPV, TNX or ZPX distortion, it is cleaner to use a CD matrix
-      (WCSLIB can't convert coordinates properly if the PC matrix is used
-      with the TPV distortion). So to help users avoid the potential
-      problems with WCSLIB. 'gal_wcs_to_cd' function already made sure that
-      CDELTi=1.0, so effectively the CD matrix and PC matrix are
-      equivalent, we just need to convert the keyword names and delete the
-      CDELT keywords. Note that zero-valued PC/CD elements may not be
-      present, so we'll manually set 'status' to zero to avoid CFITSIO from
-      crashing. */
-  if(wcs->altlin==2)
-    {
-      status=0; fits_delete_str(fptr, "CDELT1", &status);
-      status=0; fits_delete_str(fptr, "CDELT2", &status);
-      status=0; fits_modify_name(fptr, "PC1_1", "CD1_1", &status);
-      status=0; fits_modify_name(fptr, "PC1_2", "CD1_2", &status);
-      status=0; fits_modify_name(fptr, "PC2_1", "CD2_1", &status);
-      status=0; fits_modify_name(fptr, "PC2_2", "CD2_2", &status);
-      if(wcs->naxis==3)
-        {
-          status=0; fits_delete_str(fptr, "CDELT3", &status);
-          status=0; fits_modify_name(fptr, "PC1_3", "CD1_3", &status);
-          status=0; fits_modify_name(fptr, "PC2_3", "CD2_3", &status);
-          status=0; fits_modify_name(fptr, "PC3_1", "CD3_1", &status);
-          status=0; fits_modify_name(fptr, "PC3_2", "CD3_2", &status);
-          status=0; fits_modify_name(fptr, "PC3_3", "CD3_3", &status);
-        }
-      status=0;
-    }
+  /* Return the string. */
+  return wcsstr;
+}
+
+
+
+
+
+void
+gal_wcs_write_in_fitsptr(fitsfile *fptr, struct wcsprm *wcs)
+{
+  char *wcsstr;
+  int nkeyrec=0;
+
+  /* Convert the WCS structure into FITS keywords as a string. */
+  wcsstr=gal_wcs_write_wcsstr(wcs, &nkeyrec);
+
+  /* Write the keywords into the FITS file. */
+  gal_fits_key_write_wcsstr(fptr, wcs, wcsstr, nkeyrec);
+  free(wcsstr);
 }
 
 

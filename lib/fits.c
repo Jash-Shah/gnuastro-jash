@@ -1895,6 +1895,9 @@ gal_fits_key_write_wcsstr(fitsfile *fptr, struct wcsprm *wcs,
   int status=0;
   char *keystart;
 
+  /* If the 'wcsstr' string is empty, don't do anything, simply return. */
+  if(wcsstr==NULL) return;
+
   /* Write the title. */
   gal_fits_key_write_title_in_ptr("World Coordinate System (WCS)", fptr);
 
@@ -1917,6 +1920,37 @@ gal_fits_key_write_wcsstr(fitsfile *fptr, struct wcsprm *wcs,
         }
     }
   gal_fits_io_error(status, NULL);
+
+   /* WCSLIB is going to write PC+CDELT keywords in any case. But when we
+      have a TPV, TNX or ZPX distortion, it is cleaner to use a CD matrix
+      (WCSLIB can't convert coordinates properly if the PC matrix is used
+      with the TPV distortion). So to help users avoid the potential
+      problems with WCSLIB, upon reading the WCS structure, in such cases,
+      we set CDELTi=1.0 and 'altlin=2' (signifying that the CD matrix
+      should be used). Therefore, effectively the CD matrix and PC matrix
+      are equivalent, we just need to convert the keyword names and delete
+      the CDELT keywords. Note that zero-valued PC/CD elements may not be
+      present, so we'll manually set 'status' to zero to avoid CFITSIO from
+      crashing. */
+  if(wcs && wcs->altlin==2)
+    {
+      status=0; fits_delete_str(fptr, "CDELT1", &status);
+      status=0; fits_delete_str(fptr, "CDELT2", &status);
+      status=0; fits_modify_name(fptr, "PC1_1", "CD1_1", &status);
+      status=0; fits_modify_name(fptr, "PC1_2", "CD1_2", &status);
+      status=0; fits_modify_name(fptr, "PC2_1", "CD2_1", &status);
+      status=0; fits_modify_name(fptr, "PC2_2", "CD2_2", &status);
+      if(wcs->naxis==3)
+        {
+          status=0; fits_delete_str(fptr, "CDELT3", &status);
+          status=0; fits_modify_name(fptr, "PC1_3", "CD1_3", &status);
+          status=0; fits_modify_name(fptr, "PC2_3", "CD2_3", &status);
+          status=0; fits_modify_name(fptr, "PC3_1", "CD3_1", &status);
+          status=0; fits_modify_name(fptr, "PC3_2", "CD3_2", &status);
+          status=0; fits_modify_name(fptr, "PC3_3", "CD3_3", &status);
+        }
+      status=0;
+    }
 }
 
 

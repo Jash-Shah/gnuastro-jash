@@ -1374,9 +1374,9 @@ static void
 ui_prepare_canvas(struct mkprofparams *p)
 {
   float *f, *ff;
+  int setshift=0;
   long width[3]={1,1,1};
   size_t tndim, *tdsize;
-  int status=0, setshift=0;
   double truncr, semiaxes[3], euler_deg[3];
   size_t i, nshift=0, *dsize=NULL, ndim_counter;
 
@@ -1527,19 +1527,6 @@ ui_prepare_canvas(struct mkprofparams *p)
       gal_checkset_allocate_copy("Mock profiles", &p->out->name);
       if(p->out->unit==NULL)
         gal_checkset_allocate_copy("Brightness", &p->out->unit);
-    }
-
-
-  /* When individual mode is requested, write the WCS structure to a header
-     string to speed up the process: if we don't do it here, this process
-     will be necessary on every individual profile's output. So it is much
-     more efficient done once here. */
-  if(p->individual && p->wcs)
-    {
-      status=wcshdo(WCSHDO_safe, p->wcs, &p->wcsnkeyrec, &p->wcsheader);
-      if(status)
-        error(EXIT_FAILURE, 0, "wcshdo error %d: %s", status,
-              wcs_errmsg[status]);
     }
 }
 
@@ -1859,11 +1846,22 @@ ui_preparations(struct mkprofparams *p)
   else
     ui_prepare_canvas(p);
 
-  /* Read the (possible) RA/Dec inputs into X and Y for the builder.  NOTE:
-     It may happen that there are no input columns, in that case, just
-     ignore this step.*/
-  if(p->wcs && p->num)
-    ui_finalize_coordinates(p);
+  /* Preparations now that we have WCS (if any was given in any way: either
+     from a background or from options).  */
+  if(p->wcs)
+    {
+      /* Read the (possible) RA/Dec inputs into X and Y for the builder.
+         NOTE: It may happen that there are no input columns, in that case,
+         just ignore this step.*/
+      if(p->num)
+        ui_finalize_coordinates(p);
+
+      /* If individual mode is activated, write the WCS as a string here
+         (earlier than needed). This is because it will be necessary for
+         every individual profile, but it will identical (except for the
+         'CRPIX's that will be changed). */
+      p->wcsstr=gal_wcs_write_wcsstr(p->wcs, &p->wcsnkeyrec);
+    }
 
   /* Prepare the random number generator. */
   p->rng=gal_checkset_gsl_rng(p->envseed, &p->rng_name, &p->rng_seed);
@@ -2064,8 +2062,7 @@ ui_free_report(struct mkprofparams *p, struct timeval *t1)
     }
 
   /* Free the WCS headers string that was defined for individual mode. */
-  if(p->individual)
-    free(p->wcsheader);
+  if(p->wcsstr) free(p->wcsstr);
 
   /* Free the random number generator: */
   gsl_rng_free(p->rng);

@@ -37,6 +37,8 @@ See the end of the file for license conditions.
   Library:
    - Arithmetic macros:
      - GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
+   - gal_wcs_write_wcsstr: wrapper of wcshdo of WCSLIB to simplify generic
+     access to that low-level operation (has some extra sanity checks).
 
 ** Removed features
 
@@ -56,15 +58,17 @@ See the end of the file for license conditions.
 ** Bugs fixed
   bug #60725: MakeCatalog doesn't put comment on --halfsumsb column.
   bug #60776: Radial profile script not using standard deviation image,
-              this bug was fixed by Zahra Sharbaf.
+              fixed by Zahra Sharbaf.
   bug #60778: Brightness error not NaN when all STD pixels are blank,
-              this bug was reported by Zahra Sharbaf.
+              reported by Zahra Sharbaf.
   bug #60826: Arithmetic won't delete existing file with tofile operators.
   bug #60881: Query segmentation fault when NED is called without a dataset.
   bug #60901: sort-by-night crash during make check due to stdintimeout,
-              this bug was reported by Zahra Sharbaf.
+              reported by Zahra Sharbaf.
   bug #60903: Increasing value of stdintimeout not effective beyond 1000000,
-              this bug was reported by Zahra Sharbaf.
+              reported by Zahra Sharbaf.
+  bug #60909: WCS coordinate conversion not working with TPV distortion,
+              fixed with the help of Mark Calabretta.
 
 
 

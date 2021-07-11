@@ -1057,13 +1057,7 @@ ui_preparations(struct cropparams *p)
       img->wcs=gal_wcs_read_fitsptr(tmpfits, p->cp.wcslinearmatrix,
                                     p->hstartwcs, p->hendwcs, &img->nwcs);
       if(img->wcs)
-        {
-          gal_wcs_decompose_pc_cdelt(img->wcs);
-          status=wcshdo(0, img->wcs, &img->nwcskeys, &img->wcstxt);
-          if(status)
-            error(EXIT_FAILURE, 0, "wcshdo ERROR %d: %s", status,
-                  wcs_errmsg[status]);
-        }
+        img->wcstxt=gal_wcs_write_wcsstr(img->wcs, &img->nwcskeys);
       else
         if(p->mode==IMGCROP_MODE_WCS)
           error(EXIT_FAILURE, 0, "%s (hdu %s): the WCS structure is "

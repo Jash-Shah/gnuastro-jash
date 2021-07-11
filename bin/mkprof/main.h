@@ -188,7 +188,7 @@ struct mkprofparams
   pthread_cond_t     qready;  /* bq is ready to be written.               */
   pthread_mutex_t     qlock;  /* Mutex lock to change builtq.             */
   double          halfpixel;  /* Half pixel in oversampled image.         */
-  char           *wcsheader;  /* The WCS header information for main img. */
+  char              *wcsstr;  /* The WCS keywords derived from main img.  */
   int            wcsnkeyrec;  /* The number of keywords in the WCS header.*/
   char       *mergedimgname;  /* Name of merged image.                    */
   gal_data_t        *custom;  /* Table containing custom values.          */

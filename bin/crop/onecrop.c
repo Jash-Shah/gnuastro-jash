@@ -613,15 +613,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
   if(img->wcs)
     {
       /* Write the WCS title and common WCS information. */
-      if(fits_write_record(ofp, blankrec, &status))
-        gal_fits_io_error(status, NULL);
-      sprintf(titlerec, "%sWCS information", GAL_FITS_KEY_TITLE_START);
-      for(i=strlen(titlerec);i<79;++i)
-        titlerec[i]=' ';
-      fits_write_record(ofp, titlerec, &status);
-      for(i=0;i<img->nwcskeys-1;++i)
-        fits_write_record(ofp, &img->wcstxt[i*80], &status);
-      gal_fits_io_error(status, NULL);
+      gal_fits_key_write_wcsstr(ofp, img->wcs, img->wcstxt, img->nwcskeys);
 
       /* Correct the CRPIX keywords. */
       for(i=0;i<ndim;++i)
