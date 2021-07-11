@@ -33,6 +33,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gsl/gsl_linalg.h>
 #include <wcslib/wcsmath.h>
+#include <wcslib/wcsprintf.h>
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/tile.h>
@@ -325,6 +326,15 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
                 error(0, 0, "%s: (warning) wcsfix status for cylfix: %d",
                       __func__, fixstatus[CYLFIX]);
             }
+
+          /* Enable wcserr if necessary (can help in debugging situations
+             when the default error message isn't enough).  If you confront
+             an error, un-comment the two lines below and put
+             'wcsperr(wcs,NULL);' after the problematic WCSLIB
+             command. This will print a trace-back of the cause.
+          wcserr_enable(1);
+          wcsprintf_set(stderr);
+          */
 
           /* Set the WCS structure. */
           status=wcsset(wcs);
