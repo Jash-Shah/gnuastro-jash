@@ -283,4 +283,18 @@ cosmiccal(struct cosmiccalparams *p)
     }
   else
     cosmiccal_printall(p);
+
+  /* Print a warning if the redshift is too close for the hubble flow to be
+     significant. This is done at the end because it is important and may
+     be missed at the start of the program (before the outputs are
+     printed). */
+  if(p->redshift<MAIN_REDSHIFT_SIG_HUBBLE_FLOW && p->cp.quiet==0)
+    error(EXIT_SUCCESS, 0, "WARNING: at very low redshifts "
+          "(approximately below %g), the peculiar velocity of the "
+          "particular galaxy may be more significant than hubble's "
+          "law (which is the basis of the measurements here). This "
+          "gets worse as the redshift decreases. Therefore the "
+          "results above may not be accurate on a per-object basis. "
+          "You can supress this warning with the '--quiet' option",
+          MAIN_REDSHIFT_SIG_HUBBLE_FLOW);
 }

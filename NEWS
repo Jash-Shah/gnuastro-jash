@@ -20,6 +20,13 @@ See the end of the file for license conditions.
    - New operands (also available in Table's column arithmetic):
      - box-around-ellipse: width and height of the box covering an ellipse.
 
+  CosmicCalculator:
+   - A warning is printed if the requested redshift is lower than 0.007
+     (corresponding to ~30Mpc in Plank 2018 cosmology). Because at these
+     scales the peculiar velocity of galaxies may be significant compared
+     to the Hubble flow (which is the basis of the calculations here). The
+     warning can be suppressed with the '--quiet' option.
+
   Match:
    - When called with '--notmatched --outcols=AAA,BBB', Match will append
      non-matching rows of second table into first table's rows (for columns

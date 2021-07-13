@@ -33,7 +33,11 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define PROGRAM_EXEC   "astcosmiccal"     /* Program executable name. */
 #define PROGRAM_STRING PROGRAM_NAME" (" PACKAGE_NAME ") " PACKAGE_VERSION
 
+/* To avoid crashing the integration program. */
 #define MAIN_REDSHIFT_ZERO 1e-20
+
+/* The z~0.007 corresponds to about 30Mpc in Plank 2018 cosmology. */
+#define MAIN_REDSHIFT_SIG_HUBBLE_FLOW 0.007
 
 
 
