@@ -96,6 +96,7 @@ $scriptname options:
   -p, --positionangle=FLT Position angle for ellipse profiles.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
       --zeropoint=FLT     Zeropoint magnitude of input dataset.
+      --undersample=INT   Number of pixels to consider for re-binning.
 
  Output:
   -t, --tmpdir            Directory to keep temporary files.
@@ -216,6 +217,7 @@ do
         -s=*|--sigmaclip=*) sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
         --zeropoint=*)      zeropoint="${1#*=}";                       check_v "$1" "$zeropoint";  shift;;
+        --undersample=*)    undersample="${1#*=}";                     check_v "$1" "$undersample";  shift;;
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
@@ -286,7 +288,7 @@ if [ x"$center" != x ]; then
     fi
 fi
 
-# Make sure the value to '--mode' is either 'wcs' or 'img'.
+# Make sure the value to '--mode' is either 'wcs' or 'img'. 
 if [ $mode = "wcs" ] || [ $mode = "img" ]; then
     junk=1
 else
@@ -546,6 +548,20 @@ astarithmetic $aperturesraw set-i \
 
 
 
+# Re-bin the aperture image if necessary
+# -------------------------
+#
+# The re-binning scenario is done if the user asked.
+rebinapertures=$tmpdir/rebin-apertures.fits
+if [ x"$undersample" != x ]; then
+    astarithmetic $apertures $undersample / -o$rebinapertures
+    cp $rebinapertures $apertures
+fi
+
+
+
+
+
 # Extract each measurement column(s)
 # ----------------------------------
 #
@@ -599,17 +615,22 @@ astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
 # The raw MakeCatalog output isn't clear for the users of this script (for
 # example the radius column is called 'OBJ_ID'!). Also, when oversampling
 # is requested we need to divide the radii by the over-sampling factor.
+# Also, when re-binning(undersampling) is requested we need to multiple the
+# radii by the undersample factor.
 #
 # But before anything, we need to set the options to print the other
 # columns untouched (we only want to change the first column).
 restcols=$(astfits $cat -h1 \
                | awk '/^TFIELDS/{for(i=2;i<=$3;++i) printf "-c%d ", i}')
-if [ x"$oversample" = x ]; then
-    asttable $cat -c'arith OBJ_ID float32 1 -' $restcols -o$output \
-             --colmetadata=1,RADIUS,pix,"Radial distance"
-else
+if [ x"$oversample" != x ]; then
     asttable $cat -c'arith OBJ_ID float32 '$oversample' /' $restcols \
              -o$output --colmetadata=ARITH_2,RADIUS,pix,"Radial distance"
+elif [ x"$undersample" != x ]; then
+    asttable $cat -c'arith OBJ_ID float32 '$undersample' x' $restcols \
+             -o$output --colmetadata=ARITH_2,RADIUS,pix,"Radial distance"
+else
+    asttable $cat -c'arith OBJ_ID float32 1 -' $restcols -o$output \
+             --colmetadata=1,RADIUS,pix,"Radial distance"
 fi
 
 
