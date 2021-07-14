@@ -27,6 +27,11 @@ See the end of the file for license conditions.
      to the Hubble flow (which is the basis of the calculations here). The
      warning can be suppressed with the '--quiet' option.
 
+  MakeCatalog:
+   --areaerror: spatial resolution of image specified by user, used in
+     estimating the surface brightness error.
+   --sberror: error in measuring the surface brightness (mag/arcsec^2).
+
   Match:
    - When called with '--notmatched --outcols=AAA,BBB', Match will append
      non-matching rows of second table into first table's rows (for columns

@@ -205,6 +205,7 @@ columns_wcs_preparation(struct mkcatalogparams *p)
             /* High-level. */
             case UI_KEY_RA:
             case UI_KEY_DEC:
+            case UI_KEY_SBERROR:
             case UI_KEY_HALFMAXSB:
             case UI_KEY_HALFSUMSB:
             case UI_KEY_AREAARCSEC2:
@@ -255,6 +256,7 @@ columns_wcs_preparation(struct mkcatalogparams *p)
         break;
 
       /* Calculate the pixel area if necessary. */
+      case UI_KEY_SBERROR:
       case UI_KEY_HALFMAXSB:
       case UI_KEY_HALFSUMSB:
       case UI_KEY_AREAARCSEC2:
@@ -483,6 +485,24 @@ columns_define_alloc(struct mkcatalogparams *p)
           disp_precision = 0;
           oiflag[ OCOL_NUM ] = ciflag[ CCOL_NUM ] = 1;
           oiflag[ OCOL_SUM ] = ciflag[ CCOL_SUM ] = 1;
+          break;
+
+        case UI_KEY_SBERROR:
+          name           = "SB_ERROR";
+          unit           = "mag/arcsec^2";
+          ocomment       = "Error in measuring Surface brightness.";
+          ccomment       = ocomment;
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = 0;
+          disp_width     = 6;
+          disp_precision = 0;
+          oiflag[ OCOL_NUM         ] = ciflag[ CCOL_NUM         ] = 1;
+          oiflag[ OCOL_SUM         ] = ciflag[ CCOL_SUM         ] = 1;
+          oiflag[ OCOL_SUM_VAR     ] = ciflag[ CCOL_SUM_VAR     ] = 1;
+          oiflag[ OCOL_SUM_VAR_NUM ] = ciflag[ CCOL_SUM_VAR_NUM ] = 1;
+                                       ciflag[ CCOL_RIV_SUM     ] = 1;
+                                       ciflag[ CCOL_RIV_SUM_VAR ] = 1;
           break;
 
         case UI_KEY_AREAXY:
@@ -2262,7 +2282,11 @@ columns_xy_extrema(struct mkcatalog_passparams *pp, double *oi,
                                       ? columns_sn((P),(ROW),(O0C1))    \
                                       : NAN )                           \
                                     * log(10) ) )
-
+#define SB_ERROR(P,ROW,O0C1) ( MAG_ERROR(P,ROW,O0C1)                    \
+                               + ( 2.5/log(10)*p->spatialresolution     \
+                                   / ( ROW[   O0C1?CCOL_NUM:OCOL_NUM ]  \
+                                       ? ROW[ O0C1?CCOL_NUM:OCOL_NUM ]  \
+                                       : NAN ) ) )
 
 
 
@@ -2338,6 +2362,10 @@ columns_fill(struct mkcatalog_passparams *pp)
 
         case UI_KEY_SURFACEBRIGHTNESS:
           ((float *)colarr)[oind] = MKC_SB(oi[OCOL_SUM], oi[OCOL_NUM]);
+          break;
+
+        case UI_KEY_SBERROR:
+          ((float *)colarr)[oind] = SB_ERROR(p, oi, 0);
           break;
 
         case UI_KEY_AREAXY:
@@ -2747,6 +2775,10 @@ columns_fill(struct mkcatalog_passparams *pp)
 
           case UI_KEY_SURFACEBRIGHTNESS:
             ((float *)colarr)[cind]=MKC_SB(ci[CCOL_SUM], ci[CCOL_NUM]);
+            break;
+
+          case UI_KEY_SBERROR:
+            ((float *)colarr)[cind]=SB_ERROR(p, ci, 1);
             break;
 
           case UI_KEY_AREAXY:

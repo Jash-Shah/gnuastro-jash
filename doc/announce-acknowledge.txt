@@ -2,6 +2,7 @@ Alphabetically ordered list to acknowledge in the next release.
 
 Mark Calabretta
 Leslie Hunt
+Juan Miro
 Juan Molina Tobar
 Zahra Sharbaf
 Ignacio Trujillo

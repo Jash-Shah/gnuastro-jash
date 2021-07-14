@@ -244,6 +244,7 @@ struct mkcatalogparams
   int32_t       checkuplim[2];  /* Object & clump ID to check dist.     */
 
   gal_data_t         *fracmax;  /* Fractions to use in --fracsumarea.   */
+  float     spatialresolution;  /* Error in area (used in SB error).    */
 
   /* Internal. */
   char           *relabclumps;  /* Name of new file for clump labels.   */

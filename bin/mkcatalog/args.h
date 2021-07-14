@@ -427,6 +427,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET,
       gal_options_parse_csv_float64
     },
+    {
+      "spatialresolution",
+      UI_KEY_SPATIALRESOLUTION,
+      "FLT",
+      0,
+      "Spatial resolution (for surface brightness error).",
+      UI_GROUP_OTHERSETTINGS,
+      &p->spatialresolution,
+      GAL_TYPE_FLOAT32,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+    },
 
 
 
@@ -1510,6 +1523,20 @@ struct argp_option program_options[] =
       0,
       0,
       "Surface brightness (mag/arcsec^2).",
+      UI_GROUP_COLUMNS_MORPHOLOGY,
+      0,
+      GAL_TYPE_INVALID,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_column_codes_ll
+    },
+    {
+      "sberror",
+      UI_KEY_SBERROR,
+      0,
+      0,
+      "Surface brightness error (mag/arcsec^2).",
       UI_GROUP_COLUMNS_MORPHOLOGY,
       0,
       GAL_TYPE_INVALID,

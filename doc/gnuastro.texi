@@ -409,7 +409,7 @@ ConvertType
 
 Annotations for figure in paper
 
-* Full script of annotations on figure::
+* Full script of annotations on figure::  All the steps in one script
 
 Table
 
@@ -540,6 +540,7 @@ MakeCatalog
 Quantifying measurement limits
 
 * Magnitude measurement error of each detection::  Derivation of mag error equation
+* Surface brightness error of each detection::  Error in measuring the Surface brightness.
 * Completeness limit of each detection::  Possibility of detecting similar objects?
 * Upper limit magnitude of each detection::  How reliable is your magnitude?
 * Surface brightness limit of image::  How deep is your data?
@@ -10375,7 +10376,7 @@ PGFPlots is also highly customizable, you can make a lot of changes and customiz
 Both TiKZ@footnote{@url{http://mirrors.ctan.org/graphics/pgf/base/doc/pgfmanual.pdf}} and PGFPLots@footnote{@url{http://mirrors.ctan.org/graphics/pgf/contrib/pgfplots/doc/pgfplots.pdf}} have wonderful manuals, so have a look trough them.
 
 @menu
-* Full script of annotations on figure:: All the steps in one script
+* Full script of annotations on figure::  All the steps in one script
 @end menu
 
 @node Full script of annotations on figure,  , Annotations for figure in paper, Annotations for figure in paper
@@ -17942,13 +17943,14 @@ Therefore the measurements discussed here are commonly used in units of magnitud
 
 @menu
 * Magnitude measurement error of each detection::  Derivation of mag error equation
+* Surface brightness error of each detection::  Error in measuring the Surface brightness.
 * Completeness limit of each detection::  Possibility of detecting similar objects?
 * Upper limit magnitude of each detection::  How reliable is your magnitude?
 * Surface brightness limit of image::  How deep is your data?
 * Upper limit magnitude of image::  How deep is your data for certain footprint?
 @end menu
 
-@node Magnitude measurement error of each detection, Completeness limit of each detection, Quantifying measurement limits, Quantifying measurement limits
+@node Magnitude measurement error of each detection, Surface brightness error of each detection, Quantifying measurement limits, Quantifying measurement limits
 @subsubsection Magnitude measurement error of each detection
 The raw error in measuring the magnitude is only meaningful when the object's magnitude is brighter than the upper-limit magnitude (see below).
 As discussed in @ref{Brightness flux magnitude}, the magnitude (@mymath{M}) of an object with brightness @mymath{B} and zero point magnitude @mymath{z} can be written as:
@@ -17973,7 +17975,22 @@ But, @mymath{\Delta{B}/B} is just the inverse of the Signal-to-noise ratio (@mym
 MakeCatalog uses this relation to estimate the magnitude errors.
 The signal-to-noise ratio is calculated in different ways for clumps and objects (see @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}), but this single equation can be used to estimate the measured magnitude error afterwards for any type of target.
 
-@node Completeness limit of each detection, Upper limit magnitude of each detection, Magnitude measurement error of each detection, Quantifying measurement limits
+@node Surface brightness error of each detection, Completeness limit of each detection, Magnitude measurement error of each detection, Quantifying measurement limits
+@subsubsection Surface brightness error of each detection
+
+@cindex Surface brightness error
+@cindex Error in surface brightness
+We can derive the error in measuring the surface brightness based on the surface brightness (SB) equation of @ref{Brightness flux magnitude} and the generic magnitude error (@mymath{\Delta{M}}) of @ref{Magnitude measurement error of each detection}.
+Let's set @mymath{A} to represent the area and @mymath{\Delta{A}} to represent the error in measuring the area.
+For more on @mymath{\Delta{A}}, see the description of @option{--spatialresolution} in @ref{MakeCatalog inputs and basic settings}.
+
+@dispmath{\Delta{(SB)} = \Delta{M} + \left|{-2.5\over ln(10)}\right|\times{\Delta{A}\over{A}}}
+
+In the surface brightness equation mentioned above, @mymath{A} is in units of arcsecond squared and the conversion between arcseconds to pixels is a multiplication factor.
+Therefore as long as @mymath{A} and @mymath{\Delta{A}} have the same units, it doesn't matter if they are in arcseconds or pixels.
+Since the measure of spatial resolution (or area error) is the FWHM of the PSF which is usually defined in terms of pixels, its more intuitive to use pixles for @mymath{A} and @mymath{\Delta{A}}.
+
+@node Completeness limit of each detection, Upper limit magnitude of each detection, Surface brightness error of each detection, Quantifying measurement limits
 @subsubsection Completeness limit of each detection
 @cindex Completeness
 As the surface brightness of the objects decreases, the ability to detect them will also decrease.
@@ -18507,7 +18524,16 @@ For the maximum value, see the description of @option{--maximum} column below.
 The value(s) of this option must be larger than 0 and smaller than 1 (they are a fraction).
 When only @option{--fracmaxarea1} or @option{--fracmaxsum1} is requested, one value must be given to this option, but if @option{--fracmaxarea2} or @option{--fracmaxsum2} are also requested, two values must be given to this option.
 The values can be written as simple floating point numbers, or as fractions, for example @code{0.25,0.75} and @code{0.25,3/4} are the same.
+
+@item --spatialresolution=FLT
+The error in measuring spatial properties (for example the area) in units of pixels.
+You can think of this as the FWHM of the dataset's PSF and is used in measurements like the error in surface brightness (@option{--sberror}, see @ref{MakeCatalog measurements}).
+Ideally, images are taken in the optimal Nyquist sampling @ref{Sampling theorem}, so the default value for this option is 2.
+But in practice real images my be over-sampled (usually ground-based images, where you will need to increase the default value) or undersampled (some space-based images, where you will need to decrease the default value).
 @end table
+
+
+
 
 
 @node Upper-limit settings, MakeCatalog measurements, MakeCatalog inputs and basic settings, Invoking astmkcatalog
@@ -18954,13 +18980,17 @@ The number of pixels that are equal to the maximum value of the labeled region (
 The surface brightness (in units of mag/arcsec@mymath{^2}) of the labeled region (objects or clumps).
 For more on the definition of the surface brightness, see @ref{Brightness flux magnitude}.
 
+@item --sberror
+Error in measuring the surface brightness (the @option{--surfacebrightness} column).
+This column will use the value given to @option{--spatialresolution} in the processing (in pixels).
+For more on @option{--spatialresolution}, see see @ref{MakeCatalog inputs and basic settings} and for the equation used to derive the surface brightness error, see @ref{Surface brightness error of each detection}.
+
 @item --areaxy
 @cindex IFU: Integral Field Unit
 @cindex Integral Field Unit
-Similar to @option{--area}, when the clump or object is projected onto the
-first two dimensions. This is only available for 3-dimensional
-datasets. When working with Integral Field Unit (IFU) datasets, this
-projection onto the first two dimensions would be a narrow-band image.
+Similar to @option{--area}, when the clump or object is projected onto the first two dimensions.
+This is only available for 3-dimensional datasets.
+When working with Integral Field Unit (IFU) datasets, this projection onto the first two dimensions would be a narrow-band image.
 
 @item --fwhm
 @cindex FWHM
@@ -19065,10 +19095,9 @@ Note that unlike @option{--area}, pixel values are completely ignored in this co
 For example, if a pixel value is blank, it won't be counted in @option{--area}, but will be counted here.
 
 @item --geoareaxy
-Similar to @option{--geoarea}, when the clump or object is projected onto
-the first two dimensions. This is only available for 3-dimensional
-datasets. When working with Integral Field Unit (IFU) datasets, this
-projection onto the first two dimensions would be a narrow-band image.
+Similar to @option{--geoarea}, when the clump or object is projected onto the first two dimensions.
+This is only available for 3-dimensional datasets.
+When working with Integral Field Unit (IFU) datasets, this projection onto the first two dimensions would be a narrow-band image.
 
 @item -A
 @itemx --semimajor
