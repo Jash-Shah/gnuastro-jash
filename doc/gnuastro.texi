@@ -22051,9 +22051,12 @@ Oversample the input dataset to the fraction given to this option.
 Therefore if you set @option{--rmax=20} for example and @option{--oversample=5}, your output will have 100 rows (without @option{--oversample} it will only have 20 rows).
 Unless the object is heavily undersampled (the pixels are larger than the actual object), this method provides a much more accurate result and there are sufficient number of pixels to get the profile accurately.
 
+@item -u INT
 @item --undersample=INT
-Undersample the input dataset.
-If you define this option, the size which gave to this option considers as a re-bin size to do rebinning and do the calculation on the rebinned image, which allow you to decrease the noise.
+Undersample the input dataset by the number given to this option.
+This option is for considering larger apertures than the original pixel size (aperture size is equal to 1 pixel).
+For example, if a radial profile computed by default has 100 different radii (apertures of 1 pixel width), by considering @option{--undersample=2} the radial profile will be computed over apertures of 2 pixels, so the final radial profile will have 50 different radii.
+This option is good to measure over a larger number of pixels to improve the measurement.
 
 @item --instd=FLT/STR
 Sky standard deviation as a single number (FLT) or as the filename (STR) containing the image with the std value for each pixel (the HDU within the file should be given to the @option{--stdhdu} option mentioned below).

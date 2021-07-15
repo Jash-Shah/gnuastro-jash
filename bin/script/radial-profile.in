@@ -96,14 +96,14 @@ $scriptname options:
   -p, --positionangle=FLT Position angle for ellipse profiles.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
       --zeropoint=FLT     Zeropoint magnitude of input dataset.
-      --undersample=INT   Number of pixels to consider for re-binning.
 
  Output:
+  -o, --output            Output table with the radial profile.
   -t, --tmpdir            Directory to keep temporary files.
   -k, --keeptmp           Keep temporal/auxiliar files.
   -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
-  -o, --output            Output table with the radial profile.
   -v, --oversample        Oversample for higher resolution radial profile.
+  -u, --undersample=INT   Undersample for lower resolution radial profile.
       --instd=FLT/STR     Sky standard deviation as a single number or as the
                           filename containing the dataset with different values
                           per pixel.
@@ -234,6 +234,9 @@ do
         -v|--oversample)  oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
         -v=*|--oversample=*) oversample="${1#*=}";                  check_v "$1" "$oversample"; shift;;
         -v*)              oversample=$(echo "$1" | sed -e's/-v//'); check_v "$1" "$oversample"; shift;;
+        -u|--undersample) undersample="$2";                          check_v "$1" "$undersample"; shift;shift;;
+        -u=*|--undersample=*) undersample="${1#*=}";                  check_v "$1" "$undersample"; shift;;
+        -u*)              undersample=$(echo "$1" | sed -e's/-u//'); check_v "$1" "$undersample"; shift;;
         --instd=*)        instd="${1#*=}";                          check_v "$1" "$instd"; shift;;
         --stdhdu=*)       stdhdu="${1#*=}";                         check_v "$1" "$stdhdu"; shift;;
 
@@ -288,7 +291,7 @@ if [ x"$center" != x ]; then
     fi
 fi
 
-# Make sure the value to '--mode' is either 'wcs' or 'img'. 
+# Make sure the value to '--mode' is either 'wcs' or 'img'.
 if [ $mode = "wcs" ] || [ $mode = "img" ]; then
     junk=1
 else
@@ -534,29 +537,33 @@ echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
 
 
 
+# Undersampling the aperture image
+# --------------------------------
+#
+# The undersampling is for making the size of the apertures larger so the
+# number of pixels on each aperture (at each radius) will be larger. Most
+# of times this option is good to average over a larger number of pixels
+# and increase the signal-to-noise ratio of the measurement.
+aperturesrebinned=$tmpdir/apertures-rebin.fits
+if [ x"$undersample" != x ]; then
+    astarithmetic $aperturesraw $undersample / -o$aperturesrebinned
+else
+    ln -fs $aperturesraw $aperturesrebinned
+fi
+
+
+
+
+
 # Fill the central pixel(s)
 # -------------------------
 #
 # The central pixel(s) have a distance of 0! So we need to add a single
 # value to all the profile pixels (but keep the outer parts at 0).
 apertures=$tmpdir/apertures.fits
-astarithmetic $aperturesraw set-i \
+astarithmetic $aperturesrebinned set-i \
               i 0 ne 1 fill-holes set-good \
               i good i 1 + where -o$apertures
-
-
-
-
-
-# Re-bin the aperture image if necessary
-# -------------------------
-#
-# The re-binning scenario is done if the user asked.
-rebinapertures=$tmpdir/rebin-apertures.fits
-if [ x"$undersample" != x ]; then
-    astarithmetic $apertures $undersample / -o$rebinapertures
-    cp $rebinapertures $apertures
-fi
 
 
 
@@ -614,9 +621,9 @@ astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
 #
 # The raw MakeCatalog output isn't clear for the users of this script (for
 # example the radius column is called 'OBJ_ID'!). Also, when oversampling
-# is requested we need to divide the radii by the over-sampling factor.
-# Also, when re-binning(undersampling) is requested we need to multiple the
-# radii by the undersample factor.
+# is requested, we need to divide the radii by the over-sampling factor.
+# In the same way, when undersampling (re-binning) is requested, we need to
+# multiple the radii by the undersample factor.
 #
 # But before anything, we need to set the options to print the other
 # columns untouched (we only want to change the first column).
