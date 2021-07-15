@@ -22041,6 +22041,7 @@ To see the default value of this option in MakeCatalog, you can run this command
 $ astmkcatalog -P | grep " sigmaclip "
 @end example
 
+@item -z FLT
 @item --zeropoint=FLT
 The Zeropoint of the input dataset.
 This is necessary when you request measurements like Magnitude, or Surface brightness.

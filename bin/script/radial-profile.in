@@ -49,6 +49,7 @@ zeropoint=""
 sigmaclip=""
 measuretmp=""
 oversample=""
+undersample=""
 positionangle=0
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -95,7 +96,7 @@ $scriptname options:
   -Q, --axisratio=FLT     Axis ratio for ellipse profiles (A/B).
   -p, --positionangle=FLT Position angle for ellipse profiles.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
-      --zeropoint=FLT     Zeropoint magnitude of input dataset.
+  -z, --zeropoint=FLT     Zeropoint magnitude of input dataset.
 
  Output:
   -o, --output            Output table with the radial profile.
@@ -104,9 +105,8 @@ $scriptname options:
   -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
   -v, --oversample        Oversample for higher resolution radial profile.
   -u, --undersample=INT   Undersample for lower resolution radial profile.
-      --instd=FLT/STR     Sky standard deviation as a single number or as the
-                          filename containing the dataset with different values
-                          per pixel.
+      --instd=FLT/STR     Sky standard deviation per pixel, as a single number
+                          or as the filename.
       --stdhdu=STR        HDU/extension of the sky standard deviation image.
 
  Operating mode:
@@ -216,8 +216,9 @@ do
         -s|--sigmaclip)     sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*) sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
-        --zeropoint=*)      zeropoint="${1#*=}";                       check_v "$1" "$zeropoint";  shift;;
-        --undersample=*)    undersample="${1#*=}";                     check_v "$1" "$undersample";  shift;;
+        -z|--zeropoint)     zeropoint="$2";                            check_v "$1" "$zeropoint";  shift;shift;;
+        -z=*|--zeropoint=*) zeropoint="${1#*=}";                       check_v "$1" "$zeropoint";  shift;;
+        -z*)                zeropoint=$(echo "$1"  | sed -e's/-z//');  check_v "$1" "$zeropoint";  shift;;
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
@@ -630,11 +631,11 @@ astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
 restcols=$(astfits $cat -h1 \
                | awk '/^TFIELDS/{for(i=2;i<=$3;++i) printf "-c%d ", i}')
 if [ x"$oversample" != x ]; then
-    asttable $cat -c'arith OBJ_ID float32 '$oversample' /' $restcols \
-             -o$output --colmetadata=ARITH_2,RADIUS,pix,"Radial distance"
+    asttable $cat -c'arith OBJ_ID float32 '$oversample' / 1 -' $restcols \
+             -o$output --colmetadata=ARITH_3,RADIUS,pix,"Radial distance"
 elif [ x"$undersample" != x ]; then
-    asttable $cat -c'arith OBJ_ID float32 '$undersample' x' $restcols \
-             -o$output --colmetadata=ARITH_2,RADIUS,pix,"Radial distance"
+    asttable $cat -c'arith OBJ_ID float32 '$undersample' x 1 -' $restcols \
+             -o$output --colmetadata=ARITH_3,RADIUS,pix,"Radial distance"
 else
     asttable $cat -c'arith OBJ_ID float32 1 -' $restcols -o$output \
              --colmetadata=1,RADIUS,pix,"Radial distance"
