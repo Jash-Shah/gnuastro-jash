@@ -124,6 +124,9 @@ ui_profile_name_read(char *string, size_t row)
   else if ( !strcmp("distance", string) )
     return PROFILE_DISTANCE;
 
+  else if ( !strcmp("azimuth", string) )
+    return PROFILE_DISTANCE;
+
   else if ( !strcmp("custom", string) )
     return PROFILE_CUSTOM;
 
@@ -159,6 +162,7 @@ ui_profile_name_write(int profile_code)
     case PROFILE_FLAT:           return "flat";
     case PROFILE_CIRCUMFERENCE:  return "circum";
     case PROFILE_DISTANCE:       return "distance";
+    case PROFILE_AZIMUTH:        return "azimuth";
     default:
       error(EXIT_FAILURE, 0, "%s: %d not recognized as a profile code",
             __func__, profile_code);
@@ -428,6 +432,7 @@ ui_parse_kernel(struct argp_option *option, char *arg,
         case PROFILE_FLAT:          need = kernel->flag==2 ? 1 : 2;  break;
         case PROFILE_CIRCUMFERENCE: need = kernel->flag==2 ? 1 : 2;  break;
         case PROFILE_DISTANCE:      need = kernel->flag==2 ? 1 : 2;  break;
+        case PROFILE_AZIMUTH:       need = kernel->flag==2 ? 1 : 2;  break;
         default:
           error_at_line(EXIT_FAILURE, 0, filename, lineno, "%s: a bug! "
                         "Please contact us at %s to correct the issue. "
@@ -971,7 +976,9 @@ ui_read_cols_3d(struct mkprofparams *p)
               corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_UINT8);
               p->f=corrtype->array;
 
-              /* Check if they are in the correct range. */
+              /* Check if they are in the correct range. For profile names
+                 given as string, a non-matching string will result in an
+                 error, so there is no need for this in that scenario. */
               for(i=0;i<p->num;++i)
                 if(p->f[i]<=PROFILE_INVALID || p->f[i]>=PROFILE_MAXIMUM_CODE)
                   error(EXIT_FAILURE, 0, "%s: row %zu, the function "
@@ -984,6 +991,16 @@ ui_read_cols_3d(struct mkprofparams *p)
                         "'q' to return back to the command-line):\n\n"
                         "    $ info %s\n", p->catname, i+1, p->f[i],
                         PROFILE_INVALID, PROFILE_MAXIMUM_CODE, PROGRAM_EXEC);
+            }
+
+          /* General profile sanity checks. */
+          for(i=0;i<p->num;++i)
+            {
+              /* Azimuthal profile not yet supported for ellipsoids. */
+              if(p->f[i]==PROFILE_AZIMUTH)
+                error(EXIT_FAILURE, 0, "%s: row %zu: the azimuthal "
+                      "angle profile is not yet supported for 3D "
+                      "datasets", p->catname, i+1);
             }
           break;
 

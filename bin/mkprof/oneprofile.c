@@ -694,6 +694,16 @@ oneprofile_set_prof_params(struct mkonthread *mkp)
 
 
 
+
+
+    case PROFILE_AZIMUTH:
+      mkp->profile          = profiles_azimuth;
+      mkp->truncr           = tp ? p->t[id] : p->t[id]*p->r[id];
+      mkp->correction       = 0;
+      break;
+
+
+
     case PROFILE_CUSTOM:
       mkp->profile          = profiles_custom_table;
       mkp->truncr           = tp ? p->t[id] : p->t[id]*p->r[id];

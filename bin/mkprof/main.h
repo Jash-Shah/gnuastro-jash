@@ -41,6 +41,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Some constants */
 #define EPSREL_FOR_INTEG   2
 #define DEGREESTORADIANS   M_PI/180.0
+#define RADIANSTODEGREES   180.0/M_PI
+
 
 
 /* Modes to interpret coordinates. */
@@ -66,7 +68,8 @@ enum profile_types
   PROFILE_FLAT,                 /* Flat profile.               */
   PROFILE_CIRCUMFERENCE,        /* Circumference profile.      */
   PROFILE_DISTANCE,             /* Elliptical radius of pixel. */
-  PROFILE_CUSTOM,          /* Radial prof. in file/table. */
+  PROFILE_CUSTOM,               /* Radial prof. in file/table. */
+  PROFILE_AZIMUTH,              /* Azimuthal angle at distance.*/
 
   PROFILE_MAXIMUM_CODE,         /* Just for a sanity check.    */
 };

@@ -52,6 +52,56 @@ profiles_radial_distance(struct mkonthread *mkp)
 
 
 
+/* Azimuthal angle.
+
+   Assuming theta is the azimuthal angle (along a constant radius), then an
+   ellipse is defined by:
+
+      x=a*cos(theta)
+      y=b*sin(theta)
+
+   Now, let's take 'phi' to be the angle in the normal equi-distant
+   (non-elliptical coordinates). Therefore:
+
+      tan(phi)=y/x
+
+   So:
+                 b*sin(theta)
+      tan(phi) = ------------ = b/a * tan(theta)
+                 a*cos(theta)
+
+   Therefore we can find theta like this (where q=b/a):
+
+      theta = atan( a/b * tan(phi) )
+            = atan( a/b * y/x )
+            = atan( y / (x*q) )
+
+   However, the 'x' and 'y' above are only for the case where the ellipse
+   has a position angle of zero (its major axis is aligned with the
+   horizontal axis. When the ellipse is rotated, we first need to rotate
+   the 'mkp->coord' values, and then use 'x' and 'y' like above. */
+double
+profiles_azimuth(struct mkonthread *mkp)
+{
+  /* We are rotating by the inverse (multiplied by -1) position angle. */
+  double x =      mkp->coord[0]*mkp->c[0] + mkp->coord[1]*mkp->s[0];
+  double y = -1 * mkp->coord[0]*mkp->s[0] + mkp->coord[1]*mkp->c[0];
+
+  /* The normal 'atan' function will only return values between -90 to +90
+     degrees, or only two quadrants (because it only takes a single
+     value). However, with 'atan2' we can get the full -180 to +180 degrees
+     (all four quadrants). */
+  double d=atan2(y, x*mkp->q[0])*RADIANSTODEGREES;
+
+  /* 'atan2' returns values between -180 to 180 deg. But we want values
+     from 0 to 360, so we'll add the negative ones by 360. */
+  return d>0 ? d : d+360.0f;
+}
+
+
+
+
+
 /* Read the values based on the distance from a table. */
 double
 profiles_custom_table(struct mkonthread *mkp)

@@ -391,7 +391,7 @@ struct argp_option program_options[] =
       0,
       "sersic (1), moffat (2), gaussian (3), point (4), "
       "flat (5), circumference (6), distance (7), "
-      "radial-table (8).",
+      "radial-table (8), azimuth (9).",
       UI_GROUP_CATALOG,
       &p->fcol,
       GAL_TYPE_STRING,

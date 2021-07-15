@@ -20087,10 +20087,10 @@ See the description of @option{--config} in @ref{Operating mode options}.}.
 Please see @ref{Sufi simulates a detection} for a very complete tutorial explaining how one could use MakeProfiles in conjunction with other Gnuastro's programs to make a complete simulated image of a mock galaxy.
 
 @menu
-* MakeProfiles catalog::        Required catalog properties.
+* MakeProfiles catalog::           Required catalog properties.
 * MakeProfiles profile settings::  Configuration parameters for all profiles.
-* MakeProfiles output dataset::  The canvas/dataset to build profiles over.
-* MakeProfiles log file::       A description of the optional log file.
+* MakeProfiles output dataset::    The canvas/dataset to build profiles over.
+* MakeProfiles log file::          A description of the optional log file.
 @end menu
 
 @node MakeProfiles catalog, MakeProfiles profile settings, Invoking astmkprof, Invoking astmkprof
@@ -20170,6 +20170,11 @@ In the latter case, just note that the central values are going to be incorrect 
 @item
 Custom profile with `@code{custom}' or `@code{8}'.
 The values to use for each radial interval should be in the table given to @option{--customtable}. For more, see @ref{MakeProfiles profile settings}.
+
+@item
+Azimuthal angle profile with `@code{azimuth}' or `@code{9}'.
+Every pixel within the truncation radius will be given its azimuthal angle (in degrees, from 0 to 360) from the major axis.
+In combination with the radial distance profile, you can now create complex features in polar coordinates, uch as tidal tails or tidal shocks (using the Arithmetic program to mix the radius and azimuthal angle through a function to create your desired features).
 @end itemize
 
 @item --rcol=STR/INT

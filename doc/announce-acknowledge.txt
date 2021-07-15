@@ -1,7 +1,9 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Fernando Buitrago
 Mark Calabretta
 Leslie Hunt
+Matthias Kluge
 Juan Miro
 Juan Molina Tobar
 Zahra Sharbaf

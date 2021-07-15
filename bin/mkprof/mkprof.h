@@ -31,7 +31,7 @@ struct mkonthread
 {
   /* General parameters: */
   double                r;   /* Elliptical radius at this point.      */
-  double         coord[3];   /* Pixel coordinate.                     */
+  double         coord[3];   /* Pixel coord. (from profile center).   */
   double         lower[3];   /* Coordinates of lower pixel position.  */
   double        higher[3];   /* Coordinates of higher pixel position. */
   double             c[3];   /* Cosine of position angle(s).          */

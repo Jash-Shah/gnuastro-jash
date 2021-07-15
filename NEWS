@@ -32,6 +32,15 @@ See the end of the file for license conditions.
      estimating the surface brightness error.
    --sberror: error in measuring the surface brightness (mag/arcsec^2).
 
+  MakeProfiles:
+   - New type of profile showing the azimuthal angle (in degrees, along the
+     elliptical circumference of fixed radius) of each pixel. In
+     combination with the radial distance profile, you can now create
+     complex features in polar coordinates, such as tidal tails or tidal
+     shocks (using the Arithmetic program to mix the radius and azimuthal
+     angle through a function to create your desired features). Implemented
+     after discussions with Fernando Buitrago and Matthias Kluge.
+
   Match:
    - When called with '--notmatched --outcols=AAA,BBB', Match will append
      non-matching rows of second table into first table's rows (for columns

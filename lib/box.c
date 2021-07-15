@@ -88,12 +88,18 @@ gal_box_bound_ellipse(double a, double b, double theta_deg, long *width)
   /* Find the extent of the ellipse. */
   gal_box_bound_ellipse_extent(a, b, theta_deg, extent);
 
+  /* The returned value is an integer. So if the fractional component of
+     the extent is larger than 0.5, add one to it so we still cover the
+     whole desired region. */
+  extent[0] += extent[0] - ((long)(extent[0])) > 0.5f ? 0.5f : 0.0f;
+  extent[1] += extent[1] - ((long)(extent[1])) > 0.5f ? 0.5f : 0.0f;
+
   /* max_x and max_y are calculated from the center of the ellipse. We
      want the final height and width of the box enclosing the
      ellipse. So we have to multiply them by two, then take one from
      them (for the center). */
-  width[0] = 2 * ( (long)extent[0] ) + 1;
-  width[1] = 2 * ( (long)extent[1] ) + 1;
+  width[0] = 2 * ( (long)(extent[0]) ) + 1;
+  width[1] = 2 * ( (long)(extent[1]) ) + 1;
 }
 
 
@@ -261,7 +267,15 @@ gal_box_bound_ellipsoid(double *semiaxes, double *euler_deg, long *width)
 
   /* Find the width along each dimension. */
   for(i=0;i<3;++i)
-    width[i] = 2 * ( (long)extent[i] ) + 1;
+    {
+      /* The returned width along each dimension is an integer. So if the
+         fractional component of the extent is larger than 0.5, add one to
+         it so we still cover the whole desired region. */
+      extent[i] += extent[i] - ((long)(extent[i])) > 0.5f ? 0.5f : 0.0f;
+
+      /* Set the width. */
+      width[i] = 2 * ( (long)extent[i] ) + 1;
+    }
 }
 
 
