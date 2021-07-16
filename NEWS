@@ -90,6 +90,8 @@ See the end of the file for license conditions.
               reported by Zahra Sharbaf.
   bug #60909: WCS coordinate conversion not working with TPV distortion,
               fixed with the help of Mark Calabretta.
+  bug #60923: Standard deviation calculation giving NaN values due to
+              floating point errors, found and fixed by Natáli Anzanello.
 
 
 

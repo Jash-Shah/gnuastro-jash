@@ -214,8 +214,16 @@ gal_statistics_std(gal_data_t *input)
 
     /* More than one element. */
     default:
+
+      /* Find the 's' and 's2' by parsing the data. */
       GAL_TILE_PARSE_OPERATE(input, out, 0, 1, {++n; s += *i; s2 += *i * *i;});
-      o[0]=sqrt( (s2-s*s/n)/n );
+
+      /* Write the standard deviation. If the square of the average value
+         is bigger than the average of the squares of the values, we have a
+         floating-point error (due to all the points having an identical
+         value, within floating point erros). So we should just set the
+         standard deviation to zero. */
+      o[0] = (s*s/n > s2) ? 0 : sqrt( (s2-s*s/n)/n );
       break;
     }
 
@@ -255,9 +263,19 @@ gal_statistics_mean_std(gal_data_t *input)
 
     /* More than one element. */
     default:
+
+      /* Parse the data. */
       GAL_TILE_PARSE_OPERATE(input, out, 0, 1, {++n; s += *i; s2 += *i * *i;});
+
+      /* Write the mean */
       o[0]=s/n;
-      o[1]=sqrt( (s2-s*s/n)/n );
+
+      /* Write the standard deviation. If the square of the average value
+         is bigger than the average of the squares of the values, we have a
+         floating-point error (due to all the points having an identical
+         value, within floating point erros). So we should just set the
+         standard deviation to zero. */
+      o[1] = (s*s/n > s2) ? 0 : sqrt( (s2-s*s/n)/n );
       break;
     }
 
