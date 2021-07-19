@@ -12648,7 +12648,7 @@ Therefore we need parenthesis to show precedence: @code{5+(6/2)} or @code{(5+6)/
 Furthermore, if you need to leave a value for later processing, you will need to define a variable for it; for example @code{a=(5+6)/2}.
 
 Gnuastro provides libraries where you can also use infix notation in C or C++ programs.
-However, Gnuastro's programs are primarily designed to be run on the command-line and the level of complexity that infix notation requires can be annoying/confusing to write on the command-line (where they can get confused with the shell's parenthesis or variable definitions.
+However, Gnuastro's programs are primarily designed to be run on the command-line and the level of complexity that infix notation requires can be annoying/confusing to write on the command-line (where they can get confused with the shell's parenthesis or variable definitions).
 Therefore Gnuastro's Arithmetic and Table (when doing column arithmetic) programs use the the post-fix notation, also known as @url{https://en.wikipedia.org/wiki/Reverse_Polish_notation, reverse polish notation}.
 For example, instead of writing @command{5+6}, we write @command{5 6 +}.
 
@@ -12661,7 +12661,7 @@ To easily understand how the reverse polish notation works, you can think of eac
 One such stack in daily life is a stack of dishes in the kitchen: you put a clean dish, on the top of a stack of dishes when its ready for later usage.
 Later, when you need a dish, you pick the top one (hence the ``last'' dish placed ``in'' the stack is the ``first'' dish that comes ``out'' when necessary).
 
-Each operator will need a certain number of operators (in the example above, the @code{+} operator needs two operands).
+Each operator will need a certain number of operands (in the example above, the @code{+} operator needs two operands: @code{5} and @code{6}).
 In the kitchen metaphor, an operator can be an oven.
 Every time an operator is confronted, the operator takes (or ``pops'') the number of operands it needs from the top of the stack (so they don't exist in the stack any more), does its operation, and places (or ``pushes'') the result back on top of the stack.
 So if you want the average of 5 and 6, you would write: @command{5 6 + 2 /}.
@@ -12670,7 +12670,7 @@ The operations that are done are:
 @enumerate
 @item
 @command{5} is an operand, so Arithmetic pushes it to the top of the stack (which is initially empty).
-In the kitchen metaphoe, you can visualize this as taking a new dish from the cabinet, putting the number 5 inside of the dish, and putting the dish on top of the (empy) cooking table infront of you.
+In the kitchen metaphor, you can visualize this as taking a new dish from the cabinet, putting the number 5 inside of the dish, and putting the dish on top of the (empy) cooking table infront of you.
 You now have a stack of one dish on the table infront of you.
 @item
 @command{6} is also an operand, so it is pushed to the top of the stack.
@@ -12681,8 +12681,9 @@ You now have a stack of two dishes on the table infront of you.
 The result is @command{11} which is pushed to the top of the stack.
 
 To visualize this, you can think of the @code{+} operator as an oven with a place for two dishes.
-You pick up the top-most dish (that has the number 6 in it) and put it in the over.
-Then you pick the next dish (that has the number 5) and also put it in the oven and close the oven door.
+You pick up the top-most dish (that has the number 6 in it) and put it in the oven.
+The top dish is now the one that has has the number 5.
+You also pick it up and put it in the oven, and close the oven door.
 When the oven has finished its cooking, it produces a single output (in one dish, with the number 11 inside of it).
 You take that output dish and put it back on the table.
 You now have a stack of one dish on the table infront of you.
@@ -12697,7 +12698,7 @@ But unlike the oven (@code{+} operator) before, the order of inputs matters (the
 Again, you look to your stack of dishes on the table.
 
 You pick up the top one (with value 2 inside of it) and put it in the microwave's bottom (denominator) dish holder.
-Then you go back to your stack of dishes on the table and pick up the top dish (with value 11 inside of it) and put that in the top (nominator) disho holder.
+Then you go back to your stack of dishes on the table and pick up the top dish (with value 11 inside of it) and put that in the top (nominator) dish holder.
 The microwave will do its work and when its finished, returns a new dish with the single value 5.5 inside of it.
 You pick up the dish from the microwave and place it back on the table.
 
