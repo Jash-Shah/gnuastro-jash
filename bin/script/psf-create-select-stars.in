@@ -1,0 +1,481 @@
+#!/bin/sh
+
+
+# Build a catalogue, with column names "columns", of reference stars from
+# an astquery "dataset", with a $magnitud value between "min" and "max"
+# which satisfies a "criteria" specified as awk code. Additionaly, if a
+# segmented file is provided, only stars corresponding to clumps with
+# AXIS_RATIO > "minaxisrario" are selected. All the accepted stars
+# shouldn't have brilliant stars within a circle of radius
+# "mindistaarcsec".
+#
+# Run with '--help' for more information.
+#
+# Original author:
+#     Carlos Morales-Socorro <cmorsoc@gmail.com>
+# Contributing author:
+#     Sepideh Eskandarlou <sepideh.eskandarlou@gmail.com>
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Copyright (C) 2020-2021, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+
+
+
+
+# Exit the script in the case of failure
+set -e
+# Bash debug mode
+# set -x
+
+
+
+
+
+# Default parameter's values
+min=19
+max=20
+hdu=""
+bdir=""
+show=""
+input=""
+quiet=""
+segmented=""
+keepbuild=""
+extscript=""
+matchaperture=""
+minaxisratio=0.9
+version=@VERSION@
+mindistdeg=0.015277778
+field="phot_g_mean_mag"
+scriptname=@SCRIPT_NAME@
+matchaperturedeg=3.0/3600
+output="selected-stars.txt"
+dataset="gaia --dataset=edr3"
+
+
+
+
+
+# Output of '--usage'
+print_usage() {
+     cat <<EOF
+$scriptname: run with '--help' to list the options.
+EOF
+}
+
+
+
+
+
+# Output of '--help'
+print_help() {
+   cat <<EOF
+Usage: $scriptname [OPTIONS] image.fits
+
+This script builds a catalogue, with column names "columns", of reference
+stars from an astquery "dataset", with a "field" magnitude value between "min"
+and "max" specified as a chunk of awk code.
+Additionaly, if a segmented file is provided, only stars which match clumps
+within a given "matchaperture", in pixels, and with an AXIS_RATIO >
+"minaxisrario" are selected.
+
+$scriptname options:
+ Input:
+  -S, --segmented=STR     Segmentation file obtained by Segment (astsegment).
+  -in,--input=STR         Input file.
+  -h, --hdu=STR/INT       Extension name or number of input data.
+  -d, --dataset=STR       astquery format dataset ("gaia --dataset=edr3", etc.).
+  -f, --field=STR         Catalogue key field to identify the magnitude field
+                          ("phot_rp_mean_mag", etc.).
+  -m, --min=FLT           Minimum value of field.
+  -M, --max=FLT           Maximum value of field.
+  -a, --matchaperture=FLT Aperture, in pixels, to match catalogue ra and
+                          dec coordinates with clumps' ra and dec.
+  -Q, --minaxisratio=FLT  Minimum axis ratio of a clump to be accepted.
+                          Default to 0.9.
+  -D, --mindistdeg=FLT    Minimum distance to more brilliant neighbour stars
+                          to be accepted, in degree.
+
+ Output:
+  -k, --keepbuild         Keep the build directory.
+  -t, --bdir              Build directory (for intermediate files).
+  -o, --output            Catalogue file.
+
+ Operating mode:
+  -h, --help              Print this help.
+      --cite              BibTeX citation for this program.
+  -q, --quiet             Don't print any commnent.
+  -V, --version           Print program version.
+  -s, --show              Show all the selected stars on top of the image using
+                          ds9.
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponfing short options.
+
+GNU Astronomy Utilities home page: http://www.gnu.org/software/gnuastro/
+
+Report bugs to bug-gnuastro@gnu.org
+EOF
+}
+
+
+
+
+
+# Output of '--version':
+print_version() {
+     cat <<EOF
+$scriptname (GNU Astronomy Utilities) $version Copyright (C) 2020-2021, Free
+Software Foundation, Inc. License GPLv3+: GNU General public license version 3
+or later. This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written/developed by Sepideh Eskandarlou.
+EOF
+}
+
+
+
+
+
+# Functions to check option values and complain if necessary.
+on_off_option_error() {
+   if [ "x$2" = x ]; then
+       echo "$scriptname: '$1' doesn't take any values."
+   else
+       echo "$scriptname: '$1' (or '$2') doesn't take any values."
+   fi
+   exit 1
+}
+
+check_v() {
+    if [ x"$2" = x ]; then
+        echo "$scriptname: option '$1' requires an argument."
+        echo "Try '$scriptname --help' for more information."
+        exit 1;
+   fi
+}
+
+
+
+
+
+# Separate command-line arguments from options and put the option values
+# into the respective variables.
+#
+# OPTIONS WITH A VALUE:
+#
+#   Each option has three lines because we take into account the three common
+#   formats:
+#   For long option names, '--longname value' and '--longname=value'.
+#   For short option names, '-l value', '-l=value' and '-lvalue'
+#   (where '-l' is the short version of the hypothetical '--longname option').
+#
+#   The first case (with a space between the name and value) is two
+#   command-line arguments. So, we'll need to shift it twice. The
+#   latter two cases are a single command-line argument, so we just need to
+#   "shift" the counter by one.
+#
+#   IMPORTANT NOTE: the ORDER OF THE LATTER TWO cases matters: '-h*' should be
+#   checked only when we are sure that its not '-h=*').
+#
+# OPTIONS WITH NO VALUE (ON-OFF OPTIONS)
+#
+#   For these, we just want the forms of '--longname' or '-l'. Nothing
+#   else. So if an equal sign is given we should definitely crash and also,
+#   if a value is appended to the short format it should crash. So in the
+#   second test for these ('-l*') will account for both the case where we
+#   have an equal sign and where we don't.
+
+
+while [ $# -gt 0 ]
+do
+   case "$1" in
+   # Input parameters.
+       -S|--segmented)         segmented="$2";                               check_v "$1" "$segmented";  shift;shift;;
+       -S=*|--segmented=*)     segmented="${1#*=}";                          check_v "$1" "$segmented";  shift;;
+       -S*)                    segmented=$(echo "$1" | sed -e's/-S//');      check_v "$1" "$segmented";  shift;;
+       -h|--hdu)               hdu="$2";                                     check_v "$1" "$hdu";  shift;shift;;
+       -h=*|--hdu=*)           hdu="${1#*=}";                                check_v "$1" "$hdu";  shift;;
+       -h*)                    hdu=$(echo "$1" | sed -e's/-h//');            check_v "$1" "$hdu";  shift;;
+       -in|--input)            input="$2";                                   check_v "$1" "$input";  shift;shift;;
+       -in=*|--input=*)        input="${1#*=}";                              check_v "$1" "$input";  shift;;
+       -in*)                   input=$(echo "$1" | sed -e's/-in//');         check_v "$1" "$input";  shift;;
+       -e|--extscript)         extscript="$2";                               check_v "$1" "$extscript";  shift;shift;;
+       -e=*|--extscript=*)     extscript="${1#*=}";                          check_v "$1" "$extscript";  shift;;
+       -e*)                    extscript=$(echo "$1" | sed -e's/-e//');      check_v "$1" "$extscript";  shift;;
+       -d|--dataset)           dataset="$2";                                 check_v "$1" "$dataset";  shift;shift;;
+       -d=*|--dataset=*)       dataset="${1#*=}";                            check_v "$1" "$dataset";  shift;;
+       -d*)                    dataset=$(echo "$1" | sed -e's/-d//');        check_v "$1" "$dataset";  shift;;
+       -f|--field)             field="$2";                                   check_v "$1" "$field";  shift;shift;;
+       -f=*|--field=*)         field="${1#*=}";                              check_v "$1" "$field";  shift;;
+       -f*)                    field=$(echo "$1" | sed -e's/-f//');          check_v "$1" "$field";  shift;;
+       -m|--min)               min="$2";                                     check_v "$1" "$min";  shift;shift;;
+       -m=*|--min=*)           min="${1#*=}";                                check_v "$1" "$min";  shift;;
+       -m*)                    min=$(echo "$1" | sed -e's/-m//');            check_v "$1" "$min";  shift;;
+       -M|--max)               max="$2";                                     check_v "$1" "$max";  shift;shift;;
+       -M=*|--max=*)           max="${1#*=}";                                check_v "$1" "$max";  shift;;
+       -M*)                    max=$(echo "$1" | sed -e's/-M//');            check_v "$1" "$max";  shift;;
+       -a|--matchaperture)     matchaperture="$2";                           check_v "$1" "$matchaperture";shift;shift;;
+       -a=*|--matchaperture=*) matchaperture="${1#*=}";                      check_v "$1" "$matchaperture";  shift;;
+       -a*)                    matchaperture=$(echo "$1" | sed -e's/-a//');  check_v "$1" "$matchaperture";  shift;;
+       -Q|--minaxisratio)      minaxisratio="$2";                            check_v "$1" "$minaxisratio";  shift;shift;;
+       -Q=*|--minaxisratio=*)  minaxisrario="${1#*=}";                       check_v "$1" "$minaxisratio";  shift;;
+       -Q*)                    minaxisratio=$(echo "$1" | sed -e's/-Q//');   check_v "$1" "$minaxisratio";  shift;;
+       -D|--mindistdeg)        mindistdeg="$2";                              check_v "$1" "$mindistdeg";  shift;shift;;
+       -D=*|--mindistdeg=*)    mindistdeg="${1#*=}";                         check_v "$1" "$mindistdeg";  shift;;
+       -D*)                    mindistdeg=$(echo "$1" | sed -e's/-D//');     check_v "$1" "$mindistdeg";  shift;;
+
+# Output parameters
+       -k|--keepbuild)         keepbuild=1; shift;;
+       -k*|--keepbuild=*)      on_off_option_error --keepbuild -k;;
+       -t|--bdir)              bdir="$2";                                    check_v "$1" "$bdir";  shift;shift;;
+       -t=*|--bdir=*)          bdir="${1#*=}";                               check_v "$1" "$bdir";  shift;;
+       -t*)                    bdir=$(echo "$1" | sed -e's/-t//');           check_v "$1" "$bdir";  shift;;
+       -o|--output)            output="$2";                                  check_v "$1" "$output"; shift;shift;;
+       -o=*|--output=*)        output="${1#*=}";                             check_v "$1" "$output"; shift;;
+       -o*)                    output=$(echo "$1" | sed -e's/-o//');         check_v "$1" "$output"; shift;;
+
+   # Non-operating options.
+       -q|--quiet)             quiet=" -q"; shift;;
+       -q*|--quiet=*)          on_off_option_error --quiet -q;;
+       -?|--help)              print_help; exit 0;;
+       -'?'*|--help=*)         on_off_option_error --help -?;;
+       -V|--version)           print_version; exit 0;;
+       -V*|--version=*)        on_off_option_error --version -V;;
+       --cite)                 astfits --cite; exit 0;;
+       --cite=*)               on_off_option_error --cite;;
+       -s|--show)              show=1; shift;;
+
+   # Unrecognized option:
+       -*) echo "$scriptname: unknown option '$1'"; exit 1;;
+
+       # Not an option (not starting with a '-'):
+       # it's assumed to be detected.fits or segmented.fits
+       *) input="$1"; shift;;
+   esac
+done
+
+
+
+
+
+# Basic sanity checks
+# ===================
+#
+# If the input image has not been given at all.
+if [ x"$input" = x ]; then
+	echo "No input image file specified"
+	exit 1
+fi
+
+# Check that if 'matchaperture' is not specified as input,
+# Set its value to'3.0/3600'
+arcsec_per_pixel=$(astfits $input --hdu=$hdu --pixelscale -q \
+		       | awk '{print $1*3600}')
+if [ x"$matchaperture" = x ]; then
+   matchaperturedeg=$(echo $matchaperture $arcsec_per_pixel \
+                           | awk '{print $1*$2/3600}')
+fi
+
+# Check that 'segmented' is output of 'astsegment'.
+if [ x"$segmented" != x ]; then
+    nhdu=$(astfits $segmented --listimagehdus \
+               | grep 'OBJECTS\|CLUMPS' \
+               | wc -l)
+    if [ $nhdu != 2 ]; then
+        cat <<EOF
+$scriptname: the file given to '--segmented' does not have 'CLUMPS' and
+'OBJECTS' HDUs. Please give an output of 'astsegment'
+EOF
+        exit 1
+    fi
+fi
+
+
+
+
+
+
+
+
+
+
+
+# Make a directory for output files.
+#-----------------------------------
+#
+# If user dos not specify build directory make directory
+# in pwd
+if [ x"$bdir" = x ]; then
+   bdir="$imgfile"_cat_"$field"_"$min"_"$max"
+fi
+if [ ! -d $bdir ]; then
+   mkdir $bdir
+fi
+
+
+
+
+
+# Download the catalog.
+#----------------------
+#
+# Downdowd catalouge of stars from Gaia with use
+# of 'astquery'.
+query=$bdir/query.fits
+if [ -f $query ]; then
+    echo "External Cataloge already exists "
+else
+    astquery $dataset --output=$query --overlapwith=$input \
+  	     --hdu=$hdu --column=ra,dec,$field,parallax,parallax_error \
+	     --range=$field,0:$max --sort=$field $quiet
+fi
+
+
+
+
+
+# Select stars with good parallax.
+#---------------------------------
+#
+# With some options of 'asttable' such as '--noblank'
+# remove all stras have parallax larger than three
+# times of parallax-error.
+goodparallax=$bdir/parallax-good.fits
+asttable $query -cra,dec -c$field \
+         --range=$field,$min:$max --colinfoinstdout --noblank=4 \
+	 -c'arith parallax parallax abs \
+                  parallax_error 3 x lt nan where ' \
+	 | asttable -cra,dec -c$field --output=$goodparallax
+
+
+
+
+
+# Find circular objects.
+#-----------------------
+#
+# Considering only objects with an axis ratio above 1.
+# To do that, first of all a catalogue of clumps is
+# computed using 'astmkcatalog'. In second step, match
+# catalogue of stars from Gaia data sets with clump
+# catalogue. Finally apply the mimimumm axis atio
+# criteria.
+circular=$bdir/circular-objects.fits
+if [ -f $circular ]; then
+    echo "Catalog of circular objects already exists "
+else
+    if [ x"$segmented" = x ]; then
+	cp $goodparallax $circular
+    else
+	# Intermediate files.
+	qraw=$bdir/axisratio-raw.fits
+	qmatch=$bdir/axisratio-match.fits
+
+	# Measure axisratios
+	astmkcatalog $segmented --ids --ra --dec --axisratio \
+                     --positionangle --fwhm --clumpscat \
+                     $quiet --output=$qraw
+
+	# Match with downloaded cataloge
+	astmatch $goodparallax --ccol1=ra,dec \
+		 $qraw --hdu2=CLUMPS --ccol2=RA,DEC \
+		 --aperture=$matchaperturedeg \
+		 --output=$qmatch $quiet \
+		 --outcols=ara,adec,a$field,bAXIS_RATIO,bPOSITION_ANGLE,bFWHM
+
+	# Select circular objects
+	asttable $qmatch --range=AXIS_RATIO,$minaxisratio,1 \
+		 --output=$circular $quiet
+    fi
+fi
+
+
+
+
+
+# Determine the number of neighbors around each object.
+#------------------------------------------------------
+#
+# First of all based on ra and dec of circular stars determine
+# the distance between the circular star and brigther stars in
+# minimumm distance and based on '--noblank' and 'where' remove
+# stars tha have distance larger than minimumm distance. Then
+# remove each circular stars that have more than 9 neighbors.
+lessneighbor=$bdir/less-than-9-stars.fits
+moreneighbor=$bdir/more-than-9-stars.fits
+
+# Find ra and dec of each circul star.
+asttable $circular -cra,dec | while read r d; do
+
+   # Make a file for number of neighbourhood.
+   numberneighbor=$bdir/"$r"th-star-neighbor.fits
+
+   # Find number of neighborhod for each star.
+   asttable $query -cra,dec -c$field \
+	    --colinfoinstdout \
+	    -c'arith ra dec '$r' '$d' distance-on-sphere \
+                     set-i i i '$mindistdeg' gt nan where' \
+            --noblank=4
+            --output=$numberneighbor
+
+   # Check number of neighborhod and remove each star that
+   # has more than 9 neighbors.
+   lof=$(cat $numberneighbor | wc -l)
+   if [ $lof -le 9 ]; then
+       echo $r $d >> $lessneighbor
+   else
+       echo $r $d >> $moreneighbor
+   fi
+done
+
+
+
+
+
+# Run script quiet or not
+#------------------------
+#
+# If user do not want to see all steps of run,
+# the 'quiet' option must be used. Without this
+# option user can see all steps of run.
+if [ x"$quiet" = x ]; then
+   echo "Number of downloaded stars from gaia: \
+         $(asttable $query | wc -l)"
+   echo "Number of stars with good parallax: \
+         $(asttable $goodparallax | wc -l)"
+   echo "Number of stars with less than 9 neghbors: \
+         $(asttable $lessneighbor | wc -l)"
+   if [ ! -$segmented ]; then
+           echo "Number of stars matched with clump catalogue: \
+                 $(asttable $qmatch)"
+   fi
+fi
+
+
+
+
+# Remove temporary directory
+#---------------------------
+#
+# If user dos not specify to keep build file
+# with the option of --keepbuild', then the
+# directory will be removed.
+if [ x"$keepbuild" = x ]; then
+   rm -rf $bdir
+fi
