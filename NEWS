@@ -15,6 +15,13 @@ See the end of the file for license conditions.
      as your paper/slide, while being in vector graphics quality, and not
      requiring hundreds of dependencies (only LaTeX is necessary beyond
      Gnuastro).
+   - New section to describe the precedence of Table operators in one call
+     to Table. Since the number of operations on table columns/rows has
+     greatly increased in the last few versions, knowing this precedence
+     can minimize the number of calls to Table.
+   - The section on reverse polish notation (used in Arithmetic, for
+     images, and column arithmetic in Table) has been edited and extended
+     to be more useful for a new user.
 
   Arithmetic:
    - New operands (also available in Table's column arithmetic):
@@ -75,6 +82,12 @@ See the end of the file for license conditions.
      create a single catalog that appends the non-matching rows of second
      table with the rows of the first. Until this version, this would cause
      an error.
+
+  Table
+   - Column concatenation (adding columns from other files) is now done
+     before all row selection or row re-ording operations (if
+     called). Until now, adding columns from other files was done after all
+     row selection or re-ordering, but this was not too practically useful.
 
 ** Bugs fixed
   bug #60725: MakeCatalog doesn't put comment on --halfsumsb column.

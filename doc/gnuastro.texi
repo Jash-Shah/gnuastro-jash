@@ -414,6 +414,7 @@ Annotations for figure in paper
 Table
 
 * Column arithmetic::           How to do operations on table columns.
+* Operation precedence in Table::  Order of running options in Table.
 * Invoking asttable::           Options and arguments to Table.
 
 Query
@@ -10743,46 +10744,52 @@ Note that this behavior is ideal for gray-scale images, if you want a color imag
 @node Table, Query, ConvertType, Data containers
 @section Table
 
-Tables are the products of processing astronomical images and spectra.
-For example in Gnuastro, MakeCatalog will process the defined pixels over an object and produce a catalog (see @ref{MakeCatalog}).
-For each identified object, MakeCatalog can print its position on the image or sky, its total brightness and many other information that is deducible from the given image.
+Tables are the high-level products of processing on low-leveler data like images or spectra.
+For example in Gnuastro, MakeCatalog will process the pixels over an object and produce a catalog (or table) with the properties of each object like magnitudes, positions and etc (see @ref{MakeCatalog}).
 Each one of these properties is a column in its output catalog (or table) and for each input object, we have a row.
 
 When there are only a small number of objects (rows) and not too many properties (columns), then a simple plain text file is mainly enough to store, transfer, or even use the produced data.
-However, to be more efficient in all these aspects, astronomers have defined the FITS binary table standard to store data in a binary (0 and 1) format, not plain text.
-This can offer major advantages in all those aspects: the file size will be greatly reduced and the reading and writing will be faster (because the RAM and CPU also work in binary).
-
-The FITS standard also defines a standard for ASCII tables, where the data are stored in the human readable ASCII format, but within the FITS file structure.
-These are mainly useful for keeping ASCII data along with images and possibly binary data as multiple (conceptually related) extensions within a FITS file.
+However, to be more efficient, astronomers have defined the FITS binary table standard to store data in a binary format (which cannot be seen in a text editor text).
+This can offer major advantages: the file size will be greatly reduced and the reading and writing will also be faster (because the RAM and CPU also work in binary).
 The acceptable table formats are fully described in @ref{Tables}.
 
 @cindex AWK
 @cindex GNU AWK
-Binary tables are not easily readable by human eyes.
+Binary tables are not easily readable with basic plain-text editors.
 There is no fixed/unified standard on how the zero and ones should be interpreted.
-The Unix-like operating systems have flourished because of a simple fact: communication between the various tools is based on human readable characters@footnote{In ``The art of Unix programming'', Eric Raymond makes this suggestion to programmers: ``When you feel the urge to design a complex binary file format, or a complex binary application protocol, it is generally wise to lie down until the feeling passes.''.
+Unix-like operating systems have flourished because of a simple fact: communication between the various tools is based on human readable characters@footnote{In ``The art of Unix programming'', Eric Raymond makes this suggestion to programmers: ``When you feel the urge to design a complex binary file format, or a complex binary application protocol, it is generally wise to lie down until the feeling passes.''.
 This is a great book and strongly recommended, give it a look if you want to truly enjoy your work/life in this environment.}.
 So while the FITS table standards are very beneficial for the tools that recognize them, they are hard to use in the vast majority of available software.
 This creates limitations for their generic use.
 
-`Table' is Gnuastro's solution to this problem.
-With Table, FITS tables (ASCII or binary) are directly accessible to the Unix-like operating systems power-users (those working the command-line or shell, see @ref{Command-line interface}).
+Table is Gnuastro's solution to this problem.
+Table has a large set of operations that you can directly do on any recognized table (like selecting certain rows, doing arithmetic on the columns and etc).
+For operations that Table doesn't do internally, FITS tables (ASCII or binary) are directly accessible to the users of Unix-like operating systems (in particular those working the command-line or shell, see @ref{Command-line interface}).
 With Table, a FITS table (in binary or ASCII formats) is only one command away from AWK (or any other tool you want to use).
 Just like a plain text file that you read with the @command{cat} command.
 You can pipe the output of Table into any other tool for higher-level processing, see the examples in @ref{Invoking asttable} for some simple examples.
 
+In the sections below we describe how to effectively use the Table program.
+We start with @ref{Column arithmetic}, where the basic concept and methods of applying arithmetic operations on one or more columns are discussed.
+Afterwards, in @ref{Operation precedence in Table}, we review the various types of operations available and their precedence in an instance of calling Table.
+This is a good place to get a general feeling of all the things you can do with Table.
+Finally, in @ref{Invoking asttable}, we give some examples and describe each option in Table.
+
 @menu
 * Column arithmetic::           How to do operations on table columns.
+* Operation precedence in Table::  Order of running options in Table.
 * Invoking asttable::           Options and arguments to Table.
 @end menu
 
-@node Column arithmetic, Invoking asttable, Table, Table
+@node Column arithmetic, Operation precedence in Table, Table, Table
 @subsection Column arithmetic
 
-After reading the requested columns from the input table, you can also do operations/arithmetic on the columns and save the resulting values as new column(s) in the output table (possibly in between other requested columns).
-To enable column arithmetic, the first 6 characters of the value to @option{--column} (@code{-c}) should be the arithmetic activation word `@option{arith }' (note the space character in the end, after `@code{arith}').
+In many scenarios, you want to apply some kind of operation on the columns and save them in another table or feed them into another program.
+With Table you can do a rich set of operations on the contents of one or more columns in a table, and save the resulting values as new column(s) in the output table.
+For seeing the precedence of Column arithmetic in relation to other Table operators, see @ref{Operation precedence in Table}.
 
-After the activation word, you can use the reverse polish notation to identify the operators and their operands, see @ref{Reverse polish notation}.
+To enable column arithmetic, the first 6 characters of the value to @option{--column} (@code{-c}) should be the activation word `@option{arith }' (note the space character in the end, after `@code{arith}').
+After the activation word, you can use reverse polish notation to identify the operators and their operands, see @ref{Reverse polish notation}.
 Just note that white-space characters are used between the tokens of the arithmetic expression and that they are meaningful to the command-line environment.
 Therefore the whole expression (including the activation word) has to be quoted on the command-line or in a shell script (see the examples below).
 
@@ -10791,8 +10798,8 @@ When you are giving a column number, it is necessary to prefix the number with a
 Otherwise the number is not distinguishable from a constant number to use in the arithmetic operation.
 
 For example with the command below, the first two columns of @file{table.fits} will be printed along with a third column that is the result of multiplying the first column with @mymath{10^{10}} (for example to convert wavelength from Meters to Angstroms).
-Note that without the `@key{$}', it is not possible to distinguish between ``1'' as a column-counter, or as a constant number to use in the arithmetic operation.
-Also note that because of the significance of @key{$} for the command-line environment, the single-quotes are used here (as in an AWK expression), not double-quotes.
+Note that without the `@key{$}', it is not possible to distinguish between ``1'' as a column-counter, or ``1'' as a constant number to use in the arithmetic operation.
+Also note that because of the significance of @key{$} for the command-line environment, the single-quotes are the recommended quoting method (as in an AWK expression), not double-quotes (for the significance of using single quotes see the box below).
 
 @example
 $ asttable table.fits -c1,2 -c'arith $1 1e10 x'
@@ -10828,13 +10835,13 @@ $ asttable table.fits -cAWAV,SPECTRUM -c'arith AWAV 1e10 x'
 
 Comparison of the two commands above clearly shows why it is recommended to use column names instead of numbers.
 When the columns have descriptive names, the command/script actually becomes much more readable, describing the intent of the operation.
-It is also independent of the low-level table structure: for the second command, the position of the @code{AWAV} and @code{SPECTRUM} columns in @file{table.fits} is irrelevant.
+It is also independent of the low-level table structure: for the second command, the column numbers of the @code{AWAV} and @code{SPECTRUM} columns in @file{table.fits} is irrelevant.
 
-By nature, column arithmetic changes the values of the data within the column.
+Column arithmetic changes the values of the data within the column.
 So the old column meta data can't be used any more.
-By default the new column created for the arithmetic operation will be given generic metadata (for example its name will be @code{ARITH_1}, which is hardly useful!).
+By default the output column of the arithmetic operation will be given a generic metadata (for example its name will be @code{ARITH_1}, which is hardly useful!).
 But meta data are critically important and it is good practice to always have short, but descriptive, names for each columns, units and also some comments for more explanation.
-To add metadata to a column, you can use the @option{--colmetadata} option that is described in @ref{Invoking asttable}.
+To add metadata to a column, you can use the @option{--colmetadata} option that is described in @ref{Invoking asttable} and @ref{Operation precedence in Table}.
 
 Finally, since the arithmetic expressions are a value to @option{--column}, it doesn't necessarily have to be a separate option, so the commands above are also identical to the command below (note that this only has one @option{-c} option).
 Just be very careful with the quoting!
@@ -10844,10 +10851,8 @@ $ asttable table.fits -cAWAV,SPECTRUM,'arith AWAV 1e10 x'
 @end example
 
 Almost all the arithmetic operators of @ref{Arithmetic operators} are also supported for column arithmetic in Table.
-In particular, the few that are not present in the Gnuastro library aren't yet supported.
-For a list of the Gnuastro library arithmetic operators, please see the macros starting with @code{GAL_ARITHMETIC_OP} and ending with the operator name in @ref{Arithmetic on datasets}.
+In particular, the few that are not present in the Gnuastro library@footnote{For a list of the Gnuastro library arithmetic operators, please see the macros starting with @code{GAL_ARITHMETIC_OP} and ending with the operator name in @ref{Arithmetic on datasets}.} aren't yet supported for column arithmetic.
 Besides the operators in @ref{Arithmetic operators}, several operators are only available in Table to use on table columns.
-
 
 
 @cindex WCS: World Coordinate System
@@ -10970,14 +10975,142 @@ $ astfits *.fits --keyvalue=DATE-OBS --colinfoinstdout \
 
 If you don't need to see the Unix-seconds any more, you can add a @option{-cFILENAME} (short for @option{--column=FILENAME}) at the end.
 For more on @option{--keyvalue}, see @ref{Keyword inspection and manipulation}.
-
 @end table
 
+@node Operation precedence in Table, Invoking asttable, Column arithmetic, Table
+@subsection Operation precedence in Table
 
-@node Invoking asttable,  , Column arithmetic, Table
+The Table program can do many operations on the rows and columns of the input tables and they aren't always applied in the order you call the operation on the command-line.
+In this section we will describe which operation is done before/after which operation.
+Knowing this precedence table is important to avoid confusion when you ask for more than one operation.
+For a description of each option, please see @ref{Invoking asttable}.
+
+@table @asis
+@item Column information (@option{--information} or @option{-i})
+When given this option, the column data are not read at all.
+Table simply reads the column metadata (name, units, numeric data type and comments), and the number of rows and prints them.
+Table then terminates and no other operation is done.
+This can therefore be called at the end of an arbitrarily long Table command only to remember the column metadata, then deleted to continue writing the command (using the shell's history to retrieve the previous command with an up-arrow key).
+
+@item Columns from other files (@option{--catcolumns} and @option{--catcolumnfile})
+With this feature, you can import columns from other tables (in other files).
+The rest of the operations below are done on the rows, therefore you can merge the columns of various tables into one table, then start limiting the rows to have in the output.
+
+If any of the row-based operations below are requested in the same Table command, they will also be applied to the rows of these added columns.
+However, the conditions to keep/reject rows can only be applied to the rows of the main input table.
+
+@item Row selection by value in a column
+@itemize
+@item
+@option{--range}: only keep rows within a certain interval in given column.
+@item
+@option{--inpolygon}: only keep rows within the polygon of @option{--polygon}.
+@item
+@option{--outpolygon}: only keep rows outside the polygon of @option{--polygon}.
+@item
+@option{--equal}: only keep rows with specified value in given column.
+@item
+@option{--notequal}: only keep rows without specified value in given column.
+@end itemize
+These options take certain column(s) as input and remove some rows from the full table (all columns), based on the given limitations.
+They can be called any number of times (to limit the final rows based on values in different columns for example).
+Since these are row-rejection operations, their internal order is irrelevant.
+In other words, it makes no difference if @option{--equal} is called before or after @option{--range} for example.
+
+As a side-effect, because NaN/blank values are defined to fail on any condition, these operations will also remove rows with NaN/blank values in the specified column they are checking.
+Also, the columns that are used for these operations don't necessarily have to be in the final output table (you may not need the column after doing the selection based on it).
+
+Even though these options are applied after merging columns from other tables, currently their condition-columns can only come from the main input table.
+In other words, even though the rows of the added columns (from another file) will also be selected with these options, the condition to keep/reject rows cannot be taken from the newly added columns.
+
+These options are applied first because the speed of later operations can be greatly affected by the number of rows.
+For example, if you also call the @option{--sort} option, and your row selection will result in 50 rows (from an input of 1000 rows), limiting the number of rows can greatly speed up the sorting in your final output.
+
+@item Sorting (@option{--sort})
+Sort of the rows based on values in a certain column.
+The column to sort by can only come from the main input table columns (not columns that may have been added with @option{--catcolumnfile}).
+
+@item Row selection (by position)
+@itemize
+@item
+@option{--head}: keep only requested number of top rows.
+@item
+@option{--tail}: keep only requested number of bottom rows.
+@item
+@option{--rowrandom}: keep only a random number of rows.
+@item
+@option{--rowlimit}: keep only rows within a certain positional interval.
+@end itemize
+
+These options limit/select rows based on their position within the table (not their value in any certain column).
+
+@item Column arithmetic
+Once the final rows are selected in the requested order, column arithmetic is done (if requested).
+For more on column arithmetic, see @ref{Column arithmetic}.
+
+@item Column metadata (@option{--colmetadata})
+Changing column metadata is necessary after column arithmetic or adding new columns from other tables (that were done above).
+
+@item Row selection (@option{--noblank})
+Theoretically, this method of row selection by value should have been done with the other logically similar options like @option{--range} or @option{--equal}.
+However, those options are applied to the raw (input) column value.
+In some scenarios, you need to apply arithmetic operations on the columns (through @ref{Column arithmetic}) before rejecting the undesired rows.
+After the arithmetic operation is done, you can use the @code{where} operator to set the non-desired columns to NaN/blank and use @option{--noblank} to remove them at the end.
+See the example below for applying any generic value-based row selection based on @option{--noblank}.
+@end table
+
+As an example, let's review how Table interprets the command below.
+We are assuming that @file{table.fits} contians atleast three columns: @code{RA}, @code{DEC} and @code{PARAM} and you only want the RA and Dec of the rows where @mymath{p\times 2<5} (@mymath{p} is the value of each row in the @code{PARAM} column).
+
+@example
+asttable table.fits -cRA,DEC --noblank=MULTIP \
+         -c'arith PARAM 2 x set-i i i 5 gt nan where' \
+         --colmetadata=3,MULTIP,unit,"Description of column"
+@end example
+
+@noindent
+Due to the precedence described in this section, Table does these operations (which are independent of the order of the operations written on the command-line):
+
+@enumerate
+@item
+At the start (with @code{-cRA,DEC}), Table reads the @code{RA} and @code{DEC} columns.
+@item
+In between all the operations in the command above, Column arithmetic (with @option{-c'arith ...'}) has the highest precedence.
+So the arithmetic operation is done and stored as a new (third) column.
+In this arithmetic operation, we multiply all the values of the @code{PARAM} column by 2, then set all those with a value larger than 5 to NaN (for more on understanding this operation, see the `@code{set-}' and `@code{where}' operators in @ref{Arithmetic operators}).
+@item
+Updating column metadata (with @option{--colmetadata}) is then done to give a name (@code{MULTIP}) to the newly calculated (third) column.
+During the process, besides a name, we also set a unit and description for the new column.
+These metadata entries are @emph{very important}, so always be sure to add metadata after doing column arithmetic.
+@item
+The lowest precedence operation is @option{--noblank=MULTIP}.
+So only rows that aren't blank/NaN in the @code{MULTIP} column are kept.
+@item
+Finally, the output table (with three columns) is written to the command-line.
+If you also want to print the column metadata, you can use the @option{--colinfoinstdout} option.
+Alternatively, if you want the output in a file, you can use the @option{--output} option to save the table in FITS or plain-text format.
+@end enumerate
+
+@cartouche
+@noindent
+@strong{Out of precedence:} It may happen that your desired operation needs a separate precedence.
+In this case you can pipe the output of Table into another call of Table and use the @option{--colinfoinstdout} option to preserve the metadata between the two calls.
+
+For example, let's assume that you want to sort the output table from the example command above based on the new @code{MULTIP} column.
+Since sorting is done prior to column arithmetic, you can't do it in one command, but you can circumvent this limitation by simply piping the output (including metadata) to another call to Table:
+
+@example
+asttable table.fits -cRA,DEC --noblank=MULTIP --colinfoinstdout \
+         -c'arith PARAM 2 x set-i i i 5 gt nan where' \
+         --colmetadata=3,MULTIP,unit,"Description of column" \
+         | asttable --sort=MULTIP --output=selected.fits
+@end example
+@end cartouche
+
+@node Invoking asttable,  , Operation precedence in Table, Table
 @subsection Invoking Table
 
-Table will read/write, select, convert, or show the information of the columns in FITS ASCII table, FITS binary table and plain text table files, see @ref{Tables}.
+Table will read/write, select, modify, or show the information of the rows and columns in recognized Table formats (including FITS binary, FITS ASCII, and plain text table files, see @ref{Tables}).
 Output columns can also be determined by number or regular expression matching of column names, units, or comments.
 The executable name is @file{asttable} with the following general template
 
@@ -11030,11 +11163,12 @@ echo "113.64812416667 31.88732" \
      | asttable -c'arith $1 degree-to-ra $2 degree-to-dec'
 @end example
 
-Table's input dataset can be given either as a file or from Standard input (see @ref{Standard input}).
+Table's input dataset can be given either as a file or from Standard input (piped from another program, see @ref{Standard input}).
 In the absence of selected columns, all the input's columns and rows will be written to the output.
+The full set of operations Table can do are described in detail below, but for a more high-level introduction to the various operations, and their precedence, see @ref{Operation precedence in Table}.
+
 If any output file is explicitly requested (with @option{--output}) the output table will be written in it.
 When no output file is explicitly requested the output table will be written to the standard output.
-
 If the specified output is a FITS file, the type of FITS table (binary or ASCII) will be determined from the @option{--tabletype} option.
 If the output is not a FITS file, it will be printed as a plain text table (with space characters between the columns).
 When the columns are accompanied by meta-data (like column name, units, or comments), this information will also printed in the plain text file before the table, as described in @ref{Gnuastro text table format}.
@@ -11042,12 +11176,12 @@ When the columns are accompanied by meta-data (like column name, units, or comme
 For the full list of options common to all Gnuastro programs please see @ref{Common options}.
 Options can also be stored in directory, user or system-wide configuration files to avoid repeating on the command-line, see @ref{Configuration files}.
 Table does not follow Automatic output that is common in most Gnuastro programs, see @ref{Automatic output}.
-Thus, in the absence of an output file, the selected columns will be printed on the command-line with no column information, ready for redirecting to other tools like AWK or sort, similar to the examples above.
+Thus, in the absence of an output file, the selected columns will be printed on the command-line with no column information, ready for redirecting to other tools like @command{awk}.
 
 @cartouche
 @noindent
 @strong{Sexagesimal coordinates as floats in plain-text tables:}
-When a column is determined to be a floating point type (32-bit or 64-bit) in a plain-text table, it can contain sexagesimal values in the format of `@code{_h_m_s}' (for RA) and `@code{_d_m_s}' (for Dec).
+When a column is determined to be a floating point type (32-bit or 64-bit) in a plain-text table, it can contain sexagesimal values in the format of `@code{_h_m_s}' (for RA) and `@code{_d_m_s}' (for Dec), where the `@code{_}'s are place-holders for numbers.
 In this case, the string will be immediately converted to a single floating point number (in units of degrees) and stored in memory with the rest of the column or table.
 Besides being useful in large tables, with this feature, conversion to sexagesimal coordinates to degrees becomes very easy, for example:
 @example
@@ -11061,6 +11195,9 @@ operators:
 echo "113.64812416667 31.88732" \
      | asttable -c'arith $1 degree-to-ra $2 degree-to-dec'
 @end example
+
+@noindent
+If you want to preserve the sexagesimal contents of a column, you should store that column as a string, see @ref{Gnuastro text table format}.
 @end cartouche
 
 @table @option
@@ -11072,9 +11209,9 @@ Each column's information (number, name, units, data type, and comments) will be
 Note that the FITS standard only requires the data type (see @ref{Numeric data types}), and in plain text tables, no meta-data/information is mandatory.
 Gnuastro has its own convention in the comments of a plain text table to store and transfer this information as described in @ref{Gnuastro text table format}.
 
-This option will take precedence over the @option{--column} option, so when it is called along with requested columns, the latter will be ignored.
+This option will take precedence over all other operations in Table, so when it is called along with other operations, they will be ignored, see @ref{Operation precedence in Table}.
 This can be useful if you forget the identifier of a column after you have already typed some on the command-line.
-You can simply add a @option{-i} and run Table to see the whole list and remember.
+You can simply add a @option{-i} to your already-written command (without changing anything) and run Table, to see the whole list of column names and information.
 Then you can use the shell history (with the up arrow key on the keyboard), and retrieve the last command with all the previously typed columns present, delete @option{-i} and add the identifier you had forgot.
 
 @cindex AWK
@@ -11083,11 +11220,11 @@ Then you can use the shell history (with the up arrow key on the keyboard), and 
 @itemx --column=STR/INT
 Set the output columns either by specifying the column number, or name.
 For more on selecting columns, see @ref{Selecting table columns}.
-If a value of this option starts with `@code{arith }', this option will do the requested operations/arithmetic on the specified columns and output the result in that place (among other requested columns).
+If a value of this option starts with `@code{arith }', column arithmetic will be activated, allowing you to edit/manipulate column contents.
 For more on column arithmetic see @ref{Column arithmetic}.
 
-To ask for multiple columns this option can be used in two way: 1) multiple calls to this option, 2) using a comma between each column specifier in one call to this option.
-These different solutions may be mixed in one call to Table: for example, @option{-cRA,DEC -cMAG}, or @option{-cRA -cDEC -cMAG} are both equivalent to @option{-cRA -cDEC -cMAG}.
+To ask for multiple columns this option can be used in two ways: 1) multiple calls to this option, 2) using a comma between each column specifier in one call to this option.
+These different solutions may be mixed in one call to Table: for example, `@option{-cRA,DEC,MAG}', or `@option{-cRA,DEC -cMAG}' are both equivalent to `@option{-cRA -cDEC -cMAG}'.
 The order of the output columns will be the same order given to the option or in the configuration files (see @ref{Configuration file precedence}).
 
 This option is not mandatory, if no specific columns are requested, all the input table columns are output.
@@ -11095,26 +11232,23 @@ When this option is called multiple times, it is possible to output one column m
 
 @item -w FITS
 @itemx --wcsfile=FITS
-FITS file that contains the WCS to be used in the @code{wcstoimg} and @code{imgtowcs} operators of @option{--column} (see above).
+FITS file that contains the WCS to be used in the @code{wcstoimg} and @code{imgtowcs} operators of @ref{Column arithmetic}.
 The extension name/number within the FITS file can be specified with @option{--wcshdu}.
 
-If the value to this option is @option{none}, no WCS will be written in the output.
+If the value to this option is `@option{none}', no WCS will be written in the output.
 
 @item -W STR
 @itemx --wcshdu=STR
-FITS extension/HDU that contains the WCS to be used in the @code{wcstoimg} and @code{imgtowcs} operators of @option{--column} (see above).
-The FITS file name can be specified with @option{--wcsfile}.
+FITS extension/HDU in the FITS file given to @option{--wcsfile} (see the description of @option{--wcsfile} for more).
 
 @item -L FITS/TXT
 @itemx --catcolumnfile=FITS/TXT
 Concatenate (or add, or append) the columns of this option's value (a filename) to the output columns.
 This option may be called multiple times (to add columns from more than one file into the final output), the columns from each file will be added in the same order that this option is called.
+The number of rows in the file(s) given to this option has to be the same as the input table (before any type of row-selection), see @ref{Operation precedence in Table}.
 
 By default all the columns of the given file will be appended, if you only want certain columns to be appended, use the @option{--catcolumns} option to specify their name or number (see @ref{Selecting table columns}).
-Note that the columns given to @option{--catcolumns} must be present in all the given files (if this option is called more than once).
-
-The concatenation is done after any column selection (for example with @option{--column}) or row selection (for example with @option{--range}) is applied to the main input table given to Table.
-The number of rows in the file(s) given to this option has to be the same as the final output table if this option wasn't given.
+Note that the columns given to @option{--catcolumns} must be present in all the given files (if this option is called more than once with more than one file).
 
 If the file given to this option is a FITS file, its necessary to also define the corresponding HDU/extension with @option{--catcolumnhdu}.
 Also note that no operation (for example row selection, arithmetic or etc) is applied to the table given to this option.
@@ -11122,7 +11256,7 @@ Also note that no operation (for example row selection, arithmetic or etc) is ap
 If the appended columns have a name, the column names of each file will be appended with a @code{-N}, where @code{N} is a counter starting from 1 for each appended file.
 This is done because when concatenating columns from multiple tables (more than two) into one, they may have the same name, and its not good practice to have multiple columns with the same name.
 You can disable this feature with @option{--catcolumnrawname}.
-To have full control over the concatenated column names, you can use the @option{--colmetadata} option described below.
+Generally, you can use the @option{--colmetadata} option to update column metadata.
 
 For example, let's assume you have two catalogs of the same objects (same number of rows) in different filters.
 Such that @file{f160w-cat.fits} has a @code{MAGNITUDE} column that has the magnitude of each object in the @code{F160W} filter and similarly @file{f105w-cat.fits}, also has a @code{MAGNITUDE} column, but for the @code{F105W} filter.
@@ -11134,6 +11268,9 @@ asttable f160w-cat.fits --output=both.fits \
   --colmetadata=MAGNITUDE,MAG-F160W,log,"Magnitude in F160W" \
   --colmetadata=MAGNITUDE-1,MAG-F105W,log,"Magnitude in F105W"
 @end example
+
+@noindent
+For a more complete example, see @ref{Working with catalogs estimating colors}.
 
 @item -u STR/INT
 @itemx --catcolumnhdu=STR/INT
@@ -11154,14 +11291,16 @@ Don't modify the names of the concatenated (appended) columns, see description i
 @itemx --colinfoinstdout
 @cindex Standard output
 Add column metadata when the output is printed in the standard output.
-Usually the standard output is used for a fast visual check or to pipe into other program for further processing.
+Usually the standard output is used for a fast visual check, or to pipe into other metadata-agnostic programs (like AWK) for further processing.
 So by default meta-data aren't included.
+But when piping to other Gnuastro programs (where metadata can be interpreted and used) it is recommended to use this option and use column names in the next program.
 
 @item -r STR,FLT:FLT
 @itemx --range=STR,FLT:FLT
 Only output rows that have a value within the given range in the @code{STR} column (can be a name or counter).
 Note that the range is only inclusive in the lower-limit.
 For example with @code{--range=sn,5:20} the output's columns will only contain rows that have a value in the @code{sn} column (not case-sensitive) that is greater or equal to 5, and less than 20.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 This option can be called multiple times (different ranges for different columns) in one run of the Table program.
 This is very useful for selecting the final rows from multiple criteria/columns.
@@ -11175,6 +11314,7 @@ For one example of using this option, see the example under
 @item --inpolygon=STR1,STR2
 Only return rows where the given coordinates are inside the polygon specified by the @option{--polygon} option.
 The coordinate columns are the given @code{STR1} and @code{STR2} columns, they can be a column name or counter (see @ref{Selecting table columns}).
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 Note that the chosen columns doesn't have to be in the output columns (which are specified by the @code{--column} option).
 For example if we want to select rows in the polygon specified in @ref{Dataset inspection and cropping}, this option can be used like this (you can remove the double quotations and write them all in one line if you remove the white-spaces around the colon separating the column vertices):
@@ -11191,7 +11331,7 @@ asttable table.fits --inpolygon=RA,DEC      \
 @noindent
 @strong{Flat/Euclidean space: } The @option{--inpolygon} option assumes a flat/Euclidean space so it is only correct for RA and Dec when the polygon size is very small like the example above.
 If your polygon is a degree or larger, it may not return correct results.
-We are working on other options for this.
+Please get in touch if you need such a feature (see @ref{Suggest new feature}).
 @end cartouche
 
 @item --outpolygon=STR1,STR2
@@ -11207,6 +11347,8 @@ This option behaves identically to the same option in the Crop program, so for m
 @itemx --equal=STR,INT/FLT,...
 Only output rows that are equal to the given number(s) in the given column.
 The first argument is the column identifier (name or number, see @ref{Selecting table columns}), after that you can specify any number of values.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
+
 For example @option{--equal=ID,5,6,8} will only print the rows that have a value of 5, 6, or 8 in the @code{ID} column.
 This option can also be called multiple times, so @option{--equal=ID,4,5 --equal=ID,6,7} has the same effect as @option{--equal=4,5,6,7}.
 
@@ -11234,9 +11376,10 @@ Be very careful if you want to use the non-equality with floating point numbers,
 This option also works when the given column has a string type, see the description under @option{--equal} (above) for more.
 
 @item -s STR
-@item --sort=STR
+@itemx --sort=STR
 Sort the output rows based on the values in the @code{STR} column (can be a column name or number).
 By default the sort is done in ascending/increasing order, to sort in a descending order, use @option{--descending}.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 The chosen column doesn't have to be in the output columns.
 This is good when you just want to sort using one column's values, but don't need that column anymore afterwards.
@@ -11251,6 +11394,7 @@ Only print the given number of rows from the @emph{top} of the final table.
 Note that this option only affects the @emph{output} table.
 For example if you use @option{--sort}, or @option{--range}, the printed rows are the first @emph{after} applying the sort sorting, or selecting a range of the full input.
 This option cannot be called with @option{--tail}, @option{--rowlimit} or @option{--rowrandom}.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 @cindex GNU Coreutils
 If the given value to @option{--head} is 0, the output columns won't have any rows and if its larger than the number of rows in the input table, all the rows are printed (this option is effectively ignored).
@@ -11266,6 +11410,7 @@ This option cannot be called with @option{--head}, @option{--rowlimit} or @optio
 Only return the rows within the requested positional range (inclusive on both sides).
 Therefore, @code{--rowlimit=5,7} will return 3 of the input rows, row 5, 6 and 7.
 This option will abort if any of the given values is larger than the total number of rows in the table.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 With the @option{--head} or @option{--tail} options you can only see the top or bottom few rows.
 However, with this option, you can limit the returned rows to a contiguous set of rows in the middle of the table.
@@ -11279,6 +11424,7 @@ This option is applied @emph{after} the value-based selection options (like @opt
 On the other hand, only the row counters are randomly selected, this option doesn't change the order.
 Therefore, if @option{--rowrandom} is called together with @option{--sort}, the returned rows are still sorted.
 This option cannot be called with @option{--head}, @option{--tail}, or @option{--rowlimit}.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 This option will only have an effect if @code{INT} is larger than the number of rows when it is activated (after the value-based selection options have been applied).
 When there are fewer rows, a warning is printed, saying that this option has no effect.
@@ -11298,6 +11444,7 @@ For more, see @ref{Generating random numbers}.
 @itemx --noblank=STR[,STR[,STR]]
 Remove all rows in the given @emph{output} columns that have a blank value.
 Like above, the columns can be specified by their name or number (counting from 1).
+
 For example if @file{table.fits} has blank values (NaN in floating point types) in the @code{magnitude} and @code{sn} columns, with @code{--noblank=magnitude,sn}, the output will not contain any rows with blank values in these columns.
 
 If you want @emph{all} columns to be checked, simply set the value to @code{_all} (in other words: @option{--noblank=_all}).
@@ -11307,11 +11454,14 @@ For example if you give @option{--noblank=_all,magnitude}, then Table will assum
 
 This option is applied just before writing the final table (after @option{--colmetadata} has finished).
 So in case you changed the column metadata, or added new columns, you can use the new names, or the newly defined column numbers.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 @item -m STR/INT,STR[,STR[,STR]]
 @itemx --colmetadata=STR/INT,STR[,STR[,STR]]
 Update the specified column metadata in the output table.
 This option is applied after all other column-related operations are complete, for example column arithmetic, or column concatenation.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
+
 The first value (before the first comma) given to this option is the column's identifier.
 It can either be a counter (positive integer, counting from 1), or a name (the column's name in the output if this option wasn't called).
 
@@ -12488,34 +12638,76 @@ For more information on how to run Arithmetic, please see @ref{Invoking astarith
 @cindex Post-fix notation
 @cindex Reverse Polish Notation
 The most common notation for arithmetic operations is the @url{https://en.wikipedia.org/wiki/Infix_notation, infix notation} where the operator goes between the two operands, for example @mymath{4+5}.
-While the infix notation is the preferred way in most programming languages, currently the Gnuastro's program (in particular Arithmetic and Table, when doing column arithmetic) do not use it.
-This is because it will require parenthesis which can complicate the implementation of the code.
-In the near future we do plan to also allow this notation@footnote{@url{https://savannah.gnu.org/task/index.php?13867}}, but for the time being (due to time constraints on the developers), arithmetic operations can only be done in the post-fix notation (also known as @url{https://en.wikipedia.org/wiki/Reverse_Polish_notation, reverse polish notation}).
-The Wikipedia article provides some excellent explanation on this notation but here we will give a short summary here for self-sufficiency.
+The infix notation is the preferred way in most programming languages which come with scripting features for large programs.
+This is because the infix notation requires a way to define precedence when more than one operator is involved.
 
-In the post-fix notation, the operator is placed after the operands, as we will see below this removes the need to define parenthesis for most ordinary operators.
+For example consider the statement @code{5 + 6 / 2}.
+Should 6 first be divided by 2, then added by 5?
+Or should 5 first be added with 6, then divided by 2?
+Therefore we need parenthesis to show precedence: @code{5+(6/2)} or @code{(5+6)/2}.
+Furthermore, if you need to leave a value for later processing, you will need to define a variable for it; for example @code{a=(5+6)/2}.
+
+Gnuastro provides libraries where you can also use infix notation in C or C++ programs.
+However, Gnuastro's programs are primarily designed to be run on the command-line and the level of complexity that infix notation requires can be annoying/confusing to write on the command-line (where they can get confused with the shell's parenthesis or variable definitions.
+Therefore Gnuastro's Arithmetic and Table (when doing column arithmetic) programs use the the post-fix notation, also known as @url{https://en.wikipedia.org/wiki/Reverse_Polish_notation, reverse polish notation}.
 For example, instead of writing @command{5+6}, we write @command{5 6 +}.
-To easily understand how this notation works, you can think of each operand as a node in a ``last-in-first-out'' stack.
-Every time an operator is confronted, the operator pops the number of operands it needs from the top of the stack (so they don't exist in the stack any more), does its operation and pushes the result back on top of the stack.
+
+The Wikipedia article on the reverse polish notation provides some excellent explanation on this notation but here we will give a short summary here for self-sufficiency.
+In short, in the reverse polish notation, the operator is placed after the operands.
+As we will see below this removes the need to define parenthesis and lets you use previous values without needing to define a variable.
+In the future@footnote{@url{https://savannah.gnu.org/task/index.php?13867}} we do plan to also optionally allow infix notation when arithmetic operations on datasets are desired, but due to time constraints on the developers we can't do it immediately.
+
+To easily understand how the reverse polish notation works, you can think of each operand (@code{5} and @code{6} in the example above) as a node in a ``last-in-first-out'' stack.
+One such stack in daily life is a stack of dishes in the kitchen: you put a clean dish, on the top of a stack of dishes when its ready for later usage.
+Later, when you need a dish, you pick the top one (hence the ``last'' dish placed ``in'' the stack is the ``first'' dish that comes ``out'' when necessary).
+
+Each operator will need a certain number of operators (in the example above, the @code{+} operator needs two operands).
+In the kitchen metaphor, an operator can be an oven.
+Every time an operator is confronted, the operator takes (or ``pops'') the number of operands it needs from the top of the stack (so they don't exist in the stack any more), does its operation, and places (or ``pushes'') the result back on top of the stack.
 So if you want the average of 5 and 6, you would write: @command{5 6 + 2 /}.
 The operations that are done are:
 
 @enumerate
 @item
-@command{5} is an operand, so it is pushed to the top of the stack (which is initially empty).
+@command{5} is an operand, so Arithmetic pushes it to the top of the stack (which is initially empty).
+In the kitchen metaphoe, you can visualize this as taking a new dish from the cabinet, putting the number 5 inside of the dish, and putting the dish on top of the (empy) cooking table infront of you.
+You now have a stack of one dish on the table infront of you.
 @item
-@command{6} is an operand, so it is pushed to the top of the stack.
+@command{6} is also an operand, so it is pushed to the top of the stack.
+Like before, you can visualize this as taking a new dish from the cabinet, putting the number 6 in it and placing it on top of the previous dish.
+You now have a stack of two dishes on the table infront of you.
 @item
 @command{+} is a @emph{binary} operator, so it will pop the top two elements of the stack out of it, and perform addition on them (the order is @mymath{5+6} in the example above).
 The result is @command{11} which is pushed to the top of the stack.
+
+To visualize this, you can think of the @code{+} operator as an oven with a place for two dishes.
+You pick up the top-most dish (that has the number 6 in it) and put it in the over.
+Then you pick the next dish (that has the number 5) and also put it in the oven and close the oven door.
+When the oven has finished its cooking, it produces a single output (in one dish, with the number 11 inside of it).
+You take that output dish and put it back on the table.
+You now have a stack of one dish on the table infront of you.
 @item
 @command{2} is an operand so push it onto the top of the stack.
+In the kitchen metaphor, you again go to the cabinet, pick up a dish and put the number 2 inside of it and put the dish over the previous dish (that has the number 11).
+You now have a stack of two dishes on the table infront of you.
 @item
-@command{/} is a binary operator, so pull out the top two elements of the stack (top-most is @command{2}, then @command{11}) and divide the second one by the first.
+@command{/} (division) is a binary operator, so pull out the top two elements of the stack (top-most is @command{2}, then @command{11}) and divide the second one by the first.
+In the kitchen metaphor, the @command{/} operator can be visualized as a microwave that takes two dishes.
+But unlike the oven (@code{+} operator) before, the order of inputs matters (they are on top of each other: with the top dish holder being the nominator and the bottom one being the denominator).
+Again, you look to your stack of dishes on the table.
+
+You pick up the top one (with value 2 inside of it) and put it in the microwave's bottom (denominator) dish holder.
+Then you go back to your stack of dishes on the table and pick up the top dish (with value 11 inside of it) and put that in the top (nominator) disho holder.
+The microwave will do its work and when its finished, returns a new dish with the single value 5.5 inside of it.
+You pick up the dish from the microwave and place it back on the table.
+
+@item
+There are no more operands or operators, so simply return the remaining operand in the output.
+In the kitchen metaphor, you see that your recipe has no more steps, so you just pick up the remaining dish and take it to the dining room to enjoy a good dinner.
 @end enumerate
 
-In the Arithmetic program, the operands can be FITS images or numbers (see @ref{Invoking astarithmetic}).
-In Table's column arithmetic, they can be any column or a number (see @ref{Column arithmetic}).
+In the Arithmetic program, the operands can be FITS images of any dimensionality, or numbers (see @ref{Invoking astarithmetic}).
+In Table's column arithmetic, they can be any column in the table (a series of numbers in an array) or a single number (see @ref{Column arithmetic}).
 
 With this notation, very complicated procedures can be created without the need for parenthesis or worrying about precedence.
 Even functions which take an arbitrary number of arguments can be defined in this notation.
@@ -20087,10 +20279,10 @@ See the description of @option{--config} in @ref{Operating mode options}.}.
 Please see @ref{Sufi simulates a detection} for a very complete tutorial explaining how one could use MakeProfiles in conjunction with other Gnuastro's programs to make a complete simulated image of a mock galaxy.
 
 @menu
-* MakeProfiles catalog::           Required catalog properties.
+* MakeProfiles catalog::        Required catalog properties.
 * MakeProfiles profile settings::  Configuration parameters for all profiles.
-* MakeProfiles output dataset::    The canvas/dataset to build profiles over.
-* MakeProfiles log file::          A description of the optional log file.
+* MakeProfiles output dataset::  The canvas/dataset to build profiles over.
+* MakeProfiles log file::       A description of the optional log file.
 @end menu
 
 @node MakeProfiles catalog, MakeProfiles profile settings, Invoking astmkprof, Invoking astmkprof

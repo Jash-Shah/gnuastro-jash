@@ -929,8 +929,10 @@ arithmetic_reverse_polish(struct tableparams *p, struct column_pack *outpack)
               "single value, but other columns have also been requested "
               "which have more elements/rows");
 
-      /* Set 'single->next' to NULL so it isn't treated as a list and
-         remove all metadata */
+      /* Set 'single->next' to NULL so it isn't treated as a list, and set
+         all flags to zero (the arithmetic operation may have changed what
+         the flags pointed to). */
+      single->flag=0;
       single->next=NULL;
       gal_list_data_add(&p->table, single);
     }

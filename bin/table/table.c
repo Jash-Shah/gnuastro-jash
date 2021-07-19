@@ -747,8 +747,7 @@ table_select_by_position(struct tableparams *p)
 
 
 
-/*This function concatenates two table column wise .
- It  attaches catcolumn table at the back of first table */
+/* Import columns from another file/table into the working table. */
 static void
 table_catcolumn(struct tableparams *p)
 {
@@ -993,6 +992,9 @@ table_noblank(struct tableparams *p)
 void
 table(struct tableparams *p)
 {
+  /* Concatenate the columns of tables (if required)*/
+  if(p->catcolumnfile) table_catcolumn(p);
+
   /* Apply ranges based on row values (if required). */
   if(p->selection) table_select_by_value(p);
 
@@ -1009,9 +1011,6 @@ table(struct tableparams *p)
   /* If any arithmetic operations are needed, do them. */
   if(p->outcols)
     arithmetic_operate(p);
-
-  /* Concatenate the columns of tables (if required)*/
-  if(p->catcolumnfile) table_catcolumn(p);
 
   /* When column metadata should be updated. */
   if(p->colmetadata) table_colmetadata(p);
