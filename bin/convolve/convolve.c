@@ -823,7 +823,8 @@ convolve(struct convolveparams *p)
      the output. */
   if( gal_fits_name_is_fits(p->cp.output) )
     {
-      gal_fits_key_write_filename("input", p->filename, &cp->okeys, 1);
+      gal_fits_key_write_filename("input", p->filename, &cp->okeys, 1,
+                                  cp->quiet);
       gal_fits_key_write_config(&cp->okeys, "Convolve configuration",
                                 "CONVOLVE-CONFIG", cp->output, "0");
     }

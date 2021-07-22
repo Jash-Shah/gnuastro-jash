@@ -89,6 +89,10 @@ See the end of the file for license conditions.
      called). Until now, adding columns from other files was done after all
      row selection or re-ordering, but this was not too practically useful.
 
+  Library
+   - gal_fits_key_write_filename: now has 'quiet' argument to avoid
+     printing a warning.
+
 ** Bugs fixed
   bug #60725: MakeCatalog doesn't put comment on --halfsumsb column.
   bug #60776: Radial profile script not using standard deviation image,
@@ -105,6 +109,8 @@ See the end of the file for license conditions.
               fixed with the help of Mark Calabretta.
   bug #60923: Standard deviation calculation giving NaN values due to
               floating point errors, found and fixed by Natáli Anzanello.
+  bug #60958: Warning on long filename not written in FITS keyword printed
+              even when '--quiet' is called, found by Raúl Infante-Sainz.
 
 
 

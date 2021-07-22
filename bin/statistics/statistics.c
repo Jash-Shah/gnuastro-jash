@@ -285,7 +285,8 @@ statistics_interpolate_and_write(struct statisticsparams *p,
   /* Write the values. */
   gal_tile_full_values_write(values, &cp->tl, !p->ignoreblankintiles,
                              output, NULL, PROGRAM_NAME);
-  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1,
+                              p->cp.quiet);
   gal_fits_key_write_config(&p->cp.okeys, "Statistics configuration",
                             "STATISTICS-CONFIG", output, "0");
 }
@@ -664,7 +665,8 @@ write_output_table(struct statisticsparams *p, gal_data_t *table,
   /* Write the configuration information if we have a FITS output. */
   if(isfits)
     {
-      gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+      gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1,
+                                  p->cp.quiet);
       gal_fits_key_write_config(&p->cp.okeys, "Statistics configuration",
                                 "STATISTICS-CONFIG", output, "0");
     }
@@ -838,7 +840,8 @@ histogram_2d(struct statisticsparams *p)
       /* Write the output. */
       output=statistics_output_name(p, suf, &isfits);
       gal_fits_img_write(img, output, NULL, PROGRAM_STRING);
-      gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+      gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1,
+                                  p->cp.quiet);
       gal_fits_key_write_config(&p->cp.okeys, "Statistics configuration",
                                 "STATISTICS-CONFIG", output, "0");
 

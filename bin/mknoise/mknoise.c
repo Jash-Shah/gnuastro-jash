@@ -61,7 +61,8 @@ convertsaveoutput(struct mknoiseparams *p)
   gal_fits_list_key_t *headers=NULL;
 
   /* Add the proper information to the header of the output: */
-  gal_fits_key_write_filename("INF", p->inputname, &headers, 0);
+  gal_fits_key_write_filename("INF", p->inputname, &headers, 0,
+                              p->cp.quiet);
   if( !isnan(p->background) )
     {
       gal_checkset_allocate_copy("BCKGRND", &keyname);
@@ -118,7 +119,8 @@ convertsaveoutput(struct mknoiseparams *p)
   p->input->name=NULL; /* because we didn't allocate it. */
 
   /* Write the configuration keywords. */
-  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1,
+                              p->cp.quiet);
   gal_fits_key_write_config(&p->cp.okeys, "MakeNoise configuration",
                             "MKNOISE-CONFIG", p->cp.output, "0");
 }

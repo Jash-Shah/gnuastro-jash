@@ -474,7 +474,8 @@ correct_wcs_save_output(struct warpparams *p)
     }
 
   /* Add the appropriate headers: */
-  gal_fits_key_write_filename("INF", p->inputname, &headers, 0);
+  gal_fits_key_write_filename("INF", p->inputname, &headers,
+                              0, p->cp.quiet);
   for(i=0;i<9;++i)
     {
       sprintf(&keyword[i*FLEN_KEYWORD], "WMTX%zu_%zu", i/3+1, i%3+1);
@@ -489,7 +490,8 @@ correct_wcs_save_output(struct warpparams *p)
   gal_fits_img_write(p->output, p->cp.output, headers, PROGRAM_NAME);
 
   /* Write the configuration keywords. */
-  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys,
+                              1, p->cp.quiet);
   gal_fits_key_write_config(&p->cp.okeys, "Warp configuration",
                             "WARP-CONFIG", p->cp.output, "0");
 }

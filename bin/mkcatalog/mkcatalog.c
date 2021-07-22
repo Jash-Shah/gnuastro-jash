@@ -358,27 +358,34 @@ void
 mkcatalog_outputs_keys_infiles(struct mkcatalogparams *p,
                                gal_fits_list_key_t **keylist)
 {
+  int quiet=p->cp.quiet;
   char *stdname, *stdhdu, *stdvalcom;
 
   gal_fits_key_list_title_add_end(keylist,
                                   "Input files and/or configuration", 0);
 
   /* Object labels. */
-  gal_fits_key_write_filename("INLAB", p->objectsfile, keylist, 0);
-  gal_fits_key_write_filename("INLABHDU", p->cp.hdu, keylist, 0);
+  gal_fits_key_write_filename("INLAB", p->objectsfile, keylist, 0,
+                              quiet);
+  gal_fits_key_write_filename("INLABHDU", p->cp.hdu, keylist, 0,
+                              quiet);
 
   /* Clump labels. */
   if(p->clumps)
     {
-      gal_fits_key_write_filename("INCLU", p->usedclumpsfile, keylist, 0);
-      gal_fits_key_write_filename("INCLUHDU", p->clumpshdu, keylist, 0);
+      gal_fits_key_write_filename("INCLU", p->usedclumpsfile, keylist, 0,
+                                  quiet);
+      gal_fits_key_write_filename("INCLUHDU", p->clumpshdu, keylist, 0,
+                                  quiet);
     }
 
   /* Values image. */
   if(p->values)
     {
-      gal_fits_key_write_filename("INVAL", p->usedvaluesfile, keylist, 0);
-      gal_fits_key_write_filename("INVALHDU", p->valueshdu, keylist, 0);
+      gal_fits_key_write_filename("INVAL", p->usedvaluesfile, keylist, 0,
+                                  quiet);
+      gal_fits_key_write_filename("INVALHDU", p->valueshdu, keylist, 0,
+                                  quiet);
     }
 
   /* Sky image/value. */
@@ -391,8 +398,10 @@ mkcatalog_outputs_keys_infiles(struct mkcatalogparams *p,
                                        NULL);
       else
         {
-          gal_fits_key_write_filename("INSKY", p->usedskyfile, keylist, 0);
-          gal_fits_key_write_filename("INSKYHDU", p->skyhdu, keylist, 0);
+          gal_fits_key_write_filename("INSKY", p->usedskyfile, keylist, 0,
+                                      quiet);
+          gal_fits_key_write_filename("INSKYHDU", p->skyhdu, keylist, 0,
+                                      quiet);
         }
     }
 
@@ -414,16 +423,20 @@ mkcatalog_outputs_keys_infiles(struct mkcatalogparams *p,
                                        stdname, stdvalcom, NULL);
       else
         {
-          gal_fits_key_write_filename(stdname, p->usedstdfile, keylist, 0);
-          gal_fits_key_write_filename(stdhdu, p->stdhdu, keylist, 0);
+          gal_fits_key_write_filename(stdname, p->usedstdfile, keylist, 0,
+                                      quiet);
+          gal_fits_key_write_filename(stdhdu, p->stdhdu, keylist, 0,
+                                      quiet);
         }
     }
 
   /* Upper limit mask. */
   if(p->upmaskfile)
     {
-      gal_fits_key_write_filename("INUPM", p->upmaskfile, keylist, 0);
-      gal_fits_key_write_filename("INUPMHDU", p->upmaskhdu, keylist, 0);
+      gal_fits_key_write_filename("INUPM", p->upmaskfile, keylist, 0,
+                                  quiet);
+      gal_fits_key_write_filename("INUPMHDU", p->upmaskhdu, keylist, 0,
+                                  quiet);
     }
 }
 
@@ -714,7 +727,8 @@ mkcatalog_write_outputs(struct mkcatalogparams *p)
   /* Configuration information. */
   if(outisfits)
     {
-      gal_fits_key_write_filename("input", p->objectsfile, &p->cp.okeys, 1);
+      gal_fits_key_write_filename("input", p->objectsfile, &p->cp.okeys,
+                                  1, p->cp.quiet);
       gal_fits_key_write_config(&p->cp.okeys, "MakeCatalog configuration",
                                 "MKCATALOG-CONFIG", p->objectsout, "0");
     }

@@ -600,10 +600,10 @@ match(struct matchparams *p)
       gal_fits_key_write_filename("input1", ( p->input1name
                                               ? p->input1name
                                               : "Standard input" ),
-                                  &p->cp.okeys, 1);
+                                  &p->cp.okeys, 1, p->cp.quiet);
       gal_fits_key_write_filename("input2",
                                   p->input2name?p->input2name:"--coord",
-                                  &p->cp.okeys, 1);
+                                  &p->cp.okeys, 1, p->cp.quiet);
       gal_fits_key_write_config(&p->cp.okeys, "Match configuration",
                                 "MATCH-CONFIG", p->out1name, "0");
     }

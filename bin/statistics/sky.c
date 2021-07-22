@@ -285,7 +285,8 @@ sky(struct statisticsparams *p)
   gal_tile_full_values_write(p->std_t, tl, !p->ignoreblankintiles, outname,
                              NULL, PROGRAM_NAME);
   p->sky_t->name = p->std_t->name = NULL;
-  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1);
+  gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys, 1,
+                              p->cp.quiet);
   gal_fits_key_write_config(&p->cp.okeys, "Statistics configuration",
                             "STATISTICS-CONFIG", outname, "0");
   if(!cp->quiet)

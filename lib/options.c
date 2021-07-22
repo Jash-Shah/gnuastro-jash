@@ -2977,7 +2977,8 @@ options_as_fits_keywords_write(gal_fits_list_key_t **keys,
                qualifier. */
             gal_checkset_allocate_copy(options[i].name, &name);
             if(vtype==GAL_TYPE_STRING && strlen(vptr)>FLEN_KEYWORD)
-              gal_fits_key_write_filename(name, vptr, keys, 1);
+              gal_fits_key_write_filename(name, vptr, keys, 1,
+                                          cp->quiet);
             else
               {
                 gal_checkset_allocate_copy(options[i].doc,  &doc);

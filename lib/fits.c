@@ -1708,7 +1708,8 @@ gal_fits_key_write_title_in_ptr(char *title, fitsfile *fptr)
 /* Write a filename into keyword values. */
 void
 gal_fits_key_write_filename(char *keynamebase, char *filename,
-                            gal_fits_list_key_t **list, int top1end0)
+                            gal_fits_list_key_t **list, int top1end0,
+                            int quiet)
 {
   char *keyname, *value;
   size_t numkey=1, maxlength;
@@ -1778,11 +1779,12 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
                  basename. */
               strcpy(keyname, keynamebase);
 
-              /* Let the user know that  */
-              error(0,0, "%s: WARNING: '%s' is too long to fit "
-                    "into a FITS keyword value (max of %zu characters), "
-                    "it will be truncated", __func__, filename,
-                    maxlength);
+              /* Let the user know that the name will be truncated. */
+              if(quiet==0)
+                error(0,0, "%s: WARNING: '%s' is too long to fit "
+                      "into a FITS keyword value (max of %zu characters), "
+                      "it will be truncated", __func__, filename,
+                      maxlength);
             }
 
           /* Convert the last useful character and save the file name.*/

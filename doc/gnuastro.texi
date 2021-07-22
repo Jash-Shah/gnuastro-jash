@@ -26294,19 +26294,19 @@ A title in the list of keywords helps in classifying the keywords into groups an
 If @code{title==NULL}, this function won't do anything.
 @end deftypefun
 
-@deftypefun void gal_fits_key_write_filename (char @code{*keynamebase}, char @code{*filename}, gal_fits_list_key_t @code{**list}, int @code{top1end0})
-Put @file{filename} into the @code{gal_fits_list_key_t} list (possibly
-broken up into multiple keywords) to later write into a HDU header. The
-@code{keynamebase} string will be appended with a @code{_N} (N>0) and used
-as the keyword name. If @code{top1end0!=0}, then the keywords containing
-the filename will be added to the top of the list.
+@deftypefun void gal_fits_key_write_filename (char @code{*keynamebase}, char @code{*filename}, gal_fits_list_key_t @code{**list}, int @code{top1end0}, int @code{quiet})
+Put @file{filename} into the @code{gal_fits_list_key_t} list (possibly broken up into multiple keywords) to later write into a HDU header.
+The @code{keynamebase} string will be appended with a @code{_N} (N>0) and used as the keyword name.
+If @code{top1end0!=0}, then the keywords containing the filename will be added to the top of the list.
 
-The FITS standard sets a maximum length for the value of a keyword. This
-creates problems with file names (which include directories). Because file
-names/addresses can become very long. Therefore, when @code{filename} is
-longer than the maximum length of a FITS keyword value, this function will
-break it into several keywords (breaking up the string on directory
-separators).
+The FITS standard sets a maximum length of 69 characters for the string values of a keyword@footnote{The limit is actually 71 characters (which is the full 80 character length, subtracted by 8 for the keyword name and one character for the @key{=}).
+However, for strings, FITS also requires two single quotes.}.
+This creates problems with file names (which include directories) because file names/addresses can become longer than .
+Therefore, when @code{filename} is longer than the maximum length of a FITS keyword value, this function will break it into several keywords (breaking up the string on directory separators).
+So the full file/directory address (including directories) can be longer than 69 characters.
+However, if a single file or directory name (within a larger address) is longer than 69 characters, this function will truncate the name and print a warning.
+If @code{quiet!=0}, then the warning won't be printed.
+
 @end deftypefun
 
 @deftypefun void gal_fits_key_write_wcsstr (fitsfile @code{*fptr}, struct wcsprm @code{wcs}, char @code{*wcsstr}, int @code{nkeyrec})
