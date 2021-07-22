@@ -1,0 +1,555 @@
+#!/bin/sh
+
+# Obtain the factor by which it is necessary to multiply a given PSF image
+# in order to match in flux a particular star within a given ring of radii.
+# Run with `--help', or see description under `print_help' (below) for
+# more.
+#
+# Original author:
+#   Raul Infante-Sainz <infantesainz@gmail.com>
+# Copyright (C) 2021, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+# Exit the script in the case of failure
+set -e
+
+
+
+
+
+# Default option values (can be changed with options on the command-line).
+hdu=1
+psf=""
+mask=""
+rmax=""
+quiet=""
+psfhdu=1
+center=""
+keeptmp=0
+maskhdu=1
+output=""
+tmpdir=""
+mode="img"
+corewidth=""
+normradii=""
+sigmaclip=""
+oversample=""
+stampwidth=""
+normop="median"
+version=@VERSION@
+scriptname=@SCRIPT_NAME@
+
+
+
+
+
+# Output of `--usage' and `--help':
+print_usage() {
+    cat <<EOF
+$scriptname: run with '--help' for list of options
+EOF
+}
+
+print_help() {
+    cat <<EOF
+Usage: $scriptname [OPTION] FITS-files
+
+This script is part of GNU Astronomy Utilities $version.
+
+This script will consider a center position and then compute the factor by
+which it is necessary to multiply the specified PSF image in order to match
+in flux with the object at the center (within a ring radii). The main idea
+is to have the necessary factor that will be used to allocate the PSF with
+the proper flux value for constructing the scattered light field.
+
+For more information, please run any of the following commands. In
+particular the first contains a very comprehensive explanation of this
+script's invocation: expected input(s), output(s), and a full description
+of all the options.
+
+     Inputs/Outputs and options:           $ info $scriptname
+     Full Gnuastro manual/book:            $ info gnuastro
+
+If you couldn't find your answer in the manual, you can get direct help from
+experienced Gnuastro users and developers. For more information, please run:
+
+     $ info help-gnuastro
+
+$scriptname options:
+ Input:
+  -h, --hdu=STR           HDU/extension of all input FITS files.
+  -p, --psf=STR           PSF fits file.
+  -P, --psfhdu=STR        HDU/extension of all input FITS files.
+  -m, --mode=STR          Coordinates mode ('wcs' or 'img').
+  -c, --center=FLT,FLT    Center coordinates of the object.
+  -W, --stampwidth=INT    Width of the stamp in pixels.
+  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
+  -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
+                          for computing the normalization value.
+  -S, --mask=STR          Segmentation image (sky = 0).
+  -s, --maskhdu=STR       HDU/extension of the segmentation image.
+  -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
+  -N, --normop=STR        Operator for computing the normalization value
+                          (mean, sigclip-mean, etc.).
+  -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
+
+ Output:
+  -o, --output            Output table with the radial profile.
+  -t, --tmpdir            Directory to keep temporary files.
+  -k, --keeptmp           Keep temporal/auxiliar files.
+  -v, --oversample        Oversample for higher resolution radial profile.
+
+ Operating mode:
+  -?, --help              Print this help list.
+      --cite              BibTeX citation for this program.
+  -q, --quiet             Don't print the list.
+  -V, --version           Print program version.
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+GNU Astronomy Utilities home page: http://www.gnu.org/software/gnuastro/
+
+Report bugs to bug-gnuastro@gnu.org.
+EOF
+}
+
+
+
+
+
+# Output of `--version':
+print_version() {
+    cat <<EOF
+$scriptname (GNU Astronomy Utilities) $version
+Copyright (C) 2020-2021, Free Software Foundation, Inc.
+License GPLv3+: GNU General public license version 3 or later.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written/developed by Raul Infante-Sainz
+EOF
+}
+
+
+
+
+
+# Functions to check option values and complain if necessary.
+on_off_option_error() {
+    if [ "x$2" = x ]; then
+        echo "$scriptname: '$1' doesn't take any values."
+    else
+        echo "$scriptname: '$1' (or '$2') doesn't take any values."
+    fi
+    exit 1
+}
+
+check_v() {
+    if [ x"$2" = x ]; then
+        echo "$scriptname: option '$1' requires an argument."
+        echo "Try '$scriptname --help' for more information."
+        exit 1;
+    fi
+}
+
+
+
+
+
+# Separate command-line arguments from options. Then put the option
+# value into the respective variable.
+#
+# OPTIONS WITH A VALUE:
+#
+#   Each option has three lines because we want to all common formats: for
+#   long option names: `--longname value' and `--longname=value'. For short
+#   option names we want `-l value', `-l=value' and `-lvalue' (where `-l'
+#   is the short version of the hypothetical `--longname' option).
+#
+#   The first case (with a space between the name and value) is two
+#   command-line arguments. So, we'll need to shift it two times. The
+#   latter two cases are a single command-line argument, so we just need to
+#   "shift" the counter by one. IMPORTANT NOTE: the ORDER OF THE LATTER TWO
+#   cases matters: `-h*' should be checked only when we are sure that its
+#   not `-h=*').
+#
+# OPTIONS WITH NO VALUE (ON-OFF OPTIONS)
+#
+#   For these, we just want the two forms of `--longname' or `-l'. Nothing
+#   else. So if an equal sign is given we should definitely crash and also,
+#   if a value is appended to the short format it should crash. So in the
+#   second test for these (`-l*') will account for both the case where we
+#   have an equal sign and where we don't.
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        # Input parameters.
+        -h|--hdu)            hdu="$2";                                  check_v "$1" "$hdu";  shift;shift;;
+        -h=*|--hdu=*)        hdu="${1#*=}";                             check_v "$1" "$hdu";  shift;;
+        -h*)                 hdu=$(echo "$1"  | sed -e's/-h//');        check_v "$1" "$hdu";  shift;;
+        -p|--psf)            psf="$2";                                  check_v "$1" "$psf";  shift;shift;;
+        -p=*|--psf=*)        psf="${1#*=}";                             check_v "$1" "$psf";  shift;;
+        -p*)                 psf=$(echo "$1"  | sed -e's/-p//');        check_v "$1" "$psf";  shift;;
+        -P|--psfhdu)         psfhdu="$2";                               check_v "$1" "$psfhdu";  shift;shift;;
+        -P=*|--psfhdu=*)     psfhdu="${1#*=}";                          check_v "$1" "$psfhdu";  shift;;
+        -P*)                 psfhdu=$(echo "$1"  | sed -e's/-P//');     check_v "$1" "$psfhdu";  shift;;
+        -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
+        -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
+        -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
+        -W|--stampwidth)     stampwidth="$2";                           check_v "$1" "$stampwidth";  shift;shift;;
+        -W=*|--stampwidth=*) stampwidth="${1#*=}";                      check_v "$1" "$stampwidth";  shift;;
+        -W*)                 stampwidth=$(echo "$1"  | sed -e's/-W//'); check_v "$1" "$stampwidth";  shift;;
+        -w|--corewidth)      corewidth="$2";                            check_v "$1" "$corewidth";  shift;shift;;
+        -w=*|--corewidth=*)  corewidth="${1#*=}";                       check_v "$1" "$corewidth";  shift;;
+        -w*)                 corewidth=$(echo "$1"  | sed -e's/-w//');  check_v "$1" "$corewidth";  shift;;
+        -m|--mask)           mask="$2";                                 check_v "$1" "$mask";  shift;shift;;
+        -m=*|--mask=*)       mask="${1#*=}";                            check_v "$1" "$mask";  shift;;
+        -m*)                 mask=$(echo "$1"  | sed -e's/-m//');       check_v "$1" "$mask";  shift;;
+        -M|--maskhdu)        maskhdu="$2";                              check_v "$1" "$maskhdu";  shift;shift;;
+        -M=*|--maskhdu=*)    maskhdu="${1#*=}";                         check_v "$1" "$maskhdu";  shift;;
+        -M*)                 maskhdu=$(echo "$1"  | sed -e's/-M//');    check_v "$1" "$maskhdu";  shift;;
+        -O|--mode)           mode="$2";                                 check_v "$1" "$mode";  shift;shift;;
+        -O=*|--mode=*)       mode="${1#*=}";                            check_v "$1" "$mode";  shift;;
+        -O*)                 mode=$(echo "$1"  | sed -e's/-O//');       check_v "$1" "$mode";  shift;;
+        -c|--center)         center="$2";                               check_v "$1" "$center";  shift;shift;;
+        -c=*|--center=*)     center="${1#*=}";                          check_v "$1" "$center";  shift;;
+        -c*)                 center=$(echo "$1"  | sed -e's/-c//');     check_v "$1" "$center";  shift;;
+        -N|--normop)         normop="$2";                               check_v "$1" "$normop";  shift;shift;;
+        -N=*|--normop=*)     normop="${1#*=}";                          check_v "$1" "$normop";  shift;;
+        -N*)                 normop=$(echo "$1"  | sed -e's/-N//');     check_v "$1" "$normop";  shift;;
+        -R|--rmax)           rmax="$2";                                 check_v "$1" "$rmax";  shift;shift;;
+        -R=*|--rmax=*)       rmax="${1#*=}";                            check_v "$1" "$rmax";  shift;;
+        -R*)                 rmax=$(echo "$1"  | sed -e's/-R//');       check_v "$1" "$rmax";  shift;;
+        -s|--sigmaclip)      sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
+        -s=*|--sigmaclip=*)  sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
+        -s*)                 sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
+
+
+        # Output parameters
+        -k|--keeptmp)     keeptmp=1; shift;;
+        -k*|--keeptmp=*)  on_off_option_error --keeptmp -k;;
+        -t|--tmpdir)      tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
+        -t=*|--tmpdir=*)  tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
+        -t*)              tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
+        -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
+        -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
+        -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
+        -v|--oversample)     oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
+        -v=*|--oversample=*) oversample="${1#*=}";                     check_v "$1" "$oversample"; shift;;
+        -v*)                 oversample=$(echo "$1" | sed -e's/-v//'); check_v "$1" "$oversample"; shift;;
+
+        # Non-operating options.
+        -q|--quiet)       quiet="--quiet"; shift;;
+        -q*|--quiet=*)    on_off_option_error --quiet -q;;
+        -?|--help)        print_help; exit 0;;
+        -'?'*|--help=*)   on_off_option_error --help -?;;
+        -V|--version)     print_version; exit 0;;
+        -V*|--version=*)  on_off_option_error --version -V;;
+        --cite)           astfits --cite; exit 0;;
+        --cite=*)         on_off_option_error --cite;;
+
+        # Unrecognized option:
+        -*) echo "$scriptname: unknown option '$1'"; exit 1;;
+
+        # Not an option (not starting with a `-'): assumed to be input FITS
+        # file name.
+        *) inputs="$1 $inputs"; shift;;
+    esac
+
+done
+
+
+
+
+
+# Basic sanity checks
+# ===================
+
+# If an input image is not given at all.
+if [ x"$inputs" = x ]; then
+    echo "$scriptname: no input FITS image files."
+    echo "Run with '--help' for more information on how to run."
+    exit 1
+fi
+
+# If a stamp width (--stampwidth) is not given at all.
+if [ x"$stampwidth" = x ]; then
+    echo "$scriptname: no stamp width provided."
+    echo "A stamp size (width) has to be specified with --stampwidth or -w."
+    exit 1
+fi
+
+# If center coordinates (--center) is not given at all.
+if [ x"$center" = x ]; then
+    echo "$scriptname: no center coordinates provided."
+    echo "$scriptname: values to '--center' ('-c') should be provided."
+    exit 1
+else
+    ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$ncenter != x2 ]; then
+        echo "$scriptname: '--center' (or '-c') only take two values, but $ncenter were given"
+        exit 1
+    fi
+fi
+
+# If a normalization range is not given at all.
+if [ x"$normradii" = x ]; then
+    echo "$scriptname: no rign of normalization provided."
+    echo "$scriptname: values to '--normradii' ('-n') should be provided."
+    exit 1
+else
+    nnormradii=$(echo $normradii | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$nnormradii != x2 ]; then
+        echo "$scriptname: '--normradii' (or '-n') only take two values, but $nnormradii were given"
+        exit 1
+    fi
+fi
+
+# Make sure the value to '--mode' is either 'wcs' or 'img'.
+if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+    junk=1
+else
+    echo "$scriptname: wrong value to --mode (-m) provided."
+    echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
+    exit 1
+fi
+
+
+
+
+
+# Basic parameters: coordinates and normalization radii
+# -----------------------------------------------------
+#
+# Obtain the coordinates of the center as well as the normalization radii
+# ring from the command line arguments.
+xcoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
+ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
+
+normradiusmin=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $1}')
+normradiusmax=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $2}')
+
+# With the center coordinates, generate a specific label for the object
+# consisting in its coordinates.
+objectid="$xcoord"_"$ycoord"
+
+
+
+
+
+# Define a temporal directory and thefinal output file
+# ----------------------------------------------------
+#
+# Construct the temporary directory. If the user does not specify any
+# directory, then a default one with the base name of the input image will
+# be constructed.  If the user set the directory, then make it. This
+# directory will be deleted at the end of the script if the user does not
+# want to keep it (with the `--keeptmp' option).
+
+# The final output stamp is also defined here if the user does not provide
+# an explicit name. If the user has defined a specific path/name for the
+# output, it will be used for saving the output file. If the user does not
+# specify a output name, then a default value containing the center and
+# mode will be generated.
+bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
+if [ x$tmpdir = x ]; then \
+  tmpdir=$(pwd)/"$bname_prefix"_fluxfactors
+fi
+
+if [ -d $tmpdir ]; then
+  junk=1
+else
+  mkdir -p $tmpdir
+fi
+
+# Output
+if [ x$output = x ]; then
+  output=$tmpdir/fluxfactor-$objectid.txt
+fi
+
+
+
+
+
+# Transform WCS to IMG center coordinates
+# ---------------------------------------
+#
+# If the original coordinates have been given in WCS or celestial units
+# (RA/DEC), then transform them to IMG (pixel). Here, this is done by using
+# the WCS information from the original input image. If the original
+# coordinates were done in IMG, then just use them.
+if [ $mode = wcs ]; then
+  xycenter=$(echo "$xcoord,$ycoord" \
+                  | asttable  --column='arith $1 $2 wcstoimg' \
+                              --wcsfile=$inputs --wcshdu=$hdu $quiet)
+  xcenter=$(echo "$xycenter" | awk '{print $1}')
+  ycenter=$(echo "$xycenter" | awk '{print $2}')
+else
+  xcenter=$xcoord
+  ycenter=$ycoord
+fi
+
+
+
+
+
+# Crop the original image around the object
+# -----------------------------------------
+#
+# Crop the object around its center with the given stamp size width.
+cropped=$tmpdir/cropped-$objectid.fits
+astcrop $inputs --hdu=$hdu --mode=img \
+                --center=$xcenter,$ycenter \
+                --width=$stampwidth --output=$cropped $quiet
+
+
+
+
+
+# Crop and unlabel the segmentation image
+# ---------------------------------------
+#
+# If the user provides a segmentation image, treat it appropiately in order
+# to mask all objects that are not the central one. If not, just consider
+# that the cropped and masked image is the cropped (not masked) image. The
+# process is as follow:
+#   - Crop the original mask image.
+#   - Crop the original mask image to a central region (core), in order to
+#   compute what is the central object id. This is necessary to unmask this
+#   object.
+#   - Compute what is the central object value, using the median value.
+#   - In the original cropped mask, convert all pixels belonging to the
+#   central object to zeros. By doing this, the central object becomes as
+#   sky.
+#   - Mask all non zero pixels in the mask image as nan values.
+if [ x"$mask" != x ]; then
+  cropped_mask=$tmpdir/cropped_mask-$objectid.fits
+  astcrop $mask --hdu=$maskhdu --mode=img \
+                --center=$xcenter,$ycenter \
+                --width=$stampwidth --output=$cropped_mask $quiet
+
+  # If the user does not provide a core width, consider it as the maximum
+  # normalization radius value.
+  if [ x"$corewidth" = x ]; then corewidth="$normradiusmax,$normradiusmax"
+  fi
+
+  cropped_core=$tmpdir/cropped_core-$objectid.fits
+  astcrop $mask --hdu=$maskhdu --mode=img \
+                --center=$xcenter,$ycenter \
+                --width=$corewidth --output=$cropped_core $quiet
+
+  # Compute the label of the central object from the core cropped image.
+  centrallabel=$(aststatistics $cropped_core --median -q)
+
+  # Unlabel the central object.
+  cropped_unlabel=$tmpdir/cropped_unlabel-$objectid.fits
+  astarithmetic $cropped_mask --hdu=1 \
+                $cropped_mask --hdu=1 \
+                $centrallabel eq 0 where --output=$cropped_unlabel $quiet
+
+  # All objects that are not the central are masked here.
+  cropped_masked=$tmpdir/cropped_masked-$objectid.fits
+  astarithmetic $cropped --hdu=1 \
+                $cropped_unlabel --hdu=1 \
+                0 ne nan where --output=$cropped_masked $quiet
+else
+  cropped_masked=$cropped
+fi
+
+
+
+
+
+# Compute the radial profiles
+# ---------------------------
+#
+# Generate the radial profile of the stamp, since it has been already
+# centered on the center of the object, it is not necessary to give the
+# center coordinates. If the user specifies a maximum radius, use it.
+radialprofile=$tmpdir/rprofile-$objectid.fits
+psfradialprofile=$tmpdir/rprofile-psf-$objectid.fits
+if [ x"$rmax" != x ]; then
+  maximumradius="--rmax=$rmax"
+else
+  maximumradius=""
+fi
+astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
+                         --measure=$normop --output=$radialprofile $quiet
+
+astscript-radial-profile $psf --hdu=$psfhdu $maximumradius \
+                         --measure=$normop --output=$psfradialprofile $quiet
+
+
+
+
+
+# Select the same rows in the matching radii
+# ------------------------------------------
+#
+# To compute the flux factor, it is necessary to consider the same radii
+# values. Here, the radii values are extracted from the radial profiles of
+# the input object and the provided PSF image. After that, the two
+# different tables are concatenated into a single one.
+radialprofile_ring=$tmpdir/rprofile-psf-ring-$objectid.fits
+asttable $radialprofile --range=1,$normradiusmin,$normradiusmax \
+                        --output=$radialprofile_ring $quiet
+
+psfradialprofile_ring=$tmpdir/rprofile-ring-$objectid.fits
+asttable $psfradialprofile --range=1,$normradiusmin,$normradiusmax \
+                           --output=$psfradialprofile_ring $quiet
+
+# Concatenated table. This table has the rows corresponding to the ring
+# over which the flux radius is computed, and 3 columns: radius, STAR
+# radial profile, PSF radial profile.
+radialprofile_ring_both=$tmpdir/rprofile-ring-both-$objectid.fits
+asttable $radialprofile_ring --output=$radialprofile_ring_both $quiet \
+         --catcolumnfile=$psfradialprofile_ring --catcolumns=2
+
+
+
+
+
+# Compute the flux factor
+# -----------------------
+#
+# Once a table with the 3 columns has been generated, it is possible to
+# make the ratio of the two radial profiles (STAR and PSF) columns.
+radialprofile_ratio=$tmpdir/rprofile-ratio-$objectid.fits
+asttable $radialprofile_ring_both $quiet \
+                      --column=1,2,3 \
+                      --column='arith $2 $3 /' \
+                      --output=$radialprofile_ratio
+
+# Obtain the flux factor by computing the averaged value of the ratio.
+# Print the flux factor on the screen and save it into the output file.
+fluxfactor=$(aststatistics $radialprofile_ratio --column=4 --$normop --quiet)
+
+echo $fluxfactor
+echo $fluxfactor > $output
+
+
+
+
+
+# Remove temporary files
+# ----------------------
+#
+# If the user does not specify to keep the temporal files with the option
+# `--keeptmp', then remove the whole directory.
+if [ $keeptmp = 0 ]; then
+    rm -r $tmpdir
+fi
