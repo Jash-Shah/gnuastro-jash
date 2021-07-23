@@ -286,6 +286,13 @@ if [ x"$inputs" = x ]; then
     exit 1
 fi
 
+# If a PSF image (--psf) is not given at all.
+if [ x"$psf" = x ]; then
+    echo "$scriptname: no PSF image provided."
+    echo "A PSF image has to be specified with --psf or -p."
+    exit 1
+fi
+
 # If a stamp width (--stampwidth) is not given at all.
 if [ x"$stampwidth" = x ]; then
     echo "$scriptname: no stamp width provided."
