@@ -511,11 +511,11 @@ astscript-radial-profile $psf --hdu=$psfhdu $maximumradius \
 # values. Here, the radii values are extracted from the radial profiles of
 # the input object and the provided PSF image. After that, the two
 # different tables are concatenated into a single one.
-radialprofile_ring=$tmpdir/rprofile-psf-ring-$objectid.fits
+radialprofile_ring=$tmpdir/rprofile-ring-$objectid.fits
 asttable $radialprofile --range=1,$normradiusmin,$normradiusmax \
                         --output=$radialprofile_ring $quiet
 
-psfradialprofile_ring=$tmpdir/rprofile-ring-$objectid.fits
+psfradialprofile_ring=$tmpdir/rprofile-psf-ring-$objectid.fits
 asttable $psfradialprofile --range=1,$normradiusmin,$normradiusmax \
                            --output=$psfradialprofile_ring $quiet
 
