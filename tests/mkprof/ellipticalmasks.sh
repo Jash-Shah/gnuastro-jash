@@ -59,4 +59,4 @@ if [ ! -f $img      ]; then echo "$img does not exist.";   exit 77; fi
 # string. Such programs will execute the command if present and help in
 # debugging when the developer doesn't have access to the user's system.
 $check_with_program $execname $cat --background=$img --mforflatpix --replace \
-                              --oversample=1 --output="ellipticalmasks.fits"
+                    --oversample=1 --output="ellipticalmasks.fits"

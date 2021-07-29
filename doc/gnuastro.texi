@@ -1767,20 +1767,20 @@ MakeProfiles started on Sat Oct  6 16:26:56 953
   ---- ./0_cat.fits created.
   ---- row 0 complete, 1 left to go
   ---- row 1 complete, 0 left to go
-  - ./cat.fits created.                                0.041651 seconds
+  - ./cat_profiles.fits created.                       0.041651 seconds
 MakeProfiles finished in 0.267234 seconds
 
 $ls
-0_cat.fits  cat.fits  cat.txt
+0_cat.fits  cat_profiles.fits  cat.txt
 @end example
 
 @cindex Oversample
 @noindent
-The file @file{0_cat.fits} is the PSF Sufi had asked for, and @file{cat.fits} is the image containing the main objects in the catalog.
-The size of @file{cat.fits} was surprising for the student, instead of 499 by 499 (as we had requested), it was 2615 by 2615 pixels (from the command below):
+The file @file{0_cat.fits} is the PSF Sufi had asked for, and @file{cat_profiles.fits} is the image containing the main objects in the catalog.
+The size of @file{cat_profiles.fits} was surprising for the student, instead of 499 by 499 (as we had requested), it was 2615 by 2615 pixels (from the command below):
 
 @example
-$ astfits cat.fits -h1 | grep NAXIS
+$ astfits cat_profiles.fits -h1 | grep NAXIS
 @end example
 
 @noindent
@@ -1788,7 +1788,7 @@ So Sufi explained why oversampling is important in modeling, especially for part
 Recall that when you oversample the model (for example by 5 times), for every desired pixel, you get 25 pixels (@mymath{5\times5}).
 Sufi then explained that after convolving (next step below) we will down-sample the image to get our originally desired size/resolution.
 
-Sufi then opened @code{cat.fits} [you can use any FITS viewer, for example, @command{ds9}].
+Sufi then opened @code{cat_profiles.fits} [you can use any FITS viewer, for example, @command{ds9}].
 After seeing the image, the student complained that only the large elliptical model for the Andromeda nebula can be seen in the center.
 He couldn't see the four stars that we had also requested in the catalog.
 So Sufi had to explain that the stars are there in the image, but the reason that they aren't visible when looking at the whole image at once, is that they only cover a single pixel!
@@ -1800,10 +1800,11 @@ If we didn't have an atmosphere and we didn't need an aperture, then stars would
 So Sufi convolved the image with this command:
 
 @example
-$ astconvolve --kernel=0_cat.fits cat.fits
+$ astconvolve --kernel=0_cat.fits cat_profiles.fits \
+              --output=cat_convolved.fits
 Convolve started on Sat Oct  6 16:35:32 953
   - Using 8 CPU threads.
-  - Input: cat.fits (hdu: 1)
+  - Input: cat_profiles.fits (hdu: 1)
   - Kernel: 0_cat.fits (hdu: 1)
   - Input and Kernel images padded.                    0.075541 seconds
   - Images converted to frequency domain.              6.728407 seconds
@@ -1814,7 +1815,7 @@ Convolve started on Sat Oct  6 16:35:32 953
 Convolve finished in:  10.422161 seconds
 
 $ls
-0_cat.fits  cat_convolved.fits  cat.fits  cat.txt
+0_cat.fits  cat_convolved.fits  cat_profiles.fits  cat.txt
 @end example
 
 @noindent
@@ -1836,7 +1837,7 @@ Warp started on Sat Oct  6 16:51:59 953
 
 $ ls
 0_cat.fits          cat_convolved_scaled.fits     cat.txt
-cat_convolved.fits  cat.fits
+cat_convolved.fits  cat_profiles.fits
 
 $ astfits -p cat_convolved_scaled.fits | grep NAXIS
 NAXIS   =                    2 / number of data axes
@@ -1871,7 +1872,7 @@ Crop started on Sat Oct  6 17:03:24 953
 Crop finished in:  0.027204 seconds
 
 $ls
-0_cat.fits          cat_convolved_scaled_cropped.fits  cat.fits
+0_cat.fits          cat_convolved_scaled_cropped.fits  cat_profiles.fits
 cat_convolved.fits  cat_convolved_scaled.fits          cat.txt
 @end example
 
@@ -1893,14 +1894,15 @@ MakeNoise started on Sat Oct  6 17:05:06 953
 MakeNoise finished in:  0.033491 (seconds)
 
 $ls
-0_cat.fits         cat_convolved_scaled_cropped.fits cat.fits  out.fits
-cat_convolved.fits cat_convolved_scaled.fits         cat.txt
+0_cat.fits         cat_convolved_scaled_cropped.fits cat_profiles.fits
+cat_convolved.fits cat_convolved_scaled.fits         cat.txt  out.fits
 @end example
 
 @noindent
 The @file{out.fits} file now contains the noised image of the mock catalog Sufi had asked for.
-Seeing how the @option{--output} option allows the user to specify the name of the output file, the student was confused and wanted to know why Sufi hadn't used it before? Sufi then explained to him that for intermediate steps it is best to rely on the automatic output, see @ref{Automatic output}.
-Doing so will give all the intermediate files the same basic name structure, so in the end you can simply remove them all with the Shell's capabilities.
+Seeing how the @option{--output} option allows the user to specify the name of the output file, the student was confused and wanted to know why Sufi hadn't used it more regularly before?
+Sufi then explained to him that for intermediate steps, you can rely on the automatic output of the programs, see @ref{Automatic output}.
+Doing so will give all the intermediate files a similar basic name structure, so in the end you can simply remove them all with the Shell's capabilities, and it will be familiar for other users.
 So Sufi decided to show this to the student by making a shell script from the commands he had used before.
 
 The command-line shell has the capability to read all the separate input commands from a file.
@@ -1926,7 +1928,8 @@ astmkprof --prepforconv --mergedsize=499,499 --zeropoint=18.0 \
           "$base".txt
 
 # Convolve the created image with the kernel.
-astconvolve --kernel=0_"$base".fits "$base".fits
+astconvolve --kernel=0_"$base".fits "$base"_profiles.fits \
+            --output="$base"_convolved.fits
 
 # Scale the image back to the intended resolution.
 astwarp --scale=1/5 --centeroncorner "$base"_convolved.fits
@@ -3740,14 +3743,10 @@ See @ref{Invoking astmkprof} for details on the options.
 @example
 $ astmkprof apertures.txt --background=flat-ir/xdf-f160w.fits \
             --clearcanvas --replace --type=int16 --mforflatpix \
-            --mode=wcs
+            --mode=wcs --output=apertures.fits
 @end example
 
-The first thing you might notice in the printed information is that the profiles are not built in order.
-This is because MakeProfiles works in parallel, and parallel CPU operations are asynchronous.
-You can try running MakeProfiles with one thread (using @option{--numthreads=1}) to see how order is respected in that case, but slower (note that the multi-threaded run will be much more faster when more mathematically-complicated profiles are built, like S@'eric profiles).
-
-Open @file{apertures.fits} with a FITS viewer and look around at the circles placed over the targets.
+Open @file{apertures.fits} with a FITS image viewer (like SAO DS9) and look around at the circles placed over the targets.
 Also open the input image and Segment's clumps image and compare them with the positions of these circles.
 Where the apertures overlap, you will notice that one label has replaced the other (because of the @option{--replace} option).
 In the future, MakeCatalog will be able to work with overlapping labels, but currently it doesn't.

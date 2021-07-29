@@ -82,6 +82,14 @@ See the end of the file for license conditions.
      avoid too many crashes when command before the pipe takes longer (thus
      needing a manual change of this value).
 
+  MakeProfiles:
+   - The default output suffix (when no '--output' is given) is now
+     '_profiles.fits'. Until now, when no output name was given,
+     MakeProfiles just replaced the suffix with '.fits' (effectively
+     assuming the input is a plain-text file). As a result, if the input
+     catalog was a FITS file, it would be automatically written-over
+     (causing an error: bug #60989).
+
   Match:
    - The two '--notmatched' and '--outcols' can be called together (to
      create a single catalog that appends the non-matching rows of second
@@ -116,6 +124,8 @@ See the end of the file for license conditions.
               floating point errors, found and fixed by Natáli Anzanello.
   bug #60958: Warning on long filename not written in FITS keyword printed
               even when '--quiet' is called, found by Raúl Infante-Sainz.
+  bug #60989: MakeProfiles deletes input fits catalog when no output name
+              specified.
 
 
 

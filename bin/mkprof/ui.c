@@ -578,7 +578,7 @@ ui_check_options_and_arguments(struct mkprofparams *p)
               "catalog ('%s'). The parameters necessary to build a single "
               "kernel output should be given to '--kernel', not in a "
               "catalog", p->catname);
-      p->catname="kernel.option";
+      p->catname="kernel.optional";
     }
   else
     {
@@ -612,15 +612,18 @@ ui_check_options_and_arguments(struct mkprofparams *p)
       tmpname=gal_checkset_automatic_output(&p->cp,
                                             ( p->catname
                                               ? p->catname
-                                              : "makeprofiles" ), ".fits");
+                                              : "makeprofiles" ),
+                                            ( p->kernel
+                                              ? ".fits"
+                                              : "_profiles.fits" ));
       p->mergedimgname=gal_checkset_malloc_cat(p->outdir, tmpname);
       free(tmpname);
     }
   p->basename=gal_checkset_not_dir_part(p->mergedimgname);
 
 
-  /* If a merged image is requested (or '--kernel' the option is called),
-     then delete the final filename if it exists. */
+  /* If a merged image is requested (or '--kernel' is called), then delete
+     the final filename if it exists. */
   if(p->nomerged==0 && p->kernel)
     gal_checkset_writable_remove(p->mergedimgname, p->cp.keep,
                                  p->cp.dontdelete);

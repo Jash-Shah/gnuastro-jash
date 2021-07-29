@@ -45,4 +45,5 @@ if [ ! -f $cat      ]; then echo "$cat does not exist.";   exit 77; fi
 
 # Actual test script
 # ==================
-$execname $cat --config=.gnuastro/astmkprof-3d.conf --oversample=1
+$execname $cat --config=.gnuastro/astmkprof-3d.conf --oversample=1 \
+          --output=3d-cat.fits
