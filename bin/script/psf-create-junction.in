@@ -1,0 +1,494 @@
+#!/bin/sh
+
+# Join two different PSF images into a single one. Run with `--help', or
+# see description under `print_help' (below) for more.
+#
+# Original author:
+#   Raul Infante-Sainz <infantesainz@gmail.com>
+# Contributing author(s):
+#   Carlos Morales-Socorro <cmorsoc@gmail.com>
+# Copyright (C) 2021, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+# Exit the script in the case of failure
+set -e
+
+
+
+
+
+# Default option values (can be changed with options on the command-line).
+hdu=1
+core=""
+corehdu=1
+radius=""
+quiet=""
+keeptmp=0
+output=""
+tmpdir=""
+axisratio=1
+fluxfactor=""
+positionangle=0
+version=@VERSION@
+scriptname=@SCRIPT_NAME@
+
+
+
+
+
+# Output of `--usage' and `--help':
+print_usage() {
+    cat <<EOF
+$scriptname: run with '--help' for list of options
+EOF
+}
+
+print_help() {
+    cat <<EOF
+Usage: $scriptname [OPTION] FITS-files
+
+This script is part of GNU Astronomy Utilities $version.
+
+This script will consider two different PSF images to join them into a
+single one. It is intendeed to generate a single PSF by combining different
+PSF regions (core and wings).
+
+For more information, please run any of the following commands. In
+particular the first contains a very comprehensive explanation of this
+script's invocation: expected input(s), output(s), and a full description
+of all the options.
+
+     Inputs/Outputs and options:           $ info $scriptname
+     Full Gnuastro manual/book:            $ info gnuastro
+
+If you couldn't find your answer in the manual, you can get direct help from
+experienced Gnuastro users and developers. For more information, please run:
+
+     $ info help-gnuastro
+
+$scriptname options:
+ Input:
+  -h, --hdu=STR           HDU/extension of all input FITS files.
+  -c, --core=STR          Core PSF FITS image.
+  -C, --corehdu=STR       HDU/extension of the PSF image.
+  -r, --radius=FLT        Radius at which the junction is done (in pixels).
+  -f, --fluxfactor=FLT    Factor by which the inner PSF is multiplied.
+  -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
+  -p, --positionangle=FLT Position angle for ellipse mask profile.
+
+ Output:
+  -o, --output            Output table with the radial profile.
+  -t, --tmpdir            Directory to keep temporary files.
+  -k, --keeptmp           Keep temporal/auxiliar files.
+
+ Operating mode:
+  -?, --help              Print this help list.
+      --cite              BibTeX citation for this program.
+  -q, --quiet             Don't print the list.
+  -V, --version           Print program version.
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+GNU Astronomy Utilities home page: http://www.gnu.org/software/gnuastro/
+
+Report bugs to bug-gnuastro@gnu.org.
+EOF
+}
+
+
+
+
+
+# Output of `--version':
+print_version() {
+    cat <<EOF
+$scriptname (GNU Astronomy Utilities) $version
+Copyright (C) 2020-2021, Free Software Foundation, Inc.
+License GPLv3+: GNU General public license version 3 or later.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written/developed by Raul Infante-Sainz
+EOF
+}
+
+
+
+
+
+# Functions to check option values and complain if necessary.
+on_off_option_error() {
+    if [ "x$2" = x ]; then
+        echo "$scriptname: '$1' doesn't take any values."
+    else
+        echo "$scriptname: '$1' (or '$2') doesn't take any values."
+    fi
+    exit 1
+}
+
+check_v() {
+    if [ x"$2" = x ]; then
+        echo "$scriptname: option '$1' requires an argument."
+        echo "Try '$scriptname --help' for more information."
+        exit 1;
+    fi
+}
+
+
+
+
+
+# Separate command-line arguments from options. Then put the option
+# value into the respective variable.
+#
+# OPTIONS WITH A VALUE:
+#
+#   Each option has three lines because we want to all common formats: for
+#   long option names: `--longname value' and `--longname=value'. For short
+#   option names we want `-l value', `-l=value' and `-lvalue' (where `-l'
+#   is the short version of the hypothetical `--longname' option).
+#
+#   The first case (with a space between the name and value) is two
+#   command-line arguments. So, we'll need to shift it two times. The
+#   latter two cases are a single command-line argument, so we just need to
+#   "shift" the counter by one. IMPORTANT NOTE: the ORDER OF THE LATTER TWO
+#   cases matters: `-h*' should be checked only when we are sure that its
+#   not `-h=*').
+#
+# OPTIONS WITH NO VALUE (ON-OFF OPTIONS)
+#
+#   For these, we just want the two forms of `--longname' or `-l'. Nothing
+#   else. So if an equal sign is given we should definitely crash and also,
+#   if a value is appended to the short format it should crash. So in the
+#   second test for these (`-l*') will account for both the case where we
+#   have an equal sign and where we don't.
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        # Input parameters.
+        -h|--hdu)            hdu="$2";                                  check_v "$1" "$hdu";  shift;shift;;
+        -h=*|--hdu=*)        hdu="${1#*=}";                             check_v "$1" "$hdu";  shift;;
+        -h*)                 hdu=$(echo "$1"  | sed -e's/-h//');        check_v "$1" "$hdu";  shift;;
+        -c|--core)           core="$2";                                 check_v "$1" "$core";  shift;shift;;
+        -c=*|--core=*)       core="${1#*=}";                            check_v "$1" "$core";  shift;;
+        -c*)                 core=$(echo "$1"  | sed -e's/-c//');       check_v "$1" "$core";  shift;;
+        -C|--corehdu)        corehdu="$2";                              check_v "$1" "$corehdu";  shift;shift;;
+        -C=*|--corehdu=*)    corehdu="${1#*=}";                         check_v "$1" "$corehdu";  shift;;
+        -C*)                 corehdu=$(echo "$1"  | sed -e's/-C//');    check_v "$1" "$corehdu";  shift;;
+        -r|--radius)         radius="$2";                               check_v "$1" "$radius";  shift;shift;;
+        -r=*|--radius=*)     radius="${1#*=}";                          check_v "$1" "$radius";  shift;;
+        -r*)                 radius=$(echo "$1"  | sed -e's/-r//');     check_v "$1" "$radius";  shift;;
+        -f|--fluxfactor)     fluxfactor="$2";                           check_v "$1" "$fluxfactor";  shift;shift;;
+        -f=*|--fluxfactor=*) fluxfactor="${1#*=}";                      check_v "$1" "$fluxfactor";  shift;;
+        -f*)                 fluxfactor=$(echo "$1"  | sed -e's/-f//'); check_v "$1" "$fluxfactor";  shift;;
+        -Q|--axisratio)      axisratio="$2";                            check_v "$1" "$axisratio";  shift;shift;;
+        -Q=*|--axisratio=*)  axisratio="${1#*=}";                       check_v "$1" "$axisratio";  shift;;
+        -Q*)                 axisratio=$(echo "$1"  | sed -e's/-Q//');  check_v "$1" "$axisratio";  shift;;
+        -p|--positionangle)     positionangle="$2";                            check_v "$1" "$positionangle";  shift;shift;;
+        -p=*|--positionangle=*) positionangle="${1#*=}";                       check_v "$1" "$positionangle";  shift;;
+        -p*)                    positionangle=$(echo "$1"  | sed -e's/-p//');  check_v "$1" "$positionangle";  shift;;
+
+        # Output parameters
+        -k|--keeptmp)     keeptmp=1; shift;;
+        -k*|--keeptmp=*)  on_off_option_error --keeptmp -k;;
+        -t|--tmpdir)      tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
+        -t=*|--tmpdir=*)  tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
+        -t*)              tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
+        -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
+        -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
+        -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
+
+        # Non-operating options.
+        -q|--quiet)       quiet="--quiet"; shift;;
+        -q*|--quiet=*)    on_off_option_error --quiet -q;;
+        -?|--help)        print_help; exit 0;;
+        -'?'*|--help=*)   on_off_option_error --help -?;;
+        -V|--version)     print_version; exit 0;;
+        -V*|--version=*)  on_off_option_error --version -V;;
+        --cite)           astfits --cite; exit 0;;
+        --cite=*)         on_off_option_error --cite;;
+
+        # Unrecognized option:
+        -*) echo "$scriptname: unknown option '$1'"; exit 1;;
+
+        # Not an option (not starting with a `-'): assumed to be input FITS
+        # file name.
+        *) inputs="$1 $inputs"; shift;;
+    esac
+
+done
+
+
+
+
+
+# Basic sanity checks
+# ===================
+
+# If an input image is not given at all.
+if [ x"$inputs" = x ]; then
+    echo "$scriptname: no input FITS image files."
+    echo "Run with '--help' for more information on how to run."
+    exit 1
+fi
+
+# If a core image (--core) is not given at all.
+if [ x"$core" = x ]; then
+    echo "$scriptname: no core image provided."
+    echo "A core image of the PSF to be specified with --stampwidth or -w."
+    exit 1
+fi
+
+# If a radius (--radius) is not given at all.
+if [ x"$radius" = x ]; then
+    echo "$scriptname: no radius (in pixels) provided."
+    echo "A radius value (in pixels) has to be specified with --radius or -r."
+    exit 1
+fi
+
+# If a fluxfactor (--fluxfactor) is not given at all.
+if [ x"$fluxfactor" = x ]; then
+    echo "$scriptname: no flux factor provided."
+    echo "A flux factor has to be specified with --fluxfactor or -f."
+    exit 1
+fi
+
+
+
+
+# Define a temporal directory and the final output file
+# -----------------------------------------------------
+#
+# Construct the temporary directory. If the user does not specify any
+# directory, then a default one with the base name of the input image will
+# be constructed.  If the user set the directory, then make it. This
+# directory will be deleted at the end of the script if the user does not
+# want to keep it (with the `--keeptmp' option).
+
+# The final output PSF image is also defined here if the user does not
+# provide an explicit name. If the user has defined a specific path/name
+# for the output, it will be used for saving the output file.
+bname_outer=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
+bname_core=$(basename $core | sed 's/\.fits/ /' | awk '{print $1}')
+if [ x$tmpdir = x ]; then \
+  tmpdir=$(pwd)/"$bname_outer"_psf-junction
+fi
+
+if [ -d $tmpdir ]; then
+  junk=1
+else
+  mkdir -p $tmpdir
+fi
+
+# Output
+if [ x$output = x ]; then
+  output="$bname_outer"_"$bname_core"_junction.fits
+fi
+
+
+
+
+
+# Get the center of the outer PSF
+# -------------------------------
+#
+# The center of the PSF is assumed to be at the center of the PSF image.
+# So, the center of the PSF is computed here from the size of the PSF image
+# along the two axis (in pixels).
+xaxis=$(astfits $inputs --hdu=$hdu \
+                | awk '/^NAXIS1/{print $3}')
+yaxis=$(astfits $inputs --hdu=$hdu \
+	        | awk '/^NAXIS2/{print $3}')
+
+# To obtain the center of the PSF (in pixels), just divide by 2 the size of
+# the PSF image.
+xcenter=$(astarithmetic $xaxis 2 / --quiet)
+ycenter=$(astarithmetic $yaxis 2 / --quiet)
+
+
+
+
+
+# Get the center of the core PSF
+# ------------------------------
+#
+# The center of the core PSF is assumed to be at the center of the PSF
+# image.  So, the center of the PSF is computed here from the size of the
+# PSF image along the two axis (in pixels).
+xpsfaxis=$(astfits $core --hdu=$corehdu \
+                   | awk '/^NAXIS1/{print $3}')
+ypsfaxis=$(astfits $core --hdu=$corehdu \
+	           | awk '/^NAXIS2/{print $3}')
+
+# To obtain the center of the PSF (in pixels), just divide by 2 the size of
+# the PSF image.
+xpsfcenter=$(astarithmetic $xpsfaxis 2 / --quiet)
+ypsfcenter=$(astarithmetic $ypsfaxis 2 / --quiet)
+
+
+
+
+
+# Translate the PSF image
+# -----------------------
+#
+# In order to allocate the PSF into the center coordinates provided by the
+# user, it is necessary to compute the appropiate offsets along the X and Y
+# axis. After that, the PSF image is warped using that offsets. Note that
+# in order to account for a 1 pixel offset, it is necessary to subtract the
+# value 1.
+xdiff=$(astarithmetic $xcenter $xpsfcenter - 1.0 - --quiet)
+ydiff=$(astarithmetic $ycenter $ypsfcenter - 1.0 - --quiet)
+
+coretranslated=$tmpdir/"$bname_core"_translated.fits
+astwarp $core --translate=$xdiff,$ydiff \
+             --output=$coretranslated $quiet
+
+
+
+
+
+# Crop the PSF image
+# ------------------
+#
+# Once the PSF has been situated appropiately into the right position, it
+# is necessary to crop it with a sub-pixel precision as well as with the
+# same size than the original input image. Otherwise the subtraction of the
+# PSF or scattered light field model would not be possible. Here, this
+# cropping is done.
+xrange=$(echo "$xdiff $xaxis $xcenter" \
+              | awk '{if($1<0) \
+                       {i=int($1); \
+                        d=-1*i+1; \
+                        min=d; max=$2+d-1;} \
+                      else {min=1; max=$2} \
+                      i=int($3); {min=min+1; max=max+1}
+                      printf "%d:%d", min, max}')
+
+yrange=$(echo "$ydiff $yaxis $ycenter" \
+              | awk '{if($1<0) \
+                       {i=int($1); \
+                        d=-1*i+1; \
+                        min=d; max=$2+d-1;} \
+                      else {min=1; max=$2} \
+                      i=int($3); {min=min+1; max=max+1}
+                      printf "%d:%d", min, max}')
+
+# Once the necessary crop parameters have been computed, use the option
+# '--section' to get the PSF image with the correct size and the center
+# situated where the user has specified.
+corecropped=$tmpdir/"$bname_core"_cropped.fits
+astcrop $coretranslated --mode=img --section=$xrange,$yrange \
+                        --output=$corecropped $quiet
+
+
+
+
+
+# Flux scaling, zero in the outer part
+# ------------------------------------
+#
+# In order to put the core at the desired level of flux than the outer
+# part, it is necessary to multiply this core by the factor specified by
+# the user with the option --fluxfactor. Here, the cropped image of the
+# core is scaled by using that factor. In addition to that, the nan pixels
+# that came from the cropping are set to zero. This is necessary for the
+# final addition of the two different PSF images.
+corefluxscaled=$tmpdir/"$bname_core"_fluxscaled.fits
+astarithmetic $corecropped --hdu=1 set-i \
+              i i isblank 0 where set-z \
+              z $fluxfactor x --output=$corefluxscaled $quiet
+
+
+
+
+# Creating a mask image
+# ---------------------
+#
+# In order to join the two images properly, it is necessary to consider a
+# general mask. The mask is a circular flat (5) profile with the ones in
+# the center and the zeros in the outer part. It will be used for masking
+# the outer part of the core image, and the core part of the outer image.
+# As a consequence, the final image will be the sum of these two masked
+# images.
+maskimage=$tmpdir/mask-image.fits
+echo "1 $xcenter $ycenter 5 $radius 1 $positionangle $axisratio 1 1" \
+      | astmkprof --background=$corefluxscaled \
+		  --mode=img \
+                  --clearcanvas \
+                  --mforflatpix \
+                  --output=$maskimage $quiet
+
+
+
+
+
+# Masking both images
+# -------------------
+#
+# Once both images are centered, flux scaled, and have the same dimensions,
+# it is necessary to mask them properly.  The masking process consist in
+# putting to zero the core of the outer image, and to put zeros in the
+# outer part of the core image: 0=zeros, W = Wings, C = Core.
+
+# - Outer image:
+#   W W W W W W
+#   W W 0 0 W W
+#   W W 0 0 W W
+#   W W W W W W
+#
+# - Core image:
+#   0 0 0 0 0 0
+#   0 0 C C 0 0
+#   0 0 C C 0 0
+#   0 0 0 0 0 0
+
+outer_masked=$tmpdir/"$bname_outer"_masked.fits
+astarithmetic $inputs --hdu=1 set-psfouter \
+              $maskimage --hdu=1 set-mask \
+              psfouter mask 1 eq 0 where --output=$outer_masked $quiet
+
+
+core_masked=$tmpdir/"$bname_core"_masked.fits
+astarithmetic $corefluxscaled --hdu=1 set-psfinner \
+              $maskimage --hdu=1 set-mask \
+              psfinner mask 1 ne 0 where --output=$core_masked $quiet
+
+
+
+
+
+# Masking both images
+# -------------------
+#
+# Sum the two images to obtain the final output
+astarithmetic $outer_masked --hdu=1 \
+              $core_masked --hdu=1 \
+              2 sum --output=$output $quiet
+
+
+
+
+
+# Remove temporary files
+# ----------------------
+#
+# If the user does not specify to keep the temporal files with the option
+# `--keeptmp', then remove the whole directory.
+if [ $keeptmp = 0 ]; then
+    rm -r $tmpdir
+fi
