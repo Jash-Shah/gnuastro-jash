@@ -285,7 +285,7 @@ fi
 bname_outer=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 bname_core=$(basename $core | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_outer"_psf-junction
+  tmpdir=$(pwd)/"$bname_outer"_psfcreatejunction
 fi
 
 if [ -d $tmpdir ]; then
@@ -296,7 +296,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output="$bname_outer"_"$bname_core"_junction.fits
+  output="$bname_outer"_"$bname_core"_psfcreatejunction.fits
 fi
 
 

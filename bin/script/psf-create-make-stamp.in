@@ -47,7 +47,6 @@ keeptmp=0
 maskhdu=1
 output=""
 tmpdir=""
-mode="img"
 corewidth=""
 normradii=""
 sigmaclip=""
@@ -308,12 +307,17 @@ else
     fi
 fi
 
+# If mode (--mode) is not given at all.
+if [ x"$mode" = x ]; then
+    echo "$scriptname: no mode provided."
+    echo "$scriptname: value to '--mode' ('-O') should be provided."
+    exit 1
 # Make sure the value to '--mode' is either 'wcs' or 'img'.
-if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+elif [ $mode = "wcs" ] || [ $mode = "img" ]; then
     junk=1
 else
-    echo "$scriptname: wrong value to --mode (-m) provided."
-    echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
+    echo "$scriptname: wrong value to --mode (-O) provided."
+    echo "$scriptname: value to '--mode' ('-O') should be 'wcs' or 'img'"
     exit 1
 fi
 
@@ -356,7 +360,7 @@ objectid="$xcoord"_"$ycoord"
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_stamps
+  tmpdir=$(pwd)/"$bname_prefix"_psfcreatemakestamp
 fi
 
 if [ -d $tmpdir ]; then
@@ -367,7 +371,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output=$tmpdir/stamp-$objectid.fits
+  output="$bname_prefix"_psfcreatemakestamp_$objectid.fits
 fi
 
 

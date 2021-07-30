@@ -42,7 +42,6 @@ center=""
 keeptmp=0
 output=""
 tmpdir=""
-mode="img"
 fluxfactor=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -86,7 +85,7 @@ $scriptname options:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -p, --psf=STR           PSF FITS image.
   -P, --psfhdu=STR        HDU/extension of the PSF image.
-  -m, --mode=STR          Coordinates mode ('wcs' or 'img').
+  -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
   -f, --fluxfactor=FLT    Factor by which the PSF is multiplied.
 
@@ -271,12 +270,17 @@ else
     fi
 fi
 
+# If mode (--mode) is not given at all.
+if [ x"$mode" = x ]; then
+    echo "$scriptname: no mode provided."
+    echo "$scriptname: value to '--mode' ('-O') should be provided."
+    exit 1
 # Make sure the value to '--mode' is either 'wcs' or 'img'.
-if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+elif [ $mode = "wcs" ] || [ $mode = "img" ]; then
     junk=1
 else
-    echo "$scriptname: wrong value to --mode (-m) provided."
-    echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
+    echo "$scriptname: wrong value to --mode (-O) provided."
+    echo "$scriptname: value to '--mode' ('-O') should be 'wcs' or 'img'"
     exit 1
 fi
 
@@ -315,7 +319,7 @@ objectid="$xcoord"_"$ycoord"
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_psf_stamps
+  tmpdir=$(pwd)/"$bname_prefix"_psfmodelscatteredlight
 fi
 
 if [ -d $tmpdir ]; then
@@ -326,7 +330,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output=$tmpdir/psf-stamp-$objectid.fits
+  output="$bname_prefix"_psfmodelscatteredlight_$objectid.fits
 fi
 
 

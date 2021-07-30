@@ -42,7 +42,6 @@ keeptmp=0
 maskhdu=1
 output=""
 tmpdir=""
-mode="img"
 corewidth=""
 normradii=""
 sigmaclip=""
@@ -93,7 +92,7 @@ $scriptname options:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -p, --psf=STR           PSF fits file.
   -P, --psfhdu=STR        HDU/extension of all input FITS files.
-  -m, --mode=STR          Coordinates mode ('wcs' or 'img').
+  -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
   -W, --stampwidth=INT    Width of the stamp in pixels.
   -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
@@ -293,13 +292,6 @@ if [ x"$psf" = x ]; then
     exit 1
 fi
 
-# If a stamp width (--stampwidth) is not given at all.
-if [ x"$stampwidth" = x ]; then
-    echo "$scriptname: no stamp width provided."
-    echo "A stamp size (width) has to be specified with --stampwidth or -w."
-    exit 1
-fi
-
 # If center coordinates (--center) is not given at all.
 if [ x"$center" = x ]; then
     echo "$scriptname: no center coordinates provided."
@@ -326,12 +318,17 @@ else
     fi
 fi
 
+# If mode (--mode) is not given at all.
+if [ x"$mode" = x ]; then
+    echo "$scriptname: no mode provided."
+    echo "$scriptname: value to '--mode' ('-O') should be provided."
+    exit 1
 # Make sure the value to '--mode' is either 'wcs' or 'img'.
-if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+elif [ $mode = "wcs" ] || [ $mode = "img" ]; then
     junk=1
 else
-    echo "$scriptname: wrong value to --mode (-m) provided."
-    echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
+    echo "$scriptname: wrong value to --mode (-O) provided."
+    echo "$scriptname: value to '--mode' ('-O') should be 'wcs' or 'img'"
     exit 1
 fi
 
@@ -374,7 +371,7 @@ objectid="$xcoord"_"$ycoord"
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_fluxfactors
+  tmpdir=$(pwd)/"$bname_prefix"_psfmodelfluxfactor
 fi
 
 if [ -d $tmpdir ]; then
@@ -385,7 +382,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output=$tmpdir/fluxfactor-$objectid.txt
+  output="$bname_prefix"_psfmodelfluxfactor_$objectid.txt
 fi
 
 
@@ -408,6 +405,21 @@ if [ $mode = wcs ]; then
 else
   xcenter=$xcoord
   ycenter=$ycoord
+fi
+
+
+
+
+
+# Compute the width of the stamp
+# ------------------------------
+#
+# If the width of the stamp is specified by the user, use that size.
+# Otherwise, make the stamp width of the same size than two times the
+# maximum radius for computing the flux factor. This is the maximum radius
+# that is needed for computing the flux value.
+if [ x"$stampwidth" = x ]; then
+    stampwidth=$(astarithmetic $normradiusmax 2 x 1 + --quiet)
 fi
 
 
@@ -484,9 +496,9 @@ fi
 # Compute the radial profiles
 # ---------------------------
 #
-# Generate the radial profile of the stamp, since it has been already
-# centered on the center of the object, it is not necessary to give the
-# center coordinates. If the user specifies a maximum radius, use it.
+# Generate the radial profile of the stamp and the PSF, since it has been
+# already centered on the center of the object, it is not necessary to give
+# the center coordinates. If the user specifies a maximum radius, use it.
 radialprofile=$tmpdir/rprofile-$objectid.fits
 psfradialprofile=$tmpdir/rprofile-psf-$objectid.fits
 if [ x"$rmax" != x ]; then
