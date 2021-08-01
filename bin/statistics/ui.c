@@ -738,6 +738,7 @@ ui_make_sorted_if_necessary(struct statisticsparams *p)
       case UI_KEY_QUANTILE:
       case UI_KEY_QUANTFUNC:
       case UI_KEY_SIGCLIPSTD:
+      case UI_KEY_QUANTOFMEAN:
       case UI_KEY_SIGCLIPMEAN:
       case UI_KEY_SIGCLIPNUMBER:
       case UI_KEY_SIGCLIPMEDIAN:

@@ -62,6 +62,11 @@ See the end of the file for license conditions.
      pipes (standard input). This is not for inputs to the script (which
      should always be files), but for the script's internal pipes.
 
+  Statistics:
+   --quantofmean: the quantile of the mean of the input dataset. this is a
+     very good statistic to measure skewness in a distribution, see the
+     description of this option in the book for more.
+
   Library:
    - Arithmetic macros:
      - GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE

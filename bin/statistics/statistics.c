@@ -120,8 +120,9 @@ statistics_print_one_row(struct statisticsparams *p)
         sum = sum ? sum : gal_statistics_sum(p->input);              break;
       case UI_KEY_MEDIAN:
         med = med ? med : gal_statistics_median(p->sorted, 0); break;
-      case UI_KEY_MEAN:
       case UI_KEY_STD:
+      case UI_KEY_MEAN:
+      case UI_KEY_QUANTOFMEAN:
         meanstd = meanstd ? meanstd : gal_statistics_mean_std(p->input);
         break;
       case UI_KEY_MODE:
@@ -196,18 +197,34 @@ statistics_print_one_row(struct statisticsparams *p)
 
         /* Not previously calculated. */
         case UI_KEY_QUANTILE:
+          mustfree=1;
           arg = statistics_read_check_args(p);
           out = gal_statistics_quantile(p->sorted, arg, 0);
           break;
 
         case UI_KEY_QUANTFUNC:
+          mustfree=1;
           arg = statistics_read_check_args(p);
           tmpv = gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &dsize,
                                 NULL, 1, -1, 1, NULL, NULL, NULL);
           *((double *)(tmpv->array)) = arg;
           tmpv = gal_data_copy_to_new_type_free(tmpv, p->input->type);
           out = gal_statistics_quantile_function(p->sorted, tmpv, 0);
+          gal_data_free(tmpv);
           break;
+
+        case UI_KEY_QUANTOFMEAN:
+          mustfree=1;
+          tmpv=statistics_pull_out_element(meanstd, 0);
+          out = gal_statistics_quantile_function(p->sorted, tmpv, 0);
+          gal_data_free(tmpv);
+          break;
+
+        /* The option isn't recognized. */
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s so we "
+                "can address the problem. Operation code %d not recognized",
+                __func__, PACKAGE_BUGREPORT, tmp->v);
         }
 
       /* Print the number. Note that we don't want any extra white space

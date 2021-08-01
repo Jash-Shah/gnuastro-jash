@@ -16266,6 +16266,21 @@ Formally it is known as the ``Quantile function''.
 
 Since the dataset is not continuous this function will find the nearest element of the dataset and use its position to estimate the quantile function.
 
+@item --quantofmean
+@cindex Quantile of the mean
+Print the quantile of the mean in the dataset.
+This is a very good measure of detecting skewness or outliers.
+The concept is used by programs like NoiseChisel to identify the presence of signal in a tile of the image (because signal in noise causes skewness).
+
+For example, take this simple array: @code{1 2 20 4 5 6 3}.
+The mean is @code{5.85}.
+The nearest element to this mean is @code{6} and the quantile of @code{6} in this distribution is 0.8333.
+Here is how we got to this: in the sorted dataset (@code{1 2 3 4 5 6 20}), @code{6} is the 5-th element (counting from zero, since a quantile of zero corresponds to the minimum, by definition) and the maximum is the 6-th element (again, counting from zero).
+So the quantile of the mean in this case is @mymath{5/6=0.8333}.
+
+In the example above, if we had @code{7} instead of @code{20} (which was an outlier), then the mean would be @code{4} and the quantile of the mean would be 0.5 (which by definition, is the quantile of the median), showing no outliers.
+As the number of elements increases, the mean itself is less affected by a small number of outliers, but skewness can be nicely identified by the quantile of the mean.
+
 @item -O
 @itemx --mode
 Print the mode of all used elements.

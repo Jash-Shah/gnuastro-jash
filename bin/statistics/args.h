@@ -252,6 +252,20 @@ struct argp_option program_options[] =
       ui_add_to_single_value
     },
     {
+      "quantofmean",
+      UI_KEY_QUANTOFMEAN,
+      0,
+      0,
+      "Quantile of the mean.",
+      UI_GROUP_SINGLE_VALUE,
+      &p->singlevalue,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      ui_add_to_single_value
+    },
+    {
       "mode",
       UI_KEY_MODE,
       0,
