@@ -23699,34 +23699,31 @@ out = gal_type_to_string(&string, GAL_TYPE_STRING, 1);
 @end deftypefun
 
 @deftypefun int gal_type_from_string (void @code{**out}, char @code{*string}, uint8_t @code{type})
-Read a string as a given data type and put a pointer to it in
-@code{*out}. When @code{*out!=NULL}, then it is assumed to be already
-allocated and the value will be simply put there. If @code{*out==NULL},
-then space will be allocated for the given type and the string will be read
-into that type.
+Read a string as a given data type and put a pointer to it in @code{*out}.
+When @code{*out!=NULL}, then it is assumed to be already allocated and the value will be simply put there.
+If @code{*out==NULL}, then space will be allocated for the given type and the string will be read into that type.
 
-Note that when we are dealing with a string type, @code{*out} should be
-interpreted as @code{char **} (one element in an array of pointers to
-different strings). In other words, @code{out} should be @code{char ***}.
+Note that when we are dealing with a string type, @code{*out} should be interpreted as @code{char **} (one element in an array of pointers to different strings).
+In other words, @code{out} should be @code{char ***}.
 
-This function can be used to fill in arrays of numbers from strings (in an
-already allocated data structure), or add nodes to a linked list (if the
-type is a list type). For an array, you have to pass the pointer to the
-@code{i}th element where you want the value to be stored, for example
-@code{&(array[i])}.
+This function can be used to fill in arrays of numbers from strings (in an already allocated data structure), or add nodes to a linked list (if the type is a list type).
+For an array, you have to pass the pointer to the @code{i}th element where you want the value to be stored, for example @code{&(array[i])}.
 
-If the string was successfully parsed to the requested type, this function
-will return a @code{0} (zero), otherwise it will return @code{1}
-(one). This output format will help you check the status of the conversion
-in a code like the example below:
+If the string was successfully parsed to the requested type, this function will return a @code{0} (zero), otherwise it will return @code{1} (one).
+This output format will help you check the status of the conversion in a code like the example below where we will try reading a string as a single precision floating point number.
 
 @example
-if( gal_type_from_string(&out, string, GAL_TYPE_FLOAT32) )
+float out;
+void *outptr=&out;
+if( gal_type_from_string(&outptr, string, GAL_TYPE_FLOAT32) )
   @{
-    fprintf(stderr, "%s couldn't be read as float32.\n", string);
+    fprintf(stderr, "%s couldn't be read as float32\n", string);
     exit(EXIT_FAILURE);
   @}
 @end example
+
+@noindent
+When you need to read many numbers into an array, @code{out} would be an array, and you can simply increment @code{outptr=out+i} (where you increment @code{i}).
 @end deftypefun
 
 @deftypefun {void *} gal_type_string_to_number (char @code{*string}, uint8_t @code{*type})

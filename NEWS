@@ -126,6 +126,7 @@ See the end of the file for license conditions.
               even when '--quiet' is called, found by Raúl Infante-Sainz.
   bug #60989: MakeProfiles deletes input fits catalog when no output name
               specified.
+  bug #60999: No content check when plain-text table doesn't have metadata.
 
 
 

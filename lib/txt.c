@@ -315,6 +315,8 @@ static size_t
 txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
                         int inplace)
 {
+  double tmpd;
+  void *tmpdptr=&tmpd;
   gal_data_t *col, *prev, *tmp;
   size_t n=0, maxcnum=0, numtokens;
   char *line, *token, *end, *aline=NULL;
@@ -392,7 +394,6 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
             {
               token=strtok_r(n==1?line:NULL, GAL_TXT_DELIMITERS, &line);
               if(token==NULL) break;
-              /* printf(" col %zu: =%s=\n", i, token); */
             }
         }
       else
@@ -410,6 +411,15 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
              information). */
           if( *datall==NULL || format==TXT_FORMAT_TABLE )
             {
+              /* Make sure the token is actually a number and print a good
+                 error message when the input isn't actually a number but a
+                 string (like uncommented metadata).*/
+              if( gal_type_from_string( &tmpdptr, token, GAL_TYPE_FLOAT64) )
+                error(EXIT_FAILURE, 0, "'%s' couldn't be read as a number "
+                      "(element %zu of first uncommented line)", token, n);
+
+              /* Allocate this column's dataset and set it's 'status' to
+                 the column number that it corresponds to. */
               gal_list_data_add_alloc(datall, NULL, GAL_TYPE_FLOAT64, 0,
                                       NULL, NULL, 0, -1, 1, NULL, NULL, NULL);
               (*datall)->status=n;
@@ -461,7 +471,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
               gal_data_free(col);
               col=tmp;
             }
-          else                /* Column has data.                          */
+          else /* Column has data. */
             {
               prev=col;
               col=col->next;
