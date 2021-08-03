@@ -127,6 +127,7 @@ See the end of the file for license conditions.
   bug #60989: MakeProfiles deletes input fits catalog when no output name
               specified.
   bug #60999: No content check when plain-text table doesn't have metadata.
+  bug #61007: Crash due to CFITSIO 4.0.0 version format change.
 
 
 

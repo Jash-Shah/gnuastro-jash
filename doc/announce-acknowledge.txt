@@ -2,12 +2,14 @@ Alphabetically ordered list to acknowledge in the next release.
 
 Fernando Buitrago
 Mark Calabretta
+Zohreh Ghaffari
 Leslie Hunt
 Raúl Infante-Sainz
 Matthias Kluge
 Juan Miro
 Juan Molina Tobar
 Zahra Sharbaf
+Vincenzo Testa
 Ignacio Trujillo
 Aaron Watkins
 
