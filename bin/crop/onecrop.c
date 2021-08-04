@@ -524,15 +524,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
   char **strarr, cpname[FLEN_KEYWORD];
   gal_data_t *rkey=gal_data_array_calloc(1);
   size_t i, ndim=crp->p->imgs->ndim, totsize;
-  char *cp, *cpf, blankrec[80], titlerec[80];
   struct inputimgs *img=&crp->p->imgs[crp->in_ind];
-
-
-  /* Set the last element of the blank array. */
-  cpf=blankrec+79;
-  *cpf='\0';
-  titlerec[79]='\0';
-  cp=blankrec; do *cp=' '; while(++cp<cpf);
 
 
   /* Set the size of the output, in WCS mode, noblank==0. */
@@ -626,12 +618,10 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
     }
 
 
-  /* Add the Crop information. */
-  sprintf(titlerec, "%sCrop information", GAL_FITS_KEY_TITLE_START);
-  for(i=strlen(titlerec);i<79;++i)
-    titlerec[i]=' ';
-  if(fits_write_record(ofp, titlerec, &status))
-    gal_fits_io_error(status, NULL);
+  /* Add the Crop information title, the actual keywords will be written
+     later. The keywords will contain the pixels of the is cropped region
+     from input image(s): */
+  gal_fits_key_write_title_in_ptr("Crop information", ofp);
 }
 
 
