@@ -14,6 +14,7 @@
 #   Raul Infante-Sainz <infantesainz@gmail.com>
 # Contributing author(s):
 #   Carlos Morales-Socorro <cmorsoc@gmail.com>
+#   Sepideh Eskandarlou <sepideh.eskandarlou@gmail.com>
 # Copyright (C) 2021, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -40,7 +41,6 @@ set -e
 # Default option values (can be changed with options on the command-line).
 hdu=1
 mask=""
-rmax=""
 quiet=""
 center=""
 keeptmp=0
@@ -101,7 +101,8 @@ $scriptname options:
   -m, --mask=STR          Segmentation image (sky = 0).
   -M, --maskhdu=STR       HDU/extension of the segmentation image.
   -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
-  -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
+  -S, --mask=STR          Segmentation image (sky = 0).
+  -s, --maskhdu=STR       HDU/extension of the segmentation image.
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
   -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
@@ -226,9 +227,6 @@ do
         -N|--normop)         normop="$2";                               check_v "$1" "$normop";  shift;shift;;
         -N=*|--normop=*)     normop="${1#*=}";                          check_v "$1" "$normop";  shift;;
         -N*)                 normop=$(echo "$1"  | sed -e's/-N//');     check_v "$1" "$normop";  shift;;
-        -R|--rmax)           rmax="$2";                                 check_v "$1" "$rmax";  shift;shift;;
-        -R=*|--rmax=*)       rmax="${1#*=}";                            check_v "$1" "$rmax";  shift;;
-        -R*)                 rmax=$(echo "$1"  | sed -e's/-R//');       check_v "$1" "$rmax";  shift;;
         -s|--sigmaclip)      sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*)  sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                 sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
@@ -489,8 +487,9 @@ if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
     # ring for the normalization (to not wast CPU time). If the user
     # specifies sigma clip parameters, use them.
     radialprofile=$tmpdir/rprofile-$objectid.fits
-    if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
-    else                       maximumradius="--rmax=$normradiusmax";
+    maxr=$(echo "$normradiusmax" | awk '{print $1+1}')
+    if [ x"$maxradius" != x ]; then maximumradius="--rmax=$rmax"
+    else                       maximumradius="--rmax=$maxradius";
     fi
     if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
     else                           finalsigmaclip="--sigmaclip=$sigmaclip";
