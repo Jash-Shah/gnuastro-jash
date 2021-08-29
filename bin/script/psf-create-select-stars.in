@@ -53,10 +53,9 @@ bdir=""
 show=""
 input=""
 quiet=""
+catalog=""
 segmented=""
 keepbuild=""
-extscript=""
-matchaperture=""
 minaxisratio=0.9
 version=@VERSION@
 mindistdeg=0.015277778
@@ -90,7 +89,7 @@ This script builds a catalogue, with column names "columns", of reference
 stars from an astquery "dataset", with a "field" magnitude value between "min"
 and "max" specified as a chunk of awk code.
 Additionaly, if a segmented file is provided, only stars which match clumps
-within a given "matchaperture", in pixels, and with an AXIS_RATIO >
+within a given "matchaperturedeg", in pixels, and with an AXIS_RATIO >
 "minaxisrario" are selected.
 
 $scriptname options:
@@ -103,12 +102,14 @@ $scriptname options:
                           ("phot_rp_mean_mag", etc.).
   -m, --min=FLT           Minimum value of field.
   -M, --max=FLT           Maximum value of field.
-  -a, --matchaperture=FLT Aperture, in pixels, to match catalogue ra and
+  -a, --matchaperturedeg=FLT Aperture, in pixels, to match catalogue ra and
                           dec coordinates with clumps' ra and dec.
   -Q, --minaxisratio=FLT  Minimum axis ratio of a clump to be accepted.
                           Default to 0.9.
   -D, --mindistdeg=FLT    Minimum distance to more brilliant neighbour stars
                           to be accepted, in degree.
+  -c, --catalog=STR       Catalog of stras contain of ra, desc, magnitude,
+                          parrallax and parrallax_error.
 
  Output:
   -k, --keepbuild         Keep the build directory.
@@ -221,6 +222,9 @@ do
        -d|--dataset)           dataset="$2";                                 check_v "$1" "$dataset";  shift;shift;;
        -d=*|--dataset=*)       dataset="${1#*=}";                            check_v "$1" "$dataset";  shift;;
        -d*)                    dataset=$(echo "$1" | sed -e's/-d//');        check_v "$1" "$dataset";  shift;;
+       -c|--catalog)           catalog="$2";                                 check_v "$1" "$catalog";  shift;shift;;
+       -c=*|--catalog=*)       catalog="${1#*=}";                            check_v "$1" "$catalog";  shift;;
+       -c*)                    catalog=$(echo "$1" | sed -e's/-c//');        check_v "$1" "$catalog";  shift;;
        -f|--field)             field="$2";                                   check_v "$1" "$field";  shift;shift;;
        -f=*|--field=*)         field="${1#*=}";                              check_v "$1" "$field";  shift;;
        -f*)                    field=$(echo "$1" | sed -e's/-f//');          check_v "$1" "$field";  shift;;
@@ -230,11 +234,11 @@ do
        -M|--max)               max="$2";                                     check_v "$1" "$max";  shift;shift;;
        -M=*|--max=*)           max="${1#*=}";                                check_v "$1" "$max";  shift;;
        -M*)                    max=$(echo "$1" | sed -e's/-M//');            check_v "$1" "$max";  shift;;
-       -a|--matchaperture)     matchaperture="$2";                           check_v "$1" "$matchaperture";shift;shift;;
-       -a=*|--matchaperture=*) matchaperture="${1#*=}";                      check_v "$1" "$matchaperture";  shift;;
-       -a*)                    matchaperture=$(echo "$1" | sed -e's/-a//');  check_v "$1" "$matchaperture";  shift;;
+       -a|--matchaperturedeg)  matchaperturedeg="$2";                        check_v "$1" "$matchaperturedeg";shift;shift;;
+       -a=*|--matchaperturedeg=*) matchaperturedeg="${1#*=}";                check_v "$1" "$matchaperturedeg";  shift;;
+       -a*)                    matchaperturedeg=$(echo "$1" | sed -e's/-a//');  check_v "$1" "$matchaperturedeg";  shift;;
        -Q|--minaxisratio)      minaxisratio="$2";                            check_v "$1" "$minaxisratio";  shift;shift;;
-       -Q=*|--minaxisratio=*)  minaxisrario="${1#*=}";                       check_v "$1" "$minaxisratio";  shift;;
+       -Q=*|--minaxisratio=*)  minaxisratio="${1#*=}";                       check_v "$1" "$minaxisratio";  shift;;
        -Q*)                    minaxisratio=$(echo "$1" | sed -e's/-Q//');   check_v "$1" "$minaxisratio";  shift;;
        -D|--mindistdeg)        mindistdeg="$2";                              check_v "$1" "$mindistdeg";  shift;shift;;
        -D=*|--mindistdeg=*)    mindistdeg="${1#*=}";                         check_v "$1" "$mindistdeg";  shift;;
@@ -266,7 +270,7 @@ do
 
        # Not an option (not starting with a '-'):
        # it's assumed to be detected.fits or segmented.fits
-       *) input="$1"; shift;;
+       *) input="$1 $input"; shift;;
    esac
 done
 
@@ -279,16 +283,17 @@ done
 #
 # If the input image has not been given at all.
 if [ x"$input" = x ]; then
-	echo "No input image file specified"
+    echo " $scriptname: no input image file specified."
+    echo "Run with '--help' for more information on how to run."
 	exit 1
 fi
 
-# Check that if 'matchaperture' is not specified as input,
+# Check that if 'matchaperturedeg' is not specified as input,
 # Set its value to'3.0/3600'
 arcsec_per_pixel=$(astfits $input --hdu=$hdu --pixelscale -q \
 		       | awk '{print $1*3600}')
-if [ x"$matchaperture" = x ]; then
-   matchaperturedeg=$(echo $matchaperture $arcsec_per_pixel \
+if [ x"$matchaperturedeg" = x ]; then
+   matchaperturedeg=$(echo $matchaperturedeg $arcsec_per_pixel \
                            | awk '{print $1*$2/3600}')
 fi
 
@@ -310,12 +315,6 @@ fi
 
 
 
-
-
-
-
-
-
 # Make a directory for output files.
 #-----------------------------------
 #
@@ -332,18 +331,78 @@ fi
 
 
 
-# Download the catalog.
-#----------------------
+# Catalog of stars
+#-----------------
 #
-# Downdowd catalouge of stars from Gaia with use
-# of 'astquery'.
-query=$bdir/query.fits
-if [ -f $query ]; then
-    echo "External Cataloge already exists "
+# At first check that user have catalog of stars or no. If the user geive a
+# catalog to script at first with help of "--skycoverage" check the
+# catalog's minimum (maximum) ra and dec are smaller (larger) than the
+# image edge. If it is true with "asttable" just choose stars that have
+# magnitude between 0 to maximum of magitude. If it isn't stop script. If
+# user don't provide catalog with help of "--astquery" download the
+# catalog.
+if [ -f $catalog ]; then
+    # Find minimum value of image's ra.
+    minraimg=$(astfits $input --skycoverage | grep 'RA' | awk '{print $2}')
+
+    # Find minimum value of image's dec.
+    mindecimg=$(astfits $input --skycoverage | grep 'DEC' | awk '{print $2}')
+
+    # Find maximum value of image's ra.
+    maxraimg=$(astfits $input --skycoverage | grep 'RA' | awk '{print $3}')
+
+    # Find maximum value of image's dec.
+    maxdecimg=$(astfits $input --skycoverage | grep 'DEC' | awk '{print $3}')
+
+    # Find minimum value of catalog's ra.
+    minracatalog=$(asttable $catalog -cRA | aststatistics --minimum)
+
+    # Find minimum value of catalog's dec.
+    mindeccatalog=$(asttable $catalog -cDEC | aststatistics --minimum)
+
+    # Find maximum value of catalog's ra.
+    maxracatalog=$(asttable $catalog -cRA | aststatistics --maximum)
+
+    # Find maximum value of catalog's dec.
+    maxdeccatalog=$(asttable $catalog -cDEC | aststatistics --maximum)
+
+    # Check that catalog overlap the image or not.
+    check=$(echo $minraimg $minracatalog $mindecimg $mindeccatalog \
+                 $maxraimg $maxracatalog $maxdecimg $maxdeccatalog \
+                | awk '{print ($1 >= $2 && $3 >= $4 && $5 <= $6 && $7 <= $8)}')
+
+    # If catalog overlap the image, just select stars with magnitude
+    # between 0 to maximmum range that user choose.
+    if [ "$check" = 1 ]; then
+
+        # Make a file for output of 'asttable'.
+        query=$bdir/query.fits
+        if [ -f $query ]; then
+            echo "External Cataloge already exists "
+        else
+            # Select stars with magnitude between 0 to maximum.
+            asttable $catalog --range=$field,0:$max --sort=$field \
+                     --output=$query
+        fi
+    else
+        # If catalog doesn't overlap the image stop.
+        echo "Tha catalog is smaller than the image and don't overlap image."
+        exit 1
+    fi
+# If user doesn't provide catalog, with use of 'astquery' catalog of stars
+# with magnitude between 0 to max from gaia has been downloaded.
 else
-    astquery $dataset --output=$query --overlapwith=$input \
-  	     --hdu=$hdu --column=ra,dec,$field,parallax,parallax_error \
-	     --range=$field,0:$max --sort=$field $quiet
+    # Make a 'query.fits' for output of 'astquery'.
+    query=$bdir/query.fits
+    if [ -f $query ]; then
+        echo "External Cataloge already exists "
+    else
+        # Download catalog of stars with magnitude between 0 to max from
+        # Gaia with '--astquery'.
+        astquery $dataset --output=$query --overlapwith=$input \
+  	         --hdu=$hdu --column=ra,dec,$field,parallax,parallax_error \
+	         --range=$field,0:$max --sort=$field $quiet
+    fi
 fi
 
 
@@ -417,11 +476,14 @@ fi
 # minimumm distance and based on '--noblank' and 'where' remove
 # stars tha have distance larger than minimumm distance. Then
 # remove each circular stars that have more than 9 neighbors.
-lessneighbor=$bdir/less-than-9-stars.fits
-moreneighbor=$bdir/more-than-9-stars.fits
+lessneighbor=$bdir/less-than-9-stars.txt
+moreneighbor=$bdir/more-than-9-stars.txt
+echo "# Column 1: ra [deg,f64] Right ascension" >> $lessneighbor
+echo "# Column 2: dec [deg,f64] Declination" >> $lessneighbor
+echo "# Column 3: photo-g-mean-mag [mag,f64] Magnitude" >> $lessneighbor
 
 # Find ra and dec of each circul star.
-asttable $circular -cra,dec | while read r d; do
+asttable $circular -cra,dec -c$field | while read r d mag; do
 
    # Make a file for number of neighbourhood.
    numberneighbor=$bdir/"$r"th-star-neighbor.fits
@@ -431,18 +493,26 @@ asttable $circular -cra,dec | while read r d; do
 	    --colinfoinstdout \
 	    -c'arith ra dec '$r' '$d' distance-on-sphere \
                      set-i i i '$mindistdeg' gt nan where' \
-            --noblank=4
+            --noblank=4 \
             --output=$numberneighbor
 
    # Check number of neighborhod and remove each star that
    # has more than 9 neighbors.
    lof=$(cat $numberneighbor | wc -l)
    if [ $lof -le 9 ]; then
-       echo $r $d >> $lessneighbor
+       echo $r $d $mag >> $lessneighbor
    else
-       echo $r $d >> $moreneighbor
+       echo $r $d $mag >> $moreneighbor
    fi
 done
+
+
+
+
+
+# Output of selected circular stars with good parallax and
+# less than 9 neighbors in fits format.
+asttable $lessneighbor --output=$output
 
 
 
