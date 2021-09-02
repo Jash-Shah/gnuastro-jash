@@ -245,12 +245,11 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
 
 
       /* If 'typestr' was given, then check if this is a standard type. If
-         'typestr' wasn't specified, then the default double type code will
-         be used (see the variable definitions above). If the given type
-         isn't a standard type then ignore the line. Just note that if we
-         are dealing with the string type, we have to pull out the number
-         part first. If there is no number for a string type, then ignore
-         the line. */
+         'typestr' wasn't specified or couldn't be interpretted, then the
+         default double type code will be used (see the variable
+         definitions above). Just note that if we are dealing with the
+         string type, we have to pull out the number part first. If there
+         is no number for a string type, then ignore the line. */
       if(typestr && *typestr!='\0')
         {
           typestr=gal_txt_trim_space(typestr);
@@ -263,7 +262,8 @@ txt_info_from_comment(char *in_line, gal_data_t **datall, char *comm_start,
           else
             {
               type=gal_type_from_name(typestr);
-              if(type==GAL_TYPE_INVALID) return;
+              if(type==GAL_TYPE_INVALID)
+                type=GAL_TYPE_FLOAT64;
             }
         }
 

@@ -8629,6 +8629,7 @@ A column information comment is assumed to have the following format:
 Any sequence of characters between `@key{:}' and `@key{[}' will be interpreted as the column name (so it can contain anything except the `@key{[}' character).
 Anything between the `@key{]}' and the end of the line is defined as a comment.
 Within the brackets, anything before the first `@key{,}' is the units (physical units, for example km/s, or erg/s), anything before the second `@key{,}' is the short type identifier (see below, and @ref{Numeric data types}).
+If the type identifier isn't recorgnized, the default 64-bit floating point type will be used.
 
 Finally (still within the brackets), any non-white characters after the second `@key{,}' are interpreted as the blank value for that column (see @ref{Blank pixels}).
 The blank value can either be in the same type as the column (for example @code{-99} for a signed integer column), or any string (for example @code{NaN} in that same column).
@@ -8636,7 +8637,7 @@ In both cases, the values will be stored in memory as Gnuastro's fixed blank val
 For floating point types, Gnuastro's internal blank value is IEEE NaN (Not-a-Number).
 For signed integers, it is the smallest possible value and for unsigned integers its the largest possible value.
 
-When a formatting problem occurs (for example you have specified the wrong type code, see below), or the column was already given meta-data in a previous comment, or the column number is larger than the actual number of columns in the table (the non-commented or empty lines), then the comment information line will be ignored.
+When a formatting problem occurs, or when the column was already given meta-data in a previous comment, or when the column number is larger than the actual number of columns in the table (the non-commented or empty lines), then the comment information line will be ignored.
 
 When a comment information line can be used, the leading and trailing white space characters will be stripped from all of the elements.
 For example in this line:
@@ -8653,7 +8654,7 @@ Hence, in the example above, the @code{BLANK} field will be given the value of `
 Except for the column number (@code{N}), the rest of the fields are optional.
 Also, the column information comments don't have to be in order.
 In other words, the information for column @mymath{N+m} (@mymath{m>0}) can be given in a line before column @mymath{N}.
-Also, you don't have to specify information for all columns.
+Furthermore, you don't have to specify information for all columns.
 Those columns that don't have this information will be interpreted with the default settings (like the case above: values are double precision floating point, and the column has no name, unit, or comment).
 So these lines are all acceptable for any table (the first one, with nothing but the column number is redundant):
 
