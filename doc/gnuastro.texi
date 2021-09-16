@@ -27287,7 +27287,8 @@ So first we will review the constants for the recognized flags and operators and
 @deffnx Macro GAL_ARITHMETIC_FLAGS_BASIC
 @cindex Bitwise Or
 Bit-wise flags to pass onto @code{gal_arithmetic} (see below).
-To pass multiple flags, use the bitwise-or operator, for example @code{GAL_ARITHMETIC_FLAG_INPLACE | GAL_ARITHMETIC_FLAG_NUMOK}.
+To pass multiple flags, use the bitwise-or operator.
+For example if you pass @code{GAL_ARITHMETIC_FLAG_INPLACE | GAL_ARITHMETIC_FLAG_NUMOK}, then the operation will be done in-place (without allocating a new array), and a single number will also be acceptable (that will be applied to all the pixels).
 Each flag is described below:
 
 @table @code
@@ -27312,7 +27313,7 @@ For example by default the @code{mknoise-sigma} operator prints the random numbe
 By activating this bit flag to the call, that extra information is not printed on the command-line.
 
 @item GAL_ARITHMETIC_FLAGS_BASIC
-A wrapper for activating all three of @code{GAL_ARITHMETIC_FLAG_INPLACE}, @code{GAL_ARITHMETIC_FLAG_FREE} and @code{GAL_ARITHMETIC_FLAG_NUMOK}.
+A wrapper for activating the three ``basic'' operations that are commonly necessary together: @code{GAL_ARITHMETIC_FLAG_INPLACE}, @code{GAL_ARITHMETIC_FLAG_FREE} and @code{GAL_ARITHMETIC_FLAG_NUMOK}.
 @end table
 @end deffn
 
@@ -27578,29 +27579,58 @@ Just note that the list should be in the reverse of the desired dimensions.
 @end deffn
 
 @deftypefun {gal_data_t *} gal_arithmetic (int @code{operator}, size_t @code{numthreads}, int @code{flags}, ...)
-Do the arithmetic operation of @code{operator} on the given operands (the
-third argument and any further argument). If the operator can work on
-multiple threads, the number of threads can be specified with
-@code{numthreads}. When the operator is single-threaded, @code{numthreads}
-will be ignored. Special conditions can also be specified with the
-@code{flag} operator (a bit-flag with bits described above, for example
-@code{GAL_ARITHMETIC_FLAG_INPLACE} or @code{GAL_ARITHMETIC_FLAG_FREE}). The
-acceptable values for @code{operator} are also defined in the macros above.
+Apply the requested arithmetic operator on the operand(s).
+The @emph{operator} is identified through the macros above (that start with @code{GAL_ARITHMETIC_OP_}).
+The number of necessary operands (number of arguments to replace `@code{...}' in the declaration of this function, above) depends on the operator and is described under each operator, above.
+Each operand has a type of `@code{gal_data_t *}' (see last paragraph with example).
 
-@code{gal_arithmetic} is a multi-argument function (like C's
-@code{printf}). In other words, the number of necessary arguments is not
-fixed and depends on the value to @code{operator}. Here are a few examples
-showing this variability:
+If the operator can work on multiple threads, the number of threads can be specified with @code{numthreads}.
+When the operator is single-threaded, @code{numthreads} will be ignored.
+Special conditions can also be specified with the @code{flag} operator (a bit-flag with bits described above, for example @code{GAL_ARITHMETIC_FLAG_INPLACE} or @code{GAL_ARITHMETIC_FLAG_FREE}).
+
+@code{gal_arithmetic} is a multi-argument function (like C's @code{printf}).
+In other words, the number of necessary arguments is not fixed and depends on the value to @code{operator}.
+Here is one minimal working example, showing how different operators need different numbers of arguments.
 
 @example
-out_1=gal_arithmetic(GAL_ARITHMETIC_OP_LOG,   1, 0, in_1);
-out_2=gal_arithmetic(GAL_ARITHMETIC_OP_PLUS,  1, 0, in_1, in_2);
-out_3=gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, 0, in_1, in_2, in_3);
+#include <stdio.h>
+#include <stdlib.h>
+#include <gnuastro/fits.h>
+#include <gnuastro/arithmetic.h>
+
+int
+main(void)
+@{
+  /* Define the datasets and flag. */
+  gal_data_t *in1, *in2, *out1, *out2;
+  int flag=GAL_ARITHMETIC_FLAGS_BASIC;
+
+  /* Read the input images. */
+  in1=gal_fits_img_read("image1.fits", "0", -1, 1);
+  in2=gal_fits_img_read("image2.fits", "0", -1, 1);
+
+  /* Take the logarithm (base-2) of the first input. */
+  out1=gal_arithmetic(GAL_ARITHMETIC_OP_LOG, 1, flag, in1);
+
+  /* Add the second input with the logarithm of the first. */
+  out2=gal_arithmetic(GAL_ARITHMETIC_OP_PLUS, 1, flag, in2, out1);
+
+  /* Write the output into a file. */
+  gal_fits_img_write(out2, "out.fits", NULL, NULL);
+
+  /* Free ('out2'). Due to the in-place flag (in BASIC), 'out1' and
+   * 'out2' point to the same array in memory, therefore it is only
+   * necessary to free one of them. */
+  gal_data_free(out2);
+
+  /* Return control back to the OS (saying that we succeeded). */
+  return EXIT_SUCCESS;
+@}
 @end example
 
-The number of necessary operands for each operator (and thus the number of
-necessary arguments to @code{gal_arithmetic}) are described above under
-each operator.
+As you see above, by feeding the returned dataset from one call of @code{gal_arithmetic} to another call.
+The advantage of using @code{gal_arithmetic} (as opposed to manually writing a @code{for} or @code{while} loop and doing the operation with the C @code{+} operator and @code{log()} function yourself), is that you don't have to worry about the type of the input data.
+Arithmetic will automatically deal with the datatypes internally and choose the best output type depending on the operator.
 @end deftypefun
 
 @deftypefun int gal_arithmetic_set_operator (char @code{*string}, size_t @code{*num_operands})
