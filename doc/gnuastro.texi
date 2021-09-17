@@ -27383,18 +27383,13 @@ polish notation}).
 @deffn  Macro GAL_ARITHMETIC_OP_SQRT
 @deffnx Macro GAL_ARITHMETIC_OP_LOG
 @deffnx Macro GAL_ARITHMETIC_OP_LOG10
-Unary operator functions for calculating the square root
-(@mymath{\sqrt{i}}), @mymath{ln(i)} and @mymath{log(i)} mathematic
-operators on each element of the input dataset. The returned dataset will
-have a floating point type, but its precision is determined from the input:
-if the input is a 64-bit floating point, the output will also be
-64-bit. Otherwise, the returned dataset will be 32-bit floating point. See
-@ref{Numeric data types} for the respective precision.
+Unary operator functions for calculating the square root (@mymath{\sqrt{i}}), @mymath{ln(i)} and @mymath{log(i)} mathematic operators on each element of the input dataset.
+The returned dataset will have a floating point type, but its precision is determined from the input: if the input is a 64-bit floating point, the output will also be 64-bit.
+Otherwise, the returned dataset will be 32-bit floating point: you don't gain precision by using these operators, but you gain in operating speed if you use the sufficient precision.
+See @ref{Numeric data types} for more on the precision of floating point numbers to help in selecting your required floating point precision.
 
-If you want your output to be 64-bit floating point but your input is a
-different type, you can convert the input to a floating point type with
-@code{gal_data_copy_to_new_type} or
-@code{gal_data_copy_to_new_type_free}(see @ref{Copying datasets}).
+If you want your output to be 64-bit floating point but your input is a different type, you can convert the input to a 64-bit floating point type with @code{gal_data_copy_to_new_type} or @code{gal_data_copy_to_new_type_free}(see @ref{Copying datasets}).
+Alternatively, you can use the @code{GAL_ARITHMETIC_OP_TO_FLOAT64} operators in the arithmetic library.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_SIN
@@ -27590,7 +27585,7 @@ Special conditions can also be specified with the @code{flag} operator (a bit-fl
 
 @code{gal_arithmetic} is a multi-argument function (like C's @code{printf}).
 In other words, the number of necessary arguments is not fixed and depends on the value to @code{operator}.
-Here is one minimal working example, showing how different operators need different numbers of arguments.
+Below, you can see a minimal, fully working example, showing how different operators need different numbers of arguments.
 
 @example
 #include <stdio.h>
@@ -27606,10 +27601,10 @@ main(void)
   int flag=GAL_ARITHMETIC_FLAGS_BASIC;
 
   /* Read the input images. */
-  in1=gal_fits_img_read("image1.fits", "0", -1, 1);
-  in2=gal_fits_img_read("image2.fits", "0", -1, 1);
+  in1=gal_fits_img_read("image1.fits", "1", -1, 1);
+  in2=gal_fits_img_read("image2.fits", "1", -1, 1);
 
-  /* Take the logarithm (base-2) of the first input. */
+  /* Take the logarithm (base-e) of the first input. */
   out1=gal_arithmetic(GAL_ARITHMETIC_OP_LOG, 1, flag, in1);
 
   /* Add the second input with the logarithm of the first. */
@@ -27618,9 +27613,13 @@ main(void)
   /* Write the output into a file. */
   gal_fits_img_write(out2, "out.fits", NULL, NULL);
 
-  /* Free ('out2'). Due to the in-place flag (in BASIC), 'out1' and
-   * 'out2' point to the same array in memory, therefore it is only
-   * necessary to free one of them. */
+  /* Clean up. Due to the in-place flag (in
+   * 'GAL_ARITHMETIC_FLAGS_BASIC'), 'out1' and 'out2' point to the
+   * same array in memory and due to the freeing flag, any input
+   * dataset(s) that weren't returned have been freed internally by
+   * 'gal_arithmetic'. Therefore it is only necessary to free
+   * 'out2': all other allocated spaces have been freed internally.
+   * before reaching this point. */
   gal_data_free(out2);
 
   /* Return control back to the OS (saying that we succeeded). */
@@ -27628,8 +27627,8 @@ main(void)
 @}
 @end example
 
-As you see above, by feeding the returned dataset from one call of @code{gal_arithmetic} to another call.
-The advantage of using @code{gal_arithmetic} (as opposed to manually writing a @code{for} or @code{while} loop and doing the operation with the C @code{+} operator and @code{log()} function yourself), is that you don't have to worry about the type of the input data.
+As you see above, you can feed the returned dataset from one call of @code{gal_arithmetic} to another call.
+The advantage of using @code{gal_arithmetic} (as opposed to manually writing a @code{for} or @code{while} loop and doing the operation with the @code{+} operator and @code{log()} function yourself), is that you don't have to worry about the type of the input data (for a list of acceptable datatypes in Gnuastro, see @ref{Library data types}).
 Arithmetic will automatically deal with the datatypes internally and choose the best output type depending on the operator.
 @end deftypefun
 
@@ -30584,6 +30583,7 @@ extension/HDU.
 
 @example
 #include <stdio.h>
+#include <stdlib.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/dimension.h>
 
