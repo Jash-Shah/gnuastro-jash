@@ -12331,15 +12331,19 @@ The units of the coordinates are read based on the value to the @option{--mode} 
 
 @item -w FLT[,FLT[,...]]
 @itemx --width=FLT[,FLT[,...]]
-Width of the cropped region about its center.
-@option{--width} may take either a single value (to be used for all dimensions) or multiple values (a specific value for each dimension).
+Width of the cropped region about coordinate given to @option{--center}.
 If in WCS mode, value(s) given to this option will be read in the same units as the dataset's WCS information along this dimension.
-The final output will have an odd number of pixels to allow easy identification of the pixel which keeps your requested coordinate (from @option{--center} or @option{--catalog}).
+This option may take either a single value (to be used for all dimensions: @option{--width=10} in image-mode will crop a @mymath{10\times10} pixel image) or multiple values (a specific value for each dimension: @option{--width=10,20} in image-mode will crop a @mymath{10\times20} pixel image).
 
 The @code{--width} option also accepts fractions.
-For example if you want the width of your crop to be 3 by 5 arcseconds along RA and Dec respectively, you can call it with: @option{--width=3/3600,5/3600}.
+For example if you want the width of your crop to be 3 by 5 arcseconds along RA and Dec respectively and you are in wcs-mode, you can use: @option{--width=3/3600,5/3600}.
 
+The final output will have an odd number of pixels to allow easy identification of the pixel which keeps your requested coordinate (from @option{--center} or @option{--catalog}).
 If you want an even sided crop, you can run Crop afterwards with @option{--section=":*-1,:*-1"} or @option{--section=2:,2:} (depending on which side you don't need), see @ref{Crop section syntax}.
+
+The basic reason for making an odd-sided crop is that your given central coordinate will ultimately fall within a discrete pixel in the image (defined by the FITS standard).
+When the crop has an odd number of pixels in each dimension, that pixel can be very well defined as the ``central'' pixel of the crop, making it unambiguously easy to identify.
+However, for an even-sided crop, it will be very hard to identify the central pixel (it can be on any of the four pixels adjacent to the central point of the image!).
 
 @item -l STR
 @itemx -l FLT:FLT,...
