@@ -51,7 +51,6 @@ max=20
 hdu=""
 bdir=""
 show=""
-input=""
 quiet=""
 catalog=""
 segmented=""
@@ -382,7 +381,16 @@ if [ -f $catalog ]; then
         else
             # Select stars with magnitude between 0 to maximum.
             asttable $catalog --range=$field,0:$max --sort=$field \
+                     --range=ra,$minraimg:$maxraimg \
+                     --range=dec,$mindecimg:$maxdecimg \
                      --output=$query
+
+            numstars=$(asttable $query -i | grep 'Number of rows' | awk '{print $4}')
+            if [ "$numstars" = 0 ]; then
+                rm -rf $bdir
+                echo "There were no stars in magnitude range $min to $max"
+                exit 2
+            fi
         fi
     else
         # If catalog doesn't overlap the image stop.
