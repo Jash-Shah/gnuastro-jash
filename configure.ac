@@ -1018,6 +1018,8 @@ LIBS="$orig_LIBS"
 AC_SUBST(CONFIG_LDADD, [$LDADD])
 AC_SUBST(ENABLE_SHARED, [$enable_shared])
 AS_ECHO(["linking flags (LDADD) ... $LDADD"])
+AC_DEFINE_UNQUOTED([CONFIG_GNUASTRO_LDADD], ["$LDADD"],
+                   [Linking options for Gnuastro's library])
 
 
 

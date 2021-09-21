@@ -68,6 +68,24 @@ buildprog_as_one_string(char *opt, gal_list_str_t *list)
 
 
 
+/* Create the build command and run it.
+
+   Necessity of CONFIG_GNUASTRO_LDADD: By default Libtool will look into
+   the 'dependency_libs' variable of a library's 'libXXXXX.la' file to find
+   the dependencies of that library and add them to the link
+   command. Through this feature if we simply give the '.la' file to
+   Libtool, it will automatically use the dependency libraries in the final
+   compile and link command, making it redundant to use the
+   'CONFIG_GNUASTRO_LDADD' macro discussed here (which has all the link
+   commands necessary to use all the features of Gnuastro's library for
+   this system and was created at configure time). However, on some OSs
+   (including Debian, and all derivative OSs like Ubuntu), this feature of
+   libtool (to parse the dependnecies of a library) is disabled with a
+   patch in the source of Libtool (that is not modifiable without root
+   permissions!). So it is necessary to add this macro here. On other OSs
+   that don't have a problem, Libtool will automatically remove duplicates
+   before executing the command, so for the user, it won't make any
+   difference.*/
 int
 buildprog(struct buildprogparams *p)
 {
@@ -112,7 +130,7 @@ buildprog(struct buildprogparams *p)
 
   /* Write the full Libtool command into a string (to run afterwards). */
   if( asprintf(&command, "%s -c \"%s %s %s%s --mode=link %s %s %s "
-               "%s %s %s %s %s %s %s -I%s %s -o %s\"",
+               "%s %s %s %s %s %s %s -I%s %s %s -o %s\"",
                GAL_CONFIG_GNULIBTOOL_SHELL,
                GAL_CONFIG_GNULIBTOOL_EXEC,
                p->cp.quiet ? "--quiet" : "",
@@ -130,13 +148,15 @@ buildprog(struct buildprogparams *p)
                linklib     ?linklib    : "",
                INCLUDEDIR,
                fullla,
+               CONFIG_GNUASTRO_LDADD, /* See comment on this macro above */
                p->cp.output)<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
   /* Compile (and link): */
   retval=system(command);
   if(retval!=EXIT_SUCCESS)
-    error(EXIT_FAILURE, 0, "failed to build, see libtool error above");
+    error(EXIT_FAILURE, 0, "failed to build (error code %d), "
+          "see above", retval);
   else if(p->onlybuild==0)
     {
       /* Free the initial command. */
