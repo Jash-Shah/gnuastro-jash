@@ -164,7 +164,7 @@ if COND_HASHELP2MAN
   MAYBE_HELP2MAN = help2man --no-discard-stderr --output=$@ \
                    --source="$(PACKAGE_STRING)"
 else
-  MAYBE_HELP2MAN = @echo "Using distributed man page for"
+  MAYBE_HELP2MAN = @echo "Using man page in tarball (no help2man) for"
 endif
 
 
