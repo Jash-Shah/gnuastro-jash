@@ -22254,7 +22254,7 @@ $ astmkcatalog -P | grep " sigmaclip "
 @end example
 
 @item -z FLT
-@item --zeropoint=FLT
+@itemx --zeropoint=FLT
 The Zeropoint of the input dataset.
 This is necessary when you request measurements like Magnitude, or Surface brightness.
 
@@ -22265,18 +22265,20 @@ Therefore if you set @option{--rmax=20} for example and @option{--oversample=5},
 Unless the object is heavily undersampled (the pixels are larger than the actual object), this method provides a much more accurate result and there are sufficient number of pixels to get the profile accurately.
 
 @item -u INT
-@item --undersample=INT
+@itemx --undersample=INT
 Undersample the input dataset by the number given to this option.
 This option is for considering larger apertures than the original pixel size (aperture size is equal to 1 pixel).
 For example, if a radial profile computed by default has 100 different radii (apertures of 1 pixel width), by considering @option{--undersample=2} the radial profile will be computed over apertures of 2 pixels, so the final radial profile will have 50 different radii.
 This option is good to measure over a larger number of pixels to improve the measurement.
 
-@item --instd=FLT/STR
+@item -i FLT/STR
+@itemx --instd=FLT/STR
 Sky standard deviation as a single number (FLT) or as the filename (STR) containing the image with the std value for each pixel (the HDU within the file should be given to the @option{--stdhdu} option mentioned below).
 This is only necessary when the requested measurement (value given to @option{--measure}) by MakeCatalog needs the Standard deviation (for example the signal-to-noise ratio or magnitude error).
 If your measurements don't require a standard deviation, it is best to ignore this option (because it will slow down the script).
 
-@item --stdhdu=STR
+@item -d INT/STR
+@itemx --stdhdu=INT/STR
 HDU/extension of the sky standard deviation image specified with @option{--instd}.
 
 @item -t STR

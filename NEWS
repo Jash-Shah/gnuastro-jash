@@ -131,6 +131,8 @@ See the end of the file for license conditions.
               Vincenzo Testa and Zohreh Ghaffari.
   bug #61108: Plain text table metadata ignored when numeric data type was
               not understood, reported by Sepideh Eskandarlou.
+  bug #61128: Radial profile: --instd and --stdhdu error when space used
+              before value, found and fixed by Sepideh Eskandarlou.
   bug #61192: BuildProgram custom program linking problems on Debian-based
               OSs, reported by Raúl Infante-Sainz.
 
