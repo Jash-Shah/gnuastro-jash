@@ -9,6 +9,7 @@
 #   Mohammad Akhlaghi <mohammad@akhlaghi.org>
 #   Zahra Sharbaf <zahra.sharbaf2@gmail.com>
 #   Carlos Morales-Socorro <cmorsoc@gmail.com>
+#   Sepideh Eskandarlou <sepideh.eskandarlou@gmail.com>
 # Copyright (C) 2020-2021, Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -37,10 +38,10 @@ hdu=1
 rmax=""
 quiet=""
 instd=""
+stdhdu=1
 center=""
 tmpdir=""
 output=""
-stdhdu=""
 keeptmp=0
 mode="img"
 measure=""
@@ -105,9 +106,9 @@ $scriptname options:
   -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
   -v, --oversample        Oversample for higher resolution radial profile.
   -u, --undersample=INT   Undersample for lower resolution radial profile.
-      --instd=FLT/STR     Sky standard deviation per pixel, as a single number
+  -i, --instd=FLT/STR     Sky standard deviation per pixel, as a single number
                           or as the filename.
-      --stdhdu=STR        HDU/extension of the sky standard deviation image.
+  -d, --stdhdu=STR        HDU/extension of the sky standard deviation image.
 
  Operating mode:
   -?, --help              Print this help list.
@@ -235,11 +236,15 @@ do
         -v|--oversample)  oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
         -v=*|--oversample=*) oversample="${1#*=}";                  check_v "$1" "$oversample"; shift;;
         -v*)              oversample=$(echo "$1" | sed -e's/-v//'); check_v "$1" "$oversample"; shift;;
-        -u|--undersample) undersample="$2";                          check_v "$1" "$undersample"; shift;shift;;
-        -u=*|--undersample=*) undersample="${1#*=}";                  check_v "$1" "$undersample"; shift;;
+        -u|--undersample) undersample="$2";                         check_v "$1" "$undersample"; shift;shift;;
+        -u=*|--undersample=*) undersample="${1#*=}";                check_v "$1" "$undersample"; shift;;
         -u*)              undersample=$(echo "$1" | sed -e's/-u//'); check_v "$1" "$undersample"; shift;;
-        --instd=*)        instd="${1#*=}";                          check_v "$1" "$instd"; shift;;
-        --stdhdu=*)       stdhdu="${1#*=}";                         check_v "$1" "$stdhdu"; shift;;
+        -i|--instd)      instd="$2";                            check_v "$1" "$instd";  shift;shift;;
+        -i=*|--instd=*)  instd="${1#*=}";                       check_v "$1" "$instd";  shift;;
+        -i*)             instd=$(echo "$1"  | sed -e's/-i//');  check_v "$1" "$instd";  shift;;
+        -d|--stdhdu)     stdhdu="$2";                            check_v "$1" "$stdhdu";  shift;shift;;
+        -d=*|--stdhdu=*) stdhdu="${1#*=}";                       check_v "$1" "$stdhdu";  shift;;
+        -d*)             stdhdu=$(echo "$1"  | sed -e's/-d//');  check_v "$1" "$stdhdu";  shift;;
 
         # Non-operating options.
         -q|--quiet)       quiet="--quiet"; shift;;
@@ -428,10 +433,7 @@ cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$xcenter,$ycenter --mode=img \
         --width=$cropwidth --output=$crop $quiet
 if [ x"$instd" != x ] && [ -f "$instd" ]; then
-    if [ x"$stdhdu" = x ]; then instdhduopt="";
-    else                        instdhduopt="--hdu=$stdhdu";
-    fi
-    astcrop "$instd" "$instdhduopt" --center=$xcenter,$ycenter \
+    astcrop $instd --hdu="$stdhdu" --center=$xcenter,$ycenter \
             --mode=img --width=$cropwidth --output=$cropstd $quiet
 fi
 
