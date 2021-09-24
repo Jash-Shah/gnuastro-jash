@@ -641,6 +641,7 @@ Installed scripts
 * Sort FITS files by night::    Sort many files by date.
 * Generate radial profile::     Radial profile of an object in an image.
 * SAO DS9 region files from table::  Create ds9 region file from a table.
+* PSF construction and correction::  Create and subtract the PSF.
 
 Sort FITS files by night
 
@@ -653,6 +654,10 @@ Generate radial profile
 SAO DS9 region files from table
 
 * Invoking astscript-ds9-region::  How to call astscript-ds9-region
+
+PSF construction and correction
+
+* Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
 
 Library
 
@@ -23375,6 +23380,211 @@ You can see the SAO DS9 command-line descriptions by clicking on the ``Help'' me
 In the opened window, click on ``Command Line Options''.
 @end table
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node PSF construction and correction, Installed scripts
+@section PSF construction and correction
+
+The point spread function (PSF) describes how the light of a point-like source is affected by several optical scattering effects (atmosphere, telescope, instrument, etc.).
+The role PSF is key in many astronomical analysis, and consequently, having a good characterization of the PSF is fundamental.
+In many situations the PSF can be obtained by modeling it with analytical functions (Gaussian, Moffat, etc.), see @ref{PSF}.
+However, in other scenarios, it is necessary to obtain an empirical (non-parametric) and extended PSF.
+For this reason, here we have developed a set of scripts with the aim of constructing the PSF from point-like sources within astronomical images.
+Once the PSF has been obtained, it can be used for modeling and subtracting the point-like sources of astronomical images.
+The fundamental ideas of the following methodology are fully described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
+Here we describe some scripts developed with the aim of constructing an empirical PSF, and then, use that PSF for correcting the scattered light.
+
+For constructing the PSF, the basic idea is to consider a bunch of images of stars, treat them properly, and finally stack all of them together.
+For doing this, we have the script @file{astscript-psf-create-make-stamp}.
+This script generates the stamp of a specified star using as input an image and some parameters.
+Once several stamps have been generated, the PSF can be obtained by stacking them.
+
+Sometimes it is necessary to obtain different regions of the same PSF from different stars.
+For example, to construct the far wings it is necessary to consider very bright stars.
+However, these stars will be saturated in the most inner part, and consequently, fainter stars are necessary.
+It is possible to use @file{astscript-psf-create-make-stamp} to obtain two different PSFs (core and wings, using sets of stars with different brightness), and then, join them to obtain a single and extended PSF.
+To do that, we have the script @file{astscript-psf-create-junction}.
+This script merges two different PSFs at a given radius and some other parameters.
+
+Once the PSF has been constructed by the procedure above (or any other methodology), it can be used for modeling the stars: the scattered light.
+The absolute flux of a PSF has no sense.
+To model a star with a PSF it is necessary to scale the PSF up or down in order to put it at the same level of flux than the star.
+To do that, we have the script @file{astscript-psf-model-flux-factor.in}.
+It is in charge of computing the flux factor by which it is necessary to multiply the PSF in order to put it at the same level than a given star.
+
+Once the flux factor has been computed, it is possible put the PSF at the same sky position and with the same flux level than the star.
+To do that, we have the script @file{astscript-psf-model-scattered-light}.
+It will allocate the PSF at a given position (coordinates) and with the appropiate flux level.
+
+In what follows, each script all options of each script is described in detail.
+At the end of this section, a fully working example is exposed @ref{PSFEXAMPLEOF}.
+For more on installed scripts please see (see @ref{Installed scripts}).
+
+@menu
+*Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
+@end menu
+
+@node Invoking astscript-psf-create-make-stamp
+@subsection Invoking astscript-psf-create-make-stamp
+This installed script will read an image, the center of an object @option{--center}, the type of the center coordinates @option{--mode} (img or wcs), the normalization radii @option{--normradii}, and the size of the output stamp @option{--stampwidth}.
+With that input, it will generate a stamp centered at the coordinates provided, and normalized by the flux computed in the normalization radius.
+
+This script can be used with the following general template:
+
+@example
+$ astscript-psf-create-make-stamp [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Consider the pixel position (x,y)=(53,69) and make an stamp of
+## width=151 pixels, normalize the stamp by the value computed
+## within the ring defined by the radii 20 and 30 pixels.
+## The output stamp image is named as stamp.fits.
+$ astscript-psf-create-make-stamp image.fits --mode=img \
+      --center=53,69 --stampwidth=151 --normradii=20,30 \
+      --output=stamp.fits
+
+## Consider that in image.fits are some stars that are going to
+## be treated for constructing the PSF. If catalog.fits is a
+## catalog containing the center (in WCS) of the stars, then this
+## loop will generate one stamp for each star in the catalog.
+## Each stamp will have 150 pixels of width, and the normalization
+## will be computed within the ring of 20-30 pixels.
+$ asttable catalog.fits | while read -r ra dec mag; do \
+    astscript-psf-create-make-stamp.in image.fits \
+        --mode=wcs \
+        --stampwidth=150 \
+        --center=$ra,$dec \
+        --normradii=20,30 \
+        --output=stamp-"$ra"-"$dec".fits; done
+
+@end example
+
+The input is an image from which the stamp of the stars are constructed.
+There are mandatory options that the user has to specify: @option{--mode}, @option{--center}, @option{--stampwidth}, @option{--normradii}.
+There are also other optional options that the user can provide.
+The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}, and normalized by the value computed within the ring around the center at a radial distance between the two radius specified by the option @option{--normradii}.
+More options are available with the goal of obtaining better stamps.
+A full description of each option is given below.
+
+@table @option
+
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension of the input image to use.
+
+@item -O STR
+@itemx --mode=STR
+Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
+This option thus accepts only two values: @option{img} or @option{wcs}.
+
+@item -c FLT[,FLT[,...]]
+@itemx --center=FLT[,FLT[,...]]
+The central position of the object.
+This option is used for placing the center of the stamp.
+This parameter is used in @ref{Crop} to center an crop the image.
+The positions along each dimension must be separated by a comma (@key{,}).
+The number of values given to this option must be the same as the dimensions of the input dataset.
+The units of the coordinates are read based on the value to the @option{--mode} option, see above.
+
+@item -W INT
+@itemx --stampwidth=INT
+Size (width) of the output image stamp in pixels.
+The size of the output image will be always an odd number of pixels.
+As a consequence, if the user specify an even number, the final size will be the specified size plus 1 pixel.
+This is necessary to place the specified coordinate position by @option{--center} in the center of the central pixel.
+
+@item -n INT[,INT[,...]]
+@itemx --normradii=INT[,INT[,...]]
+Region around the central position in which the normalization is computed.
+The option takes two values separated by a comma (@key{,}).
+The first value is the inner radius, the second is the outer radius.
+These two radius define a ring of pixels around the center that is used for obtaining the normalization value.
+
+@item -m STR
+@itemx --mask=STR
+Filename of the segmentation image.
+It is possible use a segmentation image to mask all the objects that are not the central object.
+The segmentation image specified by this option must have the same dimensions than the input image.
+Non object pixels must have pixel values equal to zero, these pixels are not masked on the final stamp.
+Object pixels must have pixel values different from zero, these pixels are masked with NaN values on the final stamp.
+In order to not mask the central object (in case it is identified in the segmentation image as an object), a region around the center is considered from the segmentation image.
+The size of that region can be specified by the option @option{--corewidth}, see below.
+As a consequence, all pixels with values equal to the central one in the segmentation image are not masked in the final stamp image.
+Internally, all of these pixels are converted to zero values so they are not masked.
+
+@item -M STR
+@itemx --maskhdu=STR
+The HDU/extension of the segmentation image (@option{--mask}).
+
+@item -w INT
+@itemx --corewidth=INT
+Width of the region that is used to compute the central object over the segmentation image @option{--mask}, with the goal of not masking it.
+If a segmentation image is provided, then it is necessary to not mask the central object.
+To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
+Once it has been identified, that pixels are not masked.
+With this option, it is possible to control the size of the central region for computing the central object values.
+
+@item -R FLT
+@itemx --rmax=FLT
+Maximum radius (in pixels) for computing the radial profile.
+By default, the radial profile will be computed up to a radial distance equal to the maximum radius that fits into the stamp image.
+
+@item -N STR
+@itemx --normop=STR
+The operator for measuring the values within the ring defined by the option @option{--normradii}.
+The operator given to this option will be directly passed to the radial profile script @file{astscript-radial-profile}, see @ref{Generate radial profile}.
+As a consequence, all MakeCatalog measurements (median, mean, sigclip-mean, sigclip-number, etc.) can be used here.
+For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
+
+@item -s FLT,FLT
+@itemx --sigmaclip=FLT,FLT
+Sigma clipping parameters: only relevant if sigma-clipping operators are requested by @option{--normop}.
+For more on sigma-clipping, see @ref{Sigma clipping}.
+
+@item -t STR
+@itemx --tmpdir=STR
+Several intermediate files are necessary to obtain the stamp image.
+All of these temporal files are saved into a temporal directory.
+With this option, you can directly specify this directory.
+By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+If the directory doesn't exist at run-time, this script will create it.
+Once the radial profile has been obtained, this directory is removed.
+You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+
+@item -k
+@itemx --keeptmp
+Don't delete the temporary directory (see description of @option{--tmpdir} above).
+This option is useful for debugging.
+For example, to check that the intermediate images have the desired center, they are properly masked, etc.
+
+@item -o STR
+@itemx --output=STR
+Filename of stamp image.
+By default the name of the stamp will be a combination of the input image name, the name of the script, and the coordinates of the center.
+For example, if the input image is named image.fits and the center is @option{--center=33,78}, then the output name wil be: image_psfcreatemakestamp_33_78.fits
+The main reason of setting this name is to have an unique name for each stamp by default.
+@end table
 
 
 

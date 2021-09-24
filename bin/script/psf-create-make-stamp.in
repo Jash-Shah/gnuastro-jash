@@ -96,9 +96,9 @@ $scriptname options:
   -W, --stampwidth=INT    Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the normalization value.
-  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -m, --mask=STR          Segmentation image (sky = 0).
   -M, --maskhdu=STR       HDU/extension of the segmentation image.
+  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
