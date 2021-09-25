@@ -658,6 +658,7 @@ SAO DS9 region files from table
 PSF construction and correction
 
 * Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
+* Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
 
 Library
 
@@ -23434,12 +23435,15 @@ To do that, we have the script @file{astscript-psf-model-scattered-light}.
 It will allocate the PSF at a given position (coordinates) and with the appropiate flux level.
 
 In what follows, each script all options of each script is described in detail.
-At the end of this section, a fully working example is exposed @ref{PSFEXAMPLEOF}.
+At the end of this section, a fully working example is exposed @ref{TBD}.
 For more on installed scripts please see (see @ref{Installed scripts}).
 
 @menu
 *Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
+*Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
 @end menu
+
+
 
 @node Invoking astscript-psf-create-make-stamp
 @subsection Invoking astscript-psf-create-make-stamp
@@ -23584,6 +23588,107 @@ Filename of stamp image.
 By default the name of the stamp will be a combination of the input image name, the name of the script, and the coordinates of the center.
 For example, if the input image is named image.fits and the center is @option{--center=33,78}, then the output name wil be: image_psfcreatemakestamp_33_78.fits
 The main reason of setting this name is to have an unique name for each stamp by default.
+@end table
+
+
+
+@node Invoking astscript-psf-create-junction
+@subsection Invoking astscript-psf-create-junction
+This installed script will join two PSF images at a given radius.
+This operation is commonly used when the outer part of the PSF has been computed from very bright stars, and consequently, they are saturated in most central part (core).
+In order to have an extended but not saturated PSF in the core, it is necessary to put in the central part the PSF constructed from fainter stars.
+This is the main goal of the current script.
+
+This script can be used with the following general template:
+
+@example
+$ astscript-psf-create-junction [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Consider outer.fits as the outer part of the PSF.
+## Consider inner.fits as the inner part of the PSF.
+## Join these two PSFs at a radius equal to 25 pixels
+## and scale the inner part by a factor of 3.
+## Name the joined PSF as joined.fits.
+$ astscript-psf-create-junction outer.fits \
+      --core=inner.fits --fluxfactor=3 \
+      --radius=25 --output=joined.fits
+
+## Same example than the above, but considering an
+## ellipse (instead of a circle). The parameters of
+## the ellipse are position angle 40 deg, and axis
+## ratio of 0.5.
+$ astscript-psf-create-junction outer.fits \
+      --core=inner.fits --fluxfactor=3 \
+      --radius=25 --axisratio=0.5 \
+      --positionangle=40 --output=joined.fits
+
+@end example
+
+The junction is done by considering the input image as the outer part.
+The central part is specified by the option @option{--core} and it is multiplied by the factor @option{--fluxfactor}.
+Then, the core image is cropped and appened to the outer image at a radius specified by the option @option{--radius} (in pixels).
+The factor by which the core is multiplied has to be provided manually.
+Note that this script assumes that PSF is centered in both images.
+More options are available with the goal of obtaining a good junction.
+A full description of each option is given below.
+
+@table @option
+
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension of the input image to use.
+
+@item -c STR
+@itemx --core=STR
+Filename of the core PSF.
+This image is considered to be the central part of the PSF.
+It will be cropped at the radius specified by the option @option{--radius}, and multiplied by the factor specified by @option{--fluxfactor}.
+After that, it will be appened to the outer part (input image).
+
+@item -C STR
+@itemx --corehdu=STR
+The HDU/extension of the core PSF (option @option{--core}).
+
+@item -r FLT
+@itemx --radius=FLT
+Radius (in pixels) at which the junction of the images is done.
+
+@item -f FLT
+@itemx --fluxfactor=FLT
+Factor by which the core (@option{--core}) is multiplied.
+This factor is necessary to put the two different parts of the PSF at the same flux level.
+A convenient way of obtaining this value is by using the script @file{astscript-model-flux-factor}, see @ref{TBD}.
+
+@item -Q FLT
+@itemx --axisratio=FLT
+By default, the junction is done at a radius specified by @option{--radius} assuming a circular shape.
+However, in some situations it could be a good idea to make an ellipse shape, for example if the PSF is not circulary symmetric.
+With this option, the axis ratio of the ellipse can be specified.
+
+@item -p FLT
+@itemx --positionangle=FLT
+Position angle of the ellipse (in degrees).
+Similar option than @option{--axisratio} (see above) to specify the shape of the ellipse.
+
+@item -t STR
+@itemx --tmpdir=STR
+Several intermediate files are necessary to obtain the junction.
+All of these temporal files are saved into a temporal directory.
+With this option, you can directly specify this directory.
+By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+If the directory doesn't exist at run-time, this script will create it.
+Once the junction image has been obtained, this directory is removed.
+You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+
+@item -k
+@itemx --keeptmp
+Don't delete the temporary directory (see description of @option{--tmpdir} above).
+This option is useful for debugging.
 @end table
 
 
