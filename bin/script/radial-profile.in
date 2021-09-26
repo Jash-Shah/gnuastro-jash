@@ -342,7 +342,7 @@ else
     # input header image is used.
     else
         xy=$(echo "$center" \
-                  | asttable -c'arith $1 $2 wcstoimg' \
+                  | asttable -c'arith $1 $2 wcs-to-img' \
                              --wcsfile=$inputs --wcshdu=$hdu)
         xcenter=$(echo $xy | awk '{print $1}');
         ycenter=$(echo $xy | awk '{print $2}');

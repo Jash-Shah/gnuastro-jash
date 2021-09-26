@@ -129,8 +129,8 @@ arithmetic_operator_name(int operator)
     switch(operator)
       {
       case ARITHMETIC_TABLE_OP_SET: out="set"; break;
-      case ARITHMETIC_TABLE_OP_WCSTOIMG: out="wcstoimg"; break;
-      case ARITHMETIC_TABLE_OP_IMGTOWCS: out="imgtowcs"; break;
+      case ARITHMETIC_TABLE_OP_WCSTOIMG: out="wcs-to-img"; break;
+      case ARITHMETIC_TABLE_OP_IMGTOWCS: out="img-to-wcs"; break;
       case ARITHMETIC_TABLE_OP_DATETOSEC: out="date-to-sec"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEFLAT: out="distance-flat"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEONSPHERE: out="distance-on-sphere"; break;
@@ -182,9 +182,9 @@ arithmetic_set_operator(struct tableparams *p, char *string,
   if( op==GAL_ARITHMETIC_OP_INVALID )
     {
       /* Simple operators. */
-      if(      !strcmp(string, "wcstoimg"))
+      if(      !strcmp(string, "wcs-to-img"))
         { op=ARITHMETIC_TABLE_OP_WCSTOIMG; *num_operands=0; }
-      else if( !strcmp(string, "imgtowcs"))
+      else if( !strcmp(string, "img-to-wcs"))
         { op=ARITHMETIC_TABLE_OP_IMGTOWCS; *num_operands=0; }
       else if( !strcmp(string, "date-to-sec"))
         { op=ARITHMETIC_TABLE_OP_DATETOSEC; *num_operands=0; }

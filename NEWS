@@ -101,6 +101,13 @@ See the end of the file for license conditions.
      before all row selection or row re-ording operations (if
      called). Until now, adding columns from other files was done after all
      row selection or re-ordering, but this was not too practically useful.
+   - Column arithmetic operators:
+     - 'wcs-to-img' new name for old 'wcstoimg' operator. The new
+       unit-conversion operators generally have a '-to-' between the units
+       to help in readability. So to avoid confusion, this operator has
+       also been changed.
+    - 'img-to-wcs' new name for old 'imgtowcs' operator (see description of
+      'wcs-to-img' above).
 
   Library
    - gal_fits_key_write_filename: now has 'quiet' argument to avoid
