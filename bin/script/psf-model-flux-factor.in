@@ -45,7 +45,6 @@ tmpdir=""
 corewidth=""
 normradii=""
 sigmaclip=""
-oversample=""
 stampwidth=""
 normop="median"
 version=@VERSION@
@@ -95,11 +94,11 @@ $scriptname options:
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
   -W, --stampwidth=INT    Width of the stamp in pixels.
-  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
-                          for computing the normalization value.
-  -S, --mask=STR          Segmentation image (sky = 0).
-  -s, --maskhdu=STR       HDU/extension of the segmentation image.
+                          for computing the flux factor value.
+  -m, --mask=STR          Segmentation image (sky = 0).
+  -M, --maskhdu=STR       HDU/extension of the segmentation image.
+  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
@@ -109,7 +108,6 @@ $scriptname options:
   -o, --output            Output table with the radial profile.
   -t, --tmpdir            Directory to keep temporary files.
   -k, --keeptmp           Keep temporal/auxiliar files.
-  -v, --oversample        Oversample for higher resolution radial profile.
 
  Operating mode:
   -?, --help              Print this help list.
@@ -247,9 +245,6 @@ do
         -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
         -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
-        -v|--oversample)     oversample="$2";                          check_v "$1" "$oversample"; shift;shift;;
-        -v=*|--oversample=*) oversample="${1#*=}";                     check_v "$1" "$oversample"; shift;;
-        -v*)                 oversample=$(echo "$1" | sed -e's/-v//'); check_v "$1" "$oversample"; shift;;
 
         # Non-operating options.
         -q|--quiet)       quiet="--quiet"; shift;;

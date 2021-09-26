@@ -659,6 +659,7 @@ PSF construction and correction
 
 * Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
 * Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
+* Invoking astscript-psf-model-flux-factor::  How to call astscript-psf-model-flux-factor
 
 Library
 
@@ -23132,7 +23133,7 @@ It can be either a FITS table, or plain-text table (determined from your given f
 @itemx --center=FLT[,FLT[,...]]
 The central position of the radial profile.
 This option is used for placing the center of the profiles.
-This parameter is used in @ref{Crop} to center an crop the region.
+This parameter is used in @ref{Crop} to center and crop the region.
 The positions along each dimension must be separated by a comma (@key{,}) and fractions are also acceptable.
 The number of values given to this option must be the same as the dimensions of the input dataset.
 The units of the coordinates are read based on the value to the @option{--mode} option, see below.
@@ -23427,7 +23428,7 @@ This script merges two different PSFs at a given radius and some other parameter
 Once the PSF has been constructed by the procedure above (or any other methodology), it can be used for modeling the stars: the scattered light.
 The absolute flux of a PSF has no sense.
 To model a star with a PSF it is necessary to scale the PSF up or down in order to put it at the same level of flux than the star.
-To do that, we have the script @file{astscript-psf-model-flux-factor.in}.
+To do that, we have the script @file{astscript-psf-model-flux-factor}.
 It is in charge of computing the flux factor by which it is necessary to multiply the PSF in order to put it at the same level than a given star.
 
 Once the flux factor has been computed, it is possible put the PSF at the same sky position and with the same flux level than the star.
@@ -23441,6 +23442,7 @@ For more on installed scripts please see (see @ref{Installed scripts}).
 @menu
 *Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
 *Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
+*Invoking astscript-psf-model-flux-factor::  How to call astscript-psf-model-flux-factor
 @end menu
 
 
@@ -23475,7 +23477,7 @@ $ astscript-psf-create-make-stamp image.fits --mode=img \
 ## Each stamp will have 150 pixels of width, and the normalization
 ## will be computed within the ring of 20-30 pixels.
 $ asttable catalog.fits | while read -r ra dec mag; do \
-    astscript-psf-create-make-stamp.in image.fits \
+    astscript-psf-create-make-stamp image.fits \
         --mode=wcs \
         --stampwidth=150 \
         --center=$ra,$dec \
@@ -23506,7 +23508,7 @@ This option thus accepts only two values: @option{img} or @option{wcs}.
 @itemx --center=FLT[,FLT[,...]]
 The central position of the object.
 This option is used for placing the center of the stamp.
-This parameter is used in @ref{Crop} to center an crop the image.
+This parameter is used in @ref{Crop} to center and crop the image.
 The positions along each dimension must be separated by a comma (@key{,}).
 The number of values given to this option must be the same as the dimensions of the input dataset.
 The units of the coordinates are read based on the value to the @option{--mode} option, see above.
@@ -23662,7 +23664,7 @@ Radius (in pixels) at which the junction of the images is done.
 @itemx --fluxfactor=FLT
 Factor by which the core (@option{--core}) is multiplied.
 This factor is necessary to put the two different parts of the PSF at the same flux level.
-A convenient way of obtaining this value is by using the script @file{astscript-model-flux-factor}, see @ref{TBD}.
+A convenient way of obtaining this value is by using the script @file{astscript-model-flux-factor}, see @ref{Invoking astscript-psf-model-flux-factor}.
 
 @item -Q FLT
 @itemx --axisratio=FLT
@@ -23689,6 +23691,157 @@ You can disable the deletion of the temporary directory with the @option{--keept
 @itemx --keeptmp
 Don't delete the temporary directory (see description of @option{--tmpdir} above).
 This option is useful for debugging.
+@end table
+
+
+
+@node Invoking astscript-psf-model-flux-factor
+@subsection Invoking astscript-psf-model-flux-factor
+This installed script will consider an object within the input image and it will obtain the radial profile of that object.
+In the same way, it will compute the radial profile of a given PSF image.
+Then, by comparing the two radial profiles in the same region, it will calculate the factor by which it is necessary to multiply the PSF image in order to scale it at the same level of flux than the object.
+
+The computation of this flux factor is commonly used when joining two different parts of the same PSF, see @ref{Invoking astscript-psf-create-junction}.
+Also when modeling a star in order to subtract it using the PSF, see @ref{Invoking astscript-psf-model-scattered-light}.
+
+This script can be used with the following general template:
+
+@example
+$ astscript-psf-model-flux-factor [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Compute the flux factor by which it is necessary to multiply
+## the PSF (psf.fits) to put it at the same level than the object
+## in the pixel position (x,y)=(53,69). Use the ring between
+## the radii 20 and 30 pixels for computing that flux factor.
+$ astscript-psf-model-flux-factor image.fits --mode=img \
+      --center=53,69 --normradii=20,30 --psf=psf.fits
+
+## Consider that in image.fits are some stars that are going to
+## be considered for obtaining the flux factors. If catalog.fits
+## is a catalog containing the centers (in WCS), then this loop will
+## compute these flux factors, one for each star in the catalog.
+$ asttable catalog.fits | while read -r ra dec mag; do \
+    astscript-psf-model-flux-factor image.fits \
+        --mode=wcs \
+        --psf=psf.fits \
+        --center=$ra,$dec \
+        --normradii=20,30 \
+        --output=fluxfactor-"$ra"-"$dec".txt; done
+
+@end example
+
+The input is an image from which the star is considered.
+The output will be the flux factor: the value by which the PSF image (@option{--psf}) has to be multiplied to put it at the same level than the object specified (@option{--center}), within the ring of pixels specified by the option @option{--normradii}.
+More options are available with the goal of obtaining a good flux factor value.
+A full description of each option is given below.
+
+
+@table @option
+
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension of the input image to use.
+
+@item -p STR
+@itemx --psf=STR
+Filename of the PSF image.
+The PSF is assumed to be centered in this image.
+
+@item -P STR
+@itemx --psfhdu=STR
+The HDU/extension of the PSF image.
+
+@item -O STR
+@itemx --mode=STR
+Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
+This option thus accepts only two values: @option{img} or @option{wcs}.
+
+@item -c FLT[,FLT[,...]]
+@itemx --center=FLT[,FLT[,...]]
+The central position of the object.
+This parameter is used in @ref{Crop} to center and crop the image.
+The positions along each dimension must be separated by a comma (@key{,}).
+The number of values given to this option must be the same as the dimensions of the input dataset.
+The units of the coordinates are read based on the value to the @option{--mode} option, see above.
+
+@item -W INT
+@itemx --stampwidth=INT
+Size (width) of the image stamp in pixels.
+This is an intermediate product computed internally by the script.
+By default, the size of the stamp is automatically set to be as small as possible (i.e., two times the external radius of the ring specified by @option{--rnorm}) to make the computation fast.
+As a consequence, this option is only relevant for checking and testing that everything is fine.
+
+@item -n INT[,INT[,...]]
+@itemx --normradii=INT[,INT[,...]]
+Region around the central position in which the flux factor is computed.
+The option takes two values separated by a comma (@key{,}).
+The first value is the inner radius, the second is the outer radius.
+These two radius define a ring of pixels around the center that is used for obtaining the flux factor value.
+
+@item -m STR
+@itemx --mask=STR
+Filename of the segmentation image.
+It is possible use a segmentation image to mask all the objects that are not the central object.
+The segmentation image specified by this option must have the same dimensions than the input image.
+Non object pixels must have pixel values equal to zero, these pixels are not masked on the final stamp.
+Object pixels must have pixel values different from zero, these pixels are masked with NaN values on the final stamp.
+In order to not mask the central object (in case it is identified in the segmentation image as an object), a region around the center is considered from the segmentation image.
+The size of that region can be specified by the option @option{--corewidth}, see below.
+As a consequence, all pixels with values equal to the central one in the segmentation image are not masked in the final stamp image.
+Internally, all of these pixels are converted to zero values so they are not masked.
+
+@item -M STR
+@itemx --maskhdu=STR
+The HDU/extension of the segmentation image (@option{--mask}).
+
+@item -w INT
+@itemx --corewidth=INT
+Width of the region that is used to compute the central object over the segmentation image @option{--mask}, with the goal of not masking it.
+If a segmentation image is provided, then it is necessary to not mask the central object.
+To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
+Once it has been identified, that pixels are not masked.
+With this option, it is possible to control the size of the central region for computing the central object values.
+
+@item -R FLT
+@itemx --rmax=FLT
+Maximum radius (in pixels) for computing the radial profile.
+By default, the radial profile will be computed up to a radial distance equal to the maximum radius that fits into the stamp image.
+As a consequence, this option is only relevant for checking and testing that everything is fine.
+
+@item -N STR
+@itemx --normop=STR
+The operator for measuring the values within the ring defined by the option @option{--normradii}.
+The operator given to this option will be directly passed to the radial profile script @file{astscript-radial-profile}, see @ref{Generate radial profile}.
+As a consequence, all MakeCatalog measurements (median, mean, sigclip-mean, sigclip-number, etc.) can be used here.
+For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
+In the same way, this operator is used to compute the final flux factor value.
+This calculation is done by dividing the two radial profiles (object and PSF) and then taking the averaged value using this operator.
+
+@item -s FLT,FLT
+@itemx --sigmaclip=FLT,FLT
+Sigma clipping parameters: only relevant if sigma-clipping operators are requested by @option{--normop}.
+For more on sigma-clipping, see @ref{Sigma clipping}.
+
+@item -t STR
+@itemx --tmpdir=STR
+Several intermediate files are necessary to obtain the flux factor value.
+All of these temporal files are saved into a temporal directory.
+With this option, you can directly specify this directory.
+By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+If the directory doesn't exist at run-time, this script will create it.
+Once all temporal files are not necessary, this directory is removed.
+You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+
+@item -k
+@itemx --keeptmp
+Don't delete the temporary directory (see description of @option{--tmpdir} above).
+This option is useful for debugging.
+For example, to check that the intermediate images have the desired center, they are properly masked, etc.
 @end table
 
 
