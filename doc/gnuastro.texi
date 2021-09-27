@@ -23656,7 +23656,10 @@ With this option, it is possible to control the size of the central region for c
 @item -R FLT
 @itemx --rmax=FLT
 Maximum radius (in pixels) for computing the radial profile.
-By default, the radial profile will be computed up to a radial distance equal to the maximum radius that fits into the stamp image.
+By default, the radial profile will be computed up to a radial distance equal to the outer radius of the normalization region (@option{--normradii}).
+If the user wants to compute larger radial profile it is possible with this option.
+Situations in which this option is necessary are those in which the user wants to check individual radial profiles to ensure everything is fine.
+To be able to check the radial profile use the option @option{--keeptmp} to not delete temporary files, see below.
 
 @item -N STR
 @itemx --normop=STR
