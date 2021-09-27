@@ -660,6 +660,7 @@ PSF construction and correction
 * Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
 * Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
 * Invoking astscript-psf-model-flux-factor::  How to call astscript-psf-model-flux-factor
+* Invoking astscript-psf-model-scattered-light::  How to call astscript-psf-model-scattered-light
 
 Library
 
@@ -23443,6 +23444,7 @@ For more on installed scripts please see (see @ref{Installed scripts}).
 *Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
 *Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
 *Invoking astscript-psf-model-flux-factor::  How to call astscript-psf-model-flux-factor
+*Invoking astscript-psf-model-scattered-light::  How to call astscript-psf-model-scattered-light
 @end menu
 
 
@@ -23843,6 +23845,108 @@ Don't delete the temporary directory (see description of @option{--tmpdir} above
 This option is useful for debugging.
 For example, to check that the intermediate images have the desired center, they are properly masked, etc.
 @end table
+
+
+
+
+@node Invoking astscript-psf-model-scattered-light
+@subsection Invoking astscript-psf-model-scattered-light
+This installed script will put the PSF provided into a given position of the sky within the input image.
+It is aimed to model the scattered light field of an input image.
+
+This script can be used with the following general template:
+
+@example
+$ astscript-psf-model-scattered-light [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Multiply the the PSF (psf.fits) by 3 and put it into the the
+## pixel position (x,y)=(53,69) of the input image (image.fits).
+$ astscript-psf-model-scattered-light image.fits \
+    --psf=psf.fits \
+    --mode=img \
+    --fluxfactor=3 \
+    --center=53,69 \
+    --output=star-53_69.fits
+
+## Consider that in image.fits are some stars that are going to
+## be modeled. If catalog.fits is a catalog containing the centers
+## (in WCS), then this loop will generate an individual stamp for
+## each star, one for each star in the catalog. These stamps can be
+## later sumed in order to obtain the entire scattered light field.
+$ asttable catalog.fits | while read -r ra dec mag; do
+         fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
+         astscript-psf-model-scattered-light image.fits \
+             --mode=wcs \
+             --psf=psf.fits \
+             --fluxfactor=$fluxfactor \
+             --center=$ra,$dec; done
+
+@end example
+
+The input is an image from which the star is considered.
+The result is an image with the same dimensions than the input, but with the PSF (@option{--psf}) situated in the position specified by @option{--center}, and with the flux level specified by @option{--fluxfactor}.
+The region not covered by the PSF are set to zero values.
+Note that this script works over individual objects.
+As a consequence, to generate a scattered light field of many stars it is necessary to make multiple calls and then combine all the individual modeled stars.
+
+A full description of each option is given below.
+
+@table @option
+
+@item -h STR
+@itemx --hdu=STR
+The HDU/extension of the input image to use.
+
+@item -p STR
+@itemx --psf=STR
+Filename of the PSF image.
+The PSF is assumed to be centered in this image.
+
+@item -P STR
+@itemx --psfhdu=STR
+The HDU/extension of the PSF image.
+
+@item -O STR
+@itemx --mode=STR
+Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
+This option thus accepts only two values: @option{img} or @option{wcs}.
+
+@item -c FLT[,FLT[,...]]
+@itemx --center=FLT[,FLT[,...]]
+The central position of the object.
+This parameter is used in @ref{Crop} to center and crop the image.
+The positions along each dimension must be separated by a comma (@key{,}).
+The number of values given to this option must be the same as the dimensions of the input dataset.
+The units of the coordinates are read based on the value to the @option{--mode} option, see above.
+
+@item -f FLT
+@itemx --fluxfactor=FLT
+Factor by which the PSF (@option{--psf}) is multiplied.
+This factor is necessary to put the PSF with the desired flux level.
+A convenient way of obtaining this value is by using the script @file{astscript-model-flux-factor}, see @ref{Invoking astscript-psf-model-flux-factor}.
+
+@item -t STR
+@itemx --tmpdir=STR
+Several intermediate files are necessary to obtain the output.
+All of these temporal files are saved into a temporal directory.
+With this option, you can directly specify this directory.
+By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+If the directory doesn't exist at run-time, this script will create it.
+Once all temporal files are not necessary, this directory is removed.
+You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+
+@item -k
+@itemx --keeptmp
+Don't delete the temporary directory (see description of @option{--tmpdir} above).
+This option is useful for debugging.
+For example, to check that the intermediate images have the desired center, flux level, etc.
+@end table
+
 
 
 
