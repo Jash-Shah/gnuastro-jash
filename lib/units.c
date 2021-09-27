@@ -386,3 +386,98 @@ gal_units_counts_to_jy(double counts, double zeropoint_ab)
 {
   return counts * 3631 * pow(10, -1 * zeropoint_ab / 2.5);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**********************************************************************/
+/****************         Distance conversions        *****************/
+/**********************************************************************/
+/* Convert Astronomical Units (AU) to Parsecs (PC). From the definition
+   of Parsecs, 648000/pi AU = 1 PC. So   */
+double
+gal_units_au_to_pc(double au)
+{
+  return au / 648000.0f * 3.14159265358979323846264338327f;
+}
+
+
+
+
+
+/* Convert Parsecs (PC) to Astronomical units (AU), see comment of
+   'gal_units_au_to_pc'. */
+double
+gal_units_pc_to_au(double au)
+{
+  return au * 648000.0f / 3.14159265358979323846264338327f;
+}
+
+
+
+
+
+/* Convert Light-years to Parsecs, according to
+   https://en.wikipedia.org/wiki/Light-year#Definitions:
+
+   1 light-year = 9460730472580800 metres (exactly)
+                ~ 9.461 petametres
+                ~ 9.461 trillion kilometres (5.879 trillion miles)
+                ~ 63241.077 astronomical units
+                ~ 0.306601 parsecs  */
+double
+gal_units_ly_to_pc(double ly)
+{
+  return ly * 0.306601f;
+}
+
+
+
+
+
+/* Convert Parsecs to Light-years (see comment of gal_units_ly_to_pc). */
+double
+gal_units_pc_to_ly(double pc)
+{
+  return pc / 0.306601f;
+}
+
+
+
+
+
+/* Convert Astronomical Units to Light-years (see comment of
+   gal_units_ly_to_pc). */
+double
+gal_units_au_to_ly(double au)
+{
+  return au / 63241.077f;
+}
+
+
+
+
+
+/* Convert Light-years to Astronomical Units (see comment of
+   gal_units_ly_to_pc). */
+double
+gal_units_ly_to_au(double ly)
+{
+  return ly * 63241.077f;
+}

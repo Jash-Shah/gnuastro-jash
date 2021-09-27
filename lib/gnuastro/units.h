@@ -82,6 +82,24 @@ gal_units_mag_to_counts(double mag, double zeropoint);
 double
 gal_units_counts_to_jy(double counts, double zeropoint_ab);
 
+double
+gal_units_au_to_pc(double au);
+
+double
+gal_units_pc_to_au(double pc);
+
+double
+gal_units_ly_to_pc(double ly);
+
+double
+gal_units_pc_to_ly(double pc);
+
+double
+gal_units_ly_to_au(double ly);
+
+double
+gal_units_au_to_ly(double au);
+
 __END_C_DECLS    /* From C++ preparations */
 
 #endif           /* __GAL_UNITS_H__ */

@@ -24,15 +24,23 @@ See the end of the file for license conditions.
      to be more useful for a new user.
 
   Arithmetic:
-   - New operands (also available in Table's column arithmetic):
+   - New operands (also available in Table's column arithmetic, the
+     distance conversion operators were suggested by Markus Schaney):
      - box-around-ellipse: width and height of the box covering an ellipse.
+     - au-to-pc: Convert Astronomical Units (AUs) to Parsecs (PCs).
+     - pc-to-au: Convert Parsecs (PCs) to Astronomical Units (AUs).
+     - ly-to-pc: Convert Light-years (LYs) to Parsecs (PCs).
+     - pc-to-ly: Convert Parsecs (PCs) to Light-years (LYs).
+     - ly-to-au: Convert Light-years (LYs) to Astronomical Units (AUs).
+     - au-to-ly: Convert Astronomical Units (AUs) to Light-years (LYs).
 
   CosmicCalculator:
    - A warning is printed if the requested redshift is lower than 0.007
      (corresponding to ~30Mpc in Plank 2018 cosmology). Because at these
      scales the peculiar velocity of galaxies may be significant compared
      to the Hubble flow (which is the basis of the calculations here). The
-     warning can be suppressed with the '--quiet' option.
+     warning can be suppressed with the '--quiet' option. This was
+     suggested by Ignacio Trujillo.
 
   MakeCatalog:
    --areaerror: spatial resolution of image specified by user, used in
@@ -72,6 +80,12 @@ See the end of the file for license conditions.
      - GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
    - gal_wcs_write_wcsstr: wrapper of wcshdo of WCSLIB to simplify generic
      access to that low-level operation (has some extra sanity checks).
+   - gal_units_au_to_pc: Convert Astronomical Units to Parsecs.
+   - gal_units_pc_to_au: Convert Parsecs to Astronomical Units.
+   - gal_units_ly_to_pc: Convert Light-years to Parsecs.
+   - gal_units_pc_to_ly: Convert Parsecs to Light-years.
+   - gal_units_ly_to_au: Convert Light-years to Astronomical Units.
+   - gal_units_au_to_ly: Convert Astronomical Units to Light-years.
 
 ** Removed features
 

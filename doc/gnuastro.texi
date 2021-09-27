@@ -12932,6 +12932,56 @@ Therefore you can convert the units of SDSS image pixels to Janskys with the com
 $ astarithmetic sdss-image.fits 22.5 counts-to-jy
 @end example
 
+@item au-to-pc
+@cindex Parsecs
+@cindex Astronomical Units (AU)
+Convert Astronomical Units (AUs) to Parsecs (PCs).
+This operator takes a single argument which is interpretted to be the input AUs.
+The conversion is based on the definition of Parsecs: @mymath{1 \rm{PC} = 1/tan(1^{\prime\prime}) \rm{AU}}, where @mymath{1^{\prime\prime}} is one arcseconds.
+In other words, @mymath{1 (\rm{PC}) = 648000/\pi (\rm{AU})}.
+For example, if we take Pluto's average distance to the Sun to be 40 AUs, we can obtain its distance in Parsecs using this command:
+
+@example
+echo 40 | asttable -c'arith $1 au-to-pc'
+@end example
+
+@item pc-to-au
+Convert Parsecs (PCs) to Astronomical Units (AUs).
+This operator takes a single argument which is interpretted to be the input PCs.
+For more on the conversion equation, see description of @code{au-to-pc}.
+For example, Proxima Centauri (the nearest star to the Solar system) is 1.3020 Parsecs from the Sun, we can calculate this distance in units of AUs with the command below:
+
+@example
+echo 1.3020 | asttable -c'arith $1 pc-to-au'
+@end example
+
+@item ly-to-pc
+@cindex Light-year
+Convert Light-years (LY) to Parsecs (PCs).
+This operator takes a single argument which is interpretted to be the input LYs.
+The conversion is done from IAU's definition of the light-year (9460730472580800 m @mymath{\approx} 63241.077 AU = 0.306601 PC, for the conversion of AU to PC, see the description of @code{au-to-pc}).
+
+For example the distance of Andromeda galaxy to our galaxy is 2.5 million light-years, so its distance in kilo-Parsecs can be calculated with the command below (note that we want the output in kilo-parsecs, so we are dividing the output of this operator by 1000):
+
+@example
+echo 2.5e6 | asttable -c'arith $1 ly-to-pc 1000 /'
+@end example
+
+@item pc-to-ly
+Convert Parsecs (PCs) to Light-years (LY).
+This operator takes a single argument which is interpretted to be the input PCs.
+For the conversion and an example of the inverse of this operator, see the descrioption of @code{ly-to-pc}.
+
+@item ly-to-au
+Convert Light-years (LY) to Astronomical Units (AUs).
+This operator takes a single argument which is interpretted to be the input LYs.
+For the conversion and a similar example, see the descrioption of @code{ly-to-pc}.
+
+@item au-to-ly
+Convert Astronomical Units (AUs) to Light-years (LY).
+This operator takes a single argument which is interpretted to be the input AUs.
+For the conversion and a similar example, see the descrioption of @code{ly-to-pc}.
+
 @item minvalue
 Minimum value in the first popped operand, so ``@command{a.fits minvalue}'' will push the minimum pixel value in this image onto the stack.
 When this operator acts on a single image, the output (operand that is put back on the stack) will no longer be an image, but a number.
@@ -30221,6 +30271,39 @@ For more on the equation, see @ref{Brightness flux magnitude}.
 @cindex Magnitude, AB
 Convert counts to Janskys through an AB magnitude-based zero point.
 For more on the equation, see @ref{Brightness flux magnitude}.
+@end deftypefun
+
+@deftypefun double gal_units_au_to_pc (double @code{au})
+@cindex Parsecs
+@cindex Astronomical Units (AU)
+Convert the input value (assumed to be in Astronomical Units) to Parsecs.
+For the conversion equation, see the description of @code{au-to-pc} operator in @ref{Arithmetic operators}.
+@end deftypefun
+
+@deftypefun double gal_units_pc_to_au (double @code{pc})
+Convert the input value (assumed to be in Parsecs) to Astronomical Units (AUs).
+For the conversion equation, see the description of @code{au-to-pc} operator in @ref{Arithmetic operators}.
+@end deftypefun
+
+@deftypefun double gal_units_ly_to_pc (double @code{ly})
+@cindex Light-year
+Convert the input value (assumed to be in Light-years) to Parsecs.
+For the conversion equation, see the description of @code{ly-to-pc} operator in @ref{Arithmetic operators}.
+@end deftypefun
+
+@deftypefun double gal_units_pc_to_ly (double @code{pc})
+Convert the input value (assumed to be in Parsecs) to Light-years.
+For the conversion equation, see the description of @code{ly-to-pc} operator in @ref{Arithmetic operators}.
+@end deftypefun
+
+@deftypefun double gal_units_ly_to_au (double @code{ly})
+Convert the input value (assumed to be in Light-years) to Astronomical Units.
+For the conversion equation, see the description of @code{ly-to-pc} operator in @ref{Arithmetic operators}.
+@end deftypefun
+
+@deftypefun double gal_units_au_to_ly (double @code{au})
+Convert the input value (assumed to be in Astronomical Units) to Light-years.
+For the conversion equation, see the description of @code{ly-to-pc} operator in @ref{Arithmetic operators}.
 @end deftypefun
 
 @node Spectral lines library, Cosmology library, Unit conversion library, Gnuastro library

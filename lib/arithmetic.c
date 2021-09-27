@@ -573,6 +573,18 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
       UNIARY_FUNCTION_ON_ELEMENT( acosh, +0, +0);         break;
     case GAL_ARITHMETIC_OP_ATANH:
       UNIARY_FUNCTION_ON_ELEMENT( atanh, +0, +0);         break;
+    case GAL_ARITHMETIC_OP_AU_TO_PC:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_au_to_pc, +0, +0); break;
+    case GAL_ARITHMETIC_OP_PC_TO_AU:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_pc_to_au, +0, +0); break;
+    case GAL_ARITHMETIC_OP_LY_TO_PC:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_ly_to_pc, +0, +0); break;
+    case GAL_ARITHMETIC_OP_PC_TO_LY:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_pc_to_ly, +0, +0); break;
+    case GAL_ARITHMETIC_OP_LY_TO_AU:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_ly_to_au, +0, +0); break;
+    case GAL_ARITHMETIC_OP_AU_TO_LY:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_au_to_ly, +0, +0); break;
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:
       UNIFUNC_RUN_FUNCTION_ON_ELEMENT_STRING(double, gal_units_ra_to_degree);
       break;
@@ -2173,6 +2185,18 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
     { op=GAL_ARITHMETIC_OP_MAG_TO_COUNTS;     *num_operands=2;  }
   else if (!strcmp(string, "counts-to-jy"))
     { op=GAL_ARITHMETIC_OP_COUNTS_TO_JY;      *num_operands=2;  }
+  else if( !strcmp(string, "au-to-pc"))
+    { op=GAL_ARITHMETIC_OP_AU_TO_PC;          *num_operands=1;  }
+  else if( !strcmp(string, "pc-to-au"))
+    { op=GAL_ARITHMETIC_OP_PC_TO_AU;          *num_operands=1;  }
+  else if( !strcmp(string, "ly-to-pc"))
+    { op=GAL_ARITHMETIC_OP_LY_TO_PC;          *num_operands=1;  }
+  else if( !strcmp(string, "pc-to-ly"))
+    { op=GAL_ARITHMETIC_OP_PC_TO_LY;          *num_operands=1;  }
+  else if( !strcmp(string, "ly-to-au"))
+    { op=GAL_ARITHMETIC_OP_LY_TO_AU;          *num_operands=1;  }
+  else if( !strcmp(string, "au-to-ly"))
+    { op=GAL_ARITHMETIC_OP_AU_TO_LY;          *num_operands=1;  }
 
   /* Statistical/higher-level operators. */
   else if (!strcmp(string, "minvalue"))
@@ -2361,6 +2385,12 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:   return "counts-to-mag";
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:   return "mag-to-counts";
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:    return "counts-to-jy";
+    case GAL_ARITHMETIC_OP_AU_TO_PC:        return "au-to-pc";
+    case GAL_ARITHMETIC_OP_PC_TO_AU:        return "pc-to-au";
+    case GAL_ARITHMETIC_OP_LY_TO_PC:        return "ly-to-pc";
+    case GAL_ARITHMETIC_OP_PC_TO_LY:        return "pc-to-ly";
+    case GAL_ARITHMETIC_OP_LY_TO_AU:        return "ly-to-au";
+    case GAL_ARITHMETIC_OP_AU_TO_LY:        return "au-to-ly";
 
     case GAL_ARITHMETIC_OP_MINVAL:          return "minvalue";
     case GAL_ARITHMETIC_OP_MAXVAL:          return "maxvalue";
@@ -2478,6 +2508,12 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_ASINH:
     case GAL_ARITHMETIC_OP_ACOSH:
     case GAL_ARITHMETIC_OP_ATANH:
+    case GAL_ARITHMETIC_OP_AU_TO_PC:
+    case GAL_ARITHMETIC_OP_PC_TO_AU:
+    case GAL_ARITHMETIC_OP_LY_TO_PC:
+    case GAL_ARITHMETIC_OP_PC_TO_LY:
+    case GAL_ARITHMETIC_OP_LY_TO_AU:
+    case GAL_ARITHMETIC_OP_AU_TO_LY:
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:
