@@ -49,6 +49,7 @@ output=""
 tmpdir=""
 axisratio=1
 corewidth=""
+saturation=0
 normradii=""
 sigmaclip=""
 stampwidth=""
@@ -100,6 +101,7 @@ $scriptname options:
                           for computing the normalization value.
   -m, --mask=STR          Segmentation image (sky = 0).
   -M, --maskhdu=STR       HDU/extension of the segmentation image.
+  -l, --saturation        saturation limit for masking saturation pixels.
   -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -S, --mask=STR          Segmentation image (sky = 0).
   -s, --maskhdu=STR       HDU/extension of the segmentation image.
@@ -203,6 +205,9 @@ do
         -h|--hdu)            hdu="$2";                                  check_v "$1" "$hdu";  shift;shift;;
         -h=*|--hdu=*)        hdu="${1#*=}";                             check_v "$1" "$hdu";  shift;;
         -h*)                 hdu=$(echo "$1"  | sed -e's/-h//');        check_v "$1" "$hdu";  shift;;
+        -l|--saturation)     saturation="$2";                           check_v "$1" "$saturation";  shift;shift;;
+        -l=*|--saturation=*) saturation="${1#*=}";                      check_v "$1" "$saturation";  shift;;
+        -l*)                 saturation=$(echo "$1"  | sed -e's/-l//'); check_v "$1" "$saturation";  shift;;
         -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
         -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
         -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
@@ -455,17 +460,24 @@ if [ x"$mask" != x ]; then
   # Compute the label of the central object from the core cropped image.
   centrallabel=$(aststatistics $cropped_core --median -q)
 
-  # Unlabel the central object.
-  cropped_unlabel=$tmpdir/cropped_unlabel-$objectid.fits
-  astarithmetic $cropped_mask --hdu=1 \
-                $cropped_mask --hdu=1 \
-                $centrallabel eq 0 where --output=$cropped_unlabel $quiet
+  # Check if the user has determined the --saturation option.
+  if [ $saturation = 0 ]; then
+      mask_saturated=""
+  else
+      mask_saturated="i i $saturation gt nan where set-i"
+  fi
 
-  # All objects that are not the central are masked here.
+  # Unlabel the central object and then mask everything else.
   cropped_masked=$tmpdir/cropped_masked-$objectid.fits
-  astarithmetic $cropped --hdu=1 \
-                $cropped_unlabel --hdu=1 \
-                0 ne nan where --output=$cropped_masked $quiet
+  astarithmetic $cropped      --hdu=1 set-i \
+                $cropped_mask --hdu=1  set-m \
+                                            \
+                $mask_saturated \
+                m m $centrallabel eq 0 where set-a \
+                a 0 ne set-mask \
+                                \
+                i mask nan where \
+                --output=$cropped_masked $quiet
 else
   cropped_masked=$cropped
 fi
