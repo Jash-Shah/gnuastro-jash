@@ -296,9 +296,8 @@ fi
 
 # If a normalization range is not given at all.
 if [ x"$normradii" = x ]; then
-    echo "$scriptname: no rign of normalization provided."
-    echo "$scriptname: values to '--normradii' ('-n') should be provided."
-    exit 1
+    echo "$scriptname: no ring of normalization provided."
+    echo "$scriptname: the stamp won't be normalized."
 else
     nnormradii=$(echo $normradii | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nnormradii != x2 ]; then
@@ -467,40 +466,39 @@ fi
 
 
 
-# Compute the radial profile
-# --------------------------
+# Compute the radial profile and the normalization value
+# ------------------------------------------------------
 #
-# Generate the radial profile of the stamp, since it has been already
-# centered on the center of the object, it is not necessary to give the
-# center coordinates. If the user specifies a maximum radius, use it. If
-# the user specifies sigma clip parameters, use them.
-radialprofile=$tmpdir/rprofile-$objectid.fits
-if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
-else                       maximumradius=""
+# Only if the the user has specified a ring of normalization (--normradii).
+# Otherwise set the normalization value equal to 1.0 (no normalization).
+if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
+    # Generate the radial profile of the stamp, since it has been already
+    # centered on the center of the object, it is not necessary to give the
+    # center coordinates. If the user specifies a maximum radius, use it. If
+    # the user specifies sigma clip parameters, use them.
+    radialprofile=$tmpdir/rprofile-$objectid.fits
+    if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
+    else                       maximumradius=""
+    fi
+    if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
+    else                           finalsigmaclip="--sigmaclip=$sigmaclip";
+    fi
+    astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
+                             --measure=$normop $finalsigmaclip \
+                             --output=$radialprofile $quiet
+
+    # The normalization value is computed from the radial profile in between
+    # the two radius specified by the user. In this case, the option to give
+    # sigmaclip parameters to 'aststatistics' is different.
+    if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
+    else                           finalsigmaclip="--sclipparams=$sigmaclip";
+    fi
+    normvalue=$(asttable $radialprofile $quiet \
+                         --range=1,$normradiusmin,$normradiusmax \
+                         | aststatistics --column=2 --$normop $finalsigmaclip -q)
+else
+    normvalue=1.0
 fi
-if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
-else                           finalsigmaclip="--sigmaclip=$sigmaclip";
-fi
-astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
-                         --measure=$normop $finalsigmaclip \
-                         --output=$radialprofile $quiet
-
-
-
-
-
-# Compute the normalization value
-# -------------------------------
-#
-# The normalization value is computed from the radial profile in between
-# the two radius specified by the user. In this case, the option to give
-# sigmaclip parameters to 'aststatistics' is different.
-if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
-else                           finalsigmaclip="--sclipparams=$sigmaclip";
-fi
-normvalue=$(asttable $radialprofile $quiet \
-                     --range=1,$normradiusmin,$normradiusmax \
-                     | aststatistics --column=2 --$normop $finalsigmaclip -q)
 
 
 
