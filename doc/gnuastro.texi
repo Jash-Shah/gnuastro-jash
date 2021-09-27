@@ -23436,8 +23436,108 @@ Once the flux factor has been computed, it is possible put the PSF at the same s
 To do that, we have the script @file{astscript-psf-model-scattered-light}.
 It will allocate the PSF at a given position (coordinates) and with the appropiate flux level.
 
+A fully working template example on how to use the scripts in order to construct a PSF and then model the scattered light field is shown below.
+
+@example
+
+## General parameters
+## ------------------
+
+## Number of stars
+NSTARS=5
+
+## Width of the star stamps (in pixels).
+STAMPWIDTH=150
+
+## Input image.
+IMAGE=image.fits
+
+## Inner and outer radii defining the normalization ring.
+NORMRADII_INNER=20
+NORMRADII_OUTER=30
+
+
+## Obtain a catalog of stars
+## -------------------------
+
+## Download a Gaia catalog that overlap with the input image.
+astquery gaia --dataset=edr3 --overlapwith=$IMAGE \
+              -cra,dec,phot_bp_mean_mag --output=gaia.fits
+
+## Sort by brightness and select just NSTARS stars.
+## These stars are going to be used for constructing the PSF.
+## At the end, they are also modeled and subtracted.
+asttable gaia.fits --sort=phot_bp_mean_mag \
+                   --head=$NSTARS --output=catalog.fits
+
+
+## Construct the PSF
+## -----------------
+
+## Make a stamp for each star on the catalog. The center is
+## read from the catalog. The size of the stamp is STAMPWIDTH pixels.
+## The normalization, is done within the ring of pixels defined by
+## NORMRADII_INNER and NORMRADII_OUTER.
+asttable catalog.fits | while read -r ra dec mag; do
+         astscript-psf-create-make-stamp $IMAGE \
+                   --mode=wcs \
+                   --center=$ra,$dec \
+                   --stampwidth=$STAMPWIDTH \
+                   --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
+                   --output=starstamp-"$ra"_"$dec".fits; done
+
+## Once all the stars have been treated properly (i.e., they
+## have been centered using in the same grid and normalized),
+## then stack all stamps together.
+astarithmetic starstamp*.fits -g1 \
+              $(ls starstamp*.fits | wc -l) median \
+              --output=psf.fits
+
+
+## Model the scattered light field
+## -------------------------------
+
+## To model each star, it is necessary to compute what is the
+## factor by which the PSF has to be multiplied in order to have
+## the same flux level than the star.
+asttable catalog.fits | while read -r ra dec mag; do
+         astscript-psf-model-flux-factor $IMAGE \
+                   --psf=psf.fits \
+                   --mode=wcs \
+                   --center=$ra,$dec \
+                   --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
+                   --output=fluxfactor-"$ra"_"$dec".txt; done
+
+## Once the flux factors have been computed, it is possible to scale
+## the PSF to have the desired flux leve. With the next step, the
+## PSF is situated at the given sky position with the appropiate
+## flux level. Pixels that are not the PSF are set to zero.
+asttable catalog.fits | while read -r ra dec mag; do
+         fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
+         astscript-psf-model-scattered-light $IMAGE \
+                  --psf=psf.fits \
+                  --mode=wcs \
+                  --fluxfactor $fluxfactor \
+                  --center=$ra,$dec \
+                   --output=starmodel-"$ra"_"$dec".fits; done
+
+## Stack all scattered light stamps together.
+astarithmetic starmodel*.fits -g1 \
+              $(ls starmodel*.fits | wc -l) sum \
+              --output=scattered-light-field.fits
+
+
+## Remove the scattered light field model
+## --------------------------------------
+
+## Once the scattered light field has been obtained,
+## subtract it from the original image.
+astarithmetic $IMAGE --hdu=1 \
+              scattered-light-field.fits --hdu=1 \
+              - --output subtracted.fits
+@end example
+
 In what follows, each script all options of each script is described in detail.
-At the end of this section, a fully working example is exposed @ref{TBD}.
 For more on installed scripts please see (see @ref{Installed scripts}).
 
 @menu
