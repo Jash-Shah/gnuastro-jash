@@ -472,15 +472,18 @@ fi
 #
 # Generate the radial profile of the stamp, since it has been already
 # centered on the center of the object, it is not necessary to give the
-# center coordinates. If the user specifies a maximum radius, use it.
+# center coordinates. If the user specifies a maximum radius, use it. If
+# the user specifies sigma clip parameters, use them.
 radialprofile=$tmpdir/rprofile-$objectid.fits
-if [ x"$rmax" != x ]; then
-  maximumradius="--rmax=$rmax"
-else
-  maximumradius=""
+if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
+else                       maximumradius=""
+fi
+if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
+else                           finalsigmaclip="--sigmaclip=$sigmaclip";
 fi
 astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
-                         --measure=$normop --output=$radialprofile $quiet
+                         --measure=$normop $finalsigmaclip \
+                         --output=$radialprofile $quiet
 
 
 
@@ -490,10 +493,14 @@ astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
 # -------------------------------
 #
 # The normalization value is computed from the radial profile in between
-# the two radius specified by the user.
+# the two radius specified by the user. In this case, the option to give
+# sigmaclip parameters to 'aststatistics' is different.
+if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
+else                           finalsigmaclip="--sclipparams=$sigmaclip";
+fi
 normvalue=$(asttable $radialprofile $quiet \
                      --range=1,$normradiusmin,$normradiusmax \
-                     | aststatistics --column=2 --$normop --quiet)
+                     | aststatistics --column=2 --$normop $finalsigmaclip -q)
 
 
 
