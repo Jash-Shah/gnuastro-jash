@@ -494,12 +494,12 @@ fi
 # Generate the radial profile of the stamp and the PSF, since it has been
 # already centered on the center of the object, it is not necessary to give
 # the center coordinates. If the user specifies a maximum radius, use it.
+# Otherwise, compute the radial profile up to the outer part of the ring
+# for the normalization (to not wast CPU time).
 radialprofile=$tmpdir/rprofile-$objectid.fits
 psfradialprofile=$tmpdir/rprofile-psf-$objectid.fits
-if [ x"$rmax" != x ]; then
-  maximumradius="--rmax=$rmax"
-else
-  maximumradius=""
+if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
+else                       maximumradius="--rmax=$normradiusmax";
 fi
 astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
                          --measure=$normop --output=$radialprofile $quiet

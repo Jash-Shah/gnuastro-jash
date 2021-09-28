@@ -476,8 +476,8 @@ if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
     # centered on the center of the object, it is not necessary to give the
     # center coordinates. If the user specifies a maximum radius, use it.
     # Otherwise, compute the radial profile up to the outer part of the
-    # ring for the normalization +1 pixel (to not wast CPU time). If the
-    # user specifies sigma clip parameters, use them.
+    # ring for the normalization (to not wast CPU time). If the user
+    # specifies sigma clip parameters, use them.
     radialprofile=$tmpdir/rprofile-$objectid.fits
     if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
     else                       maximumradius="--rmax=$normradiusmax";
