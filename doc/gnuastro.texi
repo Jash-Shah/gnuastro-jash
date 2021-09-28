@@ -23861,6 +23861,24 @@ The PSF is assumed to be centered in this image.
 @itemx --psfhdu=STR
 The HDU/extension of the PSF image.
 
+@item -f STR
+@itemx --psfprofile=STR
+Filename of the PSF radial profile.
+Instead of using @option{--psf} to provide the PSF image, it is possible to provide the radial profile of the PSF directly.
+By doing this, the script does not calculate the radial profile internally and the execution is faster.
+This is convenient when the same PSF image is used for many stars.
+In this situation, it is necessary to compute the radial profile only once, and then feed the radial profile to this script.
+
+@item -F STR
+@itemx --psfprofilehdu=STR
+The HDU/extension of the PSF radial profile.
+
+@item -C STR,STR
+@itemx --psfprofilecol=STR,STR
+The column names for the radial profile of the PSF.
+It takes two values separated by a comma (@key{,}).
+The values are the column names for the radius and the flux of the radial profile.
+
 @item -O STR
 @itemx --mode=STR
 Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.

@@ -46,7 +46,10 @@ corewidth=""
 normradii=""
 sigmaclip=""
 stampwidth=""
+psfprofile=""
+psfprofilehdu=1
 normop="median"
+psfprofilecol=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -89,8 +92,11 @@ experienced Gnuastro users and developers. For more information, please run:
 $scriptname options:
  Input:
   -h, --hdu=STR           HDU/extension of all input FITS files.
-  -p, --psf=STR           PSF fits file.
-  -P, --psfhdu=STR        HDU/extension of all input FITS files.
+  -p, --psf=STR           PSF image fits file.
+  -P, --psfhdu=STR        HDU/extension of the PSF image.
+  -f, --psfprofile=STR    PSF radial profile fits file.
+  -F, --psfprofilehdu=STR HDU/extension of the PSF radial profile.
+  -C, --psfprofilecol=STR,STR  Column names (radius, flux) for PSF radial profile.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
   -W, --stampwidth=INT    Width of the stamp in pixels.
@@ -204,6 +210,15 @@ do
         -P|--psfhdu)         psfhdu="$2";                               check_v "$1" "$psfhdu";  shift;shift;;
         -P=*|--psfhdu=*)     psfhdu="${1#*=}";                          check_v "$1" "$psfhdu";  shift;;
         -P*)                 psfhdu=$(echo "$1"  | sed -e's/-P//');     check_v "$1" "$psfhdu";  shift;;
+        -f|--psfprofile)     psfprofile="$2";                           check_v "$1" "$psfprofile";  shift;shift;;
+        -f=*|--psfprofile=*) psfprofile="${1#*=}";                      check_v "$1" "$psfprofile";  shift;;
+        -f*)                 psfprofile=$(echo "$1"  | sed -e's/-f//'); check_v "$1" "$psfprofile";  shift;;
+        -F|--psfprofilehdu)     psfprofilehdu="$2";                           check_v "$1" "$psfprofilehdu";  shift;shift;;
+        -F=*|--psfprofilehdu=*) psfprofilehdu="${1#*=}";                      check_v "$1" "$psfprofilehdu";  shift;;
+        -F*)                    psfprofilehdu=$(echo "$1"  | sed -e's/-F//'); check_v "$1" "$psfprofilehdu";  shift;;
+        -C|--psfprofilecol)     psfprofilecol="$2";                           check_v "$1" "$psfprofilecol";  shift;shift;;
+        -C=*|--psfprofilecol=*) psfprofilecol="${1#*=}";                      check_v "$1" "$psfprofilecol";  shift;;
+        -C*)                    psfprofilecol=$(echo "$1"  | sed -e's/-C//'); check_v "$1" "$psfprofilecol";  shift;;
         -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
         -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
         -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
@@ -280,11 +295,33 @@ if [ x"$inputs" = x ]; then
     exit 1
 fi
 
-# If a PSF image (--psf) is not given at all.
-if [ x"$psf" = x ]; then
-    echo "$scriptname: no PSF image provided."
-    echo "A PSF image has to be specified with --psf or -p."
+# If a PSF image (--psf) and profile (--psfprofile) are not given at all.
+if [ x"$psf" = x ] && [ x"$psfprofile" = x ]; then
+    echo "$scriptname: no PSF image or profile provided."
+    echo "A PSF image (profile) has to be specified with --psf or -p (--psfprofile or -f)."
     exit 1
+fi
+
+# If a PSF image (--psf) and profile (--psfprofile) are given.
+if [ x"$psf" != x ] && [ x"$psfprofile" != x ]; then
+    echo "$scriptname: both PSF image and profile provided."
+    echo "Only one PSF input (image or profile) has to be provided. Image (--psf, -p), profile (--psfprofile, -f)."
+    exit 1
+fi
+
+# If PSF profile provided, ensure also column names are provided.
+if [ x"$psfprofile" != x ]; then
+    if [ x"$psfprofilecol" = x ]; then
+        echo "$scriptname: no PSF profile column names provided."
+        echo "Values to '--psfprofilecol' ('-C') should be provided."
+        exit 1
+    else
+        npsfprofilecols=$(echo $psfprofilecol | awk 'BEGIN{FS=","}END{print NF}')
+        if [ x$npsfprofilecols != x2 ]; then
+            echo "$scriptname: '--psfprofilecol' (or '-C') only take two values, but $npsfprofilecols were given."
+            exit 1
+        fi
+    fi
 fi
 
 # If center coordinates (--center) is not given at all.
@@ -341,6 +378,13 @@ ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 
 normradiusmin=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $1}')
 normradiusmax=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $2}')
+
+# If PSF radial profile provided
+if [ x"$psfprofile" != x ]; then
+    psfprofilecolradius=$(echo "$psfprofilecol" | awk 'BEGIN{FS=","} {print $1}')
+    psfprofilecolflux=$(echo "$psfprofilecol" | awk 'BEGIN{FS=","} {print $2}')
+fi
+
 
 # With the center coordinates, generate a specific label for the object
 # consisting in its coordinates.
@@ -504,8 +548,17 @@ fi
 astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
                          --measure=$normop --output=$radialprofile $quiet
 
-astscript-radial-profile $psf --hdu=$psfhdu $maximumradius \
-                         --measure=$normop --output=$psfradialprofile $quiet
+# If the user provide a PSF image, compute the radial profile of that PSF.
+# Else, consider the PSF radial profile provided.
+if [ x"$psfprofile" = x ]; then
+    astscript-radial-profile $psf --hdu=$psfhdu $maximumradius $quiet \
+                             --measure=$normop --output=$psfradialprofile
+else
+    asttable $psfprofile \
+             --output=$psfradialprofile $quiet \
+             --column=$psfprofilecolradius,$psfprofilecolflux \
+             --range=$psfprofilecolradius,$normradiusmin,$normradiusmax
+fi
 
 
 
