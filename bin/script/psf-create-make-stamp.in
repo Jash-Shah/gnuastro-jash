@@ -47,11 +47,13 @@ keeptmp=0
 maskhdu=1
 output=""
 tmpdir=""
+axisratio=1
 corewidth=""
 normradii=""
 sigmaclip=""
 stampwidth=""
 normop="median"
+positionangle=0
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -102,6 +104,8 @@ $scriptname options:
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
+  -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
+  -p, --positionangle=FLT Position angle for ellipse mask profile.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
 
  Output:
@@ -228,6 +232,12 @@ do
         -s|--sigmaclip)      sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*)  sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                 sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
+        -Q|--axisratio)      axisratio="$2";                            check_v "$1" "$axisratio";  shift;shift;;
+        -Q=*|--axisratio=*)  axisratio="${1#*=}";                       check_v "$1" "$axisratio";  shift;;
+        -Q*)                 axisratio=$(echo "$1"  | sed -e's/-Q//');  check_v "$1" "$axisratio";  shift;;
+        -p|--positionangle)     positionangle="$2";                            check_v "$1" "$positionangle";  shift;shift;;
+        -p=*|--positionangle=*) positionangle="${1#*=}";                       check_v "$1" "$positionangle";  shift;;
+        -p*)                    positionangle=$(echo "$1"  | sed -e's/-p//');  check_v "$1" "$positionangle";  shift;;
 
 
         # Output parameters
@@ -487,6 +497,8 @@ if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
     fi
     astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
                              --measure=$normop $finalsigmaclip \
+                             --positionangle=$positionangle \
+                             --axisratio=$axisratio \
                              --output=$radialprofile $quiet
 
     # The normalization value is computed from the radial profile in between

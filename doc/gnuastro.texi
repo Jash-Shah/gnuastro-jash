@@ -23159,7 +23159,7 @@ This parameter is used as the option @option{--qcol} in the generation of the ap
 @item -p FLT
 @itemx --positionangle=FLT
 The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO DS9).
-By default, it is @option{--pangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
+By default, it is @option{--positionangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
 
 @item -m STR
 @itemx --measure=STR
@@ -23667,6 +23667,18 @@ The operator for measuring the values within the ring defined by the option @opt
 The operator given to this option will be directly passed to the radial profile script @file{astscript-radial-profile}, see @ref{Generate radial profile}.
 As a consequence, all MakeCatalog measurements (median, mean, sigclip-mean, sigclip-number, etc.) can be used here.
 For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
+
+@item -Q FLT
+@itemx --axisratio=FLT
+The axis ratio of the radial profiles for computing the normalization value.
+By default (when this option isn't given), the radial profile will be circular (axis ratio of 1).
+This parameter is used directly in the @file{astscript-radial-profile} script.
+
+@item -p FLT
+@itemx --positionangle=FLT
+The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO DS9).
+By default, it is @option{--positionangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
+This parameter is used directly in the @file{astscript-radial-profile} script.
 
 @item -s FLT,FLT
 @itemx --sigmaclip=FLT,FLT
