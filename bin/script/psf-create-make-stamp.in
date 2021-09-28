@@ -500,13 +500,10 @@ if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
     # specifies sigma clip parameters, use them.
     radialprofile=$tmpdir/rprofile-$objectid.fits
     maxr=$(echo "$normradiusmax" | awk '{print $1+1}')
-    if [ x"$maxradius" != x ]; then maximumradius="--rmax=$rmax"
-    else                       maximumradius="--rmax=$maxradius";
-    fi
     if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
     else                           finalsigmaclip="--sigmaclip=$sigmaclip";
     fi
-    astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
+    astscript-radial-profile $cropped_masked --hdu=1 --rmax=$maxr \
                              --measure=$normop $finalsigmaclip \
                              --positionangle=$positionangle \
                              --axisratio=$axisratio \
