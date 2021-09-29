@@ -448,6 +448,25 @@ Arithmetic
 * Arithmetic operators::        List of operators known to Arithmetic
 * Invoking astarithmetic::      How to run Arithmetic: options and output
 
+Arithmetic operators
+
+* Basic mathematical operators::  For example +, -, /, log, pow, and etc.
+* Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, and etc
+* Unit conversion operators::   magnitudes to counts, or parsecs to AUs, and etc.
+* Statistical operators::       Statistics of a single dataset (for example mean).
+* Stacking operators::          Coadding or combining multiple datasets into one.
+* Filtering operators::         Smoothing a dataset through mixing pixel with neighbors.
+* Interpolation operators::     Giving blank pixels a value.
+* Dimensionality changing operators::  Collapse or expand a dataset.
+* Conditional operators::       Select certain pixels within the dataset.
+* Mathematical morphology operators::  Work on binary images, for example erode.
+* Bitwise operators::           Work on bits within one pixel.
+* Numerical type conversion operators::  Convert the numeric datatype of a dataset.
+* Adding noise operators::      Add noise to a dataset.
+* Elliptical shape operators::  Operations that are focused on an ellipse.
+* Building new dataset::        How to construct an empty dataset from scratch.
+* Operand storage in memory or a file::  Tools for complex operations in one command.
+
 Convolve
 
 * Spatial domain convolution::  Only using the input image values.
@@ -12731,6 +12750,51 @@ The operands to all operators can be a data array (for example a FITS image) or 
 For example a number multiplied by an array will produce an array.
 The conditional operators will return pixel, or numerical values of 0 (false) or 1 (true) and stored in an @code{unsigned char} data type (see @ref{Numeric data types}).
 
+@cartouche
+@noindent
+@strong{Blank pixels in Arithmetic:} Blank pixels in the image (see @ref{Blank pixels}) will be stored based on the data type.
+When the input is floating point type, blank values are NaN.
+One aspect of NaN values is that by definition they will fail on @emph{any} comparison.
+Hence both equal and not-equal operators will fail when both their operands are NaN!
+Therefore, the only way to guarantee selection of blank pixels is through the @command{isblank} operator explained above.
+
+One way you can exploit this property of the NaN value to your advantage is when you want a fully zero-valued image (even over the blank pixels) based on an already existing image (with same size and world coordinate system settings).
+The following command will produce this for you:
+
+@example
+$ astarithmetic input.fits nan eq --output=all-zeros.fits
+@end example
+
+@noindent
+Note that on the command-line you can write NaN in any case (for example @command{NaN}, or @command{NAN} are also acceptable).
+Reading NaN as a floating point number in Gnuastro isn't case-sensitive.
+@end cartouche
+
+@menu
+* Basic mathematical operators::  For example +, -, /, log, pow, and etc.
+* Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, and etc
+* Unit conversion operators::   magnitudes to counts, or parsecs to AUs, and etc.
+* Statistical operators::       Statistics of a single dataset (for example mean).
+* Stacking operators::          Coadding or combining multiple datasets into one.
+* Filtering operators::         Smoothing a dataset through mixing pixel with neighbors.
+* Interpolation operators::     Giving blank pixels a value.
+* Dimensionality changing operators::  Collapse or expand a dataset.
+* Conditional operators::       Select certain pixels within the dataset.
+* Mathematical morphology operators::  Work on binary images, for example erode.
+* Bitwise operators::           Work on bits within one pixel.
+* Numerical type conversion operators::  Convert the numeric datatype of a dataset.
+* Adding noise operators::      Add noise to a dataset.
+* Elliptical shape operators::  Operations that are focused on an ellipse.
+* Building new dataset::        How to construct an empty dataset from scratch.
+* Operand storage in memory or a file::  Tools for complex operations in one command.
+@end menu
+
+@node Basic mathematical operators, Trigonometric and hyperbolic operators, Arithmetic operators, Arithmetic operators
+@subsubsection Basic mathematical operators
+
+These are some of the most common operations you will be doing on your data and include, so no futher explanation is necessary.
+If you are new to Gnuastro, just read the description of each carefully.
+
 @table @command
 
 @item +
@@ -12747,6 +12811,14 @@ $ astarithmetic a.fits b.fits + -g1     --output=sum.fits
 @end example
 The HDU/extension has to be specified for each image with @option{-h}.
 However, if the HDUs are the same in all inputs, you can use @option{-g} to only specify the HDU once
+
+If you need to add more than one dataset, one way is to use this operator multiple times, for example see the two commands below that are identical in the Reverse Polish Notation (@ref{Reverse polish notation}):
+@example
+$ astarithmetic a.fits b.fits + c.fits + -osum.fits
+$ astarithmetic a.fits b.fits c.fits + + -osum.fits
+@end example
+
+However, this can get annoying/buggy if you have more than three or four images, in that case, a better way to sum data is to use the @code{sum} operator (which also ignores blank pixels), that is discussed below.
 
 @item -
 Subtraction, so ``@command{4 5 -}'' is equivalent to @mymath{4-5}.
@@ -12838,6 +12910,15 @@ For example the command below will take the base-10 logarithm of every pixel in 
 @example
 $ astarithmetic image.fits log10
 @end example
+@end table
+
+@node Trigonometric and hyperbolic operators, Unit conversion operators, Basic mathematical operators, Arithmetic operators
+@subsubsection Trigonometric and hyperbolic operators
+
+All the trigonometric and hyperbolic functioncs are described here.
+One good thing with these operators is that they take inputs and outputs in degrees (which we usually need as input or output), not radians (like most other programs/libraries).
+
+@table @command
 
 @item  sin
 @itemx cos
@@ -12890,6 +12971,16 @@ These operators take a single operand.
 @itemx atanh
 Inverse Hyperbolic sine, cosine, and tangent.
 These operators take a single operand.
+@end table
+
+
+@node Unit conversion operators, Statistical operators, Trigonometric and hyperbolic operators, Arithmetic operators
+@subsubsection Unit conversion operators
+
+It often happens that you have data in one unit (for example magnitudes to measure the brighntess of a galaxy), but would like to convert it into another (for example electron counts on your CCD).
+While the equations for the unit conversions can be easily found on the internet, the operators in this section are designed to simplify the process and let you do it easily.
+
+@table @command
 
 @item counts-to-mag
 Convert counts (usually CCD outputs) to magnitudes using the given zeropoint.
@@ -12981,6 +13072,14 @@ For the conversion and a similar example, see the descrioption of @code{ly-to-pc
 Convert Astronomical Units (AUs) to Light-years (LY).
 This operator takes a single argument which is interpretted to be the input AUs.
 For the conversion and a similar example, see the descrioption of @code{ly-to-pc}.
+@end table
+
+@node Statistical operators, Stacking operators, Unit conversion operators, Arithmetic operators
+@subsubsection Statistical operators
+
+The operators in this section take a single dataset as input, and will return the desired statistic as a single value.
+
+@table @command
 
 @item minvalue
 Minimum value in the first popped operand, so ``@command{a.fits minvalue}'' will push the minimum pixel value in this image onto the stack.
@@ -13044,6 +13143,44 @@ Its usage is similar to @command{minvalue}, for example
 $ astarithmetic image.fits medianvalue -q
 @end example
 
+@item unique
+Remove all duplicate (and blank) elements from the first popped operand.
+The unique elements of the dataset will be stored in a single-dimensional dataset.
+
+Recall that by default, single-dimensional datasets are stored as a table column in the output.
+But you can use @option{--onedasimage} or @option{--onedonstdout} to respectively store them as a single-dimensional FITS array/image, or to print them on the standard output.
+
+Although you can use this operator on the floating point dataset, due to floating-point errors it may give non-reasonable values: because the tenth digit of the decimal point is also considered although it may be statistically meaningless, see @ref{Numeric data types}.
+It is therefore better/recommended to use it on the integer dataset like the labeled images of @ref{Segment output} where each pixel has the integer label of the object/clump it is associated with.
+For example let's assume you have cropped a region of a larger labeled image and want to find the labels/objects that are within the crop.
+With this operator, this job is trivial:
+@example
+$ astarithmetic seg-crop.fits unique
+@end example
+
+@item size
+Size of the dataset along a given FITS/Fortran dimension (counting from 1).
+The desired dimension should be the first popped operand and the dataset must be the second popped operand.
+The output will be a single unsigned integer (dimensions cannot be negative).
+For example, the following command will produce the size of the first extension/HDU (the default HDU) of @file{a.fits} along the second FITS axis.
+
+@example
+$ astarithmetic a.fits 2 size
+@end example
+@end table
+
+@node Stacking operators, Filtering operators, Statistical operators, Arithmetic operators
+@subsubsection Stacking operators
+
+@cindex Stacking
+@cindex Coaddition
+The operators in this section are used when you have multiple datasets that you would like to merge into one, commonly known as ``stacking'' or ``coaddition''.
+For example, you have taken ten exposures of your scientific target, and you would like to combine them all into one deep stacked image that is deeper.
+
+When calling these operators you should determine how many operands they should take in (unlike the rest of the operators that have a fixed number of input operands).
+As described in the first operand below, you do this through their first popped operand (which should be a single integer number that is larger than one).
+
+@table @command
 
 @cindex NaN
 @item min
@@ -13189,6 +13326,14 @@ For example
 @example
 astarithmetic a.fits b.fits c.fits 3 5 0.2 sigclip-std
 @end example
+@end table
+
+@node Filtering operators, Interpolation operators, Stacking operators, Arithmetic operators
+@subsubsection Filtering (smoothing) operators
+
+Image filtering is commonly used for smoothing: every pixel value in the output image is created by applying a certain statistic to the pixels in its vicinity.
+
+@table @command
 
 @item filter-mean
 Apply mean filtering (or @url{https://en.wikipedia.org/wiki/Moving_average, moving average}) on the input dataset.
@@ -13243,6 +13388,15 @@ However, if there are strong outliers in the dataset that you want to ignore (fo
 @item filter-sigclip-median
 Apply a @mymath{\sigma}-clipped median filtering onto the input dataset.
 This operator and its necessary operands are almost identical to @code{filter-sigclip-mean}, except that after @mymath{\sigma}-clipping, the median value (which is less affected by outliers than the mean) is added back to the stack.
+@end table
+
+@node Interpolation operators, Dimensionality changing operators, Filtering operators, Arithmetic operators
+@subsubsection Interpolation operators
+
+Interpolation is the process of removing blank pixels from a dataset (by giving them a value based on the non-blank neighbors).
+
+@table @command
+
 
 @item interpolate-medianngb
 Interpolate the blank elements of the second popped operand with the median of nearest non-blank neighbors to each.
@@ -13288,6 +13442,18 @@ This operator can be useful in filling saturated pixels in stars for example.
 Recall that the @option{interpolate-maxngb} operator looks for the maximum value with a given number of neighboring pixels and is more useful in small noisy regions.
 Therefore as the blank regions become larger, @option{interpolate-maxngb} can cause a fragmentation in the connected blank region because the nearest neighbor to one part of the blank region, may not fall within the pixels searched for the other regions.
 With this option, the size of the blank region is irrelevant: all the pixels bordering the blank region are parsed and their maximum value is used for the whole region.
+@end table
+
+@node Dimensionality changing operators, Conditional operators, Interpolation operators, Arithmetic operators
+@subsubsection Dimensionality changing operators
+
+Through these operators you can change the dimentions of the output through certain statistics on the dimensions that should be removed.
+For example, let's assume you have a 3D data cube that has 300 by 300 pixels in the RA and Dec dimensions (first two dimensions), and 3600 slices along the wavelength (third dimension), so the whole cube is @mymath{300\times300\times3600} voxels (volume elements).
+To create a narrow-band image that only contains 100 slices around a certain wavelength, you can crop that section (using @ref{Crop}), giving you a @mymath{300\times300\times100} cube.
+You can now use the @code{collapse-sum} operator below to ``collapse'' all the 100 slices into one 2D image that has @mymath{300\times300} pixels.
+Every pixel in this 2D image will have the flux of the sum of the 100 slices.
+
+@table @command
 
 @item collapse-sum
 Collapse the given dataset (second popped operand), by summing all elements along the first popped operand (a dimension in FITS standard: counting from one, from fastest dimension).
@@ -13349,105 +13515,12 @@ For example if you want to put the three @file{img1.fits}, @file{img2.fits} and 
 @example
 $ astarithmetic img1.fits img2.fits img3.fits 3 add-dimension
 @end example
+@end table
 
-@item unique
-Remove all duplicate (and blank) elements from the first popped operand.
-The unique elements of the dataset will be stored in a single-dimensional dataset.
+@node Conditional operators, Mathematical morphology operators, Dimensionality changing operators, Arithmetic operators
+@subsubsection Conditional operators
 
-Recall that by default, single-dimensional datasets are stored as a table column in the output.
-But you can use @option{--onedasimage} or @option{--onedonstdout} to respectively store them as a single-dimensional FITS array/image, or to print them on the standard output.
-
-Although you can use this operator on the floating point dataset, due to floating-point errors it may give non-reasonable values: because the tenth digit of the decimal point is also considered although it may be statistically meaningless, see @ref{Numeric data types}.
-It is therefore better/recommended to use it on the integer dataset like the labeled images of @ref{Segment output} where each pixel has the integer label of the object/clump it is associated with.
-For example let's assume you have cropped a region of a larger labeled image and want to find the labels/objects that are within the crop.
-With this operator, this job is trivial:
-@example
-$ astarithmetic seg-crop.fits unique
-@end example
-
-@item erode
-@cindex Erosion
-Erode the foreground pixels (with value @code{1}) of the input dataset (second popped operand).
-The first popped operand is the connectivity (see description in @command{connected-components}).
-Erosion is simply a flipping of all foreground pixels (with value @code{1}) to background (with value @code{0}) that are ``touching'' background pixels.
-``Touching'' is defined by the connectivity.
-
-In effect, this operator ``carves off'' the outer borders of the foreground, making them thinner.
-This operator assumes a binary dataset (all pixels are @code{0} or @code{1}).
-For example, imagine that you have an astronomical image with a mean/sky value of 0 units and a standard deviation (@mymath{\sigma}) of 100 units and many galaxies in it.
-With the first command below, you can apply a threshold of @mymath{2\sigma} on the image (by only keeping pixels that are greater than 200 using the @command{gt} operator).
-The output of thresholding the image is a binary image (each pixel is either smaller or equal to the threshold or larger than it).
-You can then erode the binary image with the second command below to remove very small false positives  (one or two pixel peaks).
-@example
-$ astarithmetic image.fits 100 gt -obinary.fits
-$ astarithmetic binary.fits 2 erode -oout.fits
-@end example
-
-In fact, you can merge these operations into one command thanks to the reverse polish notation (see @ref{Reverse polish notation}):
-@example
-$ astarithmetic image.fits 100 gt 2 erode -oout.fits
-@end example
-
-To see the effect of connectivity, try this:
-@example
-$ astarithmetic image.fits 100 gt 1 erode -oout-con-1.fits
-@end example
-
-@item dilate
-@cindex Dilation
-Dilate the foreground pixels (with value @code{1}) of the binary input dataset (second popped operand).
-The first popped operand is the connectivity (see description in @command{connected-components}).
-Dilation is simply a flipping of all background pixels (with value @code{0}) to foreground (with value @code{1}) that are ``touching'' foreground pixels.
-``Touching'' is defined by the connectivity.
-In effect, this expands the outer borders of the foreground.
-This operator assumes a binary dataset (all pixels are @code{0} and @code{1}).
-The usage is similar to @code{erode}, for example:
-@example
-$ astarithmetic binary.fits 2 dilate -oout.fits
-@end example
-
-@item connected-components
-@cindex Connected components
-Find the connected components in the input dataset (second popped operand).
-The first popped is the connectivity used in the connected components algorithm.
-The second popped operand is the dataset where connected components are to be found.
-It is assumed to be a binary image (with values of 0 or 1).
-It must have an 8-bit unsigned integer type which is the format produced by conditional operators.
-This operator will return a labeled dataset where the non-zero pixels in the input will be labeled with a counter (starting from 1).
-
-The connectivity is a number between 1 and the number of dimensions in the dataset (inclusive).
-1 corresponds to the weakest (symmetric) connectivity between elements and the number of dimensions the strongest.
-For example on a 2D image, a connectivity of 1 corresponds to 4-connected neighbors and 2 corresponds to 8-connected neighbors.
-
-One example usage of this operator can be the identification of regions above a certain threshold, as in the command below.
-With this command, Arithmetic will first separate all pixels greater than 100 into a binary image (where pixels with a value of 1 are above that value).
-Afterwards, it will label all those that are connected.
-
-@example
-$ astarithmetic in.fits 100 gt 2 connected-components
-@end example
-
-If your input dataset doesn't have a binary type, but you know all its values are 0 or 1, you can use the @code{uint8} operator (below) to convert it to binary.
-
-@item fill-holes
-Flip background (0) pixels surrounded by foreground (1) in a binary dataset.
-This operator takes two operands (similar to @code{connected-components}): the second is the binary (0 or 1 valued) dataset to fill holes in and the first popped operand is the connectivity (to define a hole).
-Imagine that in your dataset there are some holes with zero value inside the objects with one value (for example the output of the thresholding example of @command{erode}) and you want to fill the holes:
-@example
-$ astarithmetic binary.fits 2 fill-holes
-@end example
-
-@item invert
-Invert an unsigned integer dataset (won't work on other data types, see @ref{Numeric data types}).
-This is the only operator that ignores blank values (which are set to be the maximum values in the unsigned integer types).
-
-This is useful in cases where the target(s) has(have) been imaged in absorption as raw formats (which are unsigned integer types).
-With this option, the maximum value for the given type will be subtracted from each pixel value, thus ``inverting'' the image, so the target(s) can be treated as emission.
-This can be useful when the higher-level analysis methods/tools only work on emission (positive skew in the noise, not negative).
-@example
-$ astarithmetic image.fits invert
-@end example
-
+@table @command
 @item lt
 Less than: creates a binary output (values either 0 or 1) where each pixel will be 1 if the second popped operand is smaller than the first popped operand and 0 otherwise.
 If both operands are images, then all the pixels will be compared with their counterparts in the other image.
@@ -13583,7 +13656,107 @@ Hence, in the example below, all the pixels in @file{reference.fits} that have a
 @example
 $ astarithmetic in.fits reference.fits 100 gt nan where
 @end example
+@end table
 
+@node Mathematical morphology operators, Bitwise operators, Conditional operators, Arithmetic operators
+@subsubsection Mathematical morphology operators
+
+@cindex Mathematical morphology
+From Wikipedia: ``Mathematical morphology (MM) is a theory and technique for the analysis and processing of geometrical structures, based on set theory, lattice theory, topology, and random functions. MM is most commonly applied to digital images''.
+In theory it extends a very large body of research and methods in image processing, but corrently in Gnuastro it mainly applies to images that are binary (only have a value of 0 or 1).
+For example you have applied the greater-than operator (@code{gt}, see @ref{Conditional operators}) to select all pixels in your image that are larger than a value of 100.
+But they will all have a value of 1, and you want to separate the various groups of pixels that are connected (for example peaks of stars in your image).
+With the @code{connected-components} operator, you can give each connected region of the output of @code{gt} a separate integer label.
+
+@table @command
+@item erode
+@cindex Erosion
+Erode the foreground pixels (with value @code{1}) of the input dataset (second popped operand).
+The first popped operand is the connectivity (see description in @command{connected-components}).
+Erosion is simply a flipping of all foreground pixels (with value @code{1}) to background (with value @code{0}) that are ``touching'' background pixels.
+``Touching'' is defined by the connectivity.
+
+In effect, this operator ``carves off'' the outer borders of the foreground, making them thinner.
+This operator assumes a binary dataset (all pixels are @code{0} or @code{1}).
+For example, imagine that you have an astronomical image with a mean/sky value of 0 units and a standard deviation (@mymath{\sigma}) of 100 units and many galaxies in it.
+With the first command below, you can apply a threshold of @mymath{2\sigma} on the image (by only keeping pixels that are greater than 200 using the @command{gt} operator).
+The output of thresholding the image is a binary image (each pixel is either smaller or equal to the threshold or larger than it).
+You can then erode the binary image with the second command below to remove very small false positives  (one or two pixel peaks).
+@example
+$ astarithmetic image.fits 100 gt -obinary.fits
+$ astarithmetic binary.fits 2 erode -oout.fits
+@end example
+
+In fact, you can merge these operations into one command thanks to the reverse polish notation (see @ref{Reverse polish notation}):
+@example
+$ astarithmetic image.fits 100 gt 2 erode -oout.fits
+@end example
+
+To see the effect of connectivity, try this:
+@example
+$ astarithmetic image.fits 100 gt 1 erode -oout-con-1.fits
+@end example
+
+@item dilate
+@cindex Dilation
+Dilate the foreground pixels (with value @code{1}) of the binary input dataset (second popped operand).
+The first popped operand is the connectivity (see description in @command{connected-components}).
+Dilation is simply a flipping of all background pixels (with value @code{0}) to foreground (with value @code{1}) that are ``touching'' foreground pixels.
+``Touching'' is defined by the connectivity.
+In effect, this expands the outer borders of the foreground.
+This operator assumes a binary dataset (all pixels are @code{0} and @code{1}).
+The usage is similar to @code{erode}, for example:
+@example
+$ astarithmetic binary.fits 2 dilate -oout.fits
+@end example
+
+@item connected-components
+@cindex Connected components
+Find the connected components in the input dataset (second popped operand).
+The first popped is the connectivity used in the connected components algorithm.
+The second popped operand is the dataset where connected components are to be found.
+It is assumed to be a binary image (with values of 0 or 1).
+It must have an 8-bit unsigned integer type which is the format produced by conditional operators.
+This operator will return a labeled dataset where the non-zero pixels in the input will be labeled with a counter (starting from 1).
+
+The connectivity is a number between 1 and the number of dimensions in the dataset (inclusive).
+1 corresponds to the weakest (symmetric) connectivity between elements and the number of dimensions the strongest.
+For example on a 2D image, a connectivity of 1 corresponds to 4-connected neighbors and 2 corresponds to 8-connected neighbors.
+
+One example usage of this operator can be the identification of regions above a certain threshold, as in the command below.
+With this command, Arithmetic will first separate all pixels greater than 100 into a binary image (where pixels with a value of 1 are above that value).
+Afterwards, it will label all those that are connected.
+
+@example
+$ astarithmetic in.fits 100 gt 2 connected-components
+@end example
+
+If your input dataset doesn't have a binary type, but you know all its values are 0 or 1, you can use the @code{uint8} operator (below) to convert it to binary.
+
+@item fill-holes
+Flip background (0) pixels surrounded by foreground (1) in a binary dataset.
+This operator takes two operands (similar to @code{connected-components}): the second is the binary (0 or 1 valued) dataset to fill holes in and the first popped operand is the connectivity (to define a hole).
+Imagine that in your dataset there are some holes with zero value inside the objects with one value (for example the output of the thresholding example of @command{erode}) and you want to fill the holes:
+@example
+$ astarithmetic binary.fits 2 fill-holes
+@end example
+
+@item invert
+Invert an unsigned integer dataset (won't work on other data types, see @ref{Numeric data types}).
+This is the only operator that ignores blank values (which are set to be the maximum values in the unsigned integer types).
+
+This is useful in cases where the target(s) has(have) been imaged in absorption as raw formats (which are unsigned integer types).
+With this option, the maximum value for the given type will be subtracted from each pixel value, thus ``inverting'' the image, so the target(s) can be treated as emission.
+This can be useful when the higher-level analysis methods/tools only work on emission (positive skew in the noise, not negative).
+@example
+$ astarithmetic image.fits invert
+@end example
+@end table
+
+@node Bitwise operators, Numerical type conversion operators, Mathematical morphology operators, Arithmetic operators
+@subsubsection Bitwise operators
+
+@table @command
 @item bitand
 Bitwise AND operator: only bits with values of 1 in both popped operands will get the value of 1, the rest will be set to 0.
 For example (assuming numbers can be written as bit strings on the command-line): @code{00101000 00100010 bitand} will give @code{00100000}.
@@ -13615,6 +13788,17 @@ Bitwise not (more formally known as one's complement) operator: flip all the bit
 In other words, any bit with a value of @code{0} is changed to @code{1} and vice-versa.
 For example (assuming numbers can be written as bit strings on the command-line): @code{00101000 bitnot} will give @code{11010111}.
 Note that the bitwise operators only work on integer type datasets/numbers.
+@end table
+
+@node Numerical type conversion operators, Adding noise operators, Bitwise operators, Arithmetic operators
+@subsubsection Numerical type conversion operators
+
+With the operators below you can convert the numerical data type of your input, see @ref{Numeric data types}.
+For example, let's assume that your colleage gives you thousands of single exposure images for archival, but they have a double-precision floating point type!
+You know that the statistical error a single-exposure image can never exceed 6 or 7 significant digits, so you would prefer to archive them as a single-precision floating point and save space on your computer (a double-precision floating point is also double the file size!).
+You can do this with the @code{float32} operator described below.
+
+@table @command
 
 @item uint8
 Convert the type of the popped operand to 8-bit unsigned integer type (see @ref{Numeric data types}).
@@ -13651,6 +13835,16 @@ The internal conversion of C will be used.
 @item float64
 Convert the type of the popped operand to 64-bit (double precision) floating point (see @ref{Numeric data types}).
 The internal conversion of C will be used.
+@end table
+
+@node Adding noise operators, Elliptical shape operators, Numerical type conversion operators, Arithmetic operators
+@subsubsection Adding noise operators
+
+When you simulate data (for example see @ref{Sufi simulates a detection}), everything is ideal and there is no noise!
+The final step of the process is to add simulated noise to the data.
+The operators in this section are designed for that purpose.
+
+@table @command
 
 @item mknoise-sigma
 Add a fixed noise (Gaussian standard deviation) to each element of the input dataset.
@@ -13729,17 +13923,14 @@ echo 12 | asttable -c'arith $1 4 mknoise-uniform'
 @end example
 
 Similar to the example in @code{mknoise-sigma}, you can pipe the output of @command{echo} to @command{awk} before passing it to @command{asttable} to generate a full column of uniformly selected values within the same interval.
+@end table
 
-@item size
-Size of the dataset along a given FITS/Fortran dimension (counting from 1).
-The desired dimension should be the first popped operand and the dataset must be the second popped operand.
-The output will be a single unsigned integer (dimensions cannot be negative).
-For example, the following command will produce the size of the first extension/HDU (the default HDU) of @file{a.fits} along the second FITS axis.
+@node Elliptical shape operators, Building new dataset, Adding noise operators, Arithmetic operators
+@subsubsection Elliptical shape operators
 
-@example
-$ astarithmetic a.fits 2 size
-@end example
+The operators here describe certain functions that will be necessary when dealing with objects that have a certain elliptical shape.
 
+@table @command
 @item box-around-ellipse
 Return the width (along horizontal) and height (along vertical) of a box that encompases an ellipse with the same center point.
 The top-popped operand is assumed to be the position angle (angle from the horizontal axis) in @emph{degrees}.
@@ -13780,7 +13971,14 @@ $ asttable catalog.fits \
                     set-height set-width \
                     width float32 height float32'
 @end example
+@end table
 
+@node Building new dataset, Operand storage in memory or a file, Elliptical shape operators, Arithmetic operators
+@subsubsection Building new dataset
+
+
+
+@table @command
 @item makenew
 Create a new dataset that only has zero values.
 The number of dimensions is read as the first popped operand and the number of elements along each dimension are the next popped operand (in reverse of the popping order).
@@ -13788,9 +13986,29 @@ The type of the new dataset is an unsigned 8-bit integer and all pixel values ha
 For example, if you want to create a new 100 by 200 pixel image, you can run this command:
 
 @example
-astarithmetic 100 200 2 makenew
+$ astarithmetic 100 200 2 makenew
 @end example
 
+@noindent
+To futher extend the example, you can use any of the noise-making operators to add noise to this new dataset (see @ref{Adding noise operators}), like the command below:
+
+@example
+$ astarithmetic 100 200 2 makenew 5 mknoise-sigma
+@end example
+@end table
+
+@node Operand storage in memory or a file,  , Building new dataset, Arithmetic operators
+@subsubsection Operand storage in memory or a file
+
+In your early days of using Gnuastro, to do multiple operations, it is likely that you will simply call Arithmetic (or Table, with column crithmetic) multiple times.
+But as you get more proficient in the reverse polish notation, you will find yourself combining many operations into one call.
+This greatly speeds up your operation, because instead of writing the dataset to a file in one command, and reading it in the next command, it will just keep the intermediate dataset in memory!
+
+But adding more complexity to your operations, can make them much harder to debug, or extend even further.
+Therefore in this section we have some special operators that behave differently from the rest: they don't touch the contents of the data, only where/how they are stored.
+They are designed to do complex operations, without necessarily having a complex command.
+
+@table @command
 @item set-AAA
 Set the characters after the dash (@code{AAA} in the case shown here) as a name for the first popped operand on the stack.
 The named dataset will be freed from memory as soon as it is no longer needed, or if the name is reset to refer to another dataset later in the command.
@@ -13841,26 +14059,6 @@ Since it doesn't modify the operands stack, this operator is very convenient whe
 Similar to the @code{tofile} operator, with the only difference that the dataset that is written to a file is popped from the operand stack and freed from memory (cannot be used any more).
 
 @end table
-
-@cartouche
-@noindent
-@strong{Blank pixels in Arithmetic:} Blank pixels in the image (see @ref{Blank pixels}) will be stored based on the data type.
-When the input is floating point type, blank values are NaN.
-One aspect of NaN values is that by definition they will fail on @emph{any} comparison.
-Hence both equal and not-equal operators will fail when both their operands are NaN!
-Therefore, the only way to guarantee selection of blank pixels is through the @command{isblank} operator explained above.
-
-One way you can exploit this property of the NaN value to your advantage is when you want a fully zero-valued image (even over the blank pixels) based on an already existing image (with same size and world coordinate system settings).
-The following command will produce this for you:
-
-@example
-$ astarithmetic input.fits nan eq --output=all-zeros.fits
-@end example
-
-@noindent
-Note that on the command-line you can write NaN in any case (for example @command{NaN}, or @command{NAN} are also acceptable).
-Reading NaN as a floating point number in Gnuastro isn't case-sensitive.
-@end cartouche
 
 
 @node Invoking astarithmetic,  , Arithmetic operators, Arithmetic

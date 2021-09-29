@@ -22,6 +22,10 @@ See the end of the file for license conditions.
    - The section on reverse polish notation (used in Arithmetic, for
      images, and column arithmetic in Table) has been edited and extended
      to be more useful for a new user.
+   - Due to the great expansion of the number of operators in the
+     Arithmetic program and Column Arithmetic in the table program, the
+     "Arithmetic operators" section of the book has now grouped similar
+     operators in sub-sections to greatly help in finding a certain option.
 
   Arithmetic:
    - New operands (also available in Table's column arithmetic, the
