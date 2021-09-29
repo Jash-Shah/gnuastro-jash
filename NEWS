@@ -156,6 +156,9 @@ See the end of the file for license conditions.
               before value, found and fixed by Sepideh Eskandarlou.
   bug #61192: BuildProgram custom program linking problems on Debian-based
               OSs, reported by Raúl Infante-Sainz.
+  bug #61244: Sum operator in arithmetic ignoring floating point images
+              with blank values, found and reported by Giulia Golini and
+              Raúl Infante-Sainz.
 
 
 

@@ -1124,8 +1124,8 @@ struct multioperandparams
             /* Only integers and non-NaN floats: v==v is 1. */          \
             if(p->hasblank[i])                                          \
               use = ( b==b                                              \
-                      ? ( a[i][j]!=b     ? 1 : 0 )       /* Integer */  \
-                      : ( a[i][j]==*a[i] ? 1 : 0 ) );    /* Float   */  \
+                      ? ( a[i][j]!=b       ? 1 : 0 )     /* Integer */  \
+                      : ( a[i][j]==a[i][j] ? 1 : 0 ) );  /* Float   */  \
             else use=1;                                                 \
                                                                         \
             /* Use in sum if necessary. */                              \
