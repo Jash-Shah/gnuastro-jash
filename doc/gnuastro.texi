@@ -641,7 +641,7 @@ Installed scripts
 * Sort FITS files by night::    Sort many files by date.
 * Generate radial profile::     Radial profile of an object in an image.
 * SAO DS9 region files from table::  Create ds9 region file from a table.
-* PSF construction and correction::  Create and subtract the PSF.
+* PSF construction and correction::
 
 Sort FITS files by night
 
@@ -657,10 +657,10 @@ SAO DS9 region files from table
 
 PSF construction and correction
 
-* Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
-* Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
-* Invoking astscript-psf-model-flux-factor::  How to call astscript-psf-model-flux-factor
-* Invoking astscript-psf-model-scattered-light::  How to call astscript-psf-model-scattered-light
+* Invoking astscript-psf-create-make-stamp::
+* Invoking astscript-psf-create-junction::
+* Invoking astscript-psf-model-flux-factor::
+* Invoking astscript-psf-model-scattered-light::
 
 Library
 
@@ -22796,6 +22796,7 @@ If you do confront such strange errors, please submit a bug report so we fix it 
 * Sort FITS files by night::    Sort many files by date.
 * Generate radial profile::     Radial profile of an object in an image.
 * SAO DS9 region files from table::  Create ds9 region file from a table.
+* PSF construction and correction::
 @end menu
 
 @node Sort FITS files by night, Generate radial profile, Installed scripts, Installed scripts
@@ -23254,7 +23255,7 @@ For example, to check that the profiles generated for obtaining the radial profi
 
 
 
-@node SAO DS9 region files from table,  , Generate radial profile, Installed scripts
+@node SAO DS9 region files from table, PSF construction and correction, Generate radial profile, Installed scripts
 @section SAO DS9 region files from table
 
 Once your desired catalog (containing the positions of some objects) is created (for example with @ref{MakeCatalog}, @ref{Match}, or @ref{Table}) it often happens that you want to see your selected objects on an image for a feeling of the spatial properties of your objects.
@@ -23402,7 +23403,7 @@ In the opened window, click on ``Command Line Options''.
 
 
 
-@node PSF construction and correction, Installed scripts
+@node PSF construction and correction,  , SAO DS9 region files from table, Installed scripts
 @section PSF construction and correction
 
 The point spread function (PSF) describes how the light of a point-like source is affected by several optical scattering effects (atmosphere, telescope, instrument, etc.).
@@ -23541,15 +23542,15 @@ In what follows, each script all options of each script is described in detail.
 For more on installed scripts please see (see @ref{Installed scripts}).
 
 @menu
-*Invoking astscript-psf-create-make-stamp::  How to call astscript-psf-create-make-stamp
-*Invoking astscript-psf-create-junction::  How to call astscript-psf-create-junction
-*Invoking astscript-psf-model-flux-factor::  How to call astscript-psf-model-flux-factor
-*Invoking astscript-psf-model-scattered-light::  How to call astscript-psf-model-scattered-light
+* Invoking astscript-psf-create-make-stamp::
+* Invoking astscript-psf-create-junction::
+* Invoking astscript-psf-model-flux-factor::
+* Invoking astscript-psf-model-scattered-light::
 @end menu
 
 
 
-@node Invoking astscript-psf-create-make-stamp
+@node Invoking astscript-psf-create-make-stamp, Invoking astscript-psf-create-junction, PSF construction and correction, PSF construction and correction
 @subsection Invoking astscript-psf-create-make-stamp
 This installed script will read an image, the center of an object @option{--center}, the type of the center coordinates @option{--mode} (img or wcs), the normalization radii @option{--normradii}, and the size of the output stamp @option{--stampwidth}.
 With that input, it will generate a stamp centered at the coordinates provided, and normalized by the flux computed in the normalization radius.
@@ -23711,7 +23712,7 @@ The main reason of setting this name is to have an unique name for each stamp by
 
 
 
-@node Invoking astscript-psf-create-junction
+@node Invoking astscript-psf-create-junction, Invoking astscript-psf-model-flux-factor, Invoking astscript-psf-create-make-stamp, PSF construction and correction
 @subsection Invoking astscript-psf-create-junction
 This installed script will join two PSF images at a given radius.
 This operation is commonly used when the outer part of the PSF has been computed from very bright stars, and consequently, they are saturated in most central part (core).
@@ -23812,7 +23813,7 @@ This option is useful for debugging.
 
 
 
-@node Invoking astscript-psf-model-flux-factor
+@node Invoking astscript-psf-model-flux-factor, Invoking astscript-psf-model-scattered-light, Invoking astscript-psf-create-junction, PSF construction and correction
 @subsection Invoking astscript-psf-model-flux-factor
 This installed script will consider an object within the input image and it will obtain the radial profile of that object.
 In the same way, it will compute the radial profile of a given PSF image.
@@ -23983,7 +23984,7 @@ For example, to check that the intermediate images have the desired center, they
 
 
 
-@node Invoking astscript-psf-model-scattered-light
+@node Invoking astscript-psf-model-scattered-light,  , Invoking astscript-psf-model-flux-factor, PSF construction and correction
 @subsection Invoking astscript-psf-model-scattered-light
 This installed script will put the PSF provided into a given position of the sky within the input image.
 It is aimed to model the scattered light field of an input image.
