@@ -1,0 +1,96 @@
+# Generate two stamps from a mock image to test the PSF stamps script
+#
+# See the Tests subsection of the manual for a complete explanation
+# (in the Installing gnuastro section).
+#
+# Original author:
+#     Raul Infante-Sainz <infantesainz@gmail.com>
+# Contributing author(s):
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
+
+
+
+
+# Preliminaries
+# =============
+#
+# Set the variables (the executable is in the build tree). Do the
+# basic checks to see if the executable is made or if the defaults
+# file exists (basicchecks.sh is in the source tree).
+prog=psf-create-make-stamp
+dep1=crop
+dep2=fits
+dep3=table
+dep4=arithmetic
+dep5=statistics
+dep6=radial-profile
+dep1name=../bin/$dep1/ast$dep1
+dep2name=../bin/$dep2/ast$dep2
+dep3name=../bin/$dep3/ast$dep3
+dep4name=../bin/$dep4/ast$dep4
+dep5name=../bin/$dep5/ast$dep5
+dep6name=../bin/script/astscript-$dep6
+execname=../bin/script/astscript-$prog
+fits1name=0_mkprofcat2.fits
+
+
+
+
+
+# Skip?
+# =====
+#
+# If the dependencies of the test don't exist, then skip it. There are two
+# types of dependencies:
+#
+#   - The executable script was not made.
+#   - The programs it use weren't made.
+#   - The input data weren't made.
+if [ ! -f $execname ]; then echo "$execname doesn't exist."; exit 77; fi
+if [ ! -f $dep1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
+if [ ! -f $dep2name ]; then echo "$dep2name doesn't exist."; exit 77; fi
+if [ ! -f $dep3name ]; then echo "$dep3name doesn't exist."; exit 77; fi
+if [ ! -f $dep4name ]; then echo "$dep4name doesn't exist."; exit 77; fi
+if [ ! -f $dep5name ]; then echo "$dep5name doesn't exist."; exit 77; fi
+if [ ! -f $dep6name ]; then echo "$dep6name doesn't exist."; exit 77; fi
+if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
+
+
+
+
+
+
+# Put a link of Gnuastro program(s) used into current directory. Note that
+# other script tests may have already brought it.
+ln -sf $dep1name ast$dep1
+ln -sf $dep2name ast$dep2
+ln -sf $dep3name ast$dep3
+ln -sf $dep4name ast$dep4
+ln -sf $dep5name ast$dep5
+ln -sf $dep6name astscript-$dep6
+
+
+
+
+
+# Actual test script
+# ==================
+#
+# 'check_with_program' can be something like Valgrind or an empty
+# string. Such programs will execute the command if present and help in
+# debugging when the developer doesn't have access to the user's system.
+#
+# Since we want the script to recognize the programs that it will use from
+# this same build of Gnuastro, we'll add the current directory to PATH.
+export PATH="./:$PATH"
+y=$($dep2name $fits1name -h1 | grep 'NAXIS1' | awk '{print $3/2}')
+x=$($dep2name $fits1name -h1 | grep 'NAXIS2' | awk '{print $3/2}')
+$check_with_program $execname $fits1name --center=$x,$y --mode=img --stampwidth=100,100
+

@@ -207,11 +207,15 @@ endif
 
 # Script tests.
 SCRIPT_TESTS = script/sort-by-night.sh \
-               script/radial-profile.sh
+               script/radial-profile.sh \
+               script/psf-create-junction.sh \
+               script/psf-create-make-stamp.sh
 
 # We want to have several FITS files as input for this script.
 script/sort-by-night.sh: mkcatalog/aperturephot.sh.log
 script/radial-profile.sh: mkprof/mosaic2.sh.log
+script/psf-create-junction.sh: mkprof/mosaic2.sh.log
+script/psf-create-make-stamp.sh: mkprof/mosaic2.sh.log
 
 
 

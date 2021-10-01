@@ -28,11 +28,15 @@
 ## 'make clean').
 bin_SCRIPTS = astscript-ds9-region \
               astscript-radial-profile \
-              astscript-sort-by-night
+              astscript-sort-by-night \
+              astscript-psf-create-junction \
+              astscript-psf-create-make-stamp
 
 EXTRA_DIST = ds9-region.in \
+             sort-by-night.in \
              radial-profile.in \
-             sort-by-night.in
+             psf-create-junction.in \
+             psf-create-make-stamp.in
 
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -59,4 +63,12 @@ astscript-radial-profile: radial-profile.in Makefile
 
 astscript-sort-by-night: sort-by-night.in Makefile
 	$(do_subst) < $(srcdir)/sort-by-night.in > $@
+	chmod +x $@
+
+astscript-psf-create-junction: psf-create-junction.in Makefile
+	$(do_subst) < $(srcdir)/psf-create-junction.in > $@
+	chmod +x $@
+
+astscript-psf-create-make-stamp: psf-create-make-stamp.in Makefile
+	$(do_subst) < $(srcdir)/psf-create-make-stamp.in > $@
 	chmod +x $@
