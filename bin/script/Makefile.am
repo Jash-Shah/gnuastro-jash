@@ -30,13 +30,17 @@ bin_SCRIPTS = astscript-ds9-region \
               astscript-radial-profile \
               astscript-sort-by-night \
               astscript-psf-create-junction \
-              astscript-psf-create-make-stamp
+              astscript-psf-create-make-stamp \
+              astscript-psf-model-flux-factor \
+              astscript-psf-model-scattered-light
 
 EXTRA_DIST = ds9-region.in \
              sort-by-night.in \
              radial-profile.in \
              psf-create-junction.in \
-             psf-create-make-stamp.in
+             psf-create-make-stamp.in \
+             psf-model-flux-factor.in \
+             psf-model-scattered-light.in
 
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -71,4 +75,12 @@ astscript-psf-create-junction: psf-create-junction.in Makefile
 
 astscript-psf-create-make-stamp: psf-create-make-stamp.in Makefile
 	$(do_subst) < $(srcdir)/psf-create-make-stamp.in > $@
+	chmod +x $@
+
+astscript-psf-model-flux-factor: psf-model-flux-factor.in Makefile
+	$(do_subst) < $(srcdir)/psf-model-flux-factor.in > $@
+	chmod +x $@
+
+astscript-psf-model-scattered-light: psf-model-scattered-light.in Makefile
+	$(do_subst) < $(srcdir)/psf-model-scattered-light.in > $@
 	chmod +x $@
