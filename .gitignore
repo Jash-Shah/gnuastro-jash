@@ -131,7 +131,9 @@ doc/gnuastro.cps
 doc/gnuastro.vrs
 tests/versioncxx
 tests/multithread
+bin/completion.bash
 lib/gnuastro/config.h
+bin/completion.bash.built
 bin/buildprog/astbuildprog.conf
 
 
