@@ -437,7 +437,7 @@ fi
 # coordinates were done in IMG, then just use them.
 if [ $mode = wcs ]; then
   xycenter=$(echo "$xcoord,$ycoord" \
-                  | asttable  --column='arith $1 $2 wcstoimg' \
+                  | asttable  --column='arith $1 $2 wcs-to-img' \
                               --wcsfile=$inputs --wcshdu=$hdu $quiet)
   xcenter=$(echo "$xycenter" | awk '{print $1}')
   ycenter=$(echo "$xycenter" | awk '{print $2}')
