@@ -2349,6 +2349,7 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
   free(stat);
   free(theta);
   free(world);
+  free(imgcrd);
   free(pixcrd);
 
   /* Return the output list of coordinates. */
@@ -2421,6 +2422,7 @@ gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
   free(stat);
   free(theta);
   free(world);
+  free(imgcrd);
   free(pixcrd);
 
 
