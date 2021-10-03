@@ -2245,8 +2245,8 @@ wcs_convert_sanity_check_alloc(gal_data_t *coords, struct wcsprm *wcs,
    list. But in WCSLIB, the input is a single array (with multiple
    columns). This function will convert between the two. */
 static void
-wcs_convert_list_to_array(gal_data_t *list, double *array, int *stat,
-                          size_t ndim, int listtoarray)
+wcs_convert_list_to_from_array(gal_data_t *list, double *array, int *stat,
+                               size_t ndim, int to0from1)
 {
   size_t i, d=0;
   gal_data_t *tmp;
@@ -2257,10 +2257,10 @@ wcs_convert_list_to_array(gal_data_t *list, double *array, int *stat,
          input into or output from WCSLIB. */
       for(i=0;i<list->size;++i)
         {
-          if(listtoarray)
-            array[i*ndim+d] = ((double *)(tmp->array))[i];
-          else
+          if(to0from1)
             ((double *)(tmp->array))[i] = stat[i] ? NAN : array[i*ndim+d];
+          else
+            array[i*ndim+d] = ((double *)(tmp->array))[i];
         }
 
       /* Increment the dimension. */
@@ -2313,7 +2313,7 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
   /* Write the values from the input list of separate columns into a single
      array (WCSLIB input). */
-  wcs_convert_list_to_array(coords, world, stat, wcs->naxis, 1);
+  wcs_convert_list_to_from_array(coords, world, stat, wcs->naxis, 0);
 
 
   /* Use WCSLIB's wcss2p for the conversion. */
@@ -2341,7 +2341,7 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
   /* Write the output from a single array (WCSLIB output) into the output
      list of this function. */
-  wcs_convert_list_to_array(out, pixcrd, stat, wcs->naxis, 0);
+  wcs_convert_list_to_from_array(out, pixcrd, stat, wcs->naxis, 1);
 
 
   /* Clean up. */
@@ -2376,7 +2376,7 @@ gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
   /* Write the values from the input list of separate columns into a single
      array (WCSLIB input). */
-  wcs_convert_list_to_array(coords, pixcrd, stat, wcs->naxis, 1);
+  wcs_convert_list_to_from_array(coords, pixcrd, stat, wcs->naxis, 0);
 
 
   /* Use WCSLIB's wcsp2s for the conversion. */
@@ -2414,7 +2414,7 @@ gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
   /* Write the output from a single array (WCSLIB output) into the output
      list of this function. */
-  wcs_convert_list_to_array(out, world, stat, wcs->naxis, 0);
+  wcs_convert_list_to_from_array(out, world, stat, wcs->naxis, 1);
 
 
   /* Clean up. */
