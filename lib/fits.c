@@ -1781,10 +1781,16 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
 
               /* Let the user know that the name will be truncated. */
               if(quiet==0)
-                error(0,0, "%s: WARNING: '%s' is too long to fit "
-                      "into a FITS keyword value (max of %zu characters), "
-                      "it will be truncated", __func__, filename,
-                      maxlength);
+                error(0,0, "%s: WARNING: the filename '%s' (not "
+                      "including directories) is too long to fit into "
+                      "a FITS keyword value (max of %zu characters). "
+                      "It will therefore be truncated. If you are "
+                      "using Gnuastro's programs, this message is "
+                      "only about the metadata (keyword that keeps "
+                      "name of input), so it won't affect the output "
+                      "analysis and data. In this case, you can supress "
+                      "this warning message with a '--quiet' option",
+                      __func__, filename, maxlength);
             }
 
           /* Convert the last useful character and save the file name.*/
