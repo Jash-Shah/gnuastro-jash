@@ -163,6 +163,9 @@ See the end of the file for license conditions.
   bug #61244: Sum operator in arithmetic ignoring floating point images
               with blank values, found and reported by Giulia Golini and
               Raúl Infante-Sainz.
+  bug #61287: Two "switch" blocks miss "break" in MakeCatalog when setting
+              output column information: found and fixed by Vladimir
+              Markelov.
 
 
 

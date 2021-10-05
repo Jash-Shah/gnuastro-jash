@@ -2443,6 +2443,7 @@ columns_fill(struct mkcatalog_passparams *pp)
         case UI_KEY_CLUMPSGEOZ:
           ((float *)colarr)[oind] = MKC_RATIO( oi[OCOL_C_GZ],
                                                oi[OCOL_C_NUMALL] );
+          break;
 
         case UI_KEY_MINVX:
           ((float *)colarr)[oind] = MKC_RATIO( oi[OCOL_MINVX], oi[OCOL_MINVNUM] );
@@ -2825,6 +2826,7 @@ columns_fill(struct mkcatalog_passparams *pp)
           case UI_KEY_GEOZ:
             ((float *)colarr)[cind] = MKC_RATIO( ci[CCOL_GZ],
                                                  ci[CCOL_NUMALL] );
+            break;
 
           case UI_KEY_MINVX:
             ((float *)colarr)[cind] = MKC_RATIO( ci[CCOL_MINVX], ci[CCOL_MINVNUM] );
