@@ -164,8 +164,10 @@ See the end of the file for license conditions.
               with blank values, found and reported by Giulia Golini and
               Raúl Infante-Sainz.
   bug #61287: Two "switch" blocks miss "break" in MakeCatalog when setting
-              output column information: found and fixed by Vladimir
+              output column information, found and fixed by Vladimir
               Markelov.
+  bug #61293: MakeCatalog not properly initializing the '--minvy' column
+              when parsing clumps, found and fixed by Vladimir Markelov.
 
 
 

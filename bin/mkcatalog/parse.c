@@ -894,7 +894,7 @@ parse_clumps(struct mkcatalog_passparams *pp)
 
   /* For the extrema columns. */
   if( cif[    CCOL_MINVNUM ] || cif[ CCOL_MINVX ]
-      || cif[ CCOL_MINVX   ] || cif[ CCOL_MINVZ ] )
+      || cif[ CCOL_MINVY   ] || cif[ CCOL_MINVZ ] )
     minima_v=parse_init_extrema(cif, GAL_TYPE_FLOAT64, pp->clumpsinobj, 0);
   if( cif[    CCOL_MAXVNUM ] || cif[ CCOL_MAXVX ]
       || cif[ CCOL_MAXVY   ] || cif[ CCOL_MAXVZ ] )
