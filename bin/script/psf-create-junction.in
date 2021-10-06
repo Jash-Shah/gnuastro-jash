@@ -348,11 +348,9 @@ ypsfcenter=$(astarithmetic $ypsfaxis 2 / --quiet)
 #
 # In order to allocate the PSF into the center coordinates provided by the
 # user, it is necessary to compute the appropiate offsets along the X and Y
-# axis. After that, the PSF image is warped using that offsets. Note that
-# in order to account for a 1 pixel offset, it is necessary to subtract the
-# value 1.
-xdiff=$(astarithmetic $xcenter $xpsfcenter - 1.0 - --quiet)
-ydiff=$(astarithmetic $ycenter $ypsfcenter - 1.0 - --quiet)
+# axis. After that, the PSF image is warped using that offsets.
+xdiff=$(astarithmetic $xcenter $xpsfcenter - --quiet)
+ydiff=$(astarithmetic $ycenter $ypsfcenter - --quiet)
 
 coretranslated=$tmpdir/"$bname_core"_translated.fits
 astwarp $core --translate=$xdiff,$ydiff \
@@ -371,7 +369,9 @@ astwarp $core --translate=$xdiff,$ydiff \
 # PSF or scattered light field model would not be possible. Here, this
 # cropping is done.
 xrange=$(echo "$xdiff $xaxis $xcenter" \
-              | awk '{if($1<0) \
+              | awk '{if($1==0) \
+                       {min=0; max=$2-1;} \
+                      else if($1<0) \
                        {i=int($1); \
                         d=-1*i+1; \
                         min=d; max=$2+d-1;} \
@@ -380,7 +380,9 @@ xrange=$(echo "$xdiff $xaxis $xcenter" \
                       printf "%d:%d", min, max}')
 
 yrange=$(echo "$ydiff $yaxis $ycenter" \
-              | awk '{if($1<0) \
+              | awk '{if($1==0) \
+                       {min=0; max=$2-1;} \
+                      else if($1<0) \
                        {i=int($1); \
                         d=-1*i+1; \
                         min=d; max=$2+d-1;} \
@@ -426,7 +428,9 @@ astarithmetic $corecropped --hdu=1 set-i \
 # As a consequence, the final image will be the sum of these two masked
 # images.
 maskimage=$tmpdir/mask-image.fits
-echo "1 $xcenter $ycenter 5 $radius 1 $positionangle $axisratio 1 1" \
+xcentmask=$(astarithmetic $xcenter 1 + --quiet)
+ycentmask=$(astarithmetic $ycenter 1 + --quiet)
+echo "1 $xcentmask $ycentmask 5 $radius 1 $positionangle $axisratio 1 1" \
       | astmkprof --background=$corefluxscaled \
 		  --mode=img \
                   --clearcanvas \
@@ -457,13 +461,13 @@ echo "1 $xcenter $ycenter 5 $radius 1 $positionangle $axisratio 1 1" \
 #   0 0 C C 0 0
 #   0 0 0 0 0 0
 
-outer_masked=$tmpdir/"$bname_outer"_masked.fits
+outer_masked=$tmpdir/"$bname_outer"_outermasked.fits
 astarithmetic $inputs --hdu=1 set-psfouter \
               $maskimage --hdu=1 set-mask \
               psfouter mask 1 eq 0 where --output=$outer_masked $quiet
 
 
-core_masked=$tmpdir/"$bname_core"_masked.fits
+core_masked=$tmpdir/"$bname_core"_coremasked.fits
 astarithmetic $corefluxscaled --hdu=1 set-psfinner \
               $maskimage --hdu=1 set-mask \
               psfinner mask 1 ne 0 where --output=$core_masked $quiet
