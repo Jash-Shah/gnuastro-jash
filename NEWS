@@ -3,6 +3,22 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 Copyright (C) 2015-2021 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
+* Noteworthy changes in release X.XX (library XX.0.0) (YYYY-MM-DD) [stable]
+
+** New features
+
+** Removed features
+
+** Changed features
+
+** Bugs fixed
+  bug #61329: make check crash in macOS in convolve/spectrum-1d.sh, found
+              and fixed with the help of Sebastian Luna-Valero.
+
+
+
+
+
 * Noteworthy changes in release 0.16 (library 14.0.0) (2021-10-10) [stable]
 
 ** New features

@@ -54,7 +54,6 @@ if [ ! -f $spec     ]; then echo "$spec does not exist.";  exit 77; fi
 # 'check_with_program' can be something like Valgrind or an empty
 # string. Such programs will execute the command if present and help in
 # debugging when the developer doesn't have access to the user's system.
-echo "1 3 10 3 1" \
-    | sed 's/ /\n/g' \
+printf '1\n3\n10\n3\n1\n' \
     | $check_with_program $execname $spec --domain=spatial   \
                           --output=convolve_spectrum.txt
