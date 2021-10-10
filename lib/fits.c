@@ -1788,7 +1788,7 @@ gal_fits_key_write_filename(char *keynamebase, char *filename,
                       "using Gnuastro's programs, this message is "
                       "only about the metadata (keyword that keeps "
                       "name of input), so it won't affect the output "
-                      "analysis and data. In this case, you can supress "
+                      "analysis and data. In this case, you can suppress "
                       "this warning message with a '--quiet' option",
                       __func__, filename, maxlength);
             }

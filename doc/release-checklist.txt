@@ -31,6 +31,13 @@ all the commits needed for this release have been completed.
        $ git diff gnuastro_vX.X..HEAD THANKS
 
 
+ - Update Gnulib and Autoconf archives, then remove all the non-version
+   controlled files and bootstrap Gnuastro:
+
+     $ git clean -fxd
+     $ ./bootstrap --copy --gnulib-srcdir=/path/to/updated/gnulib
+
+
  - Build the Debian distribution (just for a test) and correct any build or
    Lintian warnings. This is recommended, even if you don't actually want
    to make a release before the alpha or main release. Because the warnings
@@ -78,13 +85,6 @@ all the commits needed for this release have been completed.
 
      $ git add -u
      $ git commit
-
-
- - Update Gnulib and Autoconf archives, then remove all the non-version
-   controlled files and bootstrap Gnuastro:
-
-     $ git clean -fxd
-     $ ./bootstrap --copy --gnulib-srcdir=/path/to/updated/gnulib
 
 
  - Update the version and build Gnuastro, all done with the '-p' option of
@@ -228,7 +228,7 @@ Steps necessary to Package Gnuastro for Debian.
 
  - Some tips on basic Debian operating system to do the packaging:
 
-   After installing Debian from DVD, you need to tell apt to use an
+   After installing Debian from DVD, you may need to tell apt to use an
    internet connection and not the DVD for installing the packages. To do
    that, comment the line(s) with a `cdrom' in this file:
 
@@ -243,7 +243,7 @@ Steps necessary to Package Gnuastro for Debian.
                             libgsl-dev libjpeg-dev libtiff-dev libgit2-dev
      $ sudo pbuilder create
      $ su
-     # usermod -aG sudo YOURUSERID   # Add your user to the 'sudo' group.
+     # nano /etc/sudoers    # Add your user under 'root'
 
    Add these two lines to '~/.devscripts':
 
@@ -274,12 +274,14 @@ Steps necessary to Package Gnuastro for Debian.
      $ sudo apt-get update
      $ sudo apt-get upgrade
 
- - If you don't already have the Git repository, clone it with the
-   following command. A 'gnuastro' directory will be built, but to setup
-   the other to main branches, you'll need to go into the cloned directory
-   and checkout to them manually.
+ - If you don't already have the Gnuastro Debian packaging Git repository,
+   clone it with the following command (don't forget to upload your public
+   SSH key to that server). A 'gnuastro' directory will be built after the
+   cloning. To simplify changing branches between the three standard Debian
+   branches, you'll need to go into the cloned directory and checkout to
+   them manually afterwards.
 
-     $ git clone https://salsa.debian.org/debian-astro-team/gnuastro.git
+     $ git clone git@salsa.debian.org:debian-astro-team/gnuastro.git
      $ cd gnuastro
      $ git checkout -b upstream --track origin/upstream
      $ git checkout -b pristine-tar --track origin/pristine-tar
@@ -329,18 +331,17 @@ Steps necessary to Package Gnuastro for Debian.
 
 
  - Make a standard symbolic link to the tarball (IMPORTANT: the 'dash' is
-   changed to an 'underscore' and an 'orig' is added), then go into the
-   cloned directory.
+   changed to an 'underscore' and an 'orig' is added).
 
      $ mv gnuastro-$ver-XXXX.tar.gz      gnuastro_$ver.orig.tar.gz
      $ mv gnuastro-$ver-XXXX..tar.gz.sig gnuastro_$ver.orig.tar.gz.asc
+
+
+ - You need to go into the clone directory and checkout to the 'upstream'
+   branch, clean everything that was in it and unpack this release's raw
+   package source files into it as shown below.
+
      $ cd gnuastro
-
-
- - You need to checkout to the 'upstream' branch, clean everything that was
-   in it and unpack this release's raw package source files into it as
-   shown below.
-
      $ git checkout upstream
      $ mv .git ../gnuastro-tmp-git         # We want to keep '.git'.
      $ rm -rf ./* ./.*                     # Delete everything.

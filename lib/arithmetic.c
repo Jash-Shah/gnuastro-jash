@@ -1496,9 +1496,9 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
 {
   size_t i=0, dnum=1;
   float p1=NAN, p2=NAN;
-  uint8_t *hasblank, otype;
   struct multioperandparams p;
   gal_data_t *out, *tmp, *ttmp;
+  uint8_t *hasblank, otype=GAL_TYPE_INVALID;
 
 
   /* For generality, 'list' can be a NULL pointer, in that case, this

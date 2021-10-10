@@ -295,6 +295,6 @@ cosmiccal(struct cosmiccalparams *p)
           "law (which is the basis of the measurements here). This "
           "gets worse as the redshift decreases. Therefore the "
           "results above may not be accurate on a per-object basis. "
-          "You can supress this warning with the '--quiet' option",
+          "You can suppress this warning with the '--quiet' option",
           MAIN_REDSHIFT_SIG_HUBBLE_FLOW);
 }

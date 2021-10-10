@@ -1504,10 +1504,13 @@ Paul Eggert,
 Sepideh Eskandarlou,
 Gaspar Galaz,
 Andr@'es García-Serra Romero,
+Zohre Ghaffari,
 Th@'er@`ese Godefroy,
+Giulia Golini,
 Madusha Gunawardhana,
 Bruno Haible,
 Stephen Hamer,
+Leslie Hunt,
 Takashi Ichikawa,
 Ra@'ul Infante Sainz,
 Brandon Invergo,
@@ -1546,6 +1549,7 @@ Samane Raji,
 Teymoor Saifollahi,
 Joanna Sakowska,
 Elham Saremi,
+Markus Schaney,
 Yahya Sefidbakht,
 Alejandro Serrano Borlaff,
 Zahra Sharbaf,
@@ -1559,6 +1563,7 @@ Ole Streicher,
 Alfred M. Szmidt,
 Michel Tallon,
 Juan C. Tello,
+Vincenzo Testa,
 @'Eric Thi@'ebaut,
 Ignacio Trujillo,
 David Valls-Gabaud,
@@ -5273,7 +5278,7 @@ $ cd cfitsio-X.XX                   # Replace X.XX with version
 $ ./configure --prefix=/usr/local --enable-sse2 --enable-reentrant
 $ make
 $ make utils
-$ ./testprog > testprog.lis         # See below if this has an errotr
+$ ./testprog > testprog.lis         # See below if this has an error
 $ diff testprog.lis testprog.out    # Should have no output
 $ cmp testprog.fit testprog.std     # Should have no output
 $ rm cookbook fitscopy imcopy smem speed testprog
@@ -5282,7 +5287,7 @@ $ sudo make install
 
 In the @code{./testprog > testprog.lis} step, you may confront an error, complaining that it can't find @file{libcfitsio.so.AAA} (where @code{AAA} is an integer).
 This is the library that you just built and haven't yet installed.
-But unfrotunately some versions of CFISIO don't account for this on some OSs.
+But unfortunately some versions of CFITSIO don't account for this on some OSs.
 To fix the problem, you need to tell your OS to also look into current CFITSIO build directory with the first command below, afterwards, the problematic command (second below) should run properly.
 
 @example
@@ -6819,7 +6824,7 @@ If you need to copy the executables, you can do so after installation.
 
 @cindex Tests, error in converting images
 @item
-@command{$ make} (when bootstrapping): After you have bootstrapped Gnuastro from the version-controlled source, you may confront the following (or a similar) error when converting images (for more on bootrapping, see @ref{Bootstrapping}):
+@command{$ make} (when bootstrapping): After you have bootstrapped Gnuastro from the version-controlled source, you may confront the following (or a similar) error when converting images (for more on bootstrapping, see @ref{Bootstrapping}):
 
 @example
 @code{convert: attempt to perform an operation not allowed by the
@@ -8648,7 +8653,7 @@ A column information comment is assumed to have the following format:
 Any sequence of characters between `@key{:}' and `@key{[}' will be interpreted as the column name (so it can contain anything except the `@key{[}' character).
 Anything between the `@key{]}' and the end of the line is defined as a comment.
 Within the brackets, anything before the first `@key{,}' is the units (physical units, for example km/s, or erg/s), anything before the second `@key{,}' is the short type identifier (see below, and @ref{Numeric data types}).
-If the type identifier isn't recorgnized, the default 64-bit floating point type will be used.
+If the type identifier isn't recognized, the default 64-bit floating point type will be used.
 
 Finally (still within the brackets), any non-white characters after the second `@key{,}' are interpreted as the blank value for that column (see @ref{Blank pixels}).
 The blank value can either be in the same type as the column (for example @code{-99} for a signed integer column), or any string (for example @code{NaN} in that same column).
@@ -10192,7 +10197,7 @@ Now that we know the redshift of the central object, we can define the coordinat
 It will be a horizontal line (fixed Declination) across a range of RA.
 The start of this thick line will be located at the top edge of the image (at the 95-percent of the width and height of the image).
 With the commands below we'll find the three necessary parameters (one declination and two RAs).
-Just note that in astronmical images, RA increases to the left/east, which is the reason we are using the minimum and @code{+} to find the RA starting point.
+Just note that in astronomical images, RA increases to the left/east, which is the reason we are using the minimum and @code{+} to find the RA starting point.
 
 @example
 $ scalelineinkpc=20
@@ -10206,7 +10211,7 @@ $ scalelineraend=$(astcosmiccal --redshift=$redshift --arcsectandist \
 @end example
 
 To draw coordinates over the image, we need to feed these values into PGFPlots.
-But manually entering numbers into the PGFPlots source will be very furstrating and prone to many errors!
+But manually entering numbers into the PGFPlots source will be very frustrating and prone to many errors!
 Fortunately there is an easy way to do this: @LaTeX{} macros.
 New macros are defined by this @LaTeX{} command:
 @example
@@ -10230,7 +10235,7 @@ $ printf '\\newcommand@{\\maCenterZ@}'"@{$redshift@}\n" >> $macros
 @end example
 
 Please open the macros file after these commands and have a look to see if they do conform to the expected format above.
-Another set of macros we will need to feed into PGFPlots is the coordiantes of the image corners.
+Another set of macros we will need to feed into PGFPlots is the coordinates of the image corners.
 Fortunately the @code{coverage} variable found above is also useful here.
 We just need to extract each item before feeding it into the macros.
 To do this, we'll use AWK and keep each value with the temporary shell variable `@code{v}'.
@@ -11079,7 +11084,7 @@ See the example below for applying any generic value-based row selection based o
 @end table
 
 As an example, let's review how Table interprets the command below.
-We are assuming that @file{table.fits} contians atleast three columns: @code{RA}, @code{DEC} and @code{PARAM} and you only want the RA and Dec of the rows where @mymath{p\times 2<5} (@mymath{p} is the value of each row in the @code{PARAM} column).
+We are assuming that @file{table.fits} contains at least three columns: @code{RA}, @code{DEC} and @code{PARAM} and you only want the RA and Dec of the rows where @mymath{p\times 2<5} (@mymath{p} is the value of each row in the @code{PARAM} column).
 
 @example
 asttable table.fits -cRA,DEC --noblank=MULTIP \
@@ -12693,12 +12698,12 @@ The operations that are done are:
 @enumerate
 @item
 @command{5} is an operand, so Arithmetic pushes it to the top of the stack (which is initially empty).
-In the kitchen metaphor, you can visualize this as taking a new dish from the cabinet, putting the number 5 inside of the dish, and putting the dish on top of the (empy) cooking table infront of you.
-You now have a stack of one dish on the table infront of you.
+In the kitchen metaphor, you can visualize this as taking a new dish from the cabinet, putting the number 5 inside of the dish, and putting the dish on top of the (empty) cooking table in front of you.
+You now have a stack of one dish on the table in front of you.
 @item
 @command{6} is also an operand, so it is pushed to the top of the stack.
 Like before, you can visualize this as taking a new dish from the cabinet, putting the number 6 in it and placing it on top of the previous dish.
-You now have a stack of two dishes on the table infront of you.
+You now have a stack of two dishes on the table in front of you.
 @item
 @command{+} is a @emph{binary} operator, so it will pop the top two elements of the stack out of it, and perform addition on them (the order is @mymath{5+6} in the example above).
 The result is @command{11} which is pushed to the top of the stack.
@@ -12709,11 +12714,11 @@ The top dish is now the one that has has the number 5.
 You also pick it up and put it in the oven, and close the oven door.
 When the oven has finished its cooking, it produces a single output (in one dish, with the number 11 inside of it).
 You take that output dish and put it back on the table.
-You now have a stack of one dish on the table infront of you.
+You now have a stack of one dish on the table in front of you.
 @item
 @command{2} is an operand so push it onto the top of the stack.
 In the kitchen metaphor, you again go to the cabinet, pick up a dish and put the number 2 inside of it and put the dish over the previous dish (that has the number 11).
-You now have a stack of two dishes on the table infront of you.
+You now have a stack of two dishes on the table in front of you.
 @item
 @command{/} (division) is a binary operator, so pull out the top two elements of the stack (top-most is @command{2}, then @command{11}) and divide the second one by the first.
 In the kitchen metaphor, the @command{/} operator can be visualized as a microwave that takes two dishes.
@@ -12793,7 +12798,7 @@ Reading NaN as a floating point number in Gnuastro isn't case-sensitive.
 @node Basic mathematical operators, Trigonometric and hyperbolic operators, Arithmetic operators, Arithmetic operators
 @subsubsection Basic mathematical operators
 
-These are some of the most common operations you will be doing on your data and include, so no futher explanation is necessary.
+These are some of the most common operations you will be doing on your data and include, so no further explanation is necessary.
 If you are new to Gnuastro, just read the description of each carefully.
 
 @table @command
@@ -12916,7 +12921,7 @@ $ astarithmetic image.fits log10
 @node Trigonometric and hyperbolic operators, Unit conversion operators, Basic mathematical operators, Arithmetic operators
 @subsubsection Trigonometric and hyperbolic operators
 
-All the trigonometric and hyperbolic functioncs are described here.
+All the trigonometric and hyperbolic functions are described here.
 One good thing with these operators is that they take inputs and outputs in degrees (which we usually need as input or output), not radians (like most other programs/libraries).
 
 @table @command
@@ -12978,7 +12983,7 @@ These operators take a single operand.
 @node Unit conversion operators, Statistical operators, Trigonometric and hyperbolic operators, Arithmetic operators
 @subsubsection Unit conversion operators
 
-It often happens that you have data in one unit (for example magnitudes to measure the brighntess of a galaxy), but would like to convert it into another (for example electron counts on your CCD).
+It often happens that you have data in one unit (for example magnitudes to measure the brightness of a galaxy), but would like to convert it into another (for example electron counts on your CCD).
 While the equations for the unit conversions can be easily found on the internet, the operators in this section are designed to simplify the process and let you do it easily.
 
 @table @command
@@ -13028,7 +13033,7 @@ $ astarithmetic sdss-image.fits 22.5 counts-to-jy
 @cindex Parsecs
 @cindex Astronomical Units (AU)
 Convert Astronomical Units (AUs) to Parsecs (PCs).
-This operator takes a single argument which is interpretted to be the input AUs.
+This operator takes a single argument which is interpreted to be the input AUs.
 The conversion is based on the definition of Parsecs: @mymath{1 \rm{PC} = 1/tan(1^{\prime\prime}) \rm{AU}}, where @mymath{1^{\prime\prime}} is one arcseconds.
 In other words, @mymath{1 (\rm{PC}) = 648000/\pi (\rm{AU})}.
 For example, if we take Pluto's average distance to the Sun to be 40 AUs, we can obtain its distance in Parsecs using this command:
@@ -13039,7 +13044,7 @@ echo 40 | asttable -c'arith $1 au-to-pc'
 
 @item pc-to-au
 Convert Parsecs (PCs) to Astronomical Units (AUs).
-This operator takes a single argument which is interpretted to be the input PCs.
+This operator takes a single argument which is interpreted to be the input PCs.
 For more on the conversion equation, see description of @code{au-to-pc}.
 For example, Proxima Centauri (the nearest star to the Solar system) is 1.3020 Parsecs from the Sun, we can calculate this distance in units of AUs with the command below:
 
@@ -13050,7 +13055,7 @@ echo 1.3020 | asttable -c'arith $1 pc-to-au'
 @item ly-to-pc
 @cindex Light-year
 Convert Light-years (LY) to Parsecs (PCs).
-This operator takes a single argument which is interpretted to be the input LYs.
+This operator takes a single argument which is interpreted to be the input LYs.
 The conversion is done from IAU's definition of the light-year (9460730472580800 m @mymath{\approx} 63241.077 AU = 0.306601 PC, for the conversion of AU to PC, see the description of @code{au-to-pc}).
 
 For example the distance of Andromeda galaxy to our galaxy is 2.5 million light-years, so its distance in kilo-Parsecs can be calculated with the command below (note that we want the output in kilo-parsecs, so we are dividing the output of this operator by 1000):
@@ -13061,18 +13066,18 @@ echo 2.5e6 | asttable -c'arith $1 ly-to-pc 1000 /'
 
 @item pc-to-ly
 Convert Parsecs (PCs) to Light-years (LY).
-This operator takes a single argument which is interpretted to be the input PCs.
-For the conversion and an example of the inverse of this operator, see the descrioption of @code{ly-to-pc}.
+This operator takes a single argument which is interpreted to be the input PCs.
+For the conversion and an example of the inverse of this operator, see the description of @code{ly-to-pc}.
 
 @item ly-to-au
 Convert Light-years (LY) to Astronomical Units (AUs).
-This operator takes a single argument which is interpretted to be the input LYs.
-For the conversion and a similar example, see the descrioption of @code{ly-to-pc}.
+This operator takes a single argument which is interpreted to be the input LYs.
+For the conversion and a similar example, see the description of @code{ly-to-pc}.
 
 @item au-to-ly
 Convert Astronomical Units (AUs) to Light-years (LY).
-This operator takes a single argument which is interpretted to be the input AUs.
-For the conversion and a similar example, see the descrioption of @code{ly-to-pc}.
+This operator takes a single argument which is interpreted to be the input AUs.
+For the conversion and a similar example, see the description of @code{ly-to-pc}.
 @end table
 
 @node Statistical operators, Stacking operators, Unit conversion operators, Arithmetic operators
@@ -13160,7 +13165,7 @@ $ astarithmetic seg-crop.fits unique
 @end example
 
 @item size
-Size of the dataset along a given FITS/Fortran dimension (counting from 1).
+Size of the dataset along a given FITS (or FORTRAN) dimension (counting from 1).
 The desired dimension should be the first popped operand and the dataset must be the second popped operand.
 The output will be a single unsigned integer (dimensions cannot be negative).
 For example, the following command will produce the size of the first extension/HDU (the default HDU) of @file{a.fits} along the second FITS axis.
@@ -13211,7 +13216,7 @@ This is natural for the @command{min} and @command{max} operators, but for other
 Therefore, if the input was an integer, C's internal type conversion will be used.
 
 @item
-The operation will be multi-threaded, grealy speeding up the process if you have large and numerous data to stack.
+The operation will be multi-threaded, greatly speeding up the process if you have large and numerous data to stack.
 You can disable multi-threaded operations with the @option{--numthreads=1} option (see @ref{Multi-threaded operations}).
 @end itemize
 
@@ -13453,7 +13458,7 @@ With this option, the size of the blank region is irrelevant: all the pixels bor
 @node Dimensionality changing operators, Conditional operators, Interpolation operators, Arithmetic operators
 @subsubsection Dimensionality changing operators
 
-Through these operators you can change the dimentions of the output through certain statistics on the dimensions that should be removed.
+Through these operators you can change the dimensions of the output through certain statistics on the dimensions that should be removed.
 For example, let's assume you have a 3D data cube that has 300 by 300 pixels in the RA and Dec dimensions (first two dimensions), and 3600 slices along the wavelength (third dimension), so the whole cube is @mymath{300\times300\times3600} voxels (volume elements).
 To create a narrow-band image that only contains 100 slices around a certain wavelength, you can crop that section (using @ref{Crop}), giving you a @mymath{300\times300\times100} cube.
 You can now use the @code{collapse-sum} operator below to ``collapse'' all the 100 slices into one 2D image that has @mymath{300\times300} pixels.
@@ -13675,7 +13680,7 @@ $ astarithmetic in.fits reference.fits 100 gt nan where
 
 @cindex Mathematical morphology
 From Wikipedia: ``Mathematical morphology (MM) is a theory and technique for the analysis and processing of geometrical structures, based on set theory, lattice theory, topology, and random functions. MM is most commonly applied to digital images''.
-In theory it extends a very large body of research and methods in image processing, but corrently in Gnuastro it mainly applies to images that are binary (only have a value of 0 or 1).
+In theory it extends a very large body of research and methods in image processing, but currently in Gnuastro it mainly applies to images that are binary (only have a value of 0 or 1).
 For example you have applied the greater-than operator (@code{gt}, see @ref{Conditional operators}) to select all pixels in your image that are larger than a value of 100.
 But they will all have a value of 1, and you want to separate the various groups of pixels that are connected (for example peaks of stars in your image).
 With the @code{connected-components} operator, you can give each connected region of the output of @code{gt} a separate integer label.
@@ -13838,7 +13843,7 @@ Note that the bitwise operators only work on integer type datasets/numbers.
 @subsubsection Numerical type conversion operators
 
 With the operators below you can convert the numerical data type of your input, see @ref{Numeric data types}.
-For example, let's assume that your colleage gives you thousands of single exposure images for archival, but they have a double-precision floating point type!
+For example, let's assume that your colleague gives you thousands of single exposure images for archival, but they have a double-precision floating point type!
 You know that the statistical error a single-exposure image can never exceed 6 or 7 significant digits, so you would prefer to archive them as a single-precision floating point and save space on your computer (a double-precision floating point is also double the file size!).
 You can do this with the @code{float32} operator described below.
 
@@ -13976,7 +13981,7 @@ The operators here describe certain functions that will be necessary when dealin
 
 @table @command
 @item box-around-ellipse
-Return the width (along horizontal) and height (along vertical) of a box that encompases an ellipse with the same center point.
+Return the width (along horizontal) and height (along vertical) of a box that encompasses an ellipse with the same center point.
 The top-popped operand is assumed to be the position angle (angle from the horizontal axis) in @emph{degrees}.
 The second and third popped operands are the minor and major axis lengths respectively.
 This operator outputs two operands on the general stack.
@@ -14005,7 +14010,7 @@ $ astarithmetic a.fits b.fits pa.fits box-around-ellipse \
 Finally, if you need to treat the width and height separately for further processing, you can call the @code{set-} operator two times afterwards like below.
 Recall that the @code{set-} operator will pop the top operand, and put it in memory with a certain name, bringing the next operand to the top of the stack.
 
-For example let's assume @file{catalog.fits} has atleast three columns @code{MAJOR}, @code{MINOR} and @code{PA} which specify the major axis, minor axis and position angle respectively.
+For example let's assume @file{catalog.fits} has at least three columns @code{MAJOR}, @code{MINOR} and @code{PA} which specify the major axis, minor axis and position angle respectively.
 But you want the final width and height in 32-bit floating point numbers (not the default 64-bit, which may be too much precision in many scenarios).
 You can do this with the command below (note you can also break lines with @key{\}, within the single-quote environment)
 
@@ -14034,7 +14039,7 @@ $ astarithmetic 100 200 2 makenew
 @end example
 
 @noindent
-To futher extend the example, you can use any of the noise-making operators to add noise to this new dataset (see @ref{Adding noise operators}), like the command below:
+To further extend the example, you can use any of the noise-making operators to add noise to this new dataset (see @ref{Adding noise operators}), like the command below:
 
 @example
 $ astarithmetic 100 200 2 makenew 5 mknoise-sigma
@@ -18492,7 +18497,7 @@ For more on @mymath{\Delta{A}}, see the description of @option{--spatialresoluti
 
 In the surface brightness equation mentioned above, @mymath{A} is in units of arcsecond squared and the conversion between arcseconds to pixels is a multiplication factor.
 Therefore as long as @mymath{A} and @mymath{\Delta{A}} have the same units, it doesn't matter if they are in arcseconds or pixels.
-Since the measure of spatial resolution (or area error) is the FWHM of the PSF which is usually defined in terms of pixels, its more intuitive to use pixles for @mymath{A} and @mymath{\Delta{A}}.
+Since the measure of spatial resolution (or area error) is the FWHM of the PSF which is usually defined in terms of pixels, its more intuitive to use pixels for @mymath{A} and @mymath{\Delta{A}}.
 
 @node Completeness limit of each detection, Upper limit magnitude of each detection, Surface brightness error of each detection, Quantifying measurement limits
 @subsubsection Completeness limit of each detection
@@ -19912,7 +19917,7 @@ For the first input, the common option @option{--hdu} must be used.
 Columns (from both inputs) to write into a single matched table output.
 The value to @code{--outcols} must be a comma-separated list of column identifiers (number or name, see @ref{Selecting table columns}).
 The expected format depends on @option{--notmatched} and explained below.
-By default (when @option{--nomatched} is not called), the number of rows in the output will be euqal to the number of matches.
+By default (when @option{--nomatched} is not called), the number of rows in the output will be equal to the number of matches.
 However, when @option{--notmatched} is called, all the rows (from the requested columns) of the first input are placed in the output, and the not-matched rows of the second input are inserted afterwards (useful when you want to merge unique entries of multiple catalogs into one).
 
 @table @asis
@@ -19945,7 +19950,7 @@ But when using @option{--outcols}, you can't give @code{bRA}, or @code{b25}.
 
 @item With @option{--notmatched}
 Only the column names/numbers should be given (for example @option{--outcols=RA,DEC,MAGNITUDE}).
-It is assumed that both input tables have the requested column(s) and that the numerical datatypes of each column in each input (with same name) is the same as the corresponding column in the other.
+It is assumed that both input tables have the requested column(s) and that the numerical data types of each column in each input (with same name) is the same as the corresponding column in the other.
 Therefore if one input has a @code{MAGNITUDE} column with a 32-bit floating point type, but the @code{MAGNITUDE} column of the other is 64-bit floating point, Match will crash with an error.
 The metadata of the columns will come from the first input.
 
@@ -20678,7 +20683,7 @@ The values to use for each radial interval should be in the table given to @opti
 @item
 Azimuthal angle profile with `@code{azimuth}' or `@code{9}'.
 Every pixel within the truncation radius will be given its azimuthal angle (in degrees, from 0 to 360) from the major axis.
-In combination with the radial distance profile, you can now create complex features in polar coordinates, uch as tidal tails or tidal shocks (using the Arithmetic program to mix the radius and azimuthal angle through a function to create your desired features).
+In combination with the radial distance profile, you can now create complex features in polar coordinates, such as tidal tails or tidal shocks (using the Arithmetic program to mix the radius and azimuthal angle through a function to create your desired features).
 @end itemize
 
 @item --rcol=STR/INT
@@ -21357,7 +21362,7 @@ This is thus a realistic way to model noise, see @ref{Photon counting noise}.
 
 @item -B
 @itemx --bgisbrightness
-The value given to @option{--background} should be interpretted as brightness, not as a magnitude.
+The value given to @option{--background} should be interpreted as brightness, not as a magnitude.
 
 @item -z FLT
 @itemx --zeropoint=FLT
@@ -27681,7 +27686,7 @@ polish notation}).
 @deffn  Macro GAL_ARITHMETIC_OP_SQRT
 @deffnx Macro GAL_ARITHMETIC_OP_LOG
 @deffnx Macro GAL_ARITHMETIC_OP_LOG10
-Unary operator functions for calculating the square root (@mymath{\sqrt{i}}), @mymath{ln(i)} and @mymath{log(i)} mathematic operators on each element of the input dataset.
+Unary operator functions for calculating the square root (@mymath{\sqrt{i}}), @mymath{ln(i)} and @mymath{log(i)} mathematical operators on each element of the input dataset.
 The returned dataset will have a floating point type, but its precision is determined from the input: if the input is a 64-bit floating point, the output will also be 64-bit.
 Otherwise, the returned dataset will be 32-bit floating point: you don't gain precision by using these operators, but you gain in operating speed if you use the sufficient precision.
 See @ref{Numeric data types} for more on the precision of floating point numbers to help in selecting your required floating point precision.
@@ -27858,7 +27863,7 @@ directly use those functions.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
-Return the width (along horizontal) and height (along vertical) of a box that encompases an ellipse with the same center point.
+Return the width (along horizontal) and height (along vertical) of a box that encompasses an ellipse with the same center point.
 For more on the three input operands to this operator see the description of @code{box-around-ellipse}.
 This function returns two datasets as a @code{gal_data_t} linked list.
 The top element of the list is the height and its next element is the width.
@@ -27926,8 +27931,8 @@ main(void)
 @end example
 
 As you see above, you can feed the returned dataset from one call of @code{gal_arithmetic} to another call.
-The advantage of using @code{gal_arithmetic} (as opposed to manually writing a @code{for} or @code{while} loop and doing the operation with the @code{+} operator and @code{log()} function yourself), is that you don't have to worry about the type of the input data (for a list of acceptable datatypes in Gnuastro, see @ref{Library data types}).
-Arithmetic will automatically deal with the datatypes internally and choose the best output type depending on the operator.
+The advantage of using @code{gal_arithmetic} (as opposed to manually writing a @code{for} or @code{while} loop and doing the operation with the @code{+} operator and @code{log()} function yourself), is that you don't have to worry about the type of the input data (for a list of acceptable data types in Gnuastro, see @ref{Library data types}).
+Arithmetic will automatically deal with the data types internally and choose the best output type depending on the operator.
 @end deftypefun
 
 @deftypefun int gal_arithmetic_set_operator (char @code{*string}, size_t @code{*num_operands})
