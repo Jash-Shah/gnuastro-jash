@@ -23550,6 +23550,109 @@ For more on installed scripts please see (see @ref{Installed scripts}).
 
 
 
+
+@node Invoking astscript-psf-creat-select-stars
+@subsection Invoking astscript-psf-creat-select-stars
+This installed script will select the circular stars with good parallax and less than nine neighbors in the specified range of magnitude from an image or a catalog, and will generate the table of stars in the range of mgnitude between @option{--min}  to @option{--max}.
+
+This script can be used with the following general template:
+
+@example
+$ astscript-psf-create-select-stars [OPTION...] FITS-file
+@end example
+
+@noindent
+Examples:
+
+@example
+## Use the input image 'image.fits' and based on that
+## select stars from an astquery '--dataset', with a
+## '--field' magnitude value between '--min' and
+## '--max'. Additionaly, with the segmented file
+## '--segmented', only stars which match clumps within a
+## given '--matchaperturedeg', and with an axis ratio
+## '--minaxisrario' are selected.
+$ astscript-psf-create-select-stars image.fits --hdu=1 \
+    --segmented=segment.fits --min=5 --max=7 \
+    --output=selected-gaiastars.fits
+
+## If input image is simulated image and catalog of stars
+## are not in the Gaia at all. In this case, Instead of
+## Gaia data base gives the '--catalog' of stars. Which
+## this catalog contain three column. The name of the
+## first column should be 'ra' the second column should be
+## 'dec' and third column should be 'photo-g-mean-mag'.
+## based on the this catalog the stars in the range of
+## magnitude between '--min' to '--max' are selected
+## and then with segmented file '--segmented', only stars
+## which match clumps within a given '--matchaperturedeg',
+## and with an axis ratio '--minaxisratio' are seleted.
+$ astscript-psf-creat-select-stars image.fits --hdu=1 \
+    --catalog=starscatalog.fits --segmented=segment.fits \
+    --min=5 --max=7 --output=selected-simulatestars.fits
+
+@end example
+
+The input of this script is an image that gives us a table of stara in range of magnitude between @option{--min} to @option{--max} as output. Only the @option{--segmented} option is mandatory option, Which should be the output of @option{astsegment} and have two @option{CLUMPS} and @option{OBJECTS} extension and based on that match catalog of stars from gaia with clump catalog. You can also optionally specify the magnitude range with the @option{--min} and @option{--max} options, in which case stars in the range of @option{--min} to @option{--max} magnitude are selected. If the @option{--min} and @option{--max} options are not specified, by default 19 and 20 are selected for @option{--min} and @option{--max}, respectively.
+
+The output of this script is in a file whose name can be specified with the @option{--output} option. If the output file name is not specified, the @option{selected-stars.txt} name will be considered for the output file by default. More options are available with the goal of obtaining a good select stars. A full description of each option is given below.
+
+@table @option
+
+@item -h STR/INT
+@itemx --hdu=STR/INT
+The HDU/extension of the input image to use.
+
+@item -S STR
+@itemx --segmented=STR
+Segmentation file obtained by @option{astsegment}. It should have two exenctions of @option{CLUMPS} and @option{OBJECTS}. Catalog of @option{CLUMPS} are compute, then catalog of stars from gaia match with @option{CLUMPS} catalog.
+
+@item -d STR
+@itemx --dataset=STR
+By @option{astquery} the stars from the @option{--dataset} are downloaded. The value of this option is @option{gaia --dataset=edr3} by default.
+
+@item -f STR
+@itemx --field=STR
+To idendify the magnitude of the field, which determined the name of the third column in the table. By default the value of this option is @option{phot_g_mean_mag}, which has illustrated the magnitude column's name in gaia data set.
+
+@item -m FLT
+@itemx --min=FLT
+The minimum value of the magnitude for selcting the stars are specified by this option. The value of this option is 19, by default.
+
+@item -M FLT
+@itemx --max=FLT
+Such as above option this option are determined the maximum value of the magnitude for selecting the satrs which have 20 value by default.
+
+@item -a FLT
+@itemx --matchaperturedeg=FLT
+This option are determined the aperture in pixels for matching the catalog from gaia with clump catalog in degree.
+
+@item -Q FLT
+@itemx --minaxisratio=FLT
+With this optin you can deremine the minimum axis ratio, which based on that, accepted those clumps that have a axis ratio less than 0.9 by default.
+
+@item -D FLT
+@itemx --mindistdeg=FLT
+Minimum distance in degree, which stars that are brilliant than main star and reside in this distance are accepted.
+
+@item -c STR
+@itemx --catalog=STR
+If the catalog of stars does not exisr in gaia database or the user have the catalog of stars, just from that and based on the @option{--input} image want select stars in different range of magnitude for making the PSF.
+
+@item -k
+@itemx --keepbuild
+Do not remove the temporary directory. This option is useful for debugging and checking the steps of selecting stars.
+
+@item -t
+@itemx --bdir
+For selcting the stars in the range of magnitude between @option{--min} to @option{--max} several intermediate file are necessary. All of these intermediate file are saved in the directory which are specifued by the @option{--bdir}.
+
+@item -o
+@itemx --output
+The output name of the select stars. By default the output name will be @option{selected-stars.txt}.
+
+@end table
+
 @node Invoking astscript-psf-create-make-stamp, Invoking astscript-psf-create-junction, PSF construction and correction, PSF construction and correction
 @subsection Invoking astscript-psf-create-make-stamp
 This installed script will read an image, the center of an object @option{--center}, the type of the center coordinates @option{--mode} (img or wcs), the normalization radii @option{--normradii}, and the size of the output stamp @option{--stampwidth}.
