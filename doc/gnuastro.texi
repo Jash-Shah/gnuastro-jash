@@ -23416,14 +23416,15 @@ The fundamental ideas of the following methodology are fully described in Infant
 Here we describe some scripts developed with the aim of constructing an empirical PSF, and then, use that PSF for correcting the scattered light.
 
 For constructing the PSF, the basic idea is to consider a bunch of images of stars, treat them properly, and finally stack all of them together.
-For doing this, we have the script @file{astscript-psf-create-make-stamp}.
-This script generates the stamp of a specified star using as input an image and some parameters.
-Once several stamps have been generated, the PSF can be obtained by stacking them.
+For doing this work, first of all, the stars in different range of magnitude should be selected.
+For doing this work we have the script @file{astscript-psf-create-select-stars}, that based on this script, the circular stars with good parallax and less than nine neighbors from an image as input are selected.
+Then by using the @file{astscript-psf-create-make-stamp} script, and based on the image as input and coordinates of the stars that has been selected in the previous step, the stamp of each star is made.
+Now the several stamps have been generated and the PSF can be obtained by stacking them.
 
 Sometimes it is necessary to obtain different regions of the same PSF from different stars.
 For example, to construct the far wings it is necessary to consider very bright stars.
 However, these stars will be saturated in the most inner part, and consequently, fainter stars are necessary.
-It is possible to use @file{astscript-psf-create-make-stamp} to obtain two different PSFs (core and wings, using sets of stars with different brightness), and then, join them to obtain a single and extended PSF.
+By using the @file{astscript-psf-create-select-stars} script the stars in different range of magnitude(faint stars for core and bright stars for wing of the PSF) are selected. Then by using @file{astscript-psf-create-make-stamp} two different PSFs are obtained. Finally, join them to obtain a single and extended PSF.
 To do that, we have the script @file{astscript-psf-create-junction}.
 This script merges two different PSFs at a given radius and some other parameters.
 
@@ -23457,19 +23458,24 @@ IMAGE=image.fits
 NORMRADII_INNER=20
 NORMRADII_OUTER=30
 
+# The range of magnitude for making inner part of the PSF.
+MINIMUM_MAGNITUDE=3
+MAXIMUM_MAGNITUDE=5
+
+# The output of the astsegment for input image.
+SEGMENT=segment.fits
+
 
 ## Obtain a catalog of stars
 ## -------------------------
 
-## Download a Gaia catalog that overlap with the input image.
-astquery gaia --dataset=edr3 --overlapwith=$IMAGE \
-              -cra,dec,phot_bp_mean_mag --output=gaia.fits
+# Select the stars in the range of magnitue between
+# MINIMUM_MAGNITUDE to  MAXIMUM_MAGNITUDE, that
+# overlap with the input image.
+astscript-psf-create-select-stars $IMAGE --hdu=1 \
+    --segmented=SEGMENT --min=MINIMUM_MAGNITUDE \
+    --max=MAXIMUM_MAGNITUDE --output=catalog.fits
 
-## Sort by brightness and select just NSTARS stars.
-## These stars are going to be used for constructing the PSF.
-## At the end, they are also modeled and subtracted.
-asttable gaia.fits --sort=phot_bp_mean_mag \
-                   --head=$NSTARS --output=catalog.fits
 
 
 ## Construct the PSF
@@ -23565,28 +23571,15 @@ $ astscript-psf-create-select-stars [OPTION...] FITS-file
 Examples:
 
 @example
-## Use the input image 'image.fits' and based on that
-## select stars from an astquery '--dataset', with a
-## '--field' magnitude value between '--min' and
-## '--max'. Additionaly, with the segmented file
-## '--segmented', only stars which match clumps within a
-## given '--matchaperturedeg', and with an axis ratio
-## '--minaxisrario' are selected.
+## From input image select the stars in the range of
+## magnitude between '--min' and '--max'.
 $ astscript-psf-create-select-stars image.fits --hdu=1 \
     --segmented=segment.fits --min=5 --max=7 \
     --output=selected-gaiastars.fits
 
-## If input image is simulated image and catalog of stars
-## are not in the Gaia at all. In this case, Instead of
-## Gaia data base gives the '--catalog' of stars. Which
-## this catalog contain three column. The name of the
-## first column should be 'ra' the second column should be
-## 'dec' and third column should be 'photo-g-mean-mag'.
-## based on the this catalog the stars in the range of
-## magnitude between '--min' to '--max' are selected
-## and then with segmented file '--segmented', only stars
-## which match clumps within a given '--matchaperturedeg',
-## and with an axis ratio '--minaxisratio' are seleted.
+## If the stars does not exist in the Gaia, based on the
+## prepare catalog select the stars in the range of
+## magnitude between `--min` and `--max`.
 $ astscript-psf-creat-select-stars image.fits --hdu=1 \
     --catalog=starscatalog.fits --segmented=segment.fits \
     --min=5 --max=7 --output=selected-simulatestars.fits
