@@ -18116,7 +18116,7 @@ Don't abort Segment after producing the check image(s).
 The usage of this option is identical to NoiseChisel's @option{--continueaftercheck} option (@ref{NoiseChisel input}).
 Please see the descriptions there for more.
 
-@item --onlyclumps
+@item --noobjects
 Abort Segment after finding true clumps and don't continue with finding options.
 Therefore, no @code{OBJECTS} extension will be present in the output.
 Each true clump in @code{CLUMPS} will get a unique label, but diffuse regions will still have a negative value.

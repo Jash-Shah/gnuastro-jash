@@ -11,6 +11,16 @@ See the end of the file for license conditions.
 
 ** Changed features
 
+  Segment:
+   - '--noobjects' is the new name for the old '--onlyclumps' option. This
+     is because the name Only-Clumps can lead to a wrong expectation that
+     the output will _only_ contain a 'CLUMPS' HDU. However,
+     with'--onlyclumps', the input image (without a Sky level) and the Sky
+     standard deviation image are also present as HDUs in the output. To
+     only get the 'CLUMPS' HDU, it is necessary to also use the
+     '--rawoutput' option. This renaming was done to avoid such confusions
+     and was raised by Sepideh Eskandarlou.
+
 ** Bugs fixed
   bug #61329: make check crash in macOS in convolve/spectrum-1d.sh, found
               and fixed with the help of Sebastian Luna-Valero.

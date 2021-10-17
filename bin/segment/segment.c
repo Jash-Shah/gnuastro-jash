@@ -725,7 +725,7 @@ segment_relab_overall(struct clumps_thread_params *cltprm)
   struct clumps_params *clprm=cltprm->clprm;
 
   int32_t startinglab;
-  uint8_t onlyclumps=clprm->p->onlyclumps;
+  uint8_t noobjects=clprm->p->noobjects;
   size_t *s=cltprm->indexs->array, *sf=s+cltprm->indexs->size;
   int32_t *clabel=clprm->p->clabel->array, *olabel=clprm->p->olabel->array;
 
@@ -737,18 +737,18 @@ segment_relab_overall(struct clumps_thread_params *cltprm)
 
   /* Set the starting label for re-labeling (THIS HAS TO BE BEFORE
      CORRECTING THE TOTAL NUMBER OF CLUMPS/OBJECTS). */
-  startinglab = onlyclumps ? clprm->totclumps : clprm->totobjects;
+  startinglab = noobjects ? clprm->totclumps : clprm->totobjects;
 
   /* Save the total number of clumps and objects. */
   clprm->totclumps  += cltprm->numtrueclumps;
-  if( !onlyclumps ) clprm->totobjects += cltprm->numobjects;
+  if( !noobjects ) clprm->totobjects += cltprm->numobjects;
 
   /* Unlock the mutex (if it was locked). */
   if(clprm->p->cp.numthreads>1)
     pthread_mutex_unlock(&clprm->labmutex);
 
   /* Increase all the object labels by 'startinglab'. */
-  if( onlyclumps )
+  if( noobjects )
     {
       if(cltprm->numtrueclumps>0)
         {
@@ -884,7 +884,7 @@ segment_on_threads(void *in_prm)
 
 
       /* When only clumps are desired ignore the rest of the process. */
-      if(!p->onlyclumps)
+      if(!p->noobjects)
         {
           /* Abort the looping here if we don't only want clumps. */
           if(clprm->step==2) continue;
@@ -1097,8 +1097,8 @@ segment_reproducible_labels(struct segmentparams *p)
   size_t i;
   gal_data_t *new;
   int32_t currentlab=0, *oldarr, *newarr, *newlabs;
-  gal_data_t *old = p->onlyclumps ? p->clabel : p->olabel;
-  size_t numlabsplus1 = (p->onlyclumps ? p->numclumps : p->numobjects) + 1;
+  gal_data_t *old = p->noobjects ? p->clabel : p->olabel;
+  size_t numlabsplus1 = (p->noobjects ? p->numclumps : p->numobjects) + 1;
 
   /* Allocate the necessary datasets. */
   new=gal_data_alloc(NULL, old->type, old->ndim, old->dsize, old->wcs, 0,
@@ -1128,8 +1128,8 @@ segment_reproducible_labels(struct segmentparams *p)
 
   /* Clean up. */
   free(newlabs);
-  if(p->onlyclumps) { gal_data_free(p->clabel); p->clabel=new; }
-  else              { gal_data_free(p->olabel); p->olabel=new; }
+  if(p->noobjects) { gal_data_free(p->clabel); p->clabel=new; }
+  else             { gal_data_free(p->olabel); p->olabel=new; }
 }
 
 
@@ -1183,7 +1183,7 @@ segment_detections(struct segmentparams *p)
 
              /* When the user only wanted clumps, there is no point in
                 continuing beyond step 2. */
-             && !(p->onlyclumps && clprm.step>2)
+             && !(p->noobjects && clprm.step>2)
 
              /* When the user just wants to check the clump S/N values,
                 then break out of the loop, we don't need the rest of the
@@ -1401,7 +1401,7 @@ segment_output(struct segmentparams *p)
 
 
   /* The object labels. */
-  if(!p->onlyclumps)
+  if(!p->noobjects)
     {
       gal_fits_key_list_add(&keys, GAL_TYPE_SIZE_T, "NUMLABS", 0,
                             &p->numobjects, 0, "Total number of objects", 0,
@@ -1543,7 +1543,7 @@ segment(struct segmentparams *p)
   /* Report the results and timing to the user. */
   if(!p->cp.quiet)
     {
-      if(p->onlyclumps)
+      if(p->noobjects)
         {
           if( asprintf(&msg, "%zu clump%sfound.",
                        p->numclumps,  p->numclumps ==1 ? " " : "s ")<0 )
