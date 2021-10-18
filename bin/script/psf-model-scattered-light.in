@@ -241,12 +241,18 @@ if [ x"$inputs" = x ]; then
     echo "$scriptname: no input FITS image files."
     echo "Run with '--help' for more information on how to run."
     exit 1
+elif [ ! -f $inputs ]; then
+    echo "$scriptname: $inputs: No such file or directory."
+    exit 1
 fi
 
 # If a PSF image (--psf) is not given at all.
 if [ x"$psf" = x ]; then
     echo "$scriptname: no PSF image provided."
     echo "$scriptname: a PSF image '--psf' ('-p') should be provided."
+    exit 1
+elif [ ! -f $psf ]; then
+    echo "$scriptname: $psf: No such file or directory."
     exit 1
 fi
 

@@ -244,12 +244,18 @@ if [ x"$inputs" = x ]; then
     echo "$scriptname: no input FITS image files."
     echo "Run with '--help' for more information on how to run."
     exit 1
+elif [ ! -f $inputs ]; then
+    echo "$scriptname: $inputs: No such file or directory."
+    exit 1
 fi
 
 # If a core image (--core) is not given at all.
 if [ x"$core" = x ]; then
     echo "$scriptname: no core image provided."
     echo "A core image of the PSF to be specified with --stampwidth or -w."
+    exit 1
+elif [ ! -f $core ]; then
+    echo "$scriptname: $core: No such file or directory."
     exit 1
 fi
 
