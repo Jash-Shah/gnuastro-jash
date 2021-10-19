@@ -657,6 +657,7 @@ SAO DS9 region files from table
 
 PSF construction and correction
 
+* Invoking astscript-psf-creat-select-stars::
 * Invoking astscript-psf-create-make-stamp::
 * Invoking astscript-psf-create-junction::
 * Invoking astscript-psf-model-flux-factor::
@@ -23407,29 +23408,34 @@ In the opened window, click on ``Command Line Options''.
 @section PSF construction and correction
 
 The point spread function (PSF) describes how the light of a point-like source is affected by several optical scattering effects (atmosphere, telescope, instrument, etc.).
-The role PSF is key in many astronomical analysis, and consequently, having a good characterization of the PSF is fundamental.
+The role of the PSF is key in many astronomical analysis, and consequently, having a good characterization of the PSF is fundamental.
 In many situations the PSF can be obtained by modeling it with analytical functions (Gaussian, Moffat, etc.), see @ref{PSF}.
 However, in other scenarios, it is necessary to obtain an empirical (non-parametric) and extended PSF.
-For this reason, here we have developed a set of scripts with the aim of constructing the PSF from point-like sources within astronomical images.
+For this reason, here we have developed a set of scripts with the aim of constructing the PSF using point-like sources from the astronomical images.
 Once the PSF has been obtained, it can be used for modeling and subtracting the point-like sources of astronomical images.
 The fundamental ideas of the following methodology are fully described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
-Here we describe some scripts developed with the aim of constructing an empirical PSF, and then, use that PSF for correcting the scattered light.
+Here we describe the technical implementation of some scripts developed with the aim of constructing an empirical PSF, and then, use that PSF for correcting the scattered light.
+All scripts are independent of each other, meaning this that the user is free to use all of them, or just the ones that are needed.
 
 For constructing the PSF, the basic idea is to consider a bunch of images of stars, treat them properly, and finally stack all of them together.
-For doing this work, first of all, the stars in different range of magnitude should be selected.
-For doing this work we have the script @file{astscript-psf-create-select-stars}, that based on this script, the circular stars with good parallax and less than nine neighbors from an image as input are selected.
-Then by using the @file{astscript-psf-create-make-stamp} script, and based on the image as input and coordinates of the stars that has been selected in the previous step, the stamp of each star is made.
-Now the several stamps have been generated and the PSF can be obtained by stacking them.
+As a consequence, the first step would be to obtain a catalog of stars.
+In general, not all stars are good to construct a PSF.
+It is desirable to the stars to be free of contamination from other bright and nearby objects.
+To select only good candidates we have the script @file{astscript-psf-create-select-stars}.
+This script selects only good candidates by different criteria: good parallax, not nearby bright stars, axis ratio, etc.
+
+Once the catalog of stars is constructed, the script @file{astscript-psf-create-make-stamp} is in charge of making appropiate stamps of the stars.
+Each stamp is a cropped image of the star with the desired size, normalization of the flux, and mask of the contaminant objects.
+After obtaining a set of star stamps, they can be stacked for obtaining the PSF.
 
 Sometimes it is necessary to obtain different regions of the same PSF from different stars.
 For example, to construct the far wings it is necessary to consider very bright stars.
 However, these stars will be saturated in the most inner part, and consequently, fainter stars are necessary.
-By using the @file{astscript-psf-create-select-stars} script the stars in different range of magnitude(faint stars for core and bright stars for wing of the PSF) are selected. Then by using @file{astscript-psf-create-make-stamp} two different PSFs are obtained. Finally, join them to obtain a single and extended PSF.
-To do that, we have the script @file{astscript-psf-create-junction}.
-This script merges two different PSFs at a given radius and some other parameters.
+In this case, consider using the script @file{astscript-psf-create-select-stars} for selecting stars with different brightness.
+If different part of the PSF have been constructed, the script @file{astscript-psf-create-junction} is in charge of merging the different parts together.
 
-Once the PSF has been constructed by the procedure above (or any other methodology), it can be used for modeling the stars: the scattered light.
-The absolute flux of a PSF has no sense.
+Once the PSF has been constructed as described above (or by any other procedure), it can be used to model the stars: the scattered light.
+Note that absolute flux of a PSF is meaningless.
 To model a star with a PSF it is necessary to scale the PSF up or down in order to put it at the same level of flux than the star.
 To do that, we have the script @file{astscript-psf-model-flux-factor}.
 It is in charge of computing the flux factor by which it is necessary to multiply the PSF in order to put it at the same level than a given star.
@@ -23544,10 +23550,11 @@ astarithmetic $IMAGE --hdu=1 \
               - --output subtracted.fits
 @end example
 
-In what follows, each script all options of each script is described in detail.
+In what follows, all options of each script are described in detail.
 For more on installed scripts please see (see @ref{Installed scripts}).
 
 @menu
+* Invoking astscript-psf-creat-select-stars::
 * Invoking astscript-psf-create-make-stamp::
 * Invoking astscript-psf-create-junction::
 * Invoking astscript-psf-model-flux-factor::
@@ -23557,9 +23564,11 @@ For more on installed scripts please see (see @ref{Installed scripts}).
 
 
 
-@node Invoking astscript-psf-creat-select-stars
+@node Invoking astscript-psf-creat-select-stars, Invoking astscript-psf-create-make-stamp, PSF construction and correction, PSF construction and correction
 @subsection Invoking astscript-psf-creat-select-stars
-This installed script will select the circular stars with good parallax and less than nine neighbors in the specified range of magnitude from an image or a catalog, and will generate the table of stars in the range of mgnitude between @option{--min}  to @option{--max}.
+This installed script will select good star candidates for constructing a PSF.
+It will consider stars within a given range of brightness without nearby contaminant objects.
+To do that, it allows to the user to specify different options.
 
 This script can be used with the following general template:
 
@@ -23571,13 +23580,13 @@ $ astscript-psf-create-select-stars [OPTION...] FITS-file
 Examples:
 
 @example
-## From input image select the stars in the range of
+## From input, image select the stars in the range of
 ## magnitude between '--min' and '--max'.
 $ astscript-psf-create-select-stars image.fits --hdu=1 \
     --segmented=segment.fits --min=5 --max=7 \
     --output=selected-gaiastars.fits
 
-## If the stars does not exist in the Gaia, based on the
+## If the stars do not exist in the Gaia, based on the
 ## prepare catalog select the stars in the range of
 ## magnitude between `--min` and `--max`.
 $ astscript-psf-creat-select-stars image.fits --hdu=1 \
@@ -23586,9 +23595,15 @@ $ astscript-psf-creat-select-stars image.fits --hdu=1 \
 
 @end example
 
-The input of this script is an image that gives us a table of stara in range of magnitude between @option{--min} to @option{--max} as output. Only the @option{--segmented} option is mandatory option, Which should be the output of @option{astsegment} and have two @option{CLUMPS} and @option{OBJECTS} extension and based on that match catalog of stars from gaia with clump catalog. You can also optionally specify the magnitude range with the @option{--min} and @option{--max} options, in which case stars in the range of @option{--min} to @option{--max} magnitude are selected. If the @option{--min} and @option{--max} options are not specified, by default 19 and 20 are selected for @option{--min} and @option{--max}, respectively.
+The input of this script is an image that gives us a table of stars in range of magnitudes between @option{--min} to @option{--max} as output.
+It is possible to provide a segmented image with the option @option{--segmented}.
+This image should be the output of @option{astsegment} and it is used to match the catalog of stars from gaia with clumps catalog.
+You can also optionally specify the magnitude range with the the options @option{--min} and @option{--max}.
+If the @option{--min} and @option{--max} options are not specified, by default 19 and 20 are selected for @option{--min} and @option{--max}, respectively.
 
-The output of this script is in a file whose name can be specified with the @option{--output} option. If the output file name is not specified, the @option{selected-stars.txt} name will be considered for the output file by default. More options are available with the goal of obtaining a good select stars. A full description of each option is given below.
+The output of this script is a file whose name can be specified with the @option{--output} option.
+More options are available with the goal of obtaining good selected stars.
+A full description of each option is given below.
 
 @table @option
 
@@ -23598,55 +23613,66 @@ The HDU/extension of the input image to use.
 
 @item -S STR
 @itemx --segmented=STR
-Segmentation file obtained by @option{astsegment}. It should have two exenctions of @option{CLUMPS} and @option{OBJECTS}. Catalog of @option{CLUMPS} are compute, then catalog of stars from gaia match with @option{CLUMPS} catalog.
+Segmentation file obtained by @option{astsegment}.
+It should have two extensions (@option{CLUMPS} and @option{OBJECTS}).
+A catalog of @option{CLUMPS} is computed and matched with a Gaia catalog.
 
 @item -d STR
 @itemx --dataset=STR
-By @option{astquery} the stars from the @option{--dataset} are downloaded. The value of this option is @option{gaia --dataset=edr3} by default.
+It is possible to specify the dataset from which the catalog is downloaded.
+This is done with the option @option{--dataset} that is used by @option{astquery}.
+The value of this option is @option{gaia --dataset=edr3} by default.
 
 @item -f STR
 @itemx --field=STR
-To idendify the magnitude of the field, which determined the name of the third column in the table. By default the value of this option is @option{phot_g_mean_mag}, which has illustrated the magnitude column's name in gaia data set.
+Name of the column for the brightness of the objects.
+By default, the value of this option is @option{phot_g_mean_mag} (that corresponds to the name of the magnitude in the Gaia catalog).
 
 @item -m FLT
 @itemx --min=FLT
-The minimum value of the magnitude for selcting the stars are specified by this option. The value of this option is 19, by default.
+Minimum value of the magnitude of the stars to be considered.
+The value of this option is 19 by default.
 
 @item -M FLT
 @itemx --max=FLT
-Such as above option this option are determined the maximum value of the magnitude for selecting the satrs which have 20 value by default.
+Maximum value of the magnitude of the stars to be considered.
+The value of this option is 20 by default.
 
 @item -a FLT
 @itemx --matchaperturedeg=FLT
-This option are determined the aperture in pixels for matching the catalog from gaia with clump catalog in degree.
+This option determines the aperture (in degrees) for matching the catalog from gaia with the clumps catalog.
 
 @item -Q FLT
 @itemx --minaxisratio=FLT
-With this optin you can deremine the minimum axis ratio, which based on that, accepted those clumps that have a axis ratio less than 0.9 by default.
+Select stars only with axis ratio values greater than the specified by this option.
+By default, it is set to 0.9, which means that only stars with axis ratio between 0.9 and 1.0 will be considered.
 
 @item -D FLT
 @itemx --mindistdeg=FLT
-Minimum distance in degree, which stars that are brilliant than main star and reside in this distance are accepted.
+Stars with nearby bright objects are rejected.
+This option specify the minimum distance (in degree) for not rejecting a star because a nearby object is closer than it.
 
 @item -c STR
 @itemx --catalog=STR
-If the catalog of stars does not exisr in gaia database or the user have the catalog of stars, just from that and based on the @option{--input} image want select stars in different range of magnitude for making the PSF.
+If the catalog of stars does not exit in Gaia database or the user have other catalog, use this option to specify it.
 
 @item -k
-@itemx --keepbuild
-Do not remove the temporary directory. This option is useful for debugging and checking the steps of selecting stars.
+@itemx --keeptmp
+Do not remove the temporary directory.
+This option is useful for debugging and checking the steps of selecting stars.
 
 @item -t
-@itemx --bdir
-For selcting the stars in the range of magnitude between @option{--min} to @option{--max} several intermediate file are necessary. All of these intermediate file are saved in the directory which are specifued by the @option{--bdir}.
+@itemx --tmpdir
+when running this script, several intermediate files are necessary.
+All of them are saved in the directory specified by this option.
 
 @item -o
 @itemx --output
-The output name of the select stars. By default the output name will be @option{selected-stars.txt}.
+The output name of the select stars catalog.
 
 @end table
 
-@node Invoking astscript-psf-create-make-stamp, Invoking astscript-psf-create-junction, PSF construction and correction, PSF construction and correction
+@node Invoking astscript-psf-create-make-stamp, Invoking astscript-psf-create-junction, Invoking astscript-psf-creat-select-stars, PSF construction and correction
 @subsection Invoking astscript-psf-create-make-stamp
 This installed script will read an image, the center of an object @option{--center}, the type of the center coordinates @option{--mode} (img or wcs), the normalization radii @option{--normradii}, and the size of the output stamp @option{--stampwidth}.
 With that input, it will generate a stamp centered at the coordinates provided, and normalized by the flux computed in the normalization radius.
