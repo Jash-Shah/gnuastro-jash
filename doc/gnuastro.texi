@@ -655,7 +655,7 @@ SAO DS9 region files from table
 
 * Invoking astscript-ds9-region::  How to call astscript-ds9-region
 
-PSF construction and correction
+Tutorial on building the extended PSF
 
 * Invoking astscript-psf-creat-select-stars::
 * Invoking astscript-psf-create-make-stamp::
@@ -23444,111 +23444,127 @@ Once the flux factor has been computed, it is possible put the PSF at the same s
 To do that, we have the script @file{astscript-psf-model-scattered-light}.
 It will allocate the PSF at a given position (coordinates) and with the appropiate flux level.
 
-A fully working template example on how to use the scripts in order to construct a PSF and then model the scattered light field is shown below.
+
+@subsection Tutorial on building the extended PSF
+A fully working template example on how to use the scripts in order to construct a PSF and then model the scattered light field is described in this section.
+
+In this first block set of command lines, necessary variables and parameters are defined.
+They are intendeed to have them through the entire process.
+Variables like the number of stars, the size of the stamps, the normalization radii, the brightness of the stars, and the url from where the input image is downloaded are set here.
+For this particular example, a J-PLUS image of the galaxy M51 in the filter rSDSS is considered.
+For more information about the J-PLUS survey visit: @url{http://www.j-plus.es/}
 
 @example
-
-## General parameters
-## ------------------
-
-## Number of stars
-NSTARS=5
-
-## Width of the star stamps (in pixels).
-STAMPWIDTH=150
-
-## Input image.
-IMAGE=image.fits
-
-## Inner and outer radii defining the normalization ring.
-NORMRADII_INNER=20
-NORMRADII_OUTER=30
-
-# The range of magnitude for making inner part of the PSF.
-MINIMUM_MAGNITUDE=3
-MAXIMUM_MAGNITUDE=5
-
-# The output of the astsegment for input image.
-SEGMENT=segment.fits
-
-
-## Obtain a catalog of stars
-## -------------------------
-
-# Select the stars in the range of magnitue between
-# MINIMUM_MAGNITUDE to  MAXIMUM_MAGNITUDE, that
-# overlap with the input image.
-astscript-psf-create-select-stars $IMAGE --hdu=1 \
-    --segmented=SEGMENT --min=MINIMUM_MAGNITUDE \
-    --max=MAXIMUM_MAGNITUDE --output=catalog.fits
-
-
-
-## Construct the PSF
-## -----------------
-
-## Make a stamp for each star on the catalog. The center is
-## read from the catalog. The size of the stamp is STAMPWIDTH pixels.
-## The normalization, is done within the ring of pixels defined by
-## NORMRADII_INNER and NORMRADII_OUTER.
-asttable catalog.fits | while read -r ra dec mag; do
-         astscript-psf-create-make-stamp $IMAGE \
-                   --mode=wcs \
-                   --center=$ra,$dec \
-                   --stampwidth=$STAMPWIDTH \
-                   --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
-                   --output=starstamp-"$ra"_"$dec".fits; done
-
-## Once all the stars have been treated properly (i.e., they
-## have been centered using in the same grid and normalized),
-## then stack all stamps together.
-astarithmetic starstamp*.fits -g1 \
-              $(ls starstamp*.fits | wc -l) median \
-              --output=psf.fits
-
-
-## Model the scattered light field
-## -------------------------------
-
-## To model each star, it is necessary to compute what is the
-## factor by which the PSF has to be multiplied in order to have
-## the same flux level than the star.
-asttable catalog.fits | while read -r ra dec mag; do
-         astscript-psf-model-flux-factor $IMAGE \
-                   --psf=psf.fits \
-                   --mode=wcs \
-                   --center=$ra,$dec \
-                   --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
-                   --output=fluxfactor-"$ra"_"$dec".txt; done
-
-## Once the flux factors have been computed, it is possible to scale
-## the PSF to have the desired flux leve. With the next step, the
-## PSF is situated at the given sky position with the appropiate
-## flux level. Pixels that are not the PSF are set to zero.
-asttable catalog.fits | while read -r ra dec mag; do
-         fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
-         astscript-psf-model-scattered-light $IMAGE \
-                  --psf=psf.fits \
-                  --mode=wcs \
-                  --fluxfactor $fluxfactor \
-                  --center=$ra,$dec \
-                   --output=starmodel-"$ra"_"$dec".fits; done
-
-## Stack all scattered light stamps together.
-astarithmetic starmodel*.fits -g1 \
-              $(ls starmodel*.fits | wc -l) sum \
-              --output=scattered-light-field.fits
-
-
-## Remove the scattered light field model
-## --------------------------------------
-
-## Once the scattered light field has been obtained,
-## subtract it from the original image.
-astarithmetic $IMAGE --hdu=1 \
-              scattered-light-field.fits --hdu=1 \
-              - --output subtracted.fits
+$ NSTARS=5
+$ STAMPWIDTH=150
+$ NORMRADII_INNER=20
+$ NORMRADII_OUTER=30
+$ IMAGE=image.fits.fz
+$ MINIMUM_MAGNITUDE=0
+$ MAXIMUM_MAGNITUDE=10
+$ IMAGEID="jplus-dr2/get_fits?id=67510"
+$ URL="http://archive.cefca.es/catalogues/vo/siap/"
 @end example
+
+Once these variables have been set, download the image from the J-PLUS webpage using @code{wget}.
+After that, use the script @file{astscript-psf-create-select-stars} to select only appropiate stars with the desired brightness.
+
+@example
+$ wget $URL$IMAGEID -O $IMAGE
+
+$ astscript-psf-create-select-stars $IMAGE --hdu=1 \
+      --min=$MINIMUM_MAGNITUDE \
+      --max=$MAXIMUM_MAGNITUDE \
+      --output=catalog.fits
+@end example
+
+Now that the input image and the catalog of the stars have been obtained, it is time to construct the individual stamps for each star of the catalog.
+To do that, use the script @file{astscript-psf-create-make-stamp}.
+Recall that the parameters used for this script have been defined above (normalization ring, size of the stamps, etc.).
+Since there are several stars, we iterate over the catalog.
+
+@example
+$ asttable catalog.fits | while read -r ra dec mag; do
+      astscript-psf-create-make-stamp $IMAGE \
+          --mode=wcs \
+          --center=$ra,$dec \
+          --stampwidth=$STAMPWIDTH \
+          --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
+          --output=starstamp-"$ra"_"$dec".fits; done
+@end example
+
+After the stamps are created, they are stacked together with a simple Arithmetic command.
+The stack is done using the median operator and the stacked image is the PSF we are looking for: @file{psf.fits}.
+
+@example
+$ astarithmetic starstamp*.fits -g1 \
+          $(ls starstamp*.fits | wc -l) median \
+          --output=psf.fits
+@end example
+
+With the commands above PSF has been constructed and now it is going to be used for modeling and subtracting each individual star.
+By construction, the pixel values of the PSF came from the normalization of the individual stamps.
+As a consequence, when modeling each individual star, it is necessary to compute what is the factor by which the PSF has to be scaled.
+This is done with the script @file{astscript-psf-model-flux-factor}.
+For each star, a single value for the flux factor is saved into a plain text file.
+In this case, the parameters where the computation of the flux factor is done are the same to those that were used for creating the stamps.
+
+@example
+$ asttable catalog.fits | while read -r ra dec mag; do
+      astscript-psf-model-flux-factor $IMAGE \
+          --psf=psf.fits \
+          --mode=wcs \
+          --center=$ra,$dec \
+          --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
+          --output=fluxfactor-"$ra"_"$dec".txt; done
+@end example
+
+Once the flux factors have been computed, it is possible to scale the PSF to have the desired flux level.
+Of course, it is not only to scale the PSF flux but also allocate it in the correct position on the sky to model the star.
+To do this, we use the script @file{astscript-psf-model-scattered-light}.
+It will put the PSF into the coordinates specified by the user with the appropiate size and flux level.
+For those pixels that there is no PSF (it is normal that the size of the image is bigger than the size of the PSF), the script sets them automatically to zero.
+
+@example
+$ asttable catalog.fits | while read -r ra dec mag; do
+      fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
+      astscript-psf-model-scattered-light $IMAGE \
+          --psf=psf.fits \
+          --mode=wcs \
+          --fluxfactor $fluxfactor \
+          --center=$ra,$dec \
+          --output=starmodel-"$ra"_"$dec".fits; done
+@end example
+
+After all stars have been modeled using the PSF, the next step is to sum all of them together.
+In this case, it is necessary to combine them using the operator sum because each individual star has been flux calibrated, otherwise they would be averaged.
+The result is the complete scattered light field of the image using the PSF: @file{scattered-light-field.fits}.
+
+@example
+$ astarithmetic starmodel*.fits -g1 \
+      $(ls starmodel*.fits | wc -l) sum \
+      --output=scattered-light-field.fits
+@end example
+
+This is the final step.
+Once the scattered light field model has been obtained (i.e., each individual star has been modeled using the PSF and they are in one single image), it is possible to subtract this model from the original image.
+By doing this the scattered light field is removed.
+This step is done with a simple Arithmetic model to subtract two images.
+
+@example
+$ astarithmetic $IMAGE --hdu=1 \
+      scattered-light-field.fits --hdu=1 \
+      - --output subtracted.fits
+@end example
+
+As always, check that each step has been done properly.
+It is normal that on the final image there are residuals and several parts that have been not properly corrected.
+Take into account that the number of the stars used in this example is small.
+With more stars the PSF would have been better determined.
+Note also that during this process, any mask of contaminant sources have been applied (either in the creation of the PSF nor in the calibration of the flux of the PSF).
+This tutorial is intendeed to be a basic example from which the reader can start to construct the PSF.
+To obtain better results it is necessary to study in details the peculiarities of the datasets and consider other options that here they have not been used.
+
 
 In what follows, all options of each script are described in detail.
 For more on installed scripts please see (see @ref{Installed scripts}).
@@ -23586,9 +23602,8 @@ $ astscript-psf-create-select-stars image.fits --hdu=1 \
     --segmented=segment.fits --min=5 --max=7 \
     --output=selected-gaiastars.fits
 
-## If the stars do not exist in the Gaia, based on the
-## prepare catalog select the stars in the range of
-## magnitude between `--min` and `--max`.
+## Select the stars in the range of magnitude between
+## 5 and 7 magnitudes from starscatalog.fits
 $ astscript-psf-creat-select-stars image.fits --hdu=1 \
     --catalog=starscatalog.fits --segmented=segment.fits \
     --min=5 --max=7 --output=selected-simulatestars.fits
@@ -23687,20 +23702,14 @@ $ astscript-psf-create-make-stamp [OPTION...] FITS-file
 Examples:
 
 @example
-## Consider the pixel position (x,y)=(53,69) and make an stamp of
-## width=151 pixels, normalize the stamp by the value computed
-## within the ring defined by the radii 20 and 30 pixels.
-## The output stamp image is named as stamp.fits.
+## Make a stamp around (x,y)=(53,69) of width=151 pixels.
+## Normalize the stamp within the radii 20 and 30 pixels.
 $ astscript-psf-create-make-stamp image.fits --mode=img \
       --center=53,69 --stampwidth=151 --normradii=20,30 \
       --output=stamp.fits
 
-## Consider that in image.fits are some stars that are going to
-## be treated for constructing the PSF. If catalog.fits is a
-## catalog containing the center (in WCS) of the stars, then this
-## loop will generate one stamp for each star in the catalog.
-## Each stamp will have 150 pixels of width, and the normalization
-## will be computed within the ring of 20-30 pixels.
+## Iterate over a catalog with positions of stars that are
+## in the the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do \
     astscript-psf-create-make-stamp image.fits \
         --mode=wcs \
@@ -23713,7 +23722,6 @@ $ asttable catalog.fits | while read -r ra dec mag; do \
 
 The input is an image from which the stamp of the stars are constructed.
 There are mandatory options that the user has to specify: @option{--mode}, @option{--center}, @option{--stampwidth}, @option{--normradii}.
-There are also other optional options that the user can provide.
 The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}, and normalized by the value computed within the ring around the center at a radial distance between the two radius specified by the option @option{--normradii}.
 More options are available with the goal of obtaining better stamps.
 A full description of each option is given below.
@@ -23735,7 +23743,6 @@ The central position of the object.
 This option is used for placing the center of the stamp.
 This parameter is used in @ref{Crop} to center and crop the image.
 The positions along each dimension must be separated by a comma (@key{,}).
-The number of values given to this option must be the same as the dimensions of the input dataset.
 The units of the coordinates are read based on the value to the @option{--mode} option, see above.
 
 @item -W INT
@@ -23748,13 +23755,13 @@ This is necessary to place the specified coordinate position by @option{--center
 @item -n INT[,INT[,...]]
 @itemx --normradii=INT[,INT[,...]]
 Region around the central position in which the normalization is computed.
-The option takes two values separated by a comma (@key{,}).
+This option takes two values separated by a comma (@key{,}).
 The first value is the inner radius, the second is the outer radius.
 These two radius define a ring of pixels around the center that is used for obtaining the normalization value.
 
 @item -m STR
 @itemx --mask=STR
-Filename of the segmentation image.
+Filename of a segmentation image.
 It is possible use a segmentation image to mask all the objects that are not the central object.
 The segmentation image specified by this option must have the same dimensions than the input image.
 Non object pixels must have pixel values equal to zero, these pixels are not masked on the final stamp.
@@ -23774,7 +23781,7 @@ Width of the region that is used to compute the central object over the segmenta
 If a segmentation image is provided, then it is necessary to not mask the central object.
 To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
 Once it has been identified, that pixels are not masked.
-With this option, it is possible to control the size of the central region for computing the central object values.
+With this option, it is possible to control the size of the central region for computing the central object label (on the segmentation image).
 
 @item -R FLT
 @itemx --rmax=FLT
@@ -23851,19 +23858,14 @@ $ astscript-psf-create-junction [OPTION...] FITS-file
 Examples:
 
 @example
-## Consider outer.fits as the outer part of the PSF.
-## Consider inner.fits as the inner part of the PSF.
-## Join these two PSFs at a radius equal to 25 pixels
-## and scale the inner part by a factor of 3.
-## Name the joined PSF as joined.fits.
+## Multiply inner.fits by 3 and put it in the center of
+## outer.fits. The core goes up to a radius of 25 pixels.
 $ astscript-psf-create-junction outer.fits \
       --core=inner.fits --fluxfactor=3 \
       --radius=25 --output=joined.fits
 
 ## Same example than the above, but considering an
-## ellipse (instead of a circle). The parameters of
-## the ellipse are position angle 40 deg, and axis
-## ratio of 0.5.
+## ellipse (instead of a circle).
 $ astscript-psf-create-junction outer.fits \
       --core=inner.fits --fluxfactor=3 \
       --radius=25 --axisratio=0.5 \
@@ -23954,17 +23956,13 @@ $ astscript-psf-model-flux-factor [OPTION...] FITS-file
 Examples:
 
 @example
-## Compute the flux factor by which it is necessary to multiply
-## the PSF (psf.fits) to put it at the same level than the object
-## in the pixel position (x,y)=(53,69). Use the ring between
-## the radii 20 and 30 pixels for computing that flux factor.
+## Compute the flux factor for the object at (x,y)=(53,69) for
+## the PSF (psf.fits). Compute it in the ring 20-30 pixels.
 $ astscript-psf-model-flux-factor image.fits --mode=img \
       --center=53,69 --normradii=20,30 --psf=psf.fits
 
-## Consider that in image.fits are some stars that are going to
-## be considered for obtaining the flux factors. If catalog.fits
-## is a catalog containing the centers (in WCS), then this loop will
-## compute these flux factors, one for each star in the catalog.
+## Iterate over a catalog with positions of stars that are
+## in the the input image to compute their flux factors.
 $ asttable catalog.fits | while read -r ra dec mag; do \
     astscript-psf-model-flux-factor image.fits \
         --mode=wcs \
@@ -24024,7 +24022,6 @@ This option thus accepts only two values: @option{img} or @option{wcs}.
 The central position of the object.
 This parameter is used in @ref{Crop} to center and crop the image.
 The positions along each dimension must be separated by a comma (@key{,}).
-The number of values given to this option must be the same as the dimensions of the input dataset.
 The units of the coordinates are read based on the value to the @option{--mode} option, see above.
 
 @item -W INT
@@ -24047,10 +24044,10 @@ Filename of the segmentation image.
 It is possible use a segmentation image to mask all the objects that are not the central object.
 The segmentation image specified by this option must have the same dimensions than the input image.
 Non object pixels must have pixel values equal to zero, these pixels are not masked on the final stamp.
-Object pixels must have pixel values different from zero, these pixels are masked with NaN values on the final stamp.
+Object pixels must have pixel values different from zero.
 In order to not mask the central object (in case it is identified in the segmentation image as an object), a region around the center is considered from the segmentation image.
 The size of that region can be specified by the option @option{--corewidth}, see below.
-As a consequence, all pixels with values equal to the central one in the segmentation image are not masked in the final stamp image.
+As a consequence, all pixels with values equal to the central one in the segmentation image are not masked.
 Internally, all of these pixels are converted to zero values so they are not masked.
 
 @item -M STR
@@ -24130,11 +24127,8 @@ $ astscript-psf-model-scattered-light image.fits \
     --center=53,69 \
     --output=star-53_69.fits
 
-## Consider that in image.fits are some stars that are going to
-## be modeled. If catalog.fits is a catalog containing the centers
-## (in WCS), then this loop will generate an individual stamp for
-## each star, one for each star in the catalog. These stamps can be
-## later sumed in order to obtain the entire scattered light field.
+## Iterate over a catalog with positions of stars that are
+## in the the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do
          fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
          astscript-psf-model-scattered-light image.fits \
