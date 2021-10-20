@@ -367,7 +367,7 @@ if [ x"$catalog" != x ]; then
     # Check if the catalog overlap the image or not.
     check=$(echo $minraimg $minracatalog $mindecimg $mindeccatalog \
                  $maxraimg $maxracatalog $maxdecimg $maxdeccatalog \
-                 | awk '{print ($1 >= $2 && $3 >= $4 && $5 <= $6 && $7 <= $8)}')
+                 | awk '{print ($1 <= $2 && $3 <= $4 && $5 >= $6 && $7 >= $8)}')
 
     # If catalog overlap the image, select stars with magnitudes between
     # the minimum and maximum values.
