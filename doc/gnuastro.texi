@@ -15693,7 +15693,7 @@ So for the general Homography matrix of @ref{Warping basics}, it should be calle
 The raw matrix takes precedence over all the modular warping options listed above, so if it is called with any number of modular warps, the latter are ignored.
 
 @item -c
-@itemx --centeroncorer
+@itemx --centeroncorner
 Put the center of coordinates on the corner of the first (bottom-left when viewed in SAO DS9) pixel.
 This option is applied after the final warping matrix has been finalized: either through modular warpings or the raw matrix.
 See the explanation above for coordinates in the FITS standard to better understand this option and when it should be used.
