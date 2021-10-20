@@ -211,6 +211,7 @@ SCRIPT_TESTS = script/sort-by-night.sh \
                script/psf-create-junction.sh \
                script/psf-create-make-stamp.sh \
                script/psf-model-flux-factor.sh \
+               script/psf-create-select-stars.sh \
                script/psf-model-scattered-light.sh
 
 # We want to have several FITS files as input for this script.
@@ -219,6 +220,7 @@ script/radial-profile.sh: mkprof/mosaic2.sh.log
 script/psf-create-junction.sh: mkprof/mosaic2.sh.log
 script/psf-create-make-stamp.sh: mkprof/mosaic2.sh.log
 script/psf-model-flux-factor.sh: mkprof/mosaic2.sh.log
+script/psf-model-select-stars.sh: mkprof/mosaic2.sh.log
 script/psf-model-scattered-light.sh: mkprof/mosaic2.sh.log
 
 

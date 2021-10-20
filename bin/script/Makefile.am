@@ -32,6 +32,7 @@ bin_SCRIPTS = astscript-ds9-region \
               astscript-psf-create-junction \
               astscript-psf-create-make-stamp \
               astscript-psf-model-flux-factor \
+              astscript-psf-create-select-stars \
               astscript-psf-model-scattered-light
 
 EXTRA_DIST = ds9-region.in \
@@ -40,6 +41,7 @@ EXTRA_DIST = ds9-region.in \
              psf-create-junction.in \
              psf-create-make-stamp.in \
              psf-model-flux-factor.in \
+             psf-create-select-stars.in \
              psf-model-scattered-light.in
 
 CLEANFILES = $(bin_SCRIPTS)
@@ -79,6 +81,10 @@ astscript-psf-create-make-stamp: psf-create-make-stamp.in Makefile
 
 astscript-psf-model-flux-factor: psf-model-flux-factor.in Makefile
 	$(do_subst) < $(srcdir)/psf-model-flux-factor.in > $@
+	chmod +x $@
+
+astscript-psf-create-select-stars: psf-create-select-stars.in Makefile
+	$(do_subst) < $(srcdir)/psf-create-select-stars.in > $@
 	chmod +x $@
 
 astscript-psf-model-scattered-light: psf-model-scattered-light.in Makefile
