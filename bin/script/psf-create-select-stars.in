@@ -41,8 +41,8 @@ set -e
 
 # Default parameter's values
 hdu=1
-min=19
-max=20
+min=-99
+max=99
 show=""
 quiet=""
 output=""
@@ -50,7 +50,7 @@ tmpdir=""
 catalog=""
 keeptmp=""
 segmented=""
-minaxisratio=0.9
+minaxisratio=0.1
 version=@VERSION@
 mindistdeg=0.015277778
 field="phot_g_mean_mag"
@@ -374,15 +374,15 @@ if [ x"$catalog" != x ]; then
     if [ "$check" = 1 ]; then
 
         # Make a file for output of 'asttable'.
-        query=$tmpdir/query.fits
-        if [ -f $query ]; then
+        catalog_magfiltered=$tmpdir/query.fits
+        if [ -f $catalog_magfiltered ]; then
             echo "External Cataloge already exists "
         else
             # Select stars with magnitude between minimum to maximum.
             asttable $catalog --range=$field,$min:$max --sort=$field \
                      --range=ra,$minraimg:$maxraimg \
                      --range=dec,$mindecimg:$maxdecimg \
-                     --output=$query $quiet
+                     --output=$catalog_magfiltered $quiet
 
             numstars=$(asttable $query -i | grep 'Number of rows' | awk '{print $4}')
             if [ "$numstars" = 0 ]; then
@@ -414,7 +414,6 @@ fi
 
 
 
-
 # Select stars with good parallax
 # -------------------------------
 #
@@ -423,11 +422,15 @@ fi
 # 'asttable' such as '--noblank', stars that have parallax larger than
 # three times the parallax-error are removed.
 goodparallax=$tmpdir/parallax-good.fits
-asttable $query -cra,dec -c$field \
-         --range=$field,$min:$max --colinfoinstdout --noblank=4 \
-	 -c'arith parallax parallax abs \
-                  parallax_error 3 x lt nan where ' \
-	 | asttable -cra,dec -c$field --output=$goodparallax $quiet
+if [ x"$parallax" != x ]; then
+    asttable $query -cra,dec -c$field \
+             --range=$field,$min:$max --colinfoinstdout --noblank=4 \
+             -c'arith parallax parallax abs \
+                      parallax_error 3 x lt nan where ' \
+             | asttable -cra,dec -c$field --output=$goodparallax $quiet
+else
+    cp $catalog $goodparallax
+fi
 
 
 
@@ -500,7 +503,7 @@ asttable $circular -cra,dec -c$field | while read r d mag; do
    numberneighbor=$tmpdir/"$r_$d"th-star-neighbor.fits
 
    # Find number of neighborhod for each star.
-   asttable $query -cra,dec -c$field \
+   asttable $catalog -cra,dec -c$field \
 	    -c'arith ra dec '$r' '$d' distance-on-sphere \
                      set-i i i '$mindistdeg' gt nan where' \
             --noblank=4 \
