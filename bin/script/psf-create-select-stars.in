@@ -41,8 +41,6 @@ set -e
 
 # Default parameter's values
 hdu=1
-min=-99
-max=99
 show=""
 quiet=""
 output=""
@@ -50,11 +48,15 @@ tmpdir=""
 catalog=""
 keeptmp=""
 segmented=""
+racolumn="ra"
+deccolumn="dec"
 minaxisratio=0.1
 version=@VERSION@
+magnituderange=""
 mindistdeg=0.015277778
 field="phot_g_mean_mag"
 scriptname=@SCRIPT_NAME@
+parallaxanderrorcolumn=""
 matchaperturedeg=3.0/3600
 dataset="gaia --dataset=edr3"
 
@@ -90,14 +92,16 @@ $scriptname options:
  Input:
   -h, --hdu=STR/INT       Extension name or number of input data.
   -S, --segmented=STR     Segmentation file obtained by Segment (astsegment).
-  -d, --dataset=STR       astquery format dataset ("gaia --dataset=edr3", etc.).
+  -D, --dataset=STR       astquery format dataset ("gaia --dataset=edr3", etc.).
+  -r, --racolumn=STR      The name of the RA column.
+  -d, --deccolumn=STR     The name of the Dec column.
   -f, --field=STR         Catalogue key field to identify the magnitude field
                           ("phot_rp_mean_mag", etc.).
-  -m, --min=FLT           Minimum value of field.
-  -M, --max=FLT           Maximum value of field.
+  -p, --parallaxanderrorcolumn=STR,STR The name of the parallax column.
+  -m, --magnituderange=FLT,FLT The range of magnitude.
   -Q, --minaxisratio=FLT  Minimum axis ratio of a clump to be accepted.
                           Default to 0.9.
-  -D, --mindistdeg=FLT    Minimum distance to more bright neighbour stars.
+  -M, --mindistdeg=FLT    Minimum distance to more bright neighbour stars.
                           to be accepted, in degree.
   -c, --catalog=STR       Catalog of stras contain of ra, desc, magnitude,
                           parrallax and parrallax_error.
@@ -206,30 +210,36 @@ do
        -e|--extscript)         extscript="$2";                               check_v "$1" "$extscript";  shift;shift;;
        -e=*|--extscript=*)     extscript="${1#*=}";                          check_v "$1" "$extscript";  shift;;
        -e*)                    extscript=$(echo "$1" | sed -e's/-e//');      check_v "$1" "$extscript";  shift;;
-       -d|--dataset)           dataset="$2";                                 check_v "$1" "$dataset";  shift;shift;;
-       -d=*|--dataset=*)       dataset="${1#*=}";                            check_v "$1" "$dataset";  shift;;
-       -d*)                    dataset=$(echo "$1" | sed -e's/-d//');        check_v "$1" "$dataset";  shift;;
+       -r|--racolumn)          racolumn="$2";                                check_v "$1" "$racolumn";  shift;shift;;
+       -r=*|--racolumn=*)      racolumn="${1#*=}";                           check_v "$1" "$racolumn";  shift;;
+       -r*)                    racolumn=$(echo "$1" | sed -e's/-r//');       check_v "$1" "$racolumn";  shift;;
+       -d|--deccolumn)         deccolumn="$2";                               check_v "$1" "$deccolumn";  shift;shift;;
+       -d=*|--deccolumn=*)     deccolumn="${1#*=}";                          check_v "$1" "$deccolumn";  shift;;
+       -d*)                    deccolumn=$(echo "$1" | sed -e's/-d//');      check_v "$1" "$deccolumn";  shift;;
+       -p|--parallaxanderrorcolumn) parallaxanderrorcolumn="$2";            check_v "$1" "$parallaxanderrorcolumn";  shift;shift;;
+       -p=*|--parallaxanderrorcolumn=*) parallaxanderrorcolumn="${1#*=}";    check_v "$1" "$parallaxanderrorcolumn";  shift;;
+       -p*)                    parallaxanderrorcolumn=$(echo "$1" | sed -e's/-p//'); check_v "$1" "$parallaxanderrorcolumn";  shift;;
+       -D|--dataset)           dataset="$2";                                 check_v "$1" "$dataset";  shift;shift;;
+       -D=*|--dataset=*)       dataset="${1#*=}";                            check_v "$1" "$dataset";  shift;;
+       -D*)                    dataset=$(echo "$1" | sed -e's/-D//');        check_v "$1" "$dataset";  shift;;
        -c|--catalog)           catalog="$2";                                 check_v "$1" "$catalog";  shift;shift;;
        -c=*|--catalog=*)       catalog="${1#*=}";                            check_v "$1" "$catalog";  shift;;
        -c*)                    catalog=$(echo "$1" | sed -e's/-c//');        check_v "$1" "$catalog";  shift;;
        -f|--field)             field="$2";                                   check_v "$1" "$field";  shift;shift;;
        -f=*|--field=*)         field="${1#*=}";                              check_v "$1" "$field";  shift;;
        -f*)                    field=$(echo "$1" | sed -e's/-f//');          check_v "$1" "$field";  shift;;
-       -m|--min)               min="$2";                                     check_v "$1" "$min";  shift;shift;;
-       -m=*|--min=*)           min="${1#*=}";                                check_v "$1" "$min";  shift;;
-       -m*)                    min=$(echo "$1" | sed -e's/-m//');            check_v "$1" "$min";  shift;;
-       -M|--max)               max="$2";                                     check_v "$1" "$max";  shift;shift;;
-       -M=*|--max=*)           max="${1#*=}";                                check_v "$1" "$max";  shift;;
-       -M*)                    max=$(echo "$1" | sed -e's/-M//');            check_v "$1" "$max";  shift;;
+       -m|--magnituderange)    magnituderange="$2";                          check_v "$1" "$magnituderange";  shift;shift;;
+       -m=*|--magnituderange=*) magnituderange="${1#*=}";                    check_v "$1" "$magnituderange";  shift;;
+       -m*)                    magnituderange=$(echo "$1" | sed -e's/-m//'); check_v "$1" "$magnituderange";  shift;;
        -a|--matchaperturedeg)  matchaperturedeg="$2";                        check_v "$1" "$matchaperturedeg";shift;shift;;
        -a=*|--matchaperturedeg=*) matchaperturedeg="${1#*=}";                check_v "$1" "$matchaperturedeg";  shift;;
        -a*)                    matchaperturedeg=$(echo "$1" | sed -e's/-a//');  check_v "$1" "$matchaperturedeg";  shift;;
        -Q|--minaxisratio)      minaxisratio="$2";                            check_v "$1" "$minaxisratio";  shift;shift;;
        -Q=*|--minaxisratio=*)  minaxisratio="${1#*=}";                       check_v "$1" "$minaxisratio";  shift;;
        -Q*)                    minaxisratio=$(echo "$1" | sed -e's/-Q//');   check_v "$1" "$minaxisratio";  shift;;
-       -D|--mindistdeg)        mindistdeg="$2";                              check_v "$1" "$mindistdeg";  shift;shift;;
-       -D=*|--mindistdeg=*)    mindistdeg="${1#*=}";                         check_v "$1" "$mindistdeg";  shift;;
-       -D*)                    mindistdeg=$(echo "$1" | sed -e's/-D//');     check_v "$1" "$mindistdeg";  shift;;
+       -M|--mindistdeg)        mindistdeg="$2";                              check_v "$1" "$mindistdeg";  shift;shift;;
+       -M=*|--mindistdeg=*)    mindistdeg="${1#*=}";                         check_v "$1" "$mindistdeg";  shift;;
+       -M*)                    mindistdeg=$(echo "$1" | sed -e's/-M//');     check_v "$1" "$mindistdeg";  shift;;
 
 # Output parameters
        -k|--keeptmp)         keeptmp=1; shift;;
@@ -294,6 +304,46 @@ elif [ ! -f $segmented ]; then
     exit 1
 fi
 
+# Check if the minimum and maximum range of does not exist interrupt.
+if [ x$magnituderange = x ]; then
+    echo "$scriptname: The range of magnitude does not provided."
+    echo "$scriptname: Values to '--magnituderange' (or '-m') should be provided."
+    exit 1
+else
+    nmagrange=$(echo $magnituderange | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$nmagrange != x2 ]; then
+        echo "$scriptname: '--magnituderange' (or '-m') only take two values, while $nmagrange were given."
+        exit 1
+    fi
+fi
+
+# Check if the parallax and parallax error column does not provided, the
+# script print an error.
+if [ $parallaxanderrorcolumn = 0 ]; then
+    parallax_and_error=""
+else
+    nmparallax=$(echo $parallaxanderrorcolumn | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$nmparallax != x2 ]; then
+        echo "$scriptname: '--parallaxanderrorcolumn' (or '-p') only take two values, while $nmparallax were given."
+        exit 1
+    else
+        parallax_and_error=$(echo $parallaxanderrorcolumn)
+    fi
+fi
+
+
+
+# Basic parameters: magnitude range, parallax and parallax_error.
+#-----------------------------------
+#
+# Obtain the magnitude range from the command line arguments.
+minmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $1}')
+maxmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
+parallax=$(echo "$parallaxanderrorcolumn" \
+                     | awk 'BEGIN{FS=","} {print $1}')
+parallax_error=$(echo "$parallaxanderrorcolumn" \
+                          | awk 'BEGIN{FS=","} {print $2}')
+
 
 
 
@@ -314,7 +364,7 @@ fi
 # and max magnitudes will will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_psfcreateselectstar_"$field"_"$min"_"$max"
+  tmpdir=$(pwd)/"$bname_prefix"_psfcreateselectstar_"$field"_"$minmag"_"$maxmag"
 fi
 
 if [ -d $tmpdir ]; then
@@ -325,7 +375,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output="$bname_prefix"_psfcreateselectstar_"$field"_"$min"_"$max".fits
+  output="$bname_prefix"_psfcreateselectstar_"$field"_"$minmag"_"$maxmag".fits
 fi
 
 
@@ -340,6 +390,7 @@ fi
 # filter the objects to have only the ones with proper brightness. If the
 # user does not provide a catalogue, obtain it using the program
 # 'astquery'.
+catalog_magfiltered=$tmpdir/catalog-mag-$minmag-$maxmag.fits
 if [ x"$catalog" != x ]; then
 
     # Find minimum and maximum RA/Dec values of the input image.
@@ -354,40 +405,41 @@ if [ x"$catalog" != x ]; then
                 | grep 'DEC' | awk '{print $3}')
 
     # Find minimum and maximum RA/Dec values of the input catalog.
-    minracatalog=$(asttable $catalog -cRA \
+    minracatalog=$(asttable $catalog -c$racolumn \
                    | aststatistics --minimum)
-    maxracatalog=$(asttable $catalog -cRA \
+    maxracatalog=$(asttable $catalog -c$racolumn \
                    | aststatistics --maximum)
 
-    mindeccatalog=$(asttable $catalog -cDEC \
+    mindeccatalog=$(asttable $catalog -c$deccolumn \
                     | aststatistics --minimum)
-    maxdeccatalog=$(asttable $catalog -cDEC \
+    maxdeccatalog=$(asttable $catalog -c$deccolumn \
                     | aststatistics --maximum)
 
     # Check if the catalog overlap the image or not.
-    check=$(echo $minraimg $minracatalog $mindecimg $mindeccatalog \
+    checkoverlap=$(echo $minraimg $minracatalog $mindecimg $mindeccatalog \
                  $maxraimg $maxracatalog $maxdecimg $maxdeccatalog \
                  | awk '{print ($1 <= $2 && $3 <= $4 && $5 >= $6 && $7 >= $8)}')
 
     # If catalog overlap the image, select stars with magnitudes between
     # the minimum and maximum values.
-    if [ "$check" = 1 ]; then
+    if [ "$checkoverlap" = 1 ]; then
 
         # Make a file for output of 'asttable'.
-        catalog_magfiltered=$tmpdir/query.fits
         if [ -f $catalog_magfiltered ]; then
             echo "External Cataloge already exists "
         else
             # Select stars with magnitude between minimum to maximum.
-            asttable $catalog --range=$field,$min:$max --sort=$field \
-                     --range=ra,$minraimg:$maxraimg \
-                     --range=dec,$mindecimg:$maxdecimg \
+            asttable $catalog --range=$field,$minmag:$maxmag --sort=$field \
+                     --range=$racolumn,$minraimg:$maxraimg \
+                     --range=$deccolumn,$mindecimg:$maxdecimg \
                      --output=$catalog_magfiltered $quiet
 
-            numstars=$(asttable $query -i | grep 'Number of rows' | awk '{print $4}')
+            # At first check and if there are no stars in the range of magnitude
+            # the script will be stopped and print the error.
+            numstars=$(asttable $catalog_magfiltered -i | grep 'Number of rows' | awk '{print $4}')
             if [ "$numstars" = 0 ]; then
                 rm -rf $tmpdir
-                echo "There were no stars in magnitude range $min to $max"
+                echo "There were no stars in magnitude range $minmag to $maxmag"
                 exit 2
             fi
         fi
@@ -400,14 +452,13 @@ if [ x"$catalog" != x ]; then
 # If the user doesn't provide a catalog, use 'astquery' to obtain it.
 else
     # Check if the catalog already exist.
-    query=$tmpdir/query.fits
-    if [ -f $query ]; then
+    if [ -f $catalog_magfiltered ]; then
         echo "External Cataloge already exists "
     else
 	# Download the catalog with the necessary parameters.
-        astquery $dataset --output=$query --overlapwith=$inputs --hdu=$hdu \
-                 --column=ra,dec,$field,parallax,parallax_error \
-	         --range=$field,$min:$max --sort=$field $quiet
+        astquery $dataset --output=$catalog_magfiltered --overlapwith=$inputs --hdu=$hdu \
+                 --column=$racolumn,$deccolumn,$field,$parallax_and_error \
+	         --range=$field,$minmag:$maxmag --sort=$field $quiet
     fi
 fi
 
@@ -422,14 +473,14 @@ fi
 # 'asttable' such as '--noblank', stars that have parallax larger than
 # three times the parallax-error are removed.
 goodparallax=$tmpdir/parallax-good.fits
-if [ x"$parallax" != x ]; then
-    asttable $query -cra,dec -c$field \
-             --range=$field,$min:$max --colinfoinstdout --noblank=4 \
-             -c'arith parallax parallax abs \
-                      parallax_error 3 x lt nan where ' \
-             | asttable -cra,dec -c$field --output=$goodparallax $quiet
+if [ x"$parallax_and_error" != x ]; then
+    asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
+             --range=$field,$minmag:$maxmag --colinfoinstdout --noblank=4 \
+             -c'arith '$parallax' '$parallax' abs \
+                      '$parallax_error' 3 x lt nan where ' \
+             | asttable -c$racolumn,$deccolumn -c$field --output=$goodparallax $quiet
 else
-    cp $catalog $goodparallax
+    cp $catalog_magfiltered $goodparallax
 fi
 
 
@@ -461,11 +512,11 @@ else
                      --output=$qraw $quiet
 
 	# Match with downloaded cataloge
-	astmatch $goodparallax --ccol1=ra,dec \
+	astmatch $goodparallax --ccol1=$racolumn,$deccolumn \
 		 $qraw --hdu2=CLUMPS --ccol2=RA,DEC \
 		 --aperture=$matchaperturedeg \
 		 --output=$qmatch $quiet \
-		 --outcols=ara,adec,a$field,bAXIS_RATIO,bPOSITION_ANGLE,bFWHM
+		 --outcols=a$racolumn,a$deccolumn,a$field,bAXIS_RATIO,bPOSITION_ANGLE,bFWHM
 
 	# Select circular objects
 	asttable $qmatch --range=AXIS_RATIO,$minaxisratio,1 \
@@ -497,14 +548,14 @@ echo "# Column 2: dec [deg,f64] Declination" >> $lessneighbor
 echo "# Column 3: photo-g-mean-mag [mag,f64] Magnitude" >> $lessneighbor
 
 # Find ra and dec of each star.
-asttable $circular -cra,dec -c$field | while read r d mag; do
+asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
 
    # Make a file for number of neighbourhood.
    numberneighbor=$tmpdir/"$r_$d"th-star-neighbor.fits
 
    # Find number of neighborhod for each star.
-   asttable $catalog -cra,dec -c$field \
-	    -c'arith ra dec '$r' '$d' distance-on-sphere \
+   asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
+	    -c'arith '$racolumn' '$racolumn' '$r' '$d' distance-on-sphere \
                      set-i i i '$mindistdeg' gt nan where' \
             --noblank=4 \
 	    --colinfoinstdout \
@@ -542,7 +593,7 @@ asttable $lessneighbor --output=$output
 # be used. Without this option user can see all steps of run.
 if [ x"$quiet" = x ]; then
    echo "Number of downloaded stars from gaia: \
-         $(asttable $query | wc -l)"
+         $(asttable $catalog_magfiltered | wc -l)"
    echo "Number of stars with good parallax: \
          $(asttable $goodparallax | wc -l)"
    echo "Number of stars with less than 9 neghbors: \
