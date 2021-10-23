@@ -23643,15 +23643,25 @@ The value of this option is @option{gaia --dataset=edr3} by default.
 Name of the column for the brightness of the objects.
 By default, the value of this option is @option{phot_g_mean_mag} (that corresponds to the name of the magnitude in the Gaia catalog).
 
-@item -m FLT
-@itemx --min=FLT
-Minimum value of the magnitude of the stars to be considered.
-The value of this option is 19 by default.
+@item -m INT[,INT[,...]]
+@itemx --magnituderange=INT[,INT[,...]]
+This option is one of the essential parameter for selecting the stars.
+This option give two values, which based on that the minimum and maximum values magnitude of stars are determined.
 
-@item -M FLT
-@itemx --max=FLT
-Maximum value of the magnitude of the stars to be considered.
-The value of this option is 20 by default.
+@item -r STR
+@itemx --racolumn=STR
+With this option the name of the rightascension column are determined.
+If the user does not determine this option the, by default the 'ra' considered for rightascension column.
+
+@item -d STR
+@itemx --deccolumn=STR
+Such as above option this option determined the declination column.
+And if the user does not provide this option the 'dec' value will be considered.
+
+@item -p STR[,STR[,...]]
+@itemx --parallaxanderrorcolumn=STR[,STR[,...]]
+With this option the user can provide the parallax and parallax error columns name.
+If the user does not provide thi soption, the script does not provide stars with good parallax.
 
 @item -a FLT
 @itemx --matchaperturedeg=FLT
