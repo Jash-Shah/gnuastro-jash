@@ -413,18 +413,18 @@ objectid="$xcoord"_"$ycoord"
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_psfmodelfluxfactor
+    tmpdir=$(pwd)/"$bname_prefix"_psfmodelfluxfactor
 fi
 
 if [ -d $tmpdir ]; then
-  junk=1
+    junk=1
 else
-  mkdir -p $tmpdir
+    mkdir -p $tmpdir
 fi
 
 # Output
 if [ x$output = x ]; then
-  output="$bname_prefix"_psfmodelfluxfactor_$objectid.txt
+    output="$bname_prefix"_psfmodelfluxfactor_$objectid.txt
 fi
 
 
@@ -439,14 +439,14 @@ fi
 # the WCS information from the original input image. If the original
 # coordinates were done in IMG, then just use them.
 if [ $mode = wcs ]; then
-  xycenter=$(echo "$xcoord,$ycoord" \
-                  | asttable  --column='arith $1 $2 wcs-to-img' \
-                              --wcsfile=$inputs --wcshdu=$hdu $quiet)
-  xcenter=$(echo "$xycenter" | awk '{print $1}')
-  ycenter=$(echo "$xycenter" | awk '{print $2}')
+    xycenter=$(echo "$xcoord,$ycoord" \
+                   | asttable  --column='arith $1 $2 wcs-to-img' \
+                               --wcsfile=$inputs --wcshdu=$hdu $quiet)
+    xcenter=$(echo "$xycenter" | awk '{print $1}')
+    ycenter=$(echo "$xycenter" | awk '{print $2}')
 else
-  xcenter=$xcoord
-  ycenter=$ycoord
+    xcenter=$xcoord
+    ycenter=$ycoord
 fi
 
 
@@ -474,8 +474,8 @@ fi
 # Crop the object around its center with the given stamp size width.
 cropped=$tmpdir/cropped-$objectid.fits
 astcrop $inputs --hdu=$hdu --mode=img \
-                --center=$xcenter,$ycenter \
-                --width=$stampwidth --output=$cropped $quiet
+        --center=$xcenter,$ycenter \
+        --width=$stampwidth --output=$cropped $quiet
 
 
 
@@ -498,20 +498,21 @@ astcrop $inputs --hdu=$hdu --mode=img \
 #   sky.
 #   - Mask all non zero pixels in the mask image as nan values.
 if [ x"$mask" != x ]; then
-  cropped_mask=$tmpdir/cropped_mask-$objectid.fits
-  astcrop $mask --hdu=$maskhdu --mode=img \
-                --center=$xcenter,$ycenter \
-                --width=$stampwidth --output=$cropped_mask $quiet
+    cropped_mask=$tmpdir/cropped_mask-$objectid.fits
+    astcrop $mask --hdu=$maskhdu --mode=img \
+            --center=$xcenter,$ycenter \
+            --width=$stampwidth --output=$cropped_mask $quiet
 
   # If the user does not provide a core width, consider it as the maximum
   # normalization radius value.
   if [ x"$corewidth" = x ]; then corewidth="$normradiusmax,$normradiusmax"
   fi
 
+  # Crop just the center of the target star.
   cropped_core=$tmpdir/cropped_core-$objectid.fits
   astcrop $mask --hdu=$maskhdu --mode=img \
-                --center=$xcenter,$ycenter \
-                --width=$corewidth --output=$cropped_core $quiet
+          --center=$xcenter,$ycenter \
+          --width=$corewidth --output=$cropped_core $quiet
 
   # Compute the label of the central object from the core cropped image.
   centrallabel=$(aststatistics $cropped_core --median -q)
@@ -528,7 +529,7 @@ if [ x"$mask" != x ]; then
                 $cropped_unlabel --hdu=1 \
                 0 ne nan where --output=$cropped_masked $quiet
 else
-  cropped_masked=$cropped
+    cropped_masked=$cropped
 fi
 
 
@@ -576,11 +577,11 @@ fi
 # different tables are concatenated into a single one.
 radialprofile_ring=$tmpdir/rprofile-ring-$objectid.fits
 asttable $radialprofile --range=1,$normradiusmin,$normradiusmax \
-                        --output=$radialprofile_ring $quiet
+         --output=$radialprofile_ring $quiet
 
 psfradialprofile_ring=$tmpdir/rprofile-psf-ring-$objectid.fits
 asttable $psfradialprofile --range=1,$normradiusmin,$normradiusmax \
-                           --output=$psfradialprofile_ring $quiet
+         --output=$psfradialprofile_ring $quiet
 
 # Concatenated table. This table has the rows corresponding to the ring
 # over which the flux radius is computed, and 3 columns: radius, STAR
@@ -600,9 +601,9 @@ asttable $radialprofile_ring --output=$radialprofile_ring_both $quiet \
 # make the ratio of the two radial profiles (STAR and PSF) columns.
 radialprofile_ratio=$tmpdir/rprofile-ratio-$objectid.fits
 asttable $radialprofile_ring_both $quiet \
-                      --column=1,2,3 \
-                      --column='arith $2 $3 /' \
-                      --output=$radialprofile_ratio
+         --column=1,2,3 \
+         --column='arith $2 $3 /' \
+         --output=$radialprofile_ratio
 
 # Obtain the flux factor by computing the averaged value of the ratio.
 # Print the flux factor on the screen and save it into the output file.
