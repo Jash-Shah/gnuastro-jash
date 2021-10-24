@@ -411,12 +411,17 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
              information). */
           if( *datall==NULL || format==TXT_FORMAT_TABLE )
             {
-              /* Make sure the token is actually a number and print a good
-                 error message when the input isn't actually a number but a
-                 string (like uncommented metadata).*/
-              if( gal_type_from_string( &tmpdptr, token, GAL_TYPE_FLOAT64) )
+              /* Make sure the token is actually a number (or RA/Dec
+                 written in Sexagesimal format) and print a good error
+                 message when the input isn't actually a number but a
+                 string (this test was added because of uncommented
+                 metadata)! */
+              if( gal_type_from_string( &tmpdptr, token, GAL_TYPE_FLOAT64)
+                  && isnan( gal_units_ra_to_degree(token) )
+                  && isnan( gal_units_dec_to_degree(token) ) )
                 error(EXIT_FAILURE, 0, "'%s' couldn't be read as a number "
-                      "(element %zu of first uncommented line)", token, n);
+                      "(element %zu of first uncommented line) %f ", token, n,
+                      gal_units_ra_to_degree(token));
 
               /* Allocate this column's dataset and set it's 'status' to
                  the column number that it corresponds to. */

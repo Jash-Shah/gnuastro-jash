@@ -187,12 +187,13 @@ endif
 if COND_TABLE
   MAYBE_TABLE_TESTS = table/txt-to-fits-binary.sh		\
   table/fits-binary-to-txt.sh table/txt-to-fits-ascii.sh	\
-  table/fits-ascii-to-txt.sh
+  table/fits-ascii-to-txt.sh table/sexagesimal-to-deg.sh
 
   table/txt-to-fits-binary.sh: prepconf.sh.log
   table/fits-binary-to-txt.sh: table/txt-to-fits-binary.sh.log
   table/txt-to-fits-ascii.sh: prepconf.sh.log
   table/fits-ascii-to-txt.sh: table/txt-to-fits-ascii.sh.log
+  table/sexagesimal-to-deg.sh: prepconf.sh.log
 endif
 if COND_WARP
   MAYBE_WARP_TESTS = warp/warp_scale.sh warp/homographic.sh
