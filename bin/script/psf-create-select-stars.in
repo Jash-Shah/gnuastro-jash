@@ -41,7 +41,6 @@ set -e
 
 # Default parameter's values
 hdu=1
-show=""
 quiet=""
 output=""
 tmpdir=""
@@ -49,15 +48,15 @@ catalog=""
 keeptmp=""
 segmented=""
 racolumn="ra"
+mindistdeg=""
 deccolumn="dec"
-minaxisratio=0.1
+minaxisratio=""
 version=@VERSION@
 magnituderange=""
-mindistdeg=0.015277778
+matchaperturedeg=""
 field="phot_g_mean_mag"
 scriptname=@SCRIPT_NAME@
 parallaxanderrorcolumn=""
-matchaperturedeg=3.0/3600
 dataset="gaia --dataset=edr3"
 
 
@@ -319,16 +318,39 @@ fi
 
 # Check if the parallax and parallax error column does not provided, the
 # script print an error.
-if [ $parallaxanderrorcolumn = 0 ]; then
-    parallax_and_error=""
+if [ x$parallaxanderrorcolumn = x ]; then
+    columnquery=$racolumn,$deccolumn,$field
 else
     nmparallax=$(echo $parallaxanderrorcolumn | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nmparallax != x2 ]; then
         echo "$scriptname: '--parallaxanderrorcolumn' (or '-p') only take two values, while $nmparallax were given."
         exit 1
     else
-        parallax_and_error=$(echo $parallaxanderrorcolumn)
+        columnquery=$racolumn,$deccolumn,$field,$parallaxanderrorcolumn
     fi
+fi
+
+# Check if the minimum axis ratio does not provided, the script print
+# an error.
+if [ x$minaxisratio = x ]; then
+    echo "$scriptname: The minimum axis ratio does not provided."
+    echo "$scriptname: The '--minaxisratio' (or '-Q') should be provided."
+    exit 1
+fi
+
+# Check if the user does not provided minimum axis ratio, the script will
+# be intterupted.
+if [ x$mindistdeg = x ]; then
+    echo "$scriptname: The minimum distance in degree for finding the number of neighbor does not provided. "
+    echo "$scriptname: The '--mindistdeg' (or '-M') should be provided."
+    exit 1
+fi
+
+# Check
+if [ x$matchaperturedeg = x ]; then
+    echo "$scriptname: The aperture for matching cordinate in catalog with clumps does not provided."
+    echo "$scripname: The '--matchaperturedeg' (or '-a') should be provided."
+    exit 1
 fi
 
 
@@ -339,6 +361,8 @@ fi
 # Obtain the magnitude range from the command line arguments.
 minmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $1}')
 maxmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
+
+# Obtain the parallax and parallax_error columns name.
 parallax=$(echo "$parallaxanderrorcolumn" \
                      | awk 'BEGIN{FS=","} {print $1}')
 parallax_error=$(echo "$parallaxanderrorcolumn" \
@@ -457,8 +481,8 @@ else
     else
 	# Download the catalog with the necessary parameters.
         astquery $dataset --output=$catalog_magfiltered --overlapwith=$inputs --hdu=$hdu \
-                 --column=$racolumn,$deccolumn,$field,$parallax_and_error \
-	         --range=$field,$minmag:$maxmag --sort=$field $quiet
+                 --column=$columnquery --range=$field,$minmag:$maxmag \
+                 --sort=$field $quiet
     fi
 fi
 
@@ -473,7 +497,7 @@ fi
 # 'asttable' such as '--noblank', stars that have parallax larger than
 # three times the parallax-error are removed.
 goodparallax=$tmpdir/parallax-good.fits
-if [ x"$parallax_and_error" != x ]; then
+if [ x"$parallaxanderrorcolumn" != x ]; then
     asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
              --range=$field,$minmag:$maxmag --colinfoinstdout --noblank=4 \
              -c'arith '$parallax' '$parallax' abs \
