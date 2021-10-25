@@ -865,8 +865,10 @@ gal_fits_hdu_open(char *filename, char *hdu, int iomode)
             "    $ astfits %s\n\n"
             "The respective HDU number (or name, when present) may be used "
             "with the '--hdu' option in Gnuastro's programs (or the 'hdu' "
-            "argument in Gnuastro's libraries) to open the respective HDU.",
-            filename, hdu, filename, filename);
+            "argument in Gnuastro's libraries) to open the respective HDU. "
+            "If you are using counters/numbers to identify your HDUs, note "
+            "that since Gnuastro uses CFITSIO for FITS input/output, HDU "
+            "counting starts from 0", filename, hdu, filename, filename);
     }
 
   /* Clean up and the pointer. */
