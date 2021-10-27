@@ -17341,9 +17341,74 @@ Width of flat kernel used to smooth the interpolated quantile thresholds, see @o
 @cindex NaN
 @item --checkqthresh
 Check the quantile threshold values on the mesh grid.
-A file suffixed with @file{_qthresh.fits} will be created showing each step.
+A multi-extension FITS file, suffixed with @file{_qthresh.fits} will be created showing each step of how the final quantile threshold is found.
 With this option, NoiseChisel will abort as soon as quantile estimation has been completed, allowing you to inspect the steps leading to the final quantile threshold, this can be disabled with @option{--continueaftercheck}.
 By default the output will have the same pixel size as the input, but with the @option{--oneelempertile} option, only one pixel will be used for each tile (see @ref{Processing options}).
+
+The key things to remember are:
+@itemize
+@item
+The measurements to find the thresholds are done on tiles that cover the whole image in a tesselation.
+Recall that you can set the size of tiles with @option{--tilesize} and check them with @option{--checktiles}.
+Therefore except for the first and last extensions, the rest only show tiles.
+@item
+NoiseChisel ultimately has three thresholds: the quantile threshold (that you set with @option{--qthresh}), the no-erode quantile (set with @option{--noerodequant}) and the growth quantile (set with @option{--detgrowquant}).
+Therefore for each step, we have three extensions.
+@end itemize
+
+The output file will have the following extensions.
+Below, the extensions are put in the same order as you see in the file, with their name.
+
+@table @code
+@item CONVOLVED
+This is the input image after convolution with the kernel (which is a FWHM=2 Gaussian by default, but you can change with @option{--kernel}).
+Recall that the thresholds are defined on the convolved image.
+
+@item  QTHRESH_ERODE
+@itemx QTHRESH_NOERODE
+@itemx QTHRESH_EXPAND
+In these three extensions, the tiles that have a quantile-of-mean more/less than 0.5 (quantile of median) @mymath{\pm d} are set to NaN (@mymath{d} is the value given to @option{--meanmedqdiff}, see @ref{Quantifying signal in a tile}).
+Therefore the non-NaN tiles that you see here are the tiles where there is no significant skewness (changing signal) within that tile.
+The only differing thing between the three extensions is the values of the non-NaN tiles.
+These values will be used to construct the final threshold map over the whole image.
+
+@item  VALUE1_NO_OUTLIER
+@itemx VALUE2_NO_OUTLIER
+@itemx VALUE3_NO_OUTLIER
+All outlier tiles have been masked.
+The reason for removing outliers is that the quantile-of-mean is only sensitive to signal that varies on a scale that is smaller than the tile size.
+Therefore the extended wings of large galaxies or bright stars (which vary on scales much larger than the tile size) will pass that test.
+As described in @ref{Quantifying signal in a tile}, using the values given to @option{--outliersclip} and @option{--outliersigma}, the outlier tiles are removed in this step.
+
+@item  THRESH1_INTERP
+@itemx THRESH2_INTERP
+@itemx THRESH3_INTERP
+Using the successful values that remain after the previous step, give values to all (interpolate) the tiles in the image.
+The interpolation is done using the nearest-neighbor method: for each tile, the N nearest neighbors are found and the median of their values is used to fill it.
+You can set the value of N through the @option{--interpnumngb} option.
+
+@item  THRESH1_SMOOTH
+@itemx THRESH2_SMOOTH
+@itemx THRESH3_SMOOTH
+Smooth the interpolated image to remove the strong differences between touching tiles.
+Because we used the median value of the N nearest neighbors in the previous step, there can be strong discontinuities on the edges of tiles (which can directly show in the image after applying the threshold).
+The scale of the smoothing (number of nearby tiles to smooth with) is set with the @option{--smoothwidth} option.
+
+@item QTHRESH-APPLIED
+The pixels in this image can only have three values:
+
+@table @code
+@item 0
+These pixels had a value below the quantile threshold.
+@item 1
+These pixels had a value above the quantile threshod, but below the threshold for no erosion.
+Therefore in the next step, NoiseChisel will erode (set them to 0) these pixels if they are touching a 0-valued pixel.
+@item 2
+These pixels had a value above the no-erosion threshold.
+So NoiseChisel will not erode these pixels, it will only apply Opening to them afterwards.
+Recall that this was done to avoid loosing sharp point-sources (like stars in space-based imaging).
+@end table
+@end table
 
 @item --blankasforeground
 In the erosion and opening steps below, treat blank elements as foreground (regions above the threshold).
