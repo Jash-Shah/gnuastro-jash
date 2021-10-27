@@ -563,8 +563,9 @@ Quantifying measurement limits
 * Surface brightness error of each detection::  Error in measuring the Surface brightness.
 * Completeness limit of each detection::  Possibility of detecting similar objects?
 * Upper limit magnitude of each detection::  How reliable is your magnitude?
-* Surface brightness limit of image::  How deep is your data?
-* Upper limit magnitude of image::  How deep is your data for certain footprint?
+* Magnitude limit of image::    Measured magnitude of objects at certain S/N.
+* Surface brightness limit of image::  Extrapolate per-pixel noise-level to standard units.
+* Upper limit magnitude of image::  Measure the noise-level for a certain aperture.
 
 Invoking MakeCatalog
 
@@ -18455,8 +18456,9 @@ Therefore the measurements discussed here are commonly used in units of magnitud
 * Surface brightness error of each detection::  Error in measuring the Surface brightness.
 * Completeness limit of each detection::  Possibility of detecting similar objects?
 * Upper limit magnitude of each detection::  How reliable is your magnitude?
-* Surface brightness limit of image::  How deep is your data?
-* Upper limit magnitude of image::  How deep is your data for certain footprint?
+* Magnitude limit of image::    Measured magnitude of objects at certain S/N.
+* Surface brightness limit of image::  Extrapolate per-pixel noise-level to standard units.
+* Upper limit magnitude of image::  Measure the noise-level for a certain aperture.
 @end menu
 
 @node Magnitude measurement error of each detection, Surface brightness error of each detection, Quantifying measurement limits, Quantifying measurement limits
@@ -18521,7 +18523,7 @@ However in such a study we must be really careful to choose model profiles as si
 
 
 
-@node Upper limit magnitude of each detection, Surface brightness limit of image, Completeness limit of each detection, Quantifying measurement limits
+@node Upper limit magnitude of each detection, Magnitude limit of image, Completeness limit of each detection, Quantifying measurement limits
 @subsubsection Upper limit magnitude of each detection
 Due to the noisy nature of data, it is possible to get arbitrarily low values for a faint object's brightness (or arbitrarily high @emph{magnitudes}).
 Given the scatter caused by the dataset's noise, values fainter than a certain level are meaningless: another similar depth observation will give a radically different value.
@@ -18562,7 +18564,23 @@ You can get the full list of upper-limit related columns of MakeCatalog with thi
 $ astmkcatalog --help | grep -- --upperlimit
 @end example
 
-@node Surface brightness limit of image, Upper limit magnitude of image, Upper limit magnitude of each detection, Quantifying measurement limits
+@node Magnitude limit of image, Surface brightness limit of image, Upper limit magnitude of each detection, Quantifying measurement limits
+@subsubsection Magnitude limit of image
+
+@cindex Magnitude limit
+Suppose we have taken two images of the same field of view with the same CCD, once with a smaller telescope, and once with a larger one.
+Because we used the same CCD, the noise will be very similar.
+However, the larger telescope has gathered more light, therefore the same star or galaxy will have a higher signal-to-noise ratio (S/N) in the image taken with the larger one.
+The same applies for a stacked image of the field compared to a single-exposure image of the same telescope.
+
+This concept is used by some researchers to define the ``magnitude limit'' or ``detection limit'' at a certain S/N (sometimes 10, 5 or 3 for example, also written as @mymath{10\sigma}, @mymath{5\sigma} or @mymath{3\sigma}).
+To do this, they measure the magnitude and signal-to-noise ratio of all the objects within an image and measure the mean (or median) magnitude of objects at the desired S/N.
+
+However, this method should be used with extreme care!
+This is because the shape of the object becomes important in this method: a sharper object will have a higher @emph{measured} S/N compared to a more diffuse object at the same original magnitude.
+Besides the inherent shape/sharpness of the object, issues like the PSF also become important in this method (because the finally observed shapes of objects are important here): two surveys with the same surface brightness limit (see @ref{Surface brightness limit of image}) will have different magnitude limits if one is taken from space and the other from the ground.
+
+@node Surface brightness limit of image, Upper limit magnitude of image, Magnitude limit of image, Quantifying measurement limits
 @subsubsection Surface brightness limit of image
 @cindex Surface brightness
 As we make more observations on one region of the sky and add/combine the observations into one dataset, both the signal and the noise increase.
@@ -18638,8 +18656,9 @@ A more accurate measure which will provide a realistic value for every labeled r
 
 @node Upper limit magnitude of image,  , Surface brightness limit of image, Quantifying measurement limits
 @subsubsection Upper limit magnitude of image
-As mentioned above, the upper-limit magnitude will depend on the shape of each object's footprint.
-Therefore we can measure the dataset's upper-limit magnitude using standard shapes.
+As mentioned in @ref{Upper limit magnitude of each detection}, the upper-limit magnitude will depend on the shape of each object's footprint.
+Therefore we can measure a dataset's upper-limit magnitude using standard shapes.
+
 Traditionally a circular aperture of a fixed size (in arcseconds) has been used.
 For a full example of implementing this, see the respective section in the tutorial (@ref{Image surface brightness limit}).
 
