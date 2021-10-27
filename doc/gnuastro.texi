@@ -1474,7 +1474,8 @@ The Japanese Ministry of Education, Culture, Sports, Science, and Technology (ME
 The very critical view points of Professor Takashi Ichikawa (Mohammad's adviser) were also instrumental in the initial ideas and creation of Gnuastro.
 Afterwards, the European Research Council (ERC) advanced grant 339659-MUSICOS (Principal investigator: Roland Bacon) was vital in the growth and expansion of Gnuastro.
 Working with Roland at the Centre de Recherche Astrophysique de Lyon (CRAL), enabled a thorough re-write of the core functionality of all libraries and programs, turning Gnuastro into the large collection of generic programs and libraries it is today.
-Work on improving Gnuastro and making it mature is now continuing primarily in the Instituto de Astrofisica de Canarias (IAC) and in particular in collaboration with Johan Knapen and Ignacio Trujillo.
+At the Instituto de Astrofisica de Canarias (IAC, and in particular in collaboration with Johan Knapen and Ignacio Trujillo), Gnuastro matured and its user base significantly grew.
+Work on improving Gnuastro is now continuing primarily in the Centro de Estudios de F@'isica del Cosmos de Arag@'on (CEFCA), located in Teruel, Spain.
 
 @c To the developers: please keep this in the same order as the THANKS file
 @c (alphabetical, except for the names in the paragraph above).
@@ -1587,7 +1588,8 @@ Tohoku University Astronomical Institute, Sendai, Japan.@*
 University of Salento, Lecce, Italy.@*
 Centre de Recherche Astrophysique de Lyon (CRAL), Lyon, France.@*
 Instituto de Astrofisica de Canarias (IAC), Tenerife, Spain.@*
-Google Summer of Code 2020
+Centro de Estudios de F@'isica del Cosmos de Arag@'on (CEFCA), Teruel, Spain.@*
+Google Summer of Code 2020 and 2021
 @end quotation
 
 
