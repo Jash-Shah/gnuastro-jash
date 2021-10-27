@@ -414,39 +414,49 @@ fi
 # filter the objects to have only the ones with proper brightness. If the
 # user does not provide a catalogue, obtain it using the program
 # 'astquery'.
+#
+# The output name of the catalog of stars in the range of the
+# magnitude.
 catalog_magfiltered=$tmpdir/catalog-mag-$minmag-$maxmag.fits
+
+# The output name of the sky coverage.
+skycoverage=$tmpdir/skycoverage.fits
+
+# If the catalog and the image have an overlap area, then select the stars
+# in the range of magnitude between minimum and maximum.
 if [ x"$catalog" != x ]; then
 
     # Find minimum and maximum RA/Dec values of the input image.
     minraimg=$(astfits $inputs --hdu=$hdu --skycoverage \
-               | grep 'RA' | awk '{print $2}')
+                   | grep 'RA' | awk '{print $2}')
     maxraimg=$(astfits $inputs --hdu=$hdu --skycoverage \
-               | grep 'RA' | awk '{print $3}')
+                   | grep 'RA' | awk '{print $3}')
 
     mindecimg=$(astfits $inputs --hdu=$hdu --skycoverage \
-                | grep 'DEC' | awk '{print $2}')
+                    | grep 'DEC' | awk '{print $2}')
     maxdecimg=$(astfits $inputs --hdu=$hdu --skycoverage \
-                | grep 'DEC' | awk '{print $3}')
+                    | grep 'DEC' | awk '{print $3}')
 
-    # Find minimum and maximum RA/Dec values of the input catalog.
-    minracatalog=$(asttable $catalog -c$racolumn \
-                   | aststatistics --minimum)
-    maxracatalog=$(asttable $catalog -c$racolumn \
-                   | aststatistics --maximum)
+    # Find the overlap area between catalog and image.
+    asttable $catalog --inpolygon=$racolumn,$deccolumn \
+             --polygon="$minraimg,$mindecimg \
+                        : $minraimg,$maxdecimg \
+                        : $maxraimg,$mindecimg \
+                        : $maxraimg,$maxdecimg" \
+             --output=$skycoverage
 
-    mindeccatalog=$(asttable $catalog -c$deccolumn \
-                    | aststatistics --minimum)
-    maxdeccatalog=$(asttable $catalog -c$deccolumn \
-                    | aststatistics --maximum)
-
-    # Check if the catalog overlap the image or not.
-    checkoverlap=$(echo $minraimg $minracatalog $mindecimg $mindeccatalog \
-                 $maxraimg $maxracatalog $maxdecimg $maxdeccatalog \
-                 | awk '{print ($1 <= $2 && $3 <= $4 && $5 >= $6 && $7 >= $8)}')
+    # The number of stars in the overlap area.
+    number=$(asttable $skycoverage | wc -l)
 
     # If catalog overlap the image, select stars with magnitudes between
     # the minimum and maximum values.
-    if [ "$checkoverlap" = 1 ]; then
+    if [ "$number" = 0 ]; then
+
+        # Stop if the catalog doesn't overlap with the image.
+        echo "Image and catalog do not overlap."
+        echo "Please provide an iamge and a catalog which overlap together."
+        exit 1
+    else
 
         # Make a file for output of 'asttable'.
         if [ -f $catalog_magfiltered ]; then
@@ -467,10 +477,6 @@ if [ x"$catalog" != x ]; then
                 exit 2
             fi
         fi
-    else
-        # Stop if the catalog doesn't overlap with the image.
-        echo "The catalog is smaller than the image and doesn't overlap with the image."
-        exit 1
     fi
 
 # If the user doesn't provide a catalog, use 'astquery' to obtain it.
