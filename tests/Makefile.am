@@ -220,7 +220,7 @@ script/radial-profile.sh: mkprof/mosaic2.sh.log
 script/psf-create-junction.sh: mkprof/mosaic2.sh.log
 script/psf-create-make-stamp.sh: mkprof/mosaic2.sh.log
 script/psf-model-flux-factor.sh: mkprof/mosaic2.sh.log
-script/psf-model-select-stars.sh: mkprof/mosaic2.sh.log
+script/psf-create-select-stars.sh: segment/segment.sh.log
 script/psf-model-scattered-light.sh: mkprof/mosaic2.sh.log
 
 

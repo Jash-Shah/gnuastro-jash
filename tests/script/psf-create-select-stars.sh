@@ -49,6 +49,7 @@ if [ ! -f $execname ]; then echo "$execname doesn't exist."; exit 77; fi
 if [ ! -f $dep1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
 if [ ! -f $dep2name ]; then echo "$dep2name doesn't exist."; exit 77; fi
 if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
+if [ ! -f $fits2name ]; then echo "$fits2name doesn't exist."; exit 77; fi
 
 
 
@@ -83,5 +84,8 @@ $check_with_program astmkcatalog $fits2name \
 $check_with_program $execname $fits1name --hdu=1 \
                     --segmented=$fits2name \
                     --catalog=$fits3name \
-                    --field=magnitude
-
+                    --field=magnitude \
+                    --magnituderange=-17,-10 \
+                    --minaxisratio=0.85 \
+                    --mindistdeg=0.05 \
+                    --matchaperturedeg=0.5
