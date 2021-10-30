@@ -4683,19 +4683,118 @@ $ astarithmetic r_detected.fits -hINPUT-NO-SKY set-in \
                 in det nan where -odet-masked.fits
 $ ds9 det-masked.fits
 $ aststatistics det-masked.fits
+
+-------
+  Number of elements:                      918698
+  Minimum:                                 -0.113805
+  Maximum:                                 0.130365
+  Median:                                  -0.00226983
+  Mean:                                    -0.0002118496391
+  Standard deviation:                      0.02569687481
+-------
+Histogram:
+ |                              ** *
+ |                            * ** *  *
+ |                           ** ** *  *
+ |                         * ** ** ** *
+ |                        ** ** ** ** * **
+ |                        ** ** ** ** * ** *
+ |                      * ** ** ** ** * ** **
+ |                     ** ** ** ** ** * ** ** *
+ |                  ** ** ** ** ** ******* ** ** *
+ |               ** ** ** ** ** ** ******* ** ** ** *
+ |******** ** ** ** ** ** **************** ** ** ** ** ** ** ** ** ** **
+ |----------------------------------------------------------------------
+
 @end example
 
 @noindent
-From the ASCII histogram, we see that the distribution is roughly symmetric.
-We can also quantify this by measuring the skewness (difference between mean and median, divided by the standard deviation):
+From above histogram, we see taht the distribution of the noise is roughly symmetric.
+Let us to see the signal distribution in the image.
 
 @example
-$ aststatistics det-masked.fits --mean --median --std \
-                | awk '@{print ($1-$2)/$3@}'
+$ aststatistics r_detected.fits -hINPUT-NO-SKY
+
+-------
+  Number of elements:                      3049472
+  Minimum:                                 -0.113805
+  Maximum:                                 159.25
+  Median:                                  0.0239832
+  Mean:                                    0.1056523001
+  Standard deviation:                      0.6981762756
+-------
+Histogram:
+ |*
+ |*
+ |*
+ |*
+ |*
+ |*
+ |*
+ |*
+ |*
+ |*
+ |******************************************* ***  ** ****  * *   *  * *
+ |----------------------------------------------------------------------
+
 @end example
 
 @noindent
-Showing that the mean is larger than the median by @mymath{0.08\sigma}, in other words, as we saw in @ref{NoiseChisel optimization}, a very small residual signal still remains in the undetected regions and it was up to you as an exercise to improve it.
+As you can see, the distribution is very elongated because the galaxy inside the image is very bright.
+If you compare the above two distributions, you will see that the minimum value of the image has not changed because we have not masked the minimum values while the maximum value of the image has changed.
+If we compare the mean and median values of the signal distribution with the mean and mean values of the noise distribution, we see how the mean and median values of the noise distribution are close together, while these values are very different in signal distribution.
+Now let's by using the @option{--lessthan} optin, limit the distribution of the signal and make it similar to the noise distribution and then compare them together.
+
+@example
+$ aststatistics r_detected.fits -hINPUT-NO-SKY --lessthan=0.130365
+
+-------
+  Number of elements:                      2532028
+  Minimum:                                 -0.113805
+  Maximum:                                 0.130354
+  Median:                                  0.0135445
+  Mean:                                    0.01720879614
+  Standard deviation:                      0.03591988828
+-------
+Histogram:
+ |                                 *  *
+ |                              *  *  * **
+ |                              *  *  * ** *
+ |                           ** ** *  * ** **
+ |                           ** ** *  * ** ** *
+ |                         * ** ** **** ** ** **
+ |                        ** ** ** **** ** ** ** *
+ |                      * ** ** ******* ** ** ** ** *
+ |                   * ** ** ** ******* ** ** ** ** ** **
+ |                * ** ** ** ************* ** ** ** ** ** ** ** * ** **
+ |******** ** ** ** ** ******************* ** ** ** ** *****************
+ |----------------------------------------------------------------------
+@end example
+
+@noindent
+If we compare the above signal distribution with the noise distribution.
+We can see the noise distribution is completely symmetric, while the signal distribution in this range is asymmetric, especially in outer part.
+This asymmetric is due to the effect of the signal.
+Because we found and masked all those signals in the NoiseChisel, the noise distribution is completely symmetrical.
+
+@noindent
+In @ref{Quantifying signal in a tile} we showed that when our distribution is skewed, the standard deviation is not defined at all, because the distribution is not Gaussian.
+In scenarios like this, where our distribution is not Gaussian, we use quantile of the mean instead of skewness.
+Now let's quantify these distribution by measuring the quantile of the mean:
+
+@example
+$ aststatistics r_detected.fits -hINPUT-NO-SKY --quantofmean
+0.8105163158
+@end example
+
+@example
+$ aststatistics det-masked.fits --quantofmean
+0.5111848629
+@end example
+
+@noindent
+Showing that in the signal distibution the mean is larger than the median by @mymath{0.8\sigma}.
+While in noise distribution the mean is larger than the median by @mymath{0.5\sigma}, in other words, as we saw in @ref{NoiseChisel optimization}, a very small residual signal still remains in the undetected regions and it was up to you as an exercise to improve it.
 So let's continue with this value.
 Now, we will use the masked image and the surface brightness limit equation in @ref{Quantifying measurement limits} to measure the @mymath{3\sigma} surface brightness limit over an area of @mymath{25 \rm{arcsec}^2}:
 
