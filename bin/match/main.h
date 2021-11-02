@@ -33,6 +33,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define PROGRAM_EXEC   "astmatch" /* Program executable name. */
 #define PROGRAM_STRING PROGRAM_NAME" (" PACKAGE_NAME ") " PACKAGE_VERSION
 
+/* Internal constants */
+#define MATCH_KDTREE_ROOT_KEY "KDTROOT"
 
 
 enum match_modes
@@ -47,7 +49,6 @@ enum kdtree_modes
   MATCH_KDTREE_INVALID,           /* ==0 by default. */
   MATCH_KDTREE_BUILD,
   MATCH_KDTREE_INTERNAL,
-  MATCH_KDTREE_AUTO,
   MATCH_KDTREE_DISABLE,
   MATCH_KDTREE_FILE,
 };
@@ -68,6 +69,7 @@ struct matchparams
   gal_data_t         *outcols;  /* Array of second input column names.  */
   gal_data_t        *aperture;  /* Acceptable matching aperture.        */
   char                *kdtree;  /* The mode to use k-d tree mode.       */
+  char             *kdtreehdu;  /* k-d tree HDU when its a (FITS) file. */
   uint8_t         logasoutput;  /* Don't rearrange inputs, out is log.  */
   uint8_t          notmatched;  /* Output is rows that don't match.     */
 
@@ -84,6 +86,8 @@ struct matchparams
   char              *out2name;  /* Name of second matched output.       */
   gal_list_str_t  *stdinlines;  /* Lines given by Standard input.       */
   int              kdtreemode;  /* The k-d tree mode.                   */
+  gal_data_t      *kdtreedata;
+  size_t           kdtreeroot;
 
   /* Output: */
   time_t              rawtime;  /* Starting time of the program.        */

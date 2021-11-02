@@ -576,6 +576,7 @@ Invoking MakeCatalog
 
 Match
 
+* Matching algorithms::
 * Invoking astmatch::           Inputs, outputs and options of Match
 
 Modeling and fitting
@@ -19951,10 +19952,65 @@ The nearest objects in the two catalogs, within the given aperture, will be foun
 The aperture can be a circle or an ellipse with any orientation.
 
 @menu
+* Matching algorithms::         Different ways to find the match
 * Invoking astmatch::           Inputs, outputs and options of Match
 @end menu
 
-@node Invoking astmatch,  , Match, Match
+@node Matching algorithms, Invoking astmatch, Match, Match
+@subsection Matching algorithms
+
+Matching involves two catalogs, let's call them catalog A (with N rows) and catalog B (with M rows).
+The most basic algorithm that immediately comes to mind is this:
+for each row in A (let's call it @mymath{A_i}), go over all the rows in B and calculate the distance to each and find the @mymath{B_j} that is nearest to @mymath{A_i}.
+If the distance between @mymath{A_i} and @mymath{B_j} is below a certain acceptable threshold (or radius), consider them as a match.
+
+You may think of this (initially genius!) solution: During the parsing, when I find that @mymath{A_i} and @mymath{B_j} satisfy the match above, I will remove @mymath{B_j} from the search of matches for @mymath{A_k} (where @mymath{k> i}).
+As a result, as I go down A and more matches are found, I have to calculate less distances (there are fewer elements in B that remain to be checked).
+However, this will introduce an important bias: @mymath{B_j} may actually be closer to @mymath{A_k}!
+But because @mymath{A_i} happened to be before @mymath{A_k} in your table, you removed @mymath{B_j} from the potential search domain of @mymath{A_k}.
+You will therefore loose that match, and replace it by a false match between @mymath{A_i} and @mymath{B_j}!
+
+In a single-dimentional match, this bias depends on the sorting of your two datasets (leading to different matches if you shuffle your datasets).
+But it will get more complex as you add dimensionality (for example catalogs dervied from 2D images or 3D cubes, where you have 2 and 3 different coordinates for each point).
+Here is how we adress this problem in Gnuastro's Match program: as we are doing the first parsing, we keep a log of all elements in A (@mymath{A_i} and @mymath{A_k} in the example above) that were within the radial threshold of @mymath{B_j}.
+Afterwards, for each @mymath{B_j} we can find the nearest element of A, irrespective of how the inputs were sorted, or their dimensionality.
+
+On the other hand, the basic parsing algorithm mentioned above is very computationally expensive:
+@mymath{N\times M} distances have to measured, and calculating the distance requires a square root and power of 2, which are not simple operations for the CPU.
+As a result, this basic algorithm will become terribly slow as your datasets grow in size.
+For example when N or M exceed hundreds of thousands (which is common in the current days with datasets like the European Space Agency's Gaia mission).
+Therefore that basic parsing algoritm won't work and we need to use more efficient ways to parse the two catalogs.
+Gnuastro's Match currently has two such algorithms:
+
+@table @asis
+@item Sort-based
+To avoid the problem of calculating @mymath{N\times M} Euclidean distances (that involve a square root), this method works like this:
+
+@enumerate
+@item
+Sort the two datasets by their first coordinate.
+Therefore @mymath{A_i<A_j} (only in first coordinate; when @mymath{i<j}), and similarly for the elements of B.
+@item
+Use the radial distance threshold to define a moving window of B over A.
+Therefore, within a single parsing of A, you can find all the elements in A that are sufficiently near every @mymath{B_j}.
+@item
+The nearest A within the subset that is nearest to @mymath{B_j} will be considered as the match.
+@end enumerate
+
+@item k-d tree based
+The k-d tree concept is much more abstract, but powerful (for example enabling parallel processing, that was not possible in the sort-based method above).
+In short a k-d tree is a partitioning of a k-dimentional space.
+For more on the k-d tree and Gnuastro's implementation of it, please see @ref{K-d tree}.
+
+To avoid getting into too much theory, let's look at it from a user's perspective: Match will internally construct a k-d tree for catalog A (the first catalog given to it).
+Optionally, you can also build the k-d tree of A with a separate call to Match (with @option{--kdtree=build} and @option{--output=mykdtree.fits}).
+This external k-d tree can be fed to Match later, when doing your matches (to avoid having to reconstruct it every time you want to match with the same first catalog; using @option{--kdtree=mykdtree.fits}).
+
+Each thread on your CPU will then be associated a list of rows from catalog B and the k-d tree is parsed independently for those to find the nearest element of A to that row in B.
+@end table
+
+
+@node Invoking astmatch,  , Matching algorithms, Match
 @subsection Invoking Match
 
 When given two catalogs, Match finds the rows that are nearest to each other within an input aperture.
@@ -29335,20 +29391,21 @@ have any type), see above for the definition of permutation.
 @cindex Matching
 @cindex Coordinate matching
 Matching is often necessary when two measurements of the same points have been done using different instruments (or hardware), different software or different configurations of the same software.
-In other words, you have two catalogs or tables and each has N columns containing the N-dimensional ``positional'' values of each point.
-Each can have other columns too, for example one can have brightness measurements in one filter, and another can have brightness measurements in another filter as well as morphology measurements or etc.
+In other words, you have two catalogs or tables, and each has N columns containing the N-dimensional ``coordinate'' values of each point.
+Each table can have other columns too, for example one can have brightness measurements in one filter, and another can have morphology measurements or etc.
 
-The matching functions here will use the positional columns to find the permutation necessary to apply to both tables.
-This will enable you to match by the positions, then apply the permutation to the brightness or morphology columns in the example above.
-The input and output data formats of the functions below are the some and described below before the actual functions.
+The matching functions here will use the coordinate columns of the two tables to find a permutation for each, and the total number of matched rows (@mymath{N_{match}}).
+This will enable you to match by the positions if you like.
+A a higher level, you can apply the permutation to the brightness or morphology columns to merge the catalogs over the @mymath{N_{match}} rows.
+The input and output data formats of the functions are the some and described below before the actual functions.
 Each function also has extra arguments due to the particular algorithm it uses for the matching.
 
 The two inputs of the functions (@code{coord1} and @code{coord2}) must be @ref{List of gal_data_t}.
-Each @code{gal_data_t} node in @code{coord1} or @code{coord2} should be a single dimensional dataset (column in a table) and all the nodes must have the same number of elements (rows).
+Each @code{gal_data_t} node in @code{coord1} or @code{coord2} should be a single dimensional dataset (column in a table) and all the nodes (in each) must have the same number of elements (rows).
 In other words, each column can be visualized as having the coordinates of each point in its respective dimension.
 The dimensions of the coordinates is determined by the number of @code{gal_data_t} nodes in the two input lists (which must be equal).
-The number of rows (or the number of elements in each @code{gal_data_t}) in the columns of @code{coord1} and @code{coord2} can be different.
-All these functions will all be satisfied if you use @code{gal_table_read} to read the two coordinate columns, see @ref{Table input output}.
+The number of rows (or the number of elements in each @code{gal_data_t}) in the columns of @code{coord1} and @code{coord2} can (and, usually will!) be different.
+In summary, these functions will be happy if you use @code{gal_table_read} to read the two coordinate columns from a file, see @ref{Table input output}.
 
 @cindex Permutation
 The functions below return a simply-linked list of three 1D datasets (see @ref{List of gal_data_t}), let's call the returned dataset @code{ret}.
@@ -29360,20 +29417,24 @@ If there wasn't any match, this function will return @code{NULL}.
 
 The two permutations can be applied to the rows of the two inputs: the first one (@code{ret}) should be applied to the rows of the table containing @code{coord1} and the second one (@code{ret->next}) to the table containing @code{coord2}.
 After applying the returned permutations to the inputs, the top @code{nummatched} elements of both will match with each other.
-The ordering of the rest of the elements is undefined (depends on the matching funciton used).
+The ordering of the rest of the elements is undefined (depends on the matching function used).
 The third node is the distances between the respective match (which may be elliptical distance, see discussion of ``aperture'' below).
 
 The functions will not simply return the nearest neighbor as a match.
-The nearest neighbor may be too far to be a meaningful.
-They will check the distance between the distance of the nearest neighbor of each point and only return a match for it it is within an acceptable N-dimensional distance (or ``aperture'').
+This is because the nearest neighbor may be too far to be a meaningful!
+They will check the distance between the nearest neighbor of each point and only return a match if it is within an acceptable N-dimensional distance (or ``aperture'').
 The matching aperture is defined by the @code{aperture} array that is an input argument to the functions.
-If several points of one catalog lie within this aperture of a point in the other, the  nearest is defined as the match.
-In a 2D situation (where the input lists have two nodes), for the most generic case, it must have three elements: the major axis length, axis ratio and position angle (see @ref{Defining an ellipse and ellipsoid}).
+
+If several points of one catalog lie within this aperture of a point in the other catalog, the  nearest is defined as the match.
+In a 2D situation (where the input lists have two nodes), for the most generic case, @code{aperture} must have three elements: the major axis length, axis ratio and position angle (see @ref{Defining an ellipse and ellipsoid}).
 If @code{aperture[1]==1}, the aperture will be a circle of radius @code{aperture[0]} and the third value won't be used.
 When the aperture is an ellipse, distances between the points are also calculated in the respective elliptical distances (@mymath{r_{el}} in @ref{Defining an ellipse and ellipsoid}).
 
-
-
+@strong{Output permutations ignore internal sorting}: the output permutations will correspond to the initial inputs.
+Therefore, even when @code{inplace!=0} (and this function re-arranges the inputs in place), the output permutation will correspond to original (possibly non-sorted) inputs. The reason for this is that you rarely want to permute the actual positional columns after the match.
+Usually, you also have other columns (for example the brightness, morphology and etc) and you want to find how they differ between the objects that match.
+Once you have the permutations, they can be applied to those other columns (see @ref{Permutations}) and the higher-level processing can continue.
+So if you don't need the coordinate columns for the rest of your analysis, it is better to set @code{inplace=1}.
 
 @deftypefun {gal_data_t *} gal_match_sort_based (gal_data_t @code{*coord1}, gal_data_t @code{*coord2}, double @code{*aperture}, int @code{sorted_by_first}, int @code{inplace}, size_t @code{minmapsize}, int @code{quietmmap}, size_t @code{*nummatched})
 
@@ -29386,17 +29447,19 @@ When sorting is necessary and @code{inplace} is non-zero, the actual input colum
 Otherwise, an internal copy of the inputs will be made, used (sorted) and later freed before returning.
 Therefore, when @code{inplace==0}, inputs will remain untouched, but this function will take more time and memory.
 If internal allocation is necessary and the space is larger than @code{minmapsize}, the space will be not allocated in the RAM, but in a file, see description of @option{--minmapsize} and @code{--quietmmap} in @ref{Processing options}.
+@end deftypefun
 
-@cartouche
-@noindent
-@strong{Output permutations ignore internal sorting}: the output permutations will correspond to the initial inputs.
-Therefore, even when @code{inplace!=0} (and this function re-arranges the inputs in place), the output permutation will correspond to original (possibly non-sorted) inputs.
+@deftypefun {gal_data_t *} gal_match_kdtree (gal_data_t @code{*coord1}, gal_data_t @code{*coord2}, gal_data_t @code{*coord1_kdtree}, size_t @code{kdtree_root}, double @code{*aperture}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap}, size_t @code{*nummatched})
 
-The reason for this is that you rarely want to permute the actual positional columns after the match.
-Usually, you also have other columns (for example the brightness, morphology and etc) and you want to find how they differ between the objects that match.
-Once you have the permutations, they can be applied to those other columns (see @ref{Permutations}) and the higher-level processing can continue.
-So if you don't need the coordinate columns for the rest of your analysis, it is better to set @code{inplace=1}.
-@end cartouche
+@cindex Matching by k-d tree
+@cindex k-d tree matching
+Use the k-d tree concept for finding matches between two catalogs, optionally in parallel (on @code{numthreads} threads).
+The k-d tree of the first input (@code{coord1_kdtree}), and its root index (@code{kdtree_root}), should be constructed and found before calling this function, to do this, you can use the @code{gal_kdtree_create} of @ref{K-d tree}.
+The desired @code{aperture} array is the same as @code{gal_match_sort_based} and discribed at the top of this section.
+
+The final number of matches is returned in @code{nummatched} and the format of the returned dataset (three columns) is described above.
+If internal allocation is necessary and the space is larger than @code{minmapsize}, the space will be not allocated in the RAM, but in a file, see description of @option{--minmapsize} and @code{--quietmmap} in @ref{Processing options}.
+
 @end deftypefun
 
 @node Statistical operations, Binary datasets, Matching, Gnuastro library

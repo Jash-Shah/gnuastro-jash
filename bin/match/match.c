@@ -36,6 +36,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/threads.h>
 #include <gnuastro/permutation.h>
 
+#include <gnuastro-internal/timing.h>
 #include <gnuastro-internal/checkset.h>
 
 #include <main.h>
@@ -453,44 +454,42 @@ match_catalog_write_one_col(struct matchparams *p, gal_data_t *a,
 static void
 match_catalog_kdtree_build(struct matchparams *p)
 {
+  char *msg;
   size_t root;
+  struct timeval t1;
   gal_data_t *kdtree;
   gal_fits_list_key_t *keylist=NULL;
 
   /* Meta-data in the output fits file. */
   char *unit = "index";
-  char *keyname = "KDTROOT";
   char *comment = "k-d tree root index (counting from 0).";
 
   /* Construct a k-d tree from 'p->cols1': the index of root is stored in
      'root'. */
+  if(!p->cp.quiet) gettimeofday(&t1, NULL);
   kdtree = gal_kdtree_create(p->cols1, &root);
+  if(!p->cp.quiet)
+    {
+      if( asprintf(&msg, "k-d tree constructed (%zu rows).", p->cols1->size)<0 )
+        error(EXIT_FAILURE, errno, "asprintf allocation");
+      gal_timing_report(&t1, msg, 1);
+      free(msg);
+    }
 
   /* Write the k-d tree to a file and write root index and input name
      as FITS keywords ('gal_table_write' frees 'keylist'). */
   gal_fits_key_list_title_add(&keylist, "k-d tree parameters", 0);
-  gal_fits_key_write_filename("KDTIN", p->input1name, &keylist, 0);
-  gal_fits_key_list_add_end(&keylist, GAL_TYPE_SIZE_T, keyname, 0,
+  gal_fits_key_write_filename("KDTIN", p->input1name, &keylist, 0,
+                              p->cp.quiet);
+  gal_fits_key_list_add_end(&keylist, GAL_TYPE_SIZE_T,
+                            MATCH_KDTREE_ROOT_KEY, 0,
                             &root, 0, comment, 0, unit, 0);
   gal_table_write(kdtree, &keylist, NULL, GAL_TABLE_FORMAT_BFITS,
                   p->out1name, "kdtree", 0);
 
   /* Let the user know that the k-d tree has been built. */
   if(!p->cp.quiet)
-    fprintf(stdout, "Output (k-d tree): %s\n", p->out1name);
-}
-
-
-
-
-
-/* See if a k-d tree should be used (MATCH_KDTREE_INTERNAL) or classical
-   matching (MATCH_KDTREE_DISABLE). */
-static int
-match_catalog_kdtree_auto(struct matchparams *p)
-{
-  error(EXIT_FAILURE, 0, "%s: not yet implemented!", __func__);
-  return MATCH_KDTREE_INVALID;
+    fprintf(stdout, "  - Output (k-d tree): %s\n", p->out1name);
 }
 
 
@@ -502,15 +501,9 @@ match_catalog_kdtree_auto(struct matchparams *p)
 static gal_data_t *
 match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
 {
-  size_t root;
+  char *msg;
+  struct timeval t1;
   gal_data_t *out=NULL;
-  gal_data_t *kdtree=NULL;
-
-  /* If we are in automatic mode, we should look at the data (number of
-     rows/columns) and system (number of threads) to decide if the mode
-     should be set to 'MATCH_KDTREE_INTERNAL' or 'MATCH_KDTREE_DISABLE'. */
-  if(p->kdtreemode==MATCH_KDTREE_AUTO)
-    p->kdtreemode=match_catalog_kdtree_auto(p);
 
   /* Operate according to the required mode. */
   switch(p->kdtreemode)
@@ -521,13 +514,38 @@ match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
       break;
 
     /* Do the k-d tree matching. */
+    case MATCH_KDTREE_FILE:
     case MATCH_KDTREE_INTERNAL:
-      kdtree = gal_kdtree_create(p->cols1, &root);
-      out = gal_match_kdtree(p->cols1, p->cols2, kdtree, root,
-                             p->aperture->array, p->cp.numthreads,
-                             p->cp.minmapsize, p->cp.quietmmap,
-                             nummatched);
-      gal_list_data_free(kdtree);
+
+      /* If the k-d tree should be constructed internally, build it,
+         otherwise, we have already read an checked the k-d tree in 'ui.c',
+         so go directly to the matching. */
+      if(p->kdtreemode==MATCH_KDTREE_INTERNAL)
+        {
+          if(!p->cp.quiet) gettimeofday(&t1, NULL);
+          p->kdtreedata = gal_kdtree_create(p->cols1, &p->kdtreeroot);
+          if(!p->cp.quiet)
+            gal_timing_report(&t1, "Internal k-d tree constructed.", 1);
+        }
+
+      /* Do k-d tree based match. */
+      if(!p->cp.quiet)
+        {
+          gettimeofday(&t1, NULL);
+          printf("  - Match using the k-d tree ...\n");
+        }
+      out = gal_match_kdtree(p->cols1, p->cols2, p->kdtreedata,
+                             p->kdtreeroot, p->aperture->array,
+                             p->cp.numthreads, p->cp.minmapsize,
+                             p->cp.quietmmap, nummatched);
+      if(!p->cp.quiet)
+        {
+          if( asprintf(&msg, "... done (%zu matches found).", *nummatched)<0 )
+            error(EXIT_FAILURE, errno, "asprintf allocation");
+          gal_timing_report(&t1, msg, 1);
+          free(msg);
+        }
+      gal_list_data_free(p->kdtreedata);
       break;
 
     /* No 'default' necessary because the modes include disabling. */
@@ -541,12 +559,48 @@ match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
 
 
 
+static gal_data_t *
+match_catalog_sort_based(struct matchparams *p, size_t *nummatched)
+{
+  char *msg;
+  gal_data_t *mcols;
+  struct timeval t1;
+
+  /* Let the user know that the matching has started. */
+  if(!p->cp.quiet)
+    {
+      gettimeofday(&t1, NULL);
+      printf("  - Matching by sorting ...\n");
+    }
+
+  /* Do the matching. */
+  mcols=gal_match_sort_based(p->cols1, p->cols2, p->aperture->array,
+                             0, 1, p->cp.minmapsize, p->cp.quietmmap,
+                             nummatched);
+
+  /* Let the user know that it finished. */
+  if(!p->cp.quiet)
+    {
+      if( asprintf(&msg, "... done (%zu matches found).", *nummatched)<0 )
+        error(EXIT_FAILURE, errno, "asprintf allocation");
+      gal_timing_report(&t1, msg, 1);
+      free(msg);
+    }
+
+  /* Return the permutations. */
+  return mcols;
+}
+
+
+
+
+
 static void
 match_catalog(struct matchparams *p)
 {
   uint32_t *u, *uf;
-  gal_data_t *tmp, *mcols;
-  gal_data_t *a=NULL, *b=NULL;
+  struct timeval t1;
+  gal_data_t *tmp, *a=NULL, *b=NULL, *mcols=NULL;
   size_t nummatched, *acolmatch=NULL, *bcolmatch=NULL;
 
   /* If we want to use kd-tree for matching. */
@@ -560,18 +614,22 @@ match_catalog(struct matchparams *p)
       if(p->kdtreemode==MATCH_KDTREE_BUILD) return;
     }
 
-  /* Find the matching coordinates. We are doing the processing in
-     place. Incase it was decided not to use a k-d tree at all
-     (in 'automatic' mode), then we need to use the classic mode. */
+  /* If k-d tree-based matching wasn't used, use the sort-based
+     matching. */
   if(mcols==NULL)
-    mcols=gal_match_sort_based(p->cols1, p->cols2, p->aperture->array,
-                                0, 1, p->cp.minmapsize, p->cp.quietmmap,
-                                &nummatched);
+    mcols=match_catalog_sort_based(p, &nummatched);
 
   /* If the output is to be taken from the input columns (it isn't just the
      log), then do the job. */
   if(p->logasoutput==0)
     {
+      /* Let the user know what is happening. */
+      if(!p->cp.quiet)
+        {
+          gettimeofday(&t1, NULL);
+          printf("  - Re-arranging matched rows (skip this with '--logasoutput')...\n");
+        }
+
       /* Read (and possibly write) the outputs. Note that we only need to
          read the table when it is necessary for the output (the user might
          have asked for '--outcols', only with columns of one of the two
@@ -604,6 +662,10 @@ match_catalog(struct matchparams *p)
       /* Clean up. */
       if(a) gal_list_data_free(a);
       if(b) gal_list_data_free(b);
+
+      /* Let the user know. */
+      if( !p->cp.quiet )
+        gal_timing_report(&t1, "... done.", 1);
     }
 
   /* Write the raw information in a log file if necessary.  */
@@ -655,12 +717,11 @@ match_catalog(struct matchparams *p)
   /* Print the number of matches if not in quiet mode. */
   if(!p->cp.quiet)
     {
-      fprintf(stdout, "Number of matching rows in both catalogs: %zu\n",
-              nummatched);
       if(p->out2name && strcmp(p->out1name, p->out2name))
-        fprintf(stdout, "Output:\n %s\n %s\n", p->out1name, p->out2name);
+        fprintf(stdout, "  - Output-1: %s\n  - Output-2: %s\n",
+                p->out1name, p->out2name);
       else
-        fprintf(stdout, "Output: %s\n", p->out1name);
+        fprintf(stdout, "  - Output: %s\n", p->out1name);
     }
 }
 

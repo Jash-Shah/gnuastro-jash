@@ -29,6 +29,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 
 #include <gnuastro/fits.h>
+#include <gnuastro/threads.h>
 
 #include <gnuastro-internal/timing.h>
 #include <gnuastro-internal/options.h>
@@ -107,6 +108,7 @@ ui_initialize_options(struct matchparams *p,
   cp->program_exec       = PROGRAM_EXEC;
   cp->program_bibtex     = PROGRAM_BIBTEX;
   cp->program_authors    = PROGRAM_AUTHORS;
+  cp->numthreads         = gal_threads_number();
   cp->coptions           = gal_commonopts_options;
 
 
@@ -120,7 +122,6 @@ ui_initialize_options(struct matchparams *p,
           cp->coptions[i].doc="Extension name or number of first input.";
           break;
         case GAL_OPTIONS_KEY_TYPE:
-        case GAL_OPTIONS_KEY_NUMTHREADS:
           cp->coptions[i].flags=OPTION_HIDDEN;
           break;
         }
@@ -223,17 +224,15 @@ ui_read_check_only_options(struct matchparams *p)
     /* Set the k-d tree mode. */
     if(      !strcmp(p->kdtree,"build")    ) p->kdtreemode=MATCH_KDTREE_BUILD;
     else if( !strcmp(p->kdtree,"internal") ) p->kdtreemode=MATCH_KDTREE_INTERNAL;
-    else if( !strcmp(p->kdtree,"auto")     ) p->kdtreemode=MATCH_KDTREE_AUTO;
     else if( !strcmp(p->kdtree,"disable")  ) p->kdtreemode=MATCH_KDTREE_DISABLE;
     else if( gal_fits_name_is_fits(p->kdtree) ) p->kdtreemode=MATCH_KDTREE_FILE;
     else
       error(EXIT_FAILURE, 0, "'%s' is not valid for '--kdtree'. The "
             "following values are accepted: 'build' (to build the k-d tree in "
             "the file given to '--output'), 'internal' (to force internal "
-            "usage of a k-d tree for the matching), 'auto' (to decide "
-            "automatically if a k-d tree should be used or not), 'disable' "
-            "(to not use a k-d tree at all), a FITS file name (the file to "
-            "read a created k-d tree from)", p->kdtree);
+            "usage of a k-d tree for the matching), 'disable' (to not use a "
+            "k-d tree at all), a FITS file name (the file to read a created "
+            "k-d tree from)", p->kdtree);
 
     /* Make sure that the k-d tree build mode is not called with
        '--outcols'. */
@@ -243,6 +242,17 @@ ui_read_check_only_options(struct matchparams *p)
             "tree building mode doesn't involve actual matching. It will "
             "only build k-d tree and write it to a file so it can be used "
             "in future matches)");
+
+    /* Make sure that a HDU is also specified for the k-d tree when its an
+       external file. */
+    if( p->kdtreemode==MATCH_KDTREE_FILE && p->kdtreehdu==NULL )
+      error(EXIT_FAILURE, 0, "no '--kdtreehdu' specified! When a FITS "
+            "file is given to '--kdtree', you should specify its "
+            "extension/HDU within the file using '--kdtreehdu'. You "
+            "can either use the HDU name, or its number (counting "
+            "from 0). If you aren't sure what HDUs exist in the file, "
+            "you can use the 'astfits %s' command to see the full list",
+            p->kdtree);
   }
 }
 
@@ -271,10 +281,9 @@ ui_check_options_and_arguments(struct matchparams *p)
           /* Print a warning to let the user know the option will not be
              used (the user had probably confused things if they have given
              it). */
-          error(EXIT_SUCCESS, 0, "WARNING: with '--coord' you only need "
-                "to set '--ccol1' (for the table), '--ccol2' (for the "
-                "'--coord') is not needed because you are directly "
-                "giving the coordinates in any order you want");
+          error(EXIT_SUCCESS, 0, "WARNING: with '--coord' or '--kdtree', "
+                "you only need to set '--ccol1' (since there is only a "
+                "single input table), '--ccol2' is not needed");
         }
     }
 
@@ -767,6 +776,70 @@ ui_read_columns_to_double(struct matchparams *p, char *filename, char *hdu,
 
 
 
+#define UI_READ_KDTREE_FIXED_MSG "You can construct a k-d tree "        \
+  "for your first input table using the command below (just set your "  \
+  "desired output name, and give that file to '--kdtree', in a later "  \
+  "call with the same first input catalog):\n\n"                  \
+  "    astmatch %s -h%s --ccol1=%s,%s --kdtree=build --output=KDTREE.fits\n\n" \
+  "To learn more about the expected format of k-d trees in Gnuastro, "  \
+  "please run this command: 'info gnuastro k-d'"
+
+static void
+ui_read_kdtree(struct matchparams *p)
+{
+  size_t *sizetarr;
+  char **strarr1 = p->ccol1->array;
+  gal_data_t *keysll=gal_data_array_calloc(1);
+
+  /* Read the external k-d tree. */
+  p->kdtreedata=gal_table_read(p->kdtree, p->kdtreehdu, NULL,
+                               NULL, GAL_TABLE_SEARCH_NAME, 1,
+                               p->cp.minmapsize, p->cp.quietmmap, NULL);
+
+  /* It has to have only two columns, with an unsigned 32-bit integer
+     type in each. */
+  if( gal_list_data_number(p->kdtreedata)!=2 )
+    error(EXIT_FAILURE, 0, "%s (hdu: %s, that was given to "
+          "'--kdtree') has %zu column(s), but should contain 2 "
+          "columns. " UI_READ_KDTREE_FIXED_MSG,
+          p->kdtree, p->kdtreehdu, gal_list_data_number(p->kdtreedata),
+          p->input1name, p->cp.hdu, strarr1[0], strarr1[1]);
+  if( p->kdtreedata->type!=GAL_TYPE_UINT32
+      || p->kdtreedata->next->type!=GAL_TYPE_UINT32 )
+    error(EXIT_FAILURE, 0, "%s (hdu: %s, that was given to "
+          "'--kdtree') doesn't have unsigned 32-bit integer columns. "
+          UI_READ_KDTREE_FIXED_MSG, p->kdtree, p->kdtreehdu,
+          p->input1name, p->cp.hdu, strarr1[0], strarr1[1]);
+  if( p->kdtreedata->size!=p->cols1->size )
+    error(EXIT_FAILURE, 0, "%s (hdu: %s, that was given to "
+          "'--kdtree') doesn't have the same number of rows as "
+          "%s, which is the first given input. "
+          UI_READ_KDTREE_FIXED_MSG, p->kdtree, p->kdtreehdu,
+          gal_fits_name_save_as_string(p->input1name, p->cp.hdu),
+          p->input1name, p->cp.hdu, strarr1[0], strarr1[1]);
+
+  /* Read the k-d tree root. */
+  keysll[0].type=GAL_TYPE_SIZE_T;
+  keysll[0].name=MATCH_KDTREE_ROOT_KEY;
+  gal_fits_key_read(p->kdtree, p->kdtreehdu, keysll, 0, 0);
+  if(keysll[0].status)
+    error(EXIT_FAILURE, 0, "%s (hdu: %s, that was given to "
+          "'--kdtree') doesn't have the '%s' keyword, or it "
+          "couldn't be read as a number. " UI_READ_KDTREE_FIXED_MSG,
+          p->kdtree, p->kdtreehdu, MATCH_KDTREE_ROOT_KEY,
+          p->input1name, p->cp.hdu, strarr1[0], strarr1[1]);
+  sizetarr=keysll[0].array;
+  p->kdtreeroot=sizetarr[0];
+
+  /* Clean up: since the 'name' component wasn't allocated in this example,
+     we should set it to NULL before calling 'gal_data_array_free'. */
+  keysll[0].name=NULL;
+  gal_data_array_free(keysll, 1, 1);
+}
+
+
+
+
 
 /* Read catalog columns */
 static void
@@ -801,6 +874,26 @@ ui_read_columns(struct matchparams *p)
                ? ui_set_columns_from_coord(p)
                : ui_read_columns_to_double(p, p->input2name, p->hdu2,
                                            cols2, ndim) );
+
+  /* If an external k-d tree is given, read it and make sure it has the
+     same number of rows as the first input and the proper datatype. */
+  if( p->kdtreemode==MATCH_KDTREE_FILE )
+    ui_read_kdtree(p);
+
+  /* If we are in k-d tree based matching and the second dataset is smaller
+     than the first, print a warning to let the user know that the speed
+     can be greatly improved if they swap the two. */
+  if( !p->cp.quiet
+      && p->kdtreemode!=MATCH_KDTREE_DISABLE
+      && p->cols1->size > p->cols2->size )
+    error(EXIT_SUCCESS, 0, "TIP: the matching speed will GREATLY IMPROVE "
+          "if you swap the two inputs. Currently the second input has "
+          "fewer rows than the first. In the k-d tree based matching, "
+          "multi-threading will occur on the second input's rows and "
+          "the k-d will be constructed for the first input. Fewer "
+          "first-input rows therefore means a smaller tree, and more "
+          "second-input rows will be better distributed in your "
+          "system's CPU");
 
   /* Free the extra spaces. */
   gal_list_str_free(cols1, 1);
@@ -1058,6 +1151,7 @@ ui_preparations(struct matchparams *p)
 void
 ui_read_check_inputs_setup(int argc, char *argv[], struct matchparams *p)
 {
+  size_t nthreads;
   struct gal_options_common_params *cp=&p->cp;
 
 
@@ -1110,7 +1204,32 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct matchparams *p)
   /* If the output is a FITS table, prepare all the options as FITS
      keywords to write in output later. */
   if(gal_fits_name_is_fits(p->out1name))
-      gal_options_as_fits_keywords(&p->cp);
+    gal_options_as_fits_keywords(&p->cp);
+
+
+  /* Report the starting information. */
+  /* Let the user know that processing has started. */
+  if(!p->cp.quiet)
+    {
+      printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s",
+             ctime(&p->rawtime));
+      nthreads=p->kdtreemode==MATCH_KDTREE_DISABLE ? 1 : p->cp.numthreads;
+      printf("  - Using %zu CPU thread%s%s\n", nthreads,
+             nthreads==1 ? "." : "s.",
+             ( p->kdtreemode==MATCH_KDTREE_DISABLE
+               ? " (sort-based match only uses a single thread)" : ""));
+      printf("  - Match algorithm: %s\n",
+             p->kdtree ? "k-d tree" : "sort-based");
+      printf("  - Input-1: %s\n",
+             gal_fits_name_save_as_string(p->input1name, p->cp.hdu));
+      if(p->kdtreemode==MATCH_KDTREE_FILE)
+        printf("  - Input-1 k-d tree: %s\n",
+               gal_fits_name_save_as_string(p->kdtree, p->kdtreehdu));
+      if(p->kdtreemode!=MATCH_KDTREE_BUILD)
+        printf("  - Input-2: %s\n",
+               p->coord ? "from --coord"
+               : gal_fits_name_save_as_string(p->input2name, p->hdu2));
+    }
 }
 
 
@@ -1153,8 +1272,7 @@ ui_free_report(struct matchparams *p, struct timeval *t1)
   gal_list_str_free(p->bcols, 0);
   gal_list_str_free(p->stdinlines, 1);
 
-  /* Print the final message.
+  /* Print the final message. */
   if(!p->cp.quiet)
     gal_timing_report(t1, PROGRAM_NAME" finished in: ", 0);
-  */
 }

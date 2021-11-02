@@ -58,6 +58,7 @@ enum option_keys_enum
      automatically). */
   UI_KEY_NOTMATCHED      = 1000,
   UI_KEY_OUTCOLS,
+  UI_KEY_KDTREEHDU,
 };
 
 
