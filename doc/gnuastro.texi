@@ -4709,8 +4709,8 @@ Histogram:
 @end example
 
 @noindent
-From above histogram, we see taht the distribution of the noise is roughly symmetric.
-Let us to see the signal distribution in the image.
+This histogram shows a roughly symmetric noise distribution.
+Now, let's check the signal distribution for a comparison.
 
 @example
 $ aststatistics r_detected.fits -hINPUT-NO-SKY
@@ -4740,10 +4740,10 @@ Histogram:
 @end example
 
 @noindent
-As you can see, the distribution is very elongated because the galaxy inside the image is very bright.
-If you compare the above two distributions, you will see that the minimum value of the image has not changed because we have not masked the minimum values while the maximum value of the image has changed.
-If we compare the mean and median values of the signal distribution with the mean and mean values of the noise distribution, we see how the mean and median values of the noise distribution are close together, while these values are very different in signal distribution.
-Now let's by using the @option{--lessthan} optin, limit the distribution of the signal and make it similar to the noise distribution and then compare them together.
+As you can see, the distribution is very elongated because the galaxy inside the image is extremely bright.
+Comparing the distributions above, you will see that the minimum value of the image has not changed because we have not masked the minimum values even though the maximum value of the image has changed.
+Also, the mean and median values of the noise distribution are closer to each other than the signal distribution.
+Now let's limit the distribution of the signal using the @option{--lessthan} option to make it similar to the noise distribution and then compare them together.
 
 @example
 $ aststatistics r_detected.fits -hINPUT-NO-SKY --lessthan=0.130365
@@ -4772,10 +4772,9 @@ Histogram:
 @end example
 
 @noindent
-If we compare the above signal distribution with the noise distribution.
-We can see the noise distribution is completely symmetric, while the signal distribution in this range is asymmetric, especially in outer part.
-This asymmetric is due to the effect of the signal.
-Because we found and masked all those signals in the NoiseChisel, the noise distribution is completely symmetrical.
+We can see the noise distribution is completely symmetric, while the signal distribution is asymmetric in this range, especially in outer part.
+This asymmetry is due to the effect of the signal presence.
+Masking the signal in the NoiseChisel results in a symmetrical noise distribution.
 
 @noindent
 In @ref{Quantifying signal in a tile} we showed that when our distribution is skewed, the standard deviation is not defined at all, because the distribution is not Gaussian.
