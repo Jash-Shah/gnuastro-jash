@@ -20002,13 +20002,37 @@ The k-d tree concept is much more abstract, but powerful (for example enabling p
 In short a k-d tree is a partitioning of a k-dimentional space.
 For more on the k-d tree and Gnuastro's implementation of it, please see @ref{K-d tree}.
 
-To avoid getting into too much theory, let's look at it from a user's perspective: Match will internally construct a k-d tree for catalog A (the first catalog given to it).
-Optionally, you can also build the k-d tree of A with a separate call to Match (with @option{--kdtree=build} and @option{--output=mykdtree.fits}).
-This external k-d tree can be fed to Match later, when doing your matches (to avoid having to reconstruct it every time you want to match with the same first catalog; using @option{--kdtree=mykdtree.fits}).
+To avoid going too deep into theory, let's look at it from a user's perspective: the k-d tree of table A is another table with the same number of rows, but only two integer columns (the integers contain the row indexs of the left and right branch of that row).
+Match will internally construct a k-d tree for catalog A (the first catalog given to it) and use it for matching with catalog B.
+However, optionally, you can also build the k-d tree of A and save it into a file, with a separate call to Match (with @option{--kdtree=build} and @option{--output=mykdtree.fits}).
+This external k-d tree can be fed to Match later (to avoid having to reconstruct it every time you want to match with the same first catalog; using @option{--kdtree=mykdtree.fits}).
 
-Each thread on your CPU will then be associated a list of rows from catalog B and the k-d tree is parsed independently for those to find the nearest element of A to that row in B.
+For each point in catalog B, parsing the k-d tree will enable discovery of the nearest point in catalog A.
+But the advantage (compared to parsing from the first element of A to the last, for the nearest point) is that the k-d tree will find the nearest item with much fewer (statistically) checks.
+
+Therefore, the rows of catalog B will be distributed within the T threads of your CPU.
+The k-d tree is parsed independently for each row of B in each thread, to find the nearest element of A to that row in B.
+Once all threads are finished the inverse checking process mentioned above will be implemented to find the best matchs.
+
+There is just one technical issue however: when there is no neighbor within the acceptable distance of the k-d tree, it is forced to parse all elements.
+Therefore if one catalog only overlaps with the larger catalog in a small area, the algorithm will be forced to parse the full k-d tree for teh majority of points!
+This will dramatically decrease the running speed of Match.
+Therefore, Match first divides the range of the first input in all its dimensions into 1000 bins (similar to a histogram), and will only do the k-d tree based search when the point in catalog B actually falls within that bin.
 @end table
 
+@noindent
+In summary, here are the take-home messages.
+@itemize
+@item
+For larger datasets, the k-d tree based method (when running on all threads possible) is much more faster than the classical sort-based method.
+@item
+The k-d tree is constructed for the first input table and the multi-threading is done on the rows of the second input table.
+The construction of a larger dataset's k-d tree will take longer, but multi-threading will work better when you have more rows.
+As a result, the optimal way to run match is to give the smaller table as the first argument (so its k-d tree is constructed), and the larger table as the second argument (so its rows are checked in parallel).
+@item
+If you always need to match against one catalog (that is large!), the k-d tree construction itself can take a significant fraction of the running time.
+Therefore you can save its k-d tree into a file and simply give it to later calls.
+@end itemize
 
 @node Invoking astmatch,  , Matching algorithms, Match
 @subsection Invoking Match
@@ -29696,66 +29720,62 @@ dataset. The flags have to be set after this function any way.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_statistics_regular_bins (gal_data_t @code{*input}, gal_data_t @code{*inrange}, size_t @code{numbins}, double @code{onebinstart})
-Generate an array of regularly spaced elements as a 1D array (column) of
-type @code{double} (i.e., @code{float64}, it has to be double to account
-for small differences on the bin edges). The input arguments are described
-below
+Generate an array of regularly spaced elements as a 1D array (column) of type @code{double} (i.e., @code{float64}, it has to be double to account for small differences on the bin edges).
+The input arguments are described below
 
 @table @code
 @item input
-The dataset you want to apply the bins to. This is only necessary if the
-range argument is not complete, see below. If @code{inrange} has all the
-necessary information, you can pass a @code{NULL} pointer for this.
+The dataset you want to apply the bins to.
+This is only necessary if the range argument is not complete, see below.
+If @code{inrange} has all the necessary information, you can pass a @code{NULL} pointer for this.
 
 @item inrange
-This dataset keeps the desired range along each dimension of the input data
-structure, it has to be in @code{float} (i.e., @code{float32}) type.
+This dataset keeps the desired range along each dimension of the input data structure, it has to be in @code{float} (i.e., @code{float32}) type.
 
 @itemize
 @item
-If you want the full range of the dataset (in any dimensions, then just set
-@code{inrange} to @code{NULL} and the range will be specified from the
-minimum and maximum value of the dataset (@code{input} cannot be
-@code{NULL} in this case).
+If you want the full range of the dataset (in any dimensions, then just set @code{inrange} to @code{NULL} and the range will be specified from the minimum and maximum value of the dataset (@code{input} cannot be @code{NULL} in this case).
 
 @item
-If there is one element for each dimension in range, then it is viewed as a
-quantile (Q), and the range will be: `Q to 1-Q'.
+If there is one element for each dimension in range, then it is viewed as a quantile (Q), and the range will be: `Q to 1-Q'.
 
 @item
-If there are two elements for each dimension in range, then they are
-assumed to be your desired minimum and maximum values. When either of the
-two are NaN, the minimum and maximum will be calculated for it.
+If there are two elements for each dimension in range, then they are assumed to be your desired minimum and maximum values.
+When either of the two are NaN, the minimum and maximum will be calculated for it.
 @end itemize
 
 @item numbins
 The number of bins: must be larger than 0.
 
 @item onebinstart
-A desired value for onebinstart. Note that with this option, the bins won't
-start and end exactly on the given range values, it will be slightly
-shifted to accommodate this request.
+A desired value for onebinstart.
+Note that with this option, the bins won't start and end exactly on the given range values, it will be slightly shifted to accommodate this request.
+If you don't have any preference on where to start a bin, set this to NAN.
 @end table
 @end deftypefun
 
 
 @deftypefun {gal_data_t *} gal_statistics_histogram (gal_data_t @code{*input}, gal_data_t @code{*bins}, int @code{normalize}, int @code{maxone})
 @cindex Histogram
-Make a histogram of all the elements in the given dataset with bin values that are defined in the @code{inbins} structure (see @code{gal_statistics_regular_bins}, they currently have to be equally spaced).
-@code{inbins} is not mandatory, if you pass a @code{NULL} pointer, the bins structure will be built within this function based on the @code{numbins} input.
-As a result, when you have already defined the bins, @code{numbins} is not used.
+Make a histogram of all the elements in the given dataset with bin values that are defined in the @code{bins} structure (see @code{gal_statistics_regular_bins}, they currently have to be equally spaced).
+The retured histogram is a 1-D @code{gal_data_t} of type @code{GAL_TYPE_FLOAT32}, with the same number of elements as @code{bins}.
+For each bin, it will contain the number of input elements that fell inside of that bin.
 
 Let's write the center of the @mymath{i}th element of the bin array as @mymath{b_i}, and the fixed half-bin width as @mymath{h}.
 Then element @mymath{j} of the input array (@mymath{in_j}) will be counted in @mymath{b_i} if @mymath{(b_i-h) \le in_j < (b_i+h)}.
 However, if @mymath{in_j} is somewhere in the last bin, the condition changes to @mymath{(b_i-h) \le in_j \le (b_i+h)}.
 
-If @code{normalize!=0}, the histogram will be ``normalized'' such that the sum of the counts column will be one. In other words, all the counts in every bin will be divided by the total number of counts. If @code{maxone!=0}, the histogram's maximum count will be 1. In other words, the counts in every bin will be divided by the value of the maximum.
+If @code{normalize!=0}, the histogram will be ``normalized'' such that the sum of the counts column will be one.
+In other words, all the counts in every bin will be divided by the total number of counts.
+If @code{maxone!=0}, the histogram's maximum count will be 1.
+In other words, the counts in every bin will be divided by the value of the maximum.
+In both of these cases, the output dataset will have a @code{GAL_DATA_FLOAT32} datatype.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_statistics_histogram2d (gal_data_t @code{*input}, gal_data_t @code{*bins})
 @cindex Histogram, 2D
 @cindex 2D histogram
-This function is very similar to @code{gal_statistics_histogram}, but will build a 2D histogram (count how many of the elements of @code{input} have a within a 2D box.
+This function is very similar to @code{gal_statistics_histogram}, but will build a 2D histogram (count how many of the elements of @code{input} are a within a 2D box.
 The bins comprising the first dimension of the 2D box are defined by @code{bins}.
 The bins of the second dimension are defined by @code{bins->next} (@code{bins} is a @ref{List of gal_data_t}).
 Both the @code{bin} and @code{bin->next} can be created with @code{gal_statistics_regular_bins}.

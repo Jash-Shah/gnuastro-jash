@@ -273,7 +273,7 @@ ui_check_options_and_arguments(struct matchparams *p)
       /* Make sure no second argument is given. */
       if(p->input2name)
         error(EXIT_FAILURE, 0, "only one argument can be given with the "
-              "'--coord' of '--kdtree=build' options");
+              "'--coord' or '--kdtree=build' options");
 
       /* In case '--ccol2' is given. */
       if(p->ccol2 && p->cp.quiet==0)
@@ -884,6 +884,7 @@ ui_read_columns(struct matchparams *p)
      than the first, print a warning to let the user know that the speed
      can be greatly improved if they swap the two. */
   if( !p->cp.quiet
+      && p->kdtreemode!=MATCH_KDTREE_BUILD
       && p->kdtreemode!=MATCH_KDTREE_DISABLE
       && p->cols1->size > p->cols2->size )
     error(EXIT_SUCCESS, 0, "TIP: the matching speed will GREATLY IMPROVE "
@@ -1220,15 +1221,17 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct matchparams *p)
                ? " (sort-based match only uses a single thread)" : ""));
       printf("  - Match algorithm: %s\n",
              p->kdtree ? "k-d tree" : "sort-based");
-      printf("  - Input-1: %s\n",
-             gal_fits_name_save_as_string(p->input1name, p->cp.hdu));
+      printf("  - Input-1: %s; %zu rows\n",
+             gal_fits_name_save_as_string(p->input1name, p->cp.hdu),
+             p->cols1->size);
       if(p->kdtreemode==MATCH_KDTREE_FILE)
         printf("  - Input-1 k-d tree: %s\n",
                gal_fits_name_save_as_string(p->kdtree, p->kdtreehdu));
       if(p->kdtreemode!=MATCH_KDTREE_BUILD)
-        printf("  - Input-2: %s\n",
+        printf("  - Input-2: %s; %zu rows\n",
                p->coord ? "from --coord"
-               : gal_fits_name_save_as_string(p->input2name, p->hdu2));
+               : gal_fits_name_save_as_string(p->input2name, p->hdu2),
+               p->cols2->size);
     }
 }
 

@@ -1,5 +1,6 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Andres Del Pino Molina
 Sepideh Eskandarlou
 Zahra Hosseini
 Raúl Infante-Sainz
