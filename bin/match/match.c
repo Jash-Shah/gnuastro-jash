@@ -152,6 +152,157 @@ match_cat_from_coord(struct matchparams *p, gal_list_str_t *cols,
 
 
 
+/*static*/ void /* Static is commented to avoid warning. */
+match_catalog_permute_inplace(struct matchparams *p, gal_data_t *in,
+                              size_t *permutation, size_t nummatched)
+{
+  char **strarr;
+  size_t i, numnotmatched;
+
+  /* Do the permutation. */
+  gal_permutation_apply(in, permutation);
+
+  /* Correct the size of the array so only the matching/no-matching columns
+     are saved as output. Note that the 'size' element is only for
+     Gnuastro, it has no effect on later freeing of the array in the memory
+     (we are not 'realloc'ing). */
+  if(p->notmatched)
+    {
+      /* We want to move the non-matched rows after permutation
+         to the top set of rows. But when we have strings, the
+         strings that will be over-written need to be freed
+         first. */
+      numnotmatched = in->size - nummatched;
+      if(in->type==GAL_TYPE_STRING)
+        {
+          strarr=in->array;
+          for(i=0;i<nummatched;++i)
+            if(strarr[i]) free(strarr[i]);
+        }
+
+      /* Move the non-matched elements up to the top. */
+      memcpy(in->array,
+             gal_pointer_increment(in->array, nummatched,
+                                   in->type),
+             numnotmatched*gal_type_sizeof(in->type));
+
+      /* If we are on a string, the pointers at the bottom (that
+         have been moved to the top), should not be set to NULL
+         to avoid any potential double freeing. */
+      if(in->type==GAL_TYPE_STRING)
+        {
+          strarr=in->array;
+          for(i=numnotmatched; i<in->size;++i) strarr[i]=NULL;
+        }
+
+      /* Correct the size of the tile. */
+      in->size = in->dsize[0] = numnotmatched;
+    }
+
+  /* This is a normal match (not not-match). */
+  else
+    {
+      /* If we are on a string column, free the allocated space
+         for each element that should be removed. */
+      if(in->type==GAL_TYPE_STRING)
+        {
+          strarr=in->array;
+          for(i=nummatched;i<in->size;++i)
+            if(strarr[i]) { free(strarr[i]); strarr[i]=NULL; }
+        }
+
+      /* Correct the size. */
+      in->size = in->dsize[0] = nummatched;
+    }
+}
+
+
+
+
+
+static void
+match_arrange_in_new_col(struct matchparams *p, gal_data_t *in,
+                         size_t *permutation, size_t nummatched)
+{
+  size_t c=0, i;
+  size_t istart=p->notmatched ? nummatched : 0;
+  size_t iend=p->notmatched ? in->size : nummatched;
+  size_t outsize=p->notmatched ? in->size - nummatched : nummatched;
+
+  /* Allocate the array. */
+  void *out=gal_pointer_allocate_ram_or_mmap(in->type, outsize, 0,
+                                             p->cp.minmapsize,
+                                             &in->mmapname, p->cp.quietmmap,
+                                             __func__, "out");
+
+  /* Copy the matched rows into the output array. */
+  for(i=istart;i<iend;++i)
+    memcpy(gal_pointer_increment(out, c++, in->type),
+           gal_pointer_increment(in->array, permutation[i],
+                                 in->type),
+           gal_type_sizeof(in->type));
+
+  /**********************************/
+  /* Add a check so if the column is a string, we free the strings that
+     aren't included in the output. */
+  /**********************************/
+
+  /* Free the existing array, and correct the sizes. */
+  in->size = in->dsize[0] = outsize;
+  free(in->array);
+  in->array=out;
+}
+
+
+
+
+
+/* Parameters for parallelization of output creation. */
+struct ma_params
+{
+  struct matchparams *p;        /* General program settings. */
+  gal_data_t       *cat;        /* Dataset (all rows) to arrange. */
+  size_t     nummatched;        /* Number of matched. */
+  size_t   *permutation;        /* The permutation. */
+};
+
+static void *
+match_arrange(void *in_prm)
+{
+  /* Low-level definitions to be done first. */
+  struct gal_threads_params *tprm=(struct gal_threads_params *)in_prm;
+  struct ma_params *map=(struct ma_params *)tprm->params;
+
+  /* High-level variables. */
+  gal_data_t *tmp;
+  size_t c, i, index;
+
+  /* go over all columns associated to this thread. */
+  for(i=0; tprm->indexs[i] != GAL_BLANK_SIZE_T; ++i)
+    {
+      /* For easy reading. */
+      index = tprm->indexs[i];
+
+      /* Find this column in the whole table (linked list). */
+      c=0;
+      for(tmp=map->cat; tmp!=NULL; tmp=tmp->next) if(c++==index) break;
+
+      printf("%zu: %s\n", index, tmp->name);
+
+      /* Rearrange this columns' elements. */
+      match_arrange_in_new_col(map->p, tmp, map->permutation,
+                               map->nummatched);
+    }
+
+  /* Wait for all the other threads to finish, then return. */
+  if(tprm->b) pthread_barrier_wait(tprm->b);
+  return NULL;
+}
+
+
+
+
+
 /* Read the catalog in the given file and use the given permutation to keep
    the proper columns. */
 static gal_data_t *
@@ -160,9 +311,8 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
                              size_t **numcolmatch)
 {
   int hasall=0;
-  char **strarr;
+  struct ma_params map;
   gal_data_t *tmp, *cat;
-  size_t i, numnotmatched;
   gal_list_str_t *cols, *tcol;
 
   char *hdu              = (f1s2==1) ? p->cp.hdu     : p->hdu2;
@@ -206,77 +356,31 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
   /* Read the full table. NOTE that with '--coord', for the second input,
      both 'filename' and 'p->stdinlines' will be NULL. */
   if(filename || p->stdinlines)
-    cat=gal_table_read(filename, hdu, filename ? NULL : p->stdinlines, cols,
-                       p->cp.searchin, p->cp.ignorecase, p->cp.minmapsize,
-                       p->cp.quietmmap, *numcolmatch);
+    {
+      cat=gal_table_read(filename, hdu, filename ? NULL : p->stdinlines, cols,
+                         p->cp.searchin, p->cp.ignorecase, p->cp.minmapsize,
+                         p->cp.quietmmap, *numcolmatch);
+      printf("%s: Read!\n", filename);
+    }
   else
     cat=match_cat_from_coord(p, cols, *numcolmatch);
 
-  /* Go over each column and permute its contents. */
+  /* Arrange the output rows. */
   if(permutation)
     {
       /* When we are in no-match AND outcols mode, we don't need to touch
          the rows of the first input catalog (we want all of them) */
       if( (p->notmatched && p->outcols && f1s2==1) == 0 )
-        for(tmp=cat; tmp!=NULL; tmp=tmp->next)
-          {
-            /* Do the permutation. */
-            gal_permutation_apply(tmp, permutation);
+        {
+          map.p=p;
+          map.cat=cat;
+          map.nummatched=nummatched;
+          map.permutation=permutation;
+          gal_threads_spin_off(match_arrange, &map, gal_list_data_number(cat),
+                               p->cp.numthreads, p->cp.minmapsize,
+                               p->cp.quietmmap);
 
-            /* Correct the size of the array so only the
-               matching/no-matching columns are saved as output. Note that
-               the 'size' element is only for Gnuastro, it has no effect on
-               later freeing of the array in the memory (we are not
-               'realloc'ing). */
-            if(p->notmatched)
-              {
-                /* We want to move the non-matched rows after permutation
-                   to the top set of rows. But when we have strings, the
-                   strings that will be over-written need to be freed
-                   first. */
-                numnotmatched = tmp->size - nummatched;
-                if(tmp->type==GAL_TYPE_STRING)
-                  {
-                    strarr=tmp->array;
-                    for(i=0;i<nummatched;++i)
-                      if(strarr[i]) free(strarr[i]);
-                  }
-
-                /* Move the non-matched elements up to the top. */
-                memcpy(tmp->array,
-                       gal_pointer_increment(tmp->array, nummatched,
-                                             tmp->type),
-                       numnotmatched*gal_type_sizeof(tmp->type));
-
-                /* If we are on a string, the pointers at the bottom (that
-                   have been moved to the top), should not be set to NULL
-                   to avoid any potential double freeing. */
-                if(tmp->type==GAL_TYPE_STRING)
-                  {
-                    strarr=tmp->array;
-                    for(i=numnotmatched; i<tmp->size;++i) strarr[i]=NULL;
-                  }
-
-                /* Correct the size of the tile. */
-                tmp->size = tmp->dsize[0] = numnotmatched;
-              }
-
-            /* This is a normal match (not not-match). */
-            else
-              {
-                /* If we are on a string column, free the allocated space
-                   for each element that should be removed. */
-                if(tmp->type==GAL_TYPE_STRING)
-                  {
-                    strarr=tmp->array;
-                    for(i=nummatched;i<tmp->size;++i)
-                      if(strarr[i]) { free(strarr[i]); strarr[i]=NULL; }
-                  }
-
-                /* Correct the size. */
-                tmp->size = tmp->dsize[0] = nummatched;
-              }
-          }
+        }
     }
 
   /* If no match was found ('permutation==NULL'), and the matched columns
@@ -627,7 +731,8 @@ match_catalog(struct matchparams *p)
       if(!p->cp.quiet)
         {
           gettimeofday(&t1, NULL);
-          printf("  - Re-arranging matched rows (skip this with '--logasoutput')...\n");
+          printf("  - Re-arranging matched rows "
+                 "(skip this with '--logasoutput')...\n");
         }
 
       /* Read (and possibly write) the outputs. Note that we only need to
