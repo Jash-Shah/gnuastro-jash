@@ -3355,7 +3355,7 @@ fits_tab_read_onecol(void *in_prm)
   gal_data_t *col;
   gal_list_sizet_t *tmp;
   int isfloat, hdutype, anynul=0, status=0;
-  size_t i, c, indout, indin=GAL_BLANK_SIZE_T;
+  size_t i, j, c, indout, indin=GAL_BLANK_SIZE_T;
 
   /* Open the FITS file */
   fptr=gal_fits_hdu_open_format(p->filename, p->hdu, 1);
@@ -3389,16 +3389,16 @@ fits_tab_read_onecol(void *in_prm)
       if(col->type==GAL_TYPE_STRING)
         {
           strarr=col->array;
-          for(i=0;i<p->numrows;++i)
+          for(j=0;j<p->numrows;++j)
             {
               errno=0;
-              strarr[i]=calloc(p->allcols[indin].disp_width+1,
-                               sizeof *strarr[i]);
-              if(strarr[i]==NULL)
+              strarr[j]=calloc(p->allcols[indin].disp_width+1,
+                               sizeof *strarr[j]);
+              if(strarr[j]==NULL)
                 error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for "
                       "strarr[%zu]", __func__,
-                      (p->allcols[indin].disp_width+1) * sizeof *strarr[i],
-                      i);
+                      (p->allcols[indin].disp_width+1) * sizeof *strarr[j],
+                      j);
             }
         }
 
@@ -3433,10 +3433,14 @@ fits_tab_read_onecol(void *in_prm)
                                             p->minmapsize, p->quietmmap);
           status=0;
         }
+      gal_fits_io_error(status, NULL); /* After the 'status' correction. */
 
-      /* Clean up and sanity check. */
+      /* Clean up and sanity check (just note that the blank value for
+         strings, is an array of strings, so we need to free the contents
+         before freeing itself). */
+      if(col->type==GAL_TYPE_STRING)
+        {strarr=blank; free(strarr[0]);}
       if(blank) free(blank);
-      gal_fits_io_error(status, NULL);
 
       /* Everything is fine, put this column in the output array. */
       p->colarray[indout]=col;
@@ -3846,7 +3850,6 @@ gal_fits_tab_write(gal_data_t *cols, gal_list_str_t *comments,
   char **ttype, **tform, **tunit;
   int tbltype, numcols=0, status=0;
 
-
   /* Make sure all the input columns have the same number of elements */
   for(col=cols; col!=NULL; col=col->next)
     {
@@ -3915,7 +3918,10 @@ gal_fits_tab_write(gal_data_t *cols, gal_list_str_t *comments,
                          i+1, 1, 1, col->size, col->array, blank, &status);
       gal_fits_io_error(status, NULL);
 
-      /* Clean up and Increment the column counter. */
+      /* Clean up and Increment the column counter. Note that unlike
+         reading a column from a table (in 'fits_tab_read_onecol'), the
+         'blank' value for strings here is directly the string, not a
+         pointer to a string. */
       if(blank) free(blank);
       ++i;
     }

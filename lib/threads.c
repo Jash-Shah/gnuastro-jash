@@ -179,12 +179,12 @@ gal_threads_number()
 
 
 
-/* We have 'numactions' jobs and we want their indexs to be divided
-   between 'numthreads' CPU threads. This function will give each index to
-   a thread such that the maximum difference between the number of
-   images for each thread is 1. The results will be saved in a 2D
-   array of 'outthrdcols' columns and each row will finish with a
-   (size_t) -1, which is larger than any possible index!. */
+/* We have 'numactions' jobs and we want their indexs to be divided between
+   'numthreads' CPU threads. This function will give each index to a thread
+   such that the maximum difference between the number of actions for each
+   thread is 1. The results will be saved in a 2D array of 'outthrdcols'
+   columns and each row will finish with a (size_t)(-1), which is the blank
+   value for size_t (larger than any possible index!). */
 char *
 gal_threads_dist_in_threads(size_t numactions, size_t numthreads,
                             size_t minmapsize, int quietmmap,
@@ -218,8 +218,7 @@ gal_threads_dist_in_threads(size_t numactions, size_t numthreads,
         printf("%zu, ", thrds[i*thrdcols+j]);
       printf("\b\b.\n");
     }
-  exit(0);
-  */
+  exit(0); */
 
   /* Return the name of the possibly memory-mapped file. */
   return mmapname;
@@ -353,7 +352,7 @@ gal_threads_spin_off(void *(*worker)(void *), void *caller_params,
     error(EXIT_FAILURE, 0, "%s: the number of threads ('numthreads') "
           "cannot be zero", __func__);
 
-  /* Allocate the array of parameters structure structures. */
+  /* Allocate the array of parameters structure. */
   errno=0;
   prm=malloc(numthreads*sizeof *prm);
   if(prm==NULL)

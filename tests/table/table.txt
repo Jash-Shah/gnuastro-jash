@@ -5,7 +5,7 @@
 #  - Blank values in all the columns.
 #  - Empty lines (not comment or data.
 #  - Column information comments are not in the same order as data.
-#  - A column with no information.
+#  - A column (11, i.e., the last) with no information.
 #  - Columns with missing information
 #  - Some blank values different from the internal blank values.
 
