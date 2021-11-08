@@ -890,8 +890,8 @@ ui_read_columns(struct statisticsparams *p)
 
   /* Read the desired column(s). */
   cols=gal_table_read(p->inputname, p->cp.hdu, lines, columnlist,
-                      p->cp.searchin, p->cp.ignorecase, p->cp.minmapsize,
-                      p->cp.quietmmap, NULL);
+                      p->cp.searchin, p->cp.ignorecase, p->cp.numthreads,
+                      p->cp.minmapsize, p->cp.quietmmap, NULL);
   gal_list_str_free(lines, 1);
 
   /* If the input was from standard input, we'll set the input name to be

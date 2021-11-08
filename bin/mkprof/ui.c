@@ -683,9 +683,9 @@ ui_read_cols_2d(struct mkprofparams *p)
 
   /* Read the desired columns from the file. */
   lines=gal_options_check_stdin(p->catname, p->cp.stdintimeout, "input");
-  cols=gal_table_read(p->catname, p->cp.hdu, lines, colstrs, p->cp.searchin,
-                      p->cp.ignorecase, p->cp.minmapsize, p->cp.quietmmap,
-                      NULL);
+  cols=gal_table_read(p->catname, p->cp.hdu, lines, colstrs,
+                      p->cp.searchin, p->cp.ignorecase, p->cp.numthreads,
+                      p->cp.minmapsize, p->cp.quietmmap, NULL);
   gal_list_str_free(lines, 1);
 
   /* The name of the input catalog is only for informative steps from now
@@ -923,9 +923,9 @@ ui_read_cols_3d(struct mkprofparams *p)
 
   /* Read the desired columns from the file. */
   lines=gal_options_check_stdin(p->catname, p->cp.stdintimeout, "input");
-  cols=gal_table_read(p->catname, p->cp.hdu, lines, colstrs, p->cp.searchin,
-                      p->cp.ignorecase, p->cp.minmapsize, p->cp.quietmmap,
-                      NULL);
+  cols=gal_table_read(p->catname, p->cp.hdu, lines, colstrs,
+                      p->cp.searchin, p->cp.ignorecase, p->cp.numthreads,
+                      p->cp.minmapsize, p->cp.quietmmap, NULL);
   gal_list_str_free(lines, 1);
 
   /* Set the number of objects. */
@@ -1698,14 +1698,16 @@ ui_read_custom_table(struct mkprofparams *p)
   /* Read the input radial table. */
   cols=gal_table_read(p->customname, p->customhdu,
                       NULL, NULL, p->cp.searchin, p->cp.ignorecase,
-                      p->cp.minmapsize, p->cp.quietmmap, NULL);
+                      p->cp.numthreads, p->cp.minmapsize,
+                      p->cp.quietmmap, NULL);
 
   /* Make sure the table only has three columns. */
   if(gal_list_data_number(cols) != 3 )
-    error(EXIT_FAILURE, 0, "%s: has %zu columns, but it should only have "
-          "three columns. Column1: the radial interval's lower value. "
-          "Column 2: the radial interval's higher value. Column 3: the value "
-          "to use for pixels within that radius interval",
+    error(EXIT_FAILURE, 0, "%s: has %zu columns, but it should only "
+          "have three columns. Column1: the radial interval's lower "
+          "value. Column 2: the radial interval's higher value. "
+          "Column 3: the value to use for pixels within that radius "
+          "interval",
           gal_fits_name_save_as_string(p->customname, p->customhdu),
           gal_list_data_number(cols));
 

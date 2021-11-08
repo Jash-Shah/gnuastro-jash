@@ -37,6 +37,12 @@ See the end of the file for license conditions.
      '--rawoutput' option. This renaming was done to avoid such confusions
      and was raised by Sepideh Eskandarlou.
 
+  Library:
+
+   - gal_fits_tab_read: now takes the number of threads (only relevant for
+     reading FITS tables).
+   - gal_table_read: simlar to 'gal_fits_tab_read'.
+
 ** Bugs fixed
   bug #61329: make check crash in macOS in convolve/spectrum-1d.sh, found
               and fixed with the help of Sebastian Luna-Valero.

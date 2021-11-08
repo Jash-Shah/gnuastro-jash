@@ -766,24 +766,26 @@ table_catcolumn(struct tableparams *p)
         {
           if(hdull) { hdu=hdull->v; hdull=hdull->next; }
           else
-            error(EXIT_FAILURE, 0, "not enough '--catcolumnhdu's (or '-u'). "
-                  "For every FITS table given to '--catcolumnfile'. A call to "
-                  "'--catcolumnhdu' is necessary to identify its "
-                  "HDU/extension");
+            error(EXIT_FAILURE, 0, "not enough '--catcolumnhdu's (or "
+                  "'-u'). For every FITS table given to "
+                  "'--catcolumnfile'. A call to '--catcolumnhdu' is "
+                  "necessary to identify its HDU/extension");
         }
       else hdu=NULL;
 
       /* Read the catcolumn table. */
-      tocat=gal_table_read(filell->v, hdu, NULL, p->catcolumns, cp->searchin,
-                           cp->ignorecase, cp->minmapsize, p->cp.quietmmap,
-                           NULL);
+      tocat=gal_table_read(filell->v, hdu, NULL, p->catcolumns,
+                           cp->searchin, cp->ignorecase,
+                           cp->numthreads, cp->minmapsize,
+                           p->cp.quietmmap, NULL);
 
       /* Check the number of rows. */
       if(tocat->dsize[0]!=p->table->dsize[0])
-        error(EXIT_FAILURE, 0, "%s: incorrect number of rows. The table given "
-              "to '--catcolumn' must have the same number of rows as the "
-              "main argument (after all row-selections have been applied), "
-              "but they have %zu and %zu rows respectively",
+        error(EXIT_FAILURE, 0, "%s: incorrect number of rows. The "
+              "table given to '--catcolumn' must have the same number "
+              "of rows as the main argument (after all row-selections "
+              "have been applied), but they have %zu and %zu rows "
+              "respectively",
               gal_fits_name_save_as_string(filell->v, hdu), tocat->dsize[0],
               p->table->dsize[0]);
 

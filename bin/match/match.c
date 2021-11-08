@@ -356,12 +356,10 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
   /* Read the full table. NOTE that with '--coord', for the second input,
      both 'filename' and 'p->stdinlines' will be NULL. */
   if(filename || p->stdinlines)
-    {
-      cat=gal_table_read(filename, hdu, filename ? NULL : p->stdinlines, cols,
-                         p->cp.searchin, p->cp.ignorecase, p->cp.minmapsize,
-                         p->cp.quietmmap, *numcolmatch);
-      printf("%s: Read!\n", filename);
-    }
+    cat=gal_table_read(filename, hdu, filename ? NULL : p->stdinlines,
+                       cols, p->cp.searchin, p->cp.ignorecase,
+                       p->cp.numthreads, p->cp.minmapsize,
+                       p->cp.quietmmap, *numcolmatch);
   else
     cat=match_cat_from_coord(p, cols, *numcolmatch);
 
@@ -376,7 +374,8 @@ match_catalog_read_write_all(struct matchparams *p, size_t *permutation,
           map.cat=cat;
           map.nummatched=nummatched;
           map.permutation=permutation;
-          gal_threads_spin_off(match_arrange, &map, gal_list_data_number(cat),
+          gal_threads_spin_off(match_arrange, &map,
+                               gal_list_data_number(cat),
                                p->cp.numthreads, p->cp.minmapsize,
                                p->cp.quietmmap);
 

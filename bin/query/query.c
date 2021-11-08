@@ -96,8 +96,8 @@ query_output_meta_database(struct queryparams *p)
      reverse the list first since it is last-in-first-out. */
   gal_list_str_reverse(&cols);
   table=gal_table_read(p->downloadname, "1", NULL, cols,
-                       GAL_TABLE_SEARCH_NAME, 1, p->cp.minmapsize,
-                       p->cp.quietmmap, NULL);
+                       GAL_TABLE_SEARCH_NAME, 1, p->cp.numthreads,
+                       p->cp.minmapsize, p->cp.quietmmap, NULL);
 
   /* Set the basic columns for easy reading. */
   name=table->array;
@@ -202,8 +202,8 @@ query_output_meta_dataset(struct queryparams *p)
      reverse the list first since it is last-in-first-out. */
   gal_list_str_reverse(&cols);
   table=gal_table_read(p->downloadname, "1", NULL, cols,
-                       GAL_TABLE_SEARCH_NAME, 1, p->cp.minmapsize,
-                       p->cp.quietmmap, NULL);
+                       GAL_TABLE_SEARCH_NAME, 1, p->cp.numthreads,
+                       p->cp.minmapsize, p->cp.quietmmap, NULL);
 
   /* It may happen that the required dataset name isn't recognized by the
      database. In this case, 'table' will have 0 rows. */
@@ -267,8 +267,8 @@ query_output_data(struct queryparams *p)
   /* Read the table and write it into a clean output (in case the
      downloaded table is compressed in any special FITS way). */
   table=gal_table_read(p->downloadname, "1", NULL, NULL,
-                       GAL_TABLE_SEARCH_NAME, 1, p->cp.minmapsize,
-                       p->cp.quietmmap, NULL);
+                       GAL_TABLE_SEARCH_NAME, 1, p->cp.numthreads,
+                       p->cp.minmapsize, p->cp.quietmmap, NULL);
   gal_table_write(table, NULL, NULL, p->cp.tableformat,
                   p->cp.output ? p->cp.output : p->cp.output,
                   "QUERY", 0);

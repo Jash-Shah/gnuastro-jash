@@ -26273,40 +26273,35 @@ $ asttable --info table.fits
 @end example
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*lines}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, size_t @code{minmapsize}, int @code{quietmmap}, size_t @code{*colmatch})
+@deftypefun {gal_data_t *} gal_table_read (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*lines}, gal_list_str_t @code{*cols}, int @code{searchin}, int @code{ignorecase}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap}, size_t @code{*colmatch})
 
-Read the specified columns in a file (named @code{filename}), or list of
-strings (@code{lines}) into a linked list of data structures. If the file
-is FITS, then @code{hdu} will also be used, otherwise, @code{hdu} is
-ignored.
+Read the specified columns in a file (named @code{filename}), or list of strings (@code{lines}) into a linked list of data structures.
+If the file is FITS, then @code{hdu} will also be used, otherwise, @code{hdu} is ignored.
 
-@code{lines} is a list of strings with each node representing one line
-(including the new-line character), see @ref{List of strings}. It will
-mostly be the output of @code{gal_txt_stdin_read}, which is used to read
-the program's input as separate lines from the standard input (see
-@ref{Text files}). Note that @code{filename} and @code{lines} are mutually
-exclusive and one of them must be @code{NULL}.
+@code{lines} is a list of strings with each node representing one line (including the new-line character), see @ref{List of strings}.
+It will mostly be the output of @code{gal_txt_stdin_read}, which is used to read the program's input as separate lines from the standard input (see @ref{Text files}).
+Note that @code{filename} and @code{lines} are mutually exclusive and one of them must be @code{NULL}.
 
 @cindex AWK
 @cindex GNU AWK
-The information to search for columns should be specified by the
-@code{cols} list of strings (see @ref{List of strings}). The string in each
-node of the list may be a number, an exact match to a column name, or a
-regular expression (in GNU AWK format) enclosed in @code{/ /}. The
-@code{searchin} value must be one of the macros defined above. If
-@code{cols} is NULL, then this function will read the full table.
+The information to search for columns should be specified by the @code{cols} list of strings (see @ref{List of strings}).
+The string in each node of the list may be a number, an exact match to a column name, or a regular expression (in GNU AWK format) enclosed in @code{/ /}.
+The @code{searchin} value must be one of the macros defined above.
+If @code{cols} is NULL, then this function will read the full table.
 
-The output is an individually allocated list of datasets (see @ref{List of
-gal_data_t}) with the same order of the @code{cols} list. Note that one
-column node in the @code{cols} list might give multiple columns (for
-example from regular expressions), in this case, the order of output
-columns that correspond to that one input, are in order of the table (which
-column was read first). So the first requested column is the first popped
-data structure and so on.
+For FITS tables, each column will be read independently.
+Therefore they will be read in @code{numthreads} CPU threads to greatly speed up the reading when there are many columns and rows.
+However, this only happens if CFITSIO was configured with @option{--enable-reentrant}.
+This test has been done at Gnuastro's configuration time; if so, @code{GAL_CONFIG_HAVE_FITS_IS_REENTRANT} will have a value of 1, otherwise, it will have a value of 0.
+For more on this macro, see @ref{Configuration information}).
+Multi-threaded table reading is not currently applicable to other table formats (only for FITS tables).
 
-if @code{colmatch!=NULL}, it is assumed to be an array that has at least the
-same number of elements as nodes in the @code{cols} list. The number of
-columns that matched each input column will be stored in each element.
+The output is an individually allocated list of datasets (see @ref{List of gal_data_t}) with the same order of the @code{cols} list.
+Note that one column node in the @code{cols} list might give multiple columns (for example from regular expressions), in this case, the order of output columns that correspond to that one input, are in order of the table (which column was read first).
+So the first requested column is the first popped data structure and so on.
+
+if @code{colmatch!=NULL}, it is assumed to be an array that has at least the same number of elements as nodes in the @code{cols} list.
+The number of columns that matched each input column will be stored in each element.
 @end deftypefun
 
 @deftypefun {gal_list_sizet_t *} gal_table_list_of_indexs (gal_list_str_t @code{*cols}, gal_data_t @code{*allcols}, size_t @code{numcols}, int @code{searchin}, int @code{ignorecase}, char @code{*filename}, char @code{*hdu}, size_t @code{*colmatch})
@@ -27076,21 +27071,20 @@ reading tables in FITS format. To be generic, it is recommended to use
 of table formats based on the filename (see @ref{Table input output}).
 @end deftypefun
 
-@deftypefun {gal_data_t *} gal_fits_tab_read (char @code{*filename}, char @code{*hdu}, size_t @code{numrows}, gal_data_t @code{*colinfo}, gal_list_sizet_t @code{*indexll}, size_t @code{minmapsize}, int @code{quietmmap})
-Read the columns given in the list @code{indexll} from a FITS table (in
-@file{filename} and HDU/extension @code{hdu}) into the returned linked list
-of data structures, see @ref{List of size_t} and @ref{List of
-gal_data_t}. If the necessary space for each column is larger than
-@code{minmapsize}, don't keep it in the RAM, but in a file in the HDD/SSD.
-For more on @code{minmapsize} and @code{quietmmap}, see the description
-under the same name in @ref{Generic data container}.
+@deftypefun {gal_data_t *} gal_fits_tab_read (char @code{*filename}, char @code{*hdu}, size_t @code{numrows}, gal_data_t @code{*colinfo}, gal_list_sizet_t @code{*indexll}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
+Read the columns given in the list @code{indexll} from a FITS table (in @file{filename} and HDU/extension @code{hdu}) into the returned linked list of data structures, see @ref{List of size_t} and @ref{List of gal_data_t}.
 
-Each column will have @code{numrows} rows and @code{colinfo} contains any
-further information about the columns (returned by
-@code{gal_fits_tab_info}, described above). Note that this is a low-level
-function, so the output data linked list is the inverse of the input indexes
-linked list. It is recommended to use @code{gal_table_read} for generic
-reading of tables, see @ref{Table input output}.
+Each column will be read independently, therefore they will be read in @code{numthreads} CPU threads to greatly speed up the reading when there are many columns and rows.
+However, this only happens if CFITSIO was configured with @option{--enable-reentrant}.
+This test has been done at Gnuastro's configuration time; if so, @code{GAL_CONFIG_HAVE_FITS_IS_REENTRANT} will have a value of 1, otherwise, it will have a value of 0.
+For more on this macro, see @ref{Configuration information}).
+
+If the necessary space for each column is larger than @code{minmapsize}, don't keep it in the RAM, but in a file in the HDD/SSD.
+For more on @code{minmapsize} and @code{quietmmap}, see the description under the same name in @ref{Generic data container}.
+
+Each column will have @code{numrows} rows and @code{colinfo} contains any further information about the columns (returned by @code{gal_fits_tab_info}, described above).
+Note that this is a low-level function, so the output data linked list is the inverse of the input indexes linked list.
+It is recommended to use @code{gal_table_read} for generic reading of tables, see @ref{Table input output}.
 @end deftypefun
 
 @deftypefun void gal_fits_tab_write (gal_data_t @code{*cols}, gal_list_str_t @code{*comments}, int @code{tableformat}, char @code{*filename}, char @code{*extname})

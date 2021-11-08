@@ -364,8 +364,8 @@ ui_read_column(struct convolveparams *p, int i0k1)
                 "Please use the '--column' ('-c') or '--kernelcolumn' "
                 "options (depending on which dataset it is) to specify a "
                 "column. You can either give it the column number "
-                "(couting from 1), or a match/search in its meta-data (e.g., "
-                "column names).\n\n"
+                "(couting from 1), or a match/search in its meta-data "
+                "(e.g., column names).\n\n"
                 "For more information, please run the following command "
                 "(press the 'SPACE' key to go down and 'q' to return to the "
                 "command-line):\n\n"
@@ -379,8 +379,8 @@ ui_read_column(struct convolveparams *p, int i0k1)
 
   /* Read the desired column(s). */
   out=gal_table_read(filename, hdu, lines, column, p->cp.searchin,
-                     p->cp.ignorecase, p->cp.minmapsize, p->cp.quietmmap,
-                     NULL);
+                     p->cp.ignorecase, p->cp.numthreads,
+                     p->cp.minmapsize, p->cp.quietmmap, NULL);
   gal_list_str_free(lines, 1);
 
   /* Confirm if only one column was read (it is possible that a regexp
@@ -391,9 +391,10 @@ ui_read_column(struct convolveparams *p, int i0k1)
         source=gal_checkset_dataset_name(filename, hdu);
       else
         source="standard-input";
-      error(EXIT_FAILURE, 0, "%s: more than one column in input table mached "
-            "the search criteria. Please limit the match by specifying the "
-            "exact name (if its unique) or column number", source);
+      error(EXIT_FAILURE, 0, "%s: more than one column in input table "
+            "mached the search criteria. Please limit the match by "
+            "specifying the exact name (if its unique) or column "
+            "number", source);
     }
 
   /* Make sure it is a usable datatype. */

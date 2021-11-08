@@ -729,8 +729,8 @@ ui_read_cols(struct cropparams *p)
 
   /* Read the desired columns from the file. */
   cols=gal_table_read(p->catname, p->cathdu, NULL, colstrs, p->cp.searchin,
-                      p->cp.ignorecase, p->cp.minmapsize, p->cp.quietmmap,
-                      NULL);
+                      p->cp.ignorecase, p->cp.numthreads, p->cp.minmapsize,
+                      p->cp.quietmmap, NULL);
   if(cols==NULL)
     error(EXIT_FAILURE, 0, "%s: is empty! No usable information "
           "(un-commented lines) could be read from this file",

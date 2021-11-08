@@ -415,7 +415,8 @@ gal_table_list_of_indexs(gal_list_str_t *cols, gal_data_t *allcols,
 gal_data_t *
 gal_table_read(char *filename, char *hdu, gal_list_str_t *lines,
                gal_list_str_t *cols, int searchin, int ignorecase,
-               size_t minmapsize, int quietmmap, size_t *colmatch)
+               size_t numthreads, size_t minmapsize, int quietmmap,
+               size_t *colmatch)
 {
   int tableformat;
   gal_list_sizet_t *indexll;
@@ -453,7 +454,7 @@ gal_table_read(char *filename, char *hdu, gal_list_str_t *lines,
     case GAL_TABLE_FORMAT_AFITS:
     case GAL_TABLE_FORMAT_BFITS:
       out=gal_fits_tab_read(filename, hdu, numrows, allcols, indexll,
-                            minmapsize, quietmmap);
+                            numthreads, minmapsize, quietmmap);
       break;
 
     default:

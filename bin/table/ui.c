@@ -1094,8 +1094,8 @@ ui_preparations(struct tableparams *p)
 
   /* Read the necessary columns. */
   p->table=gal_table_read(p->filename, cp->hdu, lines, p->columns,
-                          cp->searchin, cp->ignorecase, cp->minmapsize,
-                          p->cp.quietmmap, colmatch);
+                          cp->searchin, cp->ignorecase, cp->numthreads,
+                          cp->minmapsize, p->cp.quietmmap, colmatch);
   if(p->filename==NULL) p->filename="stdin";
   gal_list_str_free(lines, 1);
 

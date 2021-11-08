@@ -738,8 +738,8 @@ ui_read_columns_to_double(struct matchparams *p, char *filename, char *hdu,
     p->stdinlines=gal_options_check_stdin(filename, p->cp.stdintimeout,
                                           "input");
   tout=gal_table_read(filename, hdu, filename ? NULL : p->stdinlines,
-                      cols, cp->searchin, cp->ignorecase, cp->minmapsize,
-                      p->cp.quietmmap, NULL);
+                      cols, cp->searchin, cp->ignorecase, cp->numthreads,
+                      cp->minmapsize, p->cp.quietmmap, NULL);
 
   /* A small sanity check. */
   if(gal_list_data_number(tout)!=numcols)
@@ -794,7 +794,8 @@ ui_read_kdtree(struct matchparams *p)
   /* Read the external k-d tree. */
   p->kdtreedata=gal_table_read(p->kdtree, p->kdtreehdu, NULL,
                                NULL, GAL_TABLE_SEARCH_NAME, 1,
-                               p->cp.minmapsize, p->cp.quietmmap, NULL);
+                               p->cp.numthreads, p->cp.minmapsize,
+                               p->cp.quietmmap, NULL);
 
   /* It has to have only two columns, with an unsigned 32-bit integer
      type in each. */
