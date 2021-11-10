@@ -1821,13 +1821,13 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
                           "  - It contains non-numerical characters.\n"
                           "  - It is negative, but the expected value is "
                           "positive.\n"
-                          "  - It is floating point, but the expected value "
-                          "is an integer.\n"
-                          "  - The previous option required a value, but you "
-                          "forgot to give it one, so the next option's "
-                          "name(+value, if there are no spaces between them) "
-                          "is read as the value of the previous option.", arg,
-                          option->name);
+                          "  - It is floating point, but the expected "
+                          "value is an integer.\n"
+                          "  - The previous option required a value, but "
+                          "you forgot to give it one, so the next option's "
+                          "name(+value, if there are no spaces between "
+                          "them) is read as the value of the previous "
+                          "option.", arg, option->name);
 
           /* Do a sanity check on the value. */
           options_sanity_check(option, arg, filename, lineno);

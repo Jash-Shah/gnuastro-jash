@@ -509,6 +509,7 @@ freeandreport(struct arithmeticparams *p, struct timeval *t1)
 {
   /* Free the simple strings. */
   free(p->cp.output);
+  if(p->wcshdu) free(p->wcshdu);
   if(p->globalhdu) free(p->globalhdu);
 
   /* If there are any remaining HDUs in the hdus linked list, then

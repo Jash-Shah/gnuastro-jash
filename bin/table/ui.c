@@ -1304,9 +1304,12 @@ ui_free_report(struct tableparams *p)
   free(p->cp.output);
   ui_outcols_free(p->outcols);
   gal_list_data_free(p->table);
+  if(p->wcshdu) free(p->wcshdu);
   gal_list_str_free(p->columns, 1);
   if(p->colarray) free(p->colarray);
   gal_list_data_free(p->colmetadata);
+  gal_list_str_free(p->catcolumnhdu, 1);
+  gal_list_str_free(p->catcolumnfile, 1);
 
   /* If a random number generator was allocated, free it. */
   if(p->rng) gsl_rng_free(p->rng);

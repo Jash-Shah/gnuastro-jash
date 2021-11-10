@@ -3847,8 +3847,8 @@ gal_fits_tab_write(gal_data_t *cols, gal_list_str_t *comments,
   gal_data_t *col;
   size_t i, numrows=-1;
   gal_list_str_t *strt;
-  char **ttype, **tform, **tunit;
   int tbltype, numcols=0, status=0;
+  char **ttype, **tform, **tunit, **strarr;
 
   /* Make sure all the input columns have the same number of elements */
   for(col=cols; col!=NULL; col=col->next)
@@ -3918,11 +3918,12 @@ gal_fits_tab_write(gal_data_t *cols, gal_list_str_t *comments,
                          i+1, 1, 1, col->size, col->array, blank, &status);
       gal_fits_io_error(status, NULL);
 
-      /* Clean up and Increment the column counter. Note that unlike
-         reading a column from a table (in 'fits_tab_read_onecol'), the
-         'blank' value for strings here is directly the string, not a
-         pointer to a string. */
-      if(blank) free(blank);
+      /* Clean up and Increment the column counter. */
+      if(blank)
+        {
+          if(col->type==GAL_TYPE_STRING) {strarr=blank; free(strarr[0]);}
+          free(blank); blank=NULL;
+        }
       ++i;
     }
 
