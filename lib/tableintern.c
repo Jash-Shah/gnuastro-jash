@@ -428,7 +428,7 @@ gal_tableintern_read_blank(gal_data_t *col, char *blank)
      correctly. If it isn't successful, then  */
   if( gal_type_from_string((void **)(&col->array), blank, col->type) )
     {
-      col->flag=GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING;
+      col->flag |= GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING;
       gal_checkset_allocate_copy(blank, (char **)(&col->array));
     }
   else

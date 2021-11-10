@@ -536,7 +536,7 @@ txt_infoll_to_array(gal_data_t *datall, size_t *numdata)
           /* Put all the information from 'data' into the respective part
              of the array. About the pointers, instead of having to
              allocate them again, we will just set them to NULL so
-             'gal_data_free' doesn't remove them.*/
+             'gal_data_free' doesn't remove them. */
           dataarr[ind].flag       = data->flag;    data->flag=0;
           dataarr[ind].name       = data->name;    data->name=NULL;
           dataarr[ind].unit       = data->unit;    data->unit=NULL;
@@ -750,7 +750,7 @@ txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
   double      *d = data->array,    *db;
 
   /* See if this token is blank. */
-  int isblankstr = ( info->flag==GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING
+  int isblankstr = ( info->flag & GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING
                      ? ( strcmp(info->array,token)==0 ? 1 : 0 )
                      : 0);
 
@@ -1102,6 +1102,7 @@ txt_read(char *filename, gal_list_str_t *lines, size_t *dsize,
               out->dsize=out->array=NULL;
             }
         }
+      gal_list_data_reverse(&out);
       break;
 
 

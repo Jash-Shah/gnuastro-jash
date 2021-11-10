@@ -1272,8 +1272,10 @@ ui_free_report(struct matchparams *p, struct timeval *t1)
   gal_data_free(p->outcols);
   gal_list_data_free(p->cols1);
   gal_list_data_free(p->cols2);
+  if(p->kdtree) free(p->kdtree);
   gal_list_str_free(p->acols, 0);
   gal_list_str_free(p->bcols, 0);
+  if(p->kdtreehdu) free(p->kdtreehdu);
   gal_list_str_free(p->stdinlines, 1);
 
   /* Print the final message. */

@@ -52,12 +52,17 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 
-/* Flags for columns. */
-enum tableintern_flags
-{
- GAL_TABLEINTERN_FLAG_INVALID,  /* Zero according to FITS standard. */
- GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING,
-};
+
+/* Number of bytes in the unsigned integer hosting the bit-flags ('flag'
+   element) of 'gal_data_t'. */
+#define GAL_TABLEINTERN_FLAG_SIZE         1
+
+/* Bit 0: If the FITS TFORM has a "repeat" value of 0. */
+#define GAL_TABLEINTERN_FLAG_TFORM_REPEAT_IS_ZERO 0x1
+
+/* Bit 1: If the 'array' element in this dataset is a blank string. */
+#define GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING 0x2
+
 
 
 

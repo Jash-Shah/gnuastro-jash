@@ -38,10 +38,12 @@ See the end of the file for license conditions.
      and was raised by Sepideh Eskandarlou.
 
   Library:
-
    - gal_fits_tab_read: now takes the number of threads (only relevant for
      reading FITS tables).
    - gal_table_read: simlar to 'gal_fits_tab_read'.
+   - gal_blank_initialize: also works on string data, but initializing only
+     a tile over a larger block of elements is only supported for numeric
+     data types.
 
 ** Bugs fixed
   bug #61329: make check crash in macOS in convolve/spectrum-1d.sh, found

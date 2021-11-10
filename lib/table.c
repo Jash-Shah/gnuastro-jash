@@ -58,7 +58,32 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
    Note that other than the character strings (column name, units and
    comments), nothing in the data structure(s) will be allocated by this
-   function for the actual data (e.g., the 'array' or 'dsize' elements). */
+   function for the actual data (e.g., the 'array' or 'dsize' elements).
+
+   Here are the gal_data_t structure elements that are used in 'allcols':
+
+            *restrict array -> Blank value (if present).
+                       type -> Type of column data.
+                       ndim -> Blank number of dimensions (1)
+                     *dsize -> Blank dimension lengths (1)
+                       size -> Blank total size (1)
+                  quietmmap -> ------------
+                  *mmapname -> ------------
+                 minmapsize -> Repeat (FITS Binary 'TFORM')
+                       nwcs -> ------------
+                       *wcs -> ------------
+                       flag -> 'GAL_TABLEINTERN_FLAG_*' macros.
+                     status -> ------------
+                      *name -> Column name.
+                      *unit -> Column unit.
+                   *comment -> Column comments.
+                   disp_fmt -> 'GAL_TABLE_DISPLAY_FMT' macros.
+                 disp_width -> To keep width of string columns.
+             disp_precision -> ------------
+                      *next -> ------------
+                     *block -> ------------
+
+*/
 gal_data_t *
 gal_table_info(char *filename, char *hdu, gal_list_str_t *lines,
                size_t *numcols, size_t *numrows, int *tableformat)
@@ -435,15 +460,8 @@ gal_table_read(char *filename, char *hdu, gal_list_str_t *lines,
                                    ignorecase, filename, hdu, colmatch);
 
   /* Depending on the table format, read the columns into the output
-     structure. Note that the functions here pop each index, read/store the
-     desired column and pop the next, so after these functions, the output
-     linked list will have the opposite order of its input 'indexll'
-     list. So before calling any of them, we will first reverse the
-     'indexll' list, so the output data structure list will have the same
-     order as the input list of desired columns. Also note that after these
-     functions, the 'indexll' will be all freed (each popped element is
-     actually freed).*/
-  gal_list_sizet_reverse(&indexll);
+     structure. Also note that after these functions, the 'indexll' will be
+     all freed (each popped element is actually freed).*/
   switch(tableformat)
     {
     case GAL_TABLE_FORMAT_TXT:

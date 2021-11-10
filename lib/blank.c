@@ -107,7 +107,22 @@ gal_blank_alloc_write(uint8_t type)
 void
 gal_blank_initialize(gal_data_t *input)
 {
-  GAL_TILE_PARSE_OPERATE(input, NULL, 0, 0, {*i=b;});
+  size_t i;
+  char **strarr;
+
+  /* For strings, we will initialize the full array, for numerical data
+     types we will consider tiles. */
+  if(input->type==GAL_TYPE_STRING)
+    {
+      strarr=input->array;
+      for(i=0;i<input->size;++i)
+        {
+          if(strarr[i]) free(strarr[i]);
+          gal_checkset_allocate_copy(GAL_BLANK_STRING, &strarr[i]);
+        }
+    }
+  else
+    {GAL_TILE_PARSE_OPERATE(input, NULL, 0, 0, {*i=b;});}
 }
 
 

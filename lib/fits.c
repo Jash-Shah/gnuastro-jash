@@ -3091,6 +3091,13 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
               else
                 fits_binary_tform(value, &datatype, &repeat, NULL, &status);
 
+              /* Write the "repeat" element into 'allcols->minmapsize', but
+                 also activate the repeat flag within the dataset.*/
+              allcols[index].minmapsize = repeat;
+              if(repeat==0)
+                allcols[index].flag
+                  |= GAL_TABLEINTERN_FLAG_TFORM_REPEAT_IS_ZERO;
+
               /* Write the type into the data structure. */
               allcols[index].type=gal_fits_datatype_to_type(datatype, 1);
 
@@ -3108,7 +3115,14 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
                               "standard in %s", filename, hdu, keyname, value,
                               __func__);
                     }
-                  allcols[index].disp_width=repeat;
+
+                  /* TFORM's 'repeat' element can be zero (signifying a
+                     column without any data)! In this case, we want the
+                     output to be fully blank, so we need space for the
+                     blank string. */
+                  allcols[index].disp_width = ( repeat
+                                                ? repeat
+                                                : strlen(GAL_BLANK_STRING)+1);
                 }
             }
         }
@@ -3191,9 +3205,10 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
 
                   /* This flag is not relevant for FITS tables. */
                   if(allcols[index].flag
-                     ==GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING)
+                     & GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING)
                     {
-                      allcols[index].flag=0;
+                      allcols[index].flag
+                        &= ~GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING;
                       free(allcols[index].array);
                     }
                 }
@@ -3230,9 +3245,10 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
 
               /* This flag is not relevant for FITS tables. */
               if(allcols[tmp_i->v].flag
-                 ==GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING)
+                 & GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING)
                 {
-                  allcols[tmp_i->v].flag=0;
+                  allcols[tmp_i->v].flag
+                    &= ~GAL_TABLEINTERN_FLAG_ARRAY_IS_BLANK_STRING;
                   free(allcols[tmp_i->v].array);
                 }
             }
@@ -3402,45 +3418,58 @@ fits_tab_read_onecol(void *in_prm)
             }
         }
 
-      /* Allocate a blank value for the given type and read/store the
-         column using CFITSIO. Note that for binary tables, we only need
-         blank values for integer types. For binary floating point types,
-         the FITS standard defines blanks as NaN (same as almost any other
-         software like Gnuastro). However if a blank value is specified,
-         CFITSIO will convert other special numbers like 'inf' to NaN
-         also. We want to be able to distringuish 'inf' and NaN here, so
-         for floating point types in binary tables, we won't define any
-         blank value. In ASCII tables, CFITSIO doesn't read the 'NAN'
-         values (that it has written itself) unless we specify a blank
-         pointer/value. */
-      isfloat = ( col->type==GAL_TYPE_FLOAT32
-                  || col->type==GAL_TYPE_FLOAT64 );
-      blank = ( ( hdutype==BINARY_TBL && isfloat )
-                ? NULL
-                : gal_blank_alloc_write(col->type) );
-      fits_read_col(fptr, gal_fits_type_to_datatype(col->type), indin+1,
-                    1, 1, col->size, blank, col->array, &anynul, &status);
+      /* If this column has a 'repeat' of zero, then just set all its
+         elements to its relevant blank type and don't call CFITSIO (there
+         is nothing for it to read, and it will crash with "FITSIO status =
+         308: bad first element number First element to write is too large:
+         1; max allowed value is 0"). */
+      if(p->allcols[indin].flag & GAL_TABLEINTERN_FLAG_TFORM_REPEAT_IS_ZERO)
+        gal_blank_initialize(col);
 
-      /* In the ASCII table format, CFITSIO might not be able to read 'INF'
-         or '-INF'. In this case, it will set status to 'BAD_C2D' or
-         'BAD_C2F'. So, we'll use our own parser for the column values. */
-      if( hdutype==ASCII_TBL
-          && isfloat
-          && (status==BAD_C2D || status==BAD_C2F) )
+      /* The column has non-zero width, read its contents. */
+      else
         {
-          fits_tab_read_ascii_float_special(p->filename, p->hdu,
-                                            fptr, col, indin+1, p->numrows,
-                                            p->minmapsize, p->quietmmap);
-          status=0;
-        }
-      gal_fits_io_error(status, NULL); /* After the 'status' correction. */
+          /* Allocate a blank value for the given type and read/store the
+             column using CFITSIO. Note that for binary tables, we only
+             need blank values for integer types. For binary floating point
+             types, the FITS standard defines blanks as NaN (same as almost
+             any other software like Gnuastro). However if a blank value is
+             specified, CFITSIO will convert other special numbers like
+             'inf' to NaN also. We want to be able to distringuish 'inf'
+             and NaN here, so for floating point types in binary tables, we
+             won't define any blank value. In ASCII tables, CFITSIO doesn't
+             read the 'NAN' values (that it has written itself) unless we
+             specify a blank pointer/value. */
+          isfloat = ( col->type==GAL_TYPE_FLOAT32
+                      || col->type==GAL_TYPE_FLOAT64 );
+          blank = ( ( hdutype==BINARY_TBL && isfloat )
+                    ? NULL
+                    : gal_blank_alloc_write(col->type) );
+          fits_read_col(fptr, gal_fits_type_to_datatype(col->type), indin+1,
+                        1, 1, col->size, blank, col->array, &anynul, &status);
 
-      /* Clean up and sanity check (just note that the blank value for
-         strings, is an array of strings, so we need to free the contents
-         before freeing itself). */
-      if(col->type==GAL_TYPE_STRING)
-        {strarr=blank; free(strarr[0]);}
-      if(blank) free(blank);
+          /* In the ASCII table format, CFITSIO might not be able to read
+             'INF' or '-INF'. In this case, it will set status to 'BAD_C2D'
+             or 'BAD_C2F'. So, we'll use our own parser for the column
+             values. */
+          if( hdutype==ASCII_TBL
+              && isfloat
+              && (status==BAD_C2D || status==BAD_C2F) )
+            {
+              fits_tab_read_ascii_float_special(p->filename, p->hdu,
+                                                fptr, col, indin+1, p->numrows,
+                                                p->minmapsize, p->quietmmap);
+              status=0;
+            }
+          gal_fits_io_error(status, NULL); /* After the 'status' correction. */
+
+          /* Clean up and sanity check (just note that the blank value for
+             strings, is an array of strings, so we need to free the
+             contents before freeing itself). */
+          if(col->type==GAL_TYPE_STRING)
+            {strarr=blank; free(strarr[0]);}
+          if(blank) free(blank);
+        }
 
       /* Everything is fine, put this column in the output array. */
       p->colarray[indout]=col;
