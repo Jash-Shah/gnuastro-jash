@@ -9575,6 +9575,27 @@ $ astfits test.fits -h1 --write=/,"My keywords"   \
           --write=a2,0.12,"Second keyword"
 @end example
 
+@item checksum
+@cindex CFITSIO
+@cindex @code{DATASUM}: FITS keyword
+@cindex @code{CHECKSUM}: FITS keyword
+When nothing is given afterwards, the header integrity keywords @code{DATASUM} and @code{CHECKSUM} will be calculated and written/updated.
+The calculation and writing is done fully by CFITSIO, therefore they comply with the FITS standard 4.0@footnote{@url{https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf}} that defines these keywords (its Appendix J).
+
+If a value is given (e.g., @option{--write=checksum,MyOwnCheckSum}), then CFITSIO won't be called to calculate these two keywords and the value (as well as possible comment and unit) will be written just like any other keyword.
+This is generally not recommended since @code{CHECKSUM} is a reserved FITS standard keyword.
+If you want to calculate the checksum with another hashing standard manually and write it into the header, its is recommended to use another keyword name.
+
+In the FITS standard, @code{CHECKSUM} depends on the HDU's data @emph{and} header keywords, it will therefore not be valid if you make any further changes to the header after writing the @code{CHECKSUM} keyword.
+This includes any further keyword modification options in the same call to the Fits program.
+However, @code{DATASUM} only depends on the data section of the HDU/extension, so it is not changed when you add, remove or update the header keywords.
+Therefore, it is recommended to write these keywords as the last keywords that are written/modified in the extension.
+You can use the @option{--verify} option (described below) to verify the values of these two keywords.
+
+@item datasum
+Similar to @option{checksum}, but only write the @code{DATASUM} keyword (that doesn't depend on the header keywords, only the data).
+@end table
+
 @item -a STR
 @itemx --asis=STR
 Write the given @code{STR} @emph{exactly} as it is, into the given FITS file header with no modifications.
@@ -9626,27 +9647,6 @@ IFS=$oIFS
 @end example
 
 Since its not too long, you can also simply put the variable values of the first block into the second, and write it directly on the command line (if its just for one time).
-
-@item checksum
-@cindex CFITSIO
-@cindex @code{DATASUM}: FITS keyword
-@cindex @code{CHECKSUM}: FITS keyword
-When nothing is given afterwards, the header integrity keywords @code{DATASUM} and @code{CHECKSUM} will be calculated and written/updated.
-The calculation and writing is done fully by CFITSIO, therefore they comply with the FITS standard 4.0@footnote{@url{https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf}} that defines these keywords (its Appendix J).
-
-If a value is given (e.g., @option{--write=checksum,MyOwnCheckSum}), then CFITSIO won't be called to calculate these two keywords and the value (as well as possible comment and unit) will be written just like any other keyword.
-This is generally not recommended since @code{CHECKSUM} is a reserved FITS standard keyword.
-If you want to calculate the checksum with another hashing standard manually and write it into the header, its is recommended to use another keyword name.
-
-In the FITS standard, @code{CHECKSUM} depends on the HDU's data @emph{and} header keywords, it will therefore not be valid if you make any further changes to the header after writing the @code{CHECKSUM} keyword.
-This includes any further keyword modification options in the same call to the Fits program.
-However, @code{DATASUM} only depends on the data section of the HDU/extension, so it is not changed when you add, remove or update the header keywords.
-Therefore, it is recommended to write these keywords as the last keywords that are written/modified in the extension.
-You can use the @option{--verify} option (described below) to verify the values of these two keywords.
-
-@item datasum
-Similar to @option{checksum}, but only write the @code{DATASUM} keyword (that doesn't depend on the header keywords, only the data).
-@end table
 
 @item -H STR
 @itemx --history STR
