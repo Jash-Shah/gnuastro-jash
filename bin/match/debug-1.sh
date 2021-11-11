@@ -1,4 +1,29 @@
 #!/bin/bash
+# Script to create inputs to debug match. It can either take one catalog,
+# randomly select a sub-set, and add noise to its coordinates to create a
+# second catalog, or just build two catalogs from scratch.
+#
+# Original author:
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Contributing author(s):
+# Copyright (C) 2021, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+
+
 
 # If you want to use a real catalog as reference (and manually add noise to
 # randomly selected rows, give a value to the 'real' variable). If this is
