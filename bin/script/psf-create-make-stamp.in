@@ -48,6 +48,7 @@ maskhdu=1
 output=""
 tmpdir=""
 axisratio=1
+maskskyval=0
 corewidth=""
 saturation=0
 normradii=""
@@ -223,6 +224,9 @@ do
         -M|--maskhdu)        maskhdu="$2";                              check_v "$1" "$maskhdu";  shift;shift;;
         -M=*|--maskhdu=*)    maskhdu="${1#*=}";                         check_v "$1" "$maskhdu";  shift;;
         -M*)                 maskhdu=$(echo "$1"  | sed -e's/-M//');    check_v "$1" "$maskhdu";  shift;;
+        -v|--maskskyval)     maskskyval="$2";                           check_v "$1" "$maskskyval";  shift;shift;;
+        -v=*|--maskskyval=*) maskskyval="${1#*=}";                      check_v "$1" "$maskskyval";  shift;;
+        -v*)                 maskskyval=$(echo "$1"  | sed -e's/-v//'); check_v "$1" "$maskskyval";  shift;;
         -O|--mode)           mode="$2";                                 check_v "$1" "$mode";  shift;shift;;
         -O=*|--mode=*)       mode="${1#*=}";                            check_v "$1" "$mode";  shift;;
         -O*)                 mode=$(echo "$1"  | sed -e's/-O//');       check_v "$1" "$mode";  shift;;
@@ -460,8 +464,16 @@ if [ x"$mask" != x ]; then
                 --center=$xcenter,$ycenter \
                 --width=$corewidth --output=$cropped_core $quiet
 
+  # If the cropped core labeled image has sky background values (zero by
+  # default), convert them to nan. This prevent considering the central
+  # object to be the sky if there are a lot of sky background pixels
+  # compared to the labeled region.
+  cropped_core_nonzeros=$tmpdir/cropped_core_nozeros-$objectid.fits
+  astarithmetic $cropped_core set-i $quiet \
+                i i $maskskyval eq nan where --output=$cropped_core_nonzeros
+
   # Compute the label of the central object from the core cropped image.
-  centrallabel=$(aststatistics $cropped_core --median -q)
+  centrallabel=$(aststatistics $cropped_core_nonzeros --median -q)
 
   # Check if the user has determined the --saturation option.
   if [ $saturation = 0 ]; then
@@ -473,12 +485,12 @@ if [ x"$mask" != x ]; then
   # Unlabel the central object and then mask everything else.
   cropped_masked=$tmpdir/cropped_masked-$objectid.fits
   astarithmetic $cropped      --hdu=1 set-i \
-                $cropped_mask --hdu=1  set-m \
+                $cropped_mask --hdu=1 set-m \
                                             \
-                $mask_saturated \
-                m m $centrallabel eq 0 where set-a \
-                a 0 ne set-mask \
-                                \
+                $mask_saturated  \
+                m m $centrallabel eq $maskskyval where set-a \
+                a $maskskyval ne set-mask  \
+                                 \
                 i mask nan where \
                 --output=$cropped_masked $quiet
 else
@@ -547,3 +559,4 @@ astarithmetic $cropped_masked --hdu=1 $normvalue / --output=$output $quiet
 if [ $keeptmp = 0 ]; then
     rm -r $tmpdir
 fi
+
