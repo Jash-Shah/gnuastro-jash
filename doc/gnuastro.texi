@@ -12133,7 +12133,8 @@ Please see the description of this option in @ref{Invoking astcrop} for its synt
 @end table
 
 @item WCS coordinates
-In WCS mode (@option{--mode=wcs}), the coordinates and widths are interpreted using the World Coordinate System (WCS, that must accompany the dataset), not pixel coordinates.
+In WCS mode (@option{--mode=wcs}), the coordinates and width are interpreted using the World Coordinate System (WCS, that must accompany the dataset), not pixel coordinates.
+You can optionally use @option{--widthinpix} for the width to be interpreted in pixels (even though the coordinates are in WCS).
 In WCS mode, Crop accepts multiple datasets as input.
 When the cropped region (defined by its center or vertices) overlaps with multiple of the input images/tiles, the overlapping regions will be taken from the respective input (they will be stitched when necessary for each output crop).
 
@@ -12152,6 +12153,7 @@ There are multiple ways to define your cropped region as listed below.
 Similar to catalog inputs in Image mode (above), except that the values along each dimension are assumed to have the same units as the dataset's WCS information.
 For example, the central RA and Dec value for each crop will be read from the first and second calls to the @option{--coordcol} option.
 The width of the cropped box (in units of the WCS, or degrees in RA and Dec mode) must be specified with the @option{--width} option.
+You can optionally use @option{--widthinpix} for the value of @option{--width} to be interpreted in pixels.
 
 @item Center of a single crop (on the command-line)
 You can specify the center of only one crop box with the @option{--center} option.
@@ -12359,7 +12361,7 @@ The units of the coordinates are read based on the value to the @option{--mode} 
 @item -w FLT[,FLT[,...]]
 @itemx --width=FLT[,FLT[,...]]
 Width of the cropped region about coordinate given to @option{--center}.
-If in WCS mode, value(s) given to this option will be read in the same units as the dataset's WCS information along this dimension.
+If in WCS mode, value(s) given to this option will be read in the same units as the dataset's WCS information along this dimension (unless @option{--widthinpix} is given).
 This option may take either a single value (to be used for all dimensions: @option{--width=10} in image-mode will crop a @mymath{10\times10} pixel image) or multiple values (a specific value for each dimension: @option{--width=10,20} in image-mode will crop a @mymath{10\times20} pixel image).
 
 The @code{--width} option also accepts fractions.
@@ -12371,6 +12373,11 @@ If you want an even sided crop, you can run Crop afterwards with @option{--secti
 The basic reason for making an odd-sided crop is that your given central coordinate will ultimately fall within a discrete pixel in the image (defined by the FITS standard).
 When the crop has an odd number of pixels in each dimension, that pixel can be very well defined as the ``central'' pixel of the crop, making it unambiguously easy to identify.
 However, for an even-sided crop, it will be very hard to identify the central pixel (it can be on any of the four pixels adjacent to the central point of the image!).
+
+@item -X
+@itemx --widthinpix
+In WCS mode, interpret the value to @option{--width} as number of pixels, not the WCS units like degrees.
+This is useful when you want a fixed crop size in pixels, even though your center coordinates are in WCS (for example RA and Dec).
 
 @item -l STR
 @itemx -l FLT:FLT,...

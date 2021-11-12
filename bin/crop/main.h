@@ -91,6 +91,7 @@ struct cropparams
   gal_data_t    *incheckcenter;  /* Value given to '--checkcenter'.       */
   gal_data_t           *center;  /* Center position of crop.              */
   gal_data_t            *width;  /* Width of crop when defined by center. */
+  uint8_t           widthinpix;  /* Given width is in pixels (in WCS mode)*/
   char                *catname;  /* Name of input catalog.                */
   char                 *cathdu;  /* HDU of catalog if its a FITS file.    */
   char                *namecol;  /* Filename (without suffix) of crop col.*/

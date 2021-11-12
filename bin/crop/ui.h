@@ -46,7 +46,7 @@ enum program_args_groups
 /* Available letters for short options:
 
    a d e f g i j k m r t u v y
-   A B E G H J L Q R W X Y
+   A B E G H J L Q R W Y
 */
 enum option_keys_enum
 {
@@ -60,6 +60,7 @@ enum option_keys_enum
   UI_KEY_ZEROISNOTBLANK = 'z',
   UI_KEY_MODE           = 'O',
   UI_KEY_WIDTH          = 'w',
+  UI_KEY_WIDTHINPIX     = 'X',
   UI_KEY_CENTER         = 'c',
   UI_KEY_COORDCOL       = 'x',
 

@@ -167,6 +167,19 @@ struct argp_option program_options[] =
       gal_options_parse_csv_float64
     },
     {
+      "widthinpix",
+      UI_KEY_WIDTHINPIX,
+      0,
+      0,
+      "--width is in pixels (even in WCS mode).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->widthinpix,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "center",
       UI_KEY_CENTER,
       "FLT[,...]",

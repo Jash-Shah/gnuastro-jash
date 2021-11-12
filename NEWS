@@ -7,6 +7,12 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Crop:
+   --widthinpix: when in WCS-mode, the value given to '--width' will be
+     interpreted in units of pixels. This will allow having crops of a
+     fixed pixel size, even when the mode of the central coordinate is in
+     WCS. This was suggested by Jesús Varela.
+
 ** Removed features
 
 ** Changed features

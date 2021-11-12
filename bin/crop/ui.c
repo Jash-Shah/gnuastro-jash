@@ -528,6 +528,24 @@ ui_check_options_and_arguments(struct cropparams *p)
 /**************************************************************/
 /***************       Preparations         *******************/
 /**************************************************************/
+#define UI_WIDTH_TOO_LARGE_SIZE 50000
+static void
+ui_warning_width_is_too_large(double width, size_t dim_num,
+                              double pixwidth, double pixscale)
+{
+  error(EXIT_SUCCESS, 0, "WARNING: value %g (requested WCS-based "
+        "width along dimension %zu) translates to %.0f pixels on "
+        "this dataset! This is most probably not what you wanted! "
+        "Note that the dataset's pixel size in this dimension is "
+        "%g. If you intended this number to show the width in "
+        "pixels, please add the '--widthinpix' option", width,
+        dim_num, pixwidth, pixscale);
+}
+
+
+
+
+
 /* When the crop is defined by its center, the final width that we need
    must be in actual number of pixels (an integer). But the user's values
    can be in WCS mode or even in image mode, they may be non-integers. */
@@ -574,32 +592,25 @@ ui_set_img_sizes(struct cropparams *p)
   /* WCS mode. */
   if(p->mode==IMGCROP_MODE_WCS)
     {
-      /* Fill in the widths depending on the mode. */
-      for(i=0;i<ndim;++i)
-        {
-          /* Convert the width in units of the input's WCS into pixels. */
-          pwidth = warray[i]/p->pixscale[i];
-          if(pwidth<1 || pwidth>50000)
-            error(EXIT_FAILURE, 0, "value %g (requested width along "
-                  "dimension %zu) translates to %.0f pixels on this "
-                  "dataset. This is probably not what you wanted. Note "
-                  "that the dataset's resolution in this dimension is "
-                  "%g.\n\n"
-                  "You can do the conversion to the dataset's WCS units "
-                  "prior to calling Crop. Alternatively, you can specify "
-                  "all the coordinates/sizes in image (not WCS) units and "
-                  "use the '--mode=img' option", warray[i], i+1, pwidth,
-                  p->pixscale[i]);
+      /* Only convert the width if it is actually in degrees. */
+      if(p->widthinpix==0)
+        for(i=0;i<ndim;++i)
+          {
+            /* Calculate the pixel width. */
+            pwidth = warray[i]/p->pixscale[i];
+            if(pwidth<1 || pwidth>UI_WIDTH_TOO_LARGE_SIZE)
+              ui_warning_width_is_too_large(warray[i], i+1, pwidth,
+                                          p->pixscale[i]);
 
-          /* Write the single valued width in WCS and the image width for
-             this dimension. */
-          p->iwidth[i]=GAL_DIMENSION_FLT_TO_INT(pwidth);
-          if(p->iwidth[i]%2==0)
-            {
-              p->iwidth[i] += 1;
-              warray[i]    += p->pixscale[i];
-            }
-        }
+            /* Write the single valued width in WCS and the image width for
+               this dimension. */
+            p->iwidth[i]=GAL_DIMENSION_FLT_TO_INT(pwidth);
+            if(p->iwidth[i]%2==0)
+              {
+                p->iwidth[i] += 1;
+                warray[i]    += p->pixscale[i];
+              }
+          }
 
       /* Checkcenter: */
       if(p->incheckcenter)
@@ -733,10 +744,10 @@ ui_read_cols(struct cropparams *p)
   /* Make sure more columns were not read (the name matchings might result
      in more than one column being read from the inputs). */
   if( gal_list_data_number(cols) != ndim + (p->namecol!=NULL) )
-    gal_tableintern_error_col_selection(p->catname, p->cathdu, "too many "
-                                        "columns were selected by the given "
-                                        "values to the options ending in "
-                                        "'col'.");
+    gal_tableintern_error_col_selection(p->catname, p->cathdu, "too "
+                                        "many columns were selected "
+                                        "by the given values to the "
+                                        "options ending in 'col'.");
 
 
   /* Put the information in each column in the proper place. */
@@ -879,7 +890,7 @@ ui_preparations_to_img_mode(struct cropparams *p)
 {
   size_t i;
   int nwcs;
-  double *darr, *pixscale;
+  double *darr, pixwidth, *pixscale;
   struct wcsprm *wcs=gal_wcs_read(p->inputs->v, p->cp.hdu,
                                   p->cp.wcslinearmatrix,
                                   p->hstartwcs, p->hendwcs, &nwcs);
@@ -911,15 +922,28 @@ ui_preparations_to_img_mode(struct cropparams *p)
               "defined by their center (with '--center' or '--catalog') a "
               "width is necessary (using the '--width' option)");
 
-      /* Check the requested width and convert it to pixels. */
-      darr=p->width->array;
+      /* Check if the dataset actually has WCS! */
       if(wcs->naxis<p->width->size)
         error(EXIT_FAILURE, 0, "%s (hdu %s): its WCS has %d dimensions "
               "but %zu dimensions given to '--width'", p->inputs->v,
               p->cp.hdu, wcs->naxis, p->width->size);
-      pixscale=gal_wcs_pixel_scale(wcs);
-      for(i=0;i<p->width->size;++i) darr[i] /= pixscale[i];
-      free(pixscale);
+
+      /* If the width is in WCS units, convert it to pixels. */
+      if(p->widthinpix==0)
+        {
+          darr=p->width->array;
+          pixscale=gal_wcs_pixel_scale(wcs);
+          for(i=0;i<p->width->size;++i)
+            {
+              pixwidth = darr[i] / pixscale[i];
+              if(pixwidth>UI_WIDTH_TOO_LARGE_SIZE)
+                ui_warning_width_is_too_large(darr[i], i+1, pixwidth,
+                                              pixscale[i]);
+              else
+                darr[i]=pixscale[i];
+            }
+          free(pixscale);
+        }
     }
 
   /* Switch the mode and return. */
