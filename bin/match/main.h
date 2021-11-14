@@ -86,8 +86,8 @@ struct matchparams
   char              *out2name;  /* Name of second matched output.       */
   gal_list_str_t  *stdinlines;  /* Lines given by Standard input.       */
   int              kdtreemode;  /* The k-d tree mode.                   */
-  gal_data_t      *kdtreedata;
-  size_t           kdtreeroot;
+  gal_data_t      *kdtreedata;  /* The k-d tree data.                   */
+  size_t           kdtreeroot;  /* The root node of the k-d tree.       */
 
   /* Output: */
   time_t              rawtime;  /* Starting time of the program.        */

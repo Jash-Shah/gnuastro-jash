@@ -126,12 +126,13 @@ if COND_FITS
   fits/copyhdu.sh: fits/write.sh.log mkprof/mosaic2.sh.log
 endif
 if COND_MATCH
-  MAYBE_MATCH_TESTS = match/positions.sh match/merged-cols.sh \
-  match/kdtree.sh
+  MAYBE_MATCH_TESTS = match/sort-based.sh match/merged-cols.sh \
+  match/kdtree-internal.sh match/kdtree-separate.sh
 
-  match/kdtree.sh: prepconf.sh.log
-  match/positions.sh: prepconf.sh.log
+  match/sort-based.sh: prepconf.sh.log
   match/merged-cols.sh: prepconf.sh.log
+  match/kdtree-internal.sh: prepconf.sh.log
+  match/kdtree-separate.sh: prepconf.sh.log
 endif
 if COND_MKCATALOG
   MAYBE_MKCATALOG_TESTS = mkcatalog/detections.sh mkcatalog/simple-3d.sh   \

@@ -1,4 +1,5 @@
-# Match the two input catalogs and return merged output
+# Match the two input catalogs based on k-d tree matching (the k-d tree is
+# constructed first as a separate file, then used in a later call).
 #
 # See the Tests subsection of the manual for a complete explanation
 # (in the Installing gnuastro section).
@@ -6,7 +7,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-# Copyright (C) 2015-2021, Free Software Foundation, Inc.
+# Copyright (C) 2021, Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -54,6 +55,8 @@ if [ ! -f $execname ]; then echo "$execname not created."; exit 77; fi
 # 'check_with_program' can be something like Valgrind or an empty
 # string. Such programs will execute the command if present and help in
 # debugging when the developer doesn't have access to the user's system.
-$check_with_program $execname $cat1 $cat2 --aperture=0.5 --ccol1=2,3   \
-                               --ccol2=2,3 -omatch-merged-cols.txt     \
-                               --outcols=a1,aEFGH,bACCU1,aIJKL,bACCU2
+$check_with_program $execname $cat1 --ccol1=2,3 --kdtree=build \
+                              --output=match-kdtree.fits
+$check_with_program $execname $cat1 $cat2 --aperture=0.5 --ccol1=2,3 \
+                              --ccol2=2,3 --kdtree=match-kdtree.fits \
+                              --output=match-kdtree-separate.fits

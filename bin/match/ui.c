@@ -887,7 +887,7 @@ ui_read_columns(struct matchparams *p)
   if( !p->cp.quiet
       && p->kdtreemode!=MATCH_KDTREE_BUILD
       && p->kdtreemode!=MATCH_KDTREE_DISABLE
-      && p->cols1->size > p->cols2->size )
+      && p->cols1->size > (2*p->cols2->size) )
     error(EXIT_SUCCESS, 0, "TIP: the matching speed will GREATLY IMPROVE "
           "if you swap the two inputs. Currently the second input has "
           "fewer rows than the first. In the k-d tree based matching, "
@@ -895,7 +895,7 @@ ui_read_columns(struct matchparams *p)
           "the k-d will be constructed for the first input. Fewer "
           "first-input rows therefore means a smaller tree, and more "
           "second-input rows will be better distributed in your "
-          "system's CPU");
+          "system's CPU threads");
 
   /* Free the extra spaces. */
   gal_list_str_free(cols1, 1);
@@ -1209,7 +1209,6 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct matchparams *p)
     gal_options_as_fits_keywords(&p->cp);
 
 
-  /* Report the starting information. */
   /* Let the user know that processing has started. */
   if(!p->cp.quiet)
     {

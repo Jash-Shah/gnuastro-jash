@@ -1653,15 +1653,15 @@ gal_statistics_regular_bins(gal_data_t *input, gal_data_t *inrange,
       /* Set the minimum and maximum of the bins. */
       ra=range->array;
       if( (range->size)%2 )
-        error(EXIT_FAILURE, 0, "%s: quantile ranges are not implemented yet",
-              __func__);
+        error(EXIT_FAILURE, 0, "%s: quantile ranges are not "
+              "implemented yet", __func__);
       else
         {
           /* If the minimum isn't set (is blank), find it. */
           if( isnan(ra[0]) )
             {
               tmp=gal_data_copy_to_new_type_free(
-                            gal_statistics_minimum(input), GAL_TYPE_FLOAT64);
+                          gal_statistics_minimum(input), GAL_TYPE_FLOAT64);
               min=*((double *)(tmp->array));
               gal_data_free(tmp);
             }
@@ -1681,9 +1681,10 @@ gal_statistics_regular_bins(gal_data_t *input, gal_data_t *inrange,
           else max=ra[1];
         }
 
-      /* Clean up: if 'range' was allocated. */
+      /* Clean up: if 'range' was allocated within this function. */
       if(range!=inrange) gal_data_free(range);
     }
+
   /* No range was given, find the minimum and maximum. */
   else
     {
@@ -1781,6 +1782,9 @@ gal_statistics_histogram(gal_data_t *input, gal_data_t *bins, int normalize,
      functionality. */
   if(bins==NULL)
     error(EXIT_FAILURE, 0, "%s: 'bins' is NULL", __func__);
+  if(bins->size==1)
+    error(EXIT_FAILURE, 0, "%s: 'bins' has to have more than "
+          "one element", __func__);
   if(bins->status!=GAL_STATISTICS_BINS_REGULAR)
     error(EXIT_FAILURE, 0, "%s: the input bins are not regular. Currently "
           "it is only implemented for regular bins", __func__);

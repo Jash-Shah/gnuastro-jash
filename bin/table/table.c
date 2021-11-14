@@ -915,7 +915,8 @@ table_catrows(struct tableparams *p)
       hdu=table_catrows_findhdu(filell->v, &hdull);
       new=gal_table_read(filell->v, hdu, NULL, p->columns,
                          p->cp.searchin, p->cp.ignorecase,
-                         p->cp.minmapsize, p->cp.quietmmap, NULL);
+                         p->cp.numthreads, p->cp.minmapsize,
+                         p->cp.quietmmap, NULL);
 
       /* Make sure that the same number of columns were extracted from this
          table as they were from the original table. */

@@ -47,6 +47,41 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /*****************      Erosion and dilation      ********************/
 /*********************************************************************/
 static void
+binary_erode_dilate_1d(gal_data_t *input, int dilate0_erode1)
+{
+  size_t i, nr=input->dsize[0];
+  uint8_t f, b, *pt, *fpt, *byt=input->array;
+
+  /* Do a sanity check: */
+  if(dilate0_erode1!=1 && dilate0_erode1!=0)
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s so we can "
+          "fix this problem. The value to 'dilate0_erode1' is %u while it "
+          "should be 0 or 1", __func__, PACKAGE_BUGREPORT, dilate0_erode1);
+
+  /* Set the foreground and background values. */
+  if(dilate0_erode1==0) {f=1; b=0;}
+  else                  {f=0; b=1;}
+
+  /* Check the two extremes. */
+  if(byt[0]==b && byt[1]==f ) byt[0]=GAL_BINARY_TMP_VALUE;
+  if(nr>2)
+    if(byt[nr-1]==b && byt[nr-2]==f) byt[nr-1] = GAL_BINARY_TMP_VALUE;
+
+  /* Go over the full array. */
+  for(i=1;i<nr;++i)
+    if( byt[i]==b && ( byt[i-1]==f || byt[i+1]==f ) )
+      byt[i]=GAL_BINARY_TMP_VALUE;
+
+  /* Set all the changed pixels to the proper values: */
+  fpt=(pt=byt)+nr;
+  do *pt = *pt==GAL_BINARY_TMP_VALUE ? f : *pt; while(++pt<fpt);
+}
+
+
+
+
+
+static void
 binary_erode_dilate_2d_4con(gal_data_t *input, int dilate0_erode1)
 {
   uint8_t f, b, *pt, *fpt, *byt=input->array;
@@ -290,6 +325,10 @@ binary_erode_dilate(gal_data_t *input, size_t num, int connectivity,
   /* Go over every element and do the erosion. */
   switch(binary->ndim)
     {
+    case 1:
+      binary_erode_dilate_1d(binary, d0e1);
+      break;
+
     case 2:
       for(counter=0;counter<num;++counter)
         switch(connectivity)

@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/box.h>
 #include <gnuastro/list.h>
 #include <gnuastro/blank.h>
+#include <gnuastro/binary.h>
 #include <gnuastro/kdtree.h>
 #include <gnuastro/pointer.h>
 #include <gnuastro/threads.h>
@@ -287,10 +288,9 @@ match_rearrange(gal_data_t *A, gal_data_t *B, struct match_sfll **bina)
   size_t ai, ar=A->size, br=B->size;
 
   /* Allocate the space for 'ainb' and initialize it to NaN (since zero is
-     meaningful) in this context (both for indexs and also for
-     floats). This is a two column array that will keep the distance and
-     index of the closest element in catalog 'a' for each element in
-     catalog b. */
+     meaningful in this context; both for indexs and also for floats). This
+     is a two column array that will keep the distance and index of the
+     closest element in catalog 'a' for each element in catalog b. */
   errno=0; ainb=calloc(2*br, sizeof *ainb);
   if(ainb==NULL)
     error(EXIT_FAILURE, errno, "%s: %zu bytes for 'ainb'", __func__,
@@ -300,11 +300,12 @@ match_rearrange(gal_data_t *A, gal_data_t *B, struct match_sfll **bina)
   /* Go over each object in catalog 'a' and re-distribute the near objects,
      to find which ones in catalog 'a' are within the search radius of
      catalog b in a sorted manner. Note that we only need the 'ai' with the
-     minimum distance to 'bi', the rest are junk.*/
+     minimum distance to 'bi', the rest are junk. */
   for( ai=0; ai<ar; ++ai )
     while( bina[ai] )	/* As long as its not NULL.            */
       {
-	/* Pop out a 'bi' and its distance to this 'ai' from 'bina'. */
+	/* Pop out a 'bi' and its distance to this 'ai' from 'bina' (this
+           is the nearest B item to this A element). */
 	match_pop_from_sfll(&bina[ai], &bi, &r);
 
 	/* If nothing has been put here (the 'isnan' condition below is
@@ -988,8 +989,7 @@ struct match_kdtree_params
   double              *a[3];  /* Direct pointers to column arrays.    */
   double              *b[3];  /* Direct pointers to column arrays.    */
   struct match_sfll  **bina;  /* Second cat. items in first.          */
-  gal_data_t         *Abins;  /* Bins along each dimension of A.      */
-  gal_data_t        *Aexist;  /* Bins along each dimension of A.      */
+  gal_data_t        *Aexist;  /* If any element of A exists in bins.  */
   double         *Abinwidth;  /* Width of bins along each dimension.  */
   double              *Amin;  /* Minimum value of A along each dim.   */
   double              *Amax;  /* Maximum value of A along each dim.   */
@@ -999,27 +999,166 @@ struct match_kdtree_params
 
 
 
+/* Find the "coverage" of A along each dimension to help in rejecting
+   non-matches without even calling the k-d tree function.
+
+   The 'MATCH_KDTREE_COVERAGE_MAXBINS' is currently just a place-holder to
+   get the other parts of the algorithm going. But most probably there is a
+   way to optimally select the maximum number automatically. */
+#define MATCH_KDTREE_COVERAGE_MAXBINS 10000
+static void
+match_kdtree_A_coverage(struct match_kdtree_params *p)
+{
+  double *d, min, max;
+  size_t *s, *sf, dim, two=2, numbins;
+  gal_data_t *tmp, *stat, *hist, *range=NULL, *bins=NULL;
+
+  /* Allocate the space to keep the range of first input dimensions. */
+  p->Amin=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0,
+                               __func__, "p->Amin");
+  p->Amax=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0,
+                               __func__, "p->Amax");
+  p->Abinwidth=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0,
+                                    __func__, "p->Abinwidth");
+
+  /* Set the coverage along each dimension. */
+  dim=0;
+  p->Aexist=NULL;
+  for(tmp=p->A; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Find the number of bins based on the range and aperture size. */
+      stat=gal_statistics_minimum(tmp);
+      min=((double *)(stat->array))[0];
+      gal_data_free(stat);
+      stat=gal_statistics_maximum(tmp);
+      max=((double *)(stat->array))[0];
+      gal_data_free(stat);
+
+      /* Set the generic constants. */
+      p->Amin[dim] = min - p->aperture[0];
+      p->Amax[dim] = max + p->aperture[0];
+      numbins=(p->Amax[dim] - p->Amin[dim])/p->aperture[0];
+      if(numbins>MATCH_KDTREE_COVERAGE_MAXBINS)
+        numbins=MATCH_KDTREE_COVERAGE_MAXBINS;
+      if(numbins==0) numbins=1;
+
+      /*************************/
+      //numbins=1;
+      /*************************/
+
+      /* Generate the 'Aexist' list for this dimension. Note that if we
+         have a single bin in this dimension, we can just set everything
+         automatically. */
+      if(numbins==1)
+        {
+          /* We only have one bin, so set the width and a single-element
+             histogram. */
+          p->Abinwidth[dim] = p->Amax[dim] - p->Amin[dim];
+          hist=gal_data_alloc(NULL, GAL_TYPE_UINT8, 1, &numbins, NULL,
+                              0, -1, 1, NULL, NULL, NULL);
+          ((uint8_t *)(hist->array))[0]=1;
+        }
+      else
+        {
+          /* Set the 'range' for the bins. */
+          range=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &two, NULL,
+                               0, -1, 1, NULL, NULL, NULL);
+          d=range->array;
+          d[0]=p->Amin[dim];
+          d[1]=p->Amax[dim];
+
+          /* Generate the histogram of elements in this dimension. */
+          bins=gal_statistics_regular_bins(tmp, range, numbins, NAN);
+          hist=gal_statistics_histogram(tmp, bins, 0, 0);
+
+          /* Set all histograms with atleast one element to 1 and convert
+             it to 8-bit unsigned integer. */
+          sf = (s=hist->array) + hist->size; do *s=*s>0; while(++s<sf);
+          hist=gal_data_copy_to_new_type_free(hist, GAL_TYPE_UINT8);
+
+          /* Dilate the binary histogram to avoid bin-edge-effect (missing
+             a match because the two points are on opposite sides of the
+             bin boundary). Note that we know that the bins are
+             equal/larger than ther user's given aperture and that these
+             bins are only for rejecting points before the k-d tree (they
+             aren't used within the k-d tree matching). */
+          gal_binary_dilate(hist, 1, 1, 1);
+
+          /* Set the general bin properties along this dimension. */
+          d=bins->array;
+          p->Abinwidth[dim] = d[1]-d[0];
+          p->Amin[dim]      = d[ 0            ] - p->Abinwidth[dim]/2;
+          p->Amax[dim]      = d[ bins->size-1 ] + p->Abinwidth[dim]/2;
+        }
+
+      /* For a check.
+      {
+        size_t i;
+        double *d;
+        uint8_t *u=hist->array;
+        printf("\ndim: %zu\n", dim);
+        printf("min: %g\n", p->Amin[dim]);
+        printf("max: %g\n", p->Amax[dim]);
+        printf("binwidth: %g\n", p->Abinwidth[dim]);
+        printf("----------------\n");
+        if(bins)
+          {
+            d=bins->array;
+            for(i=0;i<bins->size;++i)
+              printf("%zu: %-15.8f%-15.8f%u\n", i, d[i]-p->Abinwidth[dim]/2,
+                     d[i]+p->Abinwidth[dim]/2, u[i]);
+          }
+        else
+          printf("0: %-15.8f%-15.8f%u\n", p->Amin[dim],
+                 p->Amax[dim], u[0]);
+        printf("----------------\n");
+      } */
+
+      /* Add the histogram to the list and increment the dimensionality. */
+      gal_list_data_add(&p->Aexist, hist);
+      ++dim;
+
+      /* Clean up (these are done here in case the 'For a check' is
+         uncommented, and we want to debug things). */
+      if(bins)  { gal_data_free(bins);  bins=NULL;  }
+      if(range) { gal_data_free(range); range=NULL; }
+    }
+
+  //printf("%s: Good!\n", __func__); exit(0);
+
+  /* Reverse the list to be in the proper dimensional order. */
+  gal_list_data_reverse(&p->Aexist);
+}
+
+
+
+
+
 static void
 match_kdtree_sanity_check(struct match_kdtree_params *p)
 {
-  double *d;
-  gal_data_t *tmp, *hist, *bins;
-  size_t *s, *sf, dim, numbins=1000;
+  gal_data_t *tmp;
 
   /* Make sure all coordinates and the k-d tree have the same number of
      rows. */
   p->ndim=gal_list_data_number(p->A);
-  if( (   p->ndim != gal_list_data_number(p->B))
-      || (p->ndim != gal_list_data_number(p->A_kdtree)) )
-    error(EXIT_FAILURE, 0, "%s: the 'coord1', 'coord2' and "
-          "'coord1_kdtree' arguments should have the same number "
-          "of nodes/columns (elements in a simply linked list). "
-          "But they each respectively have %zu, %zu and %zu "
-          "nodes/columns", __func__, p->ndim,
+  if( p->ndim != gal_list_data_number(p->B) )
+    error(EXIT_FAILURE, 0, "%s: the 'coord1' and 'coord2' arguments "
+          "should have the same number of nodes/columns (elements "
+          "in a simply linked list). But they each respectively "
+          "have %zu, %zu and %zu nodes/columns", __func__, p->ndim,
           gal_list_data_number(p->B),
           gal_list_data_number(p->A_kdtree));
 
-  /* Make sure the coordinates have a 'double' type. */
+  /* Make sure that the k-d tree only has two columns. */
+  if( gal_list_data_number(p->A_kdtree)!=2 )
+    error(EXIT_FAILURE, 0, "%s: the 'kdtree' argument should only "
+          "two nodes/columns (elements in a simply linked list), "
+          "but it has %zu nodes/columns", __func__,
+          gal_list_data_number(p->A_kdtree));
+
+  /* Make sure the coordinates have a 'double' type and that the k-d tree
+     has an unsigned 32-bit integer type.*/
   for(tmp=p->A; tmp!=NULL; tmp=tmp->next)
     if( tmp->type!=GAL_TYPE_FLOAT64 )
       error(EXIT_FAILURE, 0, "%s: the type of all columns in 'coord1' "
@@ -1060,57 +1199,11 @@ match_kdtree_sanity_check(struct match_kdtree_params *p)
       if( p->B->next->next ) p->b[2]=p->B->next->next->array;
     }
 
-  /* Allocate the space to keep the range of first input dimensions. */
-  p->Amin=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0,
-                               __func__, "p->Amin");
-  p->Amax=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0,
-                               __func__, "p->Amax");
-  p->Abinwidth=gal_pointer_allocate(GAL_TYPE_FLOAT64, p->ndim, 0,
-                                    __func__, "p->Abinwidth");
-
   /* Find the bins of the first input along all its dimensions and select
      those that contain data. This is very important in optimal k-d tree
      based matching because confirming a non-match in a k-d tree is very
      computationally expensive. */
-  dim=0;
-  p->Abins=p->Aexist=NULL;
-  for(tmp=p->A; tmp!=NULL; tmp=tmp->next)
-    {
-      /* Generate the histogram of elements in this dimension. */
-      bins=gal_statistics_regular_bins(tmp, NULL, numbins, NAN);
-      hist=gal_statistics_histogram(tmp, bins, 0, 0);
-
-      /* Set all histograms with atleast one element to 1 and convert it to
-         8-bit unsigned integer. */
-      sf = (s=hist->array) + hist->size; do *s=*s>0; while(++s<sf);
-      hist=gal_data_copy_to_new_type_free(hist, GAL_TYPE_UINT8);
-
-      /* Set the general bin properties along this dimension. */
-      d=bins->array;
-      p->Abinwidth[dim] = d[1]-d[0];
-      p->Amin[dim]      = d[ 0            ] - p->Abinwidth[dim]/2;
-      p->Amax[dim]      = d[ bins->size-1 ] + p->Abinwidth[dim]/2;
-
-      /* For a check:
-      size_t i;
-      double *d=bins->array;
-      uint8_t *u=hist->array;
-      for(i=0;i<bins->size;++i)
-        printf("%-15.8f%-15.8f%u\n", d[i]-p->Abinwidth[dim]/2,
-               d[i]+p->Abinwidth[dim]/2, u[i]);
-      printf("\n"); */
-
-      /* Add the hist and bins to the list for later. */
-      gal_list_data_add(&p->Abins, bins);
-      gal_list_data_add(&p->Aexist, hist);
-
-      /* Increment the dimensionality. */
-      ++dim;
-    }
-
-  /* Reverse the list to be in the proper dimensional order. */
-  gal_list_data_reverse(&p->Abins);
-  gal_list_data_reverse(&p->Aexist);
+  match_kdtree_A_coverage(p);
 }
 
 
@@ -1126,7 +1219,7 @@ match_kdtree_worker(void *in_prm)
   struct match_kdtree_params *p=(struct match_kdtree_params *)tprm->params;
 
   /* High level definitions. */
-  int inrange;
+  int iscovered;
   uint8_t *existA;
   double r, delta[3];
   size_t i, j, ai, bi, h_i;
@@ -1142,18 +1235,18 @@ match_kdtree_worker(void *in_prm)
      thread. */
   for(i=0; tprm->indexs[i] != GAL_BLANK_SIZE_T; ++i)
     {
-      /* Set the easy-to-read indexs: note that this is the index in the
-         second catalog, hence 'bi'. */
+      /* Set the easy-to-read indexs: this is the index in the second
+         catalog, hence 'bi'. */
       bi = tprm->indexs[i];
 
-      /* Fill the 'point' for this thread, and check if each of its
+      /* Fill the 'point' for this thread. But first, check if each of its
          dimensions fall within the coverage of A. */
       j=0;
-      inrange=1;
+      iscovered=1;
       Aexist=p->Aexist;
       for(ccol=p->B; ccol!=NULL; ccol=ccol->next)
         {
-          if(inrange)
+          if(iscovered)
             {
               /* Fill the point location in this dimension and set the
                  pointer. */
@@ -1162,15 +1255,14 @@ match_kdtree_worker(void *in_prm)
 
               /* Make sure it covers the range of A (following the same set
                  of tests as in 'gal_statistics_histogram'). */
-              if( (    po >= p->Amin[j] - p->aperture[0] )
-                  && ( po <= p->Amax[j] + p->aperture[0] ) )
+              if( po >= p->Amin[j] && po <= p->Amax[j] )
                 {
                   h_i=(po-p->Amin[j])/p->Abinwidth[j];
                   if( existA[ h_i - (h_i==p->Aexist->size ? 1 : 0) ] == 0 )
-                    inrange=0;
+                    iscovered=0;
                 }
               else
-                inrange=0;
+                iscovered=0;
             }
 
           /* Increment the dimensionality counter. */
@@ -1179,7 +1271,7 @@ match_kdtree_worker(void *in_prm)
         }
 
       /* Continue with the match if the point is in-range. */
-      if(inrange)
+      if(iscovered)
         {
           /* Find the index of the nearest neighbor in the first catalog to
              this point in the second catalog. */
@@ -1187,21 +1279,28 @@ match_kdtree_worker(void *in_prm)
                                             p->kdtree_root, point,
                                             &least_dist);
 
-          /* Make sure the matched point is within the given aperture
-             (which may be elliptical). If it isn't, then the reported
-             index for this element will be 'GAL_BLANK_SIZE_T'. */
-          for(j=0;j<p->ndim;++j)
-            delta[j]=p->b[j][bi] - p->a[j][ai];
-          r=match_distance(delta, p->iscircle, p->ndim, p->aperture,
-                           p->c, p->s);
+          /* If nothing was found within the least distance, then the 'ai'
+             will be 'GAL_BLANK_SIZE_T'. */
+          if(ai!=GAL_BLANK_SIZE_T)
+            {
+              /* Make sure the matched point is within the given aperture
+                 (which may be elliptical). */
+              for(j=0;j<p->ndim;++j)
+                delta[j]=p->b[j][bi] - p->a[j][ai];
+              r=match_distance(delta, p->iscircle, p->ndim, p->aperture,
+                               p->c, p->s);
 
-          /* If the radial distance is smaller than the radial measure,
-             then add this item to a match with 'ai'. */
-          if(r<p->aperture[0])
-            match_add_to_sfll(&p->bina[ai], bi, r);
+              /* If the radial distance is smaller than the radial measure,
+                 then add this item to a match with 'ai'. */
+              if(r<p->aperture[0])
+                match_add_to_sfll(&p->bina[ai], bi, r);
+            }
 
           /* For a check:
-             printf("first[%zu] matched with second[%zu]\n", ai, bi);
+          if(ai==GAL_BLANK_SIZE_T)
+            printf("second[%zu] matched with first[%zu].\n", bi);
+          else
+            printf("second[%zu] DIDN'T match with first.\n", bi, bi);
           */
         }
     }
@@ -1258,7 +1357,8 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
   /* Basic sanity checks. */
   match_kdtree_sanity_check(&p);
 
-  /* Find all of the items in the second catalog items in the first. */
+  /* Find all of the second catalog points that are within the acceptable
+     radius of the first. */
   match_kdtree_second_in_first(&p, numthreads, minmapsize, quietmmap);
 
   /* Find the best match for each item (from possibly multiple matches). */
@@ -1276,7 +1376,6 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
   free(p.Amin);
   free(p.Amax);
   free(p.Abinwidth);
-  gal_list_data_free(p.Abins);
   gal_list_data_free(p.Aexist);
   return out;
 }

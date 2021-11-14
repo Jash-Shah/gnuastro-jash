@@ -7,6 +7,14 @@ See the end of the file for license conditions.
 
 ** New features
 
+  All programs:
+   - Columns of FITS tables are now read in parallel (when '--numthreads'
+     isn't set to '1', and if the dependency CFITSIO library was built with
+     '--enable-reentrant'). In scenarios where many columns may be
+     necessary (for example the Table or Match programs), this will greatly
+     improve the running time of the programs. This task was implemented
+     based on feedback from Andrés Del Pino Molina.
+
   Crop:
    --widthinpix: when in WCS-mode, the value given to '--width' will be
      interpreted in units of pixels. This will allow having crops of a
@@ -23,6 +31,23 @@ See the end of the file for license conditions.
      Sánchez Benavente.
    --catrowhdu: The HDU(s) of the FITS file(s) given to '--catrowfile'.
 
+  Match:
+   - k-d tree based matching has been added for finding the matching rows,
+     and is set to the default mode. It will do the matching in parallel,
+     which will improve the speed when many rows are present. The k-d tree
+     can also optionally be saved in a file for matching new tables with
+     the same one (further improving running speed). For a full description
+     of Match's new behavior, please see the new "Matching algorithms"
+     section of the book. This feature was implemented with the help of
+     Sachin Kumar Singh.
+   --kdtree: new option to specify the algorithm used by Match. It can take
+     four values: 'internal' (which is the default), 'build' (to build a
+     k-d tree), 'FILE.fits' (name of k-d tree to import), or 'disable' (to
+     do the matching with the old sort-based method). For more, please see
+     the new "Matching algorithms" section of the book.
+   --kdtreehdu: the HDU of the external k-d tree (if a FITS file was given
+     to '--kdtree').
+
 ** Removed features
 
 ** Changed features
@@ -37,10 +62,17 @@ See the end of the file for license conditions.
      '--rawoutput' option. This renaming was done to avoid such confusions
      and was raised by Sepideh Eskandarlou.
 
+  Match:
+   - By default (when '--quiet' isn't called), Match will print the names
+     of the inputs and timings of important steps to the standard output
+     (on the command-line).
+
   Library:
-   - gal_fits_tab_read: now takes the number of threads (only relevant for
+   - gal_fits_tab_read: now takes the number of threads to read the desired
+     columns in parallel (this will greatly improve reading speed when
+     there are many columns and many rows).
+   - gal_table_read: simlar to 'gal_fits_tab_read' (only relevant for
      reading FITS tables).
-   - gal_table_read: simlar to 'gal_fits_tab_read'.
    - gal_blank_initialize: also works on string data, but initializing only
      a tile over a larger block of elements is only supported for numeric
      data types.

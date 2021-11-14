@@ -287,8 +287,6 @@ match_arrange(void *in_prm)
       c=0;
       for(tmp=map->cat; tmp!=NULL; tmp=tmp->next) if(c++==index) break;
 
-      printf("%zu: %s\n", index, tmp->name);
-
       /* Rearrange this columns' elements. */
       match_arrange_in_new_col(map->p, tmp, map->permutation,
                                map->nummatched);
@@ -531,17 +529,17 @@ match_catalog_write_one_col(struct matchparams *p, gal_data_t *a,
         break;
 
       default:
-        error(EXIT_FAILURE, 0, "a bug! Please contact us at %s to fix the "
-              "problem. the value to strarr[%zu][0] (%c) is not recognized",
-              PACKAGE_BUGREPORT, i, strarr[i][0]);
+        error(EXIT_FAILURE, 0, "a bug! Please contact us at %s to "
+              "fix the problem. the value to strarr[%zu][0] (%c) "
+              "is not recognized", PACKAGE_BUGREPORT, i, strarr[i][0]);
       }
 
   /* A small sanity check. */
   if(a || b)
-    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us to fix the problem. "
-          "The two 'a' and 'b' arrays must be NULL by this point: "
-          "'a' %s NULL, 'b' %s NULL", __func__, a?"is not":"is",
-          b?"is not":"is");
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us to fix "
+          "the problem. The two 'a' and 'b' arrays must be NULL "
+          "by this point: 'a' %s NULL, 'b' %s NULL", __func__,
+          a?"is not":"is", b?"is not":"is");
 
   /* Reverse the table and write it out. */
   gal_list_data_reverse(&cat);
@@ -573,7 +571,8 @@ match_catalog_kdtree_build(struct matchparams *p)
   kdtree = gal_kdtree_create(p->cols1, &root);
   if(!p->cp.quiet)
     {
-      if( asprintf(&msg, "k-d tree constructed (%zu rows).", p->cols1->size)<0 )
+      if( asprintf(&msg, "k-d tree constructed (%zu rows).",
+                   p->cols1->size)<0 )
         error(EXIT_FAILURE, errno, "asprintf allocation");
       gal_timing_report(&t1, msg, 1);
       free(msg);
@@ -643,7 +642,8 @@ match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
                              p->cp.quietmmap, nummatched);
       if(!p->cp.quiet)
         {
-          if( asprintf(&msg, "... done (%zu matches found).", *nummatched)<0 )
+          if( asprintf(&msg, "... %zu matches found, done!",
+                       *nummatched)<0 )
             error(EXIT_FAILURE, errno, "asprintf allocation");
           gal_timing_report(&t1, msg, 1);
           free(msg);
@@ -651,7 +651,11 @@ match_catalog_kdtree(struct matchparams *p, size_t *nummatched)
       gal_list_data_free(p->kdtreedata);
       break;
 
-    /* No 'default' necessary because the modes include disabling. */
+    /* Abort if the mode isn't recognized (its a bug!). */
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
+            "the problem! The code %d isn't recognized for 'kdtreemode'",
+            __func__, PACKAGE_BUGREPORT, p->kdtreemode);
     }
 
   /* Return the final match. */
@@ -684,7 +688,7 @@ match_catalog_sort_based(struct matchparams *p, size_t *nummatched)
   /* Let the user know that it finished. */
   if(!p->cp.quiet)
     {
-      if( asprintf(&msg, "... done (%zu matches found).", *nummatched)<0 )
+      if( asprintf(&msg, "... %zu matches found, done!", *nummatched)<0 )
         error(EXIT_FAILURE, errno, "asprintf allocation");
       gal_timing_report(&t1, msg, 1);
       free(msg);
@@ -713,13 +717,10 @@ match_catalog(struct matchparams *p)
       mcols=match_catalog_kdtree(p, &nummatched);
 
       /* If the user just asked to build a k-d tree, no futher processing
-         is necessary. */
+         is necessary, so don't continue. */
       if(p->kdtreemode==MATCH_KDTREE_BUILD) return;
     }
-
-  /* If k-d tree-based matching wasn't used, use the sort-based
-     matching. */
-  if(mcols==NULL)
+  else
     mcols=match_catalog_sort_based(p, &nummatched);
 
   /* If the output is to be taken from the input columns (it isn't just the
@@ -730,8 +731,8 @@ match_catalog(struct matchparams *p)
       if(!p->cp.quiet)
         {
           gettimeofday(&t1, NULL);
-          printf("  - Re-arranging matched rows "
-                 "(skip this with '--logasoutput')...\n");
+          printf("  - Arranging matched rows (skip this with "
+                 "'--logasoutput')...\n");
         }
 
       /* Read (and possibly write) the outputs. Note that we only need to
@@ -769,7 +770,7 @@ match_catalog(struct matchparams *p)
 
       /* Let the user know. */
       if( !p->cp.quiet )
-        gal_timing_report(&t1, "... done.", 1);
+        gal_timing_report(&t1, "... done!", 1);
     }
 
   /* Write the raw information in a log file if necessary.  */

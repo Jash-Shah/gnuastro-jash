@@ -576,7 +576,7 @@ Invoking MakeCatalog
 
 Match
 
-* Matching algorithms::
+* Matching algorithms::         Different ways to find the match
 * Invoking astmatch::           Inputs, outputs and options of Match
 
 Modeling and fitting
@@ -19960,87 +19960,113 @@ The aperture can be a circle or an ellipse with any orientation.
 @subsection Matching algorithms
 
 Matching involves two catalogs, let's call them catalog A (with N rows) and catalog B (with M rows).
-The most basic algorithm that immediately comes to mind is this:
+The most basic matching algorithm that immediately comes to mind is this:
 for each row in A (let's call it @mymath{A_i}), go over all the rows in B (@mymath{B_j}, where @mymath{0<j<M}) and calculate the distance @mymath{|B_j-A_i|}.
-If this distance is less than a certain acceptable distance threshold (or radius), consider @mymath{A_i} and @mymath{B_j} as a match.
+If this distance is less than a certain acceptable distance threshold (or radius, or aperture), consider @mymath{A_i} and @mymath{B_j} as a match.
 
-During the parsing, once you have found that @mymath{A_i} and @mymath{B_j} satisfy the match above, you can even remove @mymath{B_j} from the search of matches for @mymath{A_k} (where @mymath{k>i}).
-Therefore, as you go down A (and more matches are found), you have to calculate less distances (there are fewer elements in B that remain to bex checked).
-However, this will introduce an important bias: @mymath{B_j} may actually be closer to @mymath{A_k} than to the matched @mymath{A_i}!
-But because @mymath{A_i} happened to be before @mymath{A_k} in your table, you removed @mymath{B_j} from the potential search domain of @mymath{A_k}.
-You will therefore loose that match, and replace it by a false match between @mymath{A_i} and @mymath{B_j}!
-
-In a single-dimentional match, this bias depends on the sorting of your two datasets (leading to different matches if you shuffle your datasets).
-But it will get more complex as you add dimensionality (for example catalogs dervied from 2D images or 3D cubes, where you have 2 and 3 different coordinates for each point).
-Here is how we adress this problem in Gnuastro's Match program: as we are doing the first parsing, we keep a log of all elements in A (@mymath{A_i} and @mymath{A_k} in the example above) that were within the radial threshold of @mymath{B_j}.
-Afterwards, for each @mymath{B_j} we can find the nearest element of A, irrespective of how the inputs were sorted, or their dimensionality.
-
-On the other hand, the basic parsing algorithm mentioned above is very computationally expensive:
-@mymath{N\times M} distances have to measured, and calculating the distance requires a square root and power of 2 (in 2 dimensions it would be @mymath{\sqrt{(B_{ix}-A_{ix})^2+(B_{iy}-A_{iy})^2}}), which are not simple operations for the CPU.
+This basic parsing algorithm is very computationally expensive:
+@mymath{N\times M} distances have to measured, and calculating the distance requires a square root and power of 2: in 2 dimensions it would be @mymath{\sqrt{(B_{ix}-A_{ix})^2+(B_{iy}-A_{iy})^2}}.
+If an elliptical aperture is necessary, it can even get more complicated, see @ref{Defining an ellipse and ellipsoid}.
+Such operations are not simple, and will consume many cycles of your CPU!
 As a result, this basic algorithm will become terribly slow as your datasets grow in size.
 For example when N or M exceed hundreds of thousands (which is common in the current days with datasets like the European Space Agency's Gaia mission).
-Therefore that basic parsing algoritm will take too much time and we need to use more efficient ways to parse the two catalogs.
-Gnuastro's Match currently has two such algorithms:
+Therefore that basic parsing algoritm will take too much time and more efficient ways to @emph{find the nearest neighbor} need to be found.
+Gnuastro's Match currently has algorithms for finding the nearest neighbor:
 
 @table @asis
 @item Sort-based
-To avoid the problem of calculating @mymath{N\times M} Euclidean distances (that involve a square root), this method works like this:
+In this algorithm, we will use a moving window over the sorted datasets:
 
 @enumerate
 @item
 Sort the two datasets by their first coordinate.
-Therefore @mymath{A_i<A_j} (only in first coordinate; when @mymath{i<j}), and similarly, sort the elements of B based on the first coordinate.
+Therefore @mymath{A_i<A_j} (when @mymath{i<j}; only in first coordinate), and similarly, sort the elements of B based on the first coordinate.
 @item
 Use the radial distance threshold to define the width of a moving interval over both A and B.
-Therefore, with a single parsing of A, you can find all the elements in A that are sufficiently near every element of B (while rejecting the ones that are too distant when taking other dimensions into account).
-@item
-The nearest A within the subset that is nearest to @mymath{B_j} will be considered as the match.
+Therefore, with a single parsing of both simultaneously, for each A-point, we can find all the elements in B that are sufficiently near to it (within the requested aperture).
 @end enumerate
 
 This method has some caveats:
-1) It requires sorting, which can again be slow.
+1) It requires sorting, which can again be slow on large numbers.
 2) It can only be done on a single CPU thread! So it can't benefit from the modern CPUs with many threads.
 3) There is no way to preserve intermediate information for future matches, for example this can greatly help when one of the matched datasets is always the same.
+To use this sorting method in Match, use @option{--kdtree=disable}.
 
 @item k-d tree based
-The k-d tree concept is much more abstract, but powerful (addressing all the caveats of the sort-based method).
-In short a k-d tree is a partitioning of a k-dimentional space.
-The k-d tree of table A is another table with the same number of rows, but only two integer columns: the integers contain the row indexs (counting from zero) of the left and right branch of that row.
-For more on the k-d tree and Gnuastro's implementation of it, please see @ref{K-d tree}.
+The k-d tree concept is much more abstract, but powerful (addressing all the caveats of the sort-based method described above.).
+In short a k-d tree is a partitioning of a k-dimentional space (``k'' is just a place-holder, so together with ``d'' for dimension, ``k-d'' means ``any number of dimensions''!).
+The k-d tree of table A is another table with the same number of rows, but only two integer columns: the integers contain the row indexs (counting from zero) of the left and right ``branch'' (in the ``tree'') of that row.
+With a k-d tree we can find the nearest point with much fewer (statistically) checks, compared to always parsing from the top-down.
+For more on the k-d tree concept and Gnuastro's implementation, please see @ref{K-d tree}.
 
-When given two catalogs (like the command below), Gnuastro's Match will internally construct a k-d tree for catalog A (the first catalog given to it) and use it for matching with catalog B.
+When given two catalogs (like the command below), Gnuastro's Match will internally construct a k-d tree for catalog A (the first catalog given to it) and use the k-d tree of A, for finding the nearest B-point(s) to each A-point (this is done in parallel on all available CPU threads, unless you specify a certain number of threads to use with @option{--numthreads}, see @ref{Multi-threaded operations})
 @example
-$ astmatch A.fits --ccol1=ra,dec B.fits --ccol2=ra,dec \
+$ astmatch A.fits --ccol1=ra,dec B.fits --ccol2=RA,DEC \
            --aperture=1/3600
 @end example
-However, optionally, you can also build the k-d tree of A and save it into a file, with a separate call to Match (with @option{--kdtree=build} and @option{--output=mykdtree.fits}).
-This external k-d tree can be fed to Match later (to avoid having to reconstruct it every time you want to match with the same first catalog; using @option{--kdtree=mykdtree.fits}).
+However, optionally, you can also build the k-d tree of A and save it into a file, with a separate call to Match, like below
+@example
+$ astmatch A.fits --ccol1=ra,dec --kdtree=build \
+           --output=A-kdtree.fits
+@end example
+This external k-d tree (@file{A-kdtree.fits}) can be fed to Match later (to avoid having to reconstruct it every time you want to match a new catalog with A) like below for matching both @file{B.fits} and @file{C.fits} with @file{A.fits}.
+Note that the same @option{--kdtree} option above, is now given the file name of the k-d tree, instead of @code{build}.
+@example
+$ astmatch A.fits --ccol1=ra,dec --kdtree=A-kdtree.fits \
+           B.fits --ccol2=RA,DEC --aperture=1/3600 \
+           --output=A-B.fits
+$ astmatch A.fits --ccol1=ra,dec --kdtree=A-kdtree.fits \
+           C.fits --ccol2=RA,DEC --aperture=1/3600 \
+           --output=A-C.fits
+@end example
 
-For each point in catalog B, parsing the k-d tree will enable discovery of the nearest point in catalog A.
-But the advantage (compared to parsing from the first element of A to the last, for the nearest point) is that the k-d tree will find the nearest item with much fewer (statistically) checks.
+Irrespective of how the k-d tree is made ready (by importing or by constructing internally), it will be used to find the nearest A-point to each B-point.
+The k-d tree is parsed independently (on different CPU threads) for each row of B.
 
-Therefore, the rows of catalog B will be distributed within the T threads of your CPU.
-The k-d tree is parsed independently for each row of B in each thread, to find the nearest element of A to that row in B.
-Once all threads are finished the inverse checking process mentioned above will be implemented to find the best matchs.
-
-There is just one technical issue however: when there is no neighbor within the acceptable distance of the k-d tree, it is forced to parse all elements.
-Therefore if one catalog only overlaps with the larger catalog in a small area, the algorithm will be forced to parse the full k-d tree for teh majority of points!
+There is just one technical issue however: when there is no neighbor within the acceptable distance of the k-d tree, it is forced to parse all elements to confirm that there is no match!
+Therefore if one catalog only covers a small portion (in the coordinate space) of the other catalog, the k-d tree algorithm will be forced to parse the full k-d tree for the majority of points!
 This will dramatically decrease the running speed of Match.
-Therefore, Match first divides the range of the first input in all its dimensions into 1000 bins (similar to a histogram), and will only do the k-d tree based search when the point in catalog B actually falls within that bin.
+Therefore, Match first divides the range of the first input in all its dimensions into bins that have a width of the requested aperture (similar to a histogram), and will only do the k-d tree based search when the point in catalog B actually falls within a bin that has at least one element in A.
 @end table
 
+Above, we described different ways of finding the @mymath{A_i} that is nearest to each @mymath{B_j}.
+But this isn't the whole matching process!
+Let's go ahead with a ``basic'' description of what happens next...
+You may be tempted to remove @mymath{A_i} from the search of matches for @mymath{B_k} (where @mymath{k>j}).
+Therefore, as you go down B (and more matches are found), you have to calculate less distances (there are fewer elements in A that remain to be checked).
+However, this will introduce an important bias: @mymath{A_i} may actually be closer to @mymath{B_k} than to @mymath{B_j}!
+But because @mymath{B_j} happened to be before @mymath{B_k} in your table, @mymath{A_i} was removed from the potential search domain of @mymath{B_k}.
+The good match (@mymath{B_k} with @mymath{A_i} will therefore be lost, and replaced by a false match between @mymath{B_j} and @mymath{A_i}!
+
+In a single-dimentional match, this bias depends on the sorting of your two datasets (leading to different matches if you shuffle your datasets).
+But it will get more complex as you add dimensionality.
+For example catalogs dervied from 2D images or 3D cubes, where you have 2 and 3 different coordinates for each point.
+
+To address this problem, in Gnuastro (the Match program, or the matching functions of the library) similar to above, we first parse over the elements of B.
+But we won't associate the first nearest-neighbor with a match!
+Instead, we will use an array (with the number of rows in A, let's call it ``B-in-A'') to keep the list of all nearest element(s) in B that match each A-point.
+Once all the points in B are parsed, each A-point in B-in-A will (possibly) have a sorted list of B-points (there may be multiple B-points that fall within the acceptable aperture of each A-point).
+In the previous example, the @mymath{i} element (corresponding to @mymath{A_i}) of B-in-A will contain the following list of B-points: @mymath{B_j} and @mymath{B_k}.
+
+A new array (with the number of points in B, let's call it A-in-B) is then used to find the final match.
+We parse over B-in-A (that was completed above), and from it extract the nearest B-point to each A-point (@mymath{B_k} for @mymath{A_i} in the example above).
+If this is the first A-point that is found for this B-point, then we put this A-point into A-in-B (in the example above, element @mymath{k} is filled with @mymath{A_k}).
+If another A-point was previously found for this B-point, then the distance of the two A-points to that B-point are compared, and the A-point with the smaller distance is kept in A-in-B.
+This will give us the best match between the two catalogs, independent of any sorting issues.
+Both the B-in-A and A-in-B will also keep the distances, so distances are only measured once.
+
 @noindent
-In summary, here are the take-home messages.
+In summary, here are the points to consider when selecting an algorithm, or the order of your inputs (for optimal speed, the match will the the same):
 @itemize
 @item
 For larger datasets, the k-d tree based method (when running on all threads possible) is much more faster than the classical sort-based method.
 @item
 The k-d tree is constructed for the first input table and the multi-threading is done on the rows of the second input table.
 The construction of a larger dataset's k-d tree will take longer, but multi-threading will work better when you have more rows.
-As a result, the optimal way to run match is to give the smaller table as the first argument (so its k-d tree is constructed), and the larger table as the second argument (so its rows are checked in parallel).
+As a result, the optimal way to place your inputs is to give the smaller input table (with fewer rows) as the first argument (so its k-d tree is constructed), and the larger table as the second argument (so its rows are checked in parallel).
 @item
 If you always need to match against one catalog (that is large!), the k-d tree construction itself can take a significant fraction of the running time.
-Therefore you can save its k-d tree into a file and simply give it to later calls.
+Therefore you can save its k-d tree into a file and simply give it to later calls, like the example given in the description of the k-d algorithm mentioned above.
 @end itemize
 
 @node Invoking astmatch,  , Matching algorithms, Match
@@ -20061,17 +20087,22 @@ One line examples:
 ## The wavelengths are in the 5th and 10th columns respectively.
 $ astmatch --aperture=5e-10 --ccol1=5 --ccol2=10 in1.fits in2.txt
 
-## Match the two catalogs with a circular aperture of width 2.
-## (Units same as given positional columns).
-## (By default two columns are given for `--ccol1' and `--ccol2',
-##  The number of values to these determines the dimensions).
-$ astmatch --aperture=2 input1.txt input2.fits
+## Find the row that is closest to (RA,DEC) of (12.3456,6.7890)
+## with a maximum distance of 1 arcseconds (1/3600 degrees).
+$ astmatch input1.txt --ccol1=ra,dec --coord=12.3456,6.7890 \
+           --aperture=1/3600
+
+## Find matching rows of two catalogs with a circular aperture
+## of width 2 (same unit as position columns: pixels in this case).
+$ astmatch input1.txt input2.fits --aperture=2 \
+           --ccol1=X,Y --ccol2=IMG_X,IMG_Y
 
 ## Similar to before, but the output is created by merging various
 ## columns from the two inputs: columns 1, RA, DEC from the first
 ## input, followed by all columns starting with `MAG' and the `BRG'
-## column from second input and finally the 10th from first input.
-$ astmatch --aperture=2 input1.txt input2.fits                   \
+## column from second input and the 10th column from first input.
+$ astmatch input1.txt input2.fits --aperture=1/3600 \
+           --ccol1=ra,dec --ccol2=RAJ2000,DEJ2000 \
            --outcols=a1,aRA,aDEC,b/^MAG/,bBRG,a10
 
 ## Assuming both inputs have the same column metadata (same name
@@ -20097,26 +20128,43 @@ $ astmatch --ccol1=2,3,4 --ccol2=2,3,4 -a0.5/3600,0.5/3600,5e-10 \
 @end example
 
 Match will find the rows that are nearest to each other in two catalogs (given some coordinate columns).
-Therefore two catalogs are necessary for input.
-However, they don't necessarily have to be files:
-1) the first catalog can also come from the standard input (for example a pipe, see @ref{Standard input});
-2) when only one point is needed, you can use the @option{--coord} option to avoid creating a file for the second catalog.
-When the inputs are files, they can be plain text tables or FITS tables, for more see @ref{Tables}.
+Alternatively, it can construct the k-d tree of one catalog to save in a FITS file for future matching of the same catalog with many others.
+To understand the inner working of Match and its algorithms, see @ref{Matching algorithms}.
+
+When matching, two catalogs are necessary for input.
+But for constructing a k-d tree, only a single catalog should be given.
+The input tables can be plain text tables or FITS tables, for more see @ref{Tables}.
+But other ways of feeding inputs area also supported:
+@itemize
+@item
+The @emph{first} catalog can also come from the standard input (for example a pipe that feeds the output of a previous command to Match, see @ref{Standard input});
+@item
+When you only want to match one point with another catalog, you can use the @option{--coord} option to avoid creating a file for the @emph{second} input catalog.
+@end itemize
 
 Match follows the same basic behavior of all Gnuastro programs as fully described in @ref{Common program behavior}.
 If the first input is a FITS file, the common @option{--hdu} option (see @ref{Input output options}) should be used to identify the extension.
 When the second input is FITS, the extension must be specified with @option{--hdu2}.
 
-When @option{--quiet} is not called, Match will print the number of matches found in standard output (on the command-line).
-When matches are found, by default, the output file(s) will be the re-arranged input tables such that the rows match each other: both output tables will have the same number of rows which are matched with each other.
-If @option{--outcols} is called, the output is a single table with rows chosen from either of the two inputs in any order.
-If the @option{--logasoutput} option is called, the output will be a single table with the contents of the log file, see below.
+When @option{--quiet} is not called, Match will print its various processing phases (including the number of matches found) in standard output (on the command-line).
+When matches are found, by default, two tables will be output (if in FITS format, as two HDUs).
+Each output table will contain the re-arranged rows of the respective input table.
+In other words, both tables will have the same number of rows, and row N in both corresponds to the 10th match between the two.
 If no matches are found, the columns of the output table(s) will have zero rows (with proper meta-data).
+The output format can be changed with the following options:
+@itemize
+@item
+@option{--outcols}: The output will be a single table with rows chosen from either of the two inputs in any order.
+@item
+@option{--notmatched}: The output tables will contain the rows that didn't match between the two tables.
+If called with @option{--outcols}, the output will be a single table with all non-matched rows of both tables.
+@item
+@option{--logasoutput}: The output will be a single table with the contents of the log file, see below.
+@end itemize
 
 If no output file name is given with the @option{--output} option, then automatic output @ref{Automatic output} will be used to determine the output name(s).
-Depending on @option{--tableformat} (see @ref{Input output options}), the output will then be a (possibly multi-extension) FITS file or (possibly two) plain text file(s).
-When the output is a FITS file, the default re-arranged inputs will be two extensions of the output FITS file.
-With @option{--outcols} and @option{--logasoutput}, the FITS output will be a single table (in one extension).
+Depending on @option{--tableformat} (see @ref{Input output options}), the output will be a (possibly multi-extension) FITS file or (possibly two) plain text file(s).
+Generally, giving a filename to @option{--output} is recommended.
 
 When the @option{--log} option is called (see @ref{Operating mode options}), and there was a match, Match will also create a file named @file{astmatch.fits} (or @file{astmatch.txt}, depending on @option{--tableformat}, see @ref{Input output options}) in the directory it is run in.
 This log table will have three columns.
@@ -20131,6 +20179,7 @@ In this case, the output file (possibly given by the @option{--output} option) w
 @strong{@option{--log} isn't thread-safe}: As described above, when @option{--logasoutput} is not called, the Log file has a fixed name for all calls to Match.
 Therefore if a separate log is requested in two simultaneous calls to Match in the same directory, Match will try to write to the same file.
 This will cause problems like unreasonable log file, undefined behavior, or a crash.
+Remember that @option{--log} is mainly intended for debuging purposes, if you want the log file with a specific name, simply use @option{--logasoutput} (which will also be faster, since no arranging of the input columns is necessary).
 @end cartouche
 
 @table @option
@@ -20139,6 +20188,29 @@ This will cause problems like unreasonable log file, undefined behavior, or a cr
 The extension/HDU of the second input if it is a FITS file.
 When it isn't a FITS file, this option's value is ignored.
 For the first input, the common option @option{--hdu} must be used.
+
+@item -k STR
+@itemx --kdtree=STR
+Select the algorithm and/or the way to construct or import the k-d tree.
+A summary of the four acceptable strings for this option are described here for completeness.
+However, for a much more detailed discussion on Match's algorithms with examples, see @ref{Matching algorithms}.
+@table @code
+@item internal
+Construct a k-d tree for the first input internally (within the same run of Match), and parallelize over the rows of the second to find the nearest points.
+This is the default algorithm/method used by Match (when this option isn't called).
+@item build
+Only construct a k-d tree of a single input and abort.
+The name of the k-d tree is value to @option{--output}.
+@item CUSTOM-FITS-FILE
+Use the given FITS file as a k-d tree (that was previously constructed with Match itself) of the first input, and don't construct any k-d tree internally.
+The FITS file should have two columns with an unsigned 32-bit integer data type and a @code{KDTROOT} keyword that contains the index of the root of the k-d tree.
+For more on Gnuastro's k-d tree format, see @ref{K-d tree}.
+@item disable
+Don't use the k-d tree algorithm for finding the nearest neighbor, intead, use the sort-based method.
+@end table
+
+@item --kdtreehdu=STR
+The HDU of the FITS file, when a FITS file is given to the @option{--kdtree} option that was described above.
 
 @item --outcols=STR[,STR,[...]]
 Columns (from both inputs) to write into a single matched table output.
