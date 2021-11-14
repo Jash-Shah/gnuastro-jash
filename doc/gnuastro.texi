@@ -11337,12 +11337,12 @@ Don't modify the names of the concatenated (appended) columns, see description i
 Add the rows of the given file to the output table.
 The selected columns in the tables given to this option should have the same number and datatype and the rows before control reaches this phase (after column selection and column concatenation), for more see @ref{Operation precedence in Table}.
 
-For example, if @file{a.fits}, @file{b.fits} and @file{c.fits} have the columns @code{RA}, @code{DEC} and @code{MAGNITUDE} (possibly in different column-numbers in their respective table), the command below will add their rows (in the same order) into the final output.
+For example, if @file{a.fits}, @file{b.fits} and @file{c.fits} have the columns @code{RA}, @code{DEC} and @code{MAGNITUDE} (possibly in different column-numbers in their respective table, along with many more columns), the command below will add their rows into the final output that will only have these three columns:
 
 @example
 $ asttable a.fits --catrowfile=b.fits --catrowhdu=1 \
                   --catrowfile=c.fits --catrowhdu=1 \
-                  --output=allrows.fits
+                  -cRA,DEC,MAGNITUDE --output=allrows.fits
 @end example
 
 @cartouche
