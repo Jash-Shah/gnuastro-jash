@@ -1119,12 +1119,6 @@ ui_preparations(struct tableparams *p)
     arithmetic_indexs_final(p, colmatch);
 
 
-  /* Now that the data columns are ready, we can free the string linked
-     list. */
-  gal_list_str_free(p->columns, 1);
-  p->columns=NULL;
-
-
   /* Make sure the (possible) output name is writable. */
   gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
 
@@ -1265,6 +1259,7 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct tableparams *p)
   /* Read/allocate all the necessary starting arrays. */
   ui_preparations(p);
 
+
   /* Let the user know basic information if necessary (for example when a
      random number generator has been used). */
   if(p->rng && !p->cp.quiet)
@@ -1309,8 +1304,9 @@ ui_free_report(struct tableparams *p)
   free(p->cp.output);
   ui_outcols_free(p->outcols);
   gal_list_data_free(p->table);
-  gal_list_data_free(p->colmetadata);
+  gal_list_str_free(p->columns, 1);
   if(p->colarray) free(p->colarray);
+  gal_list_data_free(p->colmetadata);
 
   /* If a random number generator was allocated, free it. */
   if(p->rng) gsl_rng_free(p->rng);

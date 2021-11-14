@@ -42,7 +42,7 @@ enum program_args_groups
 /* Available letters for short options:
 
    a d f g j k l p t v x y z
-   A B E G H J O Q R X Y
+   A B E G J O Q X Y
 */
 enum option_keys_enum
 {
@@ -63,6 +63,8 @@ enum option_keys_enum
   UI_KEY_CATCOLUMNS      = 'C',
   UI_KEY_CATCOLUMNHDU    = 'u',
   UI_KEY_CATCOLUMNFILE   = 'L',
+  UI_KEY_CATROWFILE      = 'R',
+  UI_KEY_CATROWHDU       = 'H',
   UI_KEY_COLMETADATA     = 'm',
 
   /* Only with long version (start with a value 1000, the rest will be set

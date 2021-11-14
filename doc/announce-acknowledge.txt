@@ -2,7 +2,9 @@ Alphabetically ordered list to acknowledge in the next release.
 
 Sepideh Eskandarlou
 Zahra Hosseini
+Raúl Infante-Sainz
 Sebastian Luna-Valero
+Manuel Sánchez-Benavente
 Peter Teuben
 Jesús Varela
 

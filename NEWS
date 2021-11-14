@@ -13,6 +13,16 @@ See the end of the file for license conditions.
      fixed pixel size, even when the mode of the central coordinate is in
      WCS. This was suggested by Jesús Varela.
 
+  Table:
+   --catrowfile: File to concatenate (i.e., add or append) rows into the
+     main input table. With this option, you can add the rows of another
+     table into the final output. This option can be called multiple times,
+     allowing you to merge rows of any number of tables. This job is done
+     after concatenating columns, but before any of the row-selection
+     operations. This was suggested by Raúl Infante-Sainz and Manuel
+     Sánchez Benavente.
+   --catrowhdu: The HDU(s) of the FITS file(s) given to '--catrowfile'.
+
 ** Removed features
 
 ** Changed features

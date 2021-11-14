@@ -815,6 +815,158 @@ table_catcolumn(struct tableparams *p)
 
 
 
+/* Find the HDU of the table to read. */
+static char *
+table_catrows_findhdu(char *filename, gal_list_str_t **hdull)
+{
+  char *hdu;
+
+  /* Set the HDU (not necessary for non-FITS tables). */
+  if(gal_fits_file_recognized(filename))
+    {
+      if(*hdull) { hdu=(*hdull)->v; *hdull=(*hdull)->next; }
+      else
+        error(EXIT_FAILURE, 0, "not enough '--catrowhdu's (or "
+              "'-H'). For every FITS table given to '--catrowfile'. "
+              "A call to '--catrowhdu' is necessary to identify "
+              "its HDU/extension");
+    }
+  else hdu=NULL;
+
+  /* Return the HDU. */
+  return hdu;
+}
+
+
+
+
+
+/* Preparations for adding rows: allocate final table, copy input table
+   into it, and free the input table (while checking if enough HDUs are
+   given for all the tables whose rows should be added). */
+static size_t
+table_catrows_prepare(struct tableparams *p)
+{
+  char *hdu;
+  int tableformat;
+  gal_data_t *tmp, *out=NULL;
+  size_t nrows=p->table->size;
+  gal_list_str_t *filell, *hdull;
+  size_t numcols, numrows, filledrows=p->table->size;
+
+  /* Go over all the given tables and find the final number of rows. */
+  hdull=p->catrowhdu;
+  for(filell=p->catrowfile; filell!=NULL; filell=filell->next)
+    {
+      hdu=table_catrows_findhdu(filell->v, &hdull);
+      gal_table_info(filell->v, hdu, NULL, &numcols, &numrows,
+                     &tableformat);
+      nrows+=numrows;
+    }
+
+  /* Allocate the new table with the necessary number of rows, then reverse
+     the newly allocated table (its columns were added in a
+     first-in-first-out list).*/
+  for(tmp=p->table; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Allocate the new column. */
+      gal_list_data_add_alloc(&out, NULL, tmp->type, 1, &nrows, NULL,
+                              0, p->cp.minmapsize, p->cp.quietmmap,
+                              tmp->name, tmp->unit, tmp->comment);
+
+      /* Put the full contents of the existing column into the new
+         column: this will be the first set of rows,  */
+      memcpy(out->array, tmp->array, tmp->size*gal_type_sizeof(tmp->type));
+    }
+  gal_list_data_reverse(&out);
+
+  /* Clean up and return. */
+  gal_list_data_free(p->table);
+  p->table=out;
+  return filledrows;
+}
+
+
+
+
+
+/* Import rows from another set of table(s). */
+static void
+table_catrows(struct tableparams *p)
+{
+  char *hdu;
+  gal_data_t *new, *ttmp, *tmp;
+  gal_list_str_t *filell, *hdull;
+  size_t colcount, ncols, ncolstest, filledrows;
+
+  /* Make sure enough HDUs are given, and allocate the final output table,
+     while filling the initiall table rows into it. */
+  filledrows=table_catrows_prepare(p);
+
+  /* Go over all the given tables and extract the same set of columns that
+     were extracted from the input table. */
+  hdull=p->catrowhdu;
+  ncols=gal_list_data_number(p->table);
+  for(filell=p->catrowfile; filell!=NULL; filell=filell->next)
+    {
+      /* Read the columns of the new table. */
+      hdu=table_catrows_findhdu(filell->v, &hdull);
+      new=gal_table_read(filell->v, hdu, NULL, p->columns,
+                         p->cp.searchin, p->cp.ignorecase,
+                         p->cp.minmapsize, p->cp.quietmmap, NULL);
+
+      /* Make sure that the same number of columns were extracted from this
+         table as they were from the original table. */
+      ncolstest=gal_list_data_number(new);
+      if(ncolstest!=ncols)
+        error(EXIT_FAILURE, 0, "%s: %zu column(s) were matched with "
+              "your requested columns. However, the final table "
+              "before adding rows contains %zu column(s). For "
+              "concatenating (adding) rows, the final number of "
+              "columns in all input tables should be the same. "
+              "Note that adding columns is done before adding "
+              "rows", gal_fits_name_save_as_string(filell->v, hdu),
+              ncolstest, ncols);
+
+      /* Parse all the new columns and add their contents to the already
+         allocated space of the output. */
+      colcount=1;
+      ttmp=p->table;
+      for(tmp=new; tmp!=NULL; tmp=tmp->next)
+        {
+          /* See if this column has the same type as the same column in the
+             input table. */
+          if(tmp->type!=ttmp->type)
+            error(EXIT_FAILURE, 0, "%s: column %zu has a data type of "
+                  "'%s'. However, in the final table (before adding "
+                  "rows) this column has a type of '%s'. For "
+                  "concatenating (adding) rows, the columns must have "
+                  "the same data type. Note that adding columns is "
+                  "done before adding rows. If you haven't added columns "
+                  "you can use Table's column arithmetic to change the "
+                  "data type of this column in the inputs",
+                  gal_fits_name_save_as_string(filell->v, hdu), colcount,
+                  gal_type_name(tmp->type, 1), gal_type_name(ttmp->type, 1));
+
+          /* Add the new rows and incremenet the counter. */
+          memcpy(gal_pointer_increment(ttmp->array, filledrows, ttmp->type),
+                 tmp->array, tmp->size*gal_type_sizeof(tmp->type));
+
+          /* Take 'ttmp' to the next column and increment the counter */
+          ttmp=ttmp->next;
+          ++colcount;
+        }
+
+      /* Clean up the columns of the table and increment 'filledrows'. */
+      filledrows += new->size;
+      gal_list_data_free(new);
+    }
+}
+
+
+
+
+
 void
 table_colmetadata(struct tableparams *p)
 {
@@ -992,8 +1144,11 @@ table_noblank(struct tableparams *p)
 void
 table(struct tableparams *p)
 {
-  /* Concatenate the columns of tables (if required)*/
+  /* Concatenate the columns of tables (if required). */
   if(p->catcolumnfile) table_catcolumn(p);
+
+  /* Concatenate the rows of multiple tables (if required). */
+  if(p->catrowfile) table_catrows(p);
 
   /* Apply ranges based on row values (if required). */
   if(p->selection) table_select_by_value(p);

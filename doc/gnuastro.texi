@@ -11019,12 +11019,30 @@ Table simply reads the column metadata (name, units, numeric data type and comme
 Table then terminates and no other operation is done.
 This can therefore be called at the end of an arbitrarily long Table command only to remember the column metadata, then deleted to continue writing the command (using the shell's history to retrieve the previous command with an up-arrow key).
 
-@item Columns from other files (@option{--catcolumns} and @option{--catcolumnfile})
-With this feature, you can import columns from other tables (in other files).
-The rest of the operations below are done on the rows, therefore you can merge the columns of various tables into one table, then start limiting the rows to have in the output.
+@item Column selection (@option{--column})
+When this option is given, only the columns given to this option (from the main input) will be used for all future steps.
+When @option{--column} (or @option{-c}) isn't given, then all the main input's columns will be used in the next steps.
 
-If any of the row-based operations below are requested in the same Table command, they will also be applied to the rows of these added columns.
-However, the conditions to keep/reject rows can only be applied to the rows of the main input table.
+@item Column(s) from other file(s) (@option{--catcolumnfile} and @option{--catcolumnhdu}, @option{--catcolumns})
+When column concatenation (addition) is requested, columns from other tables (in other files, or other HDUs of the same FITS file) will be added after the existing columns read from the main input.
+In one command, you can call these options multiple times to allow addition of columns from many files.
+
+The rest of the operations below are done on the rows, therefore you can merge the columns of various tables into one table, then start adding/limiting the rows of the output.
+If any of the row-based operations below are requested in the same @code{asttable} command, they will also be applied to the rows of the added columns.
+However, the conditions to keep/reject rows can only be applied to the rows of the columns in main input table (not the columns that are added with these options).
+
+@item Rows from other file(s) (@option{--catrowfile} and @option{--catrowhdu})
+With this feature, you can import rows from other tables (in other files, or other HDUs of the same FITS file).
+The same column selection of @option{--column} is applied to the tables given here.
+The column metadata (name, units and comments) will be taken from the main input.
+Two conditions are mandatory for adding rows:
+@itemize
+@item
+The number of columns used from the new tables must be equal to the number of columns in memory, by the time control reaches here.
+@item
+The data type of each column (see @ref{Numeric data types}) should be the same as the respective column in memory by the time control reaches here.
+If the datatypes are different, you can use the type conversion operators of Table's column arithmetic on the inputs in a separate command first (see @ref{Numerical type conversion operators} and @ref{Column arithmetic}).
+@end itemize
 
 @item Row selection by value in a column
 @itemize
@@ -11301,7 +11319,7 @@ For a more complete example, see @ref{Working with catalogs estimating colors}.
 
 @item -u STR/INT
 @itemx --catcolumnhdu=STR/INT
-The HDU/extension of the FITS file(s) that should be concatenated, or appended, with @option{--catcolumnfile}.
+The HDU/extension of the FITS file(s) that should be concatenated, or appended, by column with @option{--catcolumnfile}.
 If @option{--catcolumn} is called more than once with more than one FITS file, its necessary to call this option more than once.
 The HDUs will be loaded in the same order as the FITS files given to @option{--catcolumnfile}.
 
@@ -11313,6 +11331,33 @@ See @option{--catcolumnfile} for more.
 
 @item --catcolumnrawname
 Don't modify the names of the concatenated (appended) columns, see description in @option{--catcolumnfile}.
+
+@item -R FITS/TXT
+@itemx --catrowfile=FITS/TXT
+Add the rows of the given file to the output table.
+The selected columns in the tables given to this option should have the same number and datatype and the rows before control reaches this phase (after column selection and column concatenation), for more see @ref{Operation precedence in Table}.
+
+For example, if @file{a.fits}, @file{b.fits} and @file{c.fits} have the columns @code{RA}, @code{DEC} and @code{MAGNITUDE} (possibly in different column-numbers in their respective table), the command below will add their rows (in the same order) into the final output.
+
+@example
+$ asttable a.fits --catrowfile=b.fits --catrowhdu=1 \
+                  --catrowfile=c.fits --catrowhdu=1 \
+                  --output=allrows.fits
+@end example
+
+@cartouche
+@noindent
+@strong{How to avoid repetition when adding rows:} this option will simply add the rows of multiple tables into one, it doesn't check their contents!
+Therefore if you use this option on multiple catalogs that may have some shared physical objects in some of their rows, those rows/objects will be repeated in the final table.
+In such scenarios, to avoid potential repetition, it is better to use @ref{Match} (with @option{--notmatched} and @option{--outcols=AAA,BBB}) instead of Table.
+For more on using Match for this scenario, see the description of @option{--outcols} in @ref{Invoking astmatch}.
+@end cartouche
+
+@item -H STR
+@itemx --catrowhdu=STR
+The HDU/extension of the FITS file(s) that should be concatenated, or appended, by rows with @option{--catrowfile}.
+If @option{--catrowfile} is called more than once with more than one FITS file, its necessary to call this option more than once also (once for every FITS table given to @option{--catrowfile}).
+The HDUs will be loaded in the same order as the FITS files given to @option{--catrowfile}.
 
 @item -O
 @itemx --colinfoinstdout
