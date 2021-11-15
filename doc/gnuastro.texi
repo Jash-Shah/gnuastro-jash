@@ -23462,6 +23462,9 @@ $ NORMRADII_OUTER=30
 $ IMAGE=image.fits.fz
 $ MINIMUM_MAGNITUDE=0
 $ MAXIMUM_MAGNITUDE=10
+$ MINIMUM_AXISRATIO=0.9
+$ MINIMUM_DISTANCE=0.1
+$ MATCH_APERTURE=0.25
 $ IMAGEID="jplus-dr2/get_fits?id=67510"
 $ URL="http://archive.cefca.es/catalogues/vo/siap/"
 @end example
@@ -23473,8 +23476,10 @@ After that, use the script @file{astscript-psf-create-select-stars} to select on
 $ wget $URL$IMAGEID -O $IMAGE
 
 $ astscript-psf-create-select-stars $IMAGE --hdu=1 \
-      --min=$MINIMUM_MAGNITUDE \
-      --max=$MAXIMUM_MAGNITUDE \
+      --magnituderange=$MINIMUM_MAGNITUDE,$MAXIMUM_MAGNITUDE \
+      --minaxisratio=$MINIMUM_AXISRATIO \
+      --mindistdeg=$MINIMUM_DISTANCE \
+      --matchaperturedeg=$MATCH_APERTURE \
       --output=catalog.fits
 @end example
 
@@ -23597,24 +23602,29 @@ Examples:
 
 @example
 ## From input, image select the stars in the range of
-## magnitude between '--min' and '--max'.
+## magnitude between '7' and '9'.
 $ astscript-psf-create-select-stars image.fits --hdu=1 \
-    --segmented=segment.fits --min=5 --max=7 \
-    --output=selected-gaiastars.fits
+      --magnituderange=7,9 \
+      --minaxisratio=0.9 \
+      --mindistdeg=0.1 \
+      --matchaperturedeg=0.25 \
+      --output=catalog.fits
 
 ## Select the stars in the range of magnitude between
-## 5 and 7 magnitudes from starscatalog.fits
-$ astscript-psf-creat-select-stars image.fits --hdu=1 \
-    --catalog=starscatalog.fits --segmented=segment.fits \
-    --min=5 --max=7 --output=selected-simulatestars.fits
+## 7 and 9 magnitudes from starscatalog.fits
+$ astscript-psf-create-select-stars image.fits --hdu=1 \
+    --catalog=starscatalog.fits \
+    --magnituderange=7,9 \
+    --minaxisratio=0.9 \
+    --mindistdeg=0.1 \
+    --matchaperturedeg=0.25 \
+    --output=catalog.fits
 
 @end example
 
-The input of this script is an image that gives us a table of stars in range of magnitudes between @option{--min} to @option{--max} as output.
-It is possible to provide a segmented image with the option @option{--segmented}.
-This image should be the output of @option{astsegment} and it is used to match the catalog of stars from gaia with clumps catalog.
-You can also optionally specify the magnitude range with the the options @option{--min} and @option{--max}.
-If the @option{--min} and @option{--max} options are not specified, by default 19 and 20 are selected for @option{--min} and @option{--max}, respectively.
+The input of this script is an image that gives us a table of stars in range of magnitudes between 7 to 9 as output.
+It is possible to provide the range of magnitude with the option @option{--magnituderange}.
+The @option{--magnituderange}, @option{--minaxisratio}, @option{--mindistdeg} and @option{--matchaperturedeg} are mandatory and if these are not specified the code will be aborted. In the below, explains more about these options.
 
 The output of this script is a file whose name can be specified with the @option{--output} option.
 More options are available with the goal of obtaining good selected stars.
