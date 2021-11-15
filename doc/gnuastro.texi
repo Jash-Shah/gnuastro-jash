@@ -23680,7 +23680,7 @@ This option determines the aperture (in degrees) for matching the catalog from g
 @item -Q FLT
 @itemx --minaxisratio=FLT
 Select stars only with axis ratio values greater than the specified by this option.
-By default, it is set to 0.9, which means that only stars with axis ratio between 0.9 and 1.0 will be considered.
+Only stars with axis ratio between @option{--minaxisratio} to 1.0 will be selected.
 
 @item -D FLT
 @itemx --mindistdeg=FLT
