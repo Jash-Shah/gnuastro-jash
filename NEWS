@@ -81,6 +81,7 @@ See the end of the file for license conditions.
   bug #61329: make check crash in macOS in convolve/spectrum-1d.sh, found
               and fixed with the help of Sebastian Luna-Valero.
   bug #61378: Table crash when input is sexagesimal RA/DEC and no metadata.
+  bug #61462: Crash on FITS binary table colums with repeat of 0.
 
 
 
