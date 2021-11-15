@@ -318,7 +318,7 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
   double tmpd;
   void *tmpdptr=&tmpd;
   gal_data_t *col, *prev, *tmp;
-  size_t n=0, maxcnum=0, numtokens;
+  size_t ncol=0, maxcnum=0, numtokens;
   char *line, *token, *end, *aline=NULL;
 
   /* Make a copy of the input line if necessary. */
@@ -350,14 +350,15 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
     maxcnum = maxcnum>col->status ? maxcnum : col->status;
 
   /* Go over the line check/fill the column information. */
-  while(++n)
+  while(++ncol)
     {
       /* When we are dealing with a text table, check if there is
          information for this column. For a text image, only the number of
          tokens is important (as the second dimension of the image), so
          just assume there no information. */
       if(format==TXT_FORMAT_TABLE)
-        for(col=*datall; col!=NULL; col=col->next) {if(col->status==n) break;}
+        for(col=*datall; col!=NULL; col=col->next)
+          { if(col->status==ncol) break; }
       else
         col=NULL;
 
@@ -392,14 +393,14 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
             }
           else
             {
-              token=strtok_r(n==1?line:NULL, GAL_TXT_DELIMITERS, &line);
+              token=strtok_r(ncol==1?line:NULL, GAL_TXT_DELIMITERS, &line);
               if(token==NULL) break;
             }
         }
       else
         {
           /* Make sure a token exists in this undefined column. */
-          token=strtok_r(n==1?line:NULL, GAL_TXT_DELIMITERS, &line);
+          token=strtok_r(ncol==1?line:NULL, GAL_TXT_DELIMITERS, &line);
           if(token==NULL) break;
 
           /* A token exists. For a table, define a new element in the
@@ -420,14 +421,14 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
                   && isnan( gal_units_ra_to_degree(token) )
                   && isnan( gal_units_dec_to_degree(token) ) )
                 error(EXIT_FAILURE, 0, "'%s' couldn't be read as a number "
-                      "(element %zu of first uncommented line) %f ", token, n,
-                      gal_units_ra_to_degree(token));
+                      "(element %zu of first uncommented line) %f ", token,
+                      ncol, gal_units_ra_to_degree(token));
 
               /* Allocate this column's dataset and set it's 'status' to
                  the column number that it corresponds to. */
               gal_list_data_add_alloc(datall, NULL, GAL_TYPE_FLOAT64, 0,
                                       NULL, NULL, 0, -1, 1, NULL, NULL, NULL);
-              (*datall)->status=n;
+              (*datall)->status=ncol;
             }
         }
     }
@@ -443,20 +444,21 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
 
      Note that 'n' counts from 1, so the total number of tokens is one less
      than 'n'.*/
-  numtokens=n-1;
-  if(format==TXT_FORMAT_IMAGE) n=1;
+  numtokens=ncol-1;
+  if(format==TXT_FORMAT_IMAGE) ncol=1;
 
   /* If the number of columns/images given by the comments is larger than
      the actual number of lines, remove those that have larger numbers from
      the linked list before things get complicated outside of this
      function. */
-  if(maxcnum>n)
+  if(maxcnum>numtokens)
     {
       prev=NULL;
       col=*datall;
       while(col!=NULL)
         {
-          if(col->status > n) /* Column has no data (was only in comments) */
+          /* This column has no data (was only in comments) */
+          if(col->status > numtokens)
             {
               /* This column has to be removed/freed. But we have to make
                  some corrections before freeing it:
@@ -575,12 +577,12 @@ txt_get_info_line(char *line, gal_data_t **datall, char *comm_start,
 
   switch( gal_txt_line_stat(line) )
     {
-      /* Line is a comment, see if it has formatted information. */
+    /* Line is a comment, see if it has formatted information. */
     case GAL_TXT_LINESTAT_COMMENT:
       txt_info_from_comment(line, datall, comm_start, inplace);
       break;
 
-      /* Line is actual data, use it to fill in the gaps.  */
+    /* Line is actual data, use it to fill in the gaps.  */
     case GAL_TXT_LINESTAT_DATAROW:
       ++dsize[0];
       if(*firstlinedone==0)
@@ -659,8 +661,8 @@ txt_get_info(char *filename, gal_list_str_t *lines, int format,
          lines, but also confirm/complete the info by parsing the first
          uncommented line. */
       while( getline(&line, &linelen, fp) != -1 )
-        txt_get_info_line(line, &datall, comm_start, &firstlinedone, format,
-                          dsize, 1);
+        txt_get_info_line(line, &datall, comm_start, &firstlinedone,
+                          format, dsize, 1);
 
 
       /* Clean up and close the file. */
