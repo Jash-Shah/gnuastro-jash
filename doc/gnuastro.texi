@@ -23601,8 +23601,8 @@ $ astscript-psf-create-select-stars [OPTION...] FITS-file
 Examples:
 
 @example
-## From input, image select the stars in the range of
-## magnitude between '7' and '9'.
+## From the Gaia select the stars in the range of magnitude
+## between '7' and '9', which overlap with input image.
 $ astscript-psf-create-select-stars image.fits --hdu=1 \
       --magnituderange=7,9 \
       --minaxisratio=0.9 \
@@ -23611,7 +23611,7 @@ $ astscript-psf-create-select-stars image.fits --hdu=1 \
       --output=catalog.fits
 
 ## Select the stars in the range of magnitude between
-## 7 and 9 magnitudes from starscatalog.fits
+## 7 and 9 magnitudes from the input catalog.
 $ astscript-psf-create-select-stars image.fits --hdu=1 \
     --catalog=starscatalog.fits \
     --magnituderange=7,9 \
