@@ -84,6 +84,8 @@ See the end of the file for license conditions.
   bug #61462: Crash on FITS binary table colums with repeat of 0.
   bug #61490: Extra columns in the metadata causes crash in plain-text
               tables, found by Zohre Ghaffari.
+  bug #61493: NoiseChisel's --checksn not showing pseudos equal to
+              --snminarea (only larger ones), found by Raúl Infante-Sainz.
 
 
 

@@ -626,13 +626,14 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
 
 
   /* A small sanity check.
-  {
-    size_t i;
-    for(i=1;i<num+1;++i)
-      printf("%zu (%u): %-5zu %-13.3f %-13.3f %-13.3f %-13.3f\n", i, flag[i],
-             area[i], brightness[i], pos[i*pcols], pos[i*pcols+1],
-             pos[i*pcols+2]);
-  }
+  if(s0d1D2==1)
+    {
+      size_t i;
+      for(i=1;i<num+1;++i)
+        printf("%zu (%u): %-5zu %-13.3f %-13.3f %-13.3f %-13.3f\n",
+               i, dlab ? flag[i] : 255, area[i], brightness[i],
+               pos[i*pcols], pos[i*pcols+1], pos[i*pcols+2]);
+    }
   */
 
 
@@ -663,7 +664,7 @@ detection_sn(struct noisechiselparams *p, gal_data_t *worklab, size_t num,
   for(i=1;i<tablen;++i)
     {
       ave=brightness[i]/area[i];
-      if( area[i]>p->snminarea && ave>0.0f && pos[i*pcols]>0.0f )
+      if( area[i]>=p->snminarea && ave>0.0f && pos[i*pcols]>0.0f )
         {
           /* Get the flux weighted center coordinates. */
           for(j=0;j<ndim;++j)
