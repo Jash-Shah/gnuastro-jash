@@ -939,8 +939,7 @@ ui_preparations_to_img_mode(struct cropparams *p)
               if(pixwidth>UI_WIDTH_TOO_LARGE_SIZE)
                 ui_warning_width_is_too_large(darr[i], i+1, pixwidth,
                                               pixscale[i]);
-              else
-                darr[i]=pixscale[i];
+              darr[i]=pixwidth;
             }
           free(pixscale);
         }

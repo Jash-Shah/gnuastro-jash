@@ -37,6 +37,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/data.h>
 #include <gnuastro/table.h>
 #include <gnuastro/blank.h>
+#include <gnuastro/units.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/pointer.h>
 #include <gnuastro/arithmetic.h>
@@ -611,6 +612,148 @@ gal_options_read_interpmetric(struct argp_option *option, char *arg,
 
 
 
+/* If the current token (in a 'colon'-separated list) is a sexagesimal
+   number, or a normal number, read it as a double, and return the pointer
+   to the end of the string (to continue parsing). We have three types of
+   strings at this phase:
+
+      12.34,56.78:90.12,34.56:...                   Normal number.
+           ^     ^     ^
+
+      1h2m3.45,6d7m8.90:2h3m4.56,7d8m9.01:...       Sexagesimal (hd)
+       ^        ^        ^        ^
+
+      1:2:3.45,6:7:8.90:2:3:4.56,7:8:9.01:...       Sexagesimal (colon)
+       ^        ^        ^        ^
+
+  This function is called while trying to tokenize such a string and it
+  will stop at the highlighed points. Its job is to determine if the token
+  its on is sexagesimal string, or if its a normal number. If its a normal
+  number, then just return NULL. But if its a sexagesimal string, it should
+  return a copy of the string without any futher components (like the comma
+  or colon of the full string).
+
+  HOWEVER, this function may also be given a normal colon-separted list,
+  like below. In such cases, it will return a NULL (to let the caller know
+  that the ':' in the 'tailptr' was a false alarm, and it can use the
+  number before the ':' without worrying about it being a sexagesimal
+  number.
+
+      ':0.123,4.567'    which is part of    '1.2345,6.789:0.123,4.567' */
+static double
+gal_options_read_sexagesimal(size_t dim, char *str, char **tailptr)
+{
+  double out;
+  char *c, *cc, *copy;
+  size_t stlen=0, coloncounter;
+  int ishd=0, iscolon=0, isra=0, isdec=0;
+
+  /* A small sanity check. */
+  if(dim>1)
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s', "
+          "to find the cause of the problem. The value of 'dim' at "
+          "this point should be 0 or 1, but it has a value of %zu",
+          __func__, PACKAGE_BUGREPORT, dim);
+
+  /* Parse the start of this string, until you find find exactly what it
+     is. */
+  c=str;
+  while( *c!='\0' && ishd==0 && iscolon==0 )
+    switch(*c++)
+      {
+      case 'h': ishd=1; isra=1;  break;
+      case 'd': ishd=1; isdec=1; break;
+      case ':':
+        /* A single colon isn't enough to be sure that this is a
+           colon-based sexagesimal number. We need at least one more before
+           we reach the end of the string, or the next comma. */
+        cc=c; /* 'c' is already on the next character! */
+        coloncounter=1; /* We have already passed the first colon! */
+        while(*cc!='\0' && *cc!=',')
+          switch(*cc++) { case ':': coloncounter++; break; }
+
+        /* If the loop above ended in a comma, then it stops and its time
+           to check if this is actually a sexagesimal string or not. If we
+           have reached the end of the string, and there was only two
+           colons, then this is indeed a colon-based sexagesimal string.*/
+        if( (*cc=='\0' || *cc==',')
+            && coloncounter>=2 )
+          iscolon=1;
+
+        /* If 'iscolon' is still zero until we reach this point, then we
+           should simply return with a NaN, letting the user know that the
+           'tailptr' was a false alarm and it can continue with parsing the
+           string. */
+        if(iscolon==0) return NAN;
+
+        /* Everything is good, continue */
+        if(dim==0) isra=1; else isdec=1;
+        break;
+      }
+
+  /* Make sure the string could be identified properly */
+  if( (isra==0 && isdec==0) || (ishd==0 && iscolon==0) )
+    error(EXIT_FAILURE, 0, "the first token in the string '%s' "
+          "couldn't be parsed as a sexagesimal string", str);
+
+  /* Check if the hd-type is given for the proper dimension. */
+  if( (isra && dim!=0) || (isdec && dim!=1) )
+    error(EXIT_FAILURE, 0, "the order of sexagesimal coordinates "
+          "is wrong! The first should be RA (with a format like "
+          "'__h__m__'), and the second should be Dec ('__d__m__')");
+
+  /* Depending on the mode, find the length of the full string into a new
+     string to give to the unit conversion functions. Note that the
+     delimiters are ':', ','. However, if we are on a colon-based
+     sexagesimal, we should keep the first two colons and only use the
+     third as a delimiter. */
+  c=str;
+  coloncounter=0;
+  while( *c!='\0' && stlen==0)
+    switch(*c++)
+      {
+      case ':':
+        if(iscolon)
+          { if(++coloncounter == 3) stlen=c-str; }
+        else stlen=c-str;
+        break;
+      case ',': stlen=c-str;
+      }
+
+  /* If 'stlen==0', then we are on the last token, and we can simply use
+     the 'strlen' function, but because we are assuming the last extra
+     character in the loop above, we should add one to 'strlen' to be
+     consistant. */
+  if(stlen==0) stlen=strlen(str)+1;
+
+  /* Copy the string of this sexagesimal coordinate into a new string to
+     pass to the unit conversion function. */
+  copy=gal_pointer_allocate(GAL_TYPE_UINT8, stlen+1, 0, __func__,
+                            "copy");
+  memcpy(copy, str, stlen-1);
+  copy[stlen-1]='\0';
+
+  /* Convert the string to degrees and set the 'tailptr' pointer. */
+  out = ( isra
+          ? gal_units_ra_to_degree(copy)
+          : gal_units_dec_to_degree(copy) );
+  *tailptr=str+stlen-1;
+
+  /* Sanity check: */
+  if(isnan(out))
+    error(EXIT_FAILURE, 0, "%s: '%s' couldn't be parsed as a "
+          "sexagesimal representation of %s", __func__, copy,
+          isra?"RA (right ascension)":"DEC (Declination)");
+
+  /* Clean up, set the 'tailptr' pointer, and return. */
+  free(copy);
+  return out;
+}
+
+
+
+
+
 /* The input to this function is a string of any number of numbers
    separated by a comma (',') and possibly containing fractions, for
    example: '1,2/3, 4.95'. The output 'gal_data_t' contains the array of
@@ -623,7 +766,7 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
   gal_data_t *out;
   char *c=string, *tailptr;
   gal_list_f64_t *list=NULL, *tdll;
-  double numerator=NAN, denominator=NAN, tmp;
+  double numerator=NAN, denominator=NAN, tmp, ttmp;
 
   /* The nature of the arrays/numbers read here is very small, so since
      'p->cp.minmapsize' might not have been read yet, we will set it to -1
@@ -672,23 +815,29 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
         /* Extra dot is an error (cases like 2.5.5). Valid '.'s will be
            read by 'strtod'. */
         case '.':
-          error_at_line(EXIT_FAILURE, 0, filename, lineno, "extra '.' in "
-                        "'%s'", string);
+          error_at_line(EXIT_FAILURE, 0, filename, lineno,
+                        "extra '.' in '%s'", string);
           break;
 
         /* Read the number. */
         default:
 
           /* Parse the string. */
+          ttmp=NAN;
           tmp=strtod(c, &tailptr);
-          if(tailptr==c)
-            error_at_line(EXIT_FAILURE, 0, filename, lineno, "the first "
-                          "part of '%s' couldn't be read as a number. This "
-                          "was part of '%s'", c, string);
+          if(*tailptr!=',' && *tailptr!='/' && *tailptr!='\0')
+            {
+              ttmp=gal_options_read_sexagesimal(num%2, c, &tailptr);
+              if(isnan(ttmp))
+                error_at_line(EXIT_FAILURE, 0, filename, lineno, "the "
+                              "'%s' component of '%s' couldn't be parsed "
+                              "as a usable number", c, string);
+              else tmp=ttmp;
+            }
 
           /* See if the number should be put in the numerator or
              denominator. */
-          if(isnan(numerator)) numerator=tmp;
+          if( isnan(numerator) ) numerator=tmp;
           else
             {
               if(isnan(denominator)) denominator=tmp;
@@ -710,7 +859,6 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
       gal_list_f64_add(&list, isnan(denominator)
                        ? numerator : numerator/denominator);
     }
-
 
   /* Allocate the output data structure and fill it up. */
   if(num)
@@ -1392,14 +1540,14 @@ gal_data_t *
 gal_options_parse_colon_sep_csv_raw(char *instring, char *filename,
                                     size_t lineno)
 {
-  char *tailptr;
   gal_data_t *out;
-  char *pt=instring;
   size_t dim=0, size;
-  double read, *array;
+  char *pt, *tailptr;
+  double read, sread, *array;
   gal_list_f64_t *vertices=NULL;
 
   /* Parse the string. */
+  pt=instring;
   while(*pt!='\0')
     {
       switch(*pt)
@@ -1415,7 +1563,7 @@ gal_options_parse_colon_sep_csv_raw(char *instring, char *filename,
           if(dim==0)
             error_at_line(EXIT_FAILURE, 0, filename, lineno,
                           "not enough coordinates for at least "
-                          "one polygon vertex (in %s)", instring);
+                          "one polygon vertex (in '%s')", instring);
           dim=0;
           ++pt;
           break;
@@ -1452,11 +1600,20 @@ gal_options_parse_colon_sep_csv_raw(char *instring, char *filename,
              results, so its best to abort and inform the user. */
           if( *tailptr!='\0'
               && !isspace(*tailptr)
-              && strchr(":,", *tailptr)==NULL )
+              && strchr(":,hd", *tailptr)==NULL )
             error_at_line(EXIT_FAILURE, 0, filename, lineno,
                           "'%s' is an invalid floating point number "
                           "sequence in the value to the '--polygon' "
                           "option, error detected at '%s'", pt, tailptr);
+
+          /* Here we need to check if we are dealing with a sexagesimal
+             string, or just a normal number. If its just a normal
+             number. Note that 'sread' must be initialized to NaN in case
+             'tailptr' is either ',' or '\0'. */
+          sread=NAN;
+          if(*tailptr!=',' && *tailptr!='\0')
+            sread=gal_options_read_sexagesimal(dim, pt, &tailptr);
+          if(!isnan(sread)) read=sread;
 
           /* Add the read coordinate to the list of coordinates. */
           gal_list_f64_add(&vertices, read);

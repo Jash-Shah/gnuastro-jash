@@ -1,10 +1,13 @@
 Alphabetically ordered list to acknowledge in the next release.
 
 Andres Del Pino Molina
+Alessandro Ederoclite
 Sepideh Eskandarlou
+Juan Antonio Fernández Ontiveros
 Zohreh Ghaffari
 Zahra Hosseini
 Raúl Infante-Sainz
+Alejandro Lumbreras Calle
 Sebastian Luna-Valero
 Manuel Sánchez-Benavente
 Peter Teuben

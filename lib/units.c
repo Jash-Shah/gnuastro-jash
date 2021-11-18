@@ -263,7 +263,7 @@ gal_units_degree_to_ra(double decimal, int usecolon)
   /* Format the extracted hours, minutes and seconds as a string with
      leading zeros if required, in hh:mm:ss format */
   nchars = snprintf(ra, UNITS_RADECSTR_MAXLENGTH-1,
-                    usecolon ? "%02d:%02d:%g" : "%02dh%02dm%gs",
+                    usecolon ? "%02d:%02d:%g" : "%02dh%02dm%g",
                     hours, minutes, seconds);
   if(nchars>UNITS_RADECSTR_MAXLENGTH)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address "
@@ -321,7 +321,7 @@ gal_units_degree_to_dec(double decimal, int usecolon)
      with leading zeros if required, in hh:mm:ss format with correct
      sign. */
   nchars = snprintf(dec, UNITS_RADECSTR_MAXLENGTH-1,
-                    usecolon ? "%s%02d:%02d:%g" : "%s%02dd%02dm%gs",
+                    usecolon ? "%s%02d:%02d:%g" : "%s%02dd%02dm%g",
                     sign<0?"-":"+", degrees, arc_minutes, arc_seconds);
   if(nchars>UNITS_RADECSTR_MAXLENGTH)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to address "

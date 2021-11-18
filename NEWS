@@ -8,6 +8,13 @@ See the end of the file for license conditions.
 ** New features
 
   All programs:
+   - Coordinate-related columns in all programs now also accept sexagesimal
+     values, not just degrees. Therefore, '--center=113.8729761,31.9027152'
+     and '--center=07h35m29.51,31d54m9.77' are now equivalent in the Crop
+     or Query programs that have this option! Other improved options
+     include the '--polygon' options of Table and Crop (that also take
+     region files produced by DS9), the '--coord' option of Match, the
+     '--crval' option of MakeProfiles.
    - Columns of FITS tables are now read in parallel (when '--numthreads'
      isn't set to '1', and if the dependency CFITSIO library was built with
      '--enable-reentrant'). In scenarios where many columns may be
@@ -82,6 +89,9 @@ See the end of the file for license conditions.
               and fixed with the help of Sebastian Luna-Valero.
   bug #61378: Table crash when input is sexagesimal RA/DEC and no metadata.
   bug #61462: Crash on FITS binary table colums with repeat of 0.
+  bug #61468: DS9 region file can't be read in sexagesimal coordinates,
+              reported by Juan Antonio Fernández Ontiveros and Alejandro
+              Lumbreras Calle.
   bug #61490: Extra columns in the metadata causes crash in plain-text
               tables, found by Zohre Ghaffari.
   bug #61493: NoiseChisel's --checksn not showing pseudos equal to

@@ -2276,6 +2276,10 @@ $ for f in f105w f125w f160w; do \
 
 Please open these images and inspect them with the same @command{ds9} command you used above.
 You will see how it is nicely flat now and doesn't have varying depths.
+In the example above, the polygon vertices are in degrees, but you can also replace them with sexagesimal coordinates (for example using @code{03h32m44.9794} or @code{03:32:44.9794} instead of @code{53.187414} instead of the first RA and @code{-27d46m44.9472} or @code{-27:46:44.9472} instead of the first Dec).
+To futher simplify things, you can even define your polygon visually as a DS9 ``region'', save it as a ``region file'' and give that file to crop.
+But we need to continue, so if you are interested to learn more, see @ref{Crop}.
+
 Another important result of this crop is that regions with no data now have a NaN (Not-a-Number, or a blank value) value.
 In the downloaded files, such regions had a value of zero.
 However, zero is a number, and is thus meaningful, especially when you later want to NoiseChisel@footnote{As you will see below, unlike most other detection algorithms, NoiseChisel detects the objects from their faintest parts, it doesn't start with their high signal-to-noise ratio peaks.
@@ -11414,7 +11418,7 @@ This option is very similar to the @option{--inpolygon} option, so see the descr
 @item --polygon=STR
 @itemx --polygon=FLT,FLT:FLT,FLT:...
 The polygon to use for the @code{--inpolygon} and @option{--outpolygon} options.
-This option behaves identically to the same option in the Crop program, so for more information on how to use it, see @ref{Crop options}.
+This option is parsed in an identical way to the same option in the Crop program, so for more information on how to use it, see @ref{Crop options}.
 
 @item -e STR,INT/FLT,...
 @itemx --equal=STR,INT/FLT,...
@@ -11884,8 +11888,9 @@ $ astquery vizier --dataset=I/350/gaiaedr3 --output=my-gaia.fits \
 
 ## Similar to above, but only ID, RA and Dec columns for objects with
 ## magnitude range 10 to 15. In VizieR, this column is called 'Gmag'.
+## Also, using sexagesimal coordinates instead of degrees for center.
 $ astquery vizier --dataset=I/350/gaiaedr3 --output=my-gaia.fits \
-           --center=113.8729761,31.9027152 --radius=1/60 \
+           --center=07h35m29.51,31d54m9.77 --radius=1/60 \
            --range=Gmag,10:15 -cEDR3Name,RAJ2000,DEJ2000
 @end example
 
@@ -12001,6 +12006,8 @@ Therefore the resulting catalog may not overlap, or correspond to a larger/small
 @item -C FLT,FLT
 @itemx --center=FLT,FLT
 The spatial center position (mostly RA and Dec) to use for the automatically generated query (not compatible with @option{--query}).
+The comma-separated values can either be in degrees (a single number), or sexagesimal (@code{_h_m_} for RA, @code{_d_m_} for Dec, or @code{_:_:_} for both).
+
 The given values will be compared to two columns in the database to find/return rows within a certain region around this center position will be requested and downloaded.
 Pre-defined RA and Dec column names are defined in Query for every database, however you can use @option{--ccol} to select other columns to use instead.
 The region can either be a circle and the point (configured with @option{--radius}) or a box/rectangle around the point (configured with @option{--width}).
@@ -12315,6 +12322,10 @@ $ astcrop --section=10:*-10,10:*-10 --hdu=2 image.fits
 ## Crop region around RA and Dec of (189.16704, 62.218203):
 $ astcrop --mode=wcs --center=189.16704,62.218203 goodsnorth.fits
 
+## Same crop above, but coordinates given in sexagesimal (you can
+## also use ':' between the sexagesimal components).
+$ astcrop --mode=wcs --center=12h36m40.08,62d13m5.53 goodsnorth.fits
+
 ## Crop region around pixel coordinate (568.342, 2091.719):
 $ astcrop --mode=img --center=568.342,2091.719 --width=201 image.fits
 @end example
@@ -12400,6 +12411,8 @@ Crop box parameters:
 @itemx --center=FLT[,FLT[,...]]
 The central position of the crop in the input image.
 The positions along each dimension must be separated by a comma (@key{,}) and fractions are also acceptable.
+The comma-separated values can either be in degrees (a single number), or sexagesimal (@code{_h_m_} for RA, @code{_d_m_} for Dec, or @code{_:_:_} for both).
+
 The number of values given to this option must be the same as the dimensions of the input dataset.
 The width of the crop should be set with @code{--width}.
 The units of the coordinates are read based on the value to the @option{--mode} option, see below.
@@ -12429,7 +12442,10 @@ This is useful when you want a fixed crop size in pixels, even though your cente
 @itemx -l FLT:FLT,...
 @itemx --polygon=STR
 @itemx --polygon=FLT,FLT:FLT,FLT:...
+@cindex Sexagesimal
 Polygon vertice coordinates (when value is in @option{FLT,FLT:FLT,FLT:...} format) or the filename of a SAO DS9 region file (when the value has no @file{,} or @file{:} characters).
+Each vertice can either be in degrees (a single floating point number) or sexagesimal (in formats of `@code{_h_m_}' for RA and `@code{_d_m_}' for Dec, or simply `@code{_:_:_}' for either of them).
+
 The vertices are used to define the polygon: in the same order given to this option.
 When the vertices are not necessarily ordered in the proper order (for example one vertice in a square comes after its diagonal opposite), you can add the @option{--polygonsort} option which will attempt to sort the vertices before cropping.
 Note that for concave polygons, sorting is not recommended because there is no unique solution, for more, see the description under @option{--polygonsort}.
@@ -20089,6 +20105,7 @@ $ astmatch --aperture=5e-10 --ccol1=5 --ccol2=10 in1.fits in2.txt
 
 ## Find the row that is closest to (RA,DEC) of (12.3456,6.7890)
 ## with a maximum distance of 1 arcseconds (1/3600 degrees).
+## The coordinates can also be given in sexagesimal.
 $ astmatch input1.txt --ccol1=ra,dec --coord=12.3456,6.7890 \
            --aperture=1/3600
 
@@ -20295,6 +20312,7 @@ See the example in @option{--ccol1} for more.
 @itemx --coord=FLT[,FLT]
 Manually specify the coordinates to match against the given catalog.
 With this option, Match will not look for a second input file/table and will directly use the coordinates given to this option.
+When the coordinates are RA and Dec, the comma-separated values can either be in degrees (a single number), or sexagesimal (@code{_h_m_} for RA, @code{_d_m_} for Dec, or @code{_:_:_} for both).
 
 When this option is called, the output changes in the following ways:
 1) when @option{--outcols} is specified, for the second input, it can only accept integer numbers that are less than the number of values given to this option, see description of that option for more.
@@ -21347,6 +21365,8 @@ Fractions are acceptable for the values of this option.
 @item --crval=FLT,FLT
 The WCS coordinates of the Reference point.
 Fractions are acceptable for the values of this option.
+The comma-separated values can either be in degrees (a single number), or sexagesimal (@code{_h_m_} for RA, @code{_d_m_} for Dec, or @code{_:_:_} for both).
+In any case, the final value that will be written in the @code{CRVAL} keyword will be a floating point number in degrees (according to the FITS standard).
 
 @item --cdelt=FLT,FLT
 The resolution (size of one data-unit or pixel in WCS units) of the non-oversampled dataset.
@@ -24191,19 +24211,18 @@ above easier. In the functions below, the constants above can be used for
 the @code{type} input argument.
 
 @deftypefun size_t gal_type_sizeof (uint8_t @code{type})
-Return the number of bytes occupied by @code{type}. Internally, this
-function uses C's @code{sizeof} operator to measure the size of each type.
+Return the number of bytes occupied by @code{type}.
+Internally, this function uses C's @code{sizeof} operator to measure the size of each type.
+For strings, this function will return the size of @code{char *}.
 @end deftypefun
 
 @deftypefun {char *} gal_type_name (uint8_t @code{type}, int @code{long_name})
-Return a string literal that contains the name of @code{type}. It can
-return both short and long formats of the type names (for example
-@code{f32} and @code{float32}). If @code{long_name} is non-zero, the long
-format will be returned, otherwise the short name will be returned. The
-output string is statically allocated, so it should not be freed. This
-function is the inverse of the @code{gal_type_from_name} function. For the
-full list of names/strings that this function will return, see @ref{Numeric
-data types}.
+Return a string literal that contains the name of @code{type}.
+It can return both short and long formats of the type names (for example @code{f32} and @code{float32}).
+If @code{long_name} is non-zero, the long format will be returned, otherwise the short name will be returned.
+The output string is statically allocated, so it should not be freed.
+This function is the inverse of the @code{gal_type_from_name} function.
+For the full list of names/strings that this function will return, see @ref{Numeric data types}.
 @end deftypefun
 
 @deftypefun uint8_t gal_type_from_name (char @code{*str})
@@ -24378,7 +24397,11 @@ types}).
 @deftypefun {void *} gal_pointer_allocate (uint8_t @code{type}, size_t @code{size}, int @code{clear}, const char @code{*funcname}, const char @code{*varname})
 Allocate an array of type @code{type} with @code{size} elements in RAM (for the type codes, see @ref{Library data types}).
 If @code{clear!=0}, then the allocated space is set to zero (cleared).
+
 This is effectively just a wrapper around C's @code{malloc} or @code{calloc} functions but takes Gnuastro's integer type codes and will also abort with a clear error if there the allocation was not successful.
+The number of allocated bytes is the value given to @code{size} that is multiplied by the returned value of @code{gal_type_sizeof} for the given type.
+So if you want to allocate space for an array of strings you should pass the type @code{GAL_TYPE_STRING}.
+Otherwise, if you just want space for one string (for example 6 bytes for @code{hello}, including the string-termination character), you should se the type @code{GAL_TYPE_UINT8}.
 
 @cindex C99
 When space cannot be allocated, this function will abort the program with a message containing the reason for the failure.
