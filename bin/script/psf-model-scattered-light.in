@@ -384,11 +384,28 @@ astarithmetic $psf --hdu=$psfhdu $fluxfactor x \
 # ----------------------------
 #
 # In order to have the final PSF with the same size than the input image,
-# it is necessary to compute the original size of the input image.
-xaxis=$(astfits $inputs --hdu=$hdu \
-                | awk '/^NAXIS1/{print $3}')
-yaxis=$(astfits $inputs --hdu=$hdu \
-	        | awk '/^NAXIS2/{print $3}')
+# it is necessary to compute the original size of the input image. It is
+# possible that the input image is compressed as '.fz' file. In these
+# situations, the keywords with the original dimesion of the array are
+# ZNAXIS1 and ZNAXIS2, instead of NAXIS1 and NAXIS2. The former are the
+# real size of the array (as it were not compressed), the latter are the
+# size after compressing the data (as a table). If there are not ZNAXIS
+# keywords, output values are "n/a". So, they are removed with sed, and
+# then count the number of remaining values. Overall, when there are 4
+# remaining keywords, the data is compressed, otherwise use the simple
+# NAXIS1 and NAXIS2 keywords (that are always into the header).
+axises=$(astfits $inputs --hdu=$hdu --quiet \
+                 --keyvalue ZNAXIS1,ZNAXIS2,NAXIS1,NAXIS2)
+naxises=$(echo $axises \
+               | sed 's/n\/a//g' \
+               | awk '{print NF}')
+if [ x$naxises = x4 ]; then
+    xaxis=$(echo $axises | awk '{print $1}')
+    yaxis=$(echo $axises | awk '{print $2}')
+else
+    xaxis=$(echo $axises | awk '{print $3}')
+    yaxis=$(echo $axises | awk '{print $4}')
+fi
 
 
 
@@ -399,11 +416,20 @@ yaxis=$(astfits $inputs --hdu=$hdu \
 #
 # The center of the PSF is assumed to be at the center of the PSF image.
 # So, the center of the PSF is computed here from the size of the PSF image
-# along the two axis (in pixels).
-xpsfaxis=$(astfits $psf --hdu=$psfhdu \
-                   | awk '/^NAXIS1/{print $3}')
-ypsfaxis=$(astfits $psf --hdu=$psfhdu \
-	           | awk '/^NAXIS2/{print $3}')
+# along the two axis (in pixels). Dimension values are computed as
+# described above.
+psfaxises=$(astfits $psf --hdu=$psfhdu --quiet \
+                    --keyvalue ZNAXIS1,ZNAXIS2,NAXIS1,NAXIS2)
+psfnaxises=$(echo $psfaxises \
+                  | sed 's/n\/a//g' \
+                  | awk '{print NF}')
+if [ x$psfnaxises = x4 ]; then
+    xpsfaxis=$(echo $psfaxises | awk '{print $1}')
+    ypsfaxis=$(echo $psfaxises | awk '{print $2}')
+else
+    xpsfaxis=$(echo $psfaxises | awk '{print $3}')
+    ypsfaxis=$(echo $psfaxises | awk '{print $4}')
+fi
 
 # To obtain the center of the PSF (in pixels), just divide by 2 the size of
 # the PSF image.
