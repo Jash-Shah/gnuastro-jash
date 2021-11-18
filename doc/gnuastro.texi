@@ -1792,19 +1792,20 @@ MakeProfiles started on Sat Oct  6 16:26:56 953
   ---- row 3 complete, 4 left to go
   ---- row 4 complete, 3 left to go
   ---- row 5 complete, 2 left to go
-  ---- ./0_cat.fits created.
+  ---- ./0_cat_profiles.fits created.
   ---- row 0 complete, 1 left to go
   ---- row 1 complete, 0 left to go
   - ./cat_profiles.fits created.                       0.041651 seconds
+  -- Output: ./cat_profiles.fits
 MakeProfiles finished in 0.267234 seconds
 
 $ls
-0_cat.fits  cat_profiles.fits  cat.txt
+0_cat_profiles.fits cat_profiles.fits  cat.txt
 @end example
 
 @cindex Oversample
 @noindent
-The file @file{0_cat.fits} is the PSF Sufi had asked for, and @file{cat_profiles.fits} is the image containing the main objects in the catalog.
+The file @file{0_cat_profiles.fits} is the PSF Sufi had asked for, and @file{cat_profiles.fits} is the image containing the main objects in the catalog.
 The size of @file{cat_profiles.fits} was surprising for the student, instead of 499 by 499 (as we had requested), it was 2615 by 2615 pixels (from the command below):
 
 @example
@@ -1879,8 +1880,8 @@ However, the image is still larger than what we had wanted, it is 523 (@mymath{4
 The student is slightly confused, so Sufi also re-samples the PSF with the same scale by running
 
 @example
-$ astwarp --scale=1/5 --centeroncorner 0_cat.fits
-$ astfits -p 0_cat_scaled.fits | grep NAXIS
+$ astwarp --scale=1/5 --centeroncorner 0_cat_profiles.fits
+$ astfits -p 0_cat_profiles_scaled.fits | grep NAXIS
 NAXIS   =                    2 / number of data axes
 NAXIS1  =                   25 / length of data axis 1
 NAXIS2  =                   25 / length of data axis 2
