@@ -2145,7 +2145,7 @@ $ info gnuastro "Detection options"
 
 In general, Info is a powerful and convenient way to access this whole book with detailed information about the programs you are running.
 If you are not already familiar with it, please run the following command and just read along and do what it says to learn it.
-Don't stop until you feel sufficiently fluent in it.
+Do not stop until you feel sufficiently fluent in it.
 Please invest the half an hour's time necessary to start using Info comfortably.
 It will greatly improve your productivity and you will start reaping the rewards of this investment very soon.
 
@@ -4666,16 +4666,16 @@ However, given the many problems in existing ``smart'' solutions, such automatic
 So even when they are implemented, we would strongly recommend quality checks for a robust analysis.
 @end cartouche
 
-@node Image surface brightness limit, Achieved surface brightness level, NoiseChisel optimization, Detecting large extended targets
-@subsection Image surface brightness limit
-@cindex Surface brightness limit
-@cindex Limit, surface brightness
-In @ref{NoiseChisel optimization} we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
-When presenting your detection results in a paper or scientific conference, usually the first thing that someone will ask (if you don't explicitly say it!), is the dataset's @emph{surface brightness limit} (a standard measure of the noise level), and your target's surface brightness (a measure of the signal, either in the center or outskirts, depending on context).
-For more on the basics of these important concepts please see @ref{Quantifying measurement limits}).
-Here, we'll measure these values for this image.
+@node Skweness of the image, Achieved quantile of mean a image
+@subsection Skewness of the image
+To determine the image surface brightness limit, understanding the skewness of the image is a very important and vital issue.
+For this reason, it is better to know more about this skewness before starting the image surface brightness limit.
+In fact, the main purpose of this section is to show the difference between the standard deviation and quantile of the mean in the image.
+Indeed , we want to show that the definition of the quantile of the mean is much stronger than the definition of standard skewness.
 
-Let's start by measuring the surface brightness limit masking all the detected pixels and have a look at the noise distribution with the @command{astarithmetic} and @command{aststatistics} commands below.
+In @ref{NoiseChisel optimization} we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
+
+Let's start masking all the detected pixels and have a look at the noise distribution with the @command{astarithmetic} and @command{aststatistics} commands below.
 
 @example
 $ astarithmetic r_detected.fits -hINPUT-NO-SKY set-in \
@@ -4744,8 +4744,12 @@ As you can see, the distribution is very elongated because the galaxy inside the
 Comparing the distributions above, you will see that the minimum value of the image has not changed because we have not masked the minimum values even though the maximum value of the image has changed.
 Also, the mean and median values of the noise distribution are closer to each other than the signal distribution.
 Now let's limit the distribution of the signal using the @option{--lessthan} option to make it similar to the noise distribution and then compare them together.
+Our criterion here is standard deviation.
+If we look at the distribution of the @option{INPUT-NO-SKY} image and the masked image, the values of standard deviation is 0.6981762756 and 0.02569687481, respectively.
+we see how different the standard deviations are.
 
 @example
+
 $ aststatistics r_detected.fits -hINPUT-NO-SKY --lessthan=0.130365
 
 -------
@@ -4777,7 +4781,35 @@ This asymmetry is due to the effect of the signal presence.
 Masking the signal in the NoiseChisel results in a symmetrical noise distribution.
 
 @noindent
+Please quantify the distribution of the noise in maske image by measuring the skewness (difference between mean and median, divided by the standard deviation):
+
+@example
+$ aststatistics det-masked.fits --mean --median --std \
+                | awk '{print ($1-$2)/$3}'
+0.0800868
+@end example
+
+@example
+$ aststatistics r_detected.fits --mean --median --std \
+                | awk '{print ($1-$2)/$3}'
+0.116975
+@end example
+
+@noindent
+In the skewness by its standard definitiontwo above distributions show @mymath{0.08\sigma} and @mymath{0.1\sigma} skewness, respectively.
+And showing that the mean is larger than the median by @mymath{0.08\sigma} and @mymath{0.1\sigma}.
+If anybody looks at these two distributions, says that these two distributions are good, while they are not good distribution at all.
+This is because when our distribution is skewed, the standard deviation we measure is incorrect and we cannot consider it as a criterion of interpretation.
+Because the positive amount in skewness also affects the standard deviation and increases the amount of standard deviation.
+And for this reason, the difference between the mean and the mean in above is large.
+Here, standard deviation does not make sense when we are skewed.
+Because the standard deviation is defined only in symmetric and Gaussian distributions.
 In @ref{Quantifying signal in a tile} we showed that when our distribution is skewed, the standard deviation is not defined at all, because the distribution is not Gaussian.
+In the quantile, we do not use the standars deviation.
+Because quabtile is showing us the location of the mean in the whole distribution.
+When we put the whole distribution between zero and one, in fact, by doing this work we are normalization.
+But when we consider the standard deviation, by doing so we are secretly assuming that our distribution is Gaussian.
+And we interpret the standard deviation obtained from this work, while we know that when our distribution is not Gaussian, the standard deviation number does not indicate width.
 In scenarios like this, where our distribution is not Gaussian, we use quantile of the mean instead of skewness.
 Now let's quantify these distribution by measuring the quantile of the mean:
 
@@ -4792,7 +4824,30 @@ $ aststatistics det-masked.fits --quantofmean
 @end example
 
 @noindent
-Showing that in the signal distibution the mean is larger than the median by @mymath{0.8\sigma}.
+In the skewness by its quantile of the mean above distributions show @mymath{0.8\sigma} and @mymath{0.5\sigma} skewness, respectively.
+Which shows us the actual distribution and says that in the @option{INPUT-NO-SKY} image the average of the total population is pulled forwardthirty pecent.
+In quantile of the mean you can see the distribution of the signal effect very nicely.
+But in skweness by its standard definition, if we compare these two distributions, we discovere any diffrence between these two distribution.
+And this is the main reason for choosing quantile of the mean instead of standard definition of the skewness.
+
+@node Image surface brightness limit, Achieved surface brightness level, NoiseChisel optimization, Detecting large extended targets
+@subsection Image surface brightness limit
+@cindex Surface brightness limit
+@cindex Limit, surface brightness
+When presenting your detection results in a paper or scientific conference, usually the first thing that someone will ask (if you don't explicitly say it!), is the dataset's @emph{surface brightness limit} (a standard measure of the noise level), and your target's surface brightness (a measure of the signal, either in the center or outskirts, depending on context).
+For more on the basics of these important concepts please see @ref{Quantifying measurement limits}).
+Here, we'll measure these values for this image.
+
+@noindent
+Let’s start measuring the surface brightness limit by look at into the noise distribution wich we measure in @ref{Skewness of the image}
+
+@example
+$ aststatistics det-masked.fits --quantofmean
+0.5111848629
+@end example
+
+@noindent
+Showing that in the signal distibution the mean is larger than the median by @mymath{0.5\sigma}.
 While in noise distribution the mean is larger than the median by @mymath{0.5\sigma}, in other words, as we saw in @ref{NoiseChisel optimization}, a very small residual signal still remains in the undetected regions and it was up to you as an exercise to improve it.
 So let's continue with this value.
 Now, we will use the masked image and the surface brightness limit equation in @ref{Quantifying measurement limits} to measure the @mymath{3\sigma} surface brightness limit over an area of @mymath{25 \rm{arcsec}^2}:
