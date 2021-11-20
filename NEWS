@@ -29,7 +29,6 @@ See the end of the file for license conditions.
      WCS. This was suggested by Jesús Varela.
 
   Fits:
-
    - If a 'CHECKSUM' keyword exists in a HDU and any of the keyword
      modification keywords are called, Fits will automatically update the
      checksum after all the changes are done. This is important to keep the

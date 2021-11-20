@@ -5,6 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -93,6 +94,8 @@ gal_checkset_allocate_copy_set(char *arg, char **copy, int *set);
 char *
 gal_checkset_dataset_name(char *filename, char *hdu);
 
+char *
+gal_checkset_timestamp(char *filename, char *newext);
 
 
 

@@ -5,6 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -910,6 +911,7 @@ checkset_directory_writable(char *dirname)
 
 
 
+
 /* Check if dirname is actually a real directory and that we can
    actually write inside of it. To insure all conditions an actual
    file will be made */
@@ -983,4 +985,41 @@ gal_checkset_mkdir(char *dirname)
 
   /* Return the final 'errno'. */
   return errnum;
+}
+
+
+
+
+
+/* Timestamp the file name (or any other string) with a YYYY-MM-DD prefix
+   and a HH-MM-SS suffix. This is useful in making temporary debugging
+   files during a program. The 'filename' is wrapped between the dates so
+   it is easy to sort files by name and easily seperate files by their date
+   and name, where the same files will be stacked regardless of their
+   creation hour. */
+char *
+gal_checkset_timestamp(char *filename, char *newext)
+{
+  time_t t;
+  struct tm *now;
+  char suffix[20], prefix[20], *top, *rawname, *oldext;
+
+  /* Parse time */
+  time( &t );
+  now=localtime( &t );
+  strftime(prefix, 20, "%Y-%m-%d_", now);
+  strftime(suffix, 20, "_%H-%M-%S", now);
+
+  /* If parsing a filename, take care of its parent directory and
+     update the extension */
+  top=gal_checkset_dir_part(filename);
+  rawname=gal_checkset_not_dir_part(filename);
+  filename=gal_checkset_suffix_separate(rawname, &oldext);
+  filename=gal_checkset_malloc_cat(filename, suffix);
+  filename=gal_checkset_malloc_cat(prefix, filename);
+  filename=gal_checkset_malloc_cat(top, filename);
+  if(newext) filename=gal_checkset_malloc_cat(filename, newext);
+  else       filename=gal_checkset_malloc_cat(filename, oldext);
+
+  return filename;
 }
