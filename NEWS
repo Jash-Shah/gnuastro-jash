@@ -28,6 +28,15 @@ See the end of the file for license conditions.
      fixed pixel size, even when the mode of the central coordinate is in
      WCS. This was suggested by Jesús Varela.
 
+  Fits:
+
+   - If a 'CHECKSUM' keyword exists in a HDU and any of the keyword
+     modification keywords are called, Fits will automatically update the
+     checksum after all the changes are done. This is important to keep the
+     checksum valid after the change (recall that you can verify the FITS
+     checksums with the '--verify' option to Fits). This task was suggested
+     by Tamara Civera Lorenzo.
+
   Table:
    --catrowfile: File to concatenate (i.e., add or append) rows into the
      main input table. With this option, you can add the rows of another
@@ -54,6 +63,10 @@ See the end of the file for license conditions.
      the new "Matching algorithms" section of the book.
    --kdtreehdu: the HDU of the external k-d tree (if a FITS file was given
      to '--kdtree').
+
+  Library:
+   - gal_fits_key_exists_fptr: Check if a certain keyword exists in the
+     already-open FITS file pointer.
 
 ** Removed features
 

@@ -849,7 +849,7 @@ table_catrows_findhdu(char *filename, gal_list_str_t **hdull)
 static size_t
 table_catrows_prepare(struct tableparams *p)
 {
-  char *hdu;
+  char *hdu=NULL;
   int tableformat;
   gal_data_t *tmp, *out=NULL;
   size_t nrows=p->table->size;
@@ -896,7 +896,7 @@ table_catrows_prepare(struct tableparams *p)
 static void
 table_catrows(struct tableparams *p)
 {
-  char *hdu;
+  char *hdu=NULL;
   gal_data_t *new, *ttmp, *tmp;
   gal_list_str_t *filell, *hdull;
   size_t colcount, ncols, ncolstest, filledrows;

@@ -1,5 +1,6 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Tamara Civera Lorenzo
 Andres Del Pino Molina
 Alessandro Ederoclite
 Sepideh Eskandarlou

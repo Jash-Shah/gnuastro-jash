@@ -955,6 +955,19 @@ gal_fits_hdu_open_format(char *filename, char *hdu, int img0_tab1)
 /**************************************************************/
 /**********            Header keywords             ************/
 /**************************************************************/
+int
+gal_fits_key_exists_fptr(fitsfile *fptr, char *keyname)
+{
+  int status=0;
+  char card[FLEN_CARD];
+  fits_read_card(fptr, keyname, card, &status);
+  return status==0;
+}
+
+
+
+
+
 /* Return allocated pointer to the blank value to use in a FITS file header
    keyword. */
 void *

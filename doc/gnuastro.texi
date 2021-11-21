@@ -9423,11 +9423,17 @@ You can read this option as column-information-in-standard-output.
 
 Below we will discuss the options that can be used to manipulate keywords.
 To see the full list of keywords in a FITS HDU, you can use the @option{--printallkeys} option.
-If any of the keyword modification options below are requested (for example @option{--update}), the headers of the input file will be changed first, then printed.
+If any of the keyword modification options below are requested (for example @option{--update}), the headers of the input file/HDU will be changed first, then printed.
 Keyword modification is done within the input file.
 Therefore, if you want to keep the original FITS file or HDU intact, it is easiest to create a copy of the file/HDU first and then run Fits on that (for copying a HDU to another file, see @ref{HDU information and manipulation}.
 In the FITS standard, keywords are always uppercase.
 So case does not matter in the input or output keyword names you specify.
+
+@cartouche
+@noindent
+@strong{@code{CHECKSUM} automatically updated, when present:} the keyword modification options will change the contents of the HDU.
+Therefore, if a @code{CHECKSUM} is present in the HDU, after all the keyword modification options have been complete, Fits will also update @code{CHECKSUM} before closing the file.
+@end cartouche
 
 Most of the options can accept multiple instances in one command.
 For example you can add multiple keywords to delete by calling @option{--delete} multiple times, since repeated keywords are allowed, you can even delete the same keyword multiple times.
@@ -9779,6 +9785,8 @@ For more on their difference and links for further reading about epochs in astro
 @cindex SIP WCS distortion
 @cindex TPV WCS distortion
 If the argument has a WCS distortion, the output (file given with the @option{--output} option) will have the distortion given to this option (for example @code{SIP}, @code{TPV}).
+The output will be a new file (with a copy of the image, and the new WCS), so if it already exists, the file will be delete (unless you use the @code{--dontdelete} option, see @ref{Input output options}).
+
 With this option, the FITS program will read the minimal set of keywords from the input HDU and the HDU data, it will then write them into the file given to the @option{--output} option but with a newly created set of WCS-related keywords corresponding to the desired distortion standard.
 
 If no @option{--output} file is specified, an automatically generated output name will be used which is composed of the input's name but with the @file{-DDD.fits} suffix, see @ref{Automatic output}.
@@ -26714,21 +26722,25 @@ for adding elements to the list.
 @example
 typedef struct gal_fits_list_key_t
 @{
-  int                        tfree;   /* ==1, free title string.   */
-  int                        kfree;   /* ==1, free keyword name.   */
-  int                        vfree;   /* ==1, free keyword value.  */
-  int                        cfree;   /* ==1, free comment.        */
-  int                        ufree;   /* ==1, free unit.           */
-  uint8_t                     type;   /* Keyword value type.       */
-  char                      *title;   /* !=NULL, only print title. */
-  char                    *keyname;   /* Keyword Name.             */
-  void                      *value;   /* Keyword value.            */
-  char                    *comment;   /* Keyword comment.          */
-  char                       *unit;   /* Keyword unit.             */
-  struct gal_fits_list_key_t *next;   /* Pointer next keyword.     */
+  int                        tfree; /* ==1, free title string.  */
+  int                        kfree; /* ==1, free keyword name.  */
+  int                        vfree; /* ==1, free keyword value. */
+  int                        cfree; /* ==1, free comment.       */
+  int                        ufree; /* ==1, free unit.          */
+  uint8_t                     type; /* Keyword value type.      */
+  char                      *title; /* !=NULL, only print title.*/
+  char                    *keyname; /* Keyword Name.            */
+  void                      *value; /* Keyword value.           */
+  char                    *comment; /* Keyword comment.         */
+  char                       *unit; /* Keyword unit.            */
+  struct gal_fits_list_key_t *next; /* Pointer next keyword.    */
 @} gal_fits_list_key_t;
 @end example
 @end deftp
+
+@deftypefun int gal_fits_key_exists_fptr (fitsfile @code{*fptr}, char @code{*keyname})
+Return 1 (true) if the opened FITS file pointer contains the requested keyword and 0 (false) otherwise.
+@end deftypefun
 
 @deftypefun {void *} gal_fits_key_img_blank (uint8_t @code{type})
 Returns a pointer to an allocated space containing the value to the FITS

@@ -112,6 +112,7 @@ keywords_rename_keys(struct fitsparams *p, fitsfile **fptr, int *r)
       /* Rename the keyword */
       fits_modify_name(*fptr, from, to, &status);
       if(status) *r=fits_has_error(p, FITS_ACTION_RENAME, from, status);
+      else p->updatechecksum=1;
       status=0;
 
       /* Clean up the user's input string. Note that 'strtok' just changes
@@ -129,8 +130,8 @@ keywords_rename_keys(struct fitsparams *p, fitsfile **fptr, int *r)
 /* Special write options don't have any value and the value has to be found
    within the script. */
 static int
-keywords_write_set_value(struct fitsparams *p, fitsfile **fptr,
-                         gal_fits_list_key_t *keyll)
+keywords_write_special(struct fitsparams *p, fitsfile **fptr,
+                       gal_fits_list_key_t *keyll)
 {
   int status=0;
 
@@ -159,6 +160,7 @@ keywords_write_set_value(struct fitsparams *p, fitsfile **fptr,
   else if( keyll->keyname[0]=='/' )
     {
       gal_fits_key_write_title_in_ptr(keyll->value, *fptr);
+      p->updatechecksum=1;
       return 0;
     }
   else
@@ -194,7 +196,7 @@ keywords_write_update(struct fitsparams *p, fitsfile **fptr,
       /* Deal with special keywords. */
       continuewriting=1;
       if( keyll->value==NULL || keyll->keyname[0]=='/' )
-        continuewriting=keywords_write_set_value(p, fptr, keyll);
+        continuewriting=keywords_write_special(p, fptr, keyll);
 
       /* Write the information: */
       if(continuewriting)
@@ -247,6 +249,11 @@ keywords_write_update(struct fitsparams *p, fitsfile **fptr,
              && fits_write_key_unit(*fptr, keyll->keyname, keyll->unit,
                                     &status) )
             gal_fits_io_error(status, NULL);
+
+          /* By this stage, a keyword has been written or updated. So its
+             necessary to update the checksum in the end. This should be
+             under the 'if(continuewriting)' conditional (because */
+          p->updatechecksum=1;
         }
 
       /* Free the allocated spaces if necessary: */
@@ -370,18 +377,19 @@ static void
 keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
 {
   size_t i;
-  int status=0;
   long initial;
   fitsfile *fptr;
+  int status=0, updatechecksum=0, checksumexists=0;
 
   /* Initial sanity check. Since 'numinkeys' includes 'END' (counting from
      1, as we do here), the first keyword must not be larger OR EQUAL to
      'numinkeys'. */
   if(p->copykeysrange[0]>=numinkeys)
-    error(EXIT_FAILURE, 0, "%s (hdu %s): first keyword number give to "
-          "'--copykeys' (%ld) is larger than the number of keywords in this "
-          "header (%zu, including the 'END' keyword)", p->input->v, p->cp.hdu,
-          p->copykeysrange[0], numinkeys);
+    error(EXIT_FAILURE, 0, "%s (hdu %s): first keyword number give "
+          "to '--copykeys' (%ld) is larger than the number of "
+          "keywords in this header (%zu, including the 'END' "
+          "keyword)", p->input->v, p->cp.hdu, p->copykeysrange[0],
+          numinkeys);
 
   /* If the user wanted to count from the end (by giving a negative value),
      then do that. */
@@ -402,18 +410,29 @@ keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
   /* Final sanity check (on range limit). */
   if(p->copykeysrange[1]>=numinkeys)
     error(EXIT_FAILURE, 0, "%s (hdu %s): second keyword number give to "
-          "'--copykeys' (%ld) is larger than the number of keywords in this "
-          "header (%zu, including the 'END' keyword)", p->input->v, p->cp.hdu,
-          p->copykeysrange[1], numinkeys);
-
+          "'--copykeys' (%ld) is larger than the number of keywords in "
+          "this header (%zu, including the 'END' keyword)", p->input->v,
+          p->cp.hdu, p->copykeysrange[1], numinkeys);
 
   /* Open the output HDU. */
   fptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE);
 
+  /* See if a 'CHECKSUM' key exists in the HDU or not (to update in case we
+     wrote anything). */
+  checksumexists=gal_fits_key_exists_fptr(fptr, "CHECKSUM");
 
   /* Copy the requested headers into the output. */
   for(i=p->copykeysrange[0]-1; i<=p->copykeysrange[1]-1; ++i)
-    if( fits_write_record(fptr, &inkeys[i*80], &status ) )
+    {
+      if( fits_write_record(fptr, &inkeys[i*80], &status ) )
+        gal_fits_io_error(status, NULL);
+      else updatechecksum=1;
+    }
+
+  /* If a checksum existed, and we made changes in the file, we should
+     upate the checksum. */
+  if(checksumexists && updatechecksum)
+    if( fits_write_chksum(fptr, &status) )
       gal_fits_io_error(status, NULL);
 
   /* Close the output FITS file. */
@@ -919,15 +938,16 @@ int
 keywords(struct fitsparams *p)
 {
   char *inkeys=NULL;
-  int r=EXIT_SUCCESS;
   fitsfile *fptr=NULL;
   gal_list_str_t *tstll;
   int status=0, numinkeys;
+  int r=EXIT_SUCCESS, checksumexists=0;
 
   /* Print the requested keywords. Note that this option isn't called with
      the rest. It is independent of them. */
   if(p->keyvalue)
     keywords_value(p);
+
 
   /* Delete the requested keywords. */
   if(p->delete)
@@ -941,8 +961,22 @@ keywords(struct fitsparams *p)
           fits_delete_key(fptr, tstll->v, &status);
           if(status)
             r=fits_has_error(p, FITS_ACTION_DELETE, tstll->v, status);
+          else
+            p->updatechecksum=1;
           status=0;
         }
+    }
+
+
+  /* If the checksum keyword still exists in the HDU (wasn't deleted in the
+     previous step), then activate the flag to recalculate it at the
+     end. Note that the distortion or coordinate system functions will do
+     this job separately themselves. */
+  if(p->rename || p->update || p->write || p->asis || p->history
+     || p->comment || p->date)
+    {
+      keywords_open(p, &fptr, READWRITE);
+      checksumexists=gal_fits_key_exists_fptr(fptr, "CHECKSUM");
     }
 
 
@@ -978,6 +1012,7 @@ keywords(struct fitsparams *p)
         {
           fits_write_record(fptr, tstll->v, &status);
           if(status) r=fits_has_error(p, FITS_ACTION_WRITE, tstll->v, status);
+          else p->updatechecksum=1;
           status=0;
         }
     }
@@ -992,6 +1027,7 @@ keywords(struct fitsparams *p)
           fits_write_history(fptr, tstll->v, &status);
           if(status)
             r=fits_has_error(p, FITS_ACTION_WRITE, "HISTORY", status);
+          else p->updatechecksum=1;
           status=0;
         }
     }
@@ -1006,6 +1042,7 @@ keywords(struct fitsparams *p)
           fits_write_comment(fptr, tstll->v, &status);
           if(status)
             r=fits_has_error(p, FITS_ACTION_WRITE, "COMMENT", status);
+          else p->updatechecksum=1;
           status=0;
         }
     }
@@ -1017,8 +1054,15 @@ keywords(struct fitsparams *p)
       keywords_open(p, &fptr, READWRITE);
       fits_write_date(fptr, &status);
       if(status) r=fits_has_error(p, FITS_ACTION_WRITE, "DATE", status);
+      else p->updatechecksum=1;
       status=0;
     }
+
+
+  /* Update the checksum (if necessary). */
+  if(checksumexists && p->updatechecksum)
+    if( fits_write_chksum(fptr, &status) )
+      gal_fits_io_error(status, NULL);
 
 
   /* Print all the keywords in the extension. */
@@ -1056,12 +1100,14 @@ keywords(struct fitsparams *p)
       keywords_date_to_seconds(p, fptr);
     }
 
+
   /* List all keyword names. */
   if(p->printkeynames)
     {
       keywords_open(p, &fptr, READONLY);
       keywords_list_key_names(p, fptr);
     }
+
 
   /* Close the FITS file */
   if(fptr && fits_close_file(fptr, &status))
@@ -1074,6 +1120,7 @@ keywords(struct fitsparams *p)
       keywords_copykeys(p, inkeys, numinkeys);
       free(inkeys);
     }
+
 
   /* Convert the input's distortion to the desired output distortion. */
   if(p->wcsdistortion || p->wcscoordsys)

@@ -93,6 +93,7 @@ struct fitsparams
   int                         mode;  /* Operating on HDUs or keywords.  */
   int                   coordsysid;  /* ID of desired coordinate system.*/
   int                 distortionid;  /* ID of desired distortion.       */
+  int               updatechecksum;  /* If CHECKSUM should be update.   */
   long            copykeysrange[2];  /* Start and end of copy.          */
   gal_fits_list_key_t  *write_keys;  /* Keys to write in the header.    */
   gal_fits_list_key_t *update_keys;  /* Keys to update in the header.   */
