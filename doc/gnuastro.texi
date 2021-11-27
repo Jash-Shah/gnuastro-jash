@@ -274,6 +274,7 @@ Detecting large extended targets
 
 * Downloading and validating input data::  How to get and check the input data.
 * NoiseChisel optimization::    Detect the extended and diffuse wings.
+* Skewness of the image::
 * Image surface brightness limit::  Standards to quantify the noise level.
 * Achieved surface brightness level::  Calculate the outer surface brightness.
 * Extract clumps and objects::  Find sub-structure over the detections.
@@ -4335,6 +4336,7 @@ Due to its more peculiar low surface brightness structure/features, we'll focus 
 @menu
 * Downloading and validating input data::  How to get and check the input data.
 * NoiseChisel optimization::    Detect the extended and diffuse wings.
+* Skewness of the image::
 * Image surface brightness limit::  Standards to quantify the noise level.
 * Achieved surface brightness level::  Calculate the outer surface brightness.
 * Extract clumps and objects::  Find sub-structure over the detections.
@@ -4422,7 +4424,7 @@ Here, we don't need the compressed file any more, so we'll just let @command{bun
 $ bunzip2 r.fits.bz2
 @end example
 
-@node NoiseChisel optimization, Image surface brightness limit, Downloading and validating input data, Detecting large extended targets
+@node NoiseChisel optimization, Skewness of the image, Downloading and validating input data, Detecting large extended targets
 @subsection NoiseChisel optimization
 In @ref{Detecting large extended targets} we downloaded the single exposure SDSS image.
 Let's see how NoiseChisel operates on it with its default parameters:
@@ -4666,15 +4668,13 @@ However, given the many problems in existing ``smart'' solutions, such automatic
 So even when they are implemented, we would strongly recommend quality checks for a robust analysis.
 @end cartouche
 
-@node Skweness of the image, Achieved quantile of mean a image
+@node Skewness of the image, Image surface brightness limit, NoiseChisel optimization, Detecting large extended targets
 @subsection Skewness of the image
 To determine the image surface brightness limit, understanding the skewness of the image is a very important and vital issue.
 For this reason, it is better to know more about this skewness before starting the image surface brightness limit.
-In fact, the main purpose of this section is to show the difference between the standard deviation and quantile of the mean in the image.
-Indeed , we want to show that the definition of the quantile of the mean is much stronger than the definition of standard skewness.
+In fact, the main purpose of this section is to show using the quantile of the mean in the image is much stronger than the definition of standard skewness.
 
 In @ref{NoiseChisel optimization} we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
-
 Let's start masking all the detected pixels and have a look at the noise distribution with the @command{astarithmetic} and @command{aststatistics} commands below.
 
 @example
@@ -4741,12 +4741,12 @@ Histogram:
 
 @noindent
 As you can see, the distribution is very elongated because the galaxy inside the image is extremely bright.
-Comparing the distributions above, you will see that the minimum value of the image has not changed because we have not masked the minimum values even though the maximum value of the image has changed.
+Comparing the distributions above, you can see that the minimum value of the image has not changed because we have not masked the minimum values, while the maximum value of the image has been changed.
 Also, the mean and median values of the noise distribution are closer to each other than the signal distribution.
 Now let's limit the distribution of the signal using the @option{--lessthan} option to make it similar to the noise distribution and then compare them together.
 Our criterion here is standard deviation.
-If we look at the distribution of the @option{INPUT-NO-SKY} image and the masked image, the values of standard deviation is 0.6981762756 and 0.02569687481, respectively.
-we see how different the standard deviations are.
+The standard deviation changes from 0.6981762756 to 0.02569687481 between the @option{INPUT-NO-SKY} image and the masked image.
+See how standard deviations are different.
 
 @example
 
@@ -4776,42 +4776,34 @@ Histogram:
 @end example
 
 @noindent
-We can see the noise distribution is completely symmetric, while the signal distribution is asymmetric in this range, especially in outer part.
-This asymmetry is due to the effect of the signal presence.
-Masking the signal in the NoiseChisel results in a symmetrical noise distribution.
+It is clear that the noise distribution is completely symmetric, while the signal distribution is asymmetric in this range, especially in outer part.
+This asymmetry is due to the effect of the signal presence and so masking the signal by the NoiseChisel results in a symmetrical noise distribution.
 
 @noindent
-Please quantify the distribution of the noise in maske image by measuring the skewness (difference between mean and median, divided by the standard deviation):
+We can quantify the distribution of the noise in the masked image by measuring the skewness with the standard definition (difference between mean and median, divided by the standard deviation):
 
-@example
+@verbatim
 $ aststatistics det-masked.fits --mean --median --std \
                 | awk '{print ($1-$2)/$3}'
 0.0800868
-@end example
+@end verbatim
 
-@example
+@verbatim
 $ aststatistics r_detected.fits --mean --median --std \
                 | awk '{print ($1-$2)/$3}'
 0.116975
-@end example
+@end verbatim
 
 @noindent
-In the skewness by its standard definitiontwo above distributions show @mymath{0.08\sigma} and @mymath{0.1\sigma} skewness, respectively.
-And showing that the mean is larger than the median by @mymath{0.08\sigma} and @mymath{0.1\sigma}.
-If anybody looks at these two distributions, says that these two distributions are good, while they are not good distribution at all.
-This is because when our distribution is skewed, the standard deviation we measure is incorrect and we cannot consider it as a criterion of interpretation.
-Because the positive amount in skewness also affects the standard deviation and increases the amount of standard deviation.
-And for this reason, the difference between the mean and the mean in above is large.
-Here, standard deviation does not make sense when we are skewed.
-Because the standard deviation is defined only in symmetric and Gaussian distributions.
-In @ref{Quantifying signal in a tile} we showed that when our distribution is skewed, the standard deviation is not defined at all, because the distribution is not Gaussian.
-In the quantile, we do not use the standars deviation.
-Because quabtile is showing us the location of the mean in the whole distribution.
-When we put the whole distribution between zero and one, in fact, by doing this work we are normalization.
-But when we consider the standard deviation, by doing so we are secretly assuming that our distribution is Gaussian.
-And we interpret the standard deviation obtained from this work, while we know that when our distribution is not Gaussian, the standard deviation number does not indicate width.
-In scenarios like this, where our distribution is not Gaussian, we use quantile of the mean instead of skewness.
-Now let's quantify these distribution by measuring the quantile of the mean:
+Obtained values of the skewness indicate the mean is larger than the median by @mymath{0.08\sigma} and @mymath{0.1\sigma} in these cases.
+At a glance, it seems that there is not much difference and the two distributions are good, while this is not a correct conclusion.
+When our distribution is skewed, we can not consider the standard deviation as a criterion of interpretation.
+Because the standard deviation is defined only in symmetric and Gaussian distributions; it does not indicate width properly in a non-Gaussian distribution.
+Therefore, the standard definition of skewness is not useful here.
+
+As mentioned in @ref{Quantifying signal in a tile}, when our distribution is skewed, we use quantile of the mean instead of the standard definition of skewness.
+The quantile of the mean is showing the location of the mean in the whole distribution, while the distribution is normalized between 0 and 1.
+Now let's quantify these distributions by measuring the quantile of the mean:
 
 @example
 $ aststatistics r_detected.fits -hINPUT-NO-SKY --quantofmean
@@ -4824,13 +4816,11 @@ $ aststatistics det-masked.fits --quantofmean
 @end example
 
 @noindent
-In the skewness by its quantile of the mean above distributions show @mymath{0.8\sigma} and @mymath{0.5\sigma} skewness, respectively.
-Which shows us the actual distribution and says that in the @option{INPUT-NO-SKY} image the average of the total population is pulled forwardthirty pecent.
-In quantile of the mean you can see the distribution of the signal effect very nicely.
-But in skweness by its standard definition, if we compare these two distributions, we discovere any diffrence between these two distribution.
-And this is the main reason for choosing quantile of the mean instead of standard definition of the skewness.
+Based on this method using quantile of the mean, skewness of two distributions are @mymath{0.8\sigma} and @mymath{0.5\sigma}, respectively.
+This result shows the average of the total population is pulled forwardt hirty pecent in the @option{INPUT-NO-SKY} image however when signals mask by NoiseChisel, there will be no this skewness.
+So we can see the signal effect clearly, while this was not well seen by the standard definition of skewness.
 
-@node Image surface brightness limit, Achieved surface brightness level, NoiseChisel optimization, Detecting large extended targets
+@node Image surface brightness limit, Achieved surface brightness level, Skewness of the image, Detecting large extended targets
 @subsection Image surface brightness limit
 @cindex Surface brightness limit
 @cindex Limit, surface brightness
