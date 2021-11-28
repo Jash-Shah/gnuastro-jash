@@ -499,6 +499,22 @@ AS_IF([test "x$enable_shared" = "xno"],
 # _all_ the libraries, because they may add elements to 'LIBS'/'LDADD' that
 # causes possibly different versions of the libraries to be read.
 
+
+# Set a new 'LDFLAGS' variable to use in these checks. The reason is that
+# 'LDFLAGS' is placed in the compile command _before_ the library (e.g.,
+# 'libwcs'). However, 'LDADD' (that we have been actively setting above!)
+# is placed _after_ the library in the compile command! As a result, when
+# 'LDADD' includes a '-L/path/to/library', it will only be seen after the
+# library (and therefore will be useless!).
+#
+# This is only necessary during the checking of the libraries at configure
+# time (here) because of the peculiar features of 'AC_LIB_HAVE_LINKFLAGS'
+# (which may use '-l' or '-L' depending on the situtation, which is very
+# good during checks.).
+orig_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LDADD"
+
+
 # GSL's 'gsl_interp_steffen' isn't a function. So we'll need to use
 # 'AC_LINK_IFELSE'. However, AC_LINK_IFELSE doesn't use 'LDADD', so we'll
 # have to temporarily add 'LDADD' to LIBS, then set it back to the
@@ -525,7 +541,7 @@ AC_SUBST(HAVE_FITS_IS_REENTRANT, [$has_fits_is_reentrant])
 
 # If the WCS library has the 'wcslib_version' function.
 AC_CHECK_LIB([wcs], [wcslib_version], [has_wcslib_version=1],
-             [has_wcslib_version=0], [-lcfitsio -lm])
+             [has_wcslib_version=0; anywarnings=yes], [-lcfitsio -lm])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_VERSION], [$has_wcslib_version],
                    [WCSLIB comes with wcslib_version])
 AC_SUBST(HAVE_WCSLIB_VERSION, [$has_wcslib_version])
@@ -555,6 +571,7 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_OBSFIX], [$has_wcslib_obsfix],
                    [WCSLIB comes with OBSFIX macro])
 AC_SUBST(HAVE_WCSLIB_OBSFIX, [$has_wcslib_obsfix])
 
+
 # If the WCS library has the 'wcsccs' function.
 AC_CHECK_LIB([wcs], [wcsccs], [has_wcslib_wcsccs=1],
              [has_wcslib_wcsccs=0; anywarnings=yes], [-lcfitsio -lm])
@@ -562,12 +579,19 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_WCSLIB_WCSCCS], [$has_wcslib_wcsccs],
                    [WCSLIB comes with wcsccs])
 AC_SUBST(HAVE_WCSLIB_WCSCCS, [$has_wcslib_wcsccs])
 
+
 # If the pthreads library has 'pthread_barrier_wait'.
 AC_CHECK_LIB([pthread], [pthread_barrier_wait], [has_pthread_barrier=1],
              [has_pthread_barrier=0])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_PTHREAD_BARRIER], [$has_pthread_barrier],
                    [System has pthread_barrier])
 AC_SUBST(HAVE_PTHREAD_BARRIER, [$has_pthread_barrier])
+
+
+# Reset LDFLAGS (see the comments above 'orig_LDFLAGS'). This SHOULD BE
+# PLACED AFTER ALL LIBRARIES ARE CHECKED.
+LDFLAGS="$orig_LDFLAGS"
+# ---------------------------------End of library checks
 
 
 
@@ -768,8 +792,18 @@ AS_IF([test "x$missing_mandatory" = "xyes"],
 
 
 
-# Gnulib checks:
+# Gnulib checks (which are many!). We are doing these after the main
+# Gnuastro dependencies so the configure script crashes early if the
+# mandatory dependencies aren't present. However, the Gnulib checks are
+# very low-level, and the changes in envornment that we made above (in
+# particular 'LIBS') can cause conflicts with Gnulib's checks (in
+# particular with WCSLIB, because on some systems, WCSLIB's library name:
+# 'libwcs' can cause conflicts with the standard wide-character-string
+# library: 'libwcs').
+new_LIBS="$LIBS"
+LIBS="$orig_LIBS"
 gl_INIT
+LIBS="$new_LIBS"
 
 
 
@@ -1122,6 +1156,17 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    or not (it was introduced in version 3.30 released in April"])
                AS_ECHO(["    2012). This won't affect the outputs of the programs, but"])
                AS_ECHO(["    can slow them down."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_wcslib_version" = "x0"],
+              [dependency_notice=yes
+               AS_ECHO(["  - WCSLIB (https://www.atnf.csiro.au/people/mcalabre/WCS) version"])
+               AS_ECHO(["    on this system doesn't report its own version (through the "])
+               AS_ECHO(["    function 'wcslib_version'). Therefore Gnuastro can't report "])
+               AS_ECHO(["    the version of WCSLIB in its outputs (which is just metadata, "])
+               AS_ECHO(["    it won't affect the operation of any of Gnuastro's programs). "])
+               AS_ECHO(["    This function was introduced in WCSLIB version 5.0 (released "])
+               AS_ECHO(["    in April 2015)."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_wcslib_dis_h" = "x0"],
