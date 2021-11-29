@@ -296,7 +296,8 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
           /* This token is a file, count how many mult-extension files we
              have and use the first to set the output filename (if it has
              not been set). */
-          if( gal_array_name_recognized(token->v) )
+          if( gal_array_name_recognized(token->v)
+              || gal_fits_file_recognized(token->v) )
             {
               /* Increment the counter for FITS files (if they are
                  input). Recall that the 'tofile' operator can also have

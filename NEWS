@@ -108,6 +108,9 @@ See the end of the file for license conditions.
               tables, found by Zohre Ghaffari.
   bug #61493: NoiseChisel's --checksn not showing pseudos equal to
               --snminarea (only larger ones), found by Raúl Infante-Sainz.
+  bug #61584: When FITS file doesn't end with '.fits' and the output file
+              already existed, Arithmetic would write the output in new
+              extension while it should have been deleted.
 
 
 
