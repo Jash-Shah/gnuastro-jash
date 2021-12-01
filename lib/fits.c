@@ -3508,10 +3508,19 @@ gal_fits_tab_read(char *filename, char *hdu, size_t numrows,
                   gal_data_t *allcols, gal_list_sizet_t *indexll,
                   size_t numthreads, size_t minmapsize, int quietmmap)
 {
+  size_t i;
   gal_data_t *out=NULL;
   gal_list_sizet_t *ind;
   struct fits_tab_read_onecol_params p;
-  size_t i, nthreads=GAL_CONFIG_HAVE_FITS_IS_REENTRANT ? numthreads : 1;
+
+  /* If the 'fits_is_reentrant' function exists, then use it to see if
+     CFITSIO was configured in multi-thread mode. Otherwise, just use a
+     single thread. */
+#if GAL_CONFIG_HAVE_FITS_IS_REENTRANT == 1
+  size_t nthreads = fits_is_reentrant() ? numthreads : 1;
+#else
+  size_t nthreads=1;
+#endif
 
   /* We actually do have columns to read. */
   if(numrows)

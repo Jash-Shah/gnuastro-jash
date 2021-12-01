@@ -516,7 +516,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM(
 # If the CFITSIO library has the 'fits_is_reentrant' function (it was added
 # since version 3.30 of April 2012).
 AC_CHECK_LIB([cfitsio], [fits_is_reentrant], [has_fits_is_reentrant=1],
-             [has_fits_is_reentrant=0], [-lm])
+             [has_fits_is_reentrant=0; anywarnings=yes], [-lm])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_FITS_IS_REENTRANT],
                    [$has_fits_is_reentrant],
                    [CFITSIO has the fits_is_reentrant function])
@@ -1112,6 +1112,16 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    have less functionality afterwards. We thus recommend building"])
                AS_ECHO(["    and installing a more recent version of GSL (version >= 2.0,"])
                AS_ECHO(["    released in October 2015)."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_fits_is_reentrant" = "x0"],
+              [dependency_notice=yes
+               AS_ECHO(["  - CFITSIO (https://heasarc.gsfc.nasa.gov/fitsio/) version on"])
+               AS_ECHO(["    this computer doesn't have the 'fits_is_reentrant' function"])
+               AS_ECHO(["    which is used to see if FITS files can be read in parallel"])
+               AS_ECHO(["    or not (it was introduced in version 3.30 released in April"])
+               AS_ECHO(["    2012). This won't affect the outputs of the programs, but"])
+               AS_ECHO(["    can slow them down."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_wcslib_dis_h" = "x0"],
