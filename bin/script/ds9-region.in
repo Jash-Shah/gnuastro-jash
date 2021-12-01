@@ -324,13 +324,13 @@ if [ x"$namecol" = x ]; then
         cat /dev/stdin \
             | asttable --column=$col \
             | while read a b; do \
-                  printf "circle(%g,%g,%g%s)\n" \
+                  printf "circle(%f,%f,%f%s)\n" \
                          $a $b $radius $unit >> $out; \
               done
     else
         asttable $input --hdu=$hdu --column=$col \
             | while read a b; do \
-                  printf "circle(%g,%g,%g%s)\n" \
+                  printf "circle(%f,%f,%f%s)\n" \
                          $a $b $radius $unit >> $out; \
               done
     fi
@@ -339,13 +339,13 @@ else
         cat /dev/stdin \
             | asttable --column=$col --column=$namecol \
             | while read a b c; do \
-                  printf "circle(%g,%g,%g%s) # text={%g}\n" \
+                  printf "circle(%f,%f,%f%s) # text={%g}\n" \
                          $a $b $radius $unit $c >> $out; \
               done
     else
         asttable $input --hdu=$hdu --column=$col --column=$namecol \
             | while read a b c; do \
-                  printf "circle(%g,%g,%g%s) # text={%g}\n" \
+                  printf "circle(%f,%f,%f%s) # text={%g}\n" \
                          $a $b $radius $unit $c >> $out; \
               done
     fi
