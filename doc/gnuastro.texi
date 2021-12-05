@@ -21809,10 +21809,10 @@ In @ref{flatplane} the infinitesimal changes for each polar coordinate are plott
 plane.}
 @end float
 
-Assuming an object is placed at a certain position, which can be parameterized as @mymath{(x,y)}, or @mymath{(r,\phi)}, a general infinitesimal change in its position will place it in the coordinates @mymath{(x+dx,y+dy)} and @mymath{(r+dr,\phi+d\phi)}.
+Assuming an object is placed at a certain position, which can be parameterized as @mymath{(x,y)}, or @mymath{(r,\phi)}, a general infinitesimal change in its position will place it in the coordinates @mymath{(x+dx,y+dy)}, or @mymath{(r+dr,\phi+d\phi)}.
 The distance (on the flat 2D surface) that is covered by this infinitesimal change in the static universe (@mymath{ds_s}, the subscript signifies the static nature of this universe) can be written as:
 
-@dispmath{ds_s=dx^2+dy^2=dr^2+r^2d\phi^2}
+@dispmath{ds_s^2=dx^2+dy^2=dr^2+r^2d\phi^2}
 
 The main question is this: how can the 2D creature incorporate the (possible) curvature in its universe when it's calculating distances? The universe that it lives in might equally be a curved surface like @ref{sphereandplane}.
 The answer to this question but for a 3D being (us) is the whole purpose to this discussion.
