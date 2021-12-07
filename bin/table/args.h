@@ -388,12 +388,24 @@ struct argp_option program_options[] =
       0,
       "Remove rows with blank in given columns.",
       GAL_OPTIONS_GROUP_INPUT,
-      &p->noblank,
-      GAL_TYPE_STRING,
+      &p->noblankll,
+      GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
-      GAL_OPTIONS_NOT_SET,
-      gal_options_parse_csv_strings
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "noblankend",
+      UI_KEY_NOBLANKEND,
+      "STR[,STR]",
+      0,
+      "Sim. to --noblank, at end (e.g., after arith.).",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->noblankend,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
     },
 
 

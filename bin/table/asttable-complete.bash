@@ -66,13 +66,13 @@ _gnuastro_autocomplete_asttable_option_value(){
     case "$option_name" in
 
         # Options that take a columns from the main argument.
-        --column|--noblank|--inpolygon|--outpolygon|--colmetadata|--equal|--notequal)
+        --column|--noblank|--noblankend|--inpolygon|--outpolygon|--colmetadata|--equal|--notequal)
 
             # The '--column' and '--noblank' options can (and usually
             # will!) take more than one column name as value.
             local continuematch=""
             case "$option_name" in
-                --column|--noblank) continuematch=yes;;
+                --column|--noblank|--noblankend) continuematch=yes;;
             esac
 
             # Find the suggestions.

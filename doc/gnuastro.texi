@@ -11070,6 +11070,8 @@ If the datatypes are different, you can use the type conversion operators of Tab
 @option{--equal}: only keep rows with specified value in given column.
 @item
 @option{--notequal}: only keep rows without specified value in given column.
+@item
+@option{--noblank}: only keep rows that aren't blank in the given column(s).
 @end itemize
 These options take certain column(s) as input and remove some rows from the full table (all columns), based on the given limitations.
 They can be called any number of times (to limit the final rows based on values in different columns for example).
@@ -11110,19 +11112,20 @@ For more on column arithmetic, see @ref{Column arithmetic}.
 @item Column metadata (@option{--colmetadata})
 Changing column metadata is necessary after column arithmetic or adding new columns from other tables (that were done above).
 
-@item Row selection (@option{--noblank})
-Theoretically, this method of row selection by value should have been done with the other logically similar options like @option{--range} or @option{--equal}.
-However, those options are applied to the raw (input) column value.
-In some scenarios, you need to apply arithmetic operations on the columns (through @ref{Column arithmetic}) before rejecting the undesired rows.
-After the arithmetic operation is done, you can use the @code{where} operator to set the non-desired columns to NaN/blank and use @option{--noblank} to remove them at the end.
-See the example below for applying any generic value-based row selection based on @option{--noblank}.
+@item Output row selection (@option{--noblankend})
+Only keep the output rows that don't have a blank value in the given column(s).
+For example, you may need to apply arithmetic operations on the columns (through @ref{Column arithmetic}) before rejecting the undesired rows.
+After the arithmetic operation is done, you can use the @code{where} operator to set the non-desired columns to NaN/blank and use @option{--noblankend} option to remove them just before writing the output.
+In other scenarios, you may want to remove blank values based on columns in another table.
+You can also use the modified metadata of the previous steps to use updated names!
+See the example below for applying any generic value-based row selection based on @option{--noblankend}.
 @end table
 
 As an example, let's review how Table interprets the command below.
 We are assuming that @file{table.fits} contains at least three columns: @code{RA}, @code{DEC} and @code{PARAM} and you only want the RA and Dec of the rows where @mymath{p\times 2<5} (@mymath{p} is the value of each row in the @code{PARAM} column).
 
 @example
-asttable table.fits -cRA,DEC --noblank=MULTIP \
+asttable table.fits -cRA,DEC --noblankend=MULTIP \
          -c'arith PARAM 2 x set-i i i 5 gt nan where' \
          --colmetadata=3,MULTIP,unit,"Description of column"
 @end example
@@ -11142,7 +11145,7 @@ Updating column metadata (with @option{--colmetadata}) is then done to give a na
 During the process, besides a name, we also set a unit and description for the new column.
 These metadata entries are @emph{very important}, so always be sure to add metadata after doing column arithmetic.
 @item
-The lowest precedence operation is @option{--noblank=MULTIP}.
+The lowest precedence operation is @option{--noblankend=MULTIP}.
 So only rows that aren't blank/NaN in the @code{MULTIP} column are kept.
 @item
 Finally, the output table (with three columns) is written to the command-line.
@@ -11159,7 +11162,7 @@ For example, let's assume that you want to sort the output table from the exampl
 Since sorting is done prior to column arithmetic, you can't do it in one command, but you can circumvent this limitation by simply piping the output (including metadata) to another call to Table:
 
 @example
-asttable table.fits -cRA,DEC --noblank=MULTIP --colinfoinstdout \
+asttable table.fits -cRA,DEC --noblankend=MULTIP --colinfoinstdout \
          -c'arith PARAM 2 x set-i i i 5 gt nan where' \
          --colmetadata=3,MULTIP,unit,"Description of column" \
          | asttable --sort=MULTIP --output=selected.fits
@@ -11461,6 +11464,23 @@ This option can also be called multiple times, so @option{--notequal=ID,4,5 --no
 Be very careful if you want to use the non-equality with floating point numbers, see the special note under @option{--equal} for more.
 This option also works when the given column has a string type, see the description under @option{--equal} (above) for more.
 
+@item -b STR[,STR[,STR]]
+@itemx --noblank=STR[,STR[,STR]]
+Only output rows that are @emph{not} blank in the given column of the @emph{input} table.
+Like above, the columns can be specified by their name or number (counting from 1).
+This option can be called multiple times, so @option{--noblank=MAG --noblank=PHOTOZ} is equivalent to @option{--noblank=MAG,PHOTOZ}.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
+
+For example if @file{table.fits} has blank values (NaN in floating point types) in the @code{magnitude} and @code{sn} columns, with @code{--noblank=magnitude,sn}, the output will not contain any rows with blank values in these two columns.
+
+If you want @emph{all} columns to be checked, simply set the value to @code{_all} (in other words: @option{--noblank=_all}).
+This mode is useful when there are many columns in the table and you want a ``clean'' output table (with no blank values in any column): entering their name or number one-by-one can be buggy and frustrating.
+In this mode, no other column name should be given.
+For example if you give @option{--noblank=_all,magnitude}, then Table will assume that your table actually has a column named @code{_all} and @code{magnitude}, and if it doesn't, it will abort with an error.
+
+If you want to change column values using @ref{Column arithmetic} (and set some to blank, to later remove), or you want to select rows based on columns that you have imported from other tables, you should use the @option{--noblankend} option described below.
+Also, see @ref{Operation precedence in Table}.
+
 @item -s STR
 @itemx --sort=STR
 Sort the output rows based on the values in the @code{STR} column (can be a column name or number).
@@ -11526,17 +11546,23 @@ Read the random number generator seed from the @code{GSL_RNG_SEED} environment v
 This is useful if you want a reproducible random selection of the input rows.
 For more, see @ref{Generating random numbers}.
 
-@item -b STR[,STR[,STR]]
-@itemx --noblank=STR[,STR[,STR]]
-Remove all rows in the given @emph{output} columns that have a blank value.
+@item -E STR[,STR[,STR]]
+@itemx --noblankend=STR[,STR[,STR]]
+Remove all rows in the requested @emph{output} columns that have a blank value.
 Like above, the columns can be specified by their name or number (counting from 1).
+This option can be called multiple times, so @option{--noblank=MAG --noblank=PHOTOZ} is equivalent to @option{--noblank=MAG,PHOTOZ}.
+For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
-For example if @file{table.fits} has blank values (NaN in floating point types) in the @code{magnitude} and @code{sn} columns, with @code{--noblank=magnitude,sn}, the output will not contain any rows with blank values in these columns.
+For example if your final output table (possibly after column arithmetic, or adding new columns) has blank values (NaN in floating point types) in the @code{magnitude} and @code{sn} columns, with @code{--noblankend=magnitude,sn}, the output will not contain any rows with blank values in these two columns.
 
-If you want @emph{all} columns to be checked, simply set the value to @code{_all} (in other words: @option{--noblank=_all}).
+If you want blank values to be removed from the main input table _before_ any further processing (like adding columns, sorting or column arithmetic), you should use the @option{--noblank} option.
+With the @option{--noblank} option, the column(s) that is(are) given doesn't necessarily have to be in the output (it is just temporarily used for reading the inputs and selecting rows, but doens't necessarily need to be present in the output).
+However, the column(s) given to this option should exist in the output.
+
+If you want @emph{all} columns to be checked, simply set the value to @code{_all} (in other words: @option{--noblankend=_all}).
 This mode is useful when there are many columns in the table and you want a ``clean'' output table (with no blank values in any column): entering their name or number one-by-one can be buggy and frustrating.
 In this mode, no other column name should be given.
-For example if you give @option{--noblank=_all,magnitude}, then Table will assume that your table actually has a column named @code{_all} and @code{magnitude}, and if it doesn't, it will abort with an error.
+For example if you give @option{--noblankend=_all,magnitude}, then Table will assume that your table actually has a column named @code{_all} and @code{magnitude}, and if it doesn't, it will abort with an error.
 
 This option is applied just before writing the final table (after @option{--colmetadata} has finished).
 So in case you changed the column metadata, or added new columns, you can use the new names, or the newly defined column numbers.

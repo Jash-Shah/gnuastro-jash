@@ -431,6 +431,10 @@ table_select_by_value(struct tableparams *p)
           addmask=table_selection_equal_or_notequal(p, tmp->col, 1);
           break;
 
+        case SELECT_TYPE_NOBLANK:
+          addmask = gal_arithmetic(GAL_ARITHMETIC_OP_ISBLANK, 1, 0, tmp->col);
+          break;
+
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
                 "to fix the problem. The code %d is not a recognized "
@@ -438,8 +442,8 @@ table_select_by_value(struct tableparams *p)
                 tmp->type);
         }
 
-      /* Remove any blank elements. */
-      if(gal_blank_present(tmp->col, 1))
+      /* Remove any blank elements (incase we are on a noblank column. */
+      if(tmp->type!=SELECT_TYPE_NOBLANK && gal_blank_present(tmp->col, 1))
         {
           blmask = gal_arithmetic(GAL_ARITHMETIC_OP_ISBLANK, 1, 0, tmp->col);
           addmask=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, inplace,
@@ -1042,16 +1046,20 @@ table_colmetadata(struct tableparams *p)
 
 
 void
-table_noblank(struct tableparams *p)
+table_noblankend(struct tableparams *p)
 {
   int found;
+  gal_list_str_t *tmp;
   size_t i, j, *index;
   gal_data_t *tcol, *flag;
-  char **strarr=p->noblank->array;
   gal_list_sizet_t *column_indexs=NULL;
 
+  /* Merge all possible calls to '--noblankend' into one list. */
+  gal_options_merge_list_of_csv(&p->noblankend);
+
   /* See if all columns should be checked, or just a select few. */
-  if( p->noblank->size==1 && !strcmp(strarr[0],"_all") )
+  if( gal_list_str_number(p->noblankend)==1
+      && !strcmp(p->noblankend->v,"_all") )
     {
       for(i=0;i<gal_list_data_number(p->table);++i)
         gal_list_sizet_add(&column_indexs, i);
@@ -1059,7 +1067,7 @@ table_noblank(struct tableparams *p)
 
   /* Only certain columns should be checked, so find/add their index. */
   else
-    for(i=0;i<p->noblank->size;++i)
+    for(tmp=p->noblankend; tmp!=NULL; tmp=tmp->next)
       {
         /* First go through the column names and if they match, add
            them. Note that we don't want to stop once a name is found, in
@@ -1069,7 +1077,7 @@ table_noblank(struct tableparams *p)
         found=0;
         for(tcol=p->table; tcol!=NULL; tcol=tcol->next)
           {
-            if( tcol->name && !strcmp(tcol->name, strarr[i]) )
+            if( tcol->name && !strcmp(tcol->name, tmp->v) )
               {
                 found=1;
                 gal_list_sizet_add(&column_indexs, j);
@@ -1083,26 +1091,28 @@ table_noblank(struct tableparams *p)
           {
             /* Parse the given index. */
             index=NULL;
-            if( gal_type_from_string((void **)(&index), strarr[i],
+            if( gal_type_from_string((void **)(&index), tmp->v,
                                      GAL_TYPE_SIZE_T) )
               error(EXIT_FAILURE, 0, "column '%s' didn't match any of the "
                     "final column names and can't be parsed as a column "
-                    "counter (starting from 1) either", strarr[i]);
+                    "counter (starting from 1) either", tmp->v);
 
             /* Make sure its not zero (the user counts from 1). */
             if(*index==0)
               error(EXIT_FAILURE, 0, "the column number (given to the "
-                    "'--noblank' option) should start from 1, but you have "
+                    "'--noblankend' option) should start from 1, but you have "
                     "given 0.");
 
             /* Make sure that the index falls within the number (note that
                it still counts from 1).  */
             if(*index > gal_list_data_number(p->table))
-              error(EXIT_FAILURE, 0, "the final output table only has %zu "
-                    "columns, but you have given column %zu to '--noblank'. "
-                    "Recall that '--noblank' operates on the output columns "
-                    "and that you can also use output column names (if they "
-                    "have any)",
+              error(EXIT_FAILURE, 0, "the final output table only has "
+                    "%zu columns, but you have given column %zu to "
+                    "'--noblankend'. Recall that '--noblankend' operates "
+                    "at the end (on the output columns) and that you "
+                    "can also use output column names (if they have "
+                    "any). In case you meant a column from the input "
+                    "table, you should use '--noblank'",
                     gal_list_data_number(p->table), *index);
 
             /* Everything is fine, add the index to the list of columns to
@@ -1174,7 +1184,7 @@ table(struct tableparams *p)
   if(p->colmetadata) table_colmetadata(p);
 
   /* When any columns with blanks should be removed. */
-  if(p->noblank) table_noblank(p);
+  if(p->noblankend) table_noblankend(p);
 
   /* Write the output. */
   gal_table_write(p->table, NULL, NULL, p->cp.tableformat, p->cp.output,

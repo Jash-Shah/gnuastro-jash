@@ -730,6 +730,64 @@ ui_check_select_sort_read_col_ind(char *string)
 
 
 
+/* Fill replace '--noblank' with all columns (if it is given '_all'). */
+static void
+ui_noblank_prepare(struct tableparams *p, size_t numcols)
+{
+  size_t i, zero=0;
+  gal_list_str_t *tmp;
+  char name[50]; /* No table will have a 50 digit number of columns! */
+
+  /* Merge all the possible calls of 'noblank' into one. */
+  gal_options_merge_list_of_csv(&p->noblankll);
+
+  /* Initialize the 'noblank' list of (empty!) datasets (we only need the
+     column names, this is done to conform with the general selection
+     mechanism, where some selection methods need values). */
+  p->noblank=NULL;
+
+  /* In case it is given an '_all' option (for all columns to be
+     checked). */
+  if(gal_list_str_number(p->noblankll)==1
+     && !strcmp(p->noblankll->v,"_all"))
+    {
+      /* Add all the columns to the final list of datasets. */
+      for(i=0;i<numcols;++i)
+        {
+          sprintf(name, "%zu", i+1);
+          gal_list_data_add_alloc(&p->noblank, NULL, GAL_TYPE_FLOAT64, 1,
+                                  &zero, NULL, 0, -1, 1, name, NULL, NULL);
+        }
+    }
+
+  /* Only certain columns are requested (we should just put the strings in
+     the desired format of a list of datasets with names, not a single
+     dataset with type string and many elements). */
+  else
+    {
+      for(tmp=p->noblankll; tmp!=NULL; tmp=tmp->next)
+        gal_list_data_add_alloc(&p->noblank, NULL, GAL_TYPE_FLOAT64, 1,
+                                &zero, NULL, 0, -1, 1, tmp->v, NULL, NULL);
+    }
+
+  /* Reverse the final output list of columns. */
+  gal_list_data_reverse(&p->noblank);
+
+  /* Clean up the list that we don't need any more. */
+  gal_list_str_free(p->noblankll, 1);
+  p->noblankll=NULL;
+
+  /* For a check:
+  gal_data_t *dtmp;
+  for(dtmp=p->noblank;dtmp!=NULL;dtmp=dtmp->next)
+    printf("col: %s\n", dtmp->name);
+  exit(0);
+  */
+}
+
+
+
+
 
 /* See if row selection or sorting needs any extra columns to be read. */
 static void
@@ -749,10 +807,11 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
   gal_data_t *dtmp, *allcols, *inpolytmp=NULL, *outpolytmp=NULL;
 
   /* Important note: these have to be in the same order as the 'enum
-     select_types' in 'main.h'. We'll fill the two polygon elements
-     later. */
+     select_types' in 'main.h'. We'll fill the NULL components
+     afterwards. */
   gal_data_t *select[SELECT_TYPE_NUMBER]={p->range, NULL, NULL,
-                                          p->equal, p->notequal};
+                                          p->equal, p->notequal,
+                                          NULL};
 
 
   /* The inpolygon dataset is currently a single dataset with two elements
@@ -778,14 +837,32 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
     }
 
 
+  /* Get all the input table's column information. */
+  allcols=gal_table_info(p->filename, p->cp.hdu, lines, &numcols,
+                         &numrows, &tableformat);
+
+
+  /* If '--noblank' is given an '_all', we should replace it with the
+     counters of all the input table columns. */
+  if(p->noblankll)
+    {
+      ui_noblank_prepare(p, numcols);
+      select[SELECT_TYPE_NOBLANK]=p->noblank;
+    }
+
+
   /* Allocate necessary spaces. */
   if(p->selection)
     {
+      /* Find the number of columns that are needed for selection. */
       *nselect = ( gal_list_data_number(p->range)
                    + gal_list_data_number(inpolytmp)
                    + gal_list_data_number(outpolytmp)
                    + gal_list_data_number(p->equal)
-                   + gal_list_data_number(p->notequal) );
+                   + gal_list_data_number(p->notequal)
+                   + gal_list_data_number(p->noblank) );
+
+      /* Allocate the necessary arrays. */
       selectind=gal_pointer_allocate(GAL_TYPE_SIZE_T, *nselect, 0,
                                      __func__, "selectind");
       selecttype=gal_pointer_allocate(GAL_TYPE_SIZE_T, *nselect, 0,
@@ -794,7 +871,12 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
                                         __func__, "selectindout");
       selecttypeout=gal_pointer_allocate(GAL_TYPE_SIZE_T, *nselect, 0,
                                          __func__, "selecttypeout");
+
+      /* Initialize them to blank. */
       sf=(s=selectindout)+*nselect; do *s++=GAL_BLANK_SIZE_T; while(s<sf);
+
+      /* Set the output pointers (they have already been initialized to
+         NULL by the caller function). */
       *selectindout_out=selectindout;
       *selecttypeout_out=selecttypeout;
     }
@@ -811,11 +893,6 @@ ui_check_select_sort_before(struct tableparams *p, gal_list_str_t *lines,
           selectind[i] = ui_check_select_sort_read_col_ind(dtmp->name);
           ++i;
         }
-
-
-  /* Get all the column information. */
-  allcols=gal_table_info(p->filename, p->cp.hdu, lines, &numcols,
-                         &numrows, &tableformat);
 
 
   /* If the values are numbers, we'll check if the given value is less than
@@ -1073,7 +1150,7 @@ ui_preparations(struct tableparams *p)
 
   /* If any kind of row-selection is requested set 'p->selection' to 1. */
   p->selection = ( p->range || p->inpolygon || p->outpolygon || p->equal
-                   || p->notequal );
+                   || p->notequal || p->noblankll );
 
 
   /* If row sorting or selection are requested, see if we should read any
@@ -1305,6 +1382,7 @@ ui_free_report(struct tableparams *p)
   ui_outcols_free(p->outcols);
   gal_list_data_free(p->table);
   if(p->wcshdu) free(p->wcshdu);
+  gal_list_data_free(p->noblank);
   gal_list_str_free(p->columns, 1);
   if(p->colarray) free(p->colarray);
   gal_list_data_free(p->colmetadata);

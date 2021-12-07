@@ -45,6 +45,12 @@ See the end of the file for license conditions.
      operations. This was suggested by Raúl Infante-Sainz and Manuel
      Sánchez Benavente.
    --catrowhdu: The HDU(s) of the FITS file(s) given to '--catrowfile'.
+   --noblankend: remove blank rows from selected columns of the _output_
+     table, for example after after adding columns by column arithmetic or
+     from other tables (this is the new name for the old '--noblank'
+     option, see the changed features below). Like the new '--noblank',
+     this option can also be called multiple times, so '--noblankend=1
+     --noblankend=2' is equivalent to '--noblankend=1,2'.
 
   Match:
    - k-d tree based matching has been added for finding the matching rows,
@@ -85,6 +91,22 @@ See the end of the file for license conditions.
    - By default (when '--quiet' isn't called), Match will print the names
      of the inputs and timings of important steps to the standard output
      (on the command-line).
+
+  Table:
+   - The '--noblank' option's logic is very similar to other row-selection
+     (by value) options (like '--range', '--polygon' or
+     '--equal'). However, until now, it was applied at the end of Table,
+     just before writing the output (so it would apply to the output table,
+     that may have new/different column names/orders, not the input table
+     like the other similar options). This was very inconvenient and
+     non-intuitive. From this version, '--noblank' option now behaves
+     similarly to the other input row-selection (by value) options. So it
+     can be called multiple times (to give many columns in multiple calls)
+     and it can be called for a column that is not necessarily one of the
+     output columns (for example you want the RA and Dec of all rows
+     without a blank magnitude, so you don't need to have the magnitude
+     column any more!). The old behavior of this option is now available in
+     the new '--noblankend' option. This point was raised by Samane Raji.
 
   Library:
    - gal_fits_tab_read: now takes the number of threads to read the desired

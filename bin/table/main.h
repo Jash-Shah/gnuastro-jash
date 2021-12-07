@@ -44,6 +44,7 @@ enum select_types
  SELECT_TYPE_OUTPOLYGON,
  SELECT_TYPE_EQUAL,
  SELECT_TYPE_NOTEQUAL,
+ SELECT_TYPE_NOBLANK,
 
  /* This marks the total number of row-selection criteria. */
  SELECT_TYPE_NUMBER,
@@ -100,6 +101,8 @@ struct tableparams
   gal_data_t         *polygon;  /* Values of vertices of the polygon.   */
   gal_data_t           *equal;  /* Values to keep in output.            */
   gal_data_t        *notequal;  /* Values to not include in output.     */
+  gal_list_str_t   *noblankll;  /* Remove rows with blank values.       */
+  gal_list_str_t  *noblankend;  /* Similar to noblank but at end.       */
   char                  *sort;  /* Column name or number for sorting.   */
   uint8_t          descending;  /* Sort columns in descending order.    */
   size_t                 head;  /* Output only the no. of top rows.     */
@@ -107,7 +110,6 @@ struct tableparams
   gal_data_t        *rowlimit;  /* Output rows in row-counter range.    */
   size_t            rowrandom;  /* Number of rows to show randomly.     */
   uint8_t             envseed;  /* Use the environment for random seed. */
-  gal_data_t         *noblank;  /* Remove rows that have blank.         */
   gal_list_str_t *catcolumnfile; /* Filename to concat column wise.     */
   gal_list_str_t *catcolumnhdu;  /* HDU/extension for the catcolumn.    */
   gal_list_str_t  *catcolumns;  /* List of columns to concatenate.      */
@@ -118,6 +120,7 @@ struct tableparams
 
   /* Internal. */
   struct column_pack *outcols;  /* Output column packages.              */
+  gal_data_t         *noblank;  /* Remove rows that have blank.         */
   gal_data_t           *table;  /* Linked list of output table columns. */
   struct wcsprm          *wcs;  /* WCS structure for conversion.        */
   int                    nwcs;  /* Number of WCS structures.            */
