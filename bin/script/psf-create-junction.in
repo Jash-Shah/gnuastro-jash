@@ -354,7 +354,7 @@ ycenter=$(astarithmetic $yaxis 2 / --quiet)
 # image.  So, the center of the PSF is computed here from the size of the
 # PSF image along the two axis (in pixels). Dimension values are computed
 # as described above.
-psfaxises=$(astfits $psf --hdu=$psfhdu --quiet \
+psfaxises=$(astfits $core --hdu=$corehdu --quiet \
                     --keyvalue ZNAXIS1,ZNAXIS2,NAXIS1,NAXIS2)
 psfnaxises=$(echo $psfaxises \
                   | sed 's/n\/a//g' \

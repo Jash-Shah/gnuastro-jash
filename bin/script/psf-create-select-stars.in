@@ -463,9 +463,9 @@ if [ x"$catalog" != x ]; then
             echo "External Cataloge already exists "
         else
             # Select stars with magnitude between minimum to maximum.
-            asttable $catalog --range=$field,$minmag:$maxmag --sort=$field \
-                     --range=$racolumn,$minraimg:$maxraimg \
-                     --range=$deccolumn,$mindecimg:$maxdecimg \
+            asttable $catalog --range=$field,$minmag,$maxmag --sort=$field \
+                     --range=$racolumn,$minraimg,$maxraimg \
+                     --range=$deccolumn,$mindecimg,$maxdecimg \
                      --output=$catalog_magfiltered $quiet
 
             # At first check and if there are no stars in the range of magnitude
@@ -487,7 +487,7 @@ else
     else
 	# Download the catalog with the necessary parameters.
         astquery $dataset --output=$catalog_magfiltered --overlapwith=$inputs --hdu=$hdu \
-                 --column=$columnquery --range=$field,$minmag:$maxmag \
+                 --column=$columnquery --range=$field,$minmag,$maxmag \
                  --sort=$field $quiet
     fi
 fi
@@ -505,7 +505,7 @@ fi
 goodparallax=$tmpdir/parallax-good.fits
 if [ x"$parallaxanderrorcolumn" != x ]; then
     asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
-             --range=$field,$minmag:$maxmag --colinfoinstdout --noblank=4 \
+             --range=$field,$minmag,$maxmag --colinfoinstdout --noblank=4 \
              -c'arith '$parallax' '$parallax' abs \
                       '$parallax_error' 3 x lt nan where ' \
              | asttable -c$racolumn,$deccolumn -c$field --output=$goodparallax $quiet
