@@ -29114,13 +29114,38 @@ Note that the polygon vertices have to be sorted before calling this function.
 Arrange the vertices of the sorted polygon in place, to be in a counter-clockwise direction.
 If the input polygon already has a counter-clockwise direction it won't touch the input.
 The return value is @code{1} on successful execution.
-This function is just a wrapper over @code{gal_polygon_is_counterclockwise}, and will reverse the order of the vertices when necessary necessary.
+This function is just a wrapper over @code{gal_polygon_is_counterclockwise}, and will reverse the order of the vertices when necessary.
 @end deftypefun
 
 @deftypefun void gal_polygon_clip (double @code{*s}, size_t @code{n}, double @code{*c}, size_t @code{m}, double @code{*o}, size_t @code{*numcrn})
 Clip (find the overlap of) two polygons.
 This function uses the @url{https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm, Sutherland-Hodgman} polygon clipping algorithm.
 Note that the vertices of both polygons have to be sorted in an anti-clock-wise manner.
+
+The Pseudocode from Wikipedia:
+@verbatim
+List outputList = subjectPolygon;
+for (Edge clipEdge in clipPolygon) do
+  List inputList = outputList;
+  outputList.clear();
+  Point S = inputList.last;
+  for (Point E in inputList) do
+     if (E inside clipEdge) then
+        if (S not inside clipEdge) then
+           outputList.add(ComputeIntersection(S,E,clipEdge));
+        end if
+        outputList.add(E);
+     else if (S inside clipEdge) then
+        outputList.add(ComputeIntersection(S,E,clipEdge));
+     end if
+     S = E;
+  done
+done
+@end verbatim
+
+The difference is that we are not using lists, but arrays to keep polygon vertices.
+The two polygons are called Subject @code{s} and Clip @code{c} with @code{n} and @code{m} vertices respectively.
+The output is stored in @code{o} and the number of elements in the output are stored in what @code{*numcrn} (for number of corners) points to.
 @end deftypefun
 
 @deftypefun void gal_polygon_vertices_sort (double @code{*vertices}, size_t @code{n}, size_t @code{*ordinds})

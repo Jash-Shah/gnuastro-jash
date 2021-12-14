@@ -6,6 +6,7 @@ Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
      Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2021, Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -529,34 +530,7 @@ seginfintersection(double *Aa, double *Ab, double *Ba, double *Bb,
 
 
 
-/* Clip (find the overlap of) two polygons. This function uses the
-   Sutherland-Hodgman polygon clipping psudocode from Wikipedia:
-
-   List outputList = subjectPolygon;
-   for (Edge clipEdge in clipPolygon) do
-     List inputList = outputList;
-     outputList.clear();
-     Point S = inputList.last;
-     for (Point E in inputList) do
-        if (E inside clipEdge) then
-           if (S not inside clipEdge) then
-              outputList.add(ComputeIntersection(S,E,clipEdge));
-           end if
-           outputList.add(E);
-        else if (S inside clipEdge) then
-           outputList.add(ComputeIntersection(S,E,clipEdge));
-        end if
-        S = E;
-     done
-   done
-
-   The difference is that we are not using lists, but arrays to keep
-   polygon vertices. The two polygons are called Subject ('s') and
-   Clip ('c') with 'n' and 'm' vertices respectively.
-
-   The output is stored in 'o' and the number of elements in the
-   output are stored in what '*numcrn' (for number of corners) points
-   to.*/
+/* Clip (find the overlap of) two polygons. */
 void
 gal_polygon_clip(double *s, size_t n, double *c, size_t m,
                  double *o, size_t *numcrn)
