@@ -1131,8 +1131,8 @@ struct multioperandparams
             /* Use in sum if necessary. */                              \
             if(use) { sum += a[i][j]; ++n; }                            \
           }                                                             \
-        o[j] = n ? sum : b;                                             \
-      }                                                                 \
+        o[j] = n ? sum : NAN; /* Not using 'b', because input type */   \
+      }           /* may be integer, while output is always float. */   \
   }
 
 
@@ -1165,8 +1165,8 @@ struct multioperandparams
             /* Calculate the mean if necessary. */                      \
             if(use) { sum += a[i][j]; ++n; }                            \
           }                                                             \
-        o[j] = n ? sum/n : b;                                           \
-      }                                                                 \
+        o[j] = n ? sum/n : NAN; /* Not using 'b', because input type */ \
+      }             /* may be integer, while output is always float. */ \
   }
 
 
@@ -1204,8 +1204,8 @@ struct multioperandparams
                 ++n;                                                    \
               }                                                         \
           }                                                             \
-        o[j] = n ? sqrt( (sum2-sum*sum/n)/n ) : b;                      \
-      }                                                                 \
+        o[j] = n ? sqrt( (sum2-sum*sum/n)/n ) : NAN; /* Not using 'b' */ \
+      } /* because input may be integer, but output is always float. */ \
   }
 
 
@@ -1247,8 +1247,8 @@ struct multioperandparams
             o[j] = n%2 ? pixs[n/2] : (pixs[n/2] + pixs[n/2-1])/2 ;      \
           }                                                             \
         else                                                            \
-          o[j]=b;                                                       \
-      }                                                                 \
+          o[j]=NAN; /* Not using 'b' because input may be integer */    \
+      }                             /* but output is always float.*/    \
                                                                         \
     /* Clean up. */                                                     \
     free(pixs);                                                         \
@@ -1348,8 +1348,8 @@ struct multioperandparams
             cont->size=cont->dsize[0]=p->dnum;                          \
           }                                                             \
         else                                                            \
-          o[j]=b;                                                       \
-      }                                                                 \
+          o[j]=NAN; /* Not using 'b' because input can be inter, but */ \
+      }                                   /* output is always float. */ \
                                                                         \
     /* Clean up (note that 'pixs' is inside of 'cont'). */              \
     gal_data_free(cont);                                                \
@@ -1363,6 +1363,7 @@ struct multioperandparams
     TYPE b, **a;                                                        \
     gal_data_t *tmp;                                                    \
     size_t i=0, tind;                                                   \
+                                                                        \
     /* Allocate space to keep the pointers to the arrays of each. */    \
     /* Input data structure. The operators will increment these */      \
     /* pointers while parsing them. */                                  \

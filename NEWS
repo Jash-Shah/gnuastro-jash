@@ -144,6 +144,11 @@ See the end of the file for license conditions.
               extension while it should have been deleted.
   bug #61598: ds9-region script not using precise WCS values, found and
               fixed by Raúl Infante-Sainz.
+  bug #61698: Mean operator of Arithmetic (for stacking many images) not
+              returning NaN for blank regions when input is integer. This
+              fix also resolves the same problem in the 'sum', 'std',
+              'median' and all 'sigclip-*' operators). This bug was
+              reported by Zohre Ghaffari.
 
 
 
