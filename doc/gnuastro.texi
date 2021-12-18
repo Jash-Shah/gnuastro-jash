@@ -4677,7 +4677,7 @@ In the next section (@ref{Image surface brightness limit}), we will use this to 
 However, to better understand NoiseChisel and also, the image surface brightness limit, understanding the skewness caused by signal, and how to measure it properly are very important.
 Therefore now that we have separated signal from noise, let's pause for a moment and look into skewness, how signal creates it, and find the best way to measure it.
 
-Let's start masking all the detected pixels and having a look at the noise distribution with the @command{astarithmetic} and @command{aststatistics} commands below (while visually inspecting the masked image with @command{ds9} in the middle).
+Let's start masking all the detected pixels found at the end of the previous section (@ref{NoiseChisel optimization}) and having a look at the noise distribution with Gnuastro's Arithmetic and Statistics programs as shown below (while visually inspecting the masked image with DS9 in the middle).
 
 @example
 $ astarithmetic r_detected.fits -hINPUT-NO-SKY set-in \
@@ -4720,11 +4720,12 @@ Histogram:
 @noindent
 @cindex Skewness
 This histogram shows a roughly symmetric noise distribution, so let's have a look at its skewness.
-The most commonly used definition of skewness (also known as ``Pearson's first skewness coefficient'') compares the difference between the mean and median, in untis of the standard deviation (STD):
+The most commonly used definition of skewness is known as the ``Pearson's first skewness coefficient''.
+It measures the difference between the mean and median, in untis of the standard deviation (STD):
 
 @dispmath{\rm{Skewness}\equiv\frac{(\rm{mean}-\rm{median})}{\rm{STD}}}
 
-The logic behind this definition is simple: as more signal is added (skewness is increased) and the mean shifts the positive faster than the median, so their distance should increase.
+The logic behind this definition is simple: as more signal is added to the same pixels that originally only have raw noise (skewness is increased), the mean shifts to the positive faster than the median, so the distance between the mean and median should increase.
 Let's measure the skewness (as defined above) over the image without any signal.
 Its very easy with Gnuastro's Statistics program (and piping the output to AWK):
 
@@ -4735,7 +4736,7 @@ $ aststatistics det-masked.fits --mean --median --std \
 @end verbatim
 
 @noindent
-We see that the mean and median are only @mymath{0.08\sigma} away from each other (which is very close)!
+We see that the mean and median are only @mymath{0.08\sigma} (rounded) away from each other (which is very close)!
 All pixels with significant signal are masked, so this is expected, and everything is fine.
 Now, let's check the pixel distribution of the sky-subtracted input (where pixels with significant signal remain, and are not masked):
 
@@ -4820,8 +4821,8 @@ $ aststatistics r_detected.fits --mean --median --std \
 
 The difference between the mean and median is now approximately @mymath{0.12\sigma}.
 This is larger than the skewness of the masked image (which was approximately @mymath{0.08\sigma}).
-At a glance (only to the quantified numbers), it seems that there is not much difference and the two distributions.
-However, visually looking at the non-masked image, or the ASCII histogram, you would expect the quantified skewness to be much larger than that of the masked image, but hasn't happened!
+At a glance (only looking at the numbers), it seems that there is not much difference between the two distributions.
+However, visually looking at the non-masked image, or the ASCII histogram, you would expect the quantified skewness to be much larger than that of the masked image, but that hasn't happened!
 Why is that?
 
 The reason is that the presence of signal doesn't only shift the mean and median, it @emph{also} increases the standard deviation!
@@ -4837,13 +4838,14 @@ We therefore need a better unit or scale to quantify the distance between the me
 A unit that is less affected by skewness or outliers.
 One solution that we have found to be very useful is the quantile units or quantile scale.
 The quantile scale is defined by first sorting the dataset (which has @mymath{N} elements).
-If we want the quantile of a value in a distribution, we first find the nearest data element to @mymath{V} in the sorted dataset (let's assume its the @mymath{i}-th element after sorting).
-The quantile of V is then defined as @mymath{i/N} (which will have a value between 0 and 1).
+If we want the quantile of a value @mymath{V} in a distribution, we first find the nearest data element to @mymath{V} in the sorted dataset.
+Let's assume the nearest element is the @mymath{i}-th element, counting from 0, after sorting.
+The quantile of V in that distribution is then defined as @mymath{i/(N-1)} (which will have a value between 0 and 1).
 
 The quantile of the median is obvious from its definition: 0.5.
 This is because the median is defined to be the middle element of the distribution after sorting.
 We can therefore define skewness as the quantile of the mean (@mymath{q_m}).
-If @mymath{q_m\sim0.5} (the median), then we know the distribution is symmetric (possibly Gaussian, but the functional form is irrelevant here).
+If @mymath{q_m\sim0.5} (the median), then the distribution (of signal blended in noise) is symmetric (possibly Gaussian, but the functional form is irrelevant here).
 A larger value for @mymath{|q_m-0.5|} quantifies a more skewed the distribution.
 Furthermore, a @mymath{q_m>0.5} signifies a positive skewness, while @mymath{q_m<0.5} signifies a negative skewness.
 
