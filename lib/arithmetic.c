@@ -1323,7 +1323,7 @@ struct multioperandparams
         /* Read the necessay values from each input. */                 \
         for(i=0;i<p->dnum;++i) pixs[n++]=a[i][j];                       \
                                                                         \
-        /* If there are any elements, measure the  */                   \
+        /* If there are any usable elements, measure the  */            \
         if(n)                                                           \
           {                                                             \
             /* Calculate the sigma-clip and write it in. */             \
@@ -1348,8 +1348,10 @@ struct multioperandparams
             cont->size=cont->dsize[0]=p->dnum;                          \
           }                                                             \
         else                                                            \
-          o[j]=NAN; /* Not using 'b' because input can be inter, but */ \
-      }                                   /* output is always float. */ \
+          o[j] = ( p->operator==GAL_ARITHMETIC_OP_SIGCLIP_NUMBER        \
+                   ? 0.0    /* Not using 'b' because input can be an */ \
+                   : NAN );   /* integer but output is always float. */ \
+      }                                                                 \
                                                                         \
     /* Clean up (note that 'pixs' is inside of 'cont'). */              \
     gal_data_free(cont);                                                \
