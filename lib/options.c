@@ -827,11 +827,20 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
           tmp=strtod(c, &tailptr);
           if(*tailptr!=',' && *tailptr!='/' && *tailptr!='\0')
             {
+              /* See if the user has given a sexagesimal value (that can't
+                 be easily read with 'strtod'). */
               ttmp=gal_options_read_sexagesimal(num%2, c, &tailptr);
               if(isnan(ttmp))
-                error_at_line(EXIT_FAILURE, 0, filename, lineno, "the "
-                              "'%s' component of '%s' couldn't be parsed "
-                              "as a usable number", c, string);
+                {
+                  /* This happens in cases like the values to Table's
+                     '--range=NAME,5:10'. In such cases, we do have a
+                     colon, but don't have a sexagesimal number. So we
+                     shouldn't abort the program! */
+                  if(tailptr[0]!=':')
+                    error_at_line(EXIT_FAILURE, 0, filename, lineno, "the "
+                                  "'%s' component of '%s' couldn't be parsed "
+                                  "as a usable number", c, string);
+                }
               else tmp=ttmp;
             }
 
