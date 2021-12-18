@@ -7,6 +7,15 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Book:
+   - New section called "Skewness cased by signal and its measurement"
+     added to the third tutorial (Detecting large extended targets). It
+     describes the significant advantages of using the quantile of the mean
+     as a measure of skewness and why its a very important factor when
+     understanding how NoiseChisel works. It was originally written by
+     Sepideh Eskandarlou, with edits by Elham Saremi and Pedram Ashofte
+     Ardakani.
+
   All programs:
    - Coordinate-related columns in all programs now also accept sexagesimal
      values, not just degrees. Therefore, '--center=113.8729761,31.9027152'
