@@ -274,7 +274,7 @@ Detecting large extended targets
 
 * Downloading and validating input data::  How to get and check the input data.
 * NoiseChisel optimization::    Detect the extended and diffuse wings.
-* Skewness of the image::
+* Skewness cased by signal and its measurement::  How signal changes the distribution.
 * Image surface brightness limit::  Standards to quantify the noise level.
 * Achieved surface brightness level::  Calculate the outer surface brightness.
 * Extract clumps and objects::  Find sub-structure over the detections.
@@ -1964,7 +1964,7 @@ astconvolve --kernel=0_"$base".fits "$base"_profiles.fits \
 # Scale the image back to the intended resolution.
 astwarp --scale=1/5 --centeroncorner "$base"_convolved.fits
 
-# Crop the edges out (dimmed during convolution). ‘--section’
+# Crop the edges out (dimmed during convolution). '--section'
 # accepts inclusive coordinates, so the start of the section
 # must be one pixel larger than its end.
 st_edge=$(( edge + 1 ))
@@ -4336,7 +4336,7 @@ Due to its more peculiar low surface brightness structure/features, we'll focus 
 @menu
 * Downloading and validating input data::  How to get and check the input data.
 * NoiseChisel optimization::    Detect the extended and diffuse wings.
-* Skewness of the image::
+* Skewness cased by signal and its measurement::  How signal changes the distribution.
 * Image surface brightness limit::  Standards to quantify the noise level.
 * Achieved surface brightness level::  Calculate the outer surface brightness.
 * Extract clumps and objects::  Find sub-structure over the detections.
@@ -4424,7 +4424,7 @@ Here, we don't need the compressed file any more, so we'll just let @command{bun
 $ bunzip2 r.fits.bz2
 @end example
 
-@node NoiseChisel optimization, Skewness of the image, Downloading and validating input data, Detecting large extended targets
+@node NoiseChisel optimization, Skewness cased by signal and its measurement, Downloading and validating input data, Detecting large extended targets
 @subsection NoiseChisel optimization
 In @ref{Detecting large extended targets} we downloaded the single exposure SDSS image.
 Let's see how NoiseChisel operates on it with its default parameters:
@@ -4459,7 +4459,7 @@ Therefore when non-constant@footnote{by constant, we mean that it has a single v
 For a demonstration, see Figure 1 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.
 This skewness is a good measure of how much faint signal we have in the distribution.
 The skewness can be accurately measured by the difference in the mean and median (assuming no strong outliers): the more distant they are, the more skewed the dataset is.
-For more see @ref{Quantifying signal in a tile}.
+This important concept will be discussed more extensively in the next section (@ref{Skewness cased by signal and its measurement}).
 
 However, skewness is only a proxy for signal when the signal has structure (varies per pixel).
 Therefore, when it is approximately constant over a whole tile, or sub-set of the image, the constant signal's effect is just to shift the symmetric center of the noise distribution to the positive and there won't be any skewness (major difference between the mean and median).
@@ -4668,14 +4668,16 @@ However, given the many problems in existing ``smart'' solutions, such automatic
 So even when they are implemented, we would strongly recommend quality checks for a robust analysis.
 @end cartouche
 
-@node Skewness of the image, Image surface brightness limit, NoiseChisel optimization, Detecting large extended targets
-@subsection Skewness of the image
-To determine the image surface brightness limit, understanding the skewness of the image is a very important and vital issue.
-For this reason, it is better to know more about this skewness before starting the image surface brightness limit.
-In fact, the main purpose of this section is to show using the quantile of the mean in the image is much stronger than the definition of standard skewness.
+@node Skewness cased by signal and its measurement, Image surface brightness limit, NoiseChisel optimization, Detecting large extended targets
+@subsection Skewness cased by signal and its measurement
 
-In @ref{NoiseChisel optimization} we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
-Let's start masking all the detected pixels and have a look at the noise distribution with the @command{astarithmetic} and @command{aststatistics} commands below.
+In the previous section (@ref{NoiseChisel optimization}) we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
+During the customization, we also discussed the skewness caused by signal.
+In the next section (@ref{Image surface brightness limit}), we will use this to measure the surface brightness limit of the image.
+However, to better understand NoiseChisel and also, the image surface brightness limit, understanding the skewness caused by signal, and how to measure it properly are very important.
+Therefore now that we have separated signal from noise, let's pause for a moment and look into skewness, how signal creates it, and find the best way to measure it.
+
+Let's start masking all the detected pixels and having a look at the noise distribution with the @command{astarithmetic} and @command{aststatistics} commands below (while visually inspecting the masked image with @command{ds9} in the middle).
 
 @example
 $ astarithmetic r_detected.fits -hINPUT-NO-SKY set-in \
@@ -4683,14 +4685,22 @@ $ astarithmetic r_detected.fits -hINPUT-NO-SKY set-in \
                 in det nan where -odet-masked.fits
 $ ds9 det-masked.fits
 $ aststatistics det-masked.fits
+@end example
 
+@noindent
+You will see that Gnuastro's Statistics program prints an ASCII histogram when no option is given (it is shown below).
+This is done to give you a fast and easy view of the distribution of values in the dataset (pixels in an image, or rows in a table's column).
+
+@example
 -------
-  Number of elements:                      918698
-  Minimum:                                 -0.113805
-  Maximum:                                 0.130365
-  Median:                                  -0.00226983
-  Mean:                                    -0.0002118496391
-  Standard deviation:                      0.02569687481
+Input: det-masked.fits (hdu: 1)
+-------
+  Number of elements:                      903920
+  Minimum:                                 -0.113543
+  Maximum:                                 0.130339
+  Median:                                  -0.00216306
+  Mean:                                    -0.0001893073877
+  Standard deviation:                      0.02569057188
 -------
 Histogram:
  |                              ** *
@@ -4700,28 +4710,48 @@ Histogram:
  |                        ** ** ** ** * **
  |                        ** ** ** ** * ** *
  |                      * ** ** ** ** * ** **
- |                     ** ** ** ** ** * ** ** *
- |                  ** ** ** ** ** ******* ** ** *
+ |                     ** ** ** ** **** ** ** *
+ |                  ** ** ** ** ** **** ** ** ** *
  |               ** ** ** ** ** ** ******* ** ** ** *
- |******** ** ** ** ** ** **************** ** ** ** ** ** ** ** ** ** **
+ |*********** ** ** ** ******************* ** ** ** ** ***** ** ***** **
  |----------------------------------------------------------------------
-
 @end example
 
 @noindent
-This histogram shows a roughly symmetric noise distribution.
-Now, let's check the signal distribution for a comparison.
+@cindex Skewness
+This histogram shows a roughly symmetric noise distribution, so let's have a look at its skewness.
+The most commonly used definition of skewness (also known as ``Pearson's first skewness coefficient'') compares the difference between the mean and median, in untis of the standard deviation (STD):
+
+@dispmath{\rm{Skewness}\equiv\frac{(\rm{mean}-\rm{median})}{\rm{STD}}}
+
+The logic behind this definition is simple: as more signal is added (skewness is increased) and the mean shifts the positive faster than the median, so their distance should increase.
+Let's measure the skewness (as defined above) over the image without any signal.
+Its very easy with Gnuastro's Statistics program (and piping the output to AWK):
+
+@verbatim
+$ aststatistics det-masked.fits --mean --median --std \
+                | awk '{print ($1-$2)/$3}'
+0.0768279
+@end verbatim
+
+@noindent
+We see that the mean and median are only @mymath{0.08\sigma} away from each other (which is very close)!
+All pixels with significant signal are masked, so this is expected, and everything is fine.
+Now, let's check the pixel distribution of the sky-subtracted input (where pixels with significant signal remain, and are not masked):
 
 @example
+$ ds9 r_detected.fits
 $ aststatistics r_detected.fits -hINPUT-NO-SKY
-
+-------
+Input: r_detected.fits (hdu: INPUT-NO-SKY)
+Unit: nanomaggy
 -------
   Number of elements:                      3049472
-  Minimum:                                 -0.113805
+  Minimum:                                 -0.113543
   Maximum:                                 159.25
-  Median:                                  0.0239832
-  Mean:                                    0.1056523001
-  Standard deviation:                      0.6981762756
+  Median:                                  0.0241158
+  Mean:                                    0.1057885317
+  Standard deviation:                      0.698167489
 -------
 Histogram:
  |*
@@ -4736,100 +4766,115 @@ Histogram:
  |*
  |******************************************* ***  ** ****  * *   *  * *
  |----------------------------------------------------------------------
-
 @end example
 
 @noindent
-As you can see, the distribution is very elongated because the galaxy inside the image is extremely bright.
-Comparing the distributions above, you can see that the minimum value of the image has not changed because we have not masked the minimum values, while the maximum value of the image has been changed.
-Also, the mean and median values of the noise distribution are closer to each other than the signal distribution.
-Now let's limit the distribution of the signal using the @option{--lessthan} option to make it similar to the noise distribution and then compare them together.
-Our criterion here is standard deviation.
-The standard deviation changes from 0.6981762756 to 0.02569687481 between the @option{INPUT-NO-SKY} image and the masked image.
-See how standard deviations are different.
+Comparing the distributions above, you can see that the @emph{minimum} value of the image has not changed because we have not masked the minimum values.
+However, as expected, the @emph{maximum} value of the image has changed (from @mymath{0.13} to @mymath{159.25}).
+This is clearly evident from the ASCII histogram: the distribution is very elongated because the galaxy inside the image is extremely bright.
+
+Now, let's limit the displayed information with the @option{--lessthan=0.13} option of Statistics as shown below (to only use values less than 0.13; the maximum of the image where all signal is masked).
 
 @example
-
-$ aststatistics r_detected.fits -hINPUT-NO-SKY --lessthan=0.130365
-
+$ aststatistics r_detected.fits -hINPUT-NO-SKY --lessthan=0.13
 -------
-  Number of elements:                      2532028
-  Minimum:                                 -0.113805
-  Maximum:                                 0.130354
-  Median:                                  0.0135445
-  Mean:                                    0.01720879614
-  Standard deviation:                      0.03591988828
+Input: r_detected.fits (hdu: INPUT-NO-SKY)
+Range: up to (exclusive) 0.13.
+Unit: nanomaggy
+-------
+  Number of elements:                      2531949
+  Minimum:                                 -0.113543
+  Maximum:                                 0.126233
+  Median:                                  0.0137138
+  Mean:                                    0.01735551527
+  Standard deviation:                      0.03590550597
 -------
 Histogram:
- |                                 *  *
- |                              *  *  * **
- |                              *  *  * ** *
- |                           ** ** *  * ** **
- |                           ** ** *  * ** ** *
- |                         * ** ** **** ** ** **
- |                        ** ** ** **** ** ** ** *
- |                      * ** ** ******* ** ** ** ** *
- |                   * ** ** ** ******* ** ** ** ** ** **
- |                * ** ** ** ************* ** ** ** ** ** ** ** * ** **
- |******** ** ** ** ** ******************* ** ** ** ** *****************
+ |                                   *
+ |                                * ** **
+ |                             *  * ** ** **
+ |                             *  * ** ** ** *
+ |                           * ** * ** ** ** *
+ |                          ** ** * ** ** ** *  *
+ |                        * ** ** * ** ** ** *  *
+ |                       ** ** ** * ** ** ** ** * ** *
+ |                     * ** ** **** ** ** ** **** ** ** **
+ |                  * ** ** ** **** ** ** ** ******* ** ** ** * ** ** **
+ |***** ** ********** ** ** ********** ** ********** ** ************* **
  |----------------------------------------------------------------------
 @end example
 
-@noindent
-It is clear that the noise distribution is completely symmetric, while the signal distribution is asymmetric in this range, especially in outer part.
-This asymmetry is due to the effect of the signal presence and so masking the signal by the NoiseChisel results in a symmetrical noise distribution.
+The improvement is obvious: the ASCII histogram better shows the pixel values near the noise level.
+We can now compare with the distribution of @file{det-masked.fits} that we found earlier.
+The ASCII histogram of @file{det-masked.fits} was approximately symmetric, while this is asymmetric in this range, especially in outer (to the right, or positive) direction.
+The heavier right-side tail is a clear visual demonstration of skewness that is cased by the signal in the un-masked image.
 
-@noindent
-We can quantify the distribution of the noise in the masked image by measuring the skewness with the standard definition (difference between mean and median, divided by the standard deviation):
-
-@verbatim
-$ aststatistics det-masked.fits --mean --median --std \
-                | awk '{print ($1-$2)/$3}'
-0.0800868
-@end verbatim
+Having visually confirmed the skewness, let's quantify it with Pearson's first skewness coefficient.
+Like before, we can simply use Gnuastro's Statisics and AWK for the measurement and calculation:
 
 @verbatim
 $ aststatistics r_detected.fits --mean --median --std \
                 | awk '{print ($1-$2)/$3}'
-0.116975
+0.116982
 @end verbatim
 
-@noindent
-Obtained values of the skewness indicate the mean is larger than the median by @mymath{0.08\sigma} and @mymath{0.1\sigma} in these cases.
-At a glance, it seems that there is not much difference and the two distributions are good, while this is not a correct conclusion.
-When our distribution is skewed, we can not consider the standard deviation as a criterion of interpretation.
-Because the standard deviation is defined only in symmetric and Gaussian distributions; it does not indicate width properly in a non-Gaussian distribution.
-Therefore, the standard definition of skewness is not useful here.
+The difference between the mean and median is now approximately @mymath{0.12\sigma}.
+This is larger than the skewness of the masked image (which was approximately @mymath{0.08\sigma}).
+At a glance (only to the quantified numbers), it seems that there is not much difference and the two distributions.
+However, visually looking at the non-masked image, or the ASCII histogram, you would expect the quantified skewness to be much larger than that of the masked image, but hasn't happened!
+Why is that?
 
-As mentioned in @ref{Quantifying signal in a tile}, when our distribution is skewed, we use quantile of the mean instead of the standard definition of skewness.
-The quantile of the mean is showing the location of the mean in the whole distribution, while the distribution is normalized between 0 and 1.
-Now let's quantify these distributions by measuring the quantile of the mean:
+The reason is that the presence of signal doesn't only shift the mean and median, it @emph{also} increases the standard deviation!
+To see this for yourself, compare the standard deviation of @file{det-masked.fits} (which was approximately @mymath{0.025}) @file{r_detected.fits} (without @option{--lessthan}; which was approximately @mymath{0.699}).
+The latter is almost 28 times larger!
+
+This happens because the standard deviation is defined only in a symmetric (and Gaussian) distribution.
+In a non-Gaussian distribution, the standard deviation is poorly defined and isn't a good measure of ``width''.
+Since Pearson's first skewness coefficient is defined in units of the standard deviation, this very large increase in the standard deviation has hidden the much increased distance between the mean and median after adding signal.
+
+@cindex Quantile
+We therefore need a better unit or scale to quantify the distance between the mean and median.
+A unit that is less affected by skewness or outliers.
+One solution that we have found to be very useful is the quantile units or quantile scale.
+The quantile scale is defined by first sorting the dataset (which has @mymath{N} elements).
+If we want the quantile of a value in a distribution, we first find the nearest data element to @mymath{V} in the sorted dataset (let's assume its the @mymath{i}-th element after sorting).
+The quantile of V is then defined as @mymath{i/N} (which will have a value between 0 and 1).
+
+The quantile of the median is obvious from its definition: 0.5.
+This is because the median is defined to be the middle element of the distribution after sorting.
+We can therefore define skewness as the quantile of the mean (@mymath{q_m}).
+If @mymath{q_m\sim0.5} (the median), then we know the distribution is symmetric (possibly Gaussian, but the functional form is irrelevant here).
+A larger value for @mymath{|q_m-0.5|} quantifies a more skewed the distribution.
+Furthermore, a @mymath{q_m>0.5} signifies a positive skewness, while @mymath{q_m<0.5} signifies a negative skewness.
+
+Let's put this definition to a test on the same two images we have already created.
+Fortunately Gnuastro's Statistics program has the @option{--quantofmean} option to easily calculate @mymath{q_m} for you.
+So testing is easy:
 
 @example
+$ aststatistics det-masked.fits --quantofmean
+0.51295636
+
 $ aststatistics r_detected.fits -hINPUT-NO-SKY --quantofmean
 0.8105163158
 @end example
 
-@example
-$ aststatistics det-masked.fits --quantofmean
-0.5111848629
-@end example
+The two quantiles of mean are now very distinctly different (@mymath{0.51} and @mymath{0.81}): differing by about @mymath{0.3} (on a scale of 0 to 1)!
+Recall that when defining skewness with Pearson's first skewness coefficient, their difference was negligible (@mymath{0.04\sigma})!
+You can now better appreciate why we discussed quantile so extensively in @ref{NoiseChisel optimization}.
+In case you would like to know more about the usage of the quantile of the mean in Gnuastro, please see @ref{Quantifying signal in a tile}, or watch this video demonstration: @url{https://peertube.stream/w/35b7c398-9fd7-4bcf-8911-1e01c5124585}.
 
-@noindent
-Based on this method using quantile of the mean, skewness of two distributions are @mymath{0.8\sigma} and @mymath{0.5\sigma}, respectively.
-This result shows the average of the total population is pulled forwardt hirty pecent in the @option{INPUT-NO-SKY} image however when signals mask by NoiseChisel, there will be no this skewness.
-So we can see the signal effect clearly, while this was not well seen by the standard definition of skewness.
-
-@node Image surface brightness limit, Achieved surface brightness level, Skewness of the image, Detecting large extended targets
+@node Image surface brightness limit, Achieved surface brightness level, Skewness cased by signal and its measurement, Detecting large extended targets
 @subsection Image surface brightness limit
 @cindex Surface brightness limit
 @cindex Limit, surface brightness
-When presenting your detection results in a paper or scientific conference, usually the first thing that someone will ask (if you don't explicitly say it!), is the dataset's @emph{surface brightness limit} (a standard measure of the noise level), and your target's surface brightness (a measure of the signal, either in the center or outskirts, depending on context).
+When your science is related to extended emission (like the example here) and you are presenting your results in a scientific conference, usually the first thing that someone will ask (if you don't explicitly say it!), is the dataset's @emph{surface brightness limit} (a standard measure of the noise level), and your target's surface brightness (a measure of the signal, either in the center or outskirts, depending on context).
 For more on the basics of these important concepts please see @ref{Quantifying measurement limits}).
-Here, we'll measure these values for this image.
+So in this section of the tutorial, we'll measure these values for this image and this target.
 
 @noindent
-Let’s start measuring the surface brightness limit by look at into the noise distribution wich we measure in @ref{Skewness of the image}
+Before measuring the surface brightness limit, let's see how reliable our detection was.
+In other words, let's see how ``clean'' our noise is (after masking all detections, as described previously in @ref{Skewness cased by signal and its measurement})
 
 @example
 $ aststatistics det-masked.fits --quantofmean
@@ -4837,10 +4882,12 @@ $ aststatistics det-masked.fits --quantofmean
 @end example
 
 @noindent
-Showing that in the signal distibution the mean is larger than the median by @mymath{0.5\sigma}.
-While in noise distribution the mean is larger than the median by @mymath{0.5\sigma}, in other words, as we saw in @ref{NoiseChisel optimization}, a very small residual signal still remains in the undetected regions and it was up to you as an exercise to improve it.
-So let's continue with this value.
-Now, we will use the masked image and the surface brightness limit equation in @ref{Quantifying measurement limits} to measure the @mymath{3\sigma} surface brightness limit over an area of @mymath{25 \rm{arcsec}^2}:
+Showing that the mean is indeed very close to the median, although just about 1 quantile larger.
+As we saw in @ref{NoiseChisel optimization}, a very small residual signal still remains in the undetected regions and this very small difference is a quantitative measure of that undetected signal.
+It was up to you as an exercise to improve it, so we'll continue with this dataset.
+
+The surface brightness limit of the image can be measured from the masked image and the equation in @ref{Quantifying measurement limits}.
+Let's do it for a @mymath{3\sigma} surface brightness limit over an area of @mymath{25 \rm{arcsec}^2}:
 
 @example
 $ nsigma=3
@@ -16528,6 +16575,7 @@ Finally, the mode's shift to the positive is the least.
 @cindex Quantile
 Inverting the argument above gives us a robust method to quantify the significance of signal in a dataset: when the mean and median of a distribution are approximately equal we can argue that there is no significant signal.
 In other words: when the quantile of the mean (@mymath{q_{mean}}) is around 0.5.
+This definition of skewness through the quantile of the mean is further introduced with a real image the tutorials, see @ref{Skewness cased by signal and its measurement}.
 
 @cindex Signal-to-noise ratio
 However, in an astronomical image, some of the pixels will contain more signal than the rest, so we can't simply check @mymath{q_{mean}} on the whole dataset.
@@ -30833,7 +30881,7 @@ conditions. This method uses the non-rounded corner algorithm of Wodicka.
 @cindex Steffen interpolation
 @cindex Interpolation: Steffen
 @cindex Interpolation: monotonic
-[From GSL:] Steffen’s
+[From GSL:] Steffen's
 method@footnote{@url{http://adsabs.harvard.edu/abs/1990A%26A...239..443S}}
 guarantees the monotonicity of the interpolating function between the given
 data points. Therefore, minima and maxima can only occur exactly at the
