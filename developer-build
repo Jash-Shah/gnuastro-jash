@@ -306,6 +306,27 @@ done
 
 
 
+# Check if the configure script already exists. If not, let the user know
+# what to do.
+if ! [ -f configure ]; then
+    echo "The 'configure' script doesn't exist!"
+    echo "It is created after bootstrapping Gnuastro."
+    echo;
+    echo "The dependencies to bootstrap Gnuastro are described here:"
+    echo "   https://www.gnu.org/software/gnuastro/manual/html_node/Bootstrapping-dependencies.html"
+    echo;
+    echo "Afterwards, the bootstrapping process is described here:"
+    echo "   https://www.gnu.org/software/gnuastro/manual/html_node/Bootstrapping.html"
+    echo;
+    echo "If you don't want to develop Gnuastro, but just build, install and use it, you don't need to bootstrap, please use the tarball:"
+    echo "   https://ftp.gnu.org/gnu/gnuastro/"
+    exit 1
+fi
+
+
+
+
+
 # Keep the address of this source directory (where this script is being run
 # from) which we will need later.
 srcdir=$(pwd)
