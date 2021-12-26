@@ -5656,9 +5656,11 @@ In that case use the following URL for the HTTP protocol instead (for Autoconf a
 @example
 $ DEVDIR=/home/yourname/Development
 $ cd $DEVDIR
-$ git clone https://git.savannah.gnu.org/git/gnulib.git
-$ git clone https://git.savannah.gnu.org/git/autoconf-archive.git
+$ git clone https://git.sv.gnu.org/git/gnulib.git
+$ git clone https://git.sv.gnu.org/git/autoconf-archive.git
 @end example
+
+Gnulib is a source-based dependency of Gnuastro's bootstrapping process, so simply having it is enough on your computer, there is no need to install, and thus check anything.
 
 @noindent
 You now have the full version controlled source of these two repositories in separate directories.
@@ -5669,14 +5671,41 @@ Both these packages are regularly updated, so every once in a while, you can run
 GNU Automake will build the @file{Makefile.in} files in each sub-directory using the (hand-written) @file{Makefile.am} files.
 The @file{Makefile.in}s are subsequently used to generate the @file{Makefile}s when the user runs @command{./configure} before building.
 
+To check that you have a working GNU Automake in your system, you can try this command:
+
+@example
+$ automake --version
+@end example
+
 @item GNU Autoconf (@command{autoconf})
 @cindex GNU Autoconf
 GNU Autoconf will build the @file{configure} script using the configurations we have defined (hand-written) in @file{configure.ac}.
 
+To check that you have a working GNU Autoconf in your system, you can try this command:
+
+@example
+$ autoconf --version
+@end example
+
 @item GNU Autoconf Archive
 @cindex GNU Autoconf Archive
 These are a large collection of tests that can be called to run at @command{./configure} time.
-See the explanation under GNU Portability Library above for instructions on obtaining it and keeping it up to date.
+See the explanation under GNU Portability Library (Gnulib) above for instructions on obtaining it and keeping it up to date.
+
+GNU Autoconf Archive is a source-based dependency of Gnuastro's bootstrapping process, so simply having it is enough on your computer, there is no need to install, and thus check anything.
+Just don't forget that it has to be in the same directory as Gnulib (described above).
+
+@item GNU Texinfo (@command{texinfo})
+@cindex GNU Texinfo
+GNU Texinfo is the tool that formats this manual into the various output formats.
+To bootstrap Gnuastro you need all of Texinfo's command-line programs.
+However, some operating systems package them separately, for example in Fedora, @command{makeinfo} is packaged in the @command{texinfo-tex} package.
+
+To check that you have a working GNU Texinfo in your system, you can try this command:
+
+@example
+$ makeinfo --version
+@end example
 
 @item GNU Libtool (@command{libtool})
 @cindex GNU Libtool
@@ -5684,10 +5713,23 @@ GNU Libtool is in charge of building all the libraries in Gnuastro.
 The libraries contain functions that are used by more than one program and are installed for use in other programs.
 They are thus put in a separate directory (@file{lib/}).
 
+To check that you have a working GNU Libtool in your system, you can try this command (and from the output, make sure it is GNU's libtool)
+
+@example
+$ libtool --version
+@end example
+
 @item GNU help2man (@command{help2man})
 @cindex GNU help2man
 GNU help2man is used to convert the output of the @option{--help} option
 (@ref{--help}) to the traditional Man page (@ref{Man pages}).
+
+To check that you have a working GNU Help2man in your system, you can try this command:
+
+@example
+$ help2man --version
+@end example
+
 
 @item @LaTeX{} and some @TeX{} packages
 @cindex @LaTeX{}
@@ -5714,10 +5756,24 @@ $ su
                 xcolor pgfplots times rsfs ps2eps epspdf
 @end example
 
+To check that you have a working @LaTeX{} executable in your system, you can try this command (this just checks if @LaTeX{} exists, as described above, if you have a missing package, you can easily identify it from the output and install it with @command{tlmgr}.
+
+@example
+$ latex --version
+@end example
+
+
 @item ImageMagick (@command{imagemagick})
 @cindex ImageMagick
 ImageMagick is a wonderful and robust program for image manipulation on the command-line.
 @file{bootstrap} uses it to convert the book images into the formats necessary for the various book formats.
+
+To check that you have a working ImageMagick in your system, you can try this command:
+
+@example
+$ convert --version
+@end example
+
 
 @end table
 
