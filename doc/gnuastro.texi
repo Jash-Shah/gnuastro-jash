@@ -1913,6 +1913,7 @@ All this trouble was certainly worth it because now there is no dimming on the e
 
 The final step to simulate a real observation would be to add noise to the image.
 Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a magnitude of 7 that night.
+For more on how the background value deterimnes the noise, see @ref{Noise basics}.
 So using these values he ran MakeNoise:
 
 @example
@@ -21751,9 +21752,9 @@ Therefore in this section, we'll also discuss how you can set these two paramete
 @cindex Photon counting noise
 @cindex Poisson, Sim@'eon Denis
 With the very accurate electronics used in today's detectors, photon counting noise@footnote{In practice, we are actually counting the electrons that are produced by each photon, not the actual photons.} is the most significant source of uncertainty in most datasets.
-To understand this noise (error in counting), we need to take a closer look at how a distribution produced by counting can be modeled as a parametric function.
+To understand this noise (error in counting) and its effect on the images of astronomical targets, let's start by reviewing how a distribution produced by counting can be modeled as a parametric function.
 
-Counting is an inherently discrete operation, which can only produce positive (including zero) integer outputs.
+Counting is an inherently discrete operation, which can only produce positive integer outputs (including zero).
 For example we can't count @mymath{3.2} or @mymath{-2} of anything.
 We only count @mymath{0}, @mymath{1}, @mymath{2}, @mymath{3} and so on.
 The distribution of values, as a result of counting efforts is formally known as the @url{https://en.wikipedia.org/wiki/Poisson_distribution, Poisson distribution}.
@@ -21762,30 +21763,31 @@ Therefore some people suggest it should rightly be called the de Moivre distribu
 
 @cindex Probability density function
 Let's take @mymath{\lambda} to represent the expected mean count of something.
-Furthermore, let's take @mymath{k} to represent the result of one particular counting attempt.
+Furthermore, let's take @mymath{k} to represent the output of a counting attempt (hence @mymath{k} is a positive integer).
 The probability density function of getting @mymath{k} counts (in each attempt, given the expected/mean count of @mymath{\lambda}) can be written as:
 
 @cindex Poisson distribution
 @dispmath{f(k)={\lambda^k \over k!} e^{-\lambda},\quad k\in @{0, 1, 2, 3, \dots @}}
 
 @cindex Skewed Poisson distribution
-Because the Poisson distribution is only applicable to positive values (note the factorial operator, which only applies to non-negative integers), naturally it is very skewed when @mymath{\lambda} is near zero.
-One qualitative way to understand this behavior is that there simply aren't enough integers smaller than @mymath{\lambda}, than integers that are larger than it.
-Therefore to accommodate all possibilities/counts, it has to be strongly skewed when @mymath{\lambda} is small.
+Because the Poisson distribution is only applicable to positive integer values (note the factorial operator, which only applies to non-negative integers), naturally it is very skewed when @mymath{\lambda} is near zero.
+One qualitative way to understand this behavior is that for smaller values near zero, there simply aren't enough integers smaller than the mean, than integers that are larger.
+Therefore to accommodate all possibilities/counts, it has to be strongly skewed to the positive when the mean is small.
+For more on Skewness, see @ref{Skewness cased by signal and its measurement}.
 
 @cindex Compare Poisson and Gaussian
-As @mymath{\lambda} becomes larger, the distribution becomes more and more symmetric.
-A very useful property of the Poisson distribution is that the mean value is also its variance.
-When @mymath{\lambda} is very large, say @mymath{\lambda>1000}, then the @url{https://en.wikipedia.org/wiki/Normal_distribution, Normal (Gaussian) distribution}, is an excellent approximation of the Poisson distribution with mean @mymath{\mu=\lambda} and standard deviation @mymath{\sigma=\sqrt{\lambda}}.
-In other words, a Poisson distribution (with a sufficiently large @mymath{\lambda}) is simply a Gaussian that only has one free parameter (@mymath{\mu=\lambda} and @mymath{\sigma=\sqrt{\lambda}}), instead of the two parameters (independent @mymath{\mu} and @mymath{\sigma}) that it originally has.
+As @mymath{\lambda} becomes larger, the distribution becomes more and more symmetric, and the variance of that distribution is equal to its mean.
+In other words, the standard deviation is the square root of the mean.
+It can also be proved that when the mean is large, say @mymath{\lambda>1000}, the Poisson distribution approaches the @url{https://en.wikipedia.org/wiki/Normal_distribution, Normal (Gaussian) distribution} with mean @mymath{\mu=\lambda} and standard deviation @mymath{\sigma=\sqrt{\lambda}}.
+In other words, a Poisson distribution (with a sufficiently large @mymath{\lambda}) is simply a Gaussian that has one free parameter (@mymath{\mu=\lambda} and @mymath{\sigma=\sqrt{\lambda}}), instead of the two parameters that the Gaussian distribution originally has (independent @mymath{\mu} and @mymath{\sigma}).
 
 @cindex Sky value
 @cindex Background flux
 @cindex Undetected objects
-In real situations, the photons/flux from our targets are added to a certain background flux (observationally, the @emph{Sky} value).
+In real situations, the photons/flux from our targets are combined with photons from a certain background (observationally, the @emph{Sky} value).
 The Sky value is defined to be the average flux of a region in the dataset with no targets.
 Its physical origin can be the brightness of the atmosphere (for ground-based instruments), possible stray light within the imaging instrument, the average flux of undetected targets, etc.
-The Sky value is thus an ideal definition, because in real datasets, what lies deep in the noise (far lower than the detection limit) is never known@footnote{In a real image, a relatively large number of very faint objects can been fully buried in the noise and never detected.
+The Sky value is thus an ideal definition, because in real datasets, what lies deep in the noise (far lower than the detection limit) is never known@footnote{In a real image, a relatively large number of very faint objects can be fully buried in the noise and never detected.
 These undetected objects will bias the background measurement to slightly larger values.
 Our best approximation is thus to simply assume they are uniform, and consider their average effect.
 See Figure 1 (a.1 and a.2) and Section 2.2 in @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.}.
@@ -21794,16 +21796,40 @@ In a mock image/dataset, we have the luxury of setting the background (Sky) valu
 
 @cindex Simulating noise
 @cindex Noise simulation
-In each element of the dataset (pixel in an image), the flux is the sum of contributions from various sources (after convolution by the PSF, see @ref{PSF}).
-Let's name the convolved sum of possibly overlapping objects, @mymath{I_{nn}}.
-@mymath{nn} representing `no noise'.
+In summary, the value in each element of the dataset (pixel in an image) is the sum of contributions from various galaxies and stars (after convolution by the PSF, see @ref{PSF}).
+Let's name the convolved sum of possibly overlapping objects in each pixel as @mymath{I_{nn}}.
+@mymath{nn} represents `no noise'.
 For now, let's assume the background (@mymath{B}) is constant and sufficiently high for the Poisson distribution to be approximated by a Gaussian.
-Then the flux after adding noise is a random value taken from a Gaussian distribution with the following mean (@mymath{\mu}) and standard deviation (@mymath{\sigma}):
+Then the flux of that pixel, after adding noise, is @emph{a random value} taken from a Gaussian distribution with the following mean (@mymath{\mu}) and standard deviation (@mymath{\sigma}):
 
 @dispmath{\mu=B+I_{nn}, \quad \sigma=\sqrt{B+I_{nn}}}
 
+@cindex Bias level in detectors
+@cindex Dark level in detectors
+In astronomical instruments, @mymath{B} is enhanced by adding a ``bias'' level to each pixel before the shutter is even opened (for the exposure to start).
+As the exposure is ongoing and photo-electrons are accumulating from the astronomical objects, a ``dark'' current (due to thermal radiation of the instrument) also builds up in the pixels.
+The ``dark'' current will accumulate even when the shutter is closed, but the CCD electronics are working (hence the name ``dark'').
+This added dark level further enhaces the mean value in a real observation compared to the raw background value (from the atmosphere for example).
+
 Since this type of noise is inherent in the objects we study, it is usually measured on the same scale as the astronomical objects, namely the magnitude system, see @ref{Brightness flux magnitude}.
 It is then internally converted to the flux scale for further processing.
+
+The equations above clearly show the importance of the background value and its effect on the final signal to noise ratio in each pixel of a science image.
+It is therefore, one of the most important factors in understanding the noise (and properly simulating observations where necessary).
+An inappropriately bright background value can hide the signal of the mock profile hide behind the noise.
+In other words, a brighter background has larger standard deviation and vice versa.
+As a result, the only necessary parameter to define photon-counting noise over a mock image of simulated profiles is the background.
+For a complete example, see @ref{Sufi simulates a detection}.
+
+To better understand the correlation between the mean (or background) value and the noise standard deviation, let's use an analogy.
+Consider the profile of your galaxy to be analogous to the profile of a ship that is sailing in the sea.
+The height of the ship would therefore be analogous to the maximum flux difference between your galaxy's minimum and maximum values.
+Furthermore, let's take the depth of the sea to represent the background value: a deeper sea, corresponds to a brighter background.
+In this analogy, the ``noise'' would be the height of the waves that surround the ship: in deeper waters, the waves would also be taller (the squre root of the mean depth at the ship's position).
+
+If the ship is in deep waters, the height of waves are greater than when the ship is near to the beach (at lower depths).
+Therefore, when the ship is in the middle of the sea, there are high waves that are capable of hiding a significant part of the ship from our perspective.
+This corresponds to a brighter background value in astronomical images: the resulting noise from that brighter background can completely wash out the signal from a fainter galaxy, star or solar system object.
 
 @node Instrumental noise, Final noised pixel value, Photon counting noise, Noise basics
 @subsubsection Instrumental noise
@@ -21811,7 +21837,7 @@ It is then internally converted to the flux scale for further processing.
 @cindex Readout noise
 @cindex Instrumental noise
 @cindex Noise, instrumental
-While taking images with a camera, a dark current is fed to the pixels, the variation of the value of this dark current over the pixels, also adds to the final image noise.
+While taking images with a camera, a bias current is fed to the pixels, the variation of the value of this bias current over the pixels, also adds to the final image noise.
 Another source of noise is the readout noise that is produced by the electronics in the detector.
 Specifically, the parts that attempt to digitize the voltage produced by the photo-electrons in the analog to digital converter.
 With the current generation of instruments, this source of noise is not as significant as the noise due to the background Sky discussed in @ref{Photon counting noise}.
@@ -21955,11 +21981,11 @@ This is done for future reproducibility.
 
 @item -b FLT
 @itemx --background=FLT
-The background value (per pixel) that will be added to each pixel value (internally) to estimate Poisson noise, see @ref{Photon counting noise}.
+The background value (per pixel) that will be added to each pixel value (internally) to simulate Poisson noise, see @ref{Photon counting noise}.
 By default the units of this value are assumed to be in magnitudes, hence a @option{--zeropoint} is also necessary.
-But if the background is in units of brightness, you need add @option{--bgisbrightness}, see @ref{Brightness flux magnitude}
+If the background is in units of counts, you need add @option{--bgisbrightness}, see @ref{Brightness flux magnitude}
 
-Internally, the value given to this option will be converted to brightness (@mymath{b}, when @option{--bgisbrightness} is called, the value will be used directly).
+Internally, the value given to this option will be converted to counts (@mymath{b}, when @option{--bgisbrightness} is called, the value will be used directly).
 Assuming the pixel value is @mymath{p}, the random value for that pixel will be taken from a Gaussian distribution with mean of @mymath{p+b} and standard deviation of @mymath{\sqrt{p+b}}.
 With this option, the noise will therefore be dependent on the pixel values: according to the Poission noise model, as the pixel value becomes larger, its noise will also become larger.
 This is thus a realistic way to model noise, see @ref{Photon counting noise}.
