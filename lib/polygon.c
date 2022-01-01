@@ -7,7 +7,7 @@ Original author:
 Contributing author(s):
      Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
      Pedram Ashofteh Ardakani <pedramardakani@pm.me>
-Copyright (C) 2015-2021, Free Software Foundation, Inc.
+Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
