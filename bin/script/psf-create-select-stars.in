@@ -372,8 +372,8 @@ parallax_error=$(echo "$parallaxanderrorcolumn" \
 
 
 
-# Define a temporal directory and thefinal output file
-# ----------------------------------------------------
+# Define a temporary directory and thefinal output file
+# -----------------------------------------------------
 #
 # Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
@@ -454,7 +454,7 @@ if [ x"$catalog" != x ]; then
 
         # Stop if the catalog doesn't overlap with the image.
         echo "Image and catalog do not overlap."
-        echo "Please provide an iamge and a catalog which overlap together."
+        echo "Please provide an image and a catalog which overlap together."
         exit 1
     else
 
@@ -470,7 +470,8 @@ if [ x"$catalog" != x ]; then
 
             # At first check and if there are no stars in the range of magnitude
             # the script will be stopped and print the error.
-            numstars=$(asttable $catalog_magfiltered -i | grep 'Number of rows' | awk '{print $4}')
+            numstars=$(asttable $catalog_magfiltered -i \
+			   | grep 'Number of rows' | awk '{print $4}')
             if [ "$numstars" = 0 ]; then
                 rm -rf $tmpdir
                 echo "There were no stars in magnitude range $minmag to $maxmag"
@@ -483,11 +484,13 @@ if [ x"$catalog" != x ]; then
 else
     # Check if the catalog already exist.
     if [ -f $catalog_magfiltered ]; then
-        echo "External Cataloge already exists "
+        echo "Queried Cataloge already exists "
     else
 	# Download the catalog with the necessary parameters.
-        astquery $dataset --output=$catalog_magfiltered --overlapwith=$inputs --hdu=$hdu \
-                 --column=$columnquery --range=$field,$minmag,$maxmag \
+        astquery $dataset --output=$catalog_magfiltered \
+		 --overlapwith=$inputs --hdu=$hdu \
+                 --column=$columnquery \
+		 --range=$field,$minmag,$maxmag \
                  --sort=$field $quiet
     fi
 fi
@@ -585,9 +588,9 @@ asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
 
    # Find number of neighborhod for each star.
    asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
-	    -c'arith '$racolumn' '$racolumn' '$r' '$d' distance-on-sphere \
+	    -c'arith '$racolumn' '$deccolumn' '$r' '$d' distance-on-sphere \
                      set-i i i '$mindistdeg' gt nan where' \
-            --noblank=4 \
+            --noblankend=4 \
 	    --colinfoinstdout \
             --output=$numberneighbor $quiet
 
