@@ -928,8 +928,8 @@ We need to appreciate that data analysis is not purely computational and algorit
 @author Five ways to fix statistics, Nature, 551, Nov 2017.
 @end quotation
 
-Users of statistical (scientific) methods (software) are therefore not passive (objective) agents in their result.
-Therefore, it is necessary to actually understand the method, not just use it as a black box.
+Users of statistical (scientific) methods (software) are therefore not passive (objective) agents in their results.
+It is necessary to actually understand the method, not just use it as a black box.
 The subjective experience gained by frequently using a method/software is not sufficient to claim an understanding of how the tool/method works and how relevant it is to the data and analysis.
 This kind of subjective experience is prone to serious misunderstandings about the data, what the software/statistical-method really does (especially as it gets more complicated), and thus the scientific interpretation of the result.
 This attitude is further encouraged through non-free software@footnote{@url{https://www.gnu.org/philosophy/free-sw.html}}, poorly written (or non-existent) scientific software manuals, and non-reproducible papers@footnote{Where the authors omit many of the analysis/processing ``details'' from the paper by arguing that they would make the paper too long/unreadable.
@@ -959,7 +959,7 @@ There are two major differences.
 
 The first difference is that Gnuastro's code and the background information are segregated: the code is moved within the actual Gnuastro software source code and the underlying explanations are given here in this book.
 In the source code, every non-trivial step is heavily commented and correlated with this book, it follows the same logic of this book, and all the programs follow a similar internal data, function and file structure, see @ref{Program source}.
-Complementing the code, this book focuses on thoroughly explaining the concepts behind those codes (history, mathematics, science, software and usage advise when necessary) along with detailed instructions on how to run the programs.
+Complementing the code, this book focuses on thoroughly explaining the concepts behind those codes (history, mathematics, science, software and usage advice when necessary) along with detailed instructions on how to run the programs.
 At the expense of frustrating ``professionals'' or ``experts'', this book and the comments in the code also intentionally avoid jargon and abbreviations.
 The source code and this book are thus intimately linked, and when considered as a single entity can be thought of as a real (an actual software accompanying the algorithms) ``Numerical Recipes'' for astronomy.
 
@@ -1382,23 +1382,23 @@ Gnuastro is designed to be easy for anyone to develop (see @ref{Science and its 
 @cindex Feature requests
 @cindex Additions to Gnuastro
 We would always be happy to hear of suggested new features.
-For every program there are already lists of features that we are planning to add.
+For every program, there are already lists of features that we are planning to add.
 You can see the current list of plans from the Gnuastro project web page at @url{https://savannah.gnu.org/projects/gnuastro/} and following @clicksequence{``Tasks''@click{}``Browse''} on the horizontal menu at the top of the page immediately under the title, see @ref{Gnuastro project webpage}.
 If you want to request a feature to an existing program, click on the ``Display Criteria'' above the list and under ``Category'', choose that particular program.
 Under ``Category'' you can also see the existing suggestions for new programs or other cases like installation, documentation or libraries.
-Also be sure to set the ``Open/Closed'' value to ``Any''.
+Also, be sure to set the ``Open/Closed'' value to ``Any''.
 
 If the feature you want to suggest is not already listed in the task manager, then follow the steps that are fully described in @ref{Report a bug}.
-Please have in mind that the developers are all busy with their own astronomical research, and implementing existing ``task''s to add or resolving bugs.
+Please have in mind that the developers are all busy with their own astronomical research, and implementing existing ``task''s to add or resolve bugs.
 Gnuastro is a volunteer effort and none of the developers are paid for their hard work.
-So, although we will try our best, please don't not expect that your suggested feature be immediately included (with the next release of Gnuastro).
+So, although we will try our best, please don't expect for your suggested feature to be immediately included (for the next release of Gnuastro).
 
 The best person to apply the exciting new feature you have in mind is you, since you have the motivation and need.
-In fact Gnuastro is designed for making it as easy as possible for you to hack into it (add new features, change existing ones and so on), see @ref{Science and its tools}.
+In fact, Gnuastro is designed for making it as easy as possible for you to hack into it (add new features, change existing ones and so on), see @ref{Science and its tools}.
 Please have a look at the chapter devoted to developing (@ref{Developing}) and start applying your desired feature.
 Once you have added it, you can use it for your own work and if you feel you want others to benefit from your work, you can request for it to become part of Gnuastro.
 You can then join the developers and start maintaining your own part of Gnuastro.
-If you choose to take this path of action please contact us before hand (@ref{Report a bug}) so we can avoid possible duplicate activities and get interested people in contact.
+If you choose to take this path of action please contact us beforehand (@ref{Report a bug}) so we can avoid possible duplicate activities and get interested people in contact.
 
 @cartouche
 @noindent
@@ -1445,8 +1445,10 @@ If the command becomes larger than the page width a @key{\} is inserted in the c
 If you are typing the code by hand on the command-line, you don't need to use multiple lines or add the extra space characters, so you can omit them.
 If you want to copy and paste these examples (highly discouraged!) then the @key{\} should stay.
 
-The @key{\} character is a shell escape character which is used commonly to make characters which have special meaning for the shell loose that special place (the shell will not treat them specially if there is a @key{\} behind them).
-When it is a last character in a line (the next character is a new-line character) the new-line character looses its meaning an the shell sees it as a simple white-space character, enabling you to use multiple lines to write your commands.
+The @key{\} character is a shell escape character which is used commonly to make characters which have special meaning for the shell, lose that special meaning (the shell will not treat them especially if there is a @key{\} behind them).
+When @key{\} is the last visible character in a line (the next character is a new-line character) the new-line character loses its meaning.
+Therefore, the shell sees it as a simple white-space character not the end of a command!
+This enables you to use multiple lines to write your commands.
 
 @end itemize
 
@@ -1579,7 +1581,7 @@ Xiuqin Wu,
 Sara Yousefi Taemeh,
 Johannes Zabl.
 The GNU French Translation Team is also managing the French version of the top Gnuastro web page which we highly appreciate.
-Finally we should thank all the (sometimes anonymous) people in various online forums which patiently answered all our small (but imporant) technical questions.
+Finally, we should thank all the (sometimes anonymous) people in various online forums who patiently answered all our small (but important) technical questions.
 
 All work on Gnuastro has been voluntary, but the authors are most grateful to the following institutions (in chronological order) for hosting/supporting us in our research.
 Where necessary, these institutions have disclaimed any ownership of the parts of Gnuastro that were developed there, thus insuring the freedom of Gnuastro for the future (see @ref{Copyright assignment}).
@@ -1627,7 +1629,7 @@ Because all conditions are under control in a simulated/mock environment/dataset
 But they need to be as realistic as possible, so the first tutorial is dedicated to this important step of an analysis.
 
 The next two tutorials (@ref{General program usage tutorial} and @ref{Detecting large extended targets}) use real input datasets from some of the deep Hubble Space Telescope (HST) images and the Sloan Digital Sky Survey (SDSS) respectively.
-Their aim is to demonstrate some real-world problems that many astronomers often face and how they can be be solved with Gnuastro's programs.
+Their aim is to demonstrate some real-world problems that many astronomers often face and how they can be solved with Gnuastro's programs.
 
 The ultimate aim of @ref{General program usage tutorial} is to detect galaxies in a deep HST image, measure their positions and brightness and select those with the strongest colors.
 In the process, it takes many detours to introduce you to the useful capabilities of many of the programs.
