@@ -373,6 +373,10 @@ Steps necessary to Package Gnuastro for Debian.
 
      $ emacs debian/control   # Only three digits "X.Y.Z"
 
+ - Check if the years in 'debian/copyright' are up to date (usually on
+   first packaging after a new year):
+
+     $ emacs debian/copyright
 
  - If the soname of the shared libraries has changed:
 

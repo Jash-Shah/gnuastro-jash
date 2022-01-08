@@ -825,7 +825,7 @@ table_catcolumn(struct tableparams *p)
 static char *
 table_catrows_findhdu(char *filename, gal_list_str_t **hdull)
 {
-  char *hdu;
+  char *hdu=NULL;
 
   /* Set the HDU (not necessary for non-FITS tables). */
   if(gal_fits_file_recognized(filename))
@@ -837,7 +837,6 @@ table_catrows_findhdu(char *filename, gal_list_str_t **hdull)
               "A call to '--catrowhdu' is necessary to identify "
               "its HDU/extension");
     }
-  else hdu=NULL;
 
   /* Return the HDU. */
   return hdu;
