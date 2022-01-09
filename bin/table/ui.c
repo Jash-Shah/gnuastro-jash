@@ -291,6 +291,11 @@ ui_read_check_only_options(struct tableparams *p)
         error(EXIT_FAILURE, 0, "at most three values can be given to each "
               "call of '--colmetadata' ('-m') after the original columns "
               "name or number. But %zu strings have been given", tmp->size);
+
+  /* '--head' and '--tail' shouldn't be called together! */
+  if(p->head!=GAL_BLANK_SIZE_T && p->tail!=GAL_BLANK_SIZE_T)
+    error(EXIT_FAILURE, 0, "'--head' and '--tail' can't be called at "
+          "the same time");
 }
 
 

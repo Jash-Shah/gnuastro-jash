@@ -11621,7 +11621,7 @@ In such scenarios, to avoid potential repetition, it is better to use @ref{Match
 For more on using Match for this scenario, see the description of @option{--outcols} in @ref{Invoking astmatch}.
 @end cartouche
 
-@item -H STR
+@item -X STR
 @itemx --catrowhdu=STR
 The HDU/extension of the FITS file(s) that should be concatenated, or appended, by rows with @option{--catrowfile}.
 If @option{--catrowfile} is called more than once with more than one FITS file, its necessary to call this option more than once also (once for every FITS table given to @option{--catrowfile}).
