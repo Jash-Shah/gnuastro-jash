@@ -51,6 +51,7 @@ racolumn="ra"
 mindistdeg=""
 deccolumn="dec"
 minaxisratio=""
+faintmagdiff=""
 version=@VERSION@
 magnituderange=""
 matchaperturedeg=""
@@ -106,6 +107,10 @@ $scriptname options:
                           parrallax and parrallax_error.
   -a, --matchaperturedeg=FLT Aperture, in pixels, to match catalogue ra and
                              dec coordinates with clumps' ra and dec.
+  -F, --faintmagdiff      The difference from the faintest star which the user will
+                          be determined the faintest star in "--magnituderange"
+                          option.
+
  Output:
   -o, --output            Output table with the object coordinates.
   -t, --tmpdir            Directory to keep temporary files.
@@ -227,6 +232,9 @@ do
        -f|--field)             field="$2";                                   check_v "$1" "$field";  shift;shift;;
        -f=*|--field=*)         field="${1#*=}";                              check_v "$1" "$field";  shift;;
        -f*)                    field=$(echo "$1" | sed -e's/-f//');          check_v "$1" "$field";  shift;;
+       -F|--faintmagdiff)      faintmagdiff="$2";                            check_v "$1" "$faintmagdiff";  shift;shift;;
+       -F=*|--faintmagdiff=*)  faintmagdiff="${1#*=}";                       check_v "$1" "$faintmagdiff";  shift;;
+       -F*)                    faintmagdiff=$(echo "$1" | sed -e's/-F//');   check_v "$1" "$faintmagdiff";  shift;;
        -m|--magnituderange)    magnituderange="$2";                          check_v "$1" "$magnituderange";  shift;shift;;
        -m=*|--magnituderange=*) magnituderange="${1#*=}";                    check_v "$1" "$magnituderange";  shift;;
        -m*)                    magnituderange=$(echo "$1" | sed -e's/-m//'); check_v "$1" "$magnituderange";  shift;;
@@ -355,12 +363,17 @@ fi
 
 
 
-# Basic parameters: magnitude range, parallax and parallax_error.
+#  Basic parameters: magnitude range, parallax and parallax_error.
 #-----------------------------------
 #
 # Obtain the magnitude range from the command line arguments.
 minmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $1}')
 maxmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
+
+# Range of magnitude which are for time fainter than and brighter than
+# minimum magnitude and maximum magnitude.
+brighter=-10
+fainter=$(astarithmetic $maxmag $faintmagdiff + --quiet)
 
 # Obtain the parallax and parallax_error columns name.
 parallax=$(echo "$parallaxanderrorcolumn" \
@@ -415,9 +428,9 @@ fi
 # user does not provide a catalogue, obtain it using the program
 # 'astquery'.
 #
-# The output name of the catalog of stars in the range of the
-# magnitude.
-catalog_magfiltered=$tmpdir/catalog-mag-$minmag-$maxmag.fits
+# The output name of the catalog of stars in the range of the magnitude
+# between smaller than the minimumm and larger than the maximumm.
+catalog_main=$tmpdir/catalog-main-$brighter-$fainter.fits
 
 # The output name of the sky coverage.
 skycoverage=$tmpdir/skycoverage.fits
@@ -449,7 +462,7 @@ if [ x"$catalog" != x ]; then
     number=$(asttable $skycoverage | wc -l)
 
     # If catalog overlap the image, select stars with magnitudes between
-    # the minimum and maximum values.
+    # the less than minimum and larger than maximum values.
     if [ "$number" = 0 ]; then
 
         # Stop if the catalog doesn't overlap with the image.
@@ -459,18 +472,18 @@ if [ x"$catalog" != x ]; then
     else
 
         # Make a file for output of 'asttable'.
-        if [ -f $catalog_magfiltered ]; then
+        if [ -f $catalog_main ]; then
             echo "External Cataloge already exists "
         else
-            # Select stars with magnitude between minimum to maximum.
-            asttable $catalog --range=$field,$minmag,$maxmag --sort=$field \
+            # Select stars with magnitude between brighter to fainter.
+            asttable $catalog --range=$field,$brighter,$fainter --sort=$field \
                      --range=$racolumn,$minraimg,$maxraimg \
                      --range=$deccolumn,$mindecimg,$maxdecimg \
-                     --output=$catalog_magfiltered $quiet
+                     --output=$catalog_main $quiet
 
             # At first check and if there are no stars in the range of magnitude
             # the script will be stopped and print the error.
-            numstars=$(asttable $catalog_magfiltered -i \
+            numstars=$(asttable $catalog_main -i \
 			   | grep 'Number of rows' | awk '{print $4}')
             if [ "$numstars" = 0 ]; then
                 rm -rf $tmpdir
@@ -483,17 +496,27 @@ if [ x"$catalog" != x ]; then
 # If the user doesn't provide a catalog, use 'astquery' to obtain it.
 else
     # Check if the catalog already exist.
-    if [ -f $catalog_magfiltered ]; then
+    if [ -f $catalog_main ]; then
         echo "Queried Cataloge already exists "
     else
 	# Download the catalog with the necessary parameters.
-        astquery $dataset --output=$catalog_magfiltered \
+        astquery $dataset --output=$catalog_main \
 		 --overlapwith=$inputs --hdu=$hdu \
                  --column=$columnquery \
-		 --range=$field,$minmag,$maxmag \
+		 --range=$field,$brighter,$fainter \
                  --sort=$field $quiet
     fi
 fi
+
+
+
+
+# The name of the catalog of stars in the range of magnitude between
+# minimumm and maximumm.
+catalog_target=$tmpdir/catalog-gaia-$minmag-$maxmag.fits
+
+# Select the stars in the range of magnitude between minimum and maximum.
+asttable $catalog_main --range=$field,$minmag,$maxmag --output=$catalog_target
 
 
 
@@ -507,13 +530,13 @@ fi
 # three times the parallax-error are removed.
 goodparallax=$tmpdir/parallax-good.fits
 if [ x"$parallaxanderrorcolumn" != x ]; then
-    asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
+    asttable $catalog_target -c$racolumn,$deccolumn -c$field \
              --range=$field,$minmag,$maxmag --colinfoinstdout --noblank=4 \
              -c'arith '$parallax' '$parallax' abs \
                       '$parallax_error' 3 x lt nan where ' \
              | asttable -c$racolumn,$deccolumn -c$field --output=$goodparallax $quiet
 else
-    cp $catalog_magfiltered $goodparallax
+    cp $catalog_target $goodparallax
 fi
 
 
@@ -578,7 +601,7 @@ lessneighbor=$tmpdir/less-than-9-stars.txt
 moreneighbor=$tmpdir/more-than-9-stars.txt
 echo "# Column 1: ra [deg,f64] Right ascension" >> $lessneighbor
 echo "# Column 2: dec [deg,f64] Declination" >> $lessneighbor
-echo "# Column 3: photo-g-mean-mag [mag,f64] Magnitude" >> $lessneighbor
+echo "# Column 3: phot_g_mean_mag [mag,f64] Magnitude" >> $lessneighbor
 
 # Find ra and dec of each star.
 asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
@@ -587,7 +610,7 @@ asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
    numberneighbor=$tmpdir/"$r_$d"th-star-neighbor.fits
 
    # Find number of neighborhod for each star.
-   asttable $catalog_magfiltered -c$racolumn,$deccolumn -c$field \
+   asttable $catalog_main -c$racolumn,$deccolumn -c$field \
 	    -c'arith '$racolumn' '$deccolumn' '$r' '$d' distance-on-sphere \
                      set-i i i '$mindistdeg' gt nan where' \
             --noblankend=4 \
@@ -596,8 +619,8 @@ asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
 
    # Check number of neighborhod and remove each star that has more than 9
    # neighbors.
-   lof=$(cat $numberneighbor | wc -l)
-   if [ $lof -le 9 ]; then
+   lof=$(asttable $numberneighbor | wc -l)
+   if [ $lof -lt 2 ]; then
        echo $r $d $mag >> $lessneighbor
    else
        echo $r $d $mag >> $moreneighbor
@@ -613,8 +636,9 @@ done
 #
 # Output of selected circular stars with good parallax and less than 9
 # neighbors in fits format.
-asttable $lessneighbor --output=$output
 
+# Convert the '.txt' output to the '.fits' file.
+asttable $lessneighbor --output=$output
 
 
 
@@ -626,11 +650,11 @@ asttable $lessneighbor --output=$output
 # be used. Without this option user can see all steps of run.
 if [ x"$quiet" = x ]; then
    echo "Number of downloaded stars from gaia: \
-         $(asttable $catalog_magfiltered | wc -l)"
+         $(asttable $catalog_main | wc -l)"
    echo "Number of stars with good parallax: \
          $(asttable $goodparallax | wc -l)"
-   echo "Number of stars with less than 9 neghbors: \
-         $(asttable $lessneighbor | wc -l)"
+   echo "Number of stars with any neighbors has been found \
+         $(asttable $output | wc -l)"
    if [ ! -$segmented ]; then
            echo "Number of stars matched with clump catalogue: \
                  $(asttable $qmatch)"
