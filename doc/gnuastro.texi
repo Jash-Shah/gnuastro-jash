@@ -23496,10 +23496,12 @@ To do that, we will use @file{astscript-psf-create-select-stars} to select the b
 
 @example
 $ astscript-psf-create-select-stars $IMAGE --hdu=1 \
-                --magnituderange=6,10 \
+                --magnituderange=8,12 \
                 --minaxisratio=0.9 \
-                --mindistdeg=0.1 \
+                --mindistdeg=0.05 \
                 --matchaperturedeg=0.25 \
+                --faintmagdiff=4 \
+                --brightmag=-10 \
                 --output=catalog.fits
 @end example
 
@@ -23623,6 +23625,8 @@ $ astscript-psf-create-select-stars image.fits --hdu=1 \
       --minaxisratio=0.9 \
       --mindistdeg=0.1 \
       --matchaperturedeg=0.25 \
+      --faintmagdiff=4 \
+      --brightmag=-10 \
       --output=catalog.fits
 
 ## Select the stars in the range of magnitude between
@@ -23633,6 +23637,8 @@ $ astscript-psf-create-select-stars image.fits --hdu=1 \
     --minaxisratio=0.9 \
     --mindistdeg=0.1 \
     --matchaperturedeg=0.25 \
+    --faintmagdiff=4 \
+    --brightmag=-10 \
     --output=catalog.fits
 
 @end example
@@ -23691,6 +23697,19 @@ If the user does not provide thi soption, the script does not provide stars with
 @item -a FLT
 @itemx --matchaperturedeg=FLT
 This option determines the aperture (in degrees) for matching the catalog from gaia with the clumps catalog.
+
+@item -F INT
+@itemx --faintmagdiff
+This option has been used to select the stars that are fainter than the main faint stars, and user just should provide this difference how much should be.
+For more clarity in next option explain about it more.
+
+@item -b INT
+@itemx --brightmag
+This option have determined the value of the brightest star that has been selected the neighbor of the main star.
+For checking the neighbors of the main stars we should attention to the star that are brighter that the main star, and the faint stars that their brightness are close to the main star.
+For checking this main point the options @option{--faintmagdiff} and @option{--brightmag} has been considered.
+For instance if the user want select the stars in the range of magnitude between 8 to 10, and if choose the values 4 and -10 for the @option{--faintmagdiff} and @option{--brightmag}, respectively.
+The neighbor of the main stars that have magnitude between -10 to 14 has been checked and finally the stars in the range of magnitude between 8 to 10 that have not any neighbor (in the range of magnitude between -10 to 14) has been selected.
 
 @item -Q FLT
 @itemx --minaxisratio=FLT
