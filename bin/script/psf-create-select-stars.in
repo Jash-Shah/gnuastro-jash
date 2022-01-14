@@ -46,6 +46,7 @@ output=""
 tmpdir=""
 catalog=""
 keeptmp=""
+brightmag=""
 segmented=""
 racolumn="ra"
 mindistdeg=""
@@ -110,6 +111,7 @@ $scriptname options:
   -F, --faintmagdiff      The difference from the faintest star which the user will
                           be determined the faintest star in "--magnituderange"
                           option.
+  -b, --brightmag         The limit for selecting wider range of bright stars.
 
  Output:
   -o, --output            Output table with the object coordinates.
@@ -235,6 +237,9 @@ do
        -F|--faintmagdiff)      faintmagdiff="$2";                            check_v "$1" "$faintmagdiff";  shift;shift;;
        -F=*|--faintmagdiff=*)  faintmagdiff="${1#*=}";                       check_v "$1" "$faintmagdiff";  shift;;
        -F*)                    faintmagdiff=$(echo "$1" | sed -e's/-F//');   check_v "$1" "$faintmagdiff";  shift;;
+       -b|--brightmag)         brightmag="$2";                               check_v "$1" "$brightmag";  shift;shift;;
+       -b=*|--brightmag=*)     brightmag="${1#*=}";                          check_v "$1" "$brightmag";  shift;;
+       -b*)                    brightmag=$(echo "$1" | sed -e's/-b//');      check_v "$1" "$brightmag";  shift;;
        -m|--magnituderange)    magnituderange="$2";                          check_v "$1" "$magnituderange";  shift;shift;;
        -m=*|--magnituderange=*) magnituderange="${1#*=}";                    check_v "$1" "$magnituderange";  shift;;
        -m*)                    magnituderange=$(echo "$1" | sed -e's/-m//'); check_v "$1" "$magnituderange";  shift;;
@@ -293,6 +298,21 @@ elif [ ! -f $inputs ]; then
     echo "$scriptname: $inputs: No such file or directory."
     exit 1
 fi
+
+# Check the user provide the magnitude of the faintest stars which she/he
+# want compare.
+if [ x"$faintmagdiff" = x ]; then
+    echo "$scriptname:: The '--faintmagdiff' dose not provided."
+    exit 1
+fi
+
+# Check the user provide the magnitude of the brightest stars which she/he
+# want compare.
+if [ x"$brightmag" = x ]; then
+    echo "$scriptname:: The '--brightmag' dose not provided."
+    exit 1
+fi
+
 
 # Check that 'segmented' is output of 'astsegment'.
 if [ x"$segmented" != x ]; then
@@ -372,7 +392,6 @@ faintmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
 
 # Range of magnitude which are in the wider range of brighter and fainter
 # magnitude.
-brighter=-10
 fainter=$(astarithmetic $faintmag $faintmagdiff + --quiet)
 
 # Obtain the parallax and parallax_error columns name.
@@ -430,7 +449,7 @@ fi
 #
 # The output name of the catalog of stars in the range of the magnitude
 # between smaller than the brighter and larger than the fainter.
-catalog_main=$tmpdir/catalog-main-$brighter-$fainter.fits
+catalog_main=$tmpdir/catalog-main-$brightmag-$fainter.fits
 
 # The output name of the sky coverage.
 skycoverage=$tmpdir/skycoverage.fits
@@ -476,7 +495,7 @@ if [ x"$catalog" != x ]; then
             echo "External Cataloge already exists "
         else
             # Select stars with magnitude between brighter to fainter.
-            asttable $catalog --range=$field,$brighter,$fainter --sort=$field \
+            asttable $catalog --range=$field,$brightmag,$fainter --sort=$field \
                      --range=$racolumn,$minraimg,$maxraimg \
                      --range=$deccolumn,$mindecimg,$maxdecimg \
                      --output=$catalog_main $quiet
@@ -503,7 +522,7 @@ else
         astquery $dataset --output=$catalog_main \
 		 --overlapwith=$inputs --hdu=$hdu \
                  --column=$columnquery \
-		 --range=$field,$brighter,$fainter \
+		 --range=$field,$brightmag,$fainter \
                  --sort=$field $quiet
     fi
 fi
