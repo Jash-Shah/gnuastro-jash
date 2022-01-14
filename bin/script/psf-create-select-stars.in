@@ -311,7 +311,7 @@ elif [ ! -f $segmented ]; then
     exit 1
 fi
 
-# Check if the minimum and maximum range of does not exist interrupt.
+# Check if the brighter and fainter range of magnitude does not exist interrupt.
 if [ x$magnituderange = x ]; then
     echo "$scriptname: The range of magnitude does not provided."
     echo "$scriptname: Values to '--magnituderange' (or '-m') should be provided."
@@ -367,13 +367,13 @@ fi
 #-----------------------------------
 #
 # Obtain the magnitude range from the command line arguments.
-minmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $1}')
-maxmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
+brightmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $1}')
+faintmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
 
-# Range of magnitude which are for time fainter than and brighter than
-# minimum magnitude and maximum magnitude.
+# Range of magnitude which are in the wider range of brighter and fainter
+# magnitude.
 brighter=-10
-fainter=$(astarithmetic $maxmag $faintmagdiff + --quiet)
+fainter=$(astarithmetic $faintmag $faintmagdiff + --quiet)
 
 # Obtain the parallax and parallax_error columns name.
 parallax=$(echo "$parallaxanderrorcolumn" \
@@ -401,7 +401,7 @@ parallax_error=$(echo "$parallaxanderrorcolumn" \
 # and max magnitudes will will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_psfcreateselectstar_"$field"_"$minmag"_"$maxmag"
+  tmpdir=$(pwd)/"$bname_prefix"_psfcreateselectstar_"$field"_"$brightmag"_"$faintmag"
 fi
 
 if [ -d $tmpdir ]; then
@@ -412,7 +412,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output="$bname_prefix"_psfcreateselectstar_"$field"_"$minmag"_"$maxmag".fits
+  output="$bname_prefix"_psfcreateselectstar_"$field"_"$brightmag"_"$faintmag".fits
 fi
 
 
@@ -429,14 +429,14 @@ fi
 # 'astquery'.
 #
 # The output name of the catalog of stars in the range of the magnitude
-# between smaller than the minimumm and larger than the maximumm.
+# between smaller than the brighter and larger than the fainter.
 catalog_main=$tmpdir/catalog-main-$brighter-$fainter.fits
 
 # The output name of the sky coverage.
 skycoverage=$tmpdir/skycoverage.fits
 
 # If the catalog and the image have an overlap area, then select the stars
-# in the range of magnitude between minimum and maximum.
+# in the range of magnitude between bright and faint stars.
 if [ x"$catalog" != x ]; then
 
     # Find minimum and maximum RA/Dec values of the input image.
@@ -462,7 +462,7 @@ if [ x"$catalog" != x ]; then
     number=$(asttable $skycoverage | wc -l)
 
     # If catalog overlap the image, select stars with magnitudes between
-    # the less than minimum and larger than maximum values.
+    # the less than faint and larger than bright values.
     if [ "$number" = 0 ]; then
 
         # Stop if the catalog doesn't overlap with the image.
@@ -487,7 +487,7 @@ if [ x"$catalog" != x ]; then
 			   | grep 'Number of rows' | awk '{print $4}')
             if [ "$numstars" = 0 ]; then
                 rm -rf $tmpdir
-                echo "There were no stars in magnitude range $minmag to $maxmag"
+                echo "There were no stars in magnitude range $brightmag to $faintmag"
                 exit 2
             fi
         fi
@@ -512,11 +512,11 @@ fi
 
 
 # The name of the catalog of stars in the range of magnitude between
-# minimumm and maximumm.
-catalog_target=$tmpdir/catalog-gaia-$minmag-$maxmag.fits
+# bright and faint.
+catalog_target=$tmpdir/catalog-gaia-$brightmag-$faintmag.fits
 
-# Select the stars in the range of magnitude between minimum and maximum.
-asttable $catalog_main --range=$field,$minmag,$maxmag --output=$catalog_target
+# Select the stars in the range of magnitude between bright and faint.
+asttable $catalog_main --range=$field,$brightmag,$faintmag --output=$catalog_target
 
 
 
@@ -531,7 +531,7 @@ asttable $catalog_main --range=$field,$minmag,$maxmag --output=$catalog_target
 goodparallax=$tmpdir/parallax-good.fits
 if [ x"$parallaxanderrorcolumn" != x ]; then
     asttable $catalog_target -c$racolumn,$deccolumn -c$field \
-             --range=$field,$minmag,$maxmag --colinfoinstdout --noblank=4 \
+             --range=$field,$brightmag,$faintmag --colinfoinstdout --noblank=4 \
              -c'arith '$parallax' '$parallax' abs \
                       '$parallax_error' 3 x lt nan where ' \
              | asttable -c$racolumn,$deccolumn -c$field --output=$goodparallax $quiet
