@@ -46,13 +46,13 @@ output=""
 tmpdir=""
 catalog=""
 keeptmp=""
-brightmag=""
+brightmag=-10
 segmented=""
 racolumn="ra"
 mindistdeg=""
 deccolumn="dec"
 minaxisratio=""
-faintmagdiff=""
+faintmagdiff=4
 version=@VERSION@
 magnituderange=""
 matchaperturedeg=""
@@ -298,21 +298,6 @@ elif [ ! -f $inputs ]; then
     echo "$scriptname: $inputs: No such file or directory."
     exit 1
 fi
-
-# Check the user provide the magnitude of the faintest stars which she/he
-# want compare.
-if [ x"$faintmagdiff" = x ]; then
-    echo "$scriptname:: The '--faintmagdiff' dose not provided."
-    exit 1
-fi
-
-# Check the user provide the magnitude of the brightest stars which she/he
-# want compare.
-if [ x"$brightmag" = x ]; then
-    echo "$scriptname:: The '--brightmag' dose not provided."
-    exit 1
-fi
-
 
 # Check that 'segmented' is output of 'astsegment'.
 if [ x"$segmented" != x ]; then
