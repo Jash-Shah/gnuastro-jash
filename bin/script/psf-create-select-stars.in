@@ -3,7 +3,7 @@
 # Build a catalogue of "good stars" that will be considered for
 # constructing an extended and non parametric PSF. Here, "good stars" means
 # that they don't have close objects that affect it sourrondings and
-# consequently they are not contaminated.  The script will construct a
+# consequently they are not contaminated. The script will construct a
 # catalog of stars from reference datasets (Gaia) if the user does not
 # provide another one. In addition to this, other parameters like the axis
 # ratio are considered to filter the sample and select only proper stars.
@@ -46,15 +46,15 @@ output=""
 tmpdir=""
 catalog=""
 keeptmp=""
-brightmag=-10
 segmented=""
-racolumn="ra"
+brightmag=-10
 mindistdeg=""
+racolumn="ra"
+faintmagdiff=4
 deccolumn="dec"
 minaxisratio=""
-faintmagdiff=4
-version=@VERSION@
 magnituderange=""
+version=@VERSION@
 matchaperturedeg=""
 field="phot_g_mean_mag"
 scriptname=@SCRIPT_NAME@
@@ -84,28 +84,26 @@ Usage: $scriptname [OPTIONS] image.fits
 Build a catalogue of "good stars" that will be considered for constructing
 an extended and non parametric PSF. Here, "good stars" means that they
 don't have close objects that affect it sourrondings and consequently they
-are not contaminated.  The script will construct a catalog of stars from
+are not contaminated. The script will construct a catalog of stars from
 reference datasets (Gaia) if the user does not provide another one. In
 addition to this, other parameters like the axis ratio are considered to
 filter the sample and select only proper stars.
 
 $scriptname options:
  Input:
-  -h, --hdu=STR/INT       Extension name or number of input data.
+  -h, --hdu=STR/INT       HDU/Extension name of number of the input file.
   -S, --segmented=STR     Segmentation file obtained by Segment (astsegment).
-  -D, --dataset=STR       astquery format dataset ("gaia --dataset=edr3", etc.).
-  -r, --racolumn=STR      The name of the RA column.
-  -d, --deccolumn=STR     The name of the Dec column.
-  -f, --field=STR         Catalogue key field to identify the magnitude field
-                          ("phot_rp_mean_mag", etc.).
+  -D, --dataset=STR       Query dataset ("gaia --dataset=edr3", etc.).
+  -r, --racolumn=STR      Right Ascension (R.A.) column name.
+  -d, --deccolumn=STR     Declination (Dec) column name.
+  -f, --field=STR         Magnitude column name ("phot_rp_mean_mag", for Gaia).
   -p, --parallaxanderrorcolumn=STR,STR The name of the parallax column.
   -m, --magnituderange=FLT,FLT The range of magnitude.
-  -Q, --minaxisratio=FLT  Minimum axis ratio of a clump to be accepted.
-                          Default to 0.9.
+  -Q, --minaxisratio=FLT  Minimum axis ratio to be accepted (default to 0.9).
   -M, --mindistdeg=FLT    Minimum distance to more bright neighbour stars.
                           to be accepted, in degree.
-  -c, --catalog=STR       Catalog of stras contain of ra, desc, magnitude,
-                          parrallax and parrallax_error.
+  -c, --catalog=STR       Catalog of stars containing:
+                          ra, dec, magnitude, parrallax, parrallax_error.
   -a, --matchaperturedeg=FLT Aperture, in pixels, to match catalogue ra and
                              dec coordinates with clumps' ra and dec.
   -F, --faintmagdiff      The difference from the faintest star which the user will
@@ -207,15 +205,12 @@ while [ $# -gt 0 ]
 do
    case "$1" in
    # Input parameters.
-       -S|--segmented)         segmented="$2";                               check_v "$1" "$segmented";  shift;shift;;
-       -S=*|--segmented=*)     segmented="${1#*=}";                          check_v "$1" "$segmented";  shift;;
-       -S*)                    segmented=$(echo "$1" | sed -e's/-S//');      check_v "$1" "$segmented";  shift;;
        -h|--hdu)               hdu="$2";                                     check_v "$1" "$hdu";  shift;shift;;
        -h=*|--hdu=*)           hdu="${1#*=}";                                check_v "$1" "$hdu";  shift;;
        -h*)                    hdu=$(echo "$1" | sed -e's/-h//');            check_v "$1" "$hdu";  shift;;
-       -e|--extscript)         extscript="$2";                               check_v "$1" "$extscript";  shift;shift;;
-       -e=*|--extscript=*)     extscript="${1#*=}";                          check_v "$1" "$extscript";  shift;;
-       -e*)                    extscript=$(echo "$1" | sed -e's/-e//');      check_v "$1" "$extscript";  shift;;
+       -S|--segmented)         segmented="$2";                               check_v "$1" "$segmented";  shift;shift;;
+       -S=*|--segmented=*)     segmented="${1#*=}";                          check_v "$1" "$segmented";  shift;;
+       -S*)                    segmented=$(echo "$1" | sed -e's/-S//');      check_v "$1" "$segmented";  shift;;
        -r|--racolumn)          racolumn="$2";                                check_v "$1" "$racolumn";  shift;shift;;
        -r=*|--racolumn=*)      racolumn="${1#*=}";                           check_v "$1" "$racolumn";  shift;;
        -r*)                    racolumn=$(echo "$1" | sed -e's/-r//');       check_v "$1" "$racolumn";  shift;;
@@ -240,12 +235,12 @@ do
        -b|--brightmag)         brightmag="$2";                               check_v "$1" "$brightmag";  shift;shift;;
        -b=*|--brightmag=*)     brightmag="${1#*=}";                          check_v "$1" "$brightmag";  shift;;
        -b*)                    brightmag=$(echo "$1" | sed -e's/-b//');      check_v "$1" "$brightmag";  shift;;
-       -m|--magnituderange)    magnituderange="$2";                          check_v "$1" "$magnituderange";  shift;shift;;
-       -m=*|--magnituderange=*) magnituderange="${1#*=}";                    check_v "$1" "$magnituderange";  shift;;
-       -m*)                    magnituderange=$(echo "$1" | sed -e's/-m//'); check_v "$1" "$magnituderange";  shift;;
-       -a|--matchaperturedeg)  matchaperturedeg="$2";                        check_v "$1" "$matchaperturedeg";shift;shift;;
+       -m|--magnituderange)       magnituderange="$2";                          check_v "$1" "$magnituderange";  shift;shift;;
+       -m=*|--magnituderange=*)   magnituderange="${1#*=}";                    check_v "$1" "$magnituderange";  shift;;
+       -m*)                       magnituderange=$(echo "$1" | sed -e's/-m//'); check_v "$1" "$magnituderange";  shift;;
+       -a|--matchaperturedeg)     matchaperturedeg="$2";                        check_v "$1" "$matchaperturedeg";shift;shift;;
        -a=*|--matchaperturedeg=*) matchaperturedeg="${1#*=}";                check_v "$1" "$matchaperturedeg";  shift;;
-       -a*)                    matchaperturedeg=$(echo "$1" | sed -e's/-a//');  check_v "$1" "$matchaperturedeg";  shift;;
+       -a*)                       matchaperturedeg=$(echo "$1" | sed -e's/-a//');  check_v "$1" "$matchaperturedeg";  shift;;
        -Q|--minaxisratio)      minaxisratio="$2";                            check_v "$1" "$minaxisratio";  shift;shift;;
        -Q=*|--minaxisratio=*)  minaxisratio="${1#*=}";                       check_v "$1" "$minaxisratio";  shift;;
        -Q*)                    minaxisratio=$(echo "$1" | sed -e's/-Q//');   check_v "$1" "$minaxisratio";  shift;;
@@ -254,11 +249,11 @@ do
        -M*)                    mindistdeg=$(echo "$1" | sed -e's/-M//');     check_v "$1" "$mindistdeg";  shift;;
 
 # Output parameters
-       -k|--keeptmp)         keeptmp=1; shift;;
-       -k*|--keeptmp=*)      on_off_option_error --keeptmp -k;;
-       -t|--tmpdir)            tmpdir="$2";                                    check_v "$1" "$tmpdir";  shift;shift;;
-       -t=*|--tmpdir=*)        tmpdir="${1#*=}";                               check_v "$1" "$tmpdir";  shift;;
-       -t*)                    tmpdir=$(echo "$1" | sed -e's/-t//');           check_v "$1" "$tmpdir";  shift;;
+       -k|--keeptmp)           keeptmp=1; shift;;
+       -k*|--keeptmp=*)        on_off_option_error --keeptmp -k;;
+       -t|--tmpdir)            tmpdir="$2";                                  check_v "$1" "$tmpdir";  shift;shift;;
+       -t=*|--tmpdir=*)        tmpdir="${1#*=}";                             check_v "$1" "$tmpdir";  shift;;
+       -t*)                    tmpdir=$(echo "$1" | sed -e's/-t//');         check_v "$1" "$tmpdir";  shift;;
        -o|--output)            output="$2";                                  check_v "$1" "$output"; shift;shift;;
        -o=*|--output=*)        output="${1#*=}";                             check_v "$1" "$output"; shift;;
        -o*)                    output=$(echo "$1" | sed -e's/-o//');         check_v "$1" "$output"; shift;;
@@ -299,7 +294,7 @@ elif [ ! -f $inputs ]; then
     exit 1
 fi
 
-# Check that 'segmented' is output of 'astsegment'.
+# Check that 'segmented' is the output of 'astsegment'.
 if [ x"$segmented" != x ]; then
     nhdu=$(astfits $segmented --listimagehdus \
                | grep 'OBJECTS\|CLUMPS' \
@@ -307,7 +302,7 @@ if [ x"$segmented" != x ]; then
     if [ $nhdu != 2 ]; then
         cat <<EOF
 $scriptname: the file given to '--segmented' does not have 'CLUMPS' and
-'OBJECTS' HDUs. Please give an output of 'astsegment'
+'OBJECTS' HDUs. Please give an output from 'astsegment'
 EOF
         exit 1
     fi
@@ -316,60 +311,59 @@ elif [ ! -f $segmented ]; then
     exit 1
 fi
 
-# Check if the brighter and fainter range of magnitude does not exist interrupt.
+# If the brighter and fainter range of magnitude are not given at all.
 if [ x$magnituderange = x ]; then
-    echo "$scriptname: The range of magnitude does not provided."
+    echo "$scriptname: no magnitude range provided."
     echo "$scriptname: Values to '--magnituderange' (or '-m') should be provided."
     exit 1
 else
     nmagrange=$(echo $magnituderange | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nmagrange != x2 ]; then
-        echo "$scriptname: '--magnituderange' (or '-m') only take two values, while $nmagrange were given."
+        echo "$scriptname: '--magnituderange' (or '-m') only take two values, but $nmagrange were given."
         exit 1
     fi
 fi
 
-# Check if the parallax and parallax error column does not provided, the
-# script print an error.
+# If the parallax and parallax error columns are not given at all.
 if [ x$parallaxanderrorcolumn = x ]; then
     columnquery=$racolumn,$deccolumn,$field
 else
     nmparallax=$(echo $parallaxanderrorcolumn | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nmparallax != x2 ]; then
-        echo "$scriptname: '--parallaxanderrorcolumn' (or '-p') only take two values, while $nmparallax were given."
+        echo "$scriptname: '--parallaxanderrorcolumn' (or '-p') only take two values, but $nmparallax were given."
         exit 1
     else
         columnquery=$racolumn,$deccolumn,$field,$parallaxanderrorcolumn
     fi
 fi
 
-# Check if the minimum axis ratio does not provided, the script print
-# an error.
+# If the minimum axis ratio is not given at all.
 if [ x$minaxisratio = x ]; then
-    echo "$scriptname: The minimum axis ratio does not provided."
-    echo "$scriptname: The '--minaxisratio' (or '-Q') should be provided."
+    echo "$scriptname: no minimum axis ratio provided."
+    echo "$scriptname: Value to '--minaxisratio' (or '-Q') should be provided."
     exit 1
 fi
 
-# Check if the user does not provided minimum axis ratio, the script will
-# be intterupted.
+# If the minimum distance between contaminants is not given at all.
 if [ x$mindistdeg = x ]; then
-    echo "$scriptname: The minimum distance in degree for finding the number of neighbor does not provided. "
-    echo "$scriptname: The '--mindistdeg' (or '-M') should be provided."
+    echo "$scriptname: no minimum distance (for rejecting neighbors) provided. "
+    echo "$scriptname: value to '--mindistdeg' (or '-M') should be provided."
     exit 1
 fi
 
-# Check
+# If the match aperture radius is not given at all.
 if [ x$matchaperturedeg = x ]; then
-    echo "$scriptname: The aperture for matching cordinate in catalog with clumps does not provided."
-    echo "$scripname: The '--matchaperturedeg' (or '-a') should be provided."
+    echo "$scriptname: no aperture matching radius provided."
+    echo "$scripname: value to '--matchaperturedeg' (or '-a') should be provided."
     exit 1
 fi
 
 
 
-#  Basic parameters: magnitude range, parallax and parallax_error.
-#-----------------------------------
+
+
+# Basic parameters: magnitude range, parallax and parallax error
+# --------------------------------------------------------------
 #
 # Obtain the magnitude range from the command line arguments.
 brightmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $1}')
@@ -379,18 +373,18 @@ faintmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
 # magnitude.
 fainter=$(astarithmetic $faintmag $faintmagdiff + --quiet)
 
-# Obtain the parallax and parallax_error columns name.
+# Obtain the parallax and parallax error column names.
 parallax=$(echo "$parallaxanderrorcolumn" \
-                     | awk 'BEGIN{FS=","} {print $1}')
+                | awk 'BEGIN{FS=","} {print $1}')
 parallax_error=$(echo "$parallaxanderrorcolumn" \
-                          | awk 'BEGIN{FS=","} {print $2}')
+                      | awk 'BEGIN{FS=","} {print $2}')
 
 
 
 
 
-# Define a temporary directory and thefinal output file
-# -----------------------------------------------------
+# Define a temporary directory and the final output file
+# ------------------------------------------------------
 #
 # Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
@@ -414,7 +408,7 @@ else
   mkdir -p $tmpdir
 fi
 
-# Output
+# Default output catalog file
 if [ x$output = x ]; then
   output="$bname_prefix"_psfcreateselectstar_"$field"_"$brightmag"_"$faintmag".fits
 fi
@@ -423,8 +417,8 @@ fi
 
 
 
-# Obtain a catalog of stars
-# -------------------------
+# Obtain the main catalog of stars
+# --------------------------------
 #
 # Here, a catalogue of stars is constructed. If the user provides the
 # catalog, then check that the objects overlap with the input image and
@@ -439,7 +433,7 @@ catalog_main=$tmpdir/catalog-main-$brightmag-$fainter.fits
 # The output name of the sky coverage.
 skycoverage=$tmpdir/skycoverage.fits
 
-# If the catalog and the image have an overlap area, then select the stars
+# If the catalog and the image overlap, then select the stars
 # in the range of magnitude between bright and faint stars.
 if [ x"$catalog" != x ]; then
 
@@ -462,31 +456,31 @@ if [ x"$catalog" != x ]; then
                         : $maxraimg,$maxdecimg" \
              --output=$skycoverage
 
-    # The number of stars in the overlap area.
+    # The number of stars in the overlaping area.
     number=$(asttable $skycoverage | wc -l)
 
     # If catalog overlap the image, select stars with magnitudes between
-    # the less than faint and larger than bright values.
+    # the fainter and larger than bright values.
     if [ "$number" = 0 ]; then
 
         # Stop if the catalog doesn't overlap with the image.
         echo "Image and catalog do not overlap."
-        echo "Please provide an image and a catalog which overlap together."
+        echo "Please provide an image and a catalog that overlap together."
         exit 1
     else
 
         # Make a file for output of 'asttable'.
         if [ -f $catalog_main ]; then
-            echo "External Cataloge already exists "
+            echo "External Catalog already exists "
         else
             # Select stars with magnitude between brighter to fainter.
-            asttable $catalog --range=$field,$brightmag,$fainter --sort=$field \
+            asttable $catalog \
+                     --range=$field,$brightmag,$fainter --sort=$field \
                      --range=$racolumn,$minraimg,$maxraimg \
                      --range=$deccolumn,$mindecimg,$maxdecimg \
                      --output=$catalog_main $quiet
 
-            # At first check and if there are no stars in the range of magnitude
-            # the script will be stopped and print the error.
+            # If there are no stars in the range of magnitude
             numstars=$(asttable $catalog_main -i \
 			   | grep 'Number of rows' | awk '{print $4}')
             if [ "$numstars" = 0 ]; then
@@ -499,9 +493,9 @@ if [ x"$catalog" != x ]; then
 
 # If the user doesn't provide a catalog, use 'astquery' to obtain it.
 else
-    # Check if the catalog already exist.
+    # Check if the catalog already exists.
     if [ -f $catalog_main ]; then
-        echo "Queried Cataloge already exists "
+        echo "Queried Cataloge already exists."
     else
 	# Download the catalog with the necessary parameters.
         astquery $dataset --output=$catalog_main \
@@ -515,12 +509,26 @@ fi
 
 
 
-# The name of the catalog of stars in the range of magnitude between
-# bright and faint.
-catalog_target=$tmpdir/catalog-gaia-$brightmag-$faintmag.fits
 
-# Select the stars in the range of magnitude between bright and faint.
-asttable $catalog_main --range=$field,$brightmag,$faintmag --output=$catalog_target
+# Target and main catalogs
+# ------------------------
+#
+# There are two catalogs:
+
+# - Main catalog: wider catalog with extra objects (fainter and brighter)
+# than the ones the user is looking for. This is necessary for identifying
+# the contaminant objects that fall out of the range of magnitude of the
+# target stars. This is the one provided, or downloaded by this script.
+
+# - Target catalog: catalog of stars with no contaminated stars and proper
+# parameters (magnitude, parallaxes, etc.). It is a subset of the main
+# catalog.
+
+catalog_target=$tmpdir/catalog-gaia-$brightmag-$faintmag.fits
+asttable $catalog_main \
+         --range=$field,$brightmag,$faintmag \
+         --output=$catalog_target $quiet
+
 
 
 
@@ -535,10 +543,12 @@ asttable $catalog_main --range=$field,$brightmag,$faintmag --output=$catalog_tar
 goodparallax=$tmpdir/parallax-good.fits
 if [ x"$parallaxanderrorcolumn" != x ]; then
     asttable $catalog_target -c$racolumn,$deccolumn -c$field \
-             --range=$field,$brightmag,$faintmag --colinfoinstdout --noblank=4 \
+             --range=$field,$brightmag,$faintmag \
+             --colinfoinstdout --noblank=4 \
              -c'arith '$parallax' '$parallax' abs \
                       '$parallax_error' 3 x lt nan where ' \
-             | asttable -c$racolumn,$deccolumn -c$field --output=$goodparallax $quiet
+             | asttable -c$racolumn,$deccolumn -c$field \
+                        --output=$goodparallax $quiet
 else
     cp $catalog_target $goodparallax
 fi
@@ -551,13 +561,13 @@ fi
 # ---------------------
 #
 # Consider only objects with an axis ratio above 'minaxisrario'
-# (minaxisratio=1 <--> circular shape).  To do that, a catalogue is
-# computed using 'astmkcatalog' using as input the segmented image. Then,
-# that catalogue is matched with the Gaia catalog and filtered by the
+# (minaxisratio=1 <--> circular shape). To do that, a catalogue is computed
+# using 'astmkcatalog' using as input the segmented image. Then, that
+# catalogue is matched with the Gaia catalog and filtered by the
 # 'minaxisratio' criteria.
 circular=$tmpdir/circular-objects.fits
 if [ -f $circular ]; then
-    echo "Catalog of circular objects already exists "
+    echo "Catalog of circular objects already exists"
 else
     if [ x"$segmented" = x ]; then
 	cp $goodparallax $circular
@@ -571,7 +581,7 @@ else
                      --positionangle --fwhm --clumpscat \
                      --output=$qraw $quiet
 
-	# Match with downloaded cataloge
+	# Match with downloaded catalog
 	astmatch $goodparallax --ccol1=$racolumn,$deccolumn \
 		 $qraw --hdu2=CLUMPS --ccol2=RA,DEC \
 		 --aperture=$matchaperturedeg \
@@ -599,16 +609,21 @@ fi
 # First of all based on ra and dec of circular stars determine the distance
 # between the circular star and brigther stars in minimumm distance and
 # based on '--noblank' and 'where' remove stars tha have distance larger
-# than minimumm distance. Then remove each circular stars that have more
+# than minimum distance. Then remove each circular stars that have more
 # than 9 neighbors.
-lessneighbor=$tmpdir/less-than-9-stars.txt
-moreneighbor=$tmpdir/more-than-9-stars.txt
-echo "# Column 1: ra [deg,f64] Right ascension" >> $lessneighbor
-echo "# Column 2: dec [deg,f64] Declination" >> $lessneighbor
-echo "# Column 3: phot_g_mean_mag [mag,f64] Magnitude" >> $lessneighbor
+lessneighbor=$tmpdir/less-than-2-stars.txt
+moreneighbor=$tmpdir/more-than-2-stars.txt
+echo "# Column 1: ra     [deg,f64] Right ascension" >  $lessneighbor
+echo "# Column 2: dec    [deg,f64] Declination"     >> $lessneighbor
+echo "# Column 3: $field [mag,f64] Magnitude"       >> $lessneighbor
 
-# Find ra and dec of each star.
-asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
+echo "# Column 1: ra     [deg,f64] Right ascension" >  $moreneighbor
+echo "# Column 2: dec    [deg,f64] Declination"     >> $moreneighbor
+echo "# Column 3: $field [mag,f64] Magnitude"       >> $moreneighbor
+
+# LOOP over the target catalog. For each star, check the the neighbors.
+asttable $circular -c$racolumn,$deccolumn,$field \
+         | while read r d mag; do
 
    # Make a file for number of neighbourhood.
    numberneighbor=$tmpdir/"$r_$d"th-star-neighbor.fits
@@ -621,8 +636,9 @@ asttable $circular -c$racolumn,$deccolumn -c$field | while read r d mag; do
 	    --colinfoinstdout \
             --output=$numberneighbor $quiet
 
-   # Check number of neighborhod and remove each star that has more than 9
-   # neighbors.
+   # Check number of neighborhod and remove each star that has more than 2
+   # neighbors: 1 means match with itself; >2 means that there are nearby
+   # contaminant objects).
    lof=$(asttable $numberneighbor | wc -l)
    if [ $lof -lt 2 ]; then
        echo $r $d $mag >> $lessneighbor
@@ -638,11 +654,15 @@ done
 # Create the final output catalogue
 # ---------------------------------
 #
-# Output of selected circular stars with good parallax and less than 9
-# neighbors in fits format.
-
-# Convert the '.txt' output to the '.fits' file.
+# This is the catalog with the proper stars once all filtering parameters
+# have been taken into account and nearby contaminants have been rejected.
+# Just convert the '.txt' catalog from the above loop to a '.fits' file.
 asttable $lessneighbor --output=$output
+
+# The contaminated objects catalog may be useful for the user for checking
+# objects to be rejected or not.
+contaminated_objects=$tmpdir/catalog_contaminated_objects.txt
+asttable $moreneighbor --output=$contaminated_objects
 
 
 
@@ -653,15 +673,15 @@ asttable $lessneighbor --output=$output
 # If the user do not want to see all steps of run, the 'quiet' option must
 # be used. Without this option user can see all steps of run.
 if [ x"$quiet" = x ]; then
-   echo "Number of downloaded stars from gaia: \
-         $(asttable $catalog_main | wc -l)"
-   echo "Number of stars with good parallax: \
-         $(asttable $goodparallax | wc -l)"
-   echo "Number of stars with any neighbors has been found \
-         $(asttable $output | wc -l)"
+   stats_nstars_total=$(asttable $catalog_main | wc -l)
+   stats_nstars_noneighbors=$(asttable $output | wc -l)
+   stats_nstars_goodparallax=$(asttable $goodparallax | wc -l)
+   echo "Number of downloaded stars from gaia: $stats_nstars_total"
+   echo "Number of stars with good parallax  : $stats_nstars_goodparallax"
+   echo "Number of stars with no neighbors   : $stats_nstars_noneighbors"
    if [ ! -$segmented ]; then
-           echo "Number of stars matched with clump catalogue: \
-                 $(asttable $qmatch)"
+      stats_nstars_matched=$(asttable $qmatch)
+      echo "Number of clumps matched stars      : $stats_nstars_matched"
    fi
 fi
 
@@ -672,8 +692,8 @@ fi
 # Remove temporary directory
 # --------------------------
 #
-# If user dos not specify to keep build file with the option of --keeptmp',
-# then the directory will be removed.
+# If user does not specify to keep build file with the option of
+# --keeptmp', then the directory will be removed.
 if [ x"$keeptmp" = x ]; then
    rm -rf $tmpdir
 fi
