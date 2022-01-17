@@ -500,19 +500,6 @@ AS_IF([test "x$enable_shared" = "xno"],
 # causes possibly different versions of the libraries to be read.
 
 
-# Set a new 'LDFLAGS' variable to use in these checks. The reason is that
-# 'LDFLAGS' is placed in the compile command _before_ the library (e.g.,
-# 'libwcs'). However, 'LDADD' (that we have been actively setting above!)
-# is placed _after_ the library in the compile command! As a result, when
-# 'LDADD' includes a '-L/path/to/library', it will only be seen after the
-# library (and therefore will be useless!).
-#
-# This is only necessary during the checking of the libraries at configure
-# time (here) because of the peculiar features of 'AC_LIB_HAVE_LINKFLAGS'
-# (which may use '-l' or '-L' depending on the situtation, which is very
-# good during checks.).
-orig_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LDADD"
 
 
 # GSL's 'gsl_interp_steffen' isn't a function. So we'll need to use
@@ -586,12 +573,6 @@ AC_CHECK_LIB([pthread], [pthread_barrier_wait], [has_pthread_barrier=1],
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_PTHREAD_BARRIER], [$has_pthread_barrier],
                    [System has pthread_barrier])
 AC_SUBST(HAVE_PTHREAD_BARRIER, [$has_pthread_barrier])
-
-
-# Reset LDFLAGS (see the comments above 'orig_LDFLAGS'). This SHOULD BE
-# PLACED AFTER ALL LIBRARIES ARE CHECKED.
-LDFLAGS="$orig_LDFLAGS"
-# ---------------------------------End of library checks
 
 
 
