@@ -23739,7 +23739,7 @@ Now, we can easily visualize the magnitude and positions of these stars using @c
 @example
 $ astscript-ds9-region gaia.fits -cra,dec \
            --namecol=phot_g_mean_mag \
-           --command='ds9 flat/image.fits -zoom to fit -zscale'
+           --command="ds9 flat/image.fits -zoom to fit -zscale"
 @end example
 
 You can see that we have several stars between magnitudes 6 to 10.
@@ -23766,6 +23766,50 @@ $ astscript-ds9-region outer/stars.fits -cra,dec \
 
 Now that the catalog of good stars is ready, it is time to construct the individual stamps for each star of the catalog.
 To do that, we'll use @file{astscript-psf-create-make-stamp}.
+One of the most important parameters for this script is the normalization radii @code{--normradii}.
+This parameter defines a ring for the flux normalization of each star stamp.
+The normalization of the flux is necessary because each star has a different brightness, and consequently, it is crucial for having all the stamps with the same flux level in the same region.
+Otherwise the final stack of the different stamps would have no sense.
+Depending on the PSF shape, internal reflections, ghosts, saturated pixels, and other systematics, it would be necessary to choose the @code{--normradii} appropriately.
+
+The selection of the normalization radii is something that requires a good understanding of the data.
+To do that, let's use two useful parameters that will help us in the checking of the data: @code{--tmpdir} and @code{--keeptmp}.
+With @code{--tmpdir=checking-normradii} all temporal files, including the radial profiles, will be save in that directory.
+With @code{--keeptmp} we won't remove the temporal files, so it is possible to have a look at them.
+It is necessary to specify the @code{--normradii} even if we don't know yet the final values.
+Otherwise the script will not generate the radial profile.
+As a consequence, in this step we put the normalization radii equal to the size of the stamps.
+By doing this, the script will generate the radial profile of the entire stamp.
+In this particular step we set it to @code{--normradii=150,160}.
+
+@example
+$ counter=1
+$ mkdir finding-normradii
+$ asttable stars-mag-8-12.fits \
+           | while read -r ra dec mag; do
+               astscript-psf-create-make-stamp image-masked.fits \
+                    --mode=wcs \
+                    --center=$ra,$dec \
+                    --stampwidth=150 \
+                    --normradii=150,160 \
+                    --output=finding-normradii/$counter.fits \
+                    --tmpdir=checking-normradii --keeptmp; \
+               counter=$((counter+1)); \
+             done
+@end example
+
+Now, by having a look at all radial profiles at the same time, it is possible to choose a good normalization region where the profiles are similar.
+For example using Topcat or any other plotting tool.
+In the same way, it is always good to check the different stamps to ensure the quality and posible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
+
+@example
+$ topcat checking-normradii/rprofile*.fits
+$ ds9 checking-normradii/cropped*.fits
+@end example
+
+After some study of this data, we could say that a good normalization ring is those pixels between R=20 and R=30 pixels.
+Such ring ensures having a high number of pixels so the estimation of the flux normalization will be robust.
+Also, at such distance from the center the signal to noise is high and there are not obvious features that can affect the normalization.
 
 We later need the normalization radii in the next steps also.
 Therefore, to avoid typos or chances of a mistake, we'll define the two @code{NORMRADII_INNER} and @code{NORMRADII_OUTER} variables.
@@ -23773,10 +23817,11 @@ Furthermore, since there are several stars (as you saw from the output of the pr
 
 @example
 $ counter=1
+$ IMAGE=image-masked.fits
 $ NORMRADII_INNER=20
 $ NORMRADII_OUTER=30
 $ mkdir stamps-outer
-$ asttable stars-mag-6-10.fits \
+$ asttable stars-mag-8-12.fits \
            | while read -r ra dec mag; do
                astscript-psf-create-make-stamp $IMAGE \
                     --mode=wcs \
