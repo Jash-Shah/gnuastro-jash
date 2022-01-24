@@ -48,17 +48,17 @@ catalog=""
 keeptmp=""
 segmented=""
 brightmag=-10
-mindistdeg=""
 racolumn="ra"
 faintmagdiff=4
 deccolumn="dec"
-minaxisratio=""
+minaxisratio=0.9
 magnituderange=""
 version=@VERSION@
-matchaperturedeg=""
+mindistdeg=0.016666667          # one arcmin: 1/60
 field="phot_g_mean_mag"
 scriptname=@SCRIPT_NAME@
 parallaxanderrorcolumn=""
+matchaperturedeg=0.002777778    # 10 arcsec: 10/3600
 dataset="gaia --dataset=edr3"
 
 
@@ -101,11 +101,11 @@ $scriptname options:
   -m, --magnituderange=FLT,FLT The range of magnitude.
   -Q, --minaxisratio=FLT  Minimum axis ratio to be accepted (default to 0.9).
   -M, --mindistdeg=FLT    Minimum distance to more bright neighbour stars.
-                          to be accepted, in degree.
+                          to be accepted, in degrees.
   -c, --catalog=STR       Catalog of stars containing:
                           ra, dec, magnitude, parrallax, parrallax_error.
   -a, --matchaperturedeg=FLT Aperture, in pixels, to match catalogue ra and
-                             dec coordinates with clumps' ra and dec.
+                          dec coordinates with clumps' ra and dec.
   -F, --faintmagdiff      The difference from the faintest star which the user will
                           be determined the faintest star in "--magnituderange"
                           option.
@@ -571,6 +571,7 @@ if [ -f $circular ]; then
 else
     if [ x"$segmented" = x ]; then
 	cp $goodparallax $circular
+        echo "No segmented image given to use '--minaxisratio'"
     else
 	# Intermediate files.
 	qraw=$tmpdir/axisratio-raw.fits
