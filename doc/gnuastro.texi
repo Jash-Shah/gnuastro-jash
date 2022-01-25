@@ -667,9 +667,9 @@ PSF construction and subtraction
 
 Tutorial on building the extended PSF
 
-* Preparing input for extended PSF::
-* Saturated pixels and Segment's clumps::
-* Building outer part of PSF::
+* Preparing input for extended PSF::  Which stars should be used?
+* Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
+* Building outer part of PSF::  Constructing the outer PSF.
 
 Library
 
@@ -23491,10 +23491,14 @@ But before going into them, we continue with a practical tutorial to show the us
 @node Tutorial on building the extended PSF, Invoking astscript-psf-create-select-stars, Overview of the PSF scripts, PSF construction and subtraction
 @subsection Tutorial on building the extended PSF
 
+Deriving the extended PSF of an image is very important in many aspects of the analysis of the objects within it.
+Gnuastro has a set of installed scripts, designed to simplify the process following the recipe of Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}); for more, see @ref{PSF construction and subtraction}.
+An overview of the process is given in @ref{Overview of the PSF scripts}.
+
 @menu
-* Preparing input for extended PSF::
-* Saturated pixels and Segment's clumps::
-* Building outer part of PSF::
+* Preparing input for extended PSF::  Which stars should be used?
+* Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
+* Building outer part of PSF::  Constructing the outer PSF.
 @end menu
 
 @node Preparing input for extended PSF, Saturated pixels and Segment's clumps, Tutorial on building the extended PSF, Tutorial on building the extended PSF
@@ -23509,48 +23513,50 @@ But to have a generalize-able, and easy to read command, we'll define some base 
 After the download is complete, open the image with SAO DS9 (or any other FITS viewer you prefer!) to have a feeling of the data (and of course, enjoy the beauty of M51!).
 
 @example
-$ IMAGE=image.fits.fz
 $ IMAGEID="jplus-dr2/get_fits?id=67510"
 $ URL="http://archive.cefca.es/catalogues/vo/siap/"
-$ wget $URL$IMAGEID -O $IMAGE
-$ ds9 $IMAGE -zoom to fit -zscale
+$ wget $URL$IMAGEID -O image.fits.fz
+$ ds9 image.fits.fz -zoom to fit -zscale
 @end example
 
 Have a closer look at the edges of the image: zoom in to the corners.
 You see that on the edges the pixel values are either zero, or with significantly different values than the main body of the image.
 This is due to the dithering pattern that was used to make this image.
-To avoid potential issues or problems that these regions may cause, we will first crop out the main body of the image with the command below:
+To avoid potential issues or problems that these regions may cause, we will first crop out the main body of the image with the command below.
+To keep the top-level directory clean, let's also put the crop in a directory called @file{flat}.
 
 @example
+$ mkdir flat
 $ astcrop image.fits.fz --mode=img --section=225:9275,150:9350 \
-          -oimage-crop.fits
-$ ds9 image-crop.fits -zoom to fit -zscale
+          -oflat/image.fits
+$ ds9 flat/image.fits -zoom to fit -zscale
 @end example
 
-If you zoom into the edges again, you will see that they now have the same noise-level as the rest of the image (the problematic parts are now gone).
+@noindent
+Please zoom into the edges again, you will see that they now have the same noise-level as the rest of the image (the problematic parts are now gone).
 
 @node Saturated pixels and Segment's clumps, Building outer part of PSF, Preparing input for extended PSF, Tutorial on building the extended PSF
 @subsubsection Saturated pixels and Segment's clumps
 As explained in @ref{Overview of the PSF scripts}, it is important to mask other sources in the image.
 Therefore, before going onto selecting stars, let's detect all significant signal, and separate the clumps over the detections.
 However, the saturated pixels of the bright stars are going to cause problems.
-To see this problem, let's make a crop around a bright star to speed up the test (and its solution):
+To see this problem, let's make a @mymath{1000\times1000} crop around a bright star to speed up the test (and its solution):
 
 @example
-$ astcrop image-crop.fits --mode=wcs --widthinpix --width=1000 \
+$ astcrop flat/image.fits --mode=wcs --widthinpix --width=1000 \
           --center=203.3916736,46.7968652 --output=saturated.fits
 $ astnoisechisel saturated.fits --output=sat-nc.fits
 $ astsegment sat-nc.fits --output=sat-seg.fits
 $ ds9 -mecube -zscale sat-seg.fits -zoom to fit
 @end example
 
-Have a look at the @code{CLUMPS} extension, you will see that instead of a single clump, we have multiple!
+Have a look at the @code{CLUMPS} extension, you will see that instead of a single clump at the center of the star, we have multiple!
 This is because of the saturated pixels!
-When saturation occurs, the peak of the flux is lost and all pixels beyond that value get a noisy value close to the saturation level.
+When saturation occurs, the peak of the profile is lost (like cutting off the tip of a mountain!) and all saturated pixels get a noisy value close to the saturation level.
 This disrupts Segment's assumption to expand clumps from local maxima (the noise at the very high S/N level, results in each one being treated as a separate clump).
-Therefore, to have the center identified as a single clump, we should mask these saturated pixels in a way that suites Segment's methodology.
+To have the center identified as a single clump, we should mask these saturated pixels in a way that suites Segment's non-parametric methodology.
 
-To find the saturation level, let's make a smaller crop of 50 by 50 pixels around the star with the command below, then have a look at the distribution of pixels with a value larger than 100:
+To find the saturation level, let's make a smaller crop of @mymath{50\times50} pixels around the star with the command below, then have a look at the distribution of pixels with a value larger than 100 (above the noise level):
 
 @example
 $ astcrop image-crop.fits --mode=wcs --widthinpix --width=50 \
@@ -23576,7 +23582,7 @@ If there was no saturation, you would expect the number of pixels at increasing 
 But that is not the case here.
 Please try this experiment on a non-saturated star (decreasing the crop width) to see what we mean.
 Finding the saturation level is easy with Statistics (by using the @option{--lessthan} option until the histogram becomes as expected: only decreasing).
-First let's try 3000 and then 2500:
+First let's try @option{--lessthan=3000} and then @option{--lessthan=2500}:
 
 @example
 $ aststatistics saturated-center.fits --greaterequal=100 --lessthan=3000
@@ -23613,7 +23619,9 @@ Histogram:
  |----------------------------------------------------------------------
 @end example
 
-So we can safely set the saturation level in this image to 2500.
+@noindent
+We still see an increase in the histogram around 3000.
+Therefore, We can set the saturation level in this image@footnote{In raw exposures, this value is usually around 65000 (close to @mymath{2^{16}}, since most CCDs have 16-bit pixels). But that is not the case here, because this is a processed/stacked image that has been calibrated.} to 2500.
 Let's mask all such pixels with the command below:
 
 @example
@@ -23624,8 +23632,9 @@ $ ds9 sat-masked.fits
 
 Zoom into the center: you will see that the staturated pixels are indeed masked.
 However, there is still another problem: on the edges of the vertical ``bleeding'' saturated pixels, there are strong negative values (almost like ``waves'').
+Such that the pixels just touching the saturated pixels have strong negative values.
 These will also cause problems!
-So during the mask, let's dilate the saturated regions by four times.
+So with the same command, let's dilate the saturated regions by four times.
 We will use 1 and 2 connectivity in sequence to avoid creating a box-like mask.
 
 @example
@@ -23635,8 +23644,9 @@ $ astarithmetic saturated.fits set-i i i 2500 gt \
 $ ds9 sat-masked.fits
 @end example
 
-Now that saturated pixels (and their problematic neighbors) have been masked, we can convolve the image (recall that Segment will use the for identifing clumps) with the command below.
+Now that saturated pixels (and their problematic neighbors) have been masked, we can convolve the image (recall that Segment will use the convolved image for identifing clumps) with the command below.
 However, we will use the Spatial Domain convolution which can account for blank pixels (see @ref{Spatial vs. Frequency domain}).
+We will also create a Gaussian kernel with @mymath{\rm{FWHM}=2} pixels, truncated at @mymath{5\times\rm{FWHM}}.
 
 @example
 $ astmkprof --kernel=gaussian,2,5 --oversample=1 -okernel.fits
@@ -23652,10 +23662,12 @@ So before feeding into Segment, we'll fill the blank values with the maximum val
 @example
 $ astarithmetic sat-masked-conv.fits 2 interpolate-maxofregion \
                 --output=sat-conv.fits
+$ ds9 sat-conv.fits
 @end example
 
 @noindent
-The output image doesn't have blank pixels any more and each blank region is now filled with the largest value that is touching it.
+Open the output and have a look;
+The output image doesn't have blank pixels any more and each blank region (in the centers of stars) is now filled with the largest value that is touching that particular region.
 We can now feed this image to Segment as the convolved image:
 
 @example
@@ -23680,61 +23692,81 @@ Since the image not the result of too many exposures, it doesn't have strong cor
 @noindent
 See @ref{Detecting large extended targets} for more on optimizing NoiseChisel.
 Furthermore, since both NoiseChisel and Segment need a convolved image, we'll do the convolution before and feed it to both (to save running time).
+But first, let's delete all the temporary files we made above.
 
 @example
-$ astmkprof --kernel=gaussian,2,5 --oversample=1 -okernel.fits
-$ astarithmetic image-crop.fits set-i i i 2500 gt \
+$ rm *.fits
+$ mkdir label
+$ astmkprof --kernel=gaussian,2,5 --oversample=1 \
+            -olabel/kernel.fits
+$ astarithmetic flat/image.fits set-i i i 2500 gt \
                 2 dilate 2 dilate 2 dilate 2 dilate nan where \
-                --output=image-masked.fits
-$ astconvolve image-masked.fits --kernel=kernel.fits --domain=spatial \
-              --output=image-masked-conv.fits
-$ astarithmetic image-masked-conv.fits 2 interpolate-maxofregion \
-                --output=image-conv.fits
-$ astnoisechisel image-conv.fits --interpnumngb=100 --output=nc.fits \
+                --output=label/sat-masked.fits
+$ astconvolve label/sat-masked.fits --kernel=kernel.fits \
+              --domain=spatial --output=label/sat-masked-conv.fits
+$ astarithmetic label/sat-masked-conv.fits 2 interpolate-maxofregion \
+                --output=label/image-conv.fits
+$ astnoisechisel label/image-conv.fits --interpnumngb=100 \
                  --detgrowquant=0.8 --detgrowmaxholesize=100000 \
-                 --convolved=image-conv.fits
-$ astsegment nc.fits --convolved=image-conv.fits --output=seg.fits
-$ ds9 -mecube -zscale nc.fits -zoom to fit
+                 --convolved=label/image-conv.fits \
+                 --output=label/nc.fits
+$ astsegment label/nc.fits --convolved=label/image-conv.fits \
+             --output=label/seg.fits
+$ ds9 -mecube -zscale label/nc.fits -zoom to fit
 @end example
 
-Looking in the @code{SKY} extension of NoiseChisel, we see that there is no footprint of the bright stars and M51, so the detection was good!
-Furthermore, the saturated pixels haven't caused any divided the central clumps of stars into multiple clumps.
+Looking in the @code{SKY} extension of NoiseChisel, we see that there is no footprint of the bright stars or of M51, so the detection was good!
+Furthermore, the saturated pixels haven't caused any problems and the central clumps of bright stars are now a single clump.
+We can now proceed to estimating the outer PSF in @ref{Building outer part of PSF}.
 
 @node Building outer part of PSF,  , Saturated pixels and Segment's clumps, Tutorial on building the extended PSF
 @subsubsection Building outer part of PSF
-Now, ``zoom fit'' to the whole image again.
+In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars.
+So we are now ready to start building the outer parts of the PSF.
+
 First we will build the outer parts of the PSF, so we want the brightest stars.
 You will see we have several bright stars in this very large field of view, but we don't yet have a feeling how how many they are, and at what magnitudes.
 So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than magnitude 12).
 For more on Query, see @ref{Query}.
 
 @example
-$ astquery gaia --dataset=edr3 --overlapwith=image-crop.fits \
-           --range=phot_g_mean_mag,-inf,12 --output=check-brights.fits
+$ astquery gaia --dataset=edr3 --overlapwith=flat/image.fits \
+           --range=phot_g_mean_mag,-inf,12 --output=gaia.fits
 @end example
 
 Now, we can easily visualize the magnitude and positions of these stars using @command{astscript-ds9-region} and the command below (for more on this script, see @ref{SAO DS9 region files from table})
 
 @example
-$ astscript-ds9-region check-brights.fits -cra,dec \
+$ astscript-ds9-region gaia.fits -cra,dec \
            --namecol=phot_g_mean_mag \
-           --command='ds9 image-crop.fits -zoom to fit -zscale'
+           --command='ds9 flat/image.fits -zoom to fit -zscale'
 @end example
 
 You can see that we have several stars between magnitudes 6 to 10.
-Let's use @file{astscript-psf-create-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 8 to 12).
+Let's use @file{astscript-psf-create-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 6 to 8).
 Since this will select very bright stars, we will also increase the distance to nearby neighbors with brighter or similar magnitudes (the default value is 1 arcmin).
 To do this, we will set @option{--mindistdeg=0.05}, which corresponds to 3 arcmin (or 3/60 degrees).
 
 @example
-$ astscript-psf-create-select-stars image-crop.fits --hdu=1 \
-                --magnituderange=8,12 \
+$ mkdir outer
+$ astscript-psf-create-select-stars flat/image.fits \
+                --magnituderange=6,8 \
                 --mindistdeg=0.05 \
-                --output=stars-mag-8-12.fits
+                --output=outer/stars.fits
+@end example
+
+@noindent
+Let's have a look at the selected stars in the image (it is very important to visually check every step when you are first discovering a new dataset).
+
+@example
+$ astscript-ds9-region outer/stars.fits -cra,dec \
+           --namecol=phot_g_mean_mag \
+           --command='ds9 flat/image.fits -zoom to fit -zscale'
 @end example
 
 Now that the catalog of good stars is ready, it is time to construct the individual stamps for each star of the catalog.
 To do that, we'll use @file{astscript-psf-create-make-stamp}.
+
 We later need the normalization radii in the next steps also.
 Therefore, to avoid typos or chances of a mistake, we'll define the two @code{NORMRADII_INNER} and @code{NORMRADII_OUTER} variables.
 Furthermore, since there are several stars (as you saw from the output of the previous command), we iterate over each row of the catalog.
