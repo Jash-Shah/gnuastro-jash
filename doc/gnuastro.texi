@@ -669,7 +669,10 @@ Tutorial on building the extended PSF
 
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
-* Building outer part of PSF::  Constructing the outer PSF.
+* Building outer part of PSF::  Building the outermost PSF wings.
+* Inner parts of the PSF::      Going towards the PSF center.
+* Uniting the different PSF components::  Merging all the components into one PSF.
+* Subtracting the PSF::         Having the PSF, we now want to subtract it.
 
 Library
 
@@ -23498,7 +23501,10 @@ An overview of the process is given in @ref{Overview of the PSF scripts}.
 @menu
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
-* Building outer part of PSF::  Constructing the outer PSF.
+* Building outer part of PSF::  Building the outermost PSF wings.
+* Inner parts of the PSF::      Going towards the PSF center.
+* Uniting the different PSF components::  Merging all the components into one PSF.
+* Subtracting the PSF::         Having the PSF, we now want to subtract it.
 @end menu
 
 @node Preparing input for extended PSF, Saturated pixels and Segment's clumps, Tutorial on building the extended PSF, Tutorial on building the extended PSF
@@ -23635,11 +23641,10 @@ However, there is still another problem: on the edges of the vertical ``bleeding
 Such that the pixels just touching the saturated pixels have strong negative values.
 These will also cause problems!
 So with the same command, let's dilate the saturated regions by four times.
-We will use 1 and 2 connectivity in sequence to avoid creating a box-like mask.
 
 @example
 $ astarithmetic saturated.fits set-i i i 2500 gt \
-                1 dilate 2 dilate 1 dilate 2 dilate nan where \
+                2 dilate 2 dilate 2 dilate 2 dilate nan where \
                 --output=sat-masked.fits
 $ ds9 sat-masked.fits
 @end example
@@ -23701,8 +23706,8 @@ $ astmkprof --kernel=gaussian,2,5 --oversample=1 \
             -olabel/kernel.fits
 $ astarithmetic flat/image.fits set-i i i 2500 gt \
                 2 dilate 2 dilate 2 dilate 2 dilate nan where \
-                --output=label/sat-masked.fits
-$ astconvolve label/sat-masked.fits --kernel=kernel.fits \
+                --output=flat/sat-masked.fits
+$ astconvolve flat/sat-masked.fits --kernel=kernel.fits \
               --domain=spatial --output=label/sat-masked-conv.fits
 $ astarithmetic label/sat-masked-conv.fits 2 interpolate-maxofregion \
                 --output=label/image-conv.fits
@@ -23718,8 +23723,14 @@ $ ds9 -mecube -zscale label/nc.fits -zoom to fit
 Looking in the @code{SKY} extension of NoiseChisel, we see that there is no footprint of the bright stars or of M51, so the detection was good!
 Furthermore, the saturated pixels haven't caused any problems and the central clumps of bright stars are now a single clump.
 We can now proceed to estimating the outer PSF in @ref{Building outer part of PSF}.
+But first, let's clean up behind our selves (we only need the Segment output)
 
-@node Building outer part of PSF,  , Saturated pixels and Segment's clumps, Tutorial on building the extended PSF
+@example
+$ rm label/image-conv.fits label/kernel.fits label/sat-masked.fits \
+     label/sat-masked-conv.fits
+@end example
+
+@node Building outer part of PSF, Inner parts of the PSF, Saturated pixels and Segment's clumps, Tutorial on building the extended PSF
 @subsubsection Building outer part of PSF
 In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars.
 So we are now ready to start building the outer parts of the PSF.
@@ -23774,8 +23785,8 @@ Depending on the PSF shape, internal reflections, ghosts, saturated pixels, and 
 
 The selection of the normalization radii is something that requires a good understanding of the data.
 To do that, let's use two useful parameters that will help us in the checking of the data: @code{--tmpdir} and @code{--keeptmp}.
-With @code{--tmpdir=checking-normradii} all temporal files, including the radial profiles, will be save in that directory.
-With @code{--keeptmp} we won't remove the temporal files, so it is possible to have a look at them.
+With @code{--tmpdir=checking-normradii} all temporary files, including the radial profiles, will be save in that directory (instead of an internally-created name).
+With @code{--keeptmp} we won't remove the temporal files, so it is possible to have a look at them (by default the temporary directory gets deleted at the end).
 It is necessary to specify the @code{--normradii} even if we don't know yet the final values.
 Otherwise the script will not generate the radial profile.
 As a consequence, in this step we put the normalization radii equal to the size of the stamps.
@@ -23785,15 +23796,16 @@ In this particular step we set it to @code{--normradii=150,160}.
 @example
 $ counter=1
 $ mkdir finding-normradii
-$ asttable stars-mag-8-12.fits \
+$ asttable outer/stars.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp image-masked.fits \
+               astscript-psf-create-make-stamp flat/sat-masked.fits \
                     --mode=wcs \
+                    --stampwidth=500 \
                     --center=$ra,$dec \
-                    --stampwidth=150 \
-                    --normradii=150,160 \
+                    --normradii=250,260 \
+                    --segment=label/seg.fits \
                     --output=finding-normradii/$counter.fits \
-                    --tmpdir=checking-normradii --keeptmp; \
+                    --tmpdir=finding-normradii --keeptmp; \
                counter=$((counter+1)); \
              done
 @end example
@@ -23803,12 +23815,12 @@ For example using Topcat or any other plotting tool.
 In the same way, it is always good to check the different stamps to ensure the quality and posible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
 
 @example
-$ topcat checking-normradii/rprofile*.fits
-$ ds9 checking-normradii/cropped*.fits
+$ topcat finding-normradii/rprofile*.fits
+$ ds9 finding-normradii/cropped-masked*.fits
 @end example
 
-After some study of this data, we could say that a good normalization ring is those pixels between R=20 and R=30 pixels.
-Such ring ensures having a high number of pixels so the estimation of the flux normalization will be robust.
+After some study of this data, we could say that a good normalization ring is those pixels between R=50 and R=60 pixels.
+Such a ring ensures having a high number of pixels so the estimation of the flux normalization will be robust.
 Also, at such distance from the center the signal to noise is high and there are not obvious features that can affect the normalization.
 
 We later need the normalization radii in the next steps also.
@@ -23818,30 +23830,66 @@ Furthermore, since there are several stars (as you saw from the output of the pr
 @example
 $ counter=1
 $ IMAGE=image-masked.fits
-$ NORMRADII_INNER=20
-$ NORMRADII_OUTER=30
-$ mkdir stamps-outer
-$ asttable stars-mag-8-12.fits \
+$ NORMRADII_INNER=50
+$ NORMRADII_OUTER=60
+$ mkdir outer/stamps
+$ asttable outer/stars.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp $IMAGE \
+               astscript-psf-create-make-stamp flat/sat-masked.fits \
                     --mode=wcs \
+                    --stampwidth=500 \
                     --center=$ra,$dec \
-                    --stampwidth=150 \
-                    --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
-                    --output=stamps-outer/$counter.fits; \
+                    --segment=label/seg.fits \
+                    --output=outer/stamps/$counter.fits \
+                    --normradii=$NORMRADII_INNER,$NORMRADII_OUTER; \
                counter=$((counter+1)); \
              done
 @end example
 
-After the stamps are created, they are stacked together with a simple Arithmetic command.
-The stack is done using the median operator and the stacked image is the PSF we are looking for: @file{psf.fits}.
+After the stamps are created, we need to stack them together with a simple Arithmetic command (see @ref{Stacking operators}).
+The stack is done using the median operator and the stacked image is the outer PSF that we are looking for: @file{psf-outer.fits}.
 
 @example
-$ astarithmetic starstamp*.fits -g1 \
-          $(ls starstamp*.fits | wc -l) median \
-          --output=psf.fits
+$ astarithmetic outer/stamps/*.fits -g1 \
+          $(ls outer/stamps/*.fits | wc -l) median \
+          --output=outer/stack.fits
 @end example
 
+@noindent
+With the command below, we'll compare this stacked PSF with the images of the individual stars that were used to create it.
+You clearly see that the number of masked pixels is significantly decreased and the PSF is much more ``cleaner'').
+
+@example
+$ ds9 outer/stack.fits outer/stamps/*.fits
+@end example
+
+However, the bleeding, vertical saturation in the center still remains.
+Also, because we didn't have too many images (only three!), some small regions still remain that were (by chance!) masked in all three.
+If we had more bright stars in our selected magnitude range, we could have filled those outer remaining patches.
+
+@c -------------------------------------------
+@c ------- This part may be removed ----------
+To fill those regions, we can use the radial profile of the stacked PSF.
+Obtaining the radial profile for a simple (square, with a single, circular object), image is very easy:
+
+@example
+$ astscript-radial-profile outer/stack.fits -oouter/stack-radial.fits
+$ echo "1 251 251 8 300 0 0 1 1 1" \
+       | astmkprof --background=outer/stack.fits --clearcanvas \
+                   --customtable=outer/stack-radial.fits
+
+@end example
+@c -------------------------------------------
+
+@node Inner parts of the PSF, Uniting the different PSF components, Building outer part of PSF, Tutorial on building the extended PSF
+@subsubsection Inner parts of the PSF
+
+@node Uniting the different PSF components, Subtracting the PSF, Inner parts of the PSF, Tutorial on building the extended PSF
+@subsubsection Uniting the different PSF components
+
+
+@node Subtracting the PSF,  , Uniting the different PSF components, Tutorial on building the extended PSF
+@subsubsection Subtracting the PSF
 With the commands above PSF has been constructed and now it is going to be used for modeling and subtracting each individual star.
 By construction, the pixel values of the PSF came from the normalization of the individual stamps.
 As a consequence, when modeling each individual star, it is necessary to compute what is the factor by which the PSF has to be scaled.

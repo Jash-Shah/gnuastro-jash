@@ -40,22 +40,20 @@ set -e
 
 # Default option values (can be changed with options on the command-line).
 hdu=1
-mask=""
 quiet=""
 center=""
 keeptmp=0
-maskhdu=1
 output=""
 tmpdir=""
+segment=""
 axisratio=1
 maskskyval=0
-corewidth=""
-saturation=0
 normradii=""
 sigmaclip=""
 stampwidth=""
 normop="median"
 positionangle=0
+corewidth="5,5"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -100,12 +98,7 @@ $scriptname options:
   -W, --stampwidth=INT    Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the normalization value.
-  -m, --mask=STR          Segmentation image (sky = 0).
-  -M, --maskhdu=STR       HDU/extension of the segmentation image.
-  -l, --saturation        saturation limit for masking saturation pixels.
-  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
-  -S, --mask=STR          Segmentation image (sky = 0).
-  -s, --maskhdu=STR       HDU/extension of the segmentation image.
+  -m, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
   -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
@@ -206,9 +199,6 @@ do
         -h|--hdu)            hdu="$2";                                  check_v "$1" "$hdu";  shift;shift;;
         -h=*|--hdu=*)        hdu="${1#*=}";                             check_v "$1" "$hdu";  shift;;
         -h*)                 hdu=$(echo "$1"  | sed -e's/-h//');        check_v "$1" "$hdu";  shift;;
-        -l|--saturation)     saturation="$2";                           check_v "$1" "$saturation";  shift;shift;;
-        -l=*|--saturation=*) saturation="${1#*=}";                      check_v "$1" "$saturation";  shift;;
-        -l*)                 saturation=$(echo "$1"  | sed -e's/-l//'); check_v "$1" "$saturation";  shift;;
         -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
         -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
         -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
@@ -218,12 +208,9 @@ do
         -w|--corewidth)      corewidth="$2";                            check_v "$1" "$corewidth";  shift;shift;;
         -w=*|--corewidth=*)  corewidth="${1#*=}";                       check_v "$1" "$corewidth";  shift;;
         -w*)                 corewidth=$(echo "$1"  | sed -e's/-w//');  check_v "$1" "$corewidth";  shift;;
-        -m|--mask)           mask="$2";                                 check_v "$1" "$mask";  shift;shift;;
-        -m=*|--mask=*)       mask="${1#*=}";                            check_v "$1" "$mask";  shift;;
-        -m*)                 mask=$(echo "$1"  | sed -e's/-m//');       check_v "$1" "$mask";  shift;;
-        -M|--maskhdu)        maskhdu="$2";                              check_v "$1" "$maskhdu";  shift;shift;;
-        -M=*|--maskhdu=*)    maskhdu="${1#*=}";                         check_v "$1" "$maskhdu";  shift;;
-        -M*)                 maskhdu=$(echo "$1"  | sed -e's/-M//');    check_v "$1" "$maskhdu";  shift;;
+        -m|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
+        -m=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
+        -m*)                 segment=$(echo "$1"  | sed -e's/-m//');    check_v "$1" "$segment";  shift;;
         -v|--maskskyval)     maskskyval="$2";                           check_v "$1" "$maskskyval";  shift;shift;;
         -v=*|--maskskyval=*) maskskyval="${1#*=}";                      check_v "$1" "$maskskyval";  shift;;
         -v*)                 maskskyval=$(echo "$1"  | sed -e's/-v//'); check_v "$1" "$maskskyval";  shift;;
@@ -432,6 +419,45 @@ astcrop $inputs --hdu=$hdu --mode=img \
 
 
 
+# Function to find label of desired region
+# ----------------------------------------
+#
+# Given a certain extension ('CLUMPS' or 'OBJECTS'), find the respective
+# label.
+find_central_label () {
+  # Input arguments
+  hdu=$1
+
+  # Set the parameters.
+  case $hdu in
+      CLUMPS) labname=clump;;
+      OBJECTS) labname=object;;
+      *) cat <<EOF
+$scriptname: ERROR: a bug! Please contact us at bug-gnuastro@gnu.org to fix the problem. The first argument to 'find_central_label' function is not 'CLUMPS' or 'OBJECTS'
+EOF
+      ;;
+  esac
+
+  # Crop the labeled image.
+  cropped_core=$tmpdir/cropped-core-$objectid.fits
+  astcrop $segment --hdu=$hdu --mode=img $quiet --width=$corewidth \
+          --center=$xcenter,$ycenter --output=$cropped_core
+  lab=$(astarithmetic $cropped_core unique --quiet)
+  numlab=$(echo "$lab" | awk '{print NF}')
+  if [ $numlab != 1 ]; then
+    cat <<EOF
+$scriptname: ERROR: there is more than one $labname label in the core region around the given coordinate (specified by '--corewidth=$corewidth', containing $labname labels: $lab). Therefore it is not possible to unambiguously identify a single $labname. Please decrease the box size given to '--corewidth'.
+EOF
+    exit 1
+  fi
+
+  # Write the output in a file.
+  echo $lab > $tmpdir/cropped-core-$labname-$objectid.txt
+}
+
+
+
+
 # Crop and unlabel the segmentation image
 # ---------------------------------------
 #
@@ -441,58 +467,40 @@ astcrop $inputs --hdu=$hdu --mode=img \
 # process is as follow:
 #   - Crop the original mask image.
 #   - Crop the original mask image to a central region (core), in order to
-#   compute what is the central object id. This is necessary to unmask this
-#   object.
+#     compute what is the central object id. This is necessary to unmask
+#     this object.
 #   - Compute what is the central object value, using the median value.
 #   - In the original cropped mask, convert all pixels belonging to the
-#   central object to zeros. By doing this, the central object becomes as
-#   sky.
+#     central object to zeros. By doing this, the central object becomes as
+#     sky.
 #   - Mask all non zero pixels in the mask image as nan values.
-if [ x"$mask" != x ]; then
-  cropped_mask=$tmpdir/cropped_mask-$objectid.fits
-  astcrop $mask --hdu=$maskhdu --mode=img \
-                --center=$xcenter,$ycenter \
-                --width=$stampwidth --output=$cropped_mask $quiet
+if [ x"$segment" != x ]; then
 
-  # If the user does not provide a core width, consider it as the maximum
-  # normalization radius value.
-  if [ x"$corewidth" = x ]; then corewidth="$normradiusmax,$normradiusmax"
-  fi
+  # Find the object and clump labels of the target.
+  find_central_label CLUMPS
+  find_central_label OBJECTS
+  clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
+  olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
 
-  cropped_core=$tmpdir/cropped_core-$objectid.fits
-  astcrop $mask --hdu=$maskhdu --mode=img \
-                --center=$xcenter,$ycenter \
-                --width=$corewidth --output=$cropped_core $quiet
+  # Crop the object and clump image to same size as desired stamp.
+  cropclp=$tmpdir/cropped-clumps-$objectid.fits
+  cropobj=$tmpdir/cropped-objects-$objectid.fits
+  astcrop $segment --hdu=OBJECTS --mode=img \
+          --center=$xcenter,$ycenter \
+          --width=$stampwidth --output=$cropobj $quiet
+  astcrop $segment --hdu=CLUMPS --mode=img \
+          --center=$xcenter,$ycenter \
+          --width=$stampwidth --output=$cropclp $quiet
 
-  # If the cropped core labeled image has sky background values (zero by
-  # default), convert them to nan. This prevent considering the central
-  # object to be the sky if there are a lot of sky background pixels
-  # compared to the labeled region.
-  cropped_core_nonzeros=$tmpdir/cropped_core_nozeros-$objectid.fits
-  astarithmetic $cropped_core set-i $quiet \
-                i i $maskskyval eq nan where --output=$cropped_core_nonzeros
-
-  # Compute the label of the central object from the core cropped image.
-  centrallabel=$(aststatistics $cropped_core_nonzeros --median -q)
-
-  # Check if the user has determined the --saturation option.
-  if [ $saturation = 0 ]; then
-      mask_saturated=""
-  else
-      mask_saturated="i i $saturation gt nan where set-i"
-  fi
-
-  # Unlabel the central object and then mask everything else.
-  cropped_masked=$tmpdir/cropped_masked-$objectid.fits
-  astarithmetic $cropped      --hdu=1 set-i \
-                $cropped_mask --hdu=1 set-m \
-                                            \
-                $mask_saturated  \
-                m m $centrallabel eq $maskskyval where set-a \
-                a $maskskyval ne set-mask  \
-                                 \
-                i mask nan where \
-                --output=$cropped_masked $quiet
+  # Mask all the undesired regions.
+  cropped_masked=$tmpdir/cropped-masked-$objectid.fits
+  astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
+                $cropobj --hdu=1 set-o \
+                $cropclp --hdu=1 set-c \
+                                       \
+                c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
+                o o $olab eq 0 where set-omask \
+                i omask cmask or nan where
 else
   cropped_masked=$cropped
 fi
@@ -507,6 +515,7 @@ fi
 # Only if the the user has specified a ring of normalization (--normradii).
 # Otherwise set the normalization value equal to 1.0 (no normalization).
 if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
+
     # Generate the radial profile of the stamp, since it has been already
     # centered on the center of the object, it is not necessary to give the
     # center coordinates. If the user specifies a maximum radius, use it.
@@ -532,7 +541,8 @@ if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
     fi
     normvalue=$(asttable $radialprofile $quiet \
                          --range=1,$normradiusmin,$normradiusmax \
-                         | aststatistics --column=2 --$normop $finalsigmaclip -q)
+                         | aststatistics --column=2 --$normop \
+                                         $finalsigmaclip -q)
 else
     normvalue=1.0
 fi
@@ -559,4 +569,3 @@ astarithmetic $cropped_masked --hdu=1 $normvalue / --output=$output $quiet
 if [ $keeptmp = 0 ]; then
     rm -r $tmpdir
 fi
-
