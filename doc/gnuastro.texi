@@ -5402,8 +5402,9 @@ After the download is complete, open the image with SAO DS9 (or any other FITS v
 @example
 $ IMAGEID="jplus-dr2/get_fits?id=67510"
 $ URL="http://archive.cefca.es/catalogues/vo/siap/"
-$ wget $URL$IMAGEID -O image.fits.fz
-$ ds9 image.fits.fz -zoom to fit -zscale
+$ mkdir jplus-dr2
+$ wget $URL$IMAGEID -O jplus-dr2/67510.fits.fz
+$ ds9 jplus-dr2/67510.fits.fz -zoom to fit -zscale
 @end example
 
 Have a closer look at the edges of the image: zoom in to the corners.
@@ -5414,9 +5415,9 @@ To keep the top-level directory clean, let's also put the crop in a directory ca
 
 @example
 $ mkdir flat
-$ astcrop image.fits.fz --mode=img --section=225:9275,150:9350 \
-          -oflat/image.fits
-$ ds9 flat/image.fits -zoom to fit -zscale
+$ astcrop jplus-dr2/67510.fits.fz --section=225:9275,150:9350 \
+          --mode=img -oflat/67510.fits
+$ ds9 flat/67510.fits -zoom to fit -zscale
 @end example
 
 @noindent
@@ -5430,7 +5431,7 @@ However, the saturated pixels of the bright stars are going to cause problems.
 To see this problem, let's make a @mymath{1000\times1000} crop around a bright star to speed up the test (and its solution):
 
 @example
-$ astcrop flat/image.fits --mode=wcs --widthinpix --width=1000 \
+$ astcrop flat/67510.fits --mode=wcs --widthinpix --width=1000 \
           --center=203.3916736,46.7968652 --output=saturated.fits
 $ astnoisechisel saturated.fits --output=sat-nc.fits
 $ astsegment sat-nc.fits --output=sat-seg.fits
@@ -5585,10 +5586,10 @@ $ rm *.fits
 $ mkdir label
 $ astmkprof --kernel=gaussian,2,5 --oversample=1 \
             -olabel/kernel.fits
-$ astarithmetic flat/image.fits set-i i i 2500 gt \
+$ astarithmetic flat/67510.fits set-i i i 2500 gt \
                 2 dilate 2 dilate 2 dilate 2 dilate nan where \
-                --output=flat/sat-masked.fits
-$ astconvolve flat/sat-masked.fits --kernel=kernel.fits \
+                --output=flat/67510-no-sat.fits
+$ astconvolve flat/67510-no-sat.fits --kernel=kernel.fits \
               --domain=spatial --output=label/sat-masked-conv.fits
 $ astarithmetic label/sat-masked-conv.fits 2 interpolate-maxofregion \
                 --output=label/image-conv.fits
@@ -5622,7 +5623,7 @@ So let's use Gnuastro's Query program to find the magnitudes of the brightest st
 For more on Query, see @ref{Query}.
 
 @example
-$ astquery gaia --dataset=edr3 --overlapwith=flat/image.fits \
+$ astquery gaia --dataset=edr3 --overlapwith=flat/67510.fits \
            --range=phot_g_mean_mag,-inf,12 --output=gaia.fits
 @end example
 
@@ -5631,7 +5632,7 @@ Now, we can easily visualize the magnitude and positions of these stars using @c
 @example
 $ astscript-ds9-region gaia.fits -cra,dec \
            --namecol=phot_g_mean_mag \
-           --command="ds9 flat/image.fits -zoom to fit -zscale"
+           --command="ds9 flat/67510.fits -zoom to fit -zscale"
 @end example
 
 You can see that we have several stars between magnitudes 6 to 10.
@@ -5641,19 +5642,18 @@ To do this, we will set @option{--mindistdeg=0.05}, which corresponds to 3 arcmi
 
 @example
 $ mkdir outer
-$ astscript-psf-create-select-stars flat/image.fits \
-                --magnituderange=6,8 \
-                --mindistdeg=0.05 \
-                --output=outer/stars.fits
+$ astscript-psf-create-select-stars flat/67510.fits \
+           --magnituderange=6,8 --mindistdeg=0.05 \
+           --output=outer/67510-6-8.fits
 @end example
 
 @noindent
 Let's have a look at the selected stars in the image (it is very important to visually check every step when you are first discovering a new dataset).
 
 @example
-$ astscript-ds9-region outer/stars.fits -cra,dec \
+$ astscript-ds9-region outer/67510-6-8.fits -cra,dec \
            --namecol=phot_g_mean_mag \
-           --command='ds9 flat/image.fits -zoom to fit -zscale'
+           --command='ds9 flat/67510.fits -zoom to fit -zscale'
 @end example
 
 Now that the catalog of good stars is ready, it is time to construct the individual stamps for each star of the catalog.
@@ -5677,9 +5677,9 @@ In this particular step we set it to @code{--normradii=150,160}.
 @example
 $ counter=1
 $ mkdir finding-normradii
-$ asttable outer/stars.fits \
+$ asttable outer/67510-6-8.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp flat/sat-masked.fits \
+               astscript-psf-create-make-stamp flat/67510-no-sat.fits \
                     --mode=wcs \
                     --stampwidth=500 \
                     --center=$ra,$dec \
@@ -5710,30 +5710,28 @@ Furthermore, since there are several stars (as you saw from the output of the pr
 
 @example
 $ counter=1
-$ IMAGE=image-masked.fits
-$ NORMRADII_INNER=50
-$ NORMRADII_OUTER=60
 $ mkdir outer/stamps
-$ asttable outer/stars.fits \
+$ asttable outer/67510-6-8.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp flat/sat-masked.fits \
+               astscript-psf-create-make-stamp flat/67510-no-sat.fits \
                     --mode=wcs \
                     --stampwidth=500 \
                     --center=$ra,$dec \
+                    --normradii=50,60 \
                     --segment=label/seg.fits \
-                    --output=outer/stamps/$counter.fits \
-                    --normradii=$NORMRADII_INNER,$NORMRADII_OUTER; \
+                    --output=outer/stamps/67510-$counter.fits; \
                counter=$((counter+1)); \
              done
 @end example
 
 After the stamps are created, we need to stack them together with a simple Arithmetic command (see @ref{Stacking operators}).
 The stack is done using the median operator and the stacked image is the outer PSF that we are looking for: @file{psf-outer.fits}.
+Just recall that we need to specify the number of inputs into the stacking operators, so we are reading the list of images and counting them as separate variables before calling Arithmetic.
 
 @example
-$ astarithmetic outer/stamps/*.fits -g1 \
-          $(ls outer/stamps/*.fits | wc -l) median \
-          --output=outer/stack.fits
+$ imgs=outer/stamps/*.fits
+$ numimgs=$(echo $imgs | wc -w)
+$ astarithmetic $imgs $numimgs median -g1 --output=outer/stack.fits
 @end example
 
 @noindent
@@ -5747,23 +5745,97 @@ $ ds9 outer/stack.fits outer/stamps/*.fits
 However, the bleeding, vertical saturation in the center still remains.
 Also, because we didn't have too many images (only three!), some small regions still remain that were (by chance!) masked in all three.
 If we had more bright stars in our selected magnitude range, we could have filled those outer remaining patches.
+In a large survey like J-PLUS (that we are using here), you can simply look into other fields that were observed soon before/after the tile ID 67510 that we used here (to have a similar PSF) and get more stars in those images to add to these.
+Infact, the J-PLUS DR2 tile ID of the field above was intentially preserved during the steps above to show how easy it is to use images from other fields and blend them all into the output PSF.
 
 @c -------------------------------------------
-@c ------- This part may be removed ----------
-To fill those regions, we can use the radial profile of the stacked PSF.
-Obtaining the radial profile for a simple (square, with a single, circular object), image is very easy:
-
-@example
-$ astscript-radial-profile outer/stack.fits -oouter/stack-radial.fits
-$ echo "1 251 251 8 300 0 0 1 1 1" \
-       | astmkprof --background=outer/stack.fits --clearcanvas \
-                   --customtable=outer/stack-radial.fits
-
-@end example
+@c If its worth adding this part?
+@c -------------------------------------------
+@c To fill those regions, we can use the radial profile of the stacked PSF.
+@c Obtaining the radial profile for a simple (square, with a single, circular object), image is very easy:
+@c
+@c @example
+@c $ astscript-radial-profile outer/stack.fits -oouter/stack-radial.fits
+@c $ echo "1 251 251 8 300 0 0 1 1 1" \
+@c        | astmkprof --background=outer/stack.fits --clearcanvas \
+@c                    --customtable=outer/stack-radial.fits
+@c
+@c @end example
 @c -------------------------------------------
 
 @node Inner parts of the PSF, Uniting the different PSF components, Building outer part of PSF, Building the extended PSF
 @subsection Inner parts of the PSF
+
+In @ref{Building outer part of PSF}, we were able to create a stack of the outer-most behavior of the PSF in a J-PLUS survey image.
+But the central part that was affected by saturation and non-linearity is still remaining, and we still don't have a ``complete'' PSF!
+In this section, we will use the same steps before to make stacks of more inner regions of the PSF to ultimately unite them all into a single PSF in @ref{Uniting the different PSF components}.
+
+For the outer PSF, we selected stars in the magnitude range of 6 to 8.
+So let's have a look and see how many stars we have in the magnitude range of 8-10 and use the ds9 region script to visually inspect them:
+
+@example
+$ mkdir inner-1
+$ astscript-psf-create-select-stars flat/67510.fits \
+           --magnituderange=8,10 --mindistdeg=0.05 \
+           --output=inner-1/67510-8-10.fits
+
+$ astscript-ds9-region inner-1/67510-8-10.fits -cra,dec \
+           --namecol=phot_g_mean_mag \
+           --command="ds9 flat/67510-no-sat.fits -zoom to fit -zscale"
+@end example
+
+We only have two stars, but they if you zoom into their centers, you will see that they don't have any major bleeding-vertical saturations any more!
+Only the immediate center of the star is saturated.
+We can therefore use these stars to fill the strong bleeding footprints that were present in the outer stack of @file{outer/stack.fits}.
+Similar to before, let's build ready-to-stack crops of these stars.
+To get a better feeling of the normalization radii, follow the same steps of @ref{Building outer part of PSF} (setting @option{--tmpdir} and @option{--keeptmp}).
+
+@example
+$ counter=1
+$ mkdir inner-1/stamps
+$ asttable inner-1/67510-8-10.fits \
+           | while read -r ra dec mag; do
+               astscript-psf-create-make-stamp flat/67510-no-sat.fits \
+                    --mode=wcs \
+                    --stampwidth=500 \
+                    --center=$ra,$dec \
+                    --normradii=30,40 \
+                    --segment=label/seg.fits \
+                    --output=inner-1/stamps/67510-$counter.fits; \
+               counter=$((counter+1)); \
+             done
+
+$ imgs=inner-1/stamps/*.fits
+$ numimgs=$(echo $imgs | wc -w)
+$ astarithmetic $imgs $numimgs median -g1 --output=inner-1/stack.fits
+@end example
+
+@noindent
+We can now attempt to unite the two stacks.
+For this, we should first
+
+@c #########################################
+@c #########################################
+@c #########################################
+@c #########################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @node Uniting the different PSF components, Subtracting the PSF, Inner parts of the PSF, Building the extended PSF
 @subsection Uniting the different PSF components
@@ -23901,7 +23973,7 @@ For this reason, here we have developed a set of scripts with the aim of constru
 
 The scripts are based on the concepts described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
 But to be complete, we first give a summary of the logic and overview of their combined usage in @ref{Overview of the PSF scripts}.
-Furthermore, before going into the technical details of each script, in @ref{Tutorial on building the extended PSF}, we'll start with a tutorial that will use a real-world example to use the scripts in action!
+Furthermore, before going into the technical details of each script, in a specific tutorial devoted to this at @ref{Building the extended PSF}, we encourage you to do that tutorial after the overview below.
 
 @menu
 * Overview of the PSF scripts::  Summary of concepts and methods
@@ -23955,7 +24027,7 @@ Once the flux factor has been computed, a final script is in charge of placing t
 For more on the scaling and positioning script, see @ref{Invoking astscript-psf-model-scattered-light}.
 
 As mentioned above, in the following sections, each script has its own documentation and list of options for very detailed customization (if necessary).
-But before going into them, we continue with a practical tutorial to show the usage of scripts in practice; see @ref{Tutorial on building the extended PSF}.
+But before going into them, we continue with a practical tutorial to show the usage of scripts in practice; see the tutorial @ref{Building the extended PSF}.
 
 
 
