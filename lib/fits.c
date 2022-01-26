@@ -1379,7 +1379,7 @@ gal_fits_key_read_from_ptr(fitsfile *fptr, gal_data_t *keysll,
            successfully read. */
         if(tmp->status==0 && typewasinvalid)
           {
-            /* If the string can be parsed as a number, then number will be
+            /* If the string can be parsed as a number, the number will be
                allocated and placed in 'numptr', otherwise, 'numptr' will
                be NULL. */
             numptr=gal_type_string_to_number(valueptr, &numtype);

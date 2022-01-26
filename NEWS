@@ -136,7 +136,7 @@ See the end of the file for license conditions.
               reported by Juan Antonio Fernández Ontiveros and Alejandro
               Lumbreras Calle.
   bug #61490: Extra columns in the metadata causes crash in plain-text
-              tables, found by Zohre Ghaffari.
+              tables, found by Zohreh Ghaffari.
   bug #61493: NoiseChisel's --checksn not showing pseudos equal to
               --snminarea (only larger ones), found by Raúl Infante-Sainz.
   bug #61584: When FITS file doesn't end with '.fits' and the output file
@@ -147,11 +147,15 @@ See the end of the file for license conditions.
   bug #61698: Mean operator of Arithmetic (for stacking many images) not
               returning NaN for blank regions when input is integer. This
               fix also resolves the same problem in the 'sum', 'std',
-              'median' and all 'sigclip-*' operators); reported by Zohre
+              'median' and all 'sigclip-*' operators); reported by Zohreh
               Ghaffari.
   bug #61740: WCSLIB conflicting with system's wide-character string (WCS)
               library in Gnulib checks for some systems; reported by Martin
               Guerrero Roncel.
+  bug #61940: Numbers with many decimals (like '330624.3918430004', common
+              in Julian dates for example) incorrectly read as float32
+              (thus loosing precision); reported by Zohreh Ghaffari, fixed
+              with help of Pedram Ashofteh Ardakani.
 
 
 
