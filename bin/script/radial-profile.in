@@ -552,7 +552,8 @@ echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
 # and increase the signal-to-noise ratio of the measurement.
 aperturesrebinned=$tmpdir/apertures-rebin.fits
 if [ x"$undersample" != x ]; then
-    astarithmetic $aperturesraw $undersample / -o$aperturesrebinned
+    astarithmetic $aperturesraw $undersample / \
+                  $quiet --output $aperturesrebinned
 else
     ln -fs $aperturesraw $aperturesrebinned
 fi
@@ -569,7 +570,8 @@ fi
 apertures=$tmpdir/apertures.fits
 astarithmetic $aperturesrebinned set-i \
               i 0 ne 1 fill-holes set-good \
-              i good i 1 + where -o$apertures
+              i good i 1 + where \
+              $quiet --output $apertures
 
 
 
