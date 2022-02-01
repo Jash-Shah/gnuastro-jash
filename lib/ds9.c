@@ -5,6 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -45,7 +46,8 @@ gal_ds9_reg_read_polygon(char *filename)
   FILE *fp;
   char *polygonstr;
   gal_data_t *out=NULL;
-  size_t commacounter=0;
+  size_t i, commacounter=0;
+  int good_polygon_format=1;
   size_t plinelen, linesize=10, lineno=0;
   int coordmode=GAL_DS9_COORD_MODE_INVALID;
   char *c, *line, *ds9regstart="# Region file format: DS9";
@@ -109,14 +111,24 @@ gal_ds9_reg_read_polygon(char *filename)
       if( !strncmp(line, "polygon(", 8) )
         {
           /* Get the line length and check if it is indeed in the proper
-             format. If so, remove the last parenthesis. */
+             format. The format is corrupt if we do not find the matching
+             paranthesis before '#' or the final character. If successful,
+             set status to '1' and ignore the rest.  Here we skip the first
+             8 characters that contain 'polygon('. */
           plinelen=strlen(line);
-          if(line[plinelen-2]==')')
-            line[plinelen-2]='\0';
-          else
+          for(i=8; i<plinelen; ++i)
+            {
+              if(line[i]=='#') { good_polygon_format=0; break; }
+              if(line[i]==')') { line[i]='\0';          break; }
+            }
+
+          /* Check if we have the proper formatting. */
+          if(good_polygon_format==0)
             error_at_line(EXIT_FAILURE, 0, filename, lineno,
-                          "line with polygon vertices doesn't end "
-                          "with ')'. %s", polygonformaterr);
+                          "line with polygon vertices couldn't be "
+                          "parsed: no closing parenthesis could be"
+                          "found at the end, or before a '#'. %s",
+                          polygonformaterr);
 
           /* Convert the string to the expected format (with ':' separating
              each vertice). Note how we are ignoring the first 8 characters

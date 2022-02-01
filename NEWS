@@ -156,6 +156,9 @@ See the end of the file for license conditions.
               in Julian dates for example) incorrectly read as float32
               (thus loosing precision); reported by Zohreh Ghaffari, fixed
               with help of Pedram Ashofteh Ardakani.
+  bug #61967: DS9 polygon region files not read when they have width and
+              color; reported by Zohreh Ghaffari, fixed by Pedram Ashofteh
+              Ardakani.
 
 
 
