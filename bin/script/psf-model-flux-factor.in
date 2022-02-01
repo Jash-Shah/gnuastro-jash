@@ -549,14 +549,18 @@ psfradialprofile=$tmpdir/rprofile-psf-$objectid.fits
 if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
 else                       maximumradius="--rmax=$normradiusmax";
 fi
-astscript-radial-profile $cropped_masked --hdu=1 $maximumradius \
-                         --measure=$normop --output=$radialprofile $quiet
+astscript-radial-profile $cropped_masked --hdu=1 \
+                         $maximumradius --measure=$normop \
+                         --tmpdir $tmpdir --keeptmp \
+                         --output=$radialprofile $quiet
 
 # If the user provide a PSF image, compute the radial profile of that PSF.
 # Else, consider the PSF radial profile provided.
 if [ x"$psfprofile" = x ]; then
-    astscript-radial-profile $psf --hdu=$psfhdu $maximumradius $quiet \
-                             --measure=$normop --output=$psfradialprofile
+    astscript-radial-profile $psf --hdu=$psfhdu $maximumradius \
+                             --measure=$normop \
+                             --tmpdir $tmpdir --keeptmp \
+                             --output=$psfradialprofile $quiet
 else
     asttable $psfprofile \
              --output=$psfradialprofile $quiet \

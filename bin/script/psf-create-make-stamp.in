@@ -530,6 +530,7 @@ if [ x"$normradiusmin" != x ] && [ x"$normradiusmax" != x ]; then
     astscript-radial-profile $cropped_masked --hdu=1 --rmax=$maxr \
                              --measure=$normop $finalsigmaclip \
                              --positionangle=$positionangle \
+                             --tmpdir=$tmpdir --keeptmp \
                              --axisratio=$axisratio \
                              --output=$radialprofile $quiet
 
