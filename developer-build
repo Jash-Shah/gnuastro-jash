@@ -9,6 +9,7 @@
 #   Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
 #   Mosè Giordano <mose@gnu.org>
+#   Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 # Copyright (C) 2016-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -45,6 +46,7 @@ reconf=0
 upload=0
 install=0
 valgrind=0
+prefix=/usr/local
 top_build_dir=/dev/shm
 if [ -f .version ]; then
     version=$(cat .version)
@@ -137,6 +139,9 @@ Options:
  -b, --top-build-dir STR  Address to host the top build directory.
                           Current value: $top_build_dir
 
+ -o, --prefix STR         Install architecture-independent files here.
+                          Current value: $prefix
+
  -V, --version            Print current version to be used in absolute
                           build directory name.
                           Current value: $version
@@ -204,6 +209,15 @@ while [[ $# -gt 0 ]]
 do
     key="$1"
     case $key in
+        -o|--prefix)
+            prefix="$2"
+            if [ x"$prefix" = x ]; then
+                echo "No argument given to '--prefix' ('-o')."
+                exit 1;
+            fi
+            shift # past argument
+            shift # past value
+            ;;
         -b|--top-build-dir)
             top_build_dir="$2"
             if [ x"top_build_dir" = x ]; then
@@ -441,7 +455,7 @@ if [ ! -f Makefile ]; then
     fi
 
     # Run the configure script.
-    $srcdir/configure --srcdir=$srcdir $confopts
+    $srcdir/configure --srcdir=$srcdir $confopts --prefix=$prefix
 fi
 
 
@@ -507,5 +521,11 @@ fi
 
 # If requested, run 'sudo make install'.
 if [ x$install = x1 ]; then
-    sudo make install -kj$jobs
+
+    # Check if user has permission to write in $prefix, if not, use 'sudo'.
+    if [ -w $prefix ]; then
+        make install -kj$jobs
+    else
+        sudo make install -kj$jobs
+    fi
 fi
