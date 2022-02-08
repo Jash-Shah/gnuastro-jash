@@ -255,9 +255,8 @@ ui_read_check_only_options(struct arithmeticparams *p)
 static void
 ui_check_options_and_arguments(struct arithmeticparams *p)
 {
-  char *filename;
-  int output_checked=0;
   gal_list_str_t *token, *hdu;
+  char *filename, *basename=NULL;
   size_t nummultiext=0, numhdus=0;
   struct gal_options_common_params *cp=&p->cp;
 
@@ -306,17 +305,10 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
               if( gal_array_name_recognized_multiext(token->v)  )
                 ++nummultiext;
 
-              /* If the output filename isn't set yet, then set it. */
-              if(output_checked==0)
-                {
-                  if(cp->output)
-                    gal_checkset_writable_remove(cp->output, cp->keep,
-                                                 cp->dontdelete);
-                  else
-                    p->cp.output=gal_checkset_automatic_output(cp, token->v,
-                                                               "_arith.fits");
-                  output_checked=1;
-                }
+              /* If no output name is given, we need to extract the output
+                 name from the inputs. */
+              if(cp->output==NULL && basename==NULL)
+                basename=token->v;
             }
 
           /* This token is a number. Check if a negative dash was present that
@@ -337,10 +329,18 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
   /* In case no output name has been given (can happen with operators like
      'makenew' when the user doesn't set an output name explicity), use a
      default name. */
-  if(p->cp.output==NULL)
+  if(cp->output)
+    gal_checkset_writable_remove(cp->output, cp->keep, cp->dontdelete);
+  else
     {
-      gal_checkset_allocate_copy("arithmetic.fits", &p->cp.output);
-      gal_checkset_writable_remove(p->cp.output, cp->keep, cp->dontdelete);
+      if(basename)
+        p->cp.output=gal_checkset_automatic_output(cp, basename,
+                                                   "_arith.fits");
+      else
+        {
+          gal_checkset_allocate_copy("arithmetic.fits", &p->cp.output);
+          gal_checkset_writable_remove(p->cp.output, cp->keep, cp->dontdelete);
+        }
     }
 
   /* Count the number of HDU values (if globalhdu isn't given) and check if

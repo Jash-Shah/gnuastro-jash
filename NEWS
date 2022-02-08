@@ -159,6 +159,8 @@ See the end of the file for license conditions.
   bug #61967: DS9 polygon region files not read when they have width and
               color; reported by Zohreh Ghaffari, fixed by Pedram Ashofteh
               Ardakani.
+  bug #62008: Arithmetic not deleting existing output when the 'makenew' is
+              used (no FITS file exists in the reverse polish notation).
 
 
 
