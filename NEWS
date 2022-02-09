@@ -46,6 +46,12 @@ See the end of the file for license conditions.
      by Tamara Civera Lorenzo.
 
   Table:
+   - Options that accept strings ('--colmetadata', '--equal' and
+     '--notequal') can now accept a comma within the string: to avoid
+     confusing the comma with a separator of values, you should put a '\'
+     before it. For example '--equal=AB,cd\,ef' will select all rows where
+     the 'AB' column has a value of 'cd,ef'. This task was suggested by
+     Zohreh Ghaffari.
    --catrowfile: File to concatenate (i.e., add or append) rows into the
      main input table. With this option, you can add the rows of another
      table into the final output. This option can be called multiple times,

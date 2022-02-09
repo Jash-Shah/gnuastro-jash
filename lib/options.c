@@ -789,7 +789,7 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
           ++c;
           break;
 
-        /* Comma marks the transition to the next number. */
+        /* Comma or Colon mark the transition to the next number. */
         case ',':
         case ':':
           if(isnan(numerator))
@@ -899,15 +899,19 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
 
 
 
-
-
+/* Replacement characters for commented comma (ASCII code 14 for "Shift
+   out") or colon (ASCII code 15 for "Shift in"). These are chosen as
+   non-printable ASCII characters, that user's will not be typing. */
+#define OPTIONS_COMMENTED_COMMA 14
+#define OPTIONS_COMMENTED_COLON 15
 gal_data_t *
 gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
 {
   size_t num;
   gal_data_t *out;
+  int needscorrection;
   gal_list_str_t *list=NULL, *tll;
-  char *cp, *token, **strarr, delimiters[]=",:";
+  char *c, *d, *cp, *token, **strarr, delimiters[]=",:";
 
   /* The nature of the arrays/numbers read here is very small, so since
      'p->cp.minmapsize' might not have been read yet, we will set it to -1
@@ -918,8 +922,27 @@ gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
   /* If we have an empty string, just return NULL. */
   if(string==NULL || *string=='\0') return NULL;
 
-  /* Make a copy of the input string, and save the tokens */
+  /* Make a copy of the input string, remove all commented delimiters
+     (those with a preceding '\'). */
   gal_checkset_allocate_copy(string, &cp);
+  for(c=cp; *c!='\0'; c++)
+    if(*c=='\\' && c[1]!='\0')
+      {
+        /* If the next character (after the '\') is a delimiter, we need to
+           replace it with a non-delimiter (and not-typed!) character and
+           shift the whole string back by one character to simplify future
+           steps. */
+        needscorrection=0;
+        switch(c[1])
+          {
+          case ',': *c=OPTIONS_COMMENTED_COMMA; needscorrection=1; break;
+          case ':': *c=OPTIONS_COMMENTED_COLON; needscorrection=1; break;
+          }
+        if(needscorrection)
+          { for(d=c+2; *d!='\0'; ++d) {*(d-1)=*d;} *(d-1)='\0'; }
+      }
+
+  /* Make a copy of the input string, and save the tokens */
   token=strtok(cp, delimiters);
   gal_list_str_add(&list, token, 1);
   while(token!=NULL)
@@ -928,7 +951,6 @@ gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
       if(token!=NULL)
         gal_list_str_add(&list, token, 1);
     }
-
 
   /* Allocate the output dataset (array containing all the given
      strings). */
@@ -939,7 +961,19 @@ gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
   /* Fill the output dataset. */
   strarr=out->array;
   for(tll=list;tll!=NULL;tll=tll->next)
-    strarr[--num]=tll->v;
+    {
+      /* If we had commented delimiters, we need to set them back to their
+         original/typed forms. */
+      for(c=tll->v; *c!='\0'; ++c)
+        switch(*c)
+          {
+          case OPTIONS_COMMENTED_COMMA: *c=','; break;
+          case OPTIONS_COMMENTED_COLON: *c=':'; break;
+          }
+
+      /* Put the pointer of the string in the output array. */
+      strarr[--num]=tll->v;
+    }
 
   /* Clean up and return. Note that we don't want to free the values in the
      list, the elements in 'out->array' point to them and will later use

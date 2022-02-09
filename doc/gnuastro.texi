@@ -12255,6 +12255,13 @@ For the precedence of this operation in relation to others, see @ref{Operation p
 For example @option{--equal=ID,5,6,8} will only print the rows that have a value of 5, 6, or 8 in the @code{ID} column.
 This option can also be called multiple times, so @option{--equal=ID,4,5 --equal=ID,6,7} has the same effect as @option{--equal=4,5,6,7}.
 
+@cartouche
+@noindent
+@strong{Equality and floating point numbers:} Floating point numbers are only approximate values (see @ref{Numeric data types}).
+In this context, their equality depends on how the the input table was originally stored (as a plain text table or as an ASCII/binary FITS table).
+If you want to select floating point numbers, it is strongly recommended to use the @option{--range} option and set a very small interval around your desired number, don't use @option{--equal} or @option{--notequal}.
+@end cartouche
+
 The @option{--equal} and @option{--notequal} options also work when the given column has a string type.
 In this case the given value to the option will also be parsed as a string, not as a number.
 When dealing with string columns, be careful with trailing white space characters (the actual value maybe adjusted to the right, left, or center of the column's width).
@@ -12263,9 +12270,13 @@ For example @code{--equal=NAME,"  myname "}.
 
 @cartouche
 @noindent
-@strong{Equality and floating point numbers:} Floating point numbers are only approximate values (see @ref{Numeric data types}).
-In this context, their equality depends on how the the input table was originally stored (as a plain text table or as an ASCII/binary FITS table).
-If you want to select floating point numbers, it is strongly recommended to use the @option{--range} option and set a very small interval around your desired number, don't use @option{--equal} or @option{--notequal}.
+@strong{Strings with a comma (,):} When your desired column values contain a comma, you need to put a `@code{\}' before the internal comma (within the value).
+Otherwise, the comma will be interpreted as a delimiter between multiple values, and anything after it will be interpretted as a separate string.
+For example, assume column @code{AB} of your @file{table.fits} contains this value: `@code{cd,ef}' in your desired rows.
+To extract those rows, you should use the command below:
+@example
+$ asttable table.fits --equal=AB,cd\,ef
+@end example
 @end cartouche
 
 @item -n STR,INT/FLT,...
@@ -12395,8 +12406,19 @@ After the to-be-updated column is identified, at least one other string should b
 The first string after the original name will the the selected column's new name.
 The next (optional) string will be the selected column's unit and the third (optional) will be its comments.
 If the two optional strings aren't given, the original column's units or comments will remain unchanged.
+
+If any of the values contains a comma, you should place a `@code{\}' before the comma to avoid it getting confused with a delimiter.
+For example see the command below for a column description that contains a comma:
+
+@example
+$ asttable table.fits \
+           --colmetadata=NAME,UNIT,"Comments\, with a comma"
+@end example
+
+Generally, since the comma is commonly used as a delimiter in many scenarios, to avoid complicating your future analysis with the table, it is best to avoid using a comma in the column name and units.
+
 Some examples of this option are available in the tutorials, in particular @ref{Working with catalogs estimating colors}.
-Here are some more specific examples
+Here are some more specific examples:
 
 @table @option
 
