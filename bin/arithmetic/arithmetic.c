@@ -1181,6 +1181,38 @@ arithmetic_add_dimension(struct arithmeticparams *p, char *token,
 
 
 
+void
+arithmetic_repeat(struct arithmeticparams *p, char *token, int operator)
+{
+  size_t i, num;
+  gal_data_t *ttmp, *tmp = operands_pop(p, token);
+
+  /* Make sure the first operand is a number. */
+  if(tmp->size!=1)
+    error(EXIT_FAILURE, 0, "first popped operand to '%s' must be a "
+          "number (specifying how many datasets to use)", token);
+
+  /* Put the first-popped value into 'num'. */
+  tmp=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_SIZE_T);
+  num=*(size_t *)(tmp->array);
+  gal_data_free(tmp);
+
+  /* Pop the dataset to be copied. */
+  tmp=operands_pop(p, token);
+
+  /* Add it to the stack for the desired number of times. */
+  for(i=0; i<num; ++i)
+    {
+      ttmp=gal_data_copy(tmp);
+      operands_add(p, NULL, ttmp);
+    }
+
+  /* Clean up. */
+  gal_data_free(tmp);
+}
+
+
+
 
 
 
@@ -1253,6 +1285,8 @@ arithmetic_set_operator(char *string, size_t *num_operands)
         { op=ARITHMETIC_OP_ADD_DIMENSION_SLOW;    *num_operands=0; }
       else if (!strcmp(string, "add-dimension-fast"))
         { op=ARITHMETIC_OP_ADD_DIMENSION_FAST;    *num_operands=0; }
+      else if (!strcmp(string, "repeat"))
+        { op=ARITHMETIC_OP_REPEAT;                *num_operands=0; }
       else
         error(EXIT_FAILURE, 0, "the argument '%s' could not be "
               "interpretted as a file name, named dataset, number, "
@@ -1389,6 +1423,10 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
         case ARITHMETIC_OP_ADD_DIMENSION_SLOW:
         case ARITHMETIC_OP_ADD_DIMENSION_FAST:
           arithmetic_add_dimension(p, operator_string, operator);
+          break;
+
+        case ARITHMETIC_OP_REPEAT:
+          arithmetic_repeat(p, operator_string, operator);
           break;
 
         default:

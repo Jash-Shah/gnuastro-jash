@@ -15041,7 +15041,17 @@ $ astarithmetic image.fits image.fits 5 gt nan where -g1
 But with this operator you can simply give @file{image.fits} the name @code{i} and simplify the command above to the more readable one below (which greatly helps when the filename is long):
 
 @example
-$ astarithmetic image.fits set-i   i i 5 gt nan where
+$ astarithmetic image.fits set-i i i 5 gt nan where
+@end example
+
+@item repeat
+Add N copies of the second popped operand to the stack of operands.
+N is the first popped operand.
+For example, let's assume @file{image.fits} is a @mymath{100\times100} image.
+The output of the command below will be a 3D datacube of size @mymath{100\times100\times20} voxels (volume-pixels):
+
+@example
+$ astarithmetic image.fits 20 repeat 20 add-dimension-slow
 @end example
 
 @item tofile-AAA

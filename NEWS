@@ -32,12 +32,15 @@ See the end of the file for license conditions.
      based on feedback from Andrés Del Pino Molina.
 
   Arithmetic:
-   - 'add-dimension-fast': Add a new dataset along the "fastest" dimension
-     of the first dataset (in a FITS image, the "fast" dimension is the
-     horizontal one). For example if you have N one-dimensional datasets
-     with M elements, you can use this operator to construct a
-     2-dimensional FITS image that has N pixels along the horizontal and M
-     pixels along the vertical.
+   - New operators:
+     - add-dimension-fast: Add a new dataset along the "fastest" dimension
+       of the first dataset (in a FITS image, the "fast" dimension is the
+       horizontal one). For example if you have N one-dimensional datasets
+       with M elements, you can use this operator to construct a
+       2-dimensional FITS image that has N pixels along the horizontal and
+       M pixels along the vertical.
+     - repeat: Put a copy of the given dataset onto the top of the stack of
+       operators for the requested number of times.
 
   Crop:
    --widthinpix: when in WCS-mode, the value given to '--width' will be
