@@ -31,6 +31,14 @@ See the end of the file for license conditions.
      improve the running time of the programs. This task was implemented
      based on feedback from Andrés Del Pino Molina.
 
+  Arithmetic:
+   - 'add-dimension-fast': Add a new dataset along the "fastest" dimension
+     of the first dataset (in a FITS image, the "fast" dimension is the
+     horizontal one). For example if you have N one-dimensional datasets
+     with M elements, you can use this operator to construct a
+     2-dimensional FITS image that has N pixels along the horizontal and M
+     pixels along the vertical.
+
   Crop:
    --widthinpix: when in WCS-mode, the value given to '--width' will be
      interpreted in units of pixels. This will allow having crops of a
@@ -91,6 +99,9 @@ See the end of the file for license conditions.
 ** Removed features
 
 ** Changed features
+
+  Arithmetic:
+   - 'add-dimension-slow' is the new name for the old 'add-dimension'.
 
   Segment:
    - '--noobjects' is the new name for the old '--onlyclumps' option. This

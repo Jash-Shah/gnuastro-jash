@@ -639,7 +639,7 @@ gal_type_string_to_number(char *string, uint8_t *type)
 
       /* Calculate the number of decimal digits and decide if it the number
          should be a float or a double. */
-      if( lnz-fnz > FLT_DIG || abs(d)>FLT_MAX || abs(d)<FLT_MIN )
+      if( lnz-fnz > FLT_DIG || fabs(d)>FLT_MAX || fabs(d)<FLT_MIN )
         {      ptr=&d; *type=GAL_TYPE_FLOAT64; }
       else
         { f=d; ptr=&f; *type=GAL_TYPE_FLOAT32; }
