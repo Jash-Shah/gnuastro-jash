@@ -133,6 +133,7 @@ arithmetic_operator_name(int operator)
       case ARITHMETIC_TABLE_OP_IMGTOWCS: out="img-to-wcs"; break;
       case ARITHMETIC_TABLE_OP_DATETOSEC: out="date-to-sec"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEFLAT: out="distance-flat"; break;
+      case ARITHMETIC_TABLE_OP_DATETOMILLISEC: out="date-to-millisec"; break;
       case ARITHMETIC_TABLE_OP_DISTANCEONSPHERE: out="distance-on-sphere"; break;
       default:
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
@@ -188,6 +189,8 @@ arithmetic_set_operator(struct tableparams *p, char *string,
         { op=ARITHMETIC_TABLE_OP_IMGTOWCS; *num_operands=0; }
       else if( !strcmp(string, "date-to-sec"))
         { op=ARITHMETIC_TABLE_OP_DATETOSEC; *num_operands=0; }
+      else if( !strcmp(string, "date-to-millisec"))
+        { op=ARITHMETIC_TABLE_OP_DATETOMILLISEC; *num_operands=0; }
       else if( !strcmp(string, "distance-flat"))
         { op=ARITHMETIC_TABLE_OP_DISTANCEFLAT; *num_operands=0; }
       else if( !strcmp(string, "distance-on-sphere"))
@@ -649,17 +652,13 @@ arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
   size_t i, v;
   int64_t *iarr;
   gal_data_t *out;
+  double subsec=NAN;
   char *subsecstr=NULL;
-  double *darr, subsec=NAN;
+  char *unit, *name, *comment;
 
   /* Input dataset. */
   gal_data_t *in=arithmetic_stack_pop(stack, operator, NULL);
   char **strarr=in->array;
-
-  /* Output metadata. */
-  char *unit="sec";
-  char *name="UNIXSEC";
-  char *comment="Unix seconds (from 00:00:00 UTC, 1 January 1970)";
 
   /* Make sure the input has a 'string' type. */
   if(in->type!=GAL_TYPE_STRING)
@@ -667,45 +666,45 @@ arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
           "should have a string type, but it is '%s'",
           gal_type_name(in->type, 1));
 
+  /* Output metadata. */
+  switch(operator)
+    {
+    case ARITHMETIC_TABLE_OP_DATETOSEC:
+      unit="sec";
+      name="UNIXSEC";
+      comment="Unix seconds (from 00:00:00 UTC, 1 January 1970)";
+      break;
+    case ARITHMETIC_TABLE_OP_DATETOMILLISEC:
+      unit="msec";
+      name="UNIXMILLISEC";
+      comment="Unix milli-seconds (from 00:00:00 UTC, 1 January 1970)";
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+            "to fix the problem. The operator code %d isn't "
+            "recognized", __func__, PACKAGE_BUGREPORT, operator);
+    }
+
   /* Allocate the output dataset. */
   out=gal_data_alloc(NULL, GAL_TYPE_INT64, 1, &in->size, NULL, 1,
                      p->cp.minmapsize, p->cp.quietmmap, name, unit,
                      comment);
 
-  /* Convert each input string (first try as an integer, assuming no
-     sub-second, or floating point precision).  */
+  /* Convert each input string into number of seconds. */
   iarr=out->array;
   for(i=0; i<in->size; ++i)
     {
+      /* Read the number of seconds and sub-seconds and write into the
+         output. */
       v=gal_fits_key_date_to_seconds(strarr[i], &subsecstr,
                                      &subsec);
-      iarr[i] = v==GAL_BLANK_SIZE_T ? GAL_BLANK_INT64 : v;
-      if(subsecstr) break;
-    }
-
-  /* If a sub-second string was present, then save the output as double
-     precision floating point. */
-  if(subsecstr)
-    {
-      /* Free the initially allocated output (as an integer). */
-      free(subsecstr);
-      gal_data_free(out);
-
-      /* Allocate a double-precision output. */
-      out=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &in->size, NULL, 1,
-                         p->cp.minmapsize, p->cp.quietmmap, name, unit,
-                         comment);
-
-      /* Convert the date. */
-      darr=out->array;
-      for(i=0; i<in->size; ++i)
-        {
-          subsecstr=NULL;
-          v=gal_fits_key_date_to_seconds(strarr[i], &subsecstr,
-                                               &subsec);
-          darr[i] = v==GAL_BLANK_SIZE_T ? NAN : v;
-          if(subsecstr) { darr[i]+=subsec; free(subsecstr); }
-        }
+      iarr[i] = ( v==GAL_BLANK_SIZE_T
+                  ? GAL_BLANK_INT64
+                  : ( operator == ARITHMETIC_TABLE_OP_DATETOSEC
+                      ? v
+                      : (isnan(subsec)
+                         ? v*1000
+                         : v*1000 + (int64_t)(subsec*1000) ) ) );
     }
 
   /* Clean up and put the resulting calculation back on the stack. */
@@ -839,6 +838,7 @@ arithmetic_operator_run(struct tableparams *p,
           break;
 
         case ARITHMETIC_TABLE_OP_DATETOSEC:
+        case ARITHMETIC_TABLE_OP_DATETOMILLISEC:
           arithmetic_datetosec(p, stack, token->operator);
           break;
 

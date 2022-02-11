@@ -11826,11 +11826,12 @@ See the @option{degree-to-ra} for more on the format of the output.
 @cindex Unix epoch time
 @cindex Time, Unix epoch
 @cindex Epoch, Unix time
-The popped operand should be a string column in the FITS date format (most generally: @code{YYYY-MM-DDThh:mm:ss.ddd...}).
-This operator will return the corresponding Unix epoch time (number of seconds that have passed since 00:00:00 Thursday, January 1st, 1970).
-The returned operand will be named @code{UNIXSEC} (short for Unix-seconds).
-If any of the times have sub-second precision, the numeric datatype of the column will be 64-bit floating point type.
-Otherwise it will be a 64-bit, signed integer, see @ref{Numeric data types}.
+Return the number of seconds from the Unix epoch time (00:00:00 Thursday, January 1st, 1970).
+The input (popped) operand should be a string column in the FITS date format (most generally: @code{YYYY-MM-DDThh:mm:ss.ddd...}).
+
+The returned operand will be named @code{UNIXSEC} (short for Unix-seconds) and will be a 64-bit, signed integer, see @ref{Numeric data types}.
+If the input string has sub-second precision, it will be ignored because floating point numbers cannot accurately store numbers with many significant digits.
+To preserve sub-second precision, please use @code{date-to-millisec}.
 
 For example, in the example below we are using this operator, in combination with the @option{--keyvalue} option of the Fits program, to sort your desired FITS files by observation date (value in the @code{DATE-OBS} keyword in example below):
 
@@ -11843,6 +11844,16 @@ $ astfits *.fits --keyvalue=DATE-OBS --colinfoinstdout \
 
 If you don't need to see the Unix-seconds any more, you can add a @option{-cFILENAME} (short for @option{--column=FILENAME}) at the end.
 For more on @option{--keyvalue}, see @ref{Keyword inspection and manipulation}.
+
+@item date-to-millisec
+Return the number of milli-seconds from the Unix epoch time (00:00:00 Thursday, January 1st, 1970).
+The input (popped) operand should be a string column in the FITS date format (most generally: @code{YYYY-MM-DDThh:mm:ss.ddd...}, where @code{.ddd} is the optional sub-second component).
+
+The returned operand will be named @code{UNIXMILLISEC} (short for Unix milli-seconds) and will be a 64-bit, signed integer, see @ref{Numeric data types}.
+The returned value is not a floating point type because for large numbers, floating point datatypes loose single-digit precision (which is important here).
+
+Other than the units of the output, this operator behaves similarly to @code{date-to-sec}.
+See the description of that operator for an example.
 @end table
 
 @node Operation precedence in Table, Invoking asttable, Column arithmetic, Table
