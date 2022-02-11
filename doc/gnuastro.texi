@@ -6333,6 +6333,20 @@ $ latex --version
 ImageMagick is a wonderful and robust program for image manipulation on the command-line.
 @file{bootstrap} uses it to convert the book images into the formats necessary for the various book formats.
 
+Since ImageMagick version 7, it is necessary to edit the policy file (@file{/etc/ImageMagick-7/policy.xml}) to have the following line (it maybe present, but commented, in this case un-comment it):
+
+@example
+<policy domain="coder" rights="read|write" pattern="@{PS,PDF,XPS@}" />
+@end example
+
+If the following line is present, it is also necessary to comment/remove it.
+
+@example
+<policy domain="delegate" rights="none" pattern="gs" />
+@end example
+
+To learn more about the ImageMagic security policy please see: @url{https://imagemagick.org/script/security-policy.php}.
+
 To check that you have a working ImageMagick in your system, you can try this command:
 
 @example
