@@ -5447,7 +5447,7 @@ To have the center identified as a single clump, we should mask these saturated 
 To find the saturation level, let's make a smaller crop of @mymath{50\times50} pixels around the star with the command below, then have a look at the distribution of pixels with a value larger than 100 (above the noise level):
 
 @example
-$ astcrop image-crop.fits --mode=wcs --widthinpix --width=50 \
+$ astcrop saturated.fits --mode=wcs --widthinpix --width=50 \
           --center=203.3916736,46.7968652 --output=saturated-center.fits
 $ aststatistics saturated-center.fits --greaterequal=100
 Histogram:
@@ -5489,6 +5489,9 @@ Histogram:
  |********************* *** *  ***   * *****  *** *   * *** * * ********
  |----------------------------------------------------------------------
 
+@noindent
+We still see an increase in the histogram around 3000.
+Therefore, We can set the saturation level in this image@footnote{In raw exposures, this value is usually around 65000 (close to @mymath{2^{16}}, since most CCDs have 16-bit pixels). But that is not the case here, because this is a processed/stacked image that has been calibrated.} to 2500.
 
 $ aststatistics saturated-center.fits --greaterequal=100 --lessthan=2500
 -------
@@ -5508,8 +5511,6 @@ Histogram:
 @end example
 
 @noindent
-We still see an increase in the histogram around 3000.
-Therefore, We can set the saturation level in this image@footnote{In raw exposures, this value is usually around 65000 (close to @mymath{2^{16}}, since most CCDs have 16-bit pixels). But that is not the case here, because this is a processed/stacked image that has been calibrated.} to 2500.
 Let's mask all such pixels with the command below:
 
 @example
@@ -5589,7 +5590,7 @@ $ astmkprof --kernel=gaussian,2,5 --oversample=1 \
 $ astarithmetic flat/67510.fits set-i i i 2500 gt \
                 2 dilate 2 dilate 2 dilate 2 dilate nan where \
                 --output=flat/67510-no-sat.fits
-$ astconvolve flat/67510-no-sat.fits --kernel=kernel.fits \
+$ astconvolve flat/67510-no-sat.fits --kernel=label/kernel.fits \
               --domain=spatial --output=label/sat-masked-conv.fits
 $ astarithmetic label/sat-masked-conv.fits 2 interpolate-maxofregion \
                 --output=label/image-conv.fits
@@ -5618,7 +5619,7 @@ In @ref{Preparing input for extended PSF}, we described how to create a Segment 
 So we are now ready to start building the outer parts of the PSF.
 
 First we will build the outer parts of the PSF, so we want the brightest stars.
-You will see we have several bright stars in this very large field of view, but we don't yet have a feeling how how many they are, and at what magnitudes.
+You will see we have several bright stars in this very large field of view, but we don't yet have a feeling how many they are, and at what magnitudes.
 So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than magnitude 12).
 For more on Query, see @ref{Query}.
 
