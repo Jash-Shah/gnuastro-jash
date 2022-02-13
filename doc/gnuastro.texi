@@ -5390,14 +5390,12 @@ An overview of the process is given in @ref{Overview of the PSF scripts}.
 
 @node Preparing input for extended PSF, Saturated pixels and Segment's clumps, Building the extended PSF, Building the extended PSF
 @subsection Preparing input for extended PSF
-In @ref{Overview of the PSF scripts}, we presented an overview of using the separate scripts in sequence, to build an extended PSF.
-Before digging into the details of each script, we'll start here with a fully working tutorial on how to use the scripts in order to construct a PSF, model the scattered light field and subtract it from the image.
-For this particular example, an image of the M51 galaxy group in the r (SDSS) band of the Javalambre Photometric Local Universe Survey (J-PLUS) used.
+We will use an image of the M51 galaxy group in the r (SDSS) band of the Javalambre Photometric Local Universe Survey (J-PLUS) to extract its extended PSF.
 For more information on J-PLUS, and its unique features visit: @url{http://www.j-plus.es}.
 
 First, let's download the image from the J-PLUS webpage using @code{wget}.
 But to have a generalize-able, and easy to read command, we'll define some base variables (in all-caps) first.
-After the download is complete, open the image with SAO DS9 (or any other FITS viewer you prefer!) to have a feeling of the data (and of course, enjoy the beauty of M51!).
+After the download is complete, open the image with SAO DS9 (or any other FITS viewer you prefer!) to have a feeling of the data (and of course, enjoy the beauty of M51 in such a wide field of view):
 
 @example
 $ IMAGEID="jplus-dr2/get_fits?id=67510"
@@ -5407,9 +5405,10 @@ $ wget $URL$IMAGEID -O jplus-dr2/67510.fits.fz
 $ ds9 jplus-dr2/67510.fits.fz -zoom to fit -zscale
 @end example
 
-Have a closer look at the edges of the image: zoom in to the corners.
-You see that on the edges the pixel values are either zero, or with significantly different values than the main body of the image.
-This is due to the dithering pattern that was used to make this image.
+Afer enjoying the large field of view, have a closer look at the edges of the image.
+Please zoom in to the corners.
+You will see that on the edges, the pixel values are either zero or with significantly different values than the main body of the image.
+This is due to the dithering pattern that was used to make this image and happens in all imaging surveys@footnote{Recall the cropping in a previous tutorial for a similar reason (varying ``depth'' across the image): @ref{Dataset inspection and cropping}.}.
 To avoid potential issues or problems that these regions may cause, we will first crop out the main body of the image with the command below.
 To keep the top-level directory clean, let's also put the crop in a directory called @file{flat}.
 
@@ -5428,7 +5427,7 @@ Please zoom into the edges again, you will see that they now have the same noise
 As explained in @ref{Overview of the PSF scripts}, it is important to mask other sources in the image.
 Therefore, before going onto selecting stars, let's detect all significant signal, and separate the clumps over the detections.
 However, the saturated pixels of the bright stars are going to cause problems.
-To see this problem, let's make a @mymath{1000\times1000} crop around a bright star to speed up the test (and its solution):
+To see this problem, let's make a @mymath{1000\times1000} crop around a bright star to speed up the test (and its solution; afterwards we'll apply it to the whole image):
 
 @example
 $ astcrop flat/67510.fits --mode=wcs --widthinpix --width=1000 \
@@ -5438,98 +5437,148 @@ $ astsegment sat-nc.fits --output=sat-seg.fits
 $ ds9 -mecube -zscale sat-seg.fits -zoom to fit
 @end example
 
-Have a look at the @code{CLUMPS} extension, you will see that instead of a single clump at the center of the star, we have multiple!
-This is because of the saturated pixels!
-When saturation occurs, the peak of the profile is lost (like cutting off the tip of a mountain!) and all saturated pixels get a noisy value close to the saturation level.
-This disrupts Segment's assumption to expand clumps from local maxima (the noise at the very high S/N level, results in each one being treated as a separate clump).
+Have a look at the @code{CLUMPS} extension, you will see that instead of a single clump at the center of the bright star, we have many clumps!
+This has happened because of the saturated pixels!
+When saturation occurs, the peak of the profile is lost (like cutting off the tip of a mountain to build a telescope!) and all saturated pixels get a noisy value close to the saturation level.
+This disrupts Segment's assumption to expand clumps from a local maxima (the noise at the very high S/N level, results in each one being treated as a separate local maxima and thus a separate clump).
+For more on how Segment defines clumps, see Section 3.2.1 and Figure 8 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi @& Ichikawa 2015}.
 To have the center identified as a single clump, we should mask these saturated pixels in a way that suites Segment's non-parametric methodology.
 
-To find the saturation level, let's make a smaller crop of @mymath{50\times50} pixels around the star with the command below, then have a look at the distribution of pixels with a value larger than 100 (above the noise level):
+First we need to find the saturation level!
+To find the saturation level, let's make a smaller crop of @mymath{50\times50} pixels around the star with the first command below.
+With the next command, please look at the crop with DS9 to visually understand the problem.
+Visual and qualitative inspection of the process is very imporant for understanding the solution.
 
 @example
 $ astcrop saturated.fits --mode=wcs --widthinpix --width=50 \
-          --center=203.3916736,46.7968652 --output=saturated-center.fits
-$ aststatistics saturated-center.fits --greaterequal=100
+          --center=203.3916736,46.7968652 --output=sat-center.fits
+$ ds9 sat-center.fits -cmap sls -zoom to fit
+@end example
+
+@noindent
+To quantitatively identify the saturation level in this image, let's have a look at the distribution of pixels with a value larger than 100 (above the noise level):
+
+@example
+$ aststatistics sat-center.fits --greaterequal=100
 Histogram:
  |*
  |*
  |*
- |*                                                               *
- |**                                                              *
- |***                                                             *
- |***                                                             *
- |*****                                                           **
- |********                                                       ****
- |********** *  * **                                            ***** *
- |*************************  **   * ***** * * *   ** *** * *************
+ |*
+ |*                                                              *
+ |**                                                             *
+ |***                                                           **
+ |****                                                          **
+ |******                                                        ****
+ |********** *    *   *                                        ******
+ |************************* ************ * ***  ******* *** ************
  |----------------------------------------------------------------------
 @end example
 
 The peak you see in the right end (larger values) of the histogram shows the saturated pixels.
-If there was no saturation, you would expect the number of pixels at increasing values to simply decrease until reaching the maximum value of the profile.
+If there was no saturation, the number of pixels should have decreased at increasing values; until reaching the maximum value of the profile (one pixel!).
 But that is not the case here.
 Please try this experiment on a non-saturated star (decreasing the crop width) to see what we mean.
+
+If you still haven't experimented on a non-saturated star, please stop reading this tutorial!
+Please open @file{flat/67510.fits} in DS9, select a fainter/smaller star and repeat the last three commands (with a different center).
+After you have confirmed the point above (visually, and with the histogram), please continue with the rest of this tutorial.
+
 Finding the saturation level is easy with Statistics (by using the @option{--lessthan} option until the histogram becomes as expected: only decreasing).
-First let's try @option{--lessthan=3000} and then @option{--lessthan=2500}:
+First, let's try @option{--lessthan=3000}:
 
 @example
-$ aststatistics saturated-center.fits --greaterequal=100 --lessthan=3000
+$ aststatistics sat-center.fits --greaterequal=100 --lessthan=3000
 -------
 Histogram:
+ |*
  |*
  |*
  |*
  |*
  |**
- |***
  |***                                                                  *
- |***                                                                  *
+ |****                                                                 *
  |*******                                                             **
- |*********** *  *  *                                                 **
- |********************* *** *  ***   * *****  *** *   * *** * * ********
+ |*********** * *   *   *   *                            *  *       ****
+ |************************* *  ***** *******  *****  ** ***** * ********
  |----------------------------------------------------------------------
+@end example
 
 @noindent
 We still see an increase in the histogram around 3000.
-Therefore, We can set the saturation level in this image@footnote{In raw exposures, this value is usually around 65000 (close to @mymath{2^{16}}, since most CCDs have 16-bit pixels). But that is not the case here, because this is a processed/stacked image that has been calibrated.} to 2500.
+Let's try a threshold of 2500:
 
-$ aststatistics saturated-center.fits --greaterequal=100 --lessthan=2500
+@example
+$ aststatistics sat-center.fits --greaterequal=100 --lessthan=2500
 -------
 Histogram:
  |*
  |*
- |*
+ |**
  |**
  |**
  |**
  |****
- |**** **
+ |*****
  |*********
- |************** **  *  * *  *
- |******************** ***** ***  *   ***    *  *** **  * ** *    * * **
+ |*************  *   *  *   *
+ |*********************************   ** ** ** *** **  * ****   ** *****
  |----------------------------------------------------------------------
 @end example
 
-@noindent
+The peak at the large end of the histogram has gone!
+But let's have a closer look at the values (the resolution of an ASCII histogram is limited!).
+To do this, we'll ask Statistics to save the histogram into a table with the @option{--histogram} option, then look at the last 20 rows:
+
+@example
+$ aststatistics sat-center.fits --greaterequal=100 --lessthan=2500 \
+                --histogram --output=sat-center-hist.fits
+$ asttable sat-center-hist.fits --tail=20
+2021.1849112701    1
+2045.0495397186    0
+2068.9141681671    1
+2092.7787966156    1
+2116.6434250641    0
+2140.5080535126    0
+2164.3726819611    0
+2188.2373104095    0
+2212.101938858     1
+2235.9665673065    1
+2259.831195755     2
+2283.6958242035    0
+2307.560452652     0
+2331.4250811005    1
+2355.289709549     1
+2379.1543379974    1
+2403.0189664459    2
+2426.8835948944    1
+2450.7482233429    2
+2474.6128517914    2
+@end example
+
+Since the number of points at the extreme end are increasing (from 1 to 2), We therefore see that a value 2500 is still above the saturation level (the number of pixels is still decreasing before that)!
+A more reasonable saturation level for this image would be 2200!
+As an exercise, you can try automating this selection with AWK.
+
+Therefore, we can set the saturation level in this image@footnote{In raw exposures, this value is usually around 65000 (close to @mymath{2^{16}}, since most CCDs have 16-bit pixels; see @ref{Numeric data types}). But that is not the case here, because this is a processed/stacked image that has been calibrated.} to be 2200.
 Let's mask all such pixels with the command below:
 
 @example
-$ astarithmetic saturated.fits set-i i i 2500 gt nan where \
+$ astarithmetic saturated.fits set-i i i 2200 gt nan where \
                 --output=sat-masked.fits
-$ ds9 sat-masked.fits
+$ ds9 sat-masked.fits -cmap sls -zoom 8
 @end example
 
-Zoom into the center: you will see that the staturated pixels are indeed masked.
-However, there is still another problem: on the edges of the vertical ``bleeding'' saturated pixels, there are strong negative values (almost like ``waves'').
-Such that the pixels just touching the saturated pixels have strong negative values.
-These will also cause problems!
-So with the same command, let's dilate the saturated regions by four times.
+You will see that the staturated pixels are indeed masked (they aren't noisy or have a very high value: they have a value of NaN, or Not-a-Number).
+But we aren't done yet: have another look on the edges of the vertical ``bleeding'' saturated pixels, there are strong positive/negative values touching it (almost like ``waves'').
+These will also cause problems and have to be masked!
+So with a small addition to the previous command, let's dilate the saturated regions (with 2-connectivity, or 8-connected neighbors) two times and have another look:
 
 @example
-$ astarithmetic saturated.fits set-i i i 2500 gt \
-                2 dilate 2 dilate 2 dilate 2 dilate nan where \
-                --output=sat-masked.fits
-$ ds9 sat-masked.fits
+$ astarithmetic saturated.fits set-i i i 2200 gt \
+                2 dilate 2 dilate nan where --output=sat-masked.fits
+$ ds9 sat-masked.fits -cmap sls -zoom 8
 @end example
 
 Now that saturated pixels (and their problematic neighbors) have been masked, we can convolve the image (recall that Segment will use the convolved image for identifing clumps) with the command below.
@@ -5540,77 +5589,134 @@ We will also create a Gaussian kernel with @mymath{\rm{FWHM}=2} pixels, truncate
 $ astmkprof --kernel=gaussian,2,5 --oversample=1 -okernel.fits
 $ astconvolve sat-masked.fits --kernel=kernel.fits --domain=spatial \
               --output=sat-masked-conv.fits
+$ ds9 sat-masked-conv.fits -cmap sls -zoom 8
 @end example
 
 @noindent
-After convolution, the problematic pixels are still NaN.
+Please look closely to see how after spatial-domain convolution, the problematic pixels are still NaN.
 But Segment requires the profile to start with a maximum value and decrease.
-So before feeding into Segment, we'll fill the blank values with the maximum value of the neighboring pixels (see @ref{Interpolation operators}):
+So before feeding into Segment, we'll fill the blank values with the maximum value of the neighboring pixels in both the input and convolved images (see @ref{Interpolation operators}):
 
 @example
+$ astarithmetic sat-masked.fits 2 interpolate-maxofregion \
+                --output=sat-fill.fits
 $ astarithmetic sat-masked-conv.fits 2 interpolate-maxofregion \
-                --output=sat-conv.fits
-$ ds9 sat-conv.fits
+                --output=sat-fill-conv.fits
+$ ds9 sat-conv.fits -cmap sls -zoom 8
 @end example
 
 @noindent
-Open the output and have a look;
-The output image doesn't have blank pixels any more and each blank region (in the centers of stars) is now filled with the largest value that is touching that particular region.
-We can now feed this image to Segment as the convolved image:
+Have a closer look at the opened image:
+The output image doesn't have blank pixels any more and each blank region is now filled with the largest value that is touching that particular region.
+This happens for all saturated stars in this image, so zoom-out and try to find some to confirm this.
+We can now feed this image to NoiseChisel and Segment as the convolved image:
 
 @example
-$ astsegment sat-nc.fits --convolved=sat-conv.fits --output=sat-seg.fits
-$ ds9 -mecube -zscale sat-seg.fits -zoom to fit
+$ astnoisechisel sat-fill.fits --convolved=sat-fill-conv.fits \
+                 --output=sat-nc.fits
+$ astsegment sat-nc.fits --convolved=sat-fill-conv.fits \
+             --output=sat-seg.fits --rawoutput
+$ ds9 -mecube -zscale sat-seg.fits -zoom to fit -scale limits -1 1
 @end example
 
 @noindent
-Please look at the @code{CLUMPS} extension.
+See the @code{CLUMPS} extension.
 Do you see how the whole center of the star has indeed been identified as a single clump?
-We thus achieved our aim and didn't let the saturated pixels harm the identification of the center.
+We thus achieved our aim and didn't let the saturated pixels harm the identification of the center!
 
-Now we can extend it to the whole image.
+Now we can extend these same steps to the whole image.
 To detect signal, we can run NoiseChisel using the command below.
-In short:
+We modified the default value to two of the options, below you can see the reason for these changes.
+See @ref{Detecting large extended targets} for more on optimizing NoiseChisel.
 @itemize
 @item
-Since the image is so large, we increase @option{--interpnumngb} to get better outlier statistics on the tiles.
+Since the image is so large, we have increased @option{--interpnumngb} to get better outlier statistics on the tiles.
+The default value is primarily for small images, so this is usually the first thing you should do when running NoiseChisel on a real/large image.
 @item
-Since the image not the result of too many exposures, it doesn't have strong correlated noise, so we'll decrease @option{--detgrowquant} and increase @option{--detgrowmaxholesize}.
+Since the image is not too deep (made from few exposures), it doesn't have strong correlated noise, so we'll decrease @option{--detgrowquant} and increase @option{--detgrowmaxholesize} to better extract signal.
 @end itemize
 @noindent
-See @ref{Detecting large extended targets} for more on optimizing NoiseChisel.
 Furthermore, since both NoiseChisel and Segment need a convolved image, we'll do the convolution before and feed it to both (to save running time).
 But first, let's delete all the temporary files we made above.
+Since the image is large (+300 MB), to avoid wasting storage, any temporary file that is no longer necessary for later processing is deleted after it is used.
+You can visually check each of them with DS9 before deleting them (or not delete them at all!).
+Generally, within a pipeline it is best to remove such large temporary files, because space runs out much faster than you think (for example once you get good results and want to use more fields).
 
 @example
 $ rm *.fits
 $ mkdir label
 $ astmkprof --kernel=gaussian,2,5 --oversample=1 \
             -olabel/kernel.fits
-$ astarithmetic flat/67510.fits set-i i i 2500 gt \
+$ astarithmetic flat/67510.fits set-i i i 2200 gt \
                 2 dilate 2 dilate 2 dilate 2 dilate nan where \
-                --output=flat/67510-no-sat.fits
-$ astconvolve flat/67510-no-sat.fits --kernel=label/kernel.fits \
-              --domain=spatial --output=label/sat-masked-conv.fits
-$ astarithmetic label/sat-masked-conv.fits 2 interpolate-maxofregion \
-                --output=label/image-conv.fits
-$ astnoisechisel label/image-conv.fits --interpnumngb=100 \
+                --output=label/67510-masked-sat.fits
+$ astconvolve label/67510-masked-sat.fits --kernel=label/kernel.fits \
+              --domain=spatial --output=label/67510-masked-conv.fits
+$ rm label/kernel.fits
+$ astarithmetic label/67510-masked-sat.fits 2 interpolate-maxofregion \
+                --output=label/67510-fill.fits
+$ astarithmetic label/67510-masked-conv.fits 2 interpolate-maxofregion \
+                --output=label/67510-fill-conv.fits
+$ rm label/67510-masked-conv.fits
+$ astnoisechisel label/67510-fill.fits --interpnumngb=100 \
                  --detgrowquant=0.8 --detgrowmaxholesize=100000 \
-                 --convolved=label/image-conv.fits \
-                 --output=label/nc.fits
-$ astsegment label/nc.fits --convolved=label/image-conv.fits \
-             --output=label/seg.fits
-$ ds9 -mecube -zscale label/nc.fits -zoom to fit
+                 --convolved=label/67510-fill-conv.fits \
+                 --output=label/67510-nc.fits
+$ label/67510-fill.fits
+$ astsegment label/67510-nc.fits --output=label/67510-seg-raw.fits \
+             --convolved=label/67510-fill-conv.fits --rawoutput
+$ rm label/67510-fill-conv.fits
+$ ds9 -mecube -zscale label/67510-seg-raw.fits -zoom to fit \
+      -scale limits -1 1
 @end example
 
-Looking in the @code{SKY} extension of NoiseChisel, we see that there is no footprint of the bright stars or of M51, so the detection was good!
-Furthermore, the saturated pixels haven't caused any problems and the central clumps of bright stars are now a single clump.
+We see that the saturated pixels haven't caused any problems and the central clumps of bright stars are now a single clump.
 We can now proceed to estimating the outer PSF in @ref{Building outer part of PSF}.
-But first, let's clean up behind our selves (we only need the Segment output)
+
+But before that, let's make a ``standard'' segment output: one that can safely be fed into MakeCatalog for measurements.
+The main problem is again the saturted pixels: we interpolated them to be the maximum of their nearby pixels.
+But this will cause problems in any measurement that is done over those regions.
+To let MakeCatalog know that those pixels shouldn't be used, the first extension of the file given to MakeCatlog should have blank values on those pixels.
+We will do this with the commands below:
 
 @example
-$ rm label/image-conv.fits label/kernel.fits label/sat-masked.fits \
-     label/sat-masked-conv.fits
+# First HDU of Segment (Sky-subtracted input)
+$ astarithmetic label/67510-nc.fits -hINPUT-NO-SKY \
+                label/67510-masked-sat.fits isblank nan where \
+                --output=label/67510-seg.fits
+$ astfits label/67510-seg.fits --update=EXTNAME,INPUT-NO-SKY
+
+# Second and third HDUs: CLUMPS and OBJECTS
+$ astfits label/67510-seg-raw.fits --copy=CLUMPS --copy=OBJECTS \
+          --output=label/67510-seg.fits
+
+# Fourth HDU: Sky standard deviation (from NoiseChisel):
+$ astfits label/67510-nc.fits --copy=SKY_STD \
+          --output=label/67510-seg.fits
+
+# Clean up all the un-necessary files:
+$ rm label/67510-masked-sat.fits label/67510-nc.fits \
+     label/67510-seg-raw.fits
+@end example
+
+@noindent
+You can now simply run MakeCatalog on this image and be sure that saturated pixels won't affect the measurements.
+In fact, you can use this fact to find the clumps containing saturated pixels: recall that the @option{--area} column only calculates the area of non-blank pixels, while @option{--geoarea} calculates the area of the label (independent of their blank-ness in the values image):
+
+@example
+$ astmkcatalog label/67510-seg.fits --ids --area --geoarea \
+               --clumpscat --output=cat.fits
+@end example
+
+The information of the clumps that have been affected by saturation can easily be found by selecting those with a differing value in the @code{AREA} and @code{AREA_FULL} columns:
+
+@example
+# With AWK:
+$ asttable cat.fits -hCLUMPS | awk '$3!=$4'
+
+# Using Table arithmetic (can use column names, or save as FITS):
+asttable cat.fits -hCLUMPS -cHOST_OBJ_ID --noblankend=2 \
+         -c'arith AREA AREA AREA_FULL ne nan where'
 @end example
 
 @node Building outer part of PSF, Inner parts of the PSF, Saturated pixels and Segment's clumps, Building the extended PSF
