@@ -5662,7 +5662,7 @@ $ astnoisechisel label/67510-fill.fits --interpnumngb=100 \
                  --detgrowquant=0.8 --detgrowmaxholesize=100000 \
                  --convolved=label/67510-fill-conv.fits \
                  --output=label/67510-nc.fits
-$ label/67510-fill.fits
+$ rm label/67510-fill.fits
 $ astsegment label/67510-nc.fits --output=label/67510-seg-raw.fits \
              --convolved=label/67510-fill-conv.fits --rawoutput
 $ rm label/67510-fill-conv.fits
@@ -5717,6 +5717,9 @@ $ asttable cat.fits -hCLUMPS | awk '$3!=$4'
 # Using Table arithmetic (can use column names, or save as FITS):
 asttable cat.fits -hCLUMPS -cHOST_OBJ_ID --noblankend=2 \
          -c'arith AREA AREA AREA_FULL ne nan where'
+
+# Remove the table.
+$ rm cat.fits
 @end example
 
 @node Building outer part of PSF, Inner parts of the PSF, Saturated pixels and Segment's clumps, Building the extended PSF
@@ -5786,12 +5789,12 @@ $ counter=1
 $ mkdir finding-normradii
 $ asttable outer/67510-6-8.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp flat/67510-no-sat.fits \
+               astscript-psf-create-make-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --stampwidth=500 \
                     --center=$ra,$dec \
                     --normradii=250,260 \
-                    --segment=label/seg.fits \
+                    --segment=label/67510-seg.fits \
                     --output=finding-normradii/$counter.fits \
                     --tmpdir=finding-normradii --keeptmp; \
                counter=$((counter+1)); \
@@ -5820,12 +5823,12 @@ $ counter=1
 $ mkdir outer/stamps
 $ asttable outer/67510-6-8.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp flat/67510-no-sat.fits \
+               astscript-psf-create-make-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --stampwidth=500 \
                     --center=$ra,$dec \
                     --normradii=50,60 \
-                    --segment=label/seg.fits \
+                    --segment=label/67510-seg.fits \
                     --output=outer/stamps/67510-$counter.fits; \
                counter=$((counter+1)); \
              done
@@ -5888,7 +5891,7 @@ $ astscript-psf-create-select-stars flat/67510.fits \
 
 $ astscript-ds9-region inner-1/67510-8-10.fits -cra,dec \
            --namecol=phot_g_mean_mag \
-           --command="ds9 flat/67510-no-sat.fits -zoom to fit -zscale"
+           --command="ds9 flat/67510.fits -zoom to fit -zscale"
 @end example
 
 We only have two stars, but they if you zoom into their centers, you will see that they don't have any major bleeding-vertical saturations any more!
@@ -5902,12 +5905,12 @@ $ counter=1
 $ mkdir inner-1/stamps
 $ asttable inner-1/67510-8-10.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp flat/67510-no-sat.fits \
+               astscript-psf-create-make-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --stampwidth=500 \
                     --center=$ra,$dec \
                     --normradii=30,40 \
-                    --segment=label/seg.fits \
+                    --segment=label/67510-seg.fits \
                     --output=inner-1/stamps/67510-$counter.fits; \
                counter=$((counter+1)); \
              done
@@ -5915,6 +5918,7 @@ $ asttable inner-1/67510-8-10.fits \
 $ imgs=inner-1/stamps/*.fits
 $ numimgs=$(echo $imgs | wc -w)
 $ astarithmetic $imgs $numimgs median -g1 --output=inner-1/stack.fits
+$ ds9 inner-1/stack.fits inner-1/stamps/*.fits
 @end example
 
 @noindent
