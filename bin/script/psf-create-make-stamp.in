@@ -555,8 +555,15 @@ fi
 # Normalize the stamp
 # -------------------
 #
-# Normalize the masked stamp by dividing by the normalization value.
-astarithmetic $cropped_masked --hdu=1 $normvalue / --output=$output $quiet
+# Before applying the normalization factor to the masked stamps, we should
+# make sure the the normalization value has a 'float32' type. This is
+# because Arithmetic will interpret its type based on the number of digits
+# it has. Therefore something like 1.7204 will be read as float32 (1.7204),
+# but 1.868915 will be read as 'float64'. In the latter case, the output
+# will become 'float64' also, which will cause problems later when we want
+# to stack them together (some images will be 'float32', some 'float64').
+astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
+              --output=$output $quiet
 
 
 
