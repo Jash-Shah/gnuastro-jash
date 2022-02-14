@@ -852,10 +852,11 @@ table_catrows_findhdu(char *filename, gal_list_str_t **hdull)
 static size_t
 table_catrows_prepare(struct tableparams *p)
 {
+  char **strarr;
   char *hdu=NULL;
   int tableformat;
   gal_data_t *tmp, *out=NULL;
-  size_t nrows=p->table->size;
+  size_t i, nrows=p->table->size;
   gal_list_str_t *filell, *hdull;
   size_t numcols, numrows, filledrows=p->table->size;
 
@@ -882,6 +883,14 @@ table_catrows_prepare(struct tableparams *p)
       /* Put the full contents of the existing column into the new
          column: this will be the first set of rows,  */
       memcpy(out->array, tmp->array, tmp->size*gal_type_sizeof(tmp->type));
+
+      /* If the column type is a string, we should set the input pointers
+         to NULL to avoid freeing them later. */
+      if(tmp->type==GAL_TYPE_STRING)
+        {
+          strarr=tmp->array;
+          for(i=0;i<tmp->size;++i) strarr[i]=NULL;
+        }
     }
   gal_list_data_reverse(&out);
 
@@ -899,10 +908,10 @@ table_catrows_prepare(struct tableparams *p)
 static void
 table_catrows(struct tableparams *p)
 {
-  char *hdu=NULL;
+  char *hdu=NULL, **strarr;
   gal_data_t *new, *ttmp, *tmp;
   gal_list_str_t *filell, *hdull;
-  size_t colcount, ncols, ncolstest, filledrows;
+  size_t i, colcount, ncols, ncolstest, filledrows;
 
   /* Make sure enough HDUs are given, and allocate the final output table,
      while filling the initiall table rows into it. */
@@ -957,6 +966,14 @@ table_catrows(struct tableparams *p)
           /* Add the new rows and incremenet the counter. */
           memcpy(gal_pointer_increment(ttmp->array, filledrows, ttmp->type),
                  tmp->array, tmp->size*gal_type_sizeof(tmp->type));
+
+          /* If the column type is a string, we should set the input
+             pointers to NULL to avoid freeing them later. */
+          if(tmp->type==GAL_TYPE_STRING)
+            {
+              strarr=tmp->array;
+              for(i=0;i<tmp->size;++i) strarr[i]=NULL;
+            }
 
           /* Take 'ttmp' to the next column and increment the counter */
           ttmp=ttmp->next;

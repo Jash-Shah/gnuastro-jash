@@ -197,6 +197,9 @@ See the end of the file for license conditions.
   bug #62052: WCS decomposition of CD into PC+CDELT not setting interanal
               values; reported by Ignacio Ruiz Cejudo and Raul
               Infante-Sainz.
+  bug #62054: Crash in Table's '--catrowfile' when string column is present;
+              reported by Manuel Sánchez-Benavente.
+
 
 
 
