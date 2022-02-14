@@ -220,11 +220,8 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
   status=wcspih(fullheader, nkeys, relax, ctrl, &nreject, nwcs, &wcs);
   if(status)
     {
-      fprintf(stderr,"\n"
-              "##################\n"
-              "WCSLIB Warning: wcspih ERROR %d: %s.\n"
-              "##################\n",
-              status, wcs_errmsg[status]);
+      error(EXIT_SUCCESS, 0, "%s: WCSLIB Warning: wcspih ERROR %d: %s",
+            __func__, status, wcs_errmsg[status]);
       wcs=NULL; *nwcs=0;
     }
 
@@ -358,10 +355,8 @@ gal_wcs_read_fitsptr(fitsfile *fptr, int linearmatrix, size_t hstartwcs,
           status=wcsset(wcs);
           if(status)
             {
-              fprintf(stderr, "\n##################\n"
-                      "WCSLIB Warning: wcsset ERROR %d: %s.\n"
-                      "##################\n",
-                      status, wcs_errmsg[status]);
+              error(EXIT_SUCCESS, 0, "%s: WCSLIB warning: wcsset "
+                    "error %d: %s", __func__, status, wcs_errmsg[status]);
               wcsfree(wcs);
               wcs=NULL;
               *nwcs=0;
@@ -473,8 +468,8 @@ gal_wcs_create(double *crpix, double *crval, double *cdelt,
   /* Set up the wcs structure with the constants defined above. */
   status=wcsset(wcs);
   if(status)
-    error(EXIT_FAILURE, 0, "wcsset error %d: %s", status,
-          wcs_errmsg[status]);
+    error(EXIT_FAILURE, 0, "%s: wcsset error %d: %s", __func__,
+          status, wcs_errmsg[status]);
 
   /* If a CD matrix is desired make it. */
   if(linearmatrix==GAL_WCS_LINEAR_MATRIX_CD)
@@ -1620,6 +1615,11 @@ gal_wcs_warp_matrix(struct wcsprm *wcs)
       out[1] = -1 * wcs->cdelt[1] *sin(crota2);
       out[2] = wcs->cdelt[0] * sin(crota2);
       out[3] = wcs->cdelt[1] * cos(crota2);
+
+      /* For a check:
+      printf("cdelt: %f, %f\n", wcs->cdelt[0], wcs->cdelt[1]);
+      printf("cd:\n%f, %f\n%f, %f\n", out[0], out[1], out[2], out[3]);
+      */
     }
   else
     error(EXIT_FAILURE, 0, "%s: currently only PCi_ja and CDi_ja keywords "
@@ -1676,8 +1676,7 @@ gal_wcs_clean_errors(struct wcsprm *wcs)
 /* According to the FITS standard, in the 'PCi_j' WCS formalism, the matrix
    elements m_{ij} are encoded in the 'PCi_j' keywords and the scale
    factors are encoded in the 'CDELTi' keywords. There is also another
-   formalism (the 'CDi_j' formalism) which merges the two into one
-   matrix.
+   formalism (the 'CDi_j' formalism) which merges the two into one matrix.
 
    However, WCSLIB's internal operations are apparently done in the 'PCi_j'
    formalism. So its outputs are also all in that format by default. When
@@ -1689,6 +1688,7 @@ void
 gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs)
 {
   size_t i, j;
+  int status=0;
   double *ps, *warp;
 
   /* If there is on WCS, then don't do anything. */
@@ -1700,7 +1700,7 @@ gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs)
   if(ps==NULL) return;
 
   /* For a check.
-  printf("pc: %g, %g\n", pc[0], pc[1]);
+  printf("ps: %g, %g\n", ps[0], ps[1]);
   printf("warp: %g, %g, %g, %g\n", warp[0], warp[1],
          warp[2], warp[3]);
   */
@@ -1722,6 +1722,12 @@ gal_wcs_decompose_pc_cdelt(struct wcsprm *wcs)
      that WCSLIB only looks into the 'PCi_j' and 'CDELTi' and makes no
      assumptioins about 'CDELTi'. */
   wcs->altlin=1;
+
+  /* Re-run 'wcsset' to update all the internal WCS parameters. */
+  status=wcsset(wcs);
+  if(status)
+    error(EXIT_SUCCESS, 0, "%s: WCSLIB warning: wcsset ERROR %d: %s",
+          __func__, status, wcs_errmsg[status]);
 
   /* Clean up. */
   free(ps);

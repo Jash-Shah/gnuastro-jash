@@ -186,15 +186,17 @@ See the end of the file for license conditions.
               in Julian dates for example) incorrectly read as float32
               (thus loosing precision); reported by Zohreh Ghaffari, fixed
               with help of Pedram Ashofteh Ardakani.
+  bug #61976: Table arithmetic date-to-sec produces same result for
+              different times (separated by about 1 second). This bug was
+              reported by Zohreh Ghaffari and Pedram Ashofteh Ardakani.
   bug #61967: DS9 polygon region files not read when they have width and
               color; reported by Zohreh Ghaffari, fixed by Pedram Ashofteh
               Ardakani.
   bug #62008: Arithmetic not deleting existing output when the 'makenew' is
               used (no FITS file exists in the reverse polish notation).
-  bug #61976: Table arithmetic date-to-sec produces same result for
-              different times (separated by about 1 second). This bug was
-              reported by Zohreh Ghaffari and Pedram Ashofteh Ardakani.
-
+  bug #62052: WCS decomposition of CD into PC+CDELT not setting interanal
+              values; reported by Ignacio Ruiz Cejudo and Raul
+              Infante-Sainz.
 
 
 
