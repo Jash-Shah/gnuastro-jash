@@ -3,7 +3,7 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
-* Noteworthy changes in release X.XX (library XX.0.0) (YYYY-MM-DD) [stable]
+* Noteworthy changes in release X.XX (library XX.0.0) (YYYY-MM-DD) [not yet released]
 
 ** New features
 
@@ -144,14 +144,14 @@ See the end of the file for license conditions.
      always in a 64-bit signed integer format. Until now, if the input had
      sub-second precision it would return a 64-bit floating point type;
      however, that resulted in bug #61976 (where the loss of precision due
-     to the floating-point's logarithmic scale for too many significanat
-     digits caused incorrect coversions).
+     to the floating-point's logarithmic scale for too many significant
+     digits caused incorrect conversions).
 
   Library:
    - gal_fits_tab_read: now takes the number of threads to read the desired
      columns in parallel (this will greatly improve reading speed when
      there are many columns and many rows).
-   - gal_table_read: simlar to 'gal_fits_tab_read' (only relevant for
+   - gal_table_read: similar to 'gal_fits_tab_read' (only relevant for
      reading FITS tables).
    - gal_blank_initialize: also works on string data, but initializing only
      a tile over a larger block of elements is only supported for numeric
@@ -161,7 +161,7 @@ See the end of the file for license conditions.
   bug #61329: make check crash in macOS in convolve/spectrum-1d.sh, found
               and fixed with the help of Sebastian Luna-Valero.
   bug #61378: Table crash when input is sexagesimal RA/DEC and no metadata.
-  bug #61462: Crash on FITS binary table colums with repeat of 0.
+  bug #61462: Crash on FITS binary table columns with repeat of 0.
   bug #61468: DS9 region file can't be read in sexagesimal coordinates,
               reported by Juan Antonio Fernández Ontiveros and Alejandro
               Lumbreras Calle.
@@ -186,15 +186,15 @@ See the end of the file for license conditions.
               in Julian dates for example) incorrectly read as float32
               (thus loosing precision); reported by Zohreh Ghaffari, fixed
               with help of Pedram Ashofteh Ardakani.
-  bug #61976: Table arithmetic date-to-sec produces same result for
-              different times (separated by about 1 second). This bug was
-              reported by Zohreh Ghaffari and Pedram Ashofteh Ardakani.
   bug #61967: DS9 polygon region files not read when they have width and
               color; reported by Zohreh Ghaffari, fixed by Pedram Ashofteh
               Ardakani.
+  bug #61976: Table arithmetic date-to-sec produces same result for
+              different times (separated by about 1 second). This bug was
+              reported by Zohreh Ghaffari and Pedram Ashofteh Ardakani.
   bug #62008: Arithmetic not deleting existing output when the 'makenew' is
               used (no FITS file exists in the reverse polish notation).
-  bug #62052: WCS decomposition of CD into PC+CDELT not setting interanal
+  bug #62052: WCS decomposition of CD into PC+CDELT not setting internal
               values; reported by Ignacio Ruiz Cejudo and Raul
               Infante-Sainz.
   bug #62054: Crash in Table's '--catrowfile' when string column is present;
