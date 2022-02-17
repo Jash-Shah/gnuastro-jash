@@ -58,6 +58,12 @@ scriptname=@SCRIPT_NAME@
 
 
 
+# Define the path work directory.
+curdir=$(pwd)
+
+
+
+
 
 # Output of `--usage' and `--help':
 print_usage() {
@@ -430,8 +436,10 @@ if [ -d $tmpdir ]; then junk=1; else mkdir $tmpdir; fi
 # For the standard deviation, besides being empty or not, we first need to
 # make sure it is actually a file (note that it can also be a number). If
 # its a file, we'll crop it and set 'instd' to be the new cropped file.
-crop=$tmpdir/crop.fits
-cropstd=$tmpdir/crop-std.fits
+cropbase=crop.fits
+crop=$tmpdir/$cropbase
+cropstdbase=crop-std.fits
+cropstd=$tmpdir/$cropstdbase
 cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$xcenter,$ycenter --mode=img \
         --width=$cropwidth --output=$crop $quiet
@@ -467,12 +475,14 @@ ycenter=$(echo "$ycenter $cropwidth $dxy" \
 # With the goal of having higher spatial resolution, here the input image
 # is over-sampled. This is only done if the user request this with the
 # option --oversample.
-values=$tmpdir/values.fits
-valuesstd=$tmpdir/valuesstd.fits
+valuesbase=values.fits
+values=$tmpdir/$valuesbase
+valuesstdbase=valuesstd.fits
+valuesstd=$tmpdir/$valuesstdbase
 if [ x$oversample = x ]; then
-    ln -fs $crop $values
+    cd $tmpdir; ln -fs $cropbase $valuesbase; cd $curdir
     if [ x"$instd" != x ] && [ -f "$instd" ]; then
-        ln -fs $cropstd $valuesstd
+        cd $tmpdir; ln -fs $cropstdbase $valuesstdbase; cd $curdir
     fi
 else
     xcenter=$(echo $xcenter | awk '{print '$oversample'*$1}')
@@ -532,7 +542,8 @@ fi
 # axisratio     -- axis ratio.
 # rmax          -- magnitude of the profile within the truncation radius (rmax).
 # 1             -- Truncation in radius unit.
-aperturesraw=$tmpdir/apertures-raw.fits
+aperturesrawbase=apertures-raw.fits
+aperturesraw=$tmpdir/$aperturesrawbase
 echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
      | astmkprof --background=$values --backhdu=1 --mforflatpix \
                  --mode=img --clearcanvas --type=int16 \
@@ -550,12 +561,14 @@ echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
 # number of pixels on each aperture (at each radius) will be larger. Most
 # of times this option is good to average over a larger number of pixels
 # and increase the signal-to-noise ratio of the measurement.
-aperturesrebinned=$tmpdir/apertures-rebin.fits
+aperturesrebinnedbase=apertures-rebin.fits
+aperturesrebinned=$tmpdir/$aperturesrebinnedbase
 if [ x"$undersample" != x ]; then
     astarithmetic $aperturesraw $undersample / \
                   $quiet --output $aperturesrebinned
 else
-    ln -fs $aperturesraw $aperturesrebinned
+    cd $tmpdir; ln -fs $aperturesrawbase $aperturesrebinnedbase
+    cd $curdir
 fi
 
 
