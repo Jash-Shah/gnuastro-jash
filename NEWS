@@ -199,6 +199,10 @@ See the end of the file for license conditions.
               Infante-Sainz.
   bug #62054: Crash in Table's '--catrowfile' when string column is present;
               reported by Manuel Sánchez-Benavente.
+  bug #62069: Wrong Arithmetic result in binary operators when both input
+              operands are integers of same width, but different sign (for
+              example 'int32' and 'uint32'); reported by Zohreh Ghaffari
+              and Pedram Ashofteh Ardakani.
 
 
 

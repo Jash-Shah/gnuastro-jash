@@ -560,6 +560,7 @@ gal_type_from_string(void **out, char *string, uint8_t type)
 void *
 gal_type_string_to_number(char *string, uint8_t *type)
 {
+  long int l;
   void *ptr, *out;
   int fnz=-1, lnz=0;     /* 'F'irst (or 'L'ast) 'N'on-'Z'ero. */
   uint8_t forcedfloat=0;
@@ -584,15 +585,28 @@ gal_type_string_to_number(char *string, uint8_t *type)
   /* See if the number is actually an integer: */
   if( forcedfloat==0 && ceil(d) == d )
     {
+      /* We know the number is an integer, so we should re-read it again,
+         but this time, as an integer, because: 1) floating point numbers
+         can only preserve a certain number of decimals precisely after a
+         certain number of decimals, they loose precision. 2) Integer
+         comparisons (that are done below) are faster, but this is
+         secondary because the parsing itself takes more time! */
+      l=strtol(string, &tailptr, 0);
+      if(*tailptr!='\0')
+        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+              "to fix this problem. The string '%s' couldn't be "
+              "parsed with 'strtol', but was parsed by 'strtod'",
+              __func__, PACKAGE_BUGREPORT, string);
+
       /* If the number is negative, put it in the signed types (based on
          its value). If its zero or positive, then put it in the unsigned
          types. */
-      if( d < 0 )
+      if( l < 0 )
         {
-          if     (d>INT8_MIN)    { i8=d;  ptr=&i8;  *type=GAL_TYPE_INT8;   }
-          else if(d>INT16_MIN)   { i16=d; ptr=&i16; *type=GAL_TYPE_INT16;  }
-          else if(d>INT32_MIN)   { i32=d; ptr=&i32; *type=GAL_TYPE_INT32;  }
-          else                   { i64=d; ptr=&i64; *type=GAL_TYPE_INT64;  }
+          if     (l>INT8_MIN)    { i8=l;  ptr=&i8;  *type=GAL_TYPE_INT8;  }
+          else if(l>INT16_MIN)   { i16=l; ptr=&i16; *type=GAL_TYPE_INT16; }
+          else if(l>INT32_MIN)   { i32=l; ptr=&i32; *type=GAL_TYPE_INT32; }
+          else                   { i64=l; ptr=&i64; *type=GAL_TYPE_INT64; }
         }
       else
         {
@@ -602,11 +616,25 @@ gal_type_string_to_number(char *string, uint8_t *type)
              confusing situations (for example when the user gives 255), if
              the value is equal to the given maximum of the given type,
              we'll assign it to a larger type. In other words, we won't be
-             using the '<=MAX', but '<MAX'. */
-          if     (d<UINT8_MAX)  { u8=d;  ptr=&u8;  *type=GAL_TYPE_UINT8;  }
-          else if(d<UINT16_MAX) { u16=d; ptr=&u16; *type=GAL_TYPE_UINT16; }
-          else if(d<UINT32_MAX) { u32=d; ptr=&u32; *type=GAL_TYPE_UINT32; }
-          else                  { u64=d; ptr=&u64; *type=GAL_TYPE_UINT64; }
+             using the '<=MAX', but '<MAX'.
+
+             Even though they are positive, we should give priority to the
+             signed types if the number fits in the range of signed type
+             for that width: this is the way that C's internal automatic
+             type conversion works (which is used by Arithmetic's binary
+             operators for example). */
+          if     (l<UINT8_MAX)
+            {  if(l>INT8_MAX)  { u8=l;  ptr=&u8;  *type=GAL_TYPE_UINT8; }
+               else            { i8=l;  ptr=&i8;  *type=GAL_TYPE_INT8;  } }
+          else if(l<UINT16_MAX)
+            {  if(l>INT16_MAX) { u16=l; ptr=&u16; *type=GAL_TYPE_UINT16; }
+               else            { i16=l; ptr=&i16; *type=GAL_TYPE_INT16;  } }
+          else if(l<UINT32_MAX)
+            {  if(l>INT32_MAX) { u32=l; ptr=&u32; *type=GAL_TYPE_UINT32; }
+               else            { i32=l; ptr=&i32; *type=GAL_TYPE_INT32;  } }
+          else
+            {  if(l>INT64_MAX) { u64=l; ptr=&u64; *type=GAL_TYPE_UINT64; }
+               else            { i64=l; ptr=&i64; *type=GAL_TYPE_INT64;  } }
         }
     }
   else
