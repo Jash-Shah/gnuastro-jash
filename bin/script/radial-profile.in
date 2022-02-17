@@ -44,6 +44,7 @@ tmpdir=""
 output=""
 keeptmp=0
 mode="img"
+azimuth=""
 measure=""
 axisratio=1
 zeropoint=""
@@ -101,6 +102,7 @@ $scriptname options:
   -c, --center=FLT,FLT    Coordinate of the center along 2 axes.
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -Q, --axisratio=FLT     Axis ratio for ellipse profiles (A/B).
+  -a, --azimuth=FLT,FLT   Azimuthal angles range (from the major axis).
   -p, --positionangle=FLT Position angle for ellipse profiles.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
   -z, --zeropoint=FLT     Zeropoint magnitude of input dataset.
@@ -217,6 +219,9 @@ do
         -Q|--axisratio)     axisratio="$2";                            check_v "$1" "$axisratio";  shift;shift;;
         -Q=*|--axisratio=*) axisratio="${1#*=}";                       check_v "$1" "$axisratio";  shift;;
         -Q*)                axisratio=$(echo "$1"  | sed -e's/-Q//');  check_v "$1" "$axisratio";  shift;;
+        -a|--azimuth)       azimuth="$2";                               check_v "$1" "$azimuth";  shift;shift;;
+        -a=*|--azimuth=*)   azimuth="${1#*=}";                          check_v "$1" "$azimuth";  shift;;
+        -a*)                azimuth=$(echo "$1"  | sed -e's/-a//');     check_v "$1" "$azimuth";  shift;;
         -p|--positionangle) positionangle="$2";                        check_v "$1" "$positionangle";  shift;shift;;
         -p=*|--positionangle=*) positionangle="${1#*=}";               check_v "$1" "$positionangle";  shift;;
         -p*)                positionangle=$(echo "$1"  | sed -e's/-p//'); check_v "$1" "$positionangle";  shift;;
@@ -312,6 +317,15 @@ if [ $mode = "wcs" ] || [ $mode = "img" ]; then
 else
     echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
     exit 1
+fi
+
+# If a '--azimuth' has been given, make sure it only has two numbers.
+if [ x"$azimuth" != x ]; then
+    nazimuth=$(echo $azimuth | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$nazimuth != x2 ]; then
+        echo "$scriptname: '--azimuth' (or '-a') only take two values, but $nazimuth were given"
+        exit 1
+    fi
 fi
 
 # If no specific measurement has been requested, use the mean.
@@ -542,13 +556,51 @@ fi
 # axisratio     -- axis ratio.
 # rmax          -- magnitude of the profile within the truncation radius (rmax).
 # 1             -- Truncation in radius unit.
-aperturesrawbase=apertures-raw.fits
-aperturesraw=$tmpdir/$aperturesrawbase
+radialaperturesrawbase=radial-raw.fits
+radialaperturesraw=$tmpdir/$radialaperturesrawbase
 echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
      | astmkprof --background=$values --backhdu=1 --mforflatpix \
                  --mode=img --clearcanvas --type=int16 \
-                 --circumwidth=1 --replace --output=$aperturesraw \
+                 --circumwidth=1 --replace --output=$radialaperturesraw \
                  $quiet
+
+
+
+
+
+# Generate an azimuthal profile
+# -----------------------------
+#
+# Create an azimuthal apertures image if the user specifies a range of
+# angles over which compute the radial profile. The azimuthal radial
+# profile is combined with the radial apertures generated above, to only
+# consider the desired portion of the image.
+aperturesraw=$radialaperturesraw
+if [ x"$azimuth" != x ]; then
+
+    # Get the initial and final azimuth angles
+    azimuth_ini=$(echo "$azimuth" | awk 'BEGIN{FS=","} {print $1}')
+    azimuth_fin=$(echo "$azimuth" | awk 'BEGIN{FS=","} {print $2}')
+
+    # Generate the azimuthal apertures
+    azimuth_apertures_raw=$tmpdir/azimuth-raw.fits
+    echo "1 $xcenter $ycenter 9 $rmax 1 $positionangle $axisratio 1 1" \
+         | astmkprof --background=$values --backhdu=1 --mforflatpix \
+                     --mode=img --clearcanvas --type=int16 \
+                     --circumwidth=1 --replace --output=$azimuth_apertures_raw \
+                     $quiet
+
+    # From the azimuthal aperture image, consider only that portion that
+    # are in between the two specified angles. Set the rest of the pixels
+    # to zero values (on the radial apertures image)
+    aperturesraw=$tmpdir/apertures-raw.fits
+    astarithmetic $radial_apertures_raw -h1 set-radial \
+                  $azimuth_apertures_raw -h1 set-azimuth \
+                  azimuth $azimuth_ini gt \
+                  azimuth $azimuth_fin lt \
+                  and set-arc \
+                  radial arc 1 ne 0 where --output $aperturesraw
+fi
 
 
 

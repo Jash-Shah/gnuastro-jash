@@ -23893,6 +23893,12 @@ The axis ratio of the apertures (minor axis divided by the major axis in a 2D el
 By default (when this option isn't given), the radial profile will be circular (axis ratio of 1).
 This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
 
+@item -a FLT[,FLT[,...]]
+@itemx --azimuth=FLT[,FLT[,...]]
+Azimuthal angles range (in degrees, from 0 to 360) from the major axis.
+This parameter is used as the option @option{--qcol=azimuth} in the generation of the apertures with @command{astmkprof}.
+For example, if you want to obtain the radial profile only in between 55 and 78 degrees (taking as the reference the major axis), use @command{--azimuth=55,78}.
+
 @item -p FLT
 @itemx --positionangle=FLT
 The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO DS9).
