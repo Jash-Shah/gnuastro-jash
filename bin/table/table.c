@@ -711,9 +711,12 @@ table_select_by_position(struct tableparams *p)
             }
           else
             {
-              /* Free their allocated spaces. */
+              /* Set the starting and ending indexs to free the allocated
+                 space of each string. */
               start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
-              end   = p->head!=GAL_BLANK_SIZE_T ? p->table->size : p->tail;
+              end   = ( p->head!=GAL_BLANK_SIZE_T
+                        ? p->table->size
+                        : p->table->size - p->tail );
               for(i=start; i<end; ++i) { free(strarr[i]); strarr[i]=NULL; }
             }
         }

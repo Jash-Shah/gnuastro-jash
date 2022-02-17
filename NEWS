@@ -203,6 +203,10 @@ See the end of the file for license conditions.
               operands are integers of same width, but different sign (for
               example 'int32' and 'uint32'); reported by Zohreh Ghaffari
               and Pedram Ashofteh Ardakani.
+  bug #62070: Segmentation fault in Table's '--tail' option, when string
+              columns are requested and the requested number of rows given
+              to '--tail' is more than half of the number of rows; reported
+              by Manuel Sánchez-Benavente.
 
 
 
