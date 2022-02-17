@@ -1,0 +1,109 @@
+#! /bin/bash
+
+# Instead opening the multi extinctions fits image in command line or Ds9
+# or match and lock many images together or opening the table in the topca
+# by running this script you can easily open many images and tables
+# together.
+#
+# Run with '--help' for more information.
+#
+# Original author:
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+#     Sepideh Eskandarlou <sepideh.eskandarlou@gmail.com>
+# Copyright (C) 2022, Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+
+
+
+# Use this .desktop file:
+# [Desktop Entry]
+# Type=Application
+# Version=1.0
+# Name=SAO DS9
+# Comment=View FITS images
+# Terminal=false
+# Categories=Graphics;RasterGraphics;2DGraphics;3DGraphics
+# #Icon=/PATH/TO/DS9/ICON/ds9.png
+# Exec=$HOME/.local/bin/ds9-multi-ext %F
+
+
+# To allow generic usage, if no input file is given (the `if' below is
+# true), then just open an empty ds9.
+if [ "x$1" == "x" ]; then
+    ds9
+else
+    # Make sure we are dealing with a FITS file. We are using shell
+    # redirection here to make sure that nothing is printed in the
+    # terminal (to standard output when we have a FITS file, or to
+    # standard error when we don't). Since we've used redirection,
+    # we'll also have to echo the return value of `astfits'.
+    check=$(astfits $1 -h0 > /dev/null 2>&1; echo $?)
+
+    # If the file was a FITS file, then `check' will be 0.
+    if [ "$check" == "0" ]; then
+
+	# Input is image or table.
+	type=$(astfits $1 --hasimagehdu)
+
+	# If the file was a image, then  `check` will be 1.
+	if [ "$type" == "1" ]; then
+
+            # Read the number of dimensions.
+            n0=$(astfits $1 -h0 | awk '$1=="NAXIS"{print $3}')
+
+            # Find the number of dimensions.
+            if [ "$n0" == "0" ]; then
+		ndim=$(astfits $1 -h1 | awk '$1=="NAXIS"{print $3}')
+            else
+		ndim=$n0
+            fi;
+
+            # Open DS9 based on the number of dimension.
+            if [ "$ndim" = "2" ]; then
+		# 2D multi-extension file: use the "Cube" window to
+		# flip/slide through the extensions.
+		ds9 -zscale -geometry 1800x3000 -mecube $@ \
+                    -zoom to fit -wcs degrees -cmap sls \
+		    -match frame image -match frame colorbar \
+		    -frame lock image -colorbar lock yes
+            else
+		# 3D multi-extension file: The "Cube" window will slide
+		# between the slices of a single extension. To flip
+		# through the extensions (not the slices), press the top
+		# row "frame" button and from the last four buttons of the
+		# bottom row ("first", "previous", "next" and "last") can
+		# be used to switch through the extensions (while keeping
+		# the same slice).
+		ds9 -zscale -geometry 1800x3000 -wcs degrees \
+                    -multiframe $@ -match frame image \
+                    -lock slice image -lock frame image -single \
+                    -zoom to fit -match frame image \
+		    -match frame colorbar -frame lock image \
+		    -colorbar lock yes
+            fi
+	# When input was table.
+	else
+	    topcat $@
+	fi
+    else
+        if [ -f $1 ]; then
+	    echo "'$1' isn't a FITS file."
+        else
+	    echo "'$1' doesn't exist."
+        fi
+    fi
+fi
