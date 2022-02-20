@@ -200,6 +200,7 @@ CLEANFILES = bin/completion.bash bin/completion.bash.built
 ## operators).
 pkgdata_DATA = bin/completion.bash
 bin/completion.bash: $(top_srcdir)/bin/completion.bash.in
+
         # Delete any existing output file.
 	rm -f $@ $@.built $@.tmp
 
@@ -445,8 +446,15 @@ install-data-hook:
 	 echo "(for an intro, run 'info gnuastro \"Installation directory\"')";      \
 	 echo;                                                                       \
 	 echo;                                                                       \
-	 echo "Bash completion (auto-fill arguments and options with TAB):";         \
-	 echo "  - 'source $(pkgdatadir)/completion.bash' in '~/.bashrc':"; \
+	 echo "Customization scripts for manual installation:";                      \
+	 echo "  - Open FITS files in DS9 or TOPCAT depending on contents by ";      \
+	 echo "    double-clicking on the selected file(s), usable in GNOME, KDE, "; \
+	 echo "    or Xfce (freedesktop.org standards):";                            \
+	 echo "      - ln -sf $(pkgdatadir)/astscript-fits-view.desktop ~/.local/share/applications/";\
+	 echo "      - Right-click on a FITS file, and follow these menus:";         \
+	 echo "        --> Open with other application";                             \
+	 echo "        --> View all applications";                                   \
+	 echo "        --> astscript-fits-view";                                     \
 	 echo;                                                                       \
 	 echo;                                                                       \
 	 echo "To stay up to date with future releases, please subscribe to: ";      \
@@ -459,6 +467,10 @@ install-data-hook:
 	 echo;                                                                       \
 	fi
 
+# Ignored from 'install-data-hook' to avoid confusing users (due to
+# https://savannah.gnu.org/bugs/?60618 )
+#	 echo "  - Bash completion (auto-fill arguments and options with TAB):";
+#	 echo "      'source $(pkgdatadir)/completion.bash' in '~/.bashrc':";
 
 
 

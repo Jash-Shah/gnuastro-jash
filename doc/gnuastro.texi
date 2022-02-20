@@ -651,7 +651,8 @@ Installed scripts
 * Sort FITS files by night::    Sort many files by date.
 * Generate radial profile::     Radial profile of an object in an image.
 * SAO DS9 region files from table::  Create ds9 region file from a table.
-* PSF construction and subtraction::
+* Viewing FITS file contents with DS9 or TOPCAT::  Open DS9 (images/cubes) or TOPCAT (tables).
+* PSF construction and subtraction::  Set of scripts to create extended PSF of an image.
 
 Sort FITS files by night
 
@@ -664,6 +665,10 @@ Generate radial profile
 SAO DS9 region files from table
 
 * Invoking astscript-ds9-region::  How to call astscript-ds9-region
+
+Viewing FITS file contents with DS9 or TOPCAT
+
+* Invoking astscript-fits-view::  How to call this script
 
 PSF construction and subtraction
 
@@ -813,11 +818,8 @@ Contributing to Gnuastro
 Other useful software
 
 * SAO DS9::                     Viewing FITS images.
-* PGPLOT::                      Plotting directly in C
-
-SAO DS9
-
-* Viewing multiextension FITS images::  Configure SAO DS9 for multiextension images.
+* TOPCAT::                      Plotting tables of data.
+* PGPLOT::                      Plotting directly in C.
 
 @end detailmenu
 @end menu
@@ -2925,11 +2927,18 @@ This feature is present in all of Gnuastro's programs, not just NoiseChisel.
 @cindex GNOME
 @cindex SAO DS9
 Let's continue with the extensions in NoiseChisel's output that contain a dataset by visually inspecting them (here, we'll use SAO DS9).
-Since the file contains multiple related extensions, the easiest way to view all of them in DS9 is to open the file as a ``Multi-extension data cube'' with the @option{-mecube} option as shown below@footnote{You can configure your graphic user interface to open DS9 in multi-extension cube mode by default when using the GUI (double clicking on the file).
-If your graphic user interface is GNOME (another GNU software, it is most common in GNU/Linux operating systems), a full description is given in @ref{Viewing multiextension FITS images}}.
+Since the file contains multiple related extensions, the easiest way to view all of them in DS9 is to open the file as a ``Multi-extension data cube'' with the @option{-mecube} option as shown below@footnote{You can configure your graphic user interface to open DS9 in multi-extension cube mode by default when using the GUI (double clicking on the file)}.
 
 @example
 $ ds9 -mecube xdf-f160w_detected.fits -zscale -zoom to fit
+@end example
+
+To simplify viewing multi-extension FITS images in SAO DS9 (or tables in TOPCAT) and avoid such long commands, Gnuastro has the @code{astscript-fits-view}.
+It is just a simple wrapper to call them with some useful customizations depending on your input (see @ref{Viewing FITS file contents with DS9 or TOPCAT}).
+It also comes with a @file{.desktop} file (usable in GNOME or KDE graphic user interfaces or GUIs) to enable easy double-clicking on any number of FITS files to open the respective program (very useful when navigating in your graphic environment):
+
+@example
+$ astscript-fits-view xdf-f160w_detected.fits
 @end example
 
 A ``cube'' window opens along with DS9's main window.
@@ -18081,7 +18090,7 @@ In mathematical morphology, erosion on pixels can be pictured as carving-off bou
 Hence, what NoiseChisel does is similar to what a wood chisel or stone chisel do.
 It is just not a hardware, but a software.
 In fact, looking at it as a chisel and your dataset as a solid cube of rock will greatly help in effectively understanding and optimally using it: with NoiseChisel you literally carve your targets out of the noise.
-Try running it with the @option{--checkdetection} option, and open the temporary output as a multi-extension cube, to see each step of the carving process on your input dataset (see @ref{Viewing multiextension FITS images}).
+Try running it with the @option{--checkdetection} option, and open the temporary output as a multi-extension cube, to see each step of the carving process on your input dataset (see @ref{Viewing FITS file contents with DS9 or TOPCAT}).
 
 @cindex Segmentation
 NoiseChisel's primary output is a binary detection map with the same size as the input but its pixels only have two values: 0 (background) and 1 (foreground).
@@ -18752,7 +18761,7 @@ To be more space-efficient (keep only one pixel per tile), you can use the @opti
 @cindex GNOME
 To inspect any of NoiseChisel's output files, assuming you use SAO DS9, you can configure your Graphic User Interface (GUI) to open NoiseChisel's output as a multi-extension data cube.
 This will allow you to flip through the different extensions and visually inspect the results.
-This process has been described for the GNOME GUI (most common GUI in GNU/Linux operating systems) in @ref{Viewing multiextension FITS images}.
+This process has been described for the GNOME GUI (most common GUI in GNU/Linux operating systems) in @ref{Viewing FITS file contents with DS9 or TOPCAT}.
 
 NoiseChisel's output configuration options are described in detail below.
 
@@ -18801,7 +18810,7 @@ By default, the Sky-subtracted input is put in the first extension of the output
 The next extensions are NoiseChisel's main outputs described above.
 
 The extra Sky-subtracted input can be convenient in checking NoiseChisel's output and comparing the detection map with the input: visually see if everything you expected is detected (reasonable completeness) and that you don't have too many false detections (reasonable purity).
-This visual inspection is simplified if you use SAO DS9 to view NoiseChisel's output as a multi-extension data-cube, see @ref{Viewing multiextension FITS images}.
+This visual inspection is simplified if you use SAO DS9 to view NoiseChisel's output as a multi-extension data-cube, see @ref{Viewing FITS file contents with DS9 or TOPCAT}.
 
 When you are satisfied with your NoiseChisel configuration (therefore you don't need to check on every run), or you want to archive/transfer the outputs, or the datasets become large, or you are running NoiseChisel as part of a pipeline, this Sky-subtracted input image can be a significant burden (take up a large volume).
 The fact that the input is also noisy, makes it hard to compress it efficiently.
@@ -19247,7 +19256,7 @@ $ astfits image_segmented.fits -h0 | grep -i snquant
 @cindex DS9
 @cindex SAO DS9
 By default, besides the @code{CLUMPS} and @code{OBJECTS} extensions, Segment's output will also contain the (technically redundant) input dataset and the sky standard deviation dataset (if it wasn't a constant number).
-This can help in visually inspecting the result when viewing the images as a ``Multi-extension data cube'' in SAO DS9 for example (see @ref{Viewing multiextension FITS images}).
+This can help in visually inspecting the result when viewing the images as a ``Multi-extension data cube'' in SAO DS9 for example (see @ref{Viewing FITS file contents with DS9 or TOPCAT}).
 You can simply flip through the extensions and see the same region of the image and its corresponding clumps/object labels.
 It also makes it easy to feed the output (as one file) into MakeCatalog when you intend to make a catalog afterwards (see @ref{MakeCatalog}.
 To remove these redundant extensions from the output (for example when designing a pipeline), you can use @option{--rawoutput}.
@@ -19315,13 +19324,9 @@ $ gzip --best segment_output.fits
 The resulting @file{.fits.gz} file can then be fed into any of Gnuastro's programs directly, without having to decompress it separately (it will just take them a little longer, because they have to decompress it internally before use).
 @end cartouche
 
-When the input is a 2D image, to inspect NoiseChisel's output you can
-configure SAO DS9 in your Graphic User Interface (GUI) to open
-NoiseChisel's output as a multi-extension data cube. This will allow you to
-flip through the different extensions and visually inspect the
-results. This process has been described for the GNOME GUI (most common GUI
-in GNU/Linux operating systems) in @ref{Viewing multiextension FITS
-images}.
+When the input is a 2D image, to inspect NoiseChisel's output you can configure SAO DS9 in your Graphic User Interface (GUI) to open NoiseChisel's output as a multi-extension data cube.
+This will allow you to flip through the different extensions and visually inspect the results.
+This process has been described for the GNOME GUI (most common GUI in GNU/Linux operating systems) in @ref{Viewing FITS file contents with DS9 or TOPCAT}.
 
 
 
@@ -23526,7 +23531,8 @@ If you do confront such strange errors, please submit a bug report so we fix it 
 * Sort FITS files by night::    Sort many files by date.
 * Generate radial profile::     Radial profile of an object in an image.
 * SAO DS9 region files from table::  Create ds9 region file from a table.
-* PSF construction and subtraction::
+* Viewing FITS file contents with DS9 or TOPCAT::  Open DS9 (images/cubes) or TOPCAT (tables).
+* PSF construction and subtraction::  Set of scripts to create extended PSF of an image.
 @end menu
 
 @node Sort FITS files by night, Generate radial profile, Installed scripts, Installed scripts
@@ -23985,7 +23991,7 @@ For example, to check that the profiles generated for obtaining the radial profi
 
 
 
-@node SAO DS9 region files from table, PSF construction and subtraction, Generate radial profile, Installed scripts
+@node SAO DS9 region files from table, Viewing FITS file contents with DS9 or TOPCAT, Generate radial profile, Installed scripts
 @section SAO DS9 region files from table
 
 Once your desired catalog (containing the positions of some objects) is created (for example with @ref{MakeCatalog}, @ref{Match}, or @ref{Table}) it often happens that you want to see your selected objects on an image for a feeling of the spatial properties of your objects.
@@ -24117,23 +24123,129 @@ In the opened window, click on ``Command Line Options''.
 
 
 
+@node Viewing FITS file contents with DS9 or TOPCAT, PSF construction and subtraction, SAO DS9 region files from table, Installed scripts
+@section Viewing FITS file contents with DS9 or TOPCAT
+
+@cindex Multiextension FITS
+@cindex Opening multiextension FITS
+The FITS definition allows for multiple extensions (or HDUs) inside one FITS file.
+Each HDU can have a completely independent dataset inside of it.
+One HDU can be a table, another can be an image and another can be another independent image.
+For example each image HDU can be one CCD of a multi-CCD camera, or in processed images one can be the deep science image and the next can be its weight map, alternatively, one HDU can be an image, and another can be the catalog/table of objects within it.
+
+The most common software for viewing FITS images is SAO DS9 (see @ref{SAO DS9}) and for plotting tables, TOPCAT is the most commonly used tool in astronomy (see @ref{TOPCAT}).
+After installing them (as described in the respective appendix linked in the previous sentence), you can open any number of FITS images or tables with DS9 or TOPCAT with the commands below:
+
+@example
+$ ds9 image-a.fits image-b.fits
+$ topcat table-a.fits table-b.fits
+@end example
+
+But usually the default mode is not enough.
+For example in DS9, the window can be too small (not covering the height of your monitor), you probably want to match and lock multiple images, you have a favorite colormap that you prefer to use, or you may want to open a multi-extension FITS file as a cube.
+
+Using the simple commands above, you need to manually do all these in the DS9 window once it opens and this can take several tens of seconds (which is enough to distract you from what you wanted to inspect).
+For example if you have a multi-extension file containing 2D images, one way to load and switch between the each 2D extension is to take the following steps in the SAO DS9 window: @clicksequence{``File''@click{}``Open Other''@click{}``Open Multi Ext Cube''} and then choose the Multi extension FITS file in your computer's file structure.
+
+@cindex @option{-mecube} (DS9)
+The method above is a little tedious to do every time you want view a multi-extension FITS file.
+A different series of steps is also necessary if you the extensions are 3D data cubes (since they are already cubes, and should be opened as multi-frame).
+Furthermore, if you have multiple images and want to ``match'' and ``lock'' them (so when you zoom-in to one, all get zoomed-in) you will need several other sequence of menus and clicks.
+
+Fortunately SAO DS9 also provides command-line options that you can use to specify a particular behavior before/after opening a file.
+One of those options is @option{-mecube} which opens a FITS image as a multi-extension data cube (treating each 2D extension as a slice in a 3D cube).
+This allows you to flip through the extensions easily while keeping all the settings similar.
+Just to avoid confusion, note that SAO DS9 does not follow the GNU style of separating long and short options as explained in @ref{Arguments and options}.
+In the GNU style, this `long' (multi-character) option should have been called like @option{--mecube}, but SAO DS9 follows its own conventions.
+
+For example try running @command{$ds9 -mecube foo.fits} to see the effect (for example on the output of @ref{NoiseChisel}).
+If the file has multiple extensions, a small window will also be opened along with the main DS9 window.
+This small window allows you to slide through the image extensions of @file{foo.fits}.
+If @file{foo.fits} only consists of one extension, then SAO DS9 will open as usual.
+
+On the other hand, for visualizing the contents of tables (that are also commonly stored in the FITS format), you need to call a different software (most commonly, people use TOPCAT, see @ref{TOPCAT}).
+And to make things more inconvenient, by default both of these are only installed as command-line software, so while you are navigating in your GUI, you need to open a terminal there, and run these commands.
+All of the issues above are the founding purpose of the installed script that is introduced in @ref{Invoking astscript-fits-view}.
+
+@menu
+* Invoking astscript-fits-view::  How to call this script
+@end menu
+
+@node Invoking astscript-fits-view,  , Viewing FITS file contents with DS9 or TOPCAT, Viewing FITS file contents with DS9 or TOPCAT
+@subsection Invoking astscript-fits-view
+
+Given any number of FITS files, this script will either open SAO DS9 (for images or cubes) or TOPCAT (for tables) to visualize their contents in a graphic user interface (GUI).
+For more on installed scripts please see (see @ref{Installed scripts}).
+This script can be used with the following general template:
+
+@example
+$ astscript-fits-view [OPTION] input.fits [input-b.fits ...]
+@end example
+
+@noindent
+One line examples
+
+@example
+## Call TOPCAT to load all the input FITS tables.
+$ astscript-fits-view table-*.fits
+
+## Call SAO DS9 to open all the input FITS images.
+$ astscript-fits-view image-*.fits
+@end example
+
+This script will use Gnuastro's @ref{Fits} program to see if the file is a table or image.
+If the first input file contains an image HDU, then the sequence of files will be given to @ref{SAO DS9}.
+Otherwise, the input(s) will be given to @ref{TOPCAT} to visualize (plot) as tables.
+When opening DS9 it will also inspect the dimensionality of the first image HDU of the first input and open it slightly differently when the input is 2D or 3D:
+
+@table @asis
+@item 2D
+DS9's @option{-mecube} will be used to open all the 2D extensions of each input file as a ``Multi-extension cube''.
+A ``Cube'' window will also be opened with DS9 that can be used to slide/flip through each extensions.
+When multiple files are given, each file will be in one ``frame''.
+
+@item 3D
+DS9's @option{-multiframe} option will be used to open all the extensions in a separate ``frame'' (since each input is already a 3D cube, the @option{-mecube} option can be confusing).
+To flip through the extensions (while keeping the slice fixed), click the ``frame'' button on the top row of buttons, then use the last four buttons of the bottom row ("first", "previous", "next" and "last") to change between the extensions.
+If multiple files are given, there will be a separate frame for each HDU of each input (each HDU's name or number will be put in square brackets after its name).
+@end table
+
+@cartouche
+@noindent
+@strong{Double-clicking on FITS file to open DS9 or TOPCAT:} for those graphic user interface (GUI) that follow the freedesktop.org standards (including GNOME, KDS Plasma, or Xfce) Gnuastro installs a @file{fits-view.desktop} file to instruct your GUI to call this script for opening FITS files when you click on them.
+To activate this feature take the following steps:
+@enumerate
+@item
+Run the following command, while replacing @code{PREFIX}.
+If you don't know what to put in @code{PREFIX}, run @command{which astfits} on the command-line, and extract @code{PREFIX} from the output (the string before @file{/bin/astfits}).
+For more, see @ref{Installation directory}.
+@example
+ln -sf PREFIX/share/gnuastro/astscript-fits-view.desktop \
+       ~/.local/share/applications/
+@end example
+@item
+Right-click on a FITS file, and choose these items in order (based on GNOME, may be different in KDE or Xfce): @clicksequence{``Open with other application''@click{}``View all applications''@click{}``astscript-fits-view''}.
+@end enumerate
+@end cartouche
 
 
+@noindent
+This script takes the following options
 
+@table @option
 
+@item -p STR
+@itemx --prefix=STR
+Directory to search for SAO DS9 or TOPCAT's executables (assumed to be @command{ds9} and @command{topcat}).
+If not called they will be assumed to be present in your @file{PATH} (see @ref{Installation directory}).
+If you don't have them already installed, their installation directories are available in @ref{SAO DS9} and @ref{TOPCAT} (they can be installed in non-system-wide locations that don't require administrator/root permissions).
 
+@item -g INTxINT
+@itemx --ds9geometry=INTxINT
+The initial DS9 window geometry (value to DS9's @option{-geometry} option).
+@end table
 
-
-
-
-
-
-
-
-
-
-
-@node PSF construction and subtraction,  , SAO DS9 region files from table, Installed scripts
+@node PSF construction and subtraction,  , Viewing FITS file contents with DS9 or TOPCAT, Installed scripts
 @section PSF construction and subtraction
 
 @c Alternative names
@@ -35422,6 +35534,9 @@ similarly (with minor differences, see @ref{Installed scripts}).
 @item astscript-ds9-region
 (See @ref{SAO DS9 region files from table}) Given a table (either as a file or from standard input), create an SAO DS9 region file from the requested positional columns (WCS or image coordinates).
 
+@item astscript-fits-view
+(see @ref{Viewing FITS file contents with DS9 or TOPCAT}) Given any number of FITS files, this script will either open SAO DS9 (for images or cubes) or TOPCAT (for tables) to view them in a graphic user interface (GUI).
+
 @item astscript-radial-profile
 (See @ref{Generate radial profile}) Calculate the radial profile of an object within an image.
 The object can be at any location in the image, using various measures (median, sigma-clipped mean and etc), and the radial distance can also be measured on any general ellipse.
@@ -35446,234 +35561,120 @@ useful for working with Gnuastro.
 
 @menu
 * SAO DS9::                     Viewing FITS images.
-* PGPLOT::                      Plotting directly in C
+* TOPCAT::                      Plotting tables of data.
+* PGPLOT::                      Plotting directly in C.
 @end menu
 
-@node SAO DS9, PGPLOT, Other useful software, Other useful software
+@node SAO DS9, TOPCAT, Other useful software, Other useful software
 @section SAO DS9
 
 @cindex SAO DS9
 @cindex FITS image viewer
-SAO DS9@footnote{@url{http://ds9.si.edu/}} is not a requirement of
-Gnuastro, it is a FITS image viewer. So to check your inputs and
-outputs, it is one of the best options. Like the other packages, it
-might already be available in your distribution's repositories. It is
-already pre-compiled in the download section of its web page. Once you
-download it you can unpack and install (move it to a system recognized
-directory) with the following commands (@code{x.x.x} is the version
-number):
+@url{http://ds9.si.edu,SAO DS9} is not a requirement of Gnuastro, it is a FITS image viewer.
+It is therefore a useful tool to visually inspect the images/cubes of your Gnuastro inputs or outputs (for tables, see @ref{TOPCAT}).
+In Gnuastro we have an installed script to run DS9 or TOPCAT on any number of FITS files (depending on it being an image or table), see @ref{Viewing FITS file contents with DS9 or TOPCAT} (which also includes a @file{.desktop} file for GUI integration).
+After installing DS9, you can easily use that script to open any FITS file (table, image or cube).
+
+Like the other packages, it might already be available in your distribution's repositories.
+It is also already pre-compiled in the download section of its web page.
+Once you download it you can unpack and install (move it to a system recognized directory) with the following commands (@code{x.x.x} is the version number):
 
 @example
 $ tar xf ds9.linux64.x.x.x.tar.gz
 $ sudo mv ds9 /usr/local/bin
 @end example
 
-Once you run it, there might be a complaint about the Xss library,
-which you can find in your distribution package management system. You
-might also get an @command{XPA} related error. In this case, you have
-to add the following line to your @file{~/.bashrc} and
-@file{~/.profile} file (you will have to log out and back in again for
-the latter):
+@noindent
+To test the build (as long as @file{/usr/local/bin} is in your @code{PATH}, see @ref{Installation directory}), you can simply run the command below.
+
+@example
+$ ds9
+@end example
+
+@cartouche
+@noindent
+@strong{Install without root permissions:} If you don't have root permissions, you can simply replace @file{/usr/local/bin} in the command above with @file{$HOME/.local/bin}.
+If this directory isn't in your @code{PATH}, you can simply add it with the command below (in your startup file, e.g., @file{~/.bashrc}).
+For more on @code{PATH} and the startup files, see @ref{Installation directory}.
+
+@example
+export PATH="$HOME/.local/bin:$PATH"
+@end example
+@end cartouche
+
+@noindent
+Below you can see a list of known issues in some operating systems that we have found so far.
+You should be able to identify any potential error when running DS9 from the command-line like above.
+
+@itemize
+@item
+There might be a complaint about the Xss library, which you can find in your distribution package management system.
+@item
+You might also get an @command{XPA} related error.
+In this case, you have to add the following line to your @file{~/.bashrc} and @file{~/.profile} file (you will have to log out and back in again for the latter):
 
 @example
 export XPA_METHOD=local
 @end example
 
-
-@menu
-* Viewing multiextension FITS images::  Configure SAO DS9 for multiextension images.
-@end menu
-
-@node Viewing multiextension FITS images,  , SAO DS9, SAO DS9
-@subsection Viewing multiextension FITS images
-
-@cindex Multiextension FITS
-@cindex Opening multiextension FITS
-The FITS definition allows for multiple extensions inside one FITS file,
-each extension can have a completely independent dataset inside of it. If
-you just double click on a multi-extension FITS file or run @command{$ds9
-foo.fits}, SAO DS9 will only show you the first extension. If you have a
-multi-extension file containing 2D images, one way to load and switch
-between the each 2D extension is to take the following steps in the SAO DS9
-window: @clicksequence{``File''@click{}''Open Other''@click{}''Open Multi
-Ext Cube''} and then choose the Multi extension FITS file in your
-computer's file structure.
-
-@cindex @option{-mecube} (ds9)
-The method above is a little tedious to do every time you want view a
-multi-extension FITS file. A different series of steps is also necessary if
-you the extensions are 3D data cubes. Fortunately SAO DS9 also provides
-command-line options that you can use to specify a particular behavior. One
-of those options is @option{-mecube} which opens a FITS image as a
-multi-extension data cube (treating each 2D extension as a slice in a 3D
-cube). This allows you to flip through the extensions easily while keeping
-all the settings similar.
-
-Try running @command{$ds9 -mecube foo.fits} to see the effect (for example
-on the output of @ref{NoiseChisel}). If the file has multiple extensions, a
-small window will also be opened along with the main ds9 window. This small
-window allows you to slide through the image extensions of
-@file{foo.fits}. If @file{foo.fits} only consists of one extension, then
-SAO DS9 will open as usual. Just to avoid confusion, note that SAO DS9 does
-not follow the GNU style of separating long and short options as explained
-in @ref{Arguments and options}. In the GNU style, this `long'
-(multi-character) option should have been called like @option{--mecube},
-but SAO DS9 follows its own conventions.
-
-Recall the @option{-mecube} opens each 2D input extension as a slice in
-3D. Therefore, when you want to inspect a multi-extension FITS file
-containing a 3D dataset, the @option{-mecube} option is no good any more
-(it only opens the first slice of the 3D cube in each extension). In that
-case, we have to use SAO DS9's @option{-multiframe} option to open each
-extension as a separate frame. Since the input is a 3D dataset, we get the
-same small window as the 2D case above for scrolling through the 3D
-slices. We then have to also ask ds9 to match the frames and lock the
-slices, so for example zooming in one, will also zoom the others.
-
-We can use a script to automatize this process and make work much easier
-(and save a lot of time) when opening any generic 2D or 3D dataset. After
-taking the following steps, when you click on a FITS file in your graphic
-user interface, ds9 will open in the respective 2D or 3D mode when double
-clicking a FITS file on the graphic user interface, and an executable will
-also be available to open ds9 similarly on the command-line. Note that the
-following solution assumes you already have Gnuastro installed (and in
-particular the @ref{Fits} program).
-
-Let's assume that you want to store this script in @file{BINDIR} (that is
-in your @file{PATH} environment variable, see @ref{Installation
-directory}). [Tip: a good place would be @file{~/.local/bin}, just don't
-forget to make sure it is in your @file{PATH}]. Using your favorite text
-editor, put the following script into a file called
-@file{BINDIR/ds9-multi-ext}. You can change the size of the opened ds9
-window by changing the @code{1800x3000} part of the script below.
+@item
+Your system may not have the SSL library in its stardard library path, in this case, put this command in your startup file (for example @file{~/.bashrc}):
 
 @example
-#! /bin/bash
-
-# To allow generic usage, if no input file is given (the `if' below is
-# true), then just open an empty ds9.
-if [ "x$1" == "x" ]; then
-    ds9
-else
-    # Make sure we are dealing with a FITS file. We are using shell
-    # redirection here to make sure that nothing is printed in the
-    # terminal (to standard output when we have a FITS file, or to
-    # standard error when we don't). Since we've used redirection,
-    # we'll also have to echo the return value of `astfits'.
-    check=$(astfits $1 -h0 > /dev/null 2>&1; echo $?)
-
-    # If the file was a FITS file, then `check' will be 0.
-    if [ "$check" == "0" ]; then
-
-        # Read the number of dimensions.
-        n0=$(astfits $1 -h0 | awk '$1=="NAXIS"@{print $3@}')
-
-        # Find the number of dimensions.
-        if [ "$n0" == "0" ]; then
-            ndim=$(astfits $1 -h1 | awk '$1=="NAXIS"@{print $3@}')
-        else
-            ndim=$n0
-        fi;
-
-        # Open DS9 based on the number of dimension.
-        if [ "$ndim" = "2" ]; then
-            # 2D multi-extension file: use the "Cube" window to
-            # flip/slide through the extensions.
-            ds9 -zscale -geometry 1800x3000 -mecube $1         \
-                -zoom to fit -wcs degrees
-        else
-            # 3D multi-extension file: The "Cube" window will slide
-            # between the slices of a single extension. To flip
-            # through the extensions (not the slices), press the top
-            # row "frame" button and from the last four buttons of the
-            # bottom row ("first", "previous", "next" and "last") can
-            # be used to switch through the extensions (while keeping
-            # the same slice).
-            ds9 -zscale -geometry 1800x3000 -wcs degrees       \
-                -multiframe $1 -match frame image              \
-                -lock slice image -lock frame image -single    \
-                -zoom to fit
-        fi
-    else
-        if [ -f $1 ]; then
-            echo "'$1' isn't a FITS file."
-        else
-            echo "'$1' doesn't exist."
-        fi
-    fi
-fi
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/ssl/lib"
 @end example
+@end itemize
 
-As described above (also in the comments of the script), if you have opened
-a multi-extension 2D dataset (image), the ``Cube'' window can be used to
-slide/flip through each extension. But when the input is a 3D data cube,
-the ``Cube'' window will slide/flip through the slices in each extension (a
-separate 3D dataset). To flip through the extensions (while keeping the
-slice fixed), click the ``frame'' button on the top row of buttons, then
-use the last four buttons of the bottom row ("first", "previous", "next"
-and "last") to change between the extensions.
 
-To run this script, you have to activate its executable flag with this
-command:
+@node TOPCAT, PGPLOT, SAO DS9, Other useful software
+@section TOPCAT
+
+@cindex VOTable
+@cindex Table viewer
+@url{http://www.star.bris.ac.uk/~mbt/topcat, TOPCAT} is not a requirement of Gnuastro, it is a table viewer and plotter (in many input formats, including FITS, VOTable, and others).
+TOPCAT is therefore a useful tool to visually inspect the tables of your Gnuastro inputs or outputs (for images, see @ref{SAO DS9}).
+In Gnuastro we have an installed script to run DS9 or TOPCAT on any number of FITS files (depending on it being an image or table), see @ref{Viewing FITS file contents with DS9 or TOPCAT} (which also includes a @file{.desktop} file for GUI integration).
+After installing DS9, you can easily use that script to open any FITS file (table, image or cube).
+
+TOPCAT is a very large package with many capabilities to visualize tables (as plots).
+It also has an @url{http://www.star.bris.ac.uk/~mbt/topcat/#docs, extensive documentation} that you can read for optimally using it.
+TOPCAT is written in Java, so it just needs a relatively recent (in the last decade) Java Virtual Machine (JVM) and Java Runtime Environment (JRE).
+Your operating system already has a relatively recent Java installation in its package manager, and there is a large chance that it is already installed.
+So before trying to install Java, try running TOPCAT.
+If it complains about not finding a suitable Java environment, then proceed to search your operating system's package manager.
+
+To install TOPCAT, you just need to run the following two commands.
+The first @file{.jar} file is the main TOPCAT Java ARchive (JAR).
+JAR is a compressed package of Java files and definitions that should be run with a special Java command.
+But to avoid bothering users with details of how to call Java, TOPCAT also provides a simple shell script (the second downloaded file below) that is easier to call and will do all the internal checks and call Java properly.
 
 @example
-$ chmod +x BINDIR/ds9-multi-ext
+$ wget http://www.star.bris.ac.uk/~mbt/topcat/topcat-full.jar
+$ wget http://www.star.bris.ac.uk/~mbt/topcat/topcat
+$ chmod +x topcat
+$ ./topcat           # Just for a check to see if everything works!
+$ sudo mv topcat-full.jar topcat /usr/local/bin/
 @end example
 
-If @file{BINDIR} is within your system's @file{PATH} environment variable
-(see @ref{Installation directory}), you can now open ds9 conditionally
-using the script above with this command:
+@noindent
+Once the two TOPCAT files are copied in the system-wide directory, you can easily open tables with a command like below from anywhere in your operating system.
 
 @example
-$ ds9-multi-ext foo.fits
+$ topcat table.fits
 @end example
 
-@cindex GNOME 3
-@cindex @file{.desktop}
-For the graphic user interface, we'll assume you are using GNOME (the most
-popular graphic user interface for GNU/Linux systems), version 3. For GNOME
-2, see below. You can customize GNOME to open specific files with
-@file{.desktop} files. For each user, they are stored in
-@file{~/.local/share/applications/}. In case you don't have the directory,
-make it your self (with @command{mkdir}). Using your favorite text editor,
-you can now create @file{~/.local/share/applications/saods9.desktop} with
-the following contents. Just don't forget to correct @file{BINDIR}. If you
-would also like to have ds9's logo/icon in GNOME, download it, uncomment
-the @code{Icon} line, and write its address in the value.
+@cartouche
+@noindent
+@strong{Install without root permissions:} If you don't have root permissions, you can simply replace @file{/usr/local/bin} in the command above with @file{$HOME/.local/bin}.
+If this directory isn't in your @code{PATH}, you can simply add it with the command below (in your startup file, e.g., @file{~/.bashrc}).
+For more on @code{PATH} and the startup files, see @ref{Installation directory}.
 
 @example
-[Desktop Entry]
-Type=Application
-Version=1.0
-Name=SAO DS9
-Comment=View FITS images
-Terminal=false
-Categories=Graphics;RasterGraphics;2DGraphics;3DGraphics
-#Icon=/PATH/TO/DS9/ICON/ds9.png
-Exec=BINDIR/ds9-multi-ext %f
+export PATH="$HOME/.local/bin:$PATH"
 @end example
+@end cartouche
 
-The steps above will add SAO DS9 as one of your applications. To make it
-default, take the following steps (just once is enough). Right click on a
-FITS file and select @clicksequence{Open with other application@click{}View
-all applications@click{}SAO DS9}.
-
-@cindex GNOME 2
-In case you are using GNOME 2 you can take the following steps: right click
-on a FITS file and choose @clicksequence{Properties@click{}Open
-With@click{}Add} button. A list of applications will show up, ds9 might
-already be present in the list, but don't choose it because it will run
-with no options. Below the list is an option ``Use a custom
-command''. Click on it and write the following command:
-@command{BINDIR/ds9-multi-ext} in the box and click ``Add''. Then finally
-choose the command you just added as the default and click the ``Close''
-button.
-
-
-
-
-
-@node PGPLOT,  , SAO DS9, Other useful software
+@node PGPLOT,  , TOPCAT, Other useful software
 @section PGPLOT
 
 @cindex PGPLOT

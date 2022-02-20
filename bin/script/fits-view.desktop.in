@@ -1,0 +1,56 @@
+# Call the 'astscript-fits-view' command on files selected from the graphic
+# user interface (GUI) for those that support the respective standard from
+# freedesktop.org (including GNOME and KDE):
+# https://specifications.freedesktop.org/desktop-entry-spec/latest/
+#
+# This file will be automatically installed with the rest of Gnuastro in
+# 'PREFIX/share/gnuastro' (where 'PREFIX' is the value given to '--prefix'
+# at Gnuastro's configure time, by default it is '/usr/local').
+#
+# To activate this in your GUI (based on freedesktop.org including GNOME,
+# and KDE Plasma and Xfce):
+#
+#    1. Run the following command, while replacing 'PREFIX'. If you don't
+#       know what to put in 'PREFIX', run 'which astfits', and extract
+#       'PREFIX' from the output: the string before '/bin/astfits'.
+#
+#          ln -sf PREFIX/share/gnuastro/fits-view.desktop \
+#                 ~/.local/share/applications/
+#
+#    2. Tell your GUI environment to open FITS files with this (only once):
+#
+#         - Right-click on a FITS file
+#           --> "Open with other application"
+#           --> "View all applications"
+#           --> "astscript-fits-view"
+#
+# Manual installation instructions:
+#    - Replace '@PREFIX@' with the Gnuastro installation PREFIX.
+#    - Copy this file to '~/.local/share/applications/'.
+#    - Follow step 2 of the activation commands above.
+#
+# Current maintainer:
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Copyright (C) 2020-2022 Free Software Foundation, Inc.
+#
+# This '.desktop' file is part of Gnuastro. Gnuastro is free software: you
+# can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=astscript-fits-view
+Comment=View FITS images with DS9 and tables with TopCat
+Terminal=false
+Categories=Graphics;RasterGraphics;2DGraphics;3DGraphics
+Exec=@PREFIX@/bin/astscript-fits-view %F

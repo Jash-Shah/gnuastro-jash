@@ -113,6 +113,10 @@ very similarly (with minor differences, as explained in the book).
     standard input), create an SAO DS9 region file from the requested
     positional columns (WCS or image coordinates).
 
+  - astscript-fits-view Given any number of FITS files, this script will
+    either open SAO DS9 (for images or cubes) or TOPCAT (for tables) to
+    view them in a graphic user interface (GUI).
+
   - astscript-radial-profile: Calculate the radial profile of an object
     within an image. The object can be at any location in the image, using
     various measures (median, sigma-clipped mean and etc), and the radial

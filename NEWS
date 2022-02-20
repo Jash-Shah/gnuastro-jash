@@ -7,6 +7,19 @@ See the end of the file for license conditions.
 
 ** New features
 
+  New programs:
+   - astscript-fits-view: Given any number of FITS files, this script will
+     either open SAO DS9 (for 2D images or 3D cubes) or TOPCAT (for tables)
+     to visualize their contents in a graphic user interface (GUI). Both
+     SAO DS9 and TOPCAT are free software packages that are heavily used in
+     astrophysics. When opening in DS9, files will be opened as "match"ed
+     and "lock"ed frames, enabling easy visual comparison. For GUIs that
+     conform to the freedesktop.org standrads, a '.desktop' file is also
+     provided that you can easily activate (as described in the
+     manual). Once activated, simply clicking on FITS file(s) in your
+     graphic environment will open DS9 or TOPCAT depending on their
+     contents.
+
   Book:
    - New section called "Skewness cased by signal and its measurement"
      added to the third tutorial (Detecting large extended targets). It

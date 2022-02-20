@@ -22,29 +22,43 @@
 
 
 
+# Desktop files (for graphic environments)
+pkgdata_DATA = astscript-fits-view.desktop
+astscript-fits-view.desktop: $(srcdir)/fits-view.desktop.in Makefile
+	sed -e 's|@PREFIX[@]|$(exec_prefix)|g' \
+	    $(srcdir)/fits-view.desktop.in > $@
+
+
+
+
+
 ## List of programs (scripts in this directory) to install under the
 ## 'prefix/bin' directory ('bin_SCRIPTS'), files necessary to distribute
 ## with the tarball ('EXTRA_DIST') and output files (to be cleaned with
 ## 'make clean').
-bin_SCRIPTS = astscript-ds9-region \
-              astscript-radial-profile \
+bin_SCRIPTS = astscript-fits-view \
+              astscript-ds9-region \
               astscript-sort-by-night \
+              astscript-radial-profile \
               astscript-psf-create-junction \
               astscript-psf-create-make-stamp \
               astscript-psf-model-flux-factor \
               astscript-psf-create-select-stars \
               astscript-psf-model-scattered-light
 
-EXTRA_DIST = ds9-region.in \
+EXTRA_DIST = fits-view.in \
+             ds9-region.in \
              sort-by-night.in \
              radial-profile.in \
+             fits-view.desktop.in \
              psf-create-junction.in \
              psf-create-make-stamp.in \
              psf-model-flux-factor.in \
              psf-create-select-stars.in \
              psf-model-scattered-light.in
 
-CLEANFILES = $(bin_SCRIPTS)
+CLEANFILES = $(bin_SCRIPTS) \
+             astscript-fits-view.desktop
 
 
 
@@ -59,6 +73,10 @@ do_subst = sed -e 's,[@]VERSION[@],$(VERSION),g' \
 
 
 ## Rules to install the scripts.
+astscript-fits-view: fits-view.in Makefile
+	$(do_subst) < $(srcdir)/fits-view.in > $@
+	chmod +x $@
+
 astscript-ds9-region: ds9-region.in Makefile
 	$(do_subst) < $(srcdir)/ds9-region.in > $@
 	chmod +x $@

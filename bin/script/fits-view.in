@@ -1,0 +1,312 @@
+#! /bin/bash
+
+# View the contents of FITS files using DS9 (if there is an image in any of
+# the HDUs) or TopCat (when there is a table). This script can be called
+# within a '.desktop' file to easily view FITS images or tables in a GUI.
+#
+# Current maintainer:
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# All author(s):
+#     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+#     Sepideh Eskandarlou <sepideh.eskandarlou@gmail.com>
+# Copyright (C) 2020-2022 Free Software Foundation, Inc.
+#
+# Gnuastro is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# Gnuastro is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+# Exit the script in the case of failure
+set -e
+
+
+
+
+
+# Default option values (can be changed with options on the
+# command-line).
+prefix=""
+ds9geometry=""
+version=@VERSION@
+scriptname=@SCRIPT_NAME@
+
+
+
+
+
+# Output of '--usage' and '--help':
+print_usage() {
+    cat <<EOF
+$scriptname: run with '--help' for list of options
+EOF
+}
+
+print_help() {
+    cat <<EOF
+Usage: $scriptname [OPTION] FITS-file(s)
+
+This script is part of GNU Astronomy Utilities $version.
+
+This script will take any number of FITS inputs and will pass them to
+TOPCAT or SAO DS9 depending on the the first input FITS file: if it
+contains an image HDU, the files will be passed to SAO DS9, otherwise, to
+TOPCAT.
+
+For more information, please run any of the following commands. In
+particular the first contains a very comprehensive explanation of this
+script's invocation: expected input(s), output(s), and a full description
+of all the options.
+
+     Inputs/Outputs and options:           $ info $scriptname
+     Full Gnuastro manual/book:            $ info gnuastro
+
+If you couldn't find your answer in the manual, you can get direct help from
+experienced Gnuastro users and developers. For more information, please run:
+
+     $ info help-gnuastro
+
+$scriptname options:
+ Output:
+  -g, --ds9geometry=INTxINT Size of DS9 window, e.g., for HD (800x1000) and
+                          for 4K (1800x3000). If not given, the script will
+                          attempt to find your screen resolution and find a
+                          good match, otherwise, use the default size.
+  -p, --prefix=STR        Directory containing DS9 or TOPCAT executables.
+
+ Operating mode:
+  -?, --help              Print this help list.
+      --cite              BibTeX citation for this program.
+  -V, --version           Print program version.
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+GNU Astronomy Utilities home page: http://www.gnu.org/software/gnuastro/
+
+Report bugs to bug-gnuastro@gnu.org.
+EOF
+}
+
+
+
+
+
+# Output of '--version':
+print_version() {
+    cat <<EOF
+$scriptname (GNU Astronomy Utilities) $version
+Copyright (C) 2020-2022 Free Software Foundation, Inc.
+License GPLv3+: GNU General public license version 3 or later.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written/developed by Mohammad Akhlaghi and Sepideh Eskandarlou
+EOF
+}
+
+
+
+
+
+# Functions to check option values and complain if necessary.
+on_off_option_error() {
+    if [ "x$2" = x ]; then
+        echo "$scriptname: '$1' doesn't take any values."
+    else
+        echo "$scriptname: '$1' (or '$2') doesn't take any values."
+    fi
+    exit 1
+}
+
+check_v() {
+    if [ x"$2" = x ]; then
+        echo "$scriptname: option '$1' requires an argument."
+        echo "Try '$scriptname --help' for more information."
+        exit 1;
+    fi
+}
+
+
+
+
+
+# Separate command-line arguments from options. Then put the option
+# value into the respective variable.
+#
+# OPTIONS WITH A VALUE:
+#
+#   Each option has three lines because we want to all common formats: for
+#   long option names: '--longname value' and '--longname=value'. For short
+#   option names we want '-l value', '-l=value' and '-lvalue' (where '-l'
+#   is the short version of the hypothetical '--longname' option).
+#
+#   The first case (with a space between the name and value) is two
+#   command-line arguments. So, we'll need to shift it two times. The
+#   latter two cases are a single command-line argument, so we just need to
+#   "shift" the counter by one. IMPORTANT NOTE: the ORDER OF THE LATTER TWO
+#   cases matters: '-h*' should be checked only when we are sure that its
+#   not '-h=*').
+#
+# OPTIONS WITH NO VALUE (ON-OFF OPTIONS)
+#
+#   For these, we just want the two forms of '--longname' or '-l'. Nothing
+#   else. So if an equal sign is given we should definitely crash and also,
+#   if a value is appended to the short format it should crash. So in the
+#   second test for these ('-l*') will account for both the case where we
+#   have an equal sign and where we don't.
+inputs=""
+while [ $# -gt 0 ]
+do
+    # Put the values in the proper variable.
+    case "$1" in
+
+        # Output parameters
+        -g|--ds9geometry)     ds9geometry="$2";                    check_v "$1" "$ds9geometry"; shift;shift;;
+        -g=*|--ds9geometry=*) ds9geometry="${1#*=}";               check_v "$1" "$ds9geometry"; shift;;
+        -g*)                  ds9geometry=$(echo "$1"  | sed -e's/-C//');  check_v "$1" "$ds9geometry"; shift;;
+        -p|--prefix)          prefix="$2";                         check_v "$1" "$prefix"; shift;shift;;
+        -p=*|--prefix=*)      prefix="${1#*=}";                    check_v "$1" "$prefix"; shift;;
+        -p*)                  prefix=$(echo "$1"  | sed -e's/-C//');  check_v "$1" "$prefix"; shift;;
+
+        # Non-operating options.
+        -?|--help)        print_help; exit 0;;
+        -'?'*|--help=*)   on_off_option_error --help -?;;
+        -V|--version)     print_version; exit 0;;
+        -V*|--version=*)  on_off_option_error --version -V;;
+        --cite)           astfits --cite; exit 0;;
+        --cite=*)         on_off_option_error --cite;;
+
+        # Unrecognized option:
+        -*) echo "$scriptname: unknown option '$1'"; exit 1;;
+
+        # Not an option (not starting with a '-'): assumed to be input FITS
+        # file name.
+        *) inputs="$inputs $1"; shift;;
+    esac
+done
+
+
+
+
+
+
+# Set a good geometry if the user hasn't given any. So far, we just depend
+# on 'xrandr' to find the screen resolution, if it doesn't exist, then we
+# won't set this option at all and let DS9 use its default size.
+ds9geoopt=""
+if [ x"$ds9geometry" = x ]; then
+    if type xrandr > /dev/null 2>/dev/null; then
+
+        # The line with a '*' is the resolution of the used screen. We will
+        # then extract the height (second value) and set DS9's geometry
+        # based on that.
+        geosize=$(xrandr \
+                      | grep '*' \
+                      | sed 's/x/ /' \
+                      | awk '{w=0.75*$2; printf "%dx%d\n", w, $2}')
+        ds9geoopt="-geometry $geosize"
+
+    fi
+fi
+
+
+
+
+
+# If '--prefix' is given, add it to the PATH for the remainder of the
+# commands in this script.
+if [ "x$prefix" != x ]; then
+    ds9exec="$prefix/ds9"
+    topcatexec="$prefix/topcat"
+else
+    ds9exec=ds9
+    topcatexec=topcat
+fi
+
+
+
+
+
+# To allow generic usage, if no input file is given (the `if' below is
+# true), then just open an empty ds9.
+if [ "x$inputs" == "x" ]; then
+    $ds9exec $ds9geoopt
+else
+    # Select the first input.
+    input1=$(echo $inputs | awk '{print $1}')
+
+    # Make sure we are dealing with a FITS file. We are using shell
+    # redirection here to make sure that nothing is printed in the
+    # terminal (to standard output when we have a FITS file, or to
+    # standard error when we don't). Since we've used redirection,
+    # we'll also have to echo the return value of `astfits'.
+    check=$(astfits $input1 -h0 > /dev/null 2>&1; echo $?)
+
+    # If the first input existed and was a FITS file, then `check' will be
+    # 0 ('astfits' was successful).
+    if [ "$check" == "0" ]; then
+
+	# Input is image or table.
+	type=$(astfits $input1 --hasimagehdu)
+
+	# If the file was a image, then  `check` will be 1.
+	if [ "$type" == "1" ]; then
+
+            # Read the number of dimensions.
+            n0=$(astfits $input1 -h0 | awk '$1=="NAXIS"{print $3}')
+
+            # Find the number of dimensions.
+            if [ "$n0" == "0" ]; then
+		ndim=$(astfits $input1 -h1 | awk '$1=="NAXIS"{print $3}')
+            else
+		ndim=$n0
+            fi;
+
+            # Open DS9 based on the number of dimension.
+            if [ "$ndim" = "2" ]; then
+
+		# 2D multi-extension file: use the "Cube" window to
+		# flip/slide through the extensions.
+		$ds9exec -zscale $ds9geoopt -mecube $inputs \
+                         -zoom to fit -wcs degrees -cmap sls \
+		         -match frame image -match frame colorbar \
+		         -frame lock image -colorbar lock yes \
+                         -lock slice image
+            else
+
+		# 3D multi-extension file: The "Cube" window will slide
+		# between the slices of a single extension. To flip through
+		# the extensions (not the slices), press the top row
+		# "frame" button and from the last four buttons of the
+		# bottom row ("first", "previous", "next" and "last") can
+		# be used to switch through the extensions (while keeping
+		# the same slice).
+		$ds9exec -zscale $ds9geoopt -wcs degrees \
+                         -multiframe $inputs -lock slice image \
+                         -lock frame image -zoom to fit -cmap sls \
+                         -match frame colorbar -colorbar lock yes
+            fi
+
+	# When input was table.
+	else
+	    $topcatexec $inputs
+	fi
+
+    # 'astfits' couldn't open the file.
+    else
+        if [ -f $input1 ]; then
+	    echo "'$input1' isn't a FITS file."
+        else
+	    echo "'$input1' doesn't exist."
+        fi
+    fi
+fi
