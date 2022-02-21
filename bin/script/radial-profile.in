@@ -556,13 +556,12 @@ fi
 # axisratio     -- axis ratio.
 # rmax          -- magnitude of the profile within the truncation radius (rmax).
 # 1             -- Truncation in radius unit.
-radialaperturesrawbase=radial-raw.fits
-radialaperturesraw=$tmpdir/$radialaperturesrawbase
+radialaperturesbase=radial-raw.fits
+radialapertures=$tmpdir/$radialaperturesbase
 echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
      | astmkprof --background=$values --backhdu=1 --mforflatpix \
-                 --mode=img --clearcanvas --type=int16 \
-                 --circumwidth=1 --replace --output=$radialaperturesraw \
-                 $quiet
+                 --mode=img --clearcanvas --type=int16 $quiet \
+                 --circumwidth=1 --replace --output=$radialapertures
 
 
 
@@ -574,8 +573,11 @@ echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
 # Create an azimuthal apertures image if the user specifies a range of
 # angles over which compute the radial profile. The azimuthal radial
 # profile is combined with the radial apertures generated above, to only
-# consider the desired portion of the image.
-aperturesraw=$radialaperturesraw
+# consider the desired portion of the image. If the azimuth option is not
+# called, then the aperture image is a symbolic link to the radial aperture
+# image constructed above.
+aperturesrawbase=apertures-raw.fits
+aperturesraw=$tmpdir/$aperturesrawbase
 if [ x"$azimuth" != x ]; then
 
     # Get the initial and final azimuth angles
@@ -583,23 +585,25 @@ if [ x"$azimuth" != x ]; then
     azimuth_fin=$(echo "$azimuth" | awk 'BEGIN{FS=","} {print $2}')
 
     # Generate the azimuthal apertures
-    azimuth_apertures_raw=$tmpdir/azimuth-raw.fits
+    azimuthaperturesbase=azimuth-raw.fits
+    azimuthapertures=$tmpdir/$azimuthaperturesbase
     echo "1 $xcenter $ycenter 9 $rmax 1 $positionangle $axisratio 1 1" \
          | astmkprof --background=$values --backhdu=1 --mforflatpix \
-                     --mode=img --clearcanvas --type=int16 \
-                     --circumwidth=1 --replace --output=$azimuth_apertures_raw \
-                     $quiet
+                     --mode=img --clearcanvas --type=int16 $quiet \
+                     --circumwidth=1 --replace --output=$azimuthapertures
 
     # From the azimuthal aperture image, consider only that portion that
     # are in between the two specified angles. Set the rest of the pixels
     # to zero values (on the radial apertures image)
-    aperturesraw=$tmpdir/apertures-raw.fits
-    astarithmetic $radial_apertures_raw -h1 set-radial \
-                  $azimuth_apertures_raw -h1 set-azimuth \
+    astarithmetic $radialapertures -h1 set-radial \
+                  $azimuthapertures -h1 set-azimuth \
                   azimuth $azimuth_ini gt \
                   azimuth $azimuth_fin lt \
-                  and set-arc \
-                  radial arc 1 ne 0 where --output $aperturesraw
+                  and int16 set-arc \
+                  radial arc 1 ne 0 where \
+                  $quiet --output $aperturesraw
+else
+    cd $tmpdir; ln -fs $radialaperturesbase $aperturesrawbase; cd $curdir
 fi
 
 
@@ -619,8 +623,7 @@ if [ x"$undersample" != x ]; then
     astarithmetic $aperturesraw $undersample / \
                   $quiet --output $aperturesrebinned
 else
-    cd $tmpdir; ln -fs $aperturesrawbase $aperturesrebinnedbase
-    cd $curdir
+    cd $tmpdir; ln -fs $aperturesrawbase $aperturesrebinnedbase; cd $curdir
 fi
 
 
