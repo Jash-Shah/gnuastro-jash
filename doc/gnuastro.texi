@@ -285,7 +285,7 @@ Building the extended PSF
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
 * Building outer part of PSF::  Building the outermost PSF wings.
-* Inner parts of the PSF::      Going towards the PSF center.
+* Inner part of the PSF::      Going towards the PSF center.
 * Uniting the different PSF components::  Merging all the components into one PSF.
 * Subtracting the PSF::         Having the PSF, we now want to subtract it.
 
@@ -5393,7 +5393,7 @@ An overview of the process is given in @ref{Overview of the PSF scripts}.
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
 * Building outer part of PSF::  Building the outermost PSF wings.
-* Inner parts of the PSF::      Going towards the PSF center.
+* Inner part of the PSF::      Going towards the PSF center.
 * Uniting the different PSF components::  Merging all the components into one PSF.
 * Subtracting the PSF::         Having the PSF, we now want to subtract it.
 @end menu
@@ -5732,7 +5732,7 @@ asttable cat.fits -hCLUMPS -cHOST_OBJ_ID --noblankend=2 \
 $ rm cat.fits
 @end example
 
-@node Building outer part of PSF, Inner parts of the PSF, Saturated pixels and Segment's clumps, Building the extended PSF
+@node Building outer part of PSF, Inner part of the PSF, Saturated pixels and Segment's clumps, Building the extended PSF
 @subsection Building outer part of PSF
 In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars.
 So we are now ready to start building the outer parts of the PSF.
@@ -5870,6 +5870,11 @@ Also, because we didn't have too many images, some regions still are very noisy.
 If we had more bright stars in our selected magnitude range, we could have filled those outer remaining patches.
 In a large survey like J-PLUS (that we are using here), you can simply look into other fields that were observed soon before/after the tile ID 67510 that we used here (to have a similar PSF) and get more stars in those images to add to these.
 Infact, the J-PLUS DR2 tile ID of the field above was intentially preserved during the steps above to show how easy it is to use images from other fields and blend them all into the output PSF.
+Let's remove the unnecessary files before continuing with the next section.
+
+@example
+$ rm -rf finding-normradii
+@end example
 
 @c -------------------------------------------
 @c If its worth adding this part?
@@ -5886,8 +5891,8 @@ Infact, the J-PLUS DR2 tile ID of the field above was intentially preserved duri
 @c @end example
 @c -------------------------------------------
 
-@node Inner parts of the PSF, Uniting the different PSF components, Building outer part of PSF, Building the extended PSF
-@subsection Inner parts of the PSF
+@node Inner part of the PSF, Uniting the different PSF components, Building outer part of PSF, Building the extended PSF
+@subsection Inner part of the PSF
 
 In @ref{Building outer part of PSF}, we were able to create a stack of the outer-most behavior of the PSF in a J-PLUS survey image.
 But the central part that was affected by saturation and non-linearity is still remaining, and we still don't have a ``complete'' PSF!
@@ -5935,35 +5940,89 @@ $ ds9 inner/stack.fits inner/stamps/*.fits
 @end example
 
 @noindent
-We can now attempt to unite the two stacks.
-For this, we should first
+We are ready now to unite the two stacks we have constructed: the outer and the inner parts.
 
-@c #########################################
-@c #########################################
-@c #########################################
-@c #########################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@node Uniting the different PSF components, Subtracting the PSF, Inner parts of the PSF, Building the extended PSF
+@node Uniting the different PSF components, Subtracting the PSF, Inner part of the PSF, Building the extended PSF
 @subsection Uniting the different PSF components
 
+Until now we have constructed two different parts of the PSF.
+The outer part considering very bright stars, and the inner part using fainter stars to not have saturation in the core of the PSF.
+The next step is to join these two parts in order to have a single PSF.
+First of all, let's have a look at the two stacks and also to their radial profiles to have a good feeling of the task.
+
+@example
+$ ds9 outer/stack.fits inner/stack.fits
+$ astscript-radial-profile outer/stack.fits -o outer/profile.fits
+$ astscript-radial-profile inner/stack.fits -o inner/profile.fits
+$ topcat outer/profile.fits inner/profile.fits
+@end example
+
+From the visual inspection of the images and the radial profiles, it is clear that we have saturation in the center for the outer part.
+Note that the absolute flux values of the PSFs are meaningless since they depend on the normalization radii we used to obtain them.
+The uniting step consists in scaling up (or down) the inner part of the PSF to have the same flux at at the junction radius, and then, use that flux-scaled inner part to fill the center of the outer PSF.
+Let's see how we can do that.
+
+We will use the script @file{astscript-psf-model-flux-factor} for computing the factor by which the inner part of the PSF has to be multiplied to have the same flux at the junction radius.
+This script is more general and it is used also for estimating the flux factors when modeling individual stars once the final PSF is constructed (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
+The basic parameters are the normalization radii (i.e., the radius ring at which the ratio betwen the radial profiles of the outer and inner part is done), and the center of the outer part of the PSF.
+The center of the inner PSF is asumed to be in the center of the image.
+Let's obtain that flux factor with the following command
+
+@example
+astscript-psf-model-flux-factor outer/stack.fits \
+         --psf=inner/stack.fits --center=250,250 \
+         --mode=img --normradii=15,16
+@end example
+
+The output of this script is a value (95.1809), and the interpretation of the value is the following: it is the number by which you have to multiply the inner stack to have the same pixel values (on average) than the outer stack in the ring of pixels defined by @option{--normradii=15,16}.
+Basically, the script has computed the mean of the ratio of the radial profiles of the two images at the specified normalization radii ring.
+
+Once we have obtained the flux factor, we are ready to unite the outer and the inner part of the PSF.
+To do that, we will use the script @file{astscript-psf-create-junction} (for more on this script, see @ref{Invoking astscript-psf-create-junction}).
+The basic parameters are the core part of the PSF @option{--core}, the junction radius @option{--radius}, and the flux factor @option{--fluxfactor}.
+With these parameters provided, the script will consider the input image as reference outer part of the PSF.
+Then, it will scale the inner part by the flux factor, and replace the inner part (radius less than the @option{--radius}) by this image.
+Since the flux factor was computed for a ring of 1 pixel between 15 and 16 pixels, let's make the junction at R=15 pixel with the following command:
+
+@example
+astscript-psf-create-junction outer/stack.fits \
+         --core=inner/stack.fits --radius=15 \
+         --fluxfactor=95.1809 --output=psf-complete.fits
+@end example
+
+
+The choose of the @option{--normradii} is something that has to be explored from the visual inspection of the radial profiles as well as the images.
+Our best advice is that the final selection of this normalization and junction radius is something that has to be explored.
+So, take your time to play with different values to check how the junction changes.
+A good junction radius is that let no saturation in the central part, high signal to noise ratio in the outer part, and creates a smooth transition in between the two parts.
+For example, check that the values used above @option{--normradii=15,16} and @option{--radius=15} makes a good junction (it is almost impossible to see the transition in the final PSF.
+With the goal of make the search of the junction radius easier, you can use the commands below.
+Check for example that the junction at different radius (R=50) is not a good option (compared with the result we have obtained above).
+
+@example
+$ RI=50
+$ RO=51
+$ mkdir junction-radius-test
+
+$ astscript-psf-model-flux-factor outer/stack.fits \
+           --psf=inner/stack.fits --center=250,250 \
+           --mode=img --normradii=$RI,$RO \
+           --output=junction-radius-test/ffactor-$RI-$RO.txt
+
+$ ffactor=$(cat junction-radius-test/ffactor-$RI-$RO.txt)
+$ bash astscript-psf-create-junction outer/stack.fits \
+           --core=inner/stack.fits --radius=$RI --fluxfactor=$ffactor \
+           --output=junction-radius-test/joined-$RI-$RO.fits
+
+$ ds9 psf-complete.fits
+$ ds9 junction-radius-test/joined-$RI-$RO.fits
+@end example
+
+Now that the complete PSF has been obtained, let's remove non necessary files and continue with the modeling and the subtraction of the stars.
+
+@example
+$ rm -rf junction-radius-test
+@end example
 
 @node Subtracting the PSF,  , Uniting the different PSF components, Building the extended PSF
 @subsection Subtracting the PSF
