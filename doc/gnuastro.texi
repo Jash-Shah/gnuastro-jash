@@ -5990,12 +5990,11 @@ astscript-psf-create-junction outer/stack.fits \
          --fluxfactor=95.1809 --output=psf-complete.fits
 @end example
 
-
 The choose of the @option{--normradii} is something that has to be explored from the visual inspection of the radial profiles as well as the images.
 Our best advice is that the final selection of this normalization and junction radius is something that has to be explored.
 So, take your time to play with different values to check how the junction changes.
 A good junction radius is that let no saturation in the central part, high signal to noise ratio in the outer part, and creates a smooth transition in between the two parts.
-For example, check that the values used above @option{--normradii=15,16} and @option{--radius=15} makes a good junction (it is almost impossible to see the transition in the final PSF.
+For example, check that the values used above @option{--normradii=15,16} and @option{--radius=15} makes a good junction (it is almost impossible to see the transition in the final PSF).
 With the goal of make the search of the junction radius easier, you can use the commands below.
 Check for example that the junction at different radius (R=50) is not a good option (compared with the result we have obtained above).
 
@@ -6010,7 +6009,7 @@ $ astscript-psf-model-flux-factor outer/stack.fits \
            --output=junction-radius-test/ffactor-$RI-$RO.txt
 
 $ ffactor=$(cat junction-radius-test/ffactor-$RI-$RO.txt)
-$ bash astscript-psf-create-junction outer/stack.fits \
+$ astscript-psf-create-junction outer/stack.fits \
            --core=inner/stack.fits --radius=$RI --fluxfactor=$ffactor \
            --output=junction-radius-test/joined-$RI-$RO.fits
 
@@ -6026,76 +6025,123 @@ $ rm -rf junction-radius-test
 
 @node Subtracting the PSF,  , Uniting the different PSF components, Building the extended PSF
 @subsection Subtracting the PSF
-With the commands above PSF has been constructed and now it is going to be used for modeling and subtracting each individual star.
+In the previous sections we have constructed a complete PSF.
+Now we are going to use it for modeling and subtracting each individual star.
 By construction, the pixel values of the PSF came from the normalization of the individual stamps.
 As a consequence, when modeling each individual star, it is necessary to compute what is the factor by which the PSF has to be scaled.
-This is done with the script @file{astscript-psf-model-flux-factor}.
-For each star, a single value for the flux factor is saved into a plain text file.
-In this case, the parameters where the computation of the flux factor is done are the same to those that were used for creating the stamps.
+This is done with the script @file{astscript-psf-model-flux-factor} (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
+Essentially, this step is the same than the calculation of the flux factor described above in @ref{Uniting the different PSF components}.
+The difference is that now we are not aiming to join two different PSF parts but looking for the flux factor that match the star with the PSF.
+Then, we will use the script @file{astscript-psf-model-scattered-light} for allocating the PSF image at the desired coordinates within the appropriate grid.
+Finally, once the star have been modeled by the PSF, we will subtract it.
+
+Let's make the model and subtraction for one single star first.
+Later, when the basic idea has been explained, we will generalize the method for any number of stars.
+With the following command we obtain the coordinates (RA and DEC) and magnitude of the second brightnest star in the catalog we obtained previously (the first one is just at the border of the image).
 
 @example
-$ asttable catalog.fits | while read -r ra dec mag; do
-      astscript-psf-model-flux-factor $IMAGE \
-          --psf=psf.fits \
+$ asttable gaia.fits --sort phot_g_mean_mag \
+           --column=ra,dec,phot_g_mean_mag --head 2
+@end example
+
+With the center position of that star, let's obtain the flux factor using the same normalization ring we used for the creation of the outer part of the PSF:
+
+@example
+$ mkdir single-star
+$ astscript-psf-model-flux-factor label/67510-seg.fits \
+           --mode=wcs \
+           --normradii=20,30 \
+           --psf=psf-complete.fits \
+           --center=202.98395469814,47.234397688023 \
+           --output=single-star/fluxfactor.txt
+@end example
+
+Now we have all the information necessary to model the star using the PSF: the position on the sky and the flux factor.
+Let's use this data with the script @file{astscript-psf-model-scattered-light} for modeling this star and have a look with DS9.
+
+@example
+$ fluxfactor=$(cat single-star/fluxfactor.txt)
+$ astscript-psf-model-scattered-light label/67510-seg.fits \
           --mode=wcs \
-          --center=$ra,$dec \
-          --normradii=$NORMRADII_INNER,$NORMRADII_OUTER \
-          --output=fluxfactor-"$ra"_"$dec".txt; done
+          --psf=psf-complete.fits \
+          --fluxfactor=$fluxfactor \
+          --center=202.98395469814,47.234397688023 \
+          --output=single-star/star-2.fits
+
+$ ds9 label/67510-seg.fits single-star/star-2.fits
 @end example
 
-Once the flux factors have been computed, it is possible to scale the PSF to have the desired flux level.
-Of course, it is not only to scale the PSF flux but also allocate it in the correct position on the sky to model the star.
-To do this, we use the script @file{astscript-psf-model-scattered-light}.
-It will put the PSF into the coordinates specified by the user with the appropiate size and flux level.
-For those pixels that there is no PSF (it is normal that the size of the image is bigger than the size of the PSF), the script sets them automatically to zero.
+The result is the complete PSF situated in the sky position we have provided (RA, DEC) with the flux specified by the flux factor value.
+Those pixels on this image that don't correspond to the PSF image are set to zero, and the size of the image is exactly the same as the input image provided.
+So, we are ready to make the subtraction of the modeled star by the PSF.
+It is only necessary to use a simple Arithmetic subtraction to obtain it.
+Let's do and check the result:
 
 @example
-$ asttable catalog.fits | while read -r ra dec mag; do
-      fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
-      astscript-psf-model-scattered-light $IMAGE \
-          --psf=psf.fits \
-          --mode=wcs \
-          --fluxfactor $fluxfactor \
-          --center=$ra,$dec \
-          --output=starmodel-"$ra"_"$dec".fits; done
+$ astarithmetic label/67510-seg.fits --hdu=1 \
+                single-star/star-2.fits --hdu=1 \
+                - --output=single-star/star-2-subtracted.fits
+
+$ ds9 label/67510-seg.fits single-star/star-2-subtracted.fits
 @end example
 
-After all stars have been modeled using the PSF, the next step is to sum all of them together.
-In this case, it is necessary to combine them using the operator sum because each individual star has been flux calibrated, otherwise they would be averaged.
-The result is the complete scattered light field of the image using the PSF: @file{scattered-light-field.fits}.
+By comparing the original and the subtracted image, it can be clearly seen how the star has been removed.
+Still there are some residuals, specially in the central part and those corresponding to the diffraction spikes.
+It is important to note that the number of the stars used in this example is small.
+With more and brighter stars the PSF would have been better determined.
+Note also that during this process we assumed that the PSF doesn't vary with the CCD position or any other parameter.
+In other words, we are obtaining an averaged PSF model from a few star stamps that are naturally different, and this also explains the residuals on each subtracted star.
+
+Let's consider now more than one single stars.
+With the command belows you will be able to subtract the stars that we have used for constructing the PSF.
+Please, remember always to check each step.
+
+First we iterate over the catalog of stars to obtain the flux factor and generate the model of each star:
 
 @example
-$ astarithmetic starmodel*.fits -g1 \
-      $(ls starmodel*.fits | wc -l) sum \
-      --output=scattered-light-field.fits
+$ counter=1
+$ mkdir models
+$ mkdir models/stars
+$ mkdir models/fluxes
+$ asttable outer/67510-6-12.fits \
+           | while read -r ra dec mag; do
+              astscript-psf-model-flux-factor label/67510-seg.fits \
+                   --mode=wcs \
+                   --center=$ra,$dec \
+                   --normradii=20,30 \
+                   --psf=psf-complete.fits \
+                   --output=models/fluxes/flux-$counter.txt
+
+              fluxfactor=$(cat models/fluxes/flux-$counter.txt)
+
+              astscript-psf-model-scattered-light label/67510-seg.fits \
+                   --mode=wcs \
+                   --center=$ra,$dec \
+                   --psf=psf-complete.fits \
+                   --fluxfactor $fluxfactor \
+                   --output=models/stars/star-$counter.fits
+
+              counter=$((counter+1))
+             done
 @end example
 
-This is the final step.
-Once the scattered light field model has been obtained (i.e., each individual star has been modeled using the PSF and they are in one single image), it is possible to subtract this model from the original image.
-By doing this the scattered light field is removed.
-This step is done with a simple Arithmetic model to subtract two images.
+We have generated the model of each star.
+Now, let's sum all of them to generate the complete scattered light field model and subtract it from the original image.
 
 @example
-$ astarithmetic $IMAGE --hdu=1 \
-      scattered-light-field.fits --hdu=1 \
-      - --output subtracted.fits
+$ imgs=models/stars/star*.fits
+$ numimgs=$(echo $imgs | wc -w)
+$ astarithmetic $imgs $numimgs sum -g1 \
+                --output=models/scattered-light-field.fits
+
+$ astarithmetic label/67510-seg.fits \
+                models/scattered-light-field.fits \
+                -g1 - --output=models/scattered-light-subtracted.fits
+$ ds9 label/67510-seg.fits models/scattered-light-subtracted.fits
 @end example
 
-As always, check that each step has been done properly.
-It is normal that on the final image there are residuals and several parts that have been not properly corrected.
-Take into account that the number of the stars used in this example is small.
-With more stars the PSF would have been better determined.
-Note also that during this process, any mask of contaminant sources have been applied (either in the creation of the PSF nor in the calibration of the flux of the PSF).
-This tutorial is intendeed to be a basic example from which the reader can start to construct the PSF.
-To obtain better results it is necessary to study in details the peculiarities of the datasets and consider other options that here they have not been used.
-
-
-
-
-
-
-
-
+In general, in this tutorial we have showed how to deal with the most important challenges for constructing an extended PSF.
+Each image or dataset will have its own particularities that you will have to take into account when constructing the PSF.
 
 @node Installation, Common program behavior, Tutorials, Top
 @chapter Installation
