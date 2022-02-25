@@ -24,6 +24,9 @@
 @c So function output type is printed on first line
 @deftypefnnewline on
 
+@c Enable single quotes
+@codequoteundirected on
+
 @c Use section titles in cross references, not node titles.
 @xrefautomaticsectiontitle on
 
