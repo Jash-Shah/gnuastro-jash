@@ -5626,13 +5626,37 @@ $ astnoisechisel sat-fill.fits --convolved=sat-fill-conv.fits \
                  --output=sat-nc.fits
 $ astsegment sat-nc.fits --convolved=sat-fill-conv.fits \
              --output=sat-seg.fits --rawoutput
-$ ds9 -mecube -zscale sat-seg.fits -zoom to fit -scale limits -1 1
+$ ds9 -mecube sat-seg.fits -zoom to fit -scale limits -1 1
 @end example
 
 @noindent
 See the @code{CLUMPS} extension.
 Do you see how the whole center of the star has indeed been identified as a single clump?
 We thus achieved our aim and didn't let the saturated pixels harm the identification of the center!
+
+@noindent
+Let's inspect now the @code{OBJECTS} extension.
+
+@example
+$ ds9 -mecube sat-seg.fits[2] -zoom to fit -cmap sls
+@end example
+
+We can see that the label corresponding to the star has been broken into different objects, this can be clearly seen as a fragmentation of the star specially in the outer part of it.
+This is not a good object segmentation image since those objects are indeed part of the same star, so we want to keep them with the same label as the star.
+We can optimize the segmentation of such bright objects to have single objects well defined by modifying the Segment's parameters @option{--gthresh} and @option{--objbordersn}.
+By decreasing @option{--gthresh} we force the grow of the clumps to touch each other, otherwise they become different objects (this is indeed what is happening right now with the default value).
+In the same way, by decreasing @option{--objbordersn} we decrease the signal to noise ratio of the river in between true clumps to be considered as an object.
+See @ref{Segmentation options} for more on this options.
+Let's decrease these two parameters in order to obtain a non fragmented segmentation image for the star.
+Then, check that the star has been kept as a single object in the @code{OBJECTS} extension.
+
+@example
+$ astsegment sat-nc.fits --convolved=sat-fill-conv.fits \
+             --gthresh=-10 --objbordersn=0 \
+             --output=sat-seg.fits --rawoutput
+$ ds9 -mecube sat-seg.fits[2] -zoom to fit -cmap sls
+@end example
+
 
 Now we can extend these same steps to the whole image.
 To detect signal, we can run NoiseChisel using the command below.
@@ -5674,13 +5698,14 @@ $ astnoisechisel label/67510-fill.fits --interpnumngb=100 \
                  --output=label/67510-nc.fits
 $ rm label/67510-fill.fits
 $ astsegment label/67510-nc.fits --output=label/67510-seg-raw.fits \
-             --convolved=label/67510-fill-conv.fits --rawoutput
+             --convolved=label/67510-fill-conv.fits --rawoutput \
+             --gthresh=-10 --objbordersn=0
 $ rm label/67510-fill-conv.fits
 $ ds9 -mecube -zscale label/67510-seg-raw.fits -zoom to fit \
       -scale limits -1 1
 @end example
 
-We see that the saturated pixels haven't caused any problems and the central clumps of bright stars are now a single clump.
+We see that the saturated pixels haven't caused any problems and the central clumps/objects of bright stars are now a single clump/object.
 We can now proceed to estimating the outer PSF in @ref{Building outer part of PSF}.
 
 But before that, let's make a ``standard'' segment output: one that can safely be fed into MakeCatalog for measurements.
@@ -5739,12 +5764,12 @@ So we are now ready to start building the outer parts of the PSF.
 
 First we will build the outer parts of the PSF, so we want the brightest stars.
 You will see we have several bright stars in this very large field of view, but we don't yet have a feeling how many they are, and at what magnitudes.
-So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than g-magnitude 12 in Gaia EDR3).
+So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than g-magnitude 10 in Gaia EDR3).
 For more on Query, see @ref{Query}.
 
 @example
 $ astquery gaia --dataset=edr3 --overlapwith=flat/67510.fits \
-           --range=phot_g_mean_mag,-inf,12 --output=gaia.fits
+           --range=phot_g_mean_mag,-inf,10 --output=gaia.fits
 @end example
 
 Now, we can easily visualize the magnitude and positions of these stars using @command{astscript-ds9-region} and the command below (for more on this script, see @ref{SAO DS9 region files from table})
@@ -5755,23 +5780,23 @@ $ astscript-ds9-region gaia.fits -cra,dec \
            --command="ds9 flat/67510.fits -zoom to fit -zscale"
 @end example
 
-You can see that we have several stars between magnitudes 6 to 12.
-Let's use @file{astscript-psf-create-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 6 to 12).
+You can see that we have several stars between magnitudes 6 to 10.
+Let's use @file{astscript-psf-create-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 6 to 10).
 Since this will select very bright stars, we will also increase the distance to nearby neighbors with brighter or similar magnitudes (the default value is 1 arcmin).
-To do this, we will set @option{--mindistdeg=0.05}, which corresponds to 3 arcmin (or 3/60 degrees).
+To do this, we will set @option{--mindistdeg=0.02}, which corresponds to 1.2 arcmin.
 
 @example
 $ mkdir outer
 $ astscript-psf-create-select-stars flat/67510.fits \
-           --magnituderange=6,12 --mindistdeg=0.05 \
-           --output=outer/67510-6-12.fits
+           --magnituderange=6,10 --mindistdeg=0.02 \
+           --output=outer/67510-6-10.fits
 @end example
 
 @noindent
 Let's have a look at the selected stars in the image (it is very important to visually check every step when you are first discovering a new dataset).
 
 @example
-$ astscript-ds9-region outer/67510-6-12.fits -cra,dec \
+$ astscript-ds9-region outer/67510-6-10.fits -cra,dec \
            --namecol=phot_g_mean_mag \
            --command="ds9 flat/67510.fits -zoom to fit -zscale"
 @end example
@@ -5792,19 +5817,19 @@ It is necessary to specify the @code{--normradii} even if we don't know yet the 
 Otherwise the script will not generate the radial profile.
 As a consequence, in this step we put the normalization radii equal to the size of the stamps.
 By doing this, the script will generate the radial profile of the entire stamp.
-In this particular step we set it to @code{--normradii=150,160}.
+In this particular step we set it to @code{--normradii=500,510}.
 Furthermore, since there are several stars, we iterate over each row of the catalog using a while loop.
 
 @example
 $ counter=1
 $ mkdir finding-normradii
-$ asttable outer/67510-6-12.fits \
+$ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
                astscript-psf-create-make-stamp label/67510-seg.fits \
                     --mode=wcs \
-                    --stampwidth=500 \
+                    --stampwidth=1000 \
                     --center=$ra,$dec \
-                    --normradii=250,260 \
+                    --normradii=500,510 \
                     --segment=label/67510-seg.fits \
                     --output=finding-normradii/$counter.fits \
                     --tmpdir=finding-normradii --keeptmp; \
@@ -5828,17 +5853,14 @@ Note that the profiles are different because we are considering a wide range of 
 However, in this tutorial we will keep these stars in order to have a higher number of stars for the outer part.
 In a real case scenario, we should look for stars with a much more similar brightness (smaller range of magnitudes) to not lose signal to noise as a consequence of the inclusion of fainter stars.
 
-We later need the normalization radii in the next steps also.
-Therefore, to avoid typos or chances of a mistake, we'll define the two @code{NORMRADII_INNER} and @code{NORMRADII_OUTER} variables.
-
 @example
 $ counter=1
 $ mkdir outer/stamps
-$ asttable outer/67510-6-12.fits \
+$ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
                astscript-psf-create-make-stamp label/67510-seg.fits \
                     --mode=wcs \
-                    --stampwidth=500 \
+                    --stampwidth=1000 \
                     --center=$ra,$dec \
                     --normradii=20,30 \
                     --segment=label/67510-seg.fits \
@@ -5898,7 +5920,7 @@ In @ref{Building outer part of PSF}, we were able to create a stack of the outer
 But the central part that was affected by saturation and non-linearity is still remaining, and we still don't have a ``complete'' PSF!
 In this section, we will use the same steps before to make stacks of more inner regions of the PSF to ultimately unite them all into a single PSF in @ref{Uniting the different PSF components}.
 
-For the outer PSF, we selected stars in the magnitude range of 6 to 12.
+For the outer PSF, we selected stars in the magnitude range of 6 to 10.
 So let's have a look and see how many stars we have in the magnitude range of 12-13 with a more relaxed condition on the minimum distance for neighbours, @option{--mindistdeg=0.01} (36 arcsec), and use the ds9 region script to visually inspect them:
 
 @example
@@ -5917,6 +5939,7 @@ Only the very central core of some of the star is saturated.
 We can therefore use these stars to fill the strong bleeding footprints that were present in the outer stack of @file{outer/stack.fits}.
 Similar to before, let's build ready-to-stack crops of these stars.
 To get a better feeling of the normalization radii, follow the same steps of @ref{Building outer part of PSF} (setting @option{--tmpdir} and @option{--keeptmp}).
+In this case, since the stars are fainter, we can set a smaller size for the individual stamps, @option{--stampwidth=500}, to speed up the calculations:
 
 @example
 $ counter=1
@@ -5966,15 +5989,15 @@ We will use the script @file{astscript-psf-model-flux-factor} for computing the 
 This script is more general and it is used also for estimating the flux factors when modeling individual stars once the final PSF is constructed (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
 The basic parameters are the normalization radii (i.e., the radius ring at which the ratio betwen the radial profiles of the outer and inner part is done), and the center of the outer part of the PSF.
 The center of the inner PSF is asumed to be in the center of the image.
-Let's obtain that flux factor with the following command
+Let's obtain that flux factor with the following command:
 
 @example
-astscript-psf-model-flux-factor outer/stack.fits \
-         --psf=inner/stack.fits --center=250,250 \
-         --mode=img --normradii=15,16
+$ astscript-psf-model-flux-factor outer/stack.fits \
+           --psf=inner/stack.fits --center=500,500 \
+           --mode=img --normradii=15,16
 @end example
 
-The output of this script is a value (95.1809), and the interpretation of the value is the following: it is the number by which you have to multiply the inner stack to have the same pixel values (on average) than the outer stack in the ring of pixels defined by @option{--normradii=15,16}.
+The output of this script is a value (98.8871), and the interpretation of the value is the following: it is the number by which you have to multiply the inner stack to have the same pixel values (on average) than the outer stack in the ring of pixels defined by @option{--normradii=15,16}.
 Basically, the script has computed the mean of the ratio of the radial profiles of the two images at the specified normalization radii ring.
 
 Once we have obtained the flux factor, we are ready to unite the outer and the inner part of the PSF.
@@ -5982,15 +6005,16 @@ To do that, we will use the script @file{astscript-psf-create-junction} (for mor
 The basic parameters are the core part of the PSF @option{--core}, the junction radius @option{--radius}, and the flux factor @option{--fluxfactor}.
 With these parameters provided, the script will consider the input image as reference outer part of the PSF.
 Then, it will scale the inner part by the flux factor, and replace the inner part (radius less than the @option{--radius}) by this image.
-Since the flux factor was computed for a ring of 1 pixel between 15 and 16 pixels, let's make the junction at R=15 pixel with the following command:
+Since the flux factor was computed for a ring of 1 pixel between 15 and 16 pixels, let's make the junction at R=15 pixel and check the result with the following commands:
 
 @example
-astscript-psf-create-junction outer/stack.fits \
-         --core=inner/stack.fits --radius=15 \
-         --fluxfactor=95.1809 --output=psf-complete.fits
+$ astscript-psf-create-junction outer/stack.fits \
+           --core=inner/stack.fits --radius=15 \
+           --fluxfactor=98.8871 --output=psf-complete.fits
+$ ds9 psf-complete.fits
 @end example
 
-The choose of the @option{--normradii} is something that has to be explored from the visual inspection of the radial profiles as well as the images.
+The selection of the @option{--normradii} is something that has to be explored from the visual inspection of the radial profiles as well as the images.
 Our best advice is that the final selection of this normalization and junction radius is something that has to be explored.
 So, take your time to play with different values to check how the junction changes.
 A good junction radius is that let no saturation in the central part, high signal to noise ratio in the outer part, and creates a smooth transition in between the two parts.
@@ -6013,8 +6037,7 @@ $ astscript-psf-create-junction outer/stack.fits \
            --core=inner/stack.fits --radius=$RI --fluxfactor=$ffactor \
            --output=junction-radius-test/joined-$RI-$RO.fits
 
-$ ds9 psf-complete.fits
-$ ds9 junction-radius-test/joined-$RI-$RO.fits
+$ ds9 psf-complete.fits junction-radius-test/joined-$RI-$RO.fits
 @end example
 
 Now that the complete PSF has been obtained, let's remove non necessary files and continue with the modeling and the subtraction of the stars.
@@ -6088,7 +6111,8 @@ $ ds9 label/67510-seg.fits single-star/star-2-subtracted.fits
 By comparing the original and the subtracted image, it can be clearly seen how the star has been removed.
 Still there are some residuals, specially in the central part and those corresponding to the diffraction spikes.
 It is important to note that the number of the stars used in this example is small.
-With more and brighter stars the PSF would have been better determined.
+The consequence of this low number of stars is that the outer part of the PSF is very noisy, and consequently, there are a lot of residuals in the PSF subtracted image.
+With more and brighter stars the PSF would have been better determined (i.e., less noise in the outer part).
 Note also that during this process we assumed that the PSF doesn't vary with the CCD position or any other parameter.
 In other words, we are obtaining an averaged PSF model from a few star stamps that are naturally different, and this also explains the residuals on each subtracted star.
 
@@ -6103,7 +6127,7 @@ $ counter=1
 $ mkdir models
 $ mkdir models/stars
 $ mkdir models/fluxes
-$ asttable outer/67510-6-12.fits \
+$ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
               astscript-psf-model-flux-factor label/67510-seg.fits \
                    --mode=wcs \
@@ -6139,6 +6163,9 @@ $ astarithmetic label/67510-seg.fits \
                 -g1 - --output=models/scattered-light-subtracted.fits
 $ ds9 label/67510-seg.fits models/scattered-light-subtracted.fits
 @end example
+
+We let as an interesting exercise the modeling and subraction of other stars, for example, the non saturated stars of the image.
+By doing this, you will notice that in the core region the residuals are different compared to the residuals of brightner stars that we have obtained.
 
 In general, in this tutorial we have showed how to deal with the most important challenges for constructing an extended PSF.
 Each image or dataset will have its own particularities that you will have to take into account when constructing the PSF.
