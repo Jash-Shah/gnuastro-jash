@@ -33,21 +33,20 @@ set -e
 # Default option values (can be changed with options on the command-line).
 hdu=1
 psf=""
-mask=""
 rmax=""
 quiet=""
 psfhdu=1
 center=""
 keeptmp=0
-maskhdu=1
 output=""
 tmpdir=""
-corewidth=""
+segment=""
 normradii=""
 sigmaclip=""
 stampwidth=""
 psfprofile=""
 psfprofilehdu=1
+corewidth="3,3"
 normop="median"
 psfprofilecol=""
 version=@VERSION@
@@ -102,9 +101,8 @@ $scriptname options:
   -W, --stampwidth=INT    Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the flux factor value.
-  -m, --mask=STR          Segmentation image (sky = 0).
-  -M, --maskhdu=STR       HDU/extension of the segmentation image.
   -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
+  -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
   -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
@@ -228,12 +226,9 @@ do
         -w|--corewidth)      corewidth="$2";                            check_v "$1" "$corewidth";  shift;shift;;
         -w=*|--corewidth=*)  corewidth="${1#*=}";                       check_v "$1" "$corewidth";  shift;;
         -w*)                 corewidth=$(echo "$1"  | sed -e's/-w//');  check_v "$1" "$corewidth";  shift;;
-        -m|--mask)           mask="$2";                                 check_v "$1" "$mask";  shift;shift;;
-        -m=*|--mask=*)       mask="${1#*=}";                            check_v "$1" "$mask";  shift;;
-        -m*)                 mask=$(echo "$1"  | sed -e's/-m//');       check_v "$1" "$mask";  shift;;
-        -M|--maskhdu)        maskhdu="$2";                              check_v "$1" "$maskhdu";  shift;shift;;
-        -M=*|--maskhdu=*)    maskhdu="${1#*=}";                         check_v "$1" "$maskhdu";  shift;;
-        -M*)                 maskhdu=$(echo "$1"  | sed -e's/-M//');    check_v "$1" "$maskhdu";  shift;;
+        -S|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
+        -S=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
+        -S*)                 segment=$(echo "$1"  | sed -e's/-S//');    check_v "$1" "$segment";  shift;;
         -O|--mode)           mode="$2";                                 check_v "$1" "$mode";  shift;shift;;
         -O=*|--mode=*)       mode="${1#*=}";                            check_v "$1" "$mode";  shift;;
         -O*)                 mode=$(echo "$1"  | sed -e's/-O//');       check_v "$1" "$mode";  shift;;
@@ -481,6 +476,46 @@ astcrop $inputs --hdu=$hdu --mode=img \
 
 
 
+# Function to find label of desired region
+# ----------------------------------------
+#
+# Given a certain extension ('CLUMPS' or 'OBJECTS'), find the respective
+# label.
+find_central_label () {
+  # Input arguments
+  hdu=$1
+
+  # Set the parameters.
+  case $hdu in
+      CLUMPS) labname=clump;;
+      OBJECTS) labname=object;;
+      *) cat <<EOF
+$scriptname: ERROR: a bug! Please contact us at bug-gnuastro@gnu.org to fix the problem. The first argument to 'find_central_label' function is not 'CLUMPS' or 'OBJECTS'
+EOF
+      ;;
+  esac
+
+  # Crop the labeled image.
+  cropped_core=$tmpdir/cropped-core-$objectid.fits
+  astcrop $segment --hdu=$hdu --mode=img $quiet --width=$corewidth \
+          --center=$xcenter,$ycenter --output=$cropped_core
+  lab=$(astarithmetic $cropped_core unique --quiet)
+  numlab=$(echo "$lab" | awk '{print NF}')
+  if [ $numlab != 1 ]; then
+    cat <<EOF
+$scriptname: ERROR: there is more than one $labname label in the core region around the given coordinate (specified by '--corewidth=$corewidth', containing $labname labels: $lab). Therefore it is not possible to unambiguously identify a single $labname. Please decrease the box size given to '--corewidth'.
+EOF
+    exit 1
+  fi
+
+  # Write the output in a file.
+  echo $lab > $tmpdir/cropped-core-$labname-$objectid.txt
+}
+
+
+
+
+
 # Crop and unlabel the segmentation image
 # ---------------------------------------
 #
@@ -490,46 +525,42 @@ astcrop $inputs --hdu=$hdu --mode=img \
 # process is as follow:
 #   - Crop the original mask image.
 #   - Crop the original mask image to a central region (core), in order to
-#   compute what is the central object id. This is necessary to unmask this
-#   object.
+#     compute what is the central object id. This is necessary to unmask
+#     this object.
 #   - Compute what is the central object value, using the median value.
 #   - In the original cropped mask, convert all pixels belonging to the
-#   central object to zeros. By doing this, the central object becomes as
-#   sky.
+#     central object to zeros. By doing this, the central object becomes as
+#     sky.
 #   - Mask all non zero pixels in the mask image as nan values.
-if [ x"$mask" != x ]; then
-    cropped_mask=$tmpdir/cropped_mask-$objectid.fits
-    astcrop $mask --hdu=$maskhdu --mode=img \
-            --center=$xcenter,$ycenter \
-            --width=$stampwidth --output=$cropped_mask $quiet
+if [ x"$segment" != x ]; then
 
-  # If the user does not provide a core width, consider it as the maximum
-  # normalization radius value.
-  if [ x"$corewidth" = x ]; then corewidth="$normradiusmax,$normradiusmax"
-  fi
+  # Find the object and clump labels of the target.
+  find_central_label CLUMPS
+  find_central_label OBJECTS
+  clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
+  olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
 
-  # Crop just the center of the target star.
-  cropped_core=$tmpdir/cropped_core-$objectid.fits
-  astcrop $mask --hdu=$maskhdu --mode=img \
+  # Crop the object and clump image to same size as desired stamp.
+  cropclp=$tmpdir/cropped-clumps-$objectid.fits
+  cropobj=$tmpdir/cropped-objects-$objectid.fits
+  astcrop $segment --hdu=OBJECTS --mode=img \
           --center=$xcenter,$ycenter \
-          --width=$corewidth --output=$cropped_core $quiet
+          --width=$stampwidth --output=$cropobj $quiet
+  astcrop $segment --hdu=CLUMPS --mode=img \
+          --center=$xcenter,$ycenter \
+          --width=$stampwidth --output=$cropclp $quiet
 
-  # Compute the label of the central object from the core cropped image.
-  centrallabel=$(aststatistics $cropped_core --median -q)
-
-  # Unlabel the central object.
-  cropped_unlabel=$tmpdir/cropped_unlabel-$objectid.fits
-  astarithmetic $cropped_mask --hdu=1 \
-                $cropped_mask --hdu=1 \
-                $centrallabel eq 0 where --output=$cropped_unlabel $quiet
-
-  # All objects that are not the central are masked here.
-  cropped_masked=$tmpdir/cropped_masked-$objectid.fits
-  astarithmetic $cropped --hdu=1 \
-                $cropped_unlabel --hdu=1 \
-                0 ne nan where --output=$cropped_masked $quiet
+  # Mask all the undesired regions.
+  cropped_masked=$tmpdir/cropped-masked-$objectid.fits
+  astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
+                $cropobj --hdu=1 set-o \
+                $cropclp --hdu=1 set-c \
+                                       \
+                c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
+                o o $olab eq 0 where set-omask \
+                i omask cmask or nan where
 else
-    cropped_masked=$cropped
+  cropped_masked=$cropped
 fi
 
 

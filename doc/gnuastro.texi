@@ -5991,16 +5991,18 @@ Let's see how we can do that.
 We will use the script @file{astscript-psf-model-flux-factor} for computing the factor by which the inner part of the PSF has to be multiplied to have the same flux at the junction radius.
 This script is more general and it is used also for estimating the flux factors when modeling individual stars once the final PSF is constructed (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
 The basic parameters are the normalization radii (i.e., the radius ring at which the ratio betwen the radial profiles of the outer and inner part is done), and the center of the outer part of the PSF.
+You can also provide a segmentation image with a CLUMPS and OBJECTS extensions in order to mask contaminant sources as explained above.
 The center of the inner PSF is asumed to be in the center of the image.
 Let's obtain that flux factor with the following command:
 
 @example
 $ astscript-psf-model-flux-factor outer/stack.fits \
            --psf=inner/stack.fits --center=500,500 \
+           --segment=label/67510-seg.fits \
            --mode=img --normradii=15,16
 @end example
 
-The output of this script is a value (98.8871), and the interpretation of the value is the following: it is the number by which you have to multiply the inner stack to have the same pixel values (on average) than the outer stack in the ring of pixels defined by @option{--normradii=15,16}.
+The output of this script is a value (98.9177), and the interpretation of the value is the following: it is the number by which you have to multiply the inner stack to have the same pixel values (on average) than the outer stack in the ring of pixels defined by @option{--normradii=15,16}.
 Basically, the script has computed the mean of the ratio of the radial profiles of the two images at the specified normalization radii ring.
 
 Once we have obtained the flux factor, we are ready to unite the outer and the inner part of the PSF.
@@ -6013,7 +6015,7 @@ Since the flux factor was computed for a ring of 1 pixel between 15 and 16 pixel
 @example
 $ astscript-psf-create-junction outer/stack.fits \
            --core=inner/stack.fits --radius=15 \
-           --fluxfactor=98.8871 --output=psf-complete.fits
+           --fluxfactor=98.9177 --output=psf-complete.fits
 $ ds9 psf-complete.fits
 @end example
 
@@ -6033,6 +6035,7 @@ $ mkdir junction-radius-test
 $ astscript-psf-model-flux-factor outer/stack.fits \
            --psf=inner/stack.fits --center=250,250 \
            --mode=img --normradii=$RI,$RO \
+           --segment=label/67510-seg.fits \
            --output=junction-radius-test/ffactor-$RI-$RO.txt
 
 $ ffactor=$(cat junction-radius-test/ffactor-$RI-$RO.txt)
@@ -6078,6 +6081,7 @@ $ astscript-psf-model-flux-factor label/67510-seg.fits \
            --mode=wcs \
            --normradii=20,30 \
            --psf=psf-complete.fits \
+           --segment=label/67510-seg.fits \
            --center=202.98395469814,47.234397688023 \
            --output=single-star/fluxfactor.txt
 @end example
@@ -6137,6 +6141,7 @@ $ asttable outer/67510-6-10.fits \
                    --center=$ra,$dec \
                    --normradii=20,30 \
                    --psf=psf-complete.fits \
+                   --segment=label/67510-seg.fits \
                    --output=models/fluxes/flux-$counter.txt
 
               fluxfactor=$(cat models/fluxes/flux-$counter.txt)
@@ -24776,25 +24781,18 @@ This option takes two values separated by a comma (@key{,}).
 The first value is the inner radius, the second is the outer radius.
 These two radius define a ring of pixels around the center that is used for obtaining the normalization value.
 
-@item -m STR
-@itemx --mask=STR
-Filename of a segmentation image.
-It is possible use a segmentation image to mask all the objects that are not the central object.
-The segmentation image specified by this option must have the same dimensions than the input image.
-Non object pixels must have pixel values equal to zero, these pixels are not masked on the final stamp.
-Object pixels must have pixel values different from zero, these pixels are masked with NaN values on the final stamp.
-In order to not mask the central object (in case it is identified in the segmentation image as an object), a region around the center is considered from the segmentation image.
-The size of that region can be specified by the option @option{--corewidth}, see below.
-As a consequence, all pixels with values equal to the central one in the segmentation image are not masked in the final stamp image.
-Internally, all of these pixels are converted to zero values so they are not masked.
-
-@item -M STR
-@itemx --maskhdu=STR
-The HDU/extension of the segmentation image (@option{--mask}).
+@item -S STR
+@itemx --segment=STR
+Filename of a segmentation image from Segment's output.
+This image is used to mask all objects that are not the central clump/object.
+The script computes an internal mask that combine the objects and clumps to mask all objects that do not correspond to the central one.
+All clumps of the central object that are not the central clump are also masked.
+The result is that all objects and clumps that contaminate the central source are masked.
+The size of the region that is used for identifying the central clump/object can be specified by the option @option{--corewidth}, see below.
 
 @item -w INT
 @itemx --corewidth=INT
-Width of the region that is used to compute the central object over the segmentation image @option{--mask}, with the goal of not masking it.
+Width of the region that is used to compute the central clump/object over the segmentation image @option{--segment}, with the goal of not masking them.
 If a segmentation image is provided, then it is necessary to not mask the central object.
 To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
 Once it has been identified, that pixels are not masked.
@@ -25055,29 +25053,22 @@ The option takes two values separated by a comma (@key{,}).
 The first value is the inner radius, the second is the outer radius.
 These two radius define a ring of pixels around the center that is used for obtaining the flux factor value.
 
-@item -m STR
-@itemx --mask=STR
-Filename of the segmentation image.
-It is possible use a segmentation image to mask all the objects that are not the central object.
-The segmentation image specified by this option must have the same dimensions than the input image.
-Non object pixels must have pixel values equal to zero, these pixels are not masked on the final stamp.
-Object pixels must have pixel values different from zero.
-In order to not mask the central object (in case it is identified in the segmentation image as an object), a region around the center is considered from the segmentation image.
-The size of that region can be specified by the option @option{--corewidth}, see below.
-As a consequence, all pixels with values equal to the central one in the segmentation image are not masked.
-Internally, all of these pixels are converted to zero values so they are not masked.
-
-@item -M STR
-@itemx --maskhdu=STR
-The HDU/extension of the segmentation image (@option{--mask}).
+@item -S STR
+@itemx --segment=STR
+Filename of a segmentation image from Segment's output.
+This image is used to mask all objects that are not the central clump/object.
+The script computes an internal mask that combine the objects and clumps to mask all objects that do not correspond to the central one.
+All clumps of the central object that are not the central clump are also masked.
+The result is that all objects and clumps that contaminate the central source are masked.
+The size of the region that is used for identifying the central clump/object can be specified by the option @option{--corewidth}, see below.
 
 @item -w INT
 @itemx --corewidth=INT
-Width of the region that is used to compute the central object over the segmentation image @option{--mask}, with the goal of not masking it.
+Width of the region that is used to compute the central clump/object over the segmentation image @option{--segment}, with the goal of not masking them.
 If a segmentation image is provided, then it is necessary to not mask the central object.
 To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
 Once it has been identified, that pixels are not masked.
-With this option, it is possible to control the size of the central region for computing the central object values.
+With this option, it is possible to control the size of the central region for computing the central object label (on the segmentation image).
 
 @item -R FLT
 @itemx --rmax=FLT

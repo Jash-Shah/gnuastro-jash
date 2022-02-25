@@ -47,13 +47,12 @@ output=""
 tmpdir=""
 segment=""
 axisratio=1
-maskskyval=0
 normradii=""
 sigmaclip=""
 stampwidth=""
 normop="median"
 positionangle=0
-corewidth="5,5"
+corewidth="3,3"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -98,7 +97,8 @@ $scriptname options:
   -W, --stampwidth=INT    Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the normalization value.
-  -m, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
+  -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
+  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
   -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
@@ -208,12 +208,9 @@ do
         -w|--corewidth)      corewidth="$2";                            check_v "$1" "$corewidth";  shift;shift;;
         -w=*|--corewidth=*)  corewidth="${1#*=}";                       check_v "$1" "$corewidth";  shift;;
         -w*)                 corewidth=$(echo "$1"  | sed -e's/-w//');  check_v "$1" "$corewidth";  shift;;
-        -m|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
-        -m=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
-        -m*)                 segment=$(echo "$1"  | sed -e's/-m//');    check_v "$1" "$segment";  shift;;
-        -v|--maskskyval)     maskskyval="$2";                           check_v "$1" "$maskskyval";  shift;shift;;
-        -v=*|--maskskyval=*) maskskyval="${1#*=}";                      check_v "$1" "$maskskyval";  shift;;
-        -v*)                 maskskyval=$(echo "$1"  | sed -e's/-v//'); check_v "$1" "$maskskyval";  shift;;
+        -S|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
+        -S=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
+        -S*)                 segment=$(echo "$1"  | sed -e's/-S//');    check_v "$1" "$segment";  shift;;
         -O|--mode)           mode="$2";                                 check_v "$1" "$mode";  shift;shift;;
         -O=*|--mode=*)       mode="${1#*=}";                            check_v "$1" "$mode";  shift;;
         -O*)                 mode=$(echo "$1"  | sed -e's/-O//');       check_v "$1" "$mode";  shift;;
