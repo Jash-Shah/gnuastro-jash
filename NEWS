@@ -220,6 +220,9 @@ See the end of the file for license conditions.
               columns are requested and the requested number of rows given
               to '--tail' is more than half of the number of rows; reported
               by Manuel Sánchez-Benavente.
+  bug #62112: NoiseChisel crash when '--checktiles' and
+              '--continueaftercheck' called together, reported by Giulia
+              Golini.
 
 
 

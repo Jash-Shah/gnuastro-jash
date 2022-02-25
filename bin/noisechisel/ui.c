@@ -559,6 +559,7 @@ ui_prepare_tiles(struct noisechiselparams *p)
 
       /* Free the name. */
       free(tl->tilecheckname);
+      tl->tilecheckname=NULL;
     }
 }
 
