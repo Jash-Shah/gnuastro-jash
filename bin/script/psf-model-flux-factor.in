@@ -461,7 +461,7 @@ fi
 # maximum radius for computing the flux factor. This is the maximum radius
 # that is needed for computing the flux value.
 if [ x"$stampwidth" = x ]; then
-    stampwidth=$(astarithmetic $normradiusmax 2 x 1 + --quiet)
+    stampwidth=$(astarithmetic $normradiusmax float32 2.0 x 1.0 + --quiet)
 fi
 
 

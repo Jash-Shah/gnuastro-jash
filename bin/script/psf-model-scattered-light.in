@@ -373,7 +373,7 @@ fi
 # specified factor (--fluxfactor) in order to appropiately obtain the PSF
 # brightness.
 psffluxscaled=$tmpdir/psf-flux-scaled-$objectid.fits
-astarithmetic $psf --hdu=$psfhdu $fluxfactor x \
+astarithmetic $psf --hdu=$psfhdu $fluxfactor float32 x \
                    --output=$psffluxscaled $quiet
 
 
@@ -433,8 +433,8 @@ fi
 
 # To obtain the center of the PSF (in pixels), just divide by 2 the size of
 # the PSF image.
-xpsfcenter=$(astarithmetic $xpsfaxis 2 / --quiet)
-ypsfcenter=$(astarithmetic $ypsfaxis 2 / --quiet)
+xpsfcenter=$(astarithmetic $xpsfaxis float32 2.0 / --quiet)
+ypsfcenter=$(astarithmetic $ypsfaxis float32 2.0 / --quiet)
 
 
 
@@ -448,8 +448,8 @@ ypsfcenter=$(astarithmetic $ypsfaxis 2 / --quiet)
 # axis. After that, the PSF image is warped using that offsets. Note that
 # in order to account for a 1 pixel offset, it is necessary to subtract the
 # value 1.
-xdiff=$(astarithmetic $xcenter $xpsfcenter - 1.0 - --quiet)
-ydiff=$(astarithmetic $ycenter $ypsfcenter - 1.0 - --quiet)
+xdiff=$(astarithmetic $xcenter float32 $xpsfcenter float32 - 1.0 - --quiet)
+ydiff=$(astarithmetic $ycenter float32 $ypsfcenter float32 - 1.0 - --quiet)
 
 psftranslated=$tmpdir/psf-translated-$objectid.fits
 astwarp $psffluxscaled --translate=$xdiff,$ydiff \

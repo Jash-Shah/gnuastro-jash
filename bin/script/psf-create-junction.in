@@ -340,8 +340,8 @@ fi
 
 # To obtain the center of the PSF (in pixels), just divide by 2 the size of
 # the PSF image.
-xcenter=$(astarithmetic $xaxis 2 / --quiet)
-ycenter=$(astarithmetic $yaxis 2 / --quiet)
+xcenter=$(astarithmetic $xaxis float32 2.0 / --quiet)
+ycenter=$(astarithmetic $yaxis float32 2.0 / --quiet)
 
 
 
@@ -369,8 +369,8 @@ fi
 
 # To obtain the center of the PSF (in pixels), just divide by 2 the size of
 # the PSF image.
-xpsfcenter=$(astarithmetic $xpsfaxis 2 / --quiet)
-ypsfcenter=$(astarithmetic $ypsfaxis 2 / --quiet)
+xpsfcenter=$(astarithmetic $xpsfaxis float32 2.0 / --quiet)
+ypsfcenter=$(astarithmetic $ypsfaxis float32 2.0 / --quiet)
 
 
 
@@ -382,8 +382,8 @@ ypsfcenter=$(astarithmetic $ypsfaxis 2 / --quiet)
 # In order to allocate the PSF into the center coordinates provided by the
 # user, it is necessary to compute the appropiate offsets along the X and Y
 # axis. After that, the PSF image is warped using that offsets.
-xdiff=$(astarithmetic $xcenter $xpsfcenter - --quiet)
-ydiff=$(astarithmetic $ycenter $ypsfcenter - --quiet)
+xdiff=$(astarithmetic $xcenter float32 $xpsfcenter float32 - --quiet)
+ydiff=$(astarithmetic $ycenter float32 $ypsfcenter float32 - --quiet)
 
 coretranslated=$tmpdir/"$bname_core"_translated.fits
 astwarp $core --translate=$xdiff,$ydiff \
@@ -461,8 +461,8 @@ astarithmetic $corecropped --hdu=1 set-i \
 # As a consequence, the final image will be the sum of these two masked
 # images.
 maskimage=$tmpdir/mask-image.fits
-xcentmask=$(astarithmetic $xcenter 1 + --quiet)
-ycentmask=$(astarithmetic $ycenter 1 + --quiet)
+xcentmask=$(astarithmetic $xcenter float32 1.0 + --quiet)
+ycentmask=$(astarithmetic $ycenter float32 1.0 + --quiet)
 echo "1 $xcentmask $ycentmask 5 $radius 1 $positionangle $axisratio 1 1" \
       | astmkprof --background=$corefluxscaled \
 		  --mode=img \

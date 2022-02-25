@@ -371,7 +371,7 @@ faintmag=$(echo "$magnituderange" | awk 'BEGIN{FS=","} {print $2}')
 
 # Range of magnitude which are in the wider range of brighter and fainter
 # magnitude.
-fainter=$(astarithmetic $faintmag $faintmagdiff + --quiet)
+fainter=$(astarithmetic $faintmag float32 $faintmagdiff float32 + --quiet)
 
 # Obtain the parallax and parallax error column names.
 parallax=$(echo "$parallaxanderrorcolumn" \
