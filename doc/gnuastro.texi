@@ -456,6 +456,7 @@ Invoking Crop
 Arithmetic
 
 * Reverse polish notation::     The current notation style for Arithmetic
+* Integer benefits and pitfalls::  Integers have major benefits, but require care
 * Arithmetic operators::        List of operators known to Arithmetic
 * Invoking astarithmetic::      How to run Arithmetic: options and output
 
@@ -13744,11 +13745,12 @@ For more information on how to run Arithmetic, please see @ref{Invoking astarith
 
 @menu
 * Reverse polish notation::     The current notation style for Arithmetic
+* Integer benefits and pitfalls::  Integers have major benefits, but require care
 * Arithmetic operators::        List of operators known to Arithmetic
 * Invoking astarithmetic::      How to run Arithmetic: options and output
 @end menu
 
-@node Reverse polish notation, Arithmetic operators, Arithmetic, Arithmetic
+@node Reverse polish notation, Integer benefits and pitfalls, Arithmetic, Arithmetic
 @subsection Reverse polish notation
 
 @cindex Post-fix notation
@@ -13833,8 +13835,95 @@ This is a very powerful notation and is used in languages like Postscript @footn
 
 
 
+@node Integer benefits and pitfalls, Arithmetic operators, Reverse polish notation, Arithmetic
+@subsection Integer benefits and pitfalls
 
-@node Arithmetic operators, Invoking astarithmetic, Reverse polish notation, Arithmetic
+Integers are the simplest numerical data types (@ref{Numeric data types}).
+Because of this, their storage space is much less, and their processing is much faster than floating point types.
+You can confirm this on your computer with the series of commands below.
+You will make four 5000 by 5000 pixel images filled with random values.
+Two of them will be saved as signed 8-bit integers, and two with 64-bit floating point types.
+The last command prints the size of the created images.
+
+@example
+$ astarithmetic 5000 5000 2 makenew 5 mknoise-sigma int8    -oint-1.fits
+$ astarithmetic 5000 5000 2 makenew 5 mknoise-sigma int8    -oint-2.fits
+$ astarithmetic 5000 5000 2 makenew 5 mknoise-sigma float64 -oflt-1.fits
+$ astarithmetic 5000 5000 2 makenew 5 mknoise-sigma float64 -oflt-2.fits
+$ ls -lh int-*.fits flt-*.fits
+@end example
+
+The 8-bit integer images are only 24MB, while the 64-bit floating point images are 191 MB!
+Besides helping in storage (on your disk, or in RAM, while the program is running), the small size of these files also helps in faster reading of the inputs.
+Furthermore, CPUs can process integer operations much faster than floating points.
+In the integers, the ones with a smaller width (number of bits) can be processed much faster. You can see this witht he two commands below where you will add the integer images with each other and the floats with each other:
+
+@example
+$ astarithmetic flt-1.fits flt-2.fits + -oflt-sum.fits -g1
+$ astarithmetic int-1.fits int-2.fits + -oint-sum.fits -g1
+@end example
+
+Have a look at the running time of the two commands above (that is printed on their last line).
+On the system that this paragraph was written on, the floating point and integer image sums were respectively done in 0.481 and 0.089 seconds (the integer operation was almost 5 times faster!).
+
+@cartouche
+@noindent
+@strong{If your data doesn't have decimal points, use integer types:} integer types are much faster and can take much less space in your storage or RAM (while the program is running).
+@end cartouche
+
+@cartouche
+@noindent
+@strong{Select the smallest width that can host the range/precision of values}: For example, if the largest possible value in your dataset is 1000 and all numbers are integers, store it as a 16-bit integer.
+Also, if you know the values can never become negative, store it as an unsigned 16-bit integer.
+For floating point types, if you know you won't need a precision of more than 6 significant digits, use the 32-bit floating point type.
+For more on the range (for integers) and precision (for floats), see @ref{Numeric data types}.
+@end cartouche
+
+There is a price to be paid for this improved efficiency in integers: your wisdom!
+If you have not selected your types wisely, strange situtations may happen.
+For example try the command below:
+
+@example
+$ astarithmetic 125 10 +
+@end example
+
+@cindex Integer overflow
+@cindex Overflow, integer
+@noindent
+You expect the output to be @mymath{135}, but it will be @mymath{-121}!
+The reason is that when Arithmetic (or column-arithmetic in Table) confronts a number on the command-line, it use the principles above to select the most efficient type for each number.
+Both @mymath{125} and @mymath{10} can safely fit within a signed, 8-bit integer type, so arithmetic will store both as an 8-bit integer.
+However, the sum (@mymath{135}) is larger than the maximum possible value of an 8-bit signed integer (@mymath{127}).
+Therefore an integer overflow will occur, and the bits will be over-written.
+As a result, the value will be @mymath{135-128=7} more than the minimum value of this type (@mymath{-128}), which is @mymath{-128+7=-121}.
+
+When you know situations like this may occur, you can simply use @ref{Numerical type conversion operators}, to set just one of the inputs to a wider data type (the smallest, wider type to avoid wasting resources).
+In the example above, this would be @code{uint16}:
+
+@example
+$ astarithmetic 125 uint16 10 +
+@end example
+
+The reason this worked is that @mymath{125} is now converted into an unsigned 16-bit integer before the @code{+} operator.
+Since this is larger than an 8-bit integer, the C programming language's automatic type conversion will treat both as the wider type and store the result of the binary operation (@code{+}) in that type.
+
+For such a basic operation like the command above, a faster hack would be any of the two commands below (which are equivalent).
+This is because @code{125.0} or @code{125.} are interpreted as floating-point types and they don't suffer from such issues (converting only on one input is enough):
+
+@example
+$ astarithmetic 125.  10 +
+$ astarithmetic 125.0 10 +
+@end example
+
+For this particular command, the fix above will be as fast as the @code{uint16} solution.
+This is because there are only two numbers, and the overhead of Arithmetic (reading configuration files, and etc) dominates the running time.
+However, for large datasets, the @code{uint16} solution will be faster (as you saw above), Arithmetic will consume less RAM while running, and the output will consume less storage in your system (all major benefits)!
+
+It is possible to do internal checks in Gnuastro and catch integer overflows and correct them internally.
+However, we haven't opted for this solution because all those checks will consume significant resources and slow down the program (especially with large datasets where RAM, storage and running time become important).
+To be optimal, we therefore trust that you (the wise Gnuastro user!) make the appropriate type conversion in your commands where necessary (recall that the operators are available in @ref{Numerical type conversion operators}).
+
+@node Arithmetic operators, Invoking astarithmetic, Integer benefits and pitfalls, Arithmetic
 @subsection Arithmetic operators
 
 In this section, list of recognized operators in Arithmetic (and the Table program's @ref{Column arithmetic}) and discussed in detail with examples.
@@ -14939,7 +15028,9 @@ Note that the bitwise operators only work on integer type datasets/numbers.
 @subsubsection Numerical type conversion operators
 
 With the operators below you can convert the numerical data type of your input, see @ref{Numeric data types}.
-For example, let's assume that your colleague gives you thousands of single exposure images for archival, but they have a double-precision floating point type!
+Type conversion is particularly useful when dealing with integers, see @ref{Integer benefits and pitfalls}.
+
+As an example, let's assume that your colleague gives you many single exposure images for processing, but they have a double-precision floating point type!
 You know that the statistical error a single-exposure image can never exceed 6 or 7 significant digits, so you would prefer to archive them as a single-precision floating point and save space on your computer (a double-precision floating point is also double the file size!).
 You can do this with the @code{float32} operator described below.
 
@@ -14976,6 +15067,12 @@ The internal conversion of C will be used.
 @item float32
 Convert the type of the popped operand to 32-bit (single precision) floating point (see @ref{Numeric data types}).
 The internal conversion of C will be used.
+For example if @file{f64.fits} is a 64-bit floating point image, and you want to store it as a 32-bit floating point image, you can use the command below (the second command is to show that the output file consumes half the storage)
+
+@example
+$ astarithmetic f64.fits float32 --output=f32.fits
+$ ls -lh f64.fits f32.fits
+@end example
 
 @item float64
 Convert the type of the popped operand to 64-bit (double precision) floating point (see @ref{Numeric data types}).

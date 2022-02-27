@@ -1725,15 +1725,16 @@ arithmetic_binary_int_sanity_check(gal_data_t *l, gal_data_t *r,
   /* Variables to simplify the checks. */
   int l_is_signed=0, r_is_signed=0;
 
-  /* Checks are only necessary for same-width types. */
+  /* Warning only necessary for same-width types. */
   if( gal_type_sizeof(l->type)==gal_type_sizeof(r->type) )
     {
-      /* No checks needed if atleast one of the inputs is a float. */
+      /* Warning not needed when one of the inputs is a float. */
       if(    l->type==GAL_TYPE_FLOAT32 || l->type==GAL_TYPE_FLOAT64
           || r->type==GAL_TYPE_FLOAT32 || r->type==GAL_TYPE_FLOAT64 )
         return;
       else
         {
+          /* Warning not needed if both have (or don't have) a sign. */
           if(    l->type==GAL_TYPE_INT8  || l->type==GAL_TYPE_INT16
               || l->type==GAL_TYPE_INT32 || l->type==GAL_TYPE_INT64 )
             l_is_signed=1;
@@ -1741,20 +1742,22 @@ arithmetic_binary_int_sanity_check(gal_data_t *l, gal_data_t *r,
               || r->type==GAL_TYPE_INT32 || r->type==GAL_TYPE_INT64 )
             r_is_signed=1;
           if( l_is_signed!=r_is_signed )
-            error(EXIT_SUCCESS, 0, "the two integer operands given "
-                  "to '%s' have the same width, but a different sign: "
-                  "the first popped operand has type '%s' and the "
-                  "second has type '%s'. This may create unexpected "
-                  "results if the signed input contains negative "
-                  "values. To address this problem there are two "
-                  "options: 1) if you know that the signed input can "
-                  "only have positive values, use Arithmetic's type "
-                  "conversion operators to convert it to an un-signed "
-                  "type of the same width (e.g., 'uint8', 'uint16', "
-                  "'uint32' or 'uint64'). 2) Convert the unsigned input "
-                  "to a signed one of the next largest width with the "
-                  "type conversion operators (e.g., 'int16', 'int32' "
-                  "or 'int64')", gal_arithmetic_operator_string(operator),
+            error(EXIT_SUCCESS, 0, "warning: the two integer operands "
+                  "given to '%s' have the same width (number of bits), "
+                  "but a different sign: the first popped operand has "
+                  "type '%s' and the second has type '%s'. This may "
+                  "create wrong results, for example if the signed "
+                  "input contains negative values. To address this "
+                  "problem there are two options: 1) if you know that "
+                  "the signed input can only have positive values, use "
+                  "Arithmetic's type conversion operators to convert "
+                  "it to an un-signed type of the same width (e.g., "
+                  "'uint8', 'uint16', 'uint32' or 'uint64'). 2) Convert "
+                  "the unsigned input to a signed one of the next "
+                  "largest width with the type conversion operators "
+                  "(e.g., 'int16', 'int32' or 'int64'). This warning "
+                  "can be removed with '--quiet' (or '-q')",
+                  gal_arithmetic_operator_string(operator),
                   gal_type_name(r->type, 1), gal_type_name(l->type, 1));
         }
     }
@@ -1783,10 +1786,12 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
           "have the same dimension/size", __func__,
           gal_arithmetic_operator_string(operator));
 
+
   /* Print a warning if the inputs are both integers, but have different
      signs (the user needs to know that the output may not be what they
      expect!).*/
-  arithmetic_binary_int_sanity_check(l, r, operator);
+  if( (flags & GAL_ARITHMETIC_FLAG_QUIET)==0 )
+    arithmetic_binary_int_sanity_check(l, r, operator);
 
 
   /* Set the output type. For the comparison operators, the output type is

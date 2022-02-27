@@ -28,6 +28,10 @@ See the end of the file for license conditions.
      understanding how NoiseChisel works. It was originally written by
      Sepideh Eskandarlou, with edits by Elham Saremi and Pedram Ashofte
      Ardakani.
+   - New section called "Integer benefits and pitfalls" added under the
+     Arithmetic program's documentation. It describes the running time,
+     storage and RAM consumption benefits if you use integers (where
+     possible), and the issues/solutions you may confront when doing so.
 
   All programs:
    - Coordinate-related columns in all programs now also accept sexagesimal
@@ -220,8 +224,10 @@ See the end of the file for license conditions.
               columns are requested and the requested number of rows given
               to '--tail' is more than half of the number of rows; reported
               by Manuel Sánchez-Benavente.
+  bug #62096: 'astarithmetic 250 1 +' not producing correct result;
+              reported by Raul Infante-Sainz.
   bug #62112: NoiseChisel crash when '--checktiles' and
-              '--continueaftercheck' called together, reported by Giulia
+              '--continueaftercheck' called together; reported by Giulia
               Golini.
 
 

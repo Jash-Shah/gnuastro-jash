@@ -71,15 +71,21 @@ enum gal_types
 {
   GAL_TYPE_INVALID,         /* Invalid (=0 by C standard).             */
 
-  GAL_TYPE_BIT,             /* 1 bit                                   */
-  GAL_TYPE_UINT8,           /* 8-bit  unsigned integer.                */
+  /* Integer types: the ordering here is used to find the output type of
+     binary operations in 'gal_type_out'. Therefore, as in the automatic C
+     type conversion, the unsigned types should be placed after (so their
+     type is preferred over a similar-width integer that is signed). */
   GAL_TYPE_INT8,            /* 8-bit  signed   integer.                */
-  GAL_TYPE_UINT16,          /* 16-bit unsigned integer.                */
+  GAL_TYPE_UINT8,           /* 8-bit  unsigned integer.                */
   GAL_TYPE_INT16,           /* 16-bit signed   integer.                */
-  GAL_TYPE_UINT32,          /* 32-bit unsigned integer.                */
+  GAL_TYPE_UINT16,          /* 16-bit unsigned integer.                */
   GAL_TYPE_INT32,           /* 32-bit signed   integer.                */
-  GAL_TYPE_UINT64,          /* 64-bit unsigned integer.                */
+  GAL_TYPE_UINT32,          /* 32-bit unsigned integer.                */
   GAL_TYPE_INT64,           /* 64-bit signed   integer.                */
+  GAL_TYPE_UINT64,          /* 64-bit unsigned integer.                */
+
+  /* Other types. */
+  GAL_TYPE_BIT,             /* 1 bit                                   */
   GAL_TYPE_FLOAT32,         /* 32-bit single precision floating point. */
   GAL_TYPE_FLOAT64,         /* 64-bit double precision floating point. */
   GAL_TYPE_COMPLEX32,       /* Complex 32-bit floating point.          */
