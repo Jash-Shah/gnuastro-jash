@@ -212,7 +212,7 @@ if [ x"$ds9geometry" = x ]; then
         geosize=$(xrandr \
                       | grep '*' \
                       | sed 's/x/ /' \
-                      | awk '{w=0.75*$2; printf "%dx%d\n", w, $2}')
+                      | awk 'NR==1{w=0.75*$2; printf "%dx%d\n", w, $2}')
         ds9geoopt="-geometry $geosize"
 
     fi
