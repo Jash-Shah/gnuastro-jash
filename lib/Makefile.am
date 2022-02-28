@@ -147,6 +147,7 @@ gnuastro/config.h: Makefile $(internaldir)/config.h.in
 	       -e 's|@SIZEOF_LONG[@]|$(SIZEOF_LONG)|g' \
 	       -e 's|@HAVE_LIBGIT2[@]|$(HAVE_LIBGIT2)|g' \
 	       -e 's|@SIZEOF_SIZE_T[@]|$(SIZEOF_SIZE_T)|g' \
+	       -e 's|@HAVE_GSL_STEFFEN[@]|$(HAVE_GSL_STEFFEN)|g' \
 	       -e 's|@HAVE_WCSLIB_DIS_H[@]|$(HAVE_WCSLIB_DIS_H)|g' \
 	       -e 's|@HAVE_WCSLIB_MJDREF[@]|$(HAVE_WCSLIB_MJDREF)|g' \
 	       -e 's|@HAVE_WCSLIB_OBSFIX[@]|$(HAVE_WCSLIB_OBSFIX)|g' \

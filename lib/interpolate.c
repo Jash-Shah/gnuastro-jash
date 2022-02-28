@@ -563,7 +563,7 @@ gal_interpolate_1d_make_gsl_spline(gal_data_t *X, gal_data_t *Y, int type_1d)
     case GAL_INTERPOLATE_1D_AKIMA_PERIODIC:
       itype=gsl_interp_akima_periodic;   break;
     case GAL_INTERPOLATE_1D_STEFFEN:
-#if HAVE_DECL_GSL_INTERP_STEFFEN
+#if GAL_CONFIG_HAVE_GSL_INTERP_STEFFEN
       itype=gsl_interp_steffen;          break;
 #else
       error(EXIT_FAILURE, 0, "%s: Steffen interpolation isn't available "

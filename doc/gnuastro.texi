@@ -6388,7 +6388,7 @@ In this section we explain each program and any specific note that might be nece
 @end menu
 
 @node GNU Scientific Library, CFITSIO, Mandatory dependencies, Mandatory dependencies
-@subsubsection GNU Scientific library
+@subsubsection GNU Scientific Library
 
 @cindex GNU Scientific Library
 The @url{http://www.gnu.org/software/gsl/, GNU Scientific Library}, or GSL, is a large collection of functions that are very useful in scientific applications, for example integration, random number generation, and Fast Fourier Transform among many others.
@@ -26083,12 +26083,12 @@ char *gnuastro_version=GAL_CONFIG_VERSION;
 @end deffn
 
 
-@deffn Macro GAL_CONFIG_HAVE_LIBGIT2
-Libgit2 is an optional dependency of Gnuastro (see @ref{Optional dependencies}).
-When it is installed and detected at configure time, this macro will have a value of @code{1} (one).
-Otherwise, it will have a value of @code{0} (zero).
-Gnuastro also comes with some wrappers to make it easier to use libgit2 (see @ref{Git wrappers}).
+@deffn Macro GAL_CONFIG_HAVE_GSL_INTERP_STEFFEN
+GNU Scientific Library (GSL) is a mandatory dependency of Gnuastro (see @ref{GNU Scientific Library}).
+The Steffen interpolation function that can be used in Gnuastro was introduced in GSL version 2.0 (released in October 2015).
+This macro will have a value of @code{1} if the host GSL contains this feature at configure time, and @code{0} otherwise.
 @end deffn
+
 
 @deffn Macro GAL_CONFIG_HAVE_FITS_IS_REENTRANT
 @cindex CFITSIO
@@ -26103,17 +26103,21 @@ However, only more recent versions of WCSLIB also provide its version number.
 If the WCSLIB that is installed on the system provides its version (through the possibly existing @code{wcslib_version} function), this macro will have a value of one, otherwise it will have a value of zero.
 @end deffn
 
+
 @deffn Macro GAL_CONFIG_HAVE_WCSLIB_DIS_H
 This macro has a value of 1 if the host's WCSLIB has the @file{wcslib/dis.h} header for distortion-related operations.
 @end deffn
+
 
 @deffn Macro GAL_CONFIG_HAVE_WCSLIB_MJDREF
 This macro has a value of 1 if the host's WCSLIB reads and stores the @file{MJDREF} FITS header keyword as part of its core @code{wcsprm} structure.
 @end deffn
 
+
 @deffn Macro GAL_CONFIG_HAVE_WCSLIB_OBSFIX
 This macro has a value of 1 if the host's WCSLIB supports the @code{OBSFIX} feature (used by @code{wcsfix} function to parse the input WCS for known errors).
 @end deffn
+
 
 @deffn Macro GAL_CONFIG_HAVE_PTHREAD_BARRIER
 The POSIX threads standard define barriers as an optional requirement.
@@ -26133,6 +26137,15 @@ The size of (number of bytes in) the system's @code{long} and @code{size_t} type
 Their values are commonly either 4 or 8 for 32-bit and 64-bit systems.
 You can also get this value with the expression `@code{sizeof size_t}' for example without having to include this header.
 @end deffn
+
+
+@deffn Macro GAL_CONFIG_HAVE_LIBGIT2
+Libgit2 is an optional dependency of Gnuastro (see @ref{Optional dependencies}).
+When it is installed and detected at configure time, this macro will have a value of @code{1} (one).
+Otherwise, it will have a value of @code{0} (zero).
+Gnuastro also comes with some wrappers to make it easier to use libgit2 (see @ref{Git wrappers}).
+@end deffn
+
 
 @node Multithreaded programming, Library data types, Configuration information, Gnuastro library
 @subsection Multithreaded programming (@file{threads.h})
@@ -32991,12 +33004,24 @@ Once @code{gsl_spline} has been initialized by this function, the
 interpolation can be evaluated for any X value within the non-blank range
 of the input using @code{gsl_spline_eval} or @code{gsl_spline_eval_e}.
 
-For example in the small program below, we read the first two columns of
-the table in @file{table.txt} and feed them to this function to later estimate
-the values in the second column for three selected points. You can use
-@ref{BuildProgram} to compile and run this function, see @ref{Library demo
-programs} for more.
+For example in the small program below (@file{sample-interp.c}), we read the first two columns of the table in @file{table.txt} and feed them to this function to later estimate the values in the second column for three selected points.
+You can use @ref{BuildProgram} to compile and run this function, see @ref{Library demo programs} for more.
 
+Contents of the @file{table.txt} file:
+@example
+@verbatim
+$ cat table.txt
+0  0
+1  2
+3  6
+4  8
+6  12
+8  16
+9  18
+@end verbatim
+@end example
+
+Contents of the @file{sample-interp.c} file:
 @cindex first-in-first-out
 @example
 #include <stdio.h>
@@ -33014,15 +33039,15 @@ main(void)
   gal_list_str_t *cols=NULL;
 
   /* Change the values based on your input table. */
-  double points[]=@{1.8, 2.5, 10.3@};
+  double points[]=@{1.8, 2.5, 7@};
 
   /* Read the first two columns from `tab.txt'.
      IMPORTANT: the list is first-in-first-out, so the output
      column order is the inverse of the input order. */
   gal_list_str_add(&cols, "1", 0);
   gal_list_str_add(&cols, "2", 0);
-  Y=gal_table_read("table.txt", NULL, cols, GAL_TABLE_SEARCH_NAME,
-                   0, -1, 1, NULL);
+  Y=gal_table_read("table.txt", NULL, NULL, cols,
+                   GAL_TABLE_SEARCH_NAME, 0, 1, -1, 1, NULL);
   X=Y->next;
 
   /* Allocate the GSL interpolation accelerator and make the
@@ -33048,6 +33073,16 @@ main(void)
 @}
 @end example
 @end deftypefun
+
+@noindent
+Compile and run this program with @ref{BuildProgram} to see the interpolation results for the three points within the program.
+@example
+$ astbuildprog sample-interp.c --quiet
+1.800000: 3.600000
+2.500000: 5.000000
+7.000000: 14.000000
+@end example
+
 
 @deftypefun void gal_interpolate_1d_blank (gal_data_t @code{*in}, int @code{type_1d})
 Fill the blank elements of @code{in} using the rest of the elements and the

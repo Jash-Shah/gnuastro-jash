@@ -229,6 +229,10 @@ See the end of the file for license conditions.
   bug #62112: NoiseChisel crash when '--checktiles' and
               '--continueaftercheck' called together; reported by Giulia
               Golini.
+  bug #62127: GNU Scientific Library's 1D Steffen interpolation method
+              (that guarantees monotonicity) not used in Gnuastro's
+              library, even if it is present and found at configure time;
+              found and fixed by Pedram Ashofteh Ardakani.
 
 
 

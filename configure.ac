@@ -12,6 +12,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
+#     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 # Copyright (C) 2015-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it
@@ -511,9 +512,13 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM(
                    [[#include <gsl/gsl_interp.h>]],
                    [[const gsl_interp_type *itype=gsl_interp_steffen;]])],
                [AC_MSG_RESULT(yes)
-                gsl_version_old=no],
+                gsl_version_old=no; has_gsl_steffen=1;],
                [AC_MSG_RESULT(no)
-                gsl_version_old=yes; anywarnings=yes;])
+                gsl_version_old=yes; has_gsl_steffen=0; anywarnings=yes;])
+AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_GSL_INTERP_STEFFEN],
+                   [$has_gsl_steffen],
+                   [GSL has the Steffen interpolation])
+AC_SUBST(HAVE_GSL_STEFFEN, [$has_gsl_steffen])
 
 
 # If the CFITSIO library has the 'fits_is_reentrant' function (it was added

@@ -4,6 +4,7 @@ Functions dealing with general aspects of all Gnuastro.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -38,6 +39,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #define GAL_CONFIG_HAVE_LIBGIT2             @HAVE_LIBGIT2@
 
+#define GAL_CONFIG_HAVE_GSL_INTERP_STEFFEN  @HAVE_GSL_STEFFEN@
 #define GAL_CONFIG_HAVE_FITS_IS_REENTRANT   @HAVE_FITS_IS_REENTRANT@
 #define GAL_CONFIG_HAVE_WCSLIB_VERSION      @HAVE_WCSLIB_VERSION@
 #define GAL_CONFIG_HAVE_WCSLIB_DIS_H        @HAVE_WCSLIB_DIS_H@
