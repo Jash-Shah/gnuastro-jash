@@ -34,7 +34,10 @@ set -e
 
 # Default option values (can be changed with options on the
 # command-line).
+hdu=""
+quiet=0
 prefix=""
+ds9scale=""
 ds9geometry=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -75,16 +78,21 @@ experienced Gnuastro users and developers. For more information, please run:
      $ info help-gnuastro
 
 $scriptname options:
+ Input:
+  -h, --hdu=STR           Extension name or number of input data.
+
  Output:
   -g, --ds9geometry=INTxINT Size of DS9 window, e.g., for HD (800x1000) and
                           for 4K (1800x3000). If not given, the script will
                           attempt to find your screen resolution and find a
                           good match, otherwise, use the default size.
+  -s, --ds9scale=STR      Custom value to '-scale' option in DS9.
   -p, --prefix=STR        Directory containing DS9 or TOPCAT executables.
 
  Operating mode:
   -?, --help              Print this help list.
       --cite              BibTeX citation for this program.
+  -q, --quiet             Don't print any extra information in stdout.
   -V, --version           Print program version.
 
 Mandatory or optional arguments to long options are also mandatory or optional
@@ -169,15 +177,25 @@ do
     # Put the values in the proper variable.
     case "$1" in
 
-        # Output parameters
+        # Input options
+        -h|--hdu)             hdu="$2";                            check_v "$1" "$hdu"; shift;shift;;
+        -h=*|--hdu=*)         hdu="${1#*=}";                       check_v "$1" "$hdu"; shift;;
+        -h*)                  hdu=$(echo "$1"  | sed -e's/-h//');  check_v "$1" "$hdu"; shift;;
+
+        # Output options
         -g|--ds9geometry)     ds9geometry="$2";                    check_v "$1" "$ds9geometry"; shift;shift;;
         -g=*|--ds9geometry=*) ds9geometry="${1#*=}";               check_v "$1" "$ds9geometry"; shift;;
-        -g*)                  ds9geometry=$(echo "$1"  | sed -e's/-C//');  check_v "$1" "$ds9geometry"; shift;;
+        -g*)                  ds9geometry=$(echo "$1"  | sed -e's/-g//');  check_v "$1" "$ds9geometry"; shift;;
+        -s|--ds9scale)        ds9scale="$2";                       check_v "$1" "$ds9scale"; shift;shift;;
+        -s=*|--ds9scale=*)    ds9scale="${1#*=}";                  check_v "$1" "$ds9scale"; shift;;
+        -s*)                  ds9scale=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9scale"; shift;;
         -p|--prefix)          prefix="$2";                         check_v "$1" "$prefix"; shift;shift;;
         -p=*|--prefix=*)      prefix="${1#*=}";                    check_v "$1" "$prefix"; shift;;
-        -p*)                  prefix=$(echo "$1"  | sed -e's/-C//');  check_v "$1" "$prefix"; shift;;
+        -p*)                  prefix=$(echo "$1"  | sed -e's/-p//');  check_v "$1" "$prefix"; shift;;
 
-        # Non-operating options.
+        # Operating-mode options
+        -q|--quiet)       quiet=1; shift;;
+        -q*|--quiet=*)    on_off_option_error --quiet -q;;
         -?|--help)        print_help; exit 0;;
         -'?'*|--help=*)   on_off_option_error --help -?;;
         -V|--version)     print_version; exit 0;;
@@ -198,7 +216,6 @@ done
 
 
 
-
 # Set a good geometry if the user hasn't given any. So far, we just depend
 # on 'xrandr' to find the screen resolution, if it doesn't exist, then we
 # won't set this option at all and let DS9 use its default size.
@@ -209,14 +226,32 @@ if [ x"$ds9geometry" = x ]; then
         # The line with a '*' is the resolution of the used screen. We will
         # then extract the height (second value) and set DS9's geometry
         # based on that.
-        geosize=$(xrandr \
-                      | grep '*' \
-                      | sed 's/x/ /' \
-                      | awk 'NR==1{w=0.75*$2; printf "%dx%d\n", w, $2}')
-        ds9geoopt="-geometry $geosize"
+        ds9geometry=$(xrandr \
+                        | grep '*' \
+                        | sed 's/x/ /' \
+                        | awk 'NR==1{w=0.75*$2; printf "%dx%d\n", w, $2}')
 
     fi
 fi
+ds9geoopt="-geometry $ds9geometry"
+
+
+
+
+
+# Set the DS9 '-scale' option value. If nothing is given, set the mode to
+# 'zscale'. Also set some aliases to simplify usage on the command-line
+# (and let the user give '--ds9scale=minmax' instead of '--ds9scale="mode
+# minmax"').
+#
+#    zscale  --> mode zscale
+#    minmax  --> mode minmax
+if [ x"$ds9scale" = x ] || [ "$ds9scale" = "zscale" ]; then
+    ds9scale="mode zscale"
+elif [ "$ds9scale" = "minmax" ]; then
+     ds9scale="mode minmax"
+fi
+ds9scaleopt="-scale $ds9scale"
 
 
 
@@ -261,6 +296,15 @@ else
 	# If the file was a image, then  `check` will be 1.
 	if [ "$type" == "1" ]; then
 
+            # If a HDU is given, add it to all the input file names (within
+            # square brackets for DS9).
+            if [ x"$hdu" = x ]; then
+                inwithhdu="$inputs"
+            else
+                inwithhdu=""
+                for i in $inputs; do inwithhdu="$inwithhdu $i[$hdu]"; done
+            fi
+
             # Read the number of dimensions.
             n0=$(astfits $input1 -h0 | awk '$1=="NAXIS"{print $3}')
 
@@ -276,11 +320,11 @@ else
 
 		# 2D multi-extension file: use the "Cube" window to
 		# flip/slide through the extensions.
-		$ds9exec -zscale $ds9geoopt -mecube $inputs \
-                         -zoom to fit -wcs degrees -cmap sls \
-		         -match frame image -match frame colorbar \
-		         -frame lock image -colorbar lock yes \
-                         -lock slice image
+		execom="$ds9exec $ds9scaleopt $ds9geoopt -mecube $inwithhdu \
+                                 -zoom to fit -wcs degrees -cmap sls \
+		                 -match frame image -match frame colorbar \
+		                 -frame lock image -colorbar lock yes \
+                                 -lock slice image"
             else
 
 		# 3D multi-extension file: The "Cube" window will slide
@@ -290,16 +334,33 @@ else
 		# bottom row ("first", "previous", "next" and "last") can
 		# be used to switch through the extensions (while keeping
 		# the same slice).
-		$ds9exec -zscale $ds9geoopt -wcs degrees \
-                         -multiframe $inputs -lock slice image \
-                         -lock frame image -zoom to fit -cmap sls \
-                         -match frame colorbar -colorbar lock yes
+		execom="$ds9exec $ds9scaleopt $ds9geoopt -wcs degrees \
+                                 -multiframe $inwithhdu -lock slice image \
+                                 -lock frame image -zoom to fit -cmap sls \
+                                 -match frame colorbar -colorbar lock yes"
             fi
 
 	# When input was table.
 	else
-	    $topcatexec $inputs
+
+            # If a HDU is given, add it to all the input file names (with a
+            # '#' between the filename and HDU in TOPCAT).
+            if [ x"$hdu" = x ]; then
+                inwithhdu="$inputs"
+            else
+                inwithhdu=""
+                for i in $inputs; do inwithhdu="$inwithhdu $i#$hdu"; done
+            fi
+
+            # TOPCAT command.
+	    execom="$topcatexec $inwithhdu"
 	fi
+
+        # Run the final command and print it if not in '--quiet' mode.
+        if [ $quiet = 0 ]; then
+            echo "Running: $(echo $execom | sed 's|* | |')";
+        fi
+        $execom
 
     # 'astfits' couldn't open the file.
     else

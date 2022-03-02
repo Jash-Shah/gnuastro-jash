@@ -112,7 +112,12 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 * astscript-sort-by-night: (gnuastro)Invoking astscript-sort-by-night. Options to this script
 * astscript-radial-profile: (gnuastro)Invoking astscript-radial-profile. Options to this script
 * astscript-ds9-region: (gnuastro)Invoking astscript-ds9-region. Options to this script
-
+* astscript-fits-view: (gnuastro)Invoking astscript-fits-view. Options to this script
+* astscript-psf-create-select-stars: (gnuastro)Invoking astscript-psf-create-select-stars. Options to this script
+* astscript-psf-create-make-stamp: (gnuastro)Invoking astscript-psf-create-make-stamp. Options to this script
+* astscript-psf-create-junction: (gnuastro)Invoking astscript-psf-create-junction. Options to this script
+* astscript-psf-model-flux-factor: (gnuastro)Invoking astscript-psf-model-flux-factor. Options to this script
+* astscript-psf-model-scattered-light: (gnuastro)Invoking astscript-psf-model-scattered-light. Options to this script
 @end direntry
 
 
@@ -287,8 +292,9 @@ Building the extended PSF
 
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
+* One object for the whole detection::
 * Building outer part of PSF::  Building the outermost PSF wings.
-* Inner part of the PSF::      Going towards the PSF center.
+* Inner part of the PSF::       Going towards the PSF center.
 * Uniting the different PSF components::  Merging all the components into one PSF.
 * Subtracting the PSF::         Having the PSF, we now want to subtract it.
 
@@ -5395,8 +5401,9 @@ An overview of the process is given in @ref{Overview of the PSF scripts}.
 @menu
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
+* One object for the whole detection::
 * Building outer part of PSF::  Building the outermost PSF wings.
-* Inner part of the PSF::      Going towards the PSF center.
+* Inner part of the PSF::       Going towards the PSF center.
 * Uniting the different PSF components::  Merging all the components into one PSF.
 * Subtracting the PSF::         Having the PSF, we now want to subtract it.
 @end menu
@@ -5411,11 +5418,11 @@ But to have a generalize-able, and easy to read command, we'll define some base 
 After the download is complete, open the image with SAO DS9 (or any other FITS viewer you prefer!) to have a feeling of the data (and of course, enjoy the beauty of M51 in such a wide field of view):
 
 @example
-$ IMAGEID="jplus-dr2/get_fits?id=67510"
-$ URL="http://archive.cefca.es/catalogues/vo/siap/"
+$ urlend="jplus-dr2/get_fits?id=67510"
+$ urlbase="http://archive.cefca.es/catalogues/vo/siap/"
 $ mkdir jplus-dr2
-$ wget $URL$IMAGEID -O jplus-dr2/67510.fits.fz
-$ ds9 jplus-dr2/67510.fits.fz -zoom to fit -zscale
+$ wget $urlbase$urlend -O jplus-dr2/67510.fits.fz
+$ astscript-fits-view jplus-dr2/67510.fits.fz
 @end example
 
 Afer enjoying the large field of view, have a closer look at the edges of the image.
@@ -5429,43 +5436,53 @@ To keep the top-level directory clean, let's also put the crop in a directory ca
 $ mkdir flat
 $ astcrop jplus-dr2/67510.fits.fz --section=225:9275,150:9350 \
           --mode=img -oflat/67510.fits
-$ ds9 flat/67510.fits -zoom to fit -zscale
+$ astscript-fits-view flat/67510.fits
 @end example
 
 @noindent
 Please zoom into the edges again, you will see that they now have the same noise-level as the rest of the image (the problematic parts are now gone).
 
-@node Saturated pixels and Segment's clumps, Building outer part of PSF, Preparing input for extended PSF, Building the extended PSF
+@node Saturated pixels and Segment's clumps, One object for the whole detection, Preparing input for extended PSF, Building the extended PSF
 @subsection Saturated pixels and Segment's clumps
-As explained in @ref{Overview of the PSF scripts}, it is important to mask other sources in the image.
-Therefore, before going onto selecting stars, let's detect all significant signal, and separate the clumps over the detections.
-However, the saturated pixels of the bright stars are going to cause problems.
-To see this problem, let's make a @mymath{1000\times1000} crop around a bright star to speed up the test (and its solution; afterwards we'll apply it to the whole image):
+A constant-depth (flat) image was created in the previous section (@ref{Preparing input for extended PSF}).
+As explained in @ref{Overview of the PSF scripts}, an important step when building the PSF is to mask other sources in the image.
+Therefore, before going onto selecting stars, let's detect all significant signal, and identify the clumps of background objects over the wings of the extended PSF.
+
+There is a problem however: the saturated pixels of the bright stars are going to cause problems in the segmentation phase.
+To see this problem, let's make a @mymath{1000\times1000} crop around a bright star to speed up the test (and its solution).
+Afterwards we'll apply the solution to the whole image.
 
 @example
 $ astcrop flat/67510.fits --mode=wcs --widthinpix --width=1000 \
           --center=203.3916736,46.7968652 --output=saturated.fits
 $ astnoisechisel saturated.fits --output=sat-nc.fits
 $ astsegment sat-nc.fits --output=sat-seg.fits
-$ ds9 -mecube -zscale sat-seg.fits -zoom to fit
+$ astscript-fits-view sat-seg.fits
 @end example
 
-Have a look at the @code{CLUMPS} extension, you will see that instead of a single clump at the center of the bright star, we have many clumps!
+Have a look at the @code{CLUMPS} extension.
+You will see that instead of a single clump at the center of the bright star, we have many clumps!
 This has happened because of the saturated pixels!
-When saturation occurs, the peak of the profile is lost (like cutting off the tip of a mountain to build a telescope!) and all saturated pixels get a noisy value close to the saturation level.
-This disrupts Segment's assumption to expand clumps from a local maxima (the noise at the very high S/N level, results in each one being treated as a separate local maxima and thus a separate clump).
+When saturation occurs, the sharp peak of the profile is lost (like cutting off the tip of a mountain to build a telescope!) and all saturated pixels get a noisy value close to the saturation level.
+To see this saturation noise run the last command again and in SAO DS9, set the ``Scale'' to ``min max'' and zoom into the center.
+You will see the noisy saturation pixels at the center of the star in red.
+
+This noise-at-the-peak disrupts Segment's assumption to expand clumps from a local maxima: in each noisy peak is being treated as a separate local maxima and thus a separate clump.
 For more on how Segment defines clumps, see Section 3.2.1 and Figure 8 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi @& Ichikawa 2015}.
 To have the center identified as a single clump, we should mask these saturated pixels in a way that suites Segment's non-parametric methodology.
 
 First we need to find the saturation level!
-To find the saturation level, let's make a smaller crop of @mymath{50\times50} pixels around the star with the first command below.
+The saturation level is usually fixed for any survey or input data that you receive from a certain database, so you will usually have to do this only once (the first time you get data from that database).
+Let's make a smaller crop of @mymath{50\times50} pixels around the star with the first command below.
 With the next command, please look at the crop with DS9 to visually understand the problem.
+You will see the saturated pixels as the noisy red pixels in the center of the image.
+A non-saturated star will have a single pixel as the maximum and won't have a such a large area covered by a noisy constant value (find a few stars in the image and see for your self).
 Visual and qualitative inspection of the process is very imporant for understanding the solution.
 
 @example
 $ astcrop saturated.fits --mode=wcs --widthinpix --width=50 \
           --center=203.3916736,46.7968652 --output=sat-center.fits
-$ ds9 sat-center.fits -cmap sls -zoom to fit
+$ astscript-fits-view sat-center.fits --ds9scale=minmax
 @end example
 
 @noindent
@@ -5488,10 +5505,10 @@ Histogram:
  |----------------------------------------------------------------------
 @end example
 
-The peak you see in the right end (larger values) of the histogram shows the saturated pixels.
-If there was no saturation, the number of pixels should have decreased at increasing values; until reaching the maximum value of the profile (one pixel!).
+The peak you see in the right end (larger values) of the histogram shows the saturated pixels (a constant level, with some scatter due to the large Poisson noise)
+If there was no saturation, the number of pixels should have decreased at increasing values; until reaching the maximum value of the profile in one pixel.
 But that is not the case here.
-Please try this experiment on a non-saturated star (decreasing the crop width) to see what we mean.
+Please try this experiment on a non-saturated (fainter) star to see what we mean.
 
 If you still haven't experimented on a non-saturated star, please stop reading this tutorial!
 Please open @file{flat/67510.fits} in DS9, select a fainter/smaller star and repeat the last three commands (with a different center).
@@ -5570,7 +5587,7 @@ $ asttable sat-center-hist.fits --tail=20
 2474.6128517914    2
 @end example
 
-Since the number of points at the extreme end are increasing (from 1 to 2), We therefore see that a value 2500 is still above the saturation level (the number of pixels is still decreasing before that)!
+Since the number of points at the extreme end are increasing (from 1 to 2), We therefore see that a value 2500 is still above the saturation level (the number of pixels has started to increase)!
 A more reasonable saturation level for this image would be 2200!
 As an exercise, you can try automating this selection with AWK.
 
@@ -5580,48 +5597,54 @@ Let's mask all such pixels with the command below:
 @example
 $ astarithmetic saturated.fits set-i i i 2200 gt nan where \
                 --output=sat-masked.fits
-$ ds9 sat-masked.fits -cmap sls -zoom 8
+$ astscript-fits-view sat-masked.fits --ds9scale=minmax
 @end example
 
-You will see that the staturated pixels are indeed masked (they aren't noisy or have a very high value: they have a value of NaN, or Not-a-Number).
-But we aren't done yet: have another look on the edges of the vertical ``bleeding'' saturated pixels, there are strong positive/negative values touching it (almost like ``waves'').
+You will see see the peaks of several bright stars, not just the central very bright star.
+Zoom into each of the peaks you see.
+Besides the central very bright one that we were looking at closely until now, only one other star is saturated (its center is NaN, or Not-a-Number).
+Try to find it.
+
+But we aren't done yet!
+Please zoom-in to that central bright star and have another look on the edges of the vertical ``bleeding'' saturated pixels, there are strong positive/negative values touching it (almost like ``waves'').
 These will also cause problems and have to be masked!
 So with a small addition to the previous command, let's dilate the saturated regions (with 2-connectivity, or 8-connected neighbors) two times and have another look:
 
 @example
 $ astarithmetic saturated.fits set-i i i 2200 gt \
-                2 dilate 2 dilate nan where --output=sat-masked.fits
-$ ds9 sat-masked.fits -cmap sls -zoom 8
+                2 dilate 2 dilate 2 dilate 2 dilate \
+                nan where --output=sat-masked.fits
+$ astscript-fits-view sat-masked.fits --ds9scale=minmax
 @end example
 
 Now that saturated pixels (and their problematic neighbors) have been masked, we can convolve the image (recall that Segment will use the convolved image for identifing clumps) with the command below.
-However, we will use the Spatial Domain convolution which can account for blank pixels (see @ref{Spatial vs. Frequency domain}).
+However, we will use the Spatial Domain convolution which can account for blank pixels (for more on the pros and cons of spatial and frequency domain convolution, see @ref{Spatial vs. Frequency domain}).
 We will also create a Gaussian kernel with @mymath{\rm{FWHM}=2} pixels, truncated at @mymath{5\times\rm{FWHM}}.
 
 @example
 $ astmkprof --kernel=gaussian,2,5 --oversample=1 -okernel.fits
 $ astconvolve sat-masked.fits --kernel=kernel.fits --domain=spatial \
               --output=sat-masked-conv.fits
-$ ds9 sat-masked-conv.fits -cmap sls -zoom 8
+$ astscript-fits-view sat-masked-conv.fits --ds9scale=minmax
 @end example
 
 @noindent
-Please look closely to see how after spatial-domain convolution, the problematic pixels are still NaN.
+Please zoom-in to the star and look closely to see how after spatial-domain convolution, the problematic pixels are still NaN.
 But Segment requires the profile to start with a maximum value and decrease.
-So before feeding into Segment, we'll fill the blank values with the maximum value of the neighboring pixels in both the input and convolved images (see @ref{Interpolation operators}):
+So before feeding into Segment, let's fill the blank values with the maximum value of the neighboring pixels in both the input and convolved images (see @ref{Interpolation operators}):
 
 @example
 $ astarithmetic sat-masked.fits 2 interpolate-maxofregion \
                 --output=sat-fill.fits
 $ astarithmetic sat-masked-conv.fits 2 interpolate-maxofregion \
                 --output=sat-fill-conv.fits
-$ ds9 sat-fill-conv.fits -cmap sls -zoom 8
+$ astscript-fits-view sat-fill* --ds9scale=minmax
 @end example
 
 @noindent
-Have a closer look at the opened image:
-The output image doesn't have blank pixels any more and each blank region is now filled with the largest value that is touching that particular region.
-This happens for all saturated stars in this image, so zoom-out and try to find some to confirm this.
+Have a closer look at the opened images.
+Please zoom-in (you will notice that they are already matched and locked, so they will both zoom-in together).
+Go to the centers of the saturated stars and confirm how they are filled with the largest non-blank pixel.
 We can now feed this image to NoiseChisel and Segment as the convolved image:
 
 @example
@@ -5637,29 +5660,45 @@ See the @code{CLUMPS} extension.
 Do you see how the whole center of the star has indeed been identified as a single clump?
 We thus achieved our aim and didn't let the saturated pixels harm the identification of the center!
 
-@noindent
-Let's inspect now the @code{OBJECTS} extension.
+If the issue was only clumps (like in a normal deep image processing), this was the end of Segment's special considerations.
+However, in the scenario here, with the very extended wings of the bright stars, it usually happens that background objects become ``clumps'' in the outskirts and will rip the bright star outskirts into separate ``objects''.
+In the next section (@ref{One object for the whole detection}), we'll describe how you can modify Segment to avoid this issue.
+
+@node One object for the whole detection, Building outer part of PSF, Saturated pixels and Segment's clumps, Building the extended PSF
+@subsection One object for the whole detection
+
+In @ref{Saturated pixels and Segment's clumps}, we described how you can run Segment such that saturated pixels don't interfere with its clumps.
+However, due to the very extended wings of the PSF, the default definition of ``objects'' should also be modified for the scenario here.
+To better see the problem, let's inspect now the @code{OBJECTS} extension, focusing on those objects with a label between 50 to 150 (which include the main star):
 
 @example
-$ ds9 -mecube sat-seg.fits[2] -zoom to fit -cmap sls
+$ astscript-fits-view sat-seg.fits -hOBJECTS --ds9scale="limits 50 150"
 @end example
 
-We can see that the label corresponding to the star has been broken into different objects, this can be clearly seen as a fragmentation of the star specially in the outer part of it.
-This is not a good object segmentation image since those objects are indeed part of the same star, so we want to keep them with the same label as the star.
-We can optimize the segmentation of such bright objects to have single objects well defined by modifying the Segment's parameters @option{--gthresh} and @option{--objbordersn}.
-By decreasing @option{--gthresh} we force the grow of the clumps to touch each other, otherwise they become different objects (this is indeed what is happening right now with the default value).
-In the same way, by decreasing @option{--objbordersn} we decrease the signal to noise ratio of the river in between true clumps to be considered as an object.
-See @ref{Segmentation options} for more on this options.
-Let's decrease these two parameters in order to obtain a non fragmented segmentation image for the star.
-Then, check that the star has been kept as a single object in the @code{OBJECTS} extension.
+We can see that the detection corresponding to the star has been broken into different objects.
+This is not a good object segmentation image for our scenario here.
+Since those objects in the outer wings of the bright star's detection harbor a lo of the extended PSF.
+We want to keep them with the same ``object'' label as the star (we only need to mask the ``clumps'' of the background sources).
+To do this, we'll make the following changes to Segment's options (see @ref{Segmentation options} for more on this options):
+@itemize
+@item
+Since we want the extended diffuse flux of the PSF to be taken as a single object, we want all the grown clumps to touch.
+Therefore, it is necessary to decrease @option{--gthresh} to very low values, like @mymath{-10}.
+Recall that its value is in units of the input standard deviation, so @option{--gthresh=-10} corresponds to @mymath{-10\sigma}.
+The default value is not for such extended sources that dominate all background sources.
+@item
+Since we want all connected grown clumps to be counted as a single object in any case, we'll set @option{--objbordersn=0} (its smallest possible value).
+@end itemize
+
+@noindent
+Let's make these changes and check if the star has been kept as a single object in the @code{OBJECTS} extension or not:
 
 @example
 $ astsegment sat-nc.fits --convolved=sat-fill-conv.fits \
              --gthresh=-10 --objbordersn=0 \
              --output=sat-seg.fits --rawoutput
-$ ds9 -mecube sat-seg.fits[2] -zoom to fit -cmap sls
+$ astscript-fits-view sat-seg.fits -hOBJECTS --ds9scale="limits 50 150"
 @end example
-
 
 Now we can extend these same steps to the whole image.
 To detect signal, we can run NoiseChisel using the command below.
@@ -5674,7 +5713,8 @@ Since the image is not too deep (made from few exposures), it doesn't have stron
 @end itemize
 @noindent
 Furthermore, since both NoiseChisel and Segment need a convolved image, we'll do the convolution before and feed it to both (to save running time).
-But first, let's delete all the temporary files we made above.
+But in the first comand below, let's delete all the temporary files we made above.
+
 Since the image is large (+300 MB), to avoid wasting storage, any temporary file that is no longer necessary for later processing is deleted after it is used.
 You can visually check each of them with DS9 before deleting them (or not delete them at all!).
 Generally, within a pipeline it is best to remove such large temporary files, because space runs out much faster than you think (for example once you get good results and want to use more fields).
@@ -5704,70 +5744,74 @@ $ astsegment label/67510-nc.fits --output=label/67510-seg-raw.fits \
              --convolved=label/67510-fill-conv.fits --rawoutput \
              --gthresh=-10 --objbordersn=0
 $ rm label/67510-fill-conv.fits
-$ ds9 -mecube -zscale label/67510-seg-raw.fits -zoom to fit \
-      -scale limits -1 1
+$ astscript-fits-view label/67510-seg-raw.fits
 @end example
 
-We see that the saturated pixels haven't caused any problems and the central clumps/objects of bright stars are now a single clump/object.
-We can now proceed to estimating the outer PSF in @ref{Building outer part of PSF}.
+We see that the saturated pixels haven't caused any problem and the central clumps/objects of bright stars are now a single clump/object.
+We can now proceed to estimating the outer PSF.
+But before that, let's make a ``standard'' segment output: one that can safely be fed into MakeCatalog for measurements and can contain all necessary outputs of this whole process in a single file (as multiple extensions).
 
-But before that, let's make a ``standard'' segment output: one that can safely be fed into MakeCatalog for measurements.
 The main problem is again the saturated pixels: we interpolated them to be the maximum of their nearby pixels.
 But this will cause problems in any measurement that is done over those regions.
 To let MakeCatalog know that those pixels shouldn't be used, the first extension of the file given to MakeCatalog should have blank values on those pixels.
 We will do this with the commands below:
 
 @example
-# First HDU of Segment (Sky-subtracted input)
+## First HDU of Segment (Sky-subtracted input)
 $ astarithmetic label/67510-nc.fits -hINPUT-NO-SKY \
                 label/67510-masked-sat.fits isblank nan where \
                 --output=label/67510-seg.fits
 $ astfits label/67510-seg.fits --update=EXTNAME,INPUT-NO-SKY
 
-# Second and third HDUs: CLUMPS and OBJECTS
+## Second and third HDUs: CLUMPS and OBJECTS
 $ astfits label/67510-seg-raw.fits --copy=CLUMPS --copy=OBJECTS \
           --output=label/67510-seg.fits
 
-# Fourth HDU: Sky standard deviation (from NoiseChisel):
+## Fourth HDU: Sky standard deviation (from NoiseChisel):
 $ astfits label/67510-nc.fits --copy=SKY_STD \
           --output=label/67510-seg.fits
 
-# Clean up all the un-necessary files:
+## Clean up all the un-necessary files:
 $ rm label/67510-masked-sat.fits label/67510-nc.fits \
      label/67510-seg-raw.fits
 @end example
 
 @noindent
 You can now simply run MakeCatalog on this image and be sure that saturated pixels won't affect the measurements.
-In fact, you can use this fact to find the clumps containing saturated pixels: recall that the @option{--area} column only calculates the area of non-blank pixels, while @option{--geoarea} calculates the area of the label (independent of their blank-ness in the values image):
+As one example, you can use MakeCatalog to find the clumps containing saturated pixels: recall that the @option{--area} column only calculates the area of non-blank pixels, while @option{--geoarea} calculates the area of the label (independent of their blank-ness in the values image):
 
 @example
-$ astmkcatalog label/67510-seg.fits --ids --area --geoarea \
+$ astmkcatalog label/67510-seg.fits --ids --ra --dec --area --geoarea \
                --clumpscat --output=cat.fits
 @end example
 
 The information of the clumps that have been affected by saturation can easily be found by selecting those with a differing value in the @code{AREA} and @code{AREA_FULL} columns:
 
 @example
-# With AWK:
-$ asttable cat.fits -hCLUMPS | awk '$3!=$4'
+## With AWK (second command, counts the number of rows)
+$ asttable cat.fits -hCLUMPS | awk '$5!=$6'
+$ asttable cat.fits -hCLUMPS | awk '$5!=$6' | wc -l
 
-# Using Table arithmetic (can use column names, or save as FITS):
-asttable cat.fits -hCLUMPS -cHOST_OBJ_ID --noblankend=2 \
-         -c'arith AREA AREA AREA_FULL ne nan where'
+## Using Table arithmetic (compared to AWK, you can use column
+## names, save as FITS, and be faster):
+$ asttable cat.fits -hCLUMPS -cRA,DEC --noblankend=3 \
+         -c'arith AREA AREA AREA_FULL eq nan where'
 
-# Remove the table.
+## Remove the table (which was just for a demo)
 $ rm cat.fits
 @end example
 
-@node Building outer part of PSF, Inner part of the PSF, Saturated pixels and Segment's clumps, Building the extended PSF
+@noindent
+We are now ready to start building the outer parts of the PSF in @ref{Building outer part of PSF}.
+
+@node Building outer part of PSF, Inner part of the PSF, One object for the whole detection, Building the extended PSF
 @subsection Building outer part of PSF
-In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars.
-So we are now ready to start building the outer parts of the PSF.
+In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars and won't cause over-fragmentation of objects in the outskirts of stars.
+We are now ready to start building the extended PSF.
 
 First we will build the outer parts of the PSF, so we want the brightest stars.
 You will see we have several bright stars in this very large field of view, but we don't yet have a feeling how many they are, and at what magnitudes.
-So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than g-magnitude 10 in Gaia EDR3).
+So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than g-magnitude 10 in Gaia early data relase 3, or eDR3).
 For more on Query, see @ref{Query}.
 
 @example
@@ -5781,11 +5825,13 @@ Now, we can easily visualize the magnitude and positions of these stars using @c
 $ astscript-ds9-region gaia.fits -cra,dec \
            --namecol=phot_g_mean_mag \
            --command="ds9 flat/67510.fits -zoom to fit -zscale"
+$ rm gaia.fits
 @end example
 
 You can see that we have several stars between magnitudes 6 to 10.
 Let's use @file{astscript-psf-create-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 6 to 10).
-Since this will select very bright stars, we will also increase the distance to nearby neighbors with brighter or similar magnitudes (the default value is 1 arcmin).
+The advantage of using this script (instead of a simple @option{--range} in Table), is that it will also check distances to nearby stars and reject those that are too close (and not good for constructing the PSF).
+Since we have very bright stars in this very wide-field image, we will also increase the distance to nearby neighbors with brighter or similar magnitudes (the default value is 1 arcmin).
 To do this, we will set @option{--mindistdeg=0.02}, which corresponds to 1.2 arcmin.
 
 @example
@@ -5804,7 +5850,7 @@ $ astscript-ds9-region outer/67510-6-10.fits -cra,dec \
            --command="ds9 flat/67510.fits -zoom to fit -zscale"
 @end example
 
-Now that the catalog of good stars is ready, it is time to construct the individual stamps for each star of the catalog.
+Now that the catalog of good stars is ready, it is time to construct the individual stamps from the catalog above.
 To do that, we'll use @file{astscript-psf-create-make-stamp}.
 One of the most important parameters for this script is the normalization radii @code{--normradii}.
 This parameter defines a ring for the flux normalization of each star stamp.
@@ -5813,11 +5859,17 @@ Otherwise the final stack of the different stamps would have no sense.
 Depending on the PSF shape, internal reflections, ghosts, saturated pixels, and other systematics, it would be necessary to choose the @code{--normradii} appropriately.
 
 The selection of the normalization radii is something that requires a good understanding of the data.
-To do that, let's use two useful parameters that will help us in the checking of the data: @code{--tmpdir} and @code{--keeptmp}.
+To do that, let's use two useful parameters that will help us in the checking of the data: @code{--tmpdir} and @code{--keeptmp};
+@itemize
+@item
 With @code{--tmpdir=checking-normradii} all temporary files, including the radial profiles, will be save in that directory (instead of an internally-created name).
+@item
 With @code{--keeptmp} we won't remove the temporal files, so it is possible to have a look at them (by default the temporary directory gets deleted at the end).
 It is necessary to specify the @code{--normradii} even if we don't know yet the final values.
 Otherwise the script will not generate the radial profile.
+@end itemize
+
+@noindent
 As a consequence, in this step we put the normalization radii equal to the size of the stamps.
 By doing this, the script will generate the radial profile of the entire stamp.
 In this particular step we set it to @code{--normradii=500,510}.
@@ -5840,13 +5892,19 @@ $ asttable outer/67510-6-10.fits \
              done
 @end example
 
-Now, by having a look at all radial profiles at the same time, it is possible to choose a good normalization region where the profiles are similar.
-For example using Topcat or any other plotting tool.
-In the same way, it is always good to check the different stamps to ensure the quality and posible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
+First let's have a look at all the masked postage stamps of the cropped stars.
+Once they all open, feel free to zoom-in, they are all matched and locked.
+It is always good to check the different stamps to ensure the quality and posible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
 
 @example
-$ topcat finding-normradii/rprofile*.fits
-$ ds9 finding-normradii/cropped-masked*.fits
+$ astscript-fits-view finding-normradii/cropped-masked*.fits
+@end example
+
+@noindent
+If everything looks good in the image, let's open all the radial profiles and visually check those:
+
+@example
+$ astscript-fits-view finding-normradii/rprofile*.fits
 @end example
 
 After some study of this data, we could say that a good normalization ring is those pixels between R=20 and R=30 pixels.
@@ -5854,9 +5912,10 @@ Such a ring ensures having a high number of pixels so the estimation of the flux
 Also, at such distance from the center the signal to noise is high and there are not obvious features that can affect the normalization.
 Note that the profiles are different because we are considering a wide range of magnitudes, so the fainter stars are much more noisy.
 However, in this tutorial we will keep these stars in order to have a higher number of stars for the outer part.
-In a real case scenario, we should look for stars with a much more similar brightness (smaller range of magnitudes) to not lose signal to noise as a consequence of the inclusion of fainter stars.
+In a real case scenario, we should look for stars with a much more similar brightness (smaller range of magnitudes) to not we will lose signal to noise as a consequence of the inclusion of fainter stars.
 
 @example
+$ rm -r finding-normradii
 $ counter=1
 $ mkdir outer/stamps
 $ asttable outer/67510-6-10.fits \
@@ -5873,12 +5932,14 @@ $ asttable outer/67510-6-10.fits \
 @end example
 
 After the stamps are created, we need to stack them together with a simple Arithmetic command (see @ref{Stacking operators}).
-The stack is done using the median operator and the stacked image is the outer PSF that we are looking for: @file{psf-outer.fits}.
+The stack is done using the sigma-clipped mean operator that will preserve more of the signal, while rejecting outliers (more than @mymath{3\sigma} with a tolerance of @mymath{0.2}, for more on sigma-clipping see @ref{Sigma clipping}).
 Just recall that we need to specify the number of inputs into the stacking operators, so we are reading the list of images and counting them as separate variables before calling Arithmetic.
 
 @example
 $ imgs=outer/stamps/*.fits
 $ numimgs=$(echo $imgs | wc -w)
+$ astarithmetic $imgs $numimgs 3 0.2 sigclip-mean -g1 \
+                --output=outer/stack.fits
 $ astarithmetic $imgs $numimgs median -g1 --output=outer/stack.fits
 @end example
 
@@ -5887,7 +5948,7 @@ With the command below, we'll compare this stacked PSF with the images of the in
 You clearly see that the number of masked pixels is significantly decreased and the PSF is much more ``cleaner'').
 
 @example
-$ ds9 outer/stack.fits outer/stamps/*.fits
+$ astscript-fits-view outer/stack.fits outer/stamps/*.fits
 @end example
 
 However, the saturation in the center still remains.
@@ -5895,11 +5956,7 @@ Also, because we didn't have too many images, some regions still are very noisy.
 If we had more bright stars in our selected magnitude range, we could have filled those outer remaining patches.
 In a large survey like J-PLUS (that we are using here), you can simply look into other fields that were observed soon before/after the tile ID 67510 that we used here (to have a similar PSF) and get more stars in those images to add to these.
 Infact, the J-PLUS DR2 tile ID of the field above was intentially preserved during the steps above to show how easy it is to use images from other fields and blend them all into the output PSF.
-Let's remove the unnecessary files before continuing with the next section.
 
-@example
-$ rm -rf finding-normradii
-@end example
 
 @c -------------------------------------------
 @c If its worth adding this part?
@@ -5924,7 +5981,7 @@ But the central part that was affected by saturation and non-linearity is still 
 In this section, we will use the same steps before to make stacks of more inner regions of the PSF to ultimately unite them all into a single PSF in @ref{Uniting the different PSF components}.
 
 For the outer PSF, we selected stars in the magnitude range of 6 to 10.
-So let's have a look and see how many stars we have in the magnitude range of 12-13 with a more relaxed condition on the minimum distance for neighbours, @option{--mindistdeg=0.01} (36 arcsec), and use the ds9 region script to visually inspect them:
+So let's have a look and see how many stars we have in the magnitude range of 12 to 13 with a more relaxed condition on the minimum distance for neighbours, @option{--mindistdeg=0.01} (36 arcsec, since these stars are fainter), and use the ds9 region script to visually inspect them:
 
 @example
 $ mkdir inner
@@ -5938,7 +5995,7 @@ $ astscript-ds9-region inner/67510-12-13.fits -cra,dec \
 @end example
 
 We have 41 stars, but if you zoom into their centers, you will see that they don't have any major bleeding-vertical saturations any more.
-Only the very central core of some of the star is saturated.
+Only the very central core of some of the stars is saturated.
 We can therefore use these stars to fill the strong bleeding footprints that were present in the outer stack of @file{outer/stack.fits}.
 Similar to before, let's build ready-to-stack crops of these stars.
 To get a better feeling of the normalization radii, follow the same steps of @ref{Building outer part of PSF} (setting @option{--tmpdir} and @option{--keeptmp}).
@@ -5961,8 +6018,9 @@ $ asttable inner/67510-12-13.fits \
 
 $ imgs=inner/stamps/*.fits
 $ numimgs=$(echo $imgs | wc -w)
-$ astarithmetic $imgs $numimgs median -g1 --output=inner/stack.fits
-$ ds9 inner/stack.fits inner/stamps/*.fits
+$ astarithmetic $imgs $numimgs 3 0.2 sigclip-mean -g1 \
+                --output=inner/stack.fits
+$ astscript-fits-view inner/stack.fits inner/stamps/*.fits
 @end example
 
 @noindent
@@ -5971,34 +6029,110 @@ We are ready now to unite the two stacks we have constructed: the outer and the 
 @node Uniting the different PSF components, Subtracting the PSF, Inner part of the PSF, Building the extended PSF
 @subsection Uniting the different PSF components
 
-Until now we have constructed two different parts of the PSF.
-The outer part considering very bright stars, and the inner part using fainter stars to not have saturation in the core of the PSF.
+In @ref{Building outer part of PSF} we built the outer part of the extened PSF and the inner part was built in @ref{Inner part of the PSF}.
+The outer part was built with very bright stars, and the inner part using fainter stars to not have saturation in the core of the PSF.
 The next step is to join these two parts in order to have a single PSF.
 First of all, let's have a look at the two stacks and also to their radial profiles to have a good feeling of the task.
+Note that you will need to have TOPCAT to run the last command and plot the radial profile (see @ref{TOPCAT}).
 
 @example
-$ ds9 outer/stack.fits inner/stack.fits
+$ astscript-fits-view outer/stack.fits inner/stack.fits
 $ astscript-radial-profile outer/stack.fits -o outer/profile.fits
 $ astscript-radial-profile inner/stack.fits -o inner/profile.fits
-$ topcat outer/profile.fits inner/profile.fits
+$ astscript-fits-view outer/profile.fits inner/profile.fits
 @end example
 
 From the visual inspection of the images and the radial profiles, it is clear that we have saturation in the center for the outer part.
 Note that the absolute flux values of the PSFs are meaningless since they depend on the normalization radii we used to obtain them.
 The uniting step consists in scaling up (or down) the inner part of the PSF to have the same flux at at the junction radius, and then, use that flux-scaled inner part to fill the center of the outer PSF.
-Let's see how we can do that.
+To get a feeling of the process, first, let's open the two radial profiles and find the factor manually first:
 
-We will use the script @file{astscript-psf-model-flux-factor} for computing the factor by which the inner part of the PSF has to be multiplied to have the same flux at the junction radius.
-This script is more general and it is used also for estimating the flux factors when modeling individual stars once the final PSF is constructed (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
+@enumerate
+@item
+Run this command to open the two tables in @ref{TOPCAT}:
+@example
+$ astscript-fits-view outer/profile.fits inner/profile.fits
+@end example
+@item
+On the left side of the screen, under ``Table List'', you will see the two imported tables.
+Click on the first one (profile of the outer part) so it is shown first.
+@item
+Under the ``Graphics'' menu item, click on ``Plane plot''.
+A new window will open with the plot of the first two columns: @code{RADIUS} on the horizontal axis and @code{MEAN} on the vertical.
+The rest of the steps are done in this window.
+@item
+In the bottom settings, within the left panel, click on the ``Axes'' item.
+This will allow customization of the plot axises.
+@item
+In the bottom-right panel, click on the box infront of ``Y Log'' to make the vertical axis logarithmtic-scaled.
+@item
+On the ``Layers'' menu, select ``Add Position Control'' to allow adding the profile of the inner region.
+After it, you will see that a new red-blue scatter plot icon opened on the bottom-left menu (with a title of @code{<no table>}).
+@item
+On the bottom-right panel, in the drop-down menue infront of @code{Table:}, select @code{2: profile.fits}.
+Afterwards, you will see the radial profile of the inner stack as the newly added blue plot.
+Our goal here is to find the factor that is necessary to multiply with the inner profile so it matches the outer one.
+@item
+On the bottom-right panel, infront of @code{Y:}, you will see @code{MEAN}.
+Click in the white-space after it, and type this: @code{*100}.
+This will display the @code{MEAN} column of the inner profile, after multiplying it by 100.
+Afterwards, you will see that the inner profile (blue) matches more cleanly with the outer (red); especially in the smaller radii.
+At larger radii, it doesn't drop like the red plot.
+This is because of the extremely low signal-to-noise ratio at those regions in the fainter stars used to make this stack.
+@item
+Take your mouse cursor over the profile, in particular over the bump around a radius of 100 pixels.
+Scroll your mouse down-ward to zoom-in to the profile and up-ward to zoom-out.
+You can click-and-hold any part of the profile and if you move your cursor (while still holding the mouse-button) to look at different parts of the profile.
+This is particular helpful when you have zoomed-in to the profile.
+@item
+Zoom-in to the bump around a radius of 100 pixels until the horizontal axis range becomes around 50 to 130 pixels.
+@item
+You clearly see that the inner stack (blue) is much more noisy than the outer (red) stack.
+By ``noisy'', we mean that the scatter of the points is much larger.
+If you further zoom-out, you will see that the shallow slope at the larger radii of the inner (blue) profile has also affected the height of this bump in the inner profile.
+This is a @emph{very important} point: this clearly shows that the inner profile is too noisy at these radii.
+@item
+Click-and-hold your mouse to see the inner parts of the two profiles (in the range 0 to 80).
+You will see that for radii less than 40 pixels, the inner profile (blue) points loose their scatter (and thus have a good signal-to-noise ratio).
+@item
+Zoom-in to the plot and follow the profiles until smaller radii (for example 10 pixels).
+You see that for each radius, the inner (blue) points are consistantly above the outer (red) points.
+This shows that the @mymath{\times100} factor we selected above was too much.
+@item
+In the bottom-right panel, change the @code{100} to @code{80} and zoom-in to the same region.
+At each radius, the blue points are now below the red points, so the scale-factor 80 is not enough.
+So let's increase it and try @code{90}.
+After zooming-in, you will notice that in the inner-radii (less than 30 pixels), they are now very similar.
+The ultimate aim of the steps below is to find this factor automatically.
+@cindex Saturation (CCDs)
+@cindex Non-linearity (CCDs)
+@item
+But before continuing, let's focus on another important point about the central regions: non-linearity and saturation.
+While you are zoomed-in (from the step above), follow (click-and-drag) the profile towards smaller radii.
+You will see that smaller than a radius of 10, they start to diverge.
+But this time, the outer (red) profile is getting a shallower slope and diverges significantly from about the radius of 8.
+We had masked all saturated pixels before, so this divergance for radii smaller than 10 shows the effect of the CCD's non-linearity (where the number of electrons will not be linearly correlated with the number of incident photons).
+This is present in all CCDs and pixels beyond this level should not be used in measurements (or properly corrected).
+@end enumerate
+
+The items above were only listed so you get a good mental/visual understanding of the logic behind the operation of the next script (and to learn how to tune its parameters where necessary): @file{astscript-psf-model-flux-factor}.
+This script is more general than this particular problem, but can be used for this special case also.
+Its job is to take a model of an object and a larger image.
+It will calculate the radial profile of the model, and the profile of the object at a certain point within the larger image.
+It will divide the centered object profile by the model profile and will use the range of radii you specify to find the flux factor.
+You can multiply its retured value by the model to scale it to your object's flux (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
+
 The basic parameters are the normalization radii (i.e., the radius ring at which the ratio betwen the radial profiles of the outer and inner part is done), and the center of the outer part of the PSF.
 You can also provide a segmentation image with a CLUMPS and OBJECTS extensions in order to mask contaminant sources as explained above.
 The center of the inner PSF is asumed to be in the center of the image.
 Let's obtain that flux factor with the following command:
 
+@c The radial profiles in this script appear to be different from the
+@c radial profiles of the last section.
+
 @example
 $ astscript-psf-model-flux-factor outer/stack.fits \
            --psf=inner/stack.fits --center=500,500 \
-           --segment=label/67510-seg.fits \
            --mode=img --normradii=15,16
 @end example
 
@@ -24480,11 +24614,33 @@ This script takes the following options
 
 @table @option
 
+@item -h STR
+@itemx --hdu=STR
+The HDU (extension) of the input dataset to display.
+The value can be the HDU name or number (the first HDU is counted from 0).
+
 @item -p STR
 @itemx --prefix=STR
 Directory to search for SAO DS9 or TOPCAT's executables (assumed to be @command{ds9} and @command{topcat}).
 If not called they will be assumed to be present in your @file{PATH} (see @ref{Installation directory}).
 If you don't have them already installed, their installation directories are available in @ref{SAO DS9} and @ref{TOPCAT} (they can be installed in non-system-wide locations that don't require administrator/root permissions).
+
+@item -s STR
+@itemx --ds9scale=STR
+The string to give to DS9's @option{-scale} option.
+You can use this option to use a different scaling.
+The Fits-view script will place @option{-scale} before your given string when calling DS9.
+If you don't call this option, the default behavior is to cal DS9 with: @option{-scale mode zscale} or @option{--ds9scale="mode zscale"} when using this script.
+
+The Fits-view script has the following aliases to simplify the calling of this option (and avoid the double-quotations and @code{mode} in the example above):
+
+@table @option
+@item zscale
+or @option{--ds9scale=zscale} equivalent to @option{--ds9scale="mode zscale"}.
+@item minmax
+or @option{--ds9scale=minmax} equivalent to @option{--ds9scale="mode minmax"}.
+@end table
+
 
 @item -g INTxINT
 @itemx --ds9geometry=INTxINT
@@ -24983,8 +25139,7 @@ $ asttable catalog.fits | while read -r ra dec mag; do \
         --mode=wcs \
         --psf=psf.fits \
         --center=$ra,$dec \
-        --normradii=20,30 \
-        --output=fluxfactor-"$ra"-"$dec".txt; done
+        --normradii=20,30 > fluxfactor-"$ra"-"$dec".txt; done
 
 @end example
 
@@ -24992,7 +25147,6 @@ The input is an image from which the star is considered.
 The output will be the flux factor: the value by which the PSF image (@option{--psf}) has to be multiplied to put it at the same level than the object specified (@option{--center}), within the ring of pixels specified by the option @option{--normradii}.
 More options are available with the goal of obtaining a good flux factor value.
 A full description of each option is given below.
-
 
 @table @option
 

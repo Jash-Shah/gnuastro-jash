@@ -97,7 +97,7 @@ $scriptname options:
  Operating mode:
   -?, --help              Print this help list.
       --cite              BibTeX citation for this program.
-  -q, --quiet             Don't print the list.
+  -q, --quiet             Don't print any extra information in stdout.
   -V, --version           Print program version.
 
 Mandatory or optional arguments to long options are also mandatory or optional

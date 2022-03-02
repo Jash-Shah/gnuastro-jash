@@ -1755,9 +1755,11 @@ arithmetic_binary_int_sanity_check(gal_data_t *l, gal_data_t *r,
                   "'uint8', 'uint16', 'uint32' or 'uint64'). 2) Convert "
                   "the unsigned input to a signed one of the next "
                   "largest width with the type conversion operators "
-                  "(e.g., 'int16', 'int32' or 'int64'). This warning "
-                  "can be removed with '--quiet' (or '-q')",
-                  gal_arithmetic_operator_string(operator),
+                  "(e.g., 'int16', 'int32' or 'int64'). For more, see "
+                  "the \"Integer benefits and pitfalls\" section of "
+                  "Gnuastro's manual with this command: 'info gnuastro "
+                  "integer'. This warning can be removed with '--quiet' "
+                  "(or '-q')", gal_arithmetic_operator_string(operator),
                   gal_type_name(r->type, 1), gal_type_name(l->type, 1));
         }
     }
