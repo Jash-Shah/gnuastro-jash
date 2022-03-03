@@ -131,17 +131,18 @@ EOF
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
     if [ "x$2" = x ]; then
-        echo "$scriptname: '$1' doesn't take any values."
+        echo "$scriptname: '$1' doesn't take any values"
     else
-        echo "$scriptname: '$1' (or '$2') doesn't take any values."
+        echo "$scriptname: '$1' (or '$2') doesn't take any values"
     fi
     exit 1
 }
 
 check_v() {
     if [ x"$2" = x ]; then
-        echo "$scriptname: option '$1' requires an argument."
-        echo "Try '$scriptname --help' for more information."
+        cat <<EOF
+$scriptname: option '$1' requires an argument. Try '$scriptname --help' for more information
+EOF
         exit 1;
     fi
 }

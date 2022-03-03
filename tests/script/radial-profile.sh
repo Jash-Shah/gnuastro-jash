@@ -25,24 +25,17 @@
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
 prog=radial-profile
-dep1=fits
-dep2=crop
-dep3=warp
-dep4=table
-dep5=mkprof
-dep6=mkcatalog
-dep7=arithmetic
-dep8=statistics
-dep1name=../bin/$dep1/ast$dep1
-dep2name=../bin/$dep2/ast$dep2
-dep3name=../bin/$dep3/ast$dep3
-dep4name=../bin/$dep4/ast$dep4
-dep5name=../bin/$dep5/ast$dep5
-dep6name=../bin/$dep6/ast$dep6
-dep7name=../bin/$dep7/ast$dep7
-dep8name=../bin/$dep8/ast$dep8
 execname=../bin/script/astscript-$prog
+
+dep1name=$progbdir/astfits
+dep2name=$progbdir/astcrop
+dep3name=$progbdir/astwarp
+dep4name=$progbdir/asttable
 fits1name=0_mkprofcat2.fits
+dep5name=$progbdir/astmkprof
+dep6name=$progbdir/astmkcatalog
+dep7name=$progbdir/astarithmetic
+dep8name=$progbdir/aststatistics
 
 
 
@@ -72,22 +65,6 @@ if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
 
 
 
-
-# Put a link of Gnuastro program(s) used into current directory. Note that
-# other script tests may have already brought it.
-ln -sf $dep1name ast$dep1
-ln -sf $dep2name ast$dep2
-ln -sf $dep3name ast$dep3
-ln -sf $dep4name ast$dep4
-ln -sf $dep5name ast$dep5
-ln -sf $dep6name ast$dep6
-ln -sf $dep7name ast$dep7
-ln -sf $dep8name ast$dep8
-
-
-
-
-
 # Actual test script
 # ==================
 #
@@ -97,5 +74,5 @@ ln -sf $dep8name ast$dep8
 #
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
-export PATH="./:$PATH"
+export PATH="$progbdir:$PATH"
 $check_with_program $execname $fits1name

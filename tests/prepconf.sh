@@ -65,21 +65,45 @@ rm addedoptions.txt
 
 
 
-# Bring utility configuration files
+# Necessary files to simplify tests
 # ---------------------------------
 #
 # Each utility's configuration file is copied in the 'tests' directory for
 # easy readability. Note that some programs may need to build their
 # configuration files during compilation. Hence, their configuration files
 # are in the build directory, not the source directory.
-for prog in arithmetic buildprog convertt convolve cosmiccal crop fits    \
-                       match mkcatalog mknoise mkprof noisechisel segment \
-                       statistics table warp
+#
+# To test the 'astscript-*'s, we need to make sure that all the internally
+# built programs are used, not the (possibly existing) host operating
+# system's programs. Since each program is built within its own directory
+# of 'bin', instead of adding all those to the PATH, we will simply put a
+# symbolic link to the program in a special directory.
+if ! [ -d $progbdir ]; then mkdir $progbdir; fi
+for prog in arithmetic buildprog convertt convolve cosmiccal crop \
+            fits match mkcatalog mknoise mkprof noisechisel segment \
+            statistics table warp
 do
+    # Get the configuration file.
     if test -f $topsrc/bin/$prog/ast$prog.conf; then
         ctopdir=$topsrc
     else
         ctopdir=$topbuild
     fi
     cp $ctopdir/bin/$prog/*.conf .gnuastro/
+
+    # If the program was built, put a symbolic link to it:
+    if [ -f $topbuild/bin/$prog/ast$prog ]; then
+        ln -sf $topbuild/bin/$prog/ast$prog $progbdir/
+    fi
+done
+
+
+
+
+
+# Extract all the executable files in the build directory for 'astscripts'
+# and put a link to them in the temporary directory for all Gnuastro
+# executables. This is because some 'astscript-*'s depend on others.
+for f in $(find $topbuild/bin/script/ -type f -perm /111); do
+    ln -sf $f $progbdir/
 done

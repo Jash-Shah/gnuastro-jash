@@ -24,11 +24,11 @@
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
 prog=sort-by-night
-dep1=fits
-dep2=table
-dep1name=../bin/$dep1/ast$dep1
-dep2name=../bin/$dep2/ast$dep2
 execname=../bin/script/astscript-$prog
+
+dep1name=$progbdir/astfits
+dep2name=$progbdir/asttable
+
 fits1name=clearcanvas.fits
 fits2name=aperturephot.fits
 fits3name=convolve_spatial.fits
@@ -61,16 +61,6 @@ if [ ! -f $fits5name ]; then echo "$dep1name doesn't exist."; exit 77; fi
 
 
 
-
-# Put a link of Gnuastro program(s) used into current directory. Note that
-# other script tests may have already brought it.
-ln -sf $dep1name ast$dep1
-ln -sf $dep2name ast$dep2
-
-
-
-
-
 # Actual test script
 # ==================
 #
@@ -80,6 +70,6 @@ ln -sf $dep2name ast$dep2
 #
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
-export PATH="./:$PATH"
+export PATH="$progbdir:$PATH"
 $check_with_program $execname $fits1name $fits2name $fits3name \
                     $fits4name $fits5name

@@ -25,11 +25,10 @@
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
 prog=psf-create-select-stars
-dep1=mkcatalog
-dep2=match
-dep1name=../bin/$dep1/ast$dep1
-dep2name=../bin/$dep2/ast$dep2
 execname=../bin/script/astscript-$prog
+
+dep1name=$progbdir/astmatch
+dep2name=$progbdir/astmkcatalog
 fits1name=convolve_spatial_noised.fits
 fits2name=convolve_spatial_noised_detected_segmented.fits
 fits3name=convolve_spatial_noised_detected_segmented_catalog.fits
@@ -57,16 +56,6 @@ if [ ! -f $fits2name ]; then echo "$fits2name doesn't exist."; exit 77; fi
 
 
 
-
-# Put a link of Gnuastro program(s) used into current directory. Note that
-# other script tests may have already brought it.
-ln -sf $dep1name ast$dep1
-ln -sf $dep2name ast$dep2
-
-
-
-
-
 # Actual test script
 # ==================
 #
@@ -76,7 +65,7 @@ ln -sf $dep2name ast$dep2
 #
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
-export PATH="./:$PATH"
+export PATH="$progbdir:$PATH"
 
 # Create a catalog with appropiate parameters
 $check_with_program astmkcatalog $fits2name \
