@@ -338,7 +338,7 @@ else
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$ncenter != x2 ]; then
         cat <<EOF
-$scriptname: '--center' (or '-c') only take two values, but $ncenter were given
+$scriptname: '--center' (or '-c') only take two values, but $ncenter were given in '$center'
 EOF
         exit 1
     fi

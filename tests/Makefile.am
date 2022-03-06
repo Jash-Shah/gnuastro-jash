@@ -227,6 +227,7 @@ script/psf-model-scattered-light.sh: mkprof/mosaic2.sh.log
 
 # Environment variables for the test scripts.
 AM_TESTS_ENVIRONMENT = \
+export LANG=C; \
 export mkdir_p="$(MKDIR_P)"; \
 export progbdir=programs-built; \
 export topsrc=$(abs_top_srcdir); \
