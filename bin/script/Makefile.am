@@ -37,25 +37,25 @@ astscript-fits-view.desktop: $(srcdir)/fits-view.desktop.in Makefile
 ## with the tarball ('EXTRA_DIST') and output files (to be cleaned with
 ## 'make clean').
 bin_SCRIPTS = astscript-fits-view \
+              astscript-psf-unite \
+              astscript-psf-stamp \
               astscript-ds9-region \
+              astscript-psf-subtract \
               astscript-sort-by-night \
               astscript-radial-profile \
-              astscript-psf-create-junction \
-              astscript-psf-create-make-stamp \
-              astscript-psf-model-flux-factor \
-              astscript-psf-create-select-stars \
-              astscript-psf-model-scattered-light
+              astscript-psf-scale-factor \
+              astscript-psf-select-stars
 
 EXTRA_DIST = fits-view.in \
+             psf-unite.in \
+             psf-stamp.in \
              ds9-region.in \
+             psf-subtract.in \
              sort-by-night.in \
              radial-profile.in \
-             fits-view.desktop.in \
-             psf-create-junction.in \
-             psf-create-make-stamp.in \
-             psf-model-flux-factor.in \
-             psf-create-select-stars.in \
-             psf-model-scattered-light.in
+             psf-select-stars.in \
+             psf-scale-factor.in \
+             fits-view.desktop.in
 
 CLEANFILES = $(bin_SCRIPTS) \
              astscript-fits-view.desktop
@@ -89,22 +89,22 @@ astscript-sort-by-night: sort-by-night.in Makefile
 	$(do_subst) < $(srcdir)/sort-by-night.in > $@
 	chmod +x $@
 
-astscript-psf-create-junction: psf-create-junction.in Makefile
-	$(do_subst) < $(srcdir)/psf-create-junction.in > $@
+astscript-psf-unite: psf-unite.in Makefile
+	$(do_subst) < $(srcdir)/psf-unite.in > $@
 	chmod +x $@
 
-astscript-psf-create-make-stamp: psf-create-make-stamp.in Makefile
-	$(do_subst) < $(srcdir)/psf-create-make-stamp.in > $@
+astscript-psf-stamp: psf-stamp.in Makefile
+	$(do_subst) < $(srcdir)/psf-stamp.in > $@
 	chmod +x $@
 
-astscript-psf-model-flux-factor: psf-model-flux-factor.in Makefile
-	$(do_subst) < $(srcdir)/psf-model-flux-factor.in > $@
+astscript-psf-scale-factor: psf-scale-factor.in Makefile
+	$(do_subst) < $(srcdir)/psf-scale-factor.in > $@
 	chmod +x $@
 
-astscript-psf-create-select-stars: psf-create-select-stars.in Makefile
-	$(do_subst) < $(srcdir)/psf-create-select-stars.in > $@
+astscript-psf-select-stars: psf-select-stars.in Makefile
+	$(do_subst) < $(srcdir)/psf-select-stars.in > $@
 	chmod +x $@
 
-astscript-psf-model-scattered-light: psf-model-scattered-light.in Makefile
-	$(do_subst) < $(srcdir)/psf-model-scattered-light.in > $@
+astscript-psf-subtract: psf-subtract.in Makefile
+	$(do_subst) < $(srcdir)/psf-subtract.in > $@
 	chmod +x $@

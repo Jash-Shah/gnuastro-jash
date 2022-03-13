@@ -1,9 +1,7 @@
 #!/bin/sh
 
 # Situate a PSF stamp into a given position with the same output image size
-# than the original image. This script is useful to generate a scattered
-# light field image. Run with `--help', or see description under
-# `print_help' (below) for more.
+# than the original image and subtract it.
 #
 # Original author:
 #   Raul Infante-Sainz <infantesainz@gmail.com>
@@ -41,11 +39,11 @@ hdu=1
 psf=""
 psfhdu=1
 quiet=""
+scale=""
 center=""
 keeptmp=0
 output=""
 tmpdir=""
-fluxfactor=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -66,9 +64,8 @@ Usage: $scriptname [OPTION] FITS-files
 
 This script is part of GNU Astronomy Utilities $version.
 
-This script will consider a center position to situate the PSF image into a
-new empty image. It is intendeed to generate several images that can be
-added to construct the scattered light field.
+This script will place the given PSF image into a certain central position
+with the image and subtract it.
 
 For more information, please run any of the following commands. In
 particular the first contains a very comprehensive explanation of this
@@ -90,7 +87,7 @@ $scriptname options:
   -P, --psfhdu=STR        HDU/extension of the PSF image.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
-  -f, --fluxfactor=FLT    Factor by which the PSF is multiplied.
+  -s, --scale=FLT         Factor by which the PSF is multiplied.
 
  Output:
   -o, --output            Output table with the radial profile.
@@ -199,9 +196,9 @@ do
         -c|--center)         center="$2";                               check_v "$1" "$center";  shift;shift;;
         -c=*|--center=*)     center="${1#*=}";                          check_v "$1" "$center";  shift;;
         -c*)                 center=$(echo "$1"  | sed -e's/-c//');     check_v "$1" "$center";  shift;;
-        -f|--fluxfactor)     fluxfactor="$2";                           check_v "$1" "$fluxfactor";  shift;shift;;
-        -f=*|--fluxfactor=*) fluxfactor="${1#*=}";                      check_v "$1" "$fluxfactor";  shift;;
-        -f*)                 fluxfactor=$(echo "$1"  | sed -e's/-f//'); check_v "$1" "$fluxfactor";  shift;;
+        -s|--scale)          scale="$2";                                check_v "$1" "$scale";  shift;shift;;
+        -s=*|--scale=*)      scale="${1#*=}";                           check_v "$1" "$scale";  shift;;
+        -s*)                 scale=$(echo "$1"  | sed -e's/-f//');      check_v "$1" "$scale";  shift;;
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
@@ -242,8 +239,9 @@ done
 
 # If an input image is not given at all.
 if [ x"$inputs" = x ]; then
-    echo "$scriptname: no input FITS image files."
-    echo "Run with '--help' for more information on how to run."
+    cat <<EOF
+$scriptname: no input FITS image files. Run with '--help' for more information on how to run
+EOF
     exit 1
 elif [ ! -f $inputs ]; then
     echo "$scriptname: $inputs: No such file or directory."
@@ -252,25 +250,28 @@ fi
 
 # If a PSF image (--psf) is not given at all.
 if [ x"$psf" = x ]; then
-    echo "$scriptname: no PSF image provided."
-    echo "$scriptname: a PSF image '--psf' ('-p') should be provided."
+    cat <<EOF
+$scriptname: no PSF image provided. The PSF image should be provided with '--psf' ('-p').
+EOF
     exit 1
 elif [ ! -f $psf ]; then
     echo "$scriptname: $psf: No such file or directory."
     exit 1
 fi
 
-# If a flux factor (--fluxfactor) is not given at all.
-if [ x"$fluxfactor" = x ]; then
-    echo "$scriptname: no flux factor provided."
-    echo "$scriptname: value to '--fluxfactor' ('-f') should be provided."
+# If a scale factor (--scale) is not given at all.
+if [ x"$scale" = x ]; then
+    cat <<EOF
+$scriptname: no scale factor provided. It can be given with '--scale' (or '-s'). You can derive this value with the 'astscript-psf-model-scale-factor'
+EOF
     exit 1
 fi
 
 # If center coordinates (--center) is not given at all.
 if [ x"$center" = x ]; then
-    echo "$scriptname: no center coordinates provided."
-    echo "$scriptname: values to '--center' ('-c') should be provided."
+    cat <<EOF
+$scriptname: no center coordinates provided (for the star that should be subtracted). You can use '--center' ('-c').
+EOF
     exit 1
 else
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
@@ -281,16 +282,17 @@ else
 fi
 
 # If mode (--mode) is not given at all.
+modeerrorinfo="Depending on the nature of the star's coordinates, please give either 'img' (for pixel coordinates) or 'wcs' (for RA,Dec) to the '--mode' (or '-O') option."
 if [ x"$mode" = x ]; then
-    echo "$scriptname: no mode provided."
-    echo "$scriptname: value to '--mode' ('-O') should be provided."
+    echo "$scriptname: no coordinate mode provided! $modeerrorinfo"
     exit 1
 # Make sure the value to '--mode' is either 'wcs' or 'img'.
 elif [ $mode = "wcs" ] || [ $mode = "img" ]; then
     junk=1
 else
-    echo "$scriptname: wrong value to --mode (-O) provided."
-    echo "$scriptname: value to '--mode' ('-O') should be 'wcs' or 'img'"
+    cat <<EOF
+$scriptname: '$mode' not acceptable for '--mode' (or '-O'). $modeerrorinfo
+EOF
     exit 1
 fi
 
@@ -369,16 +371,16 @@ fi
 
 
 
-# Scale the PSF in flux
-# ---------------------
+# Scale the PSF with the given factor
+# -----------------------------------
 #
 # The PSF absolute pixel values are not relevant since they are used to be
 # normalized somehow. Here, the input PSF is scaled (multiplied) by the
 # specified factor (--fluxfactor) in order to appropiately obtain the PSF
 # brightness.
 psffluxscaled=$tmpdir/psf-flux-scaled-$objectid.fits
-astarithmetic $psf --hdu=$psfhdu $fluxfactor float32 x \
-                   --output=$psffluxscaled $quiet
+astarithmetic $psf --hdu=$psfhdu $scale float32 x \
+              --output=$psffluxscaled $quiet
 
 
 
@@ -494,7 +496,7 @@ yrange=$(echo "$ydiff $yaxis $ycenter" \
 # situated where the user has specified.
 psfcropped=$tmpdir/psf-cropped-$objectid.fits
 astcrop $psftranslated --mode=img --section=$xrange,$yrange \
-                       --output=$psfcropped $quiet
+        --output=$psfcropped $quiet
 
 
 
@@ -511,7 +513,8 @@ astcrop $psftranslated --mode=img --section=$xrange,$yrange \
 # stars (using the PSF) or the subtraction without having nan values in the
 # final subtracted image.
 astarithmetic $psfcropped --hdu=1 set-i \
-              i i isblank 0 where --output=$output $quiet
+              i i isblank 0 where set-psf \
+              $inputs --hdu=$hdu psf - --output=$output $quiet
 
 
 

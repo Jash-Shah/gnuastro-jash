@@ -1,13 +1,15 @@
 #!/bin/sh
 
-# Obtain the factor by which it is necessary to multiply a given PSF image
-# in order to match in flux a particular star within a given ring of radii.
-# Run with `--help', or see description under `print_help' (below) for
-# more.
+# Obtain the scale factor by which it is necessary to multiply a given PSF
+# image in order to match it to a particular star within a given ring of
+# radii.  Run with `--help', or see description under `print_help' (below)
+# for more.
 #
 # Original author:
 #   Raul Infante-Sainz <infantesainz@gmail.com>
-# Copyright (C) 2021, Free Software Foundation, Inc.
+# Contributing author(s):
+#   Mohammad Akhlaghi <mohammad@akhlaghi.org>
+# Copyright (C) 2021-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -36,7 +38,6 @@ export LANG=C
 # Default option values (can be changed with options on the command-line).
 hdu=1
 psf=""
-rmax=""
 quiet=""
 psfhdu=1
 center=""
@@ -44,13 +45,9 @@ keeptmp=0
 tmpdir=""
 segment=""
 normradii=""
-sigmaclip=""
 stampwidth=""
-psfprofile=""
-psfprofilehdu=1
 corewidth="3,3"
-normop="median"
-psfprofilecol=""
+sigmaclip="3,0.1"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -73,9 +70,9 @@ This script is part of GNU Astronomy Utilities $version.
 
 This script will consider a center position and then compute the factor by
 which it is necessary to multiply the specified PSF image in order to match
-in flux with the object at the center (within a ring radii). The main idea
-is to have the necessary factor that will be used to allocate the PSF with
-the proper flux value for constructing the scattered light field.
+it with the object at the center (within a ring radii). The main idea is to
+have the necessary factor that will be used to allocate the PSF with the
+proper flux value for constructing the scattered light field.
 
 For more information, please run any of the following commands. In
 particular the first contains a very comprehensive explanation of this
@@ -95,19 +92,13 @@ $scriptname options:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -p, --psf=STR           PSF image fits file.
   -P, --psfhdu=STR        HDU/extension of the PSF image.
-  -f, --psfprofile=STR    PSF radial profile fits file.
-  -F, --psfprofilehdu=STR HDU/extension of the PSF radial profile.
-  -C, --psfprofilecol=STR,STR  Column names (radius, flux) for PSF radial profile.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
   -W, --stampwidth=INT    Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
-                          for computing the flux factor value.
+                          for computing the scaling factor value.
   -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
-  -R, --rmax=FLT          Maximum radius for the radial profile (in pixels).
-  -N, --normop=STR        Operator for computing the normalization value
-                          (mean, sigclip-mean, etc.).
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
 
  Output:
@@ -210,15 +201,6 @@ do
         -P|--psfhdu)         psfhdu="$2";                               check_v "$1" "$psfhdu";  shift;shift;;
         -P=*|--psfhdu=*)     psfhdu="${1#*=}";                          check_v "$1" "$psfhdu";  shift;;
         -P*)                 psfhdu=$(echo "$1"  | sed -e's/-P//');     check_v "$1" "$psfhdu";  shift;;
-        -f|--psfprofile)     psfprofile="$2";                           check_v "$1" "$psfprofile";  shift;shift;;
-        -f=*|--psfprofile=*) psfprofile="${1#*=}";                      check_v "$1" "$psfprofile";  shift;;
-        -f*)                 psfprofile=$(echo "$1"  | sed -e's/-f//'); check_v "$1" "$psfprofile";  shift;;
-        -F|--psfprofilehdu)     psfprofilehdu="$2";                           check_v "$1" "$psfprofilehdu";  shift;shift;;
-        -F=*|--psfprofilehdu=*) psfprofilehdu="${1#*=}";                      check_v "$1" "$psfprofilehdu";  shift;;
-        -F*)                    psfprofilehdu=$(echo "$1"  | sed -e's/-F//'); check_v "$1" "$psfprofilehdu";  shift;;
-        -C|--psfprofilecol)     psfprofilecol="$2";                           check_v "$1" "$psfprofilecol";  shift;shift;;
-        -C=*|--psfprofilecol=*) psfprofilecol="${1#*=}";                      check_v "$1" "$psfprofilecol";  shift;;
-        -C*)                    psfprofilecol=$(echo "$1"  | sed -e's/-C//'); check_v "$1" "$psfprofilecol";  shift;;
         -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
         -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
         -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
@@ -237,16 +219,9 @@ do
         -c|--center)         center="$2";                               check_v "$1" "$center";  shift;shift;;
         -c=*|--center=*)     center="${1#*=}";                          check_v "$1" "$center";  shift;;
         -c*)                 center=$(echo "$1"  | sed -e's/-c//');     check_v "$1" "$center";  shift;;
-        -N|--normop)         normop="$2";                               check_v "$1" "$normop";  shift;shift;;
-        -N=*|--normop=*)     normop="${1#*=}";                          check_v "$1" "$normop";  shift;;
-        -N*)                 normop=$(echo "$1"  | sed -e's/-N//');     check_v "$1" "$normop";  shift;;
-        -R|--rmax)           rmax="$2";                                 check_v "$1" "$rmax";  shift;shift;;
-        -R=*|--rmax=*)       rmax="${1#*=}";                            check_v "$1" "$rmax";  shift;;
-        -R*)                 rmax=$(echo "$1"  | sed -e's/-R//');       check_v "$1" "$rmax";  shift;;
         -s|--sigmaclip)      sigmaclip="$2";                            check_v "$1" "$sigmaclip";  shift;shift;;
         -s=*|--sigmaclip=*)  sigmaclip="${1#*=}";                       check_v "$1" "$sigmaclip";  shift;;
         -s*)                 sigmaclip=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$sigmaclip";  shift;;
-
 
         # Output parameters
         -k|--keeptmp)     keeptmp=1; shift;;
@@ -296,39 +271,12 @@ elif [ ! -f $inputs ]; then
     exit 1
 fi
 
-# If a PSF image (--psf) and profile (--psfprofile) are not given at all.
-if [ x"$psf" = x ] && [ x"$psfprofile" = x ]; then
+# If a PSF image (--psf) is not given.
+if [ x"$psf" = x ]; then
     cat <<EOF
-$scriptname: no PSF image or profile provided. A PSF image (profile) has to be specified with --psf or -p (--psfprofile or -f).
+$scriptname: no PSF image or profile provided. A PSF image (profile) has to be specified with '--psf' (or '-p').
 EOF
     exit 1
-fi
-
-# If a PSF image (--psf) and profile (--psfprofile) are given.
-if [ x"$psf" != x ] && [ x"$psfprofile" != x ]; then
-    cat <<EOF
-$scriptname: both PSF image and profile provided. Only one PSF input (image or profile) has to be provided. Image (--psf, -p), profile (--psfprofile, -f).
-EOF
-    exit 1
-fi
-
-# If PSF profile provided, ensure also column names are provided.
-if [ x"$psfprofile" != x ]; then
-    if [ x"$psfprofilecol" = x ]; then
-        cat <<EOF
-$scriptname: no PSF profile column names provided. Values to '--psfprofilecol' ('-C') should be provided.
-EOF
-        exit 1
-    else
-        npsfprofilecols=$(echo $psfprofilecol \
-                              | awk 'BEGIN{FS=","}END{print NF}')
-        if [ x$npsfprofilecols != x2 ]; then
-            cat <<EOF
-$scriptname: '--psfprofilecol' (or '-C') only take two values, but $npsfprofilecols were given
-EOF
-            exit 1
-        fi
-    fi
 fi
 
 # If center coordinates (--center) is not given at all.
@@ -394,13 +342,6 @@ ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 normradiusmin=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $1}')
 normradiusmax=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $2}')
 
-# If PSF radial profile provided
-if [ x"$psfprofile" != x ]; then
-    psfprofilecolradius=$(echo "$psfprofilecol" | awk 'BEGIN{FS=","} {print $1}')
-    psfprofilecolflux=$(echo "$psfprofilecol" | awk 'BEGIN{FS=","} {print $2}')
-fi
-
-
 # With the center coordinates, generate a specific label for the object
 # consisting in its coordinates.
 objectid="$xcoord"_"$ycoord"
@@ -409,8 +350,8 @@ objectid="$xcoord"_"$ycoord"
 
 
 
-# Define a temporary directory and thefinal output file
-# -----------------------------------------------------
+# Define a temporary directory and the final output file
+# ------------------------------------------------------
 #
 # Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
@@ -425,7 +366,7 @@ objectid="$xcoord"_"$ycoord"
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-    tmpdir=$(pwd)/"$bname_prefix"_psfmodelfluxfactor
+    tmpdir=$(pwd)/"$bname_prefix"_psfmodelscalefactor
 fi
 
 if [ -d $tmpdir ]; then
@@ -570,7 +511,7 @@ if [ x"$segment" != x ]; then
                                        \
                 c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
                 o o $olab eq 0 where set-omask \
-                i omask cmask or nan where
+                i omask cmask or nan where $quiet
 else
   cropped_masked=$cropped
 fi
@@ -579,86 +520,41 @@ fi
 
 
 
-# Compute the radial profiles
-# ---------------------------
-#
-# Generate the radial profile of the stamp and the PSF, since it has been
-# already centered on the center of the object, it is not necessary to give
-# the center coordinates. If the user specifies a maximum radius, use it.
-# Otherwise, compute the radial profile up to the outer part of the ring
-# for the normalization (to not wast CPU time).
-radialprofile=$tmpdir/rprofile-$objectid.fits
-psfradialprofile=$tmpdir/rprofile-psf-$objectid.fits
-if [ x"$rmax" != x ]; then maximumradius="--rmax=$rmax"
-else                       maximumradius="--rmax=$normradiusmax";
-fi
-astscript-radial-profile $cropped_masked --hdu=1 \
-                         $maximumradius --measure=$normop \
-                         --tmpdir $tmpdir --keeptmp \
-                         --output=$radialprofile $quiet
-
-# If the user provide a PSF image, compute the radial profile of that PSF.
-# Otherwise, consider the PSF radial profile provided.
-if [ x"$psfprofile" = x ]; then
-    astscript-radial-profile $psf --hdu=$psfhdu $maximumradius \
-                             --measure=$normop \
-                             --tmpdir $tmpdir --keeptmp \
-                             --output=$psfradialprofile $quiet
-else
-    asttable $psfprofile \
-             --output=$psfradialprofile $quiet \
-             --column=$psfprofilecolradius,$psfprofilecolflux \
-             --range=$psfprofilecolradius,$normradiusmin,$normradiusmax
-fi
+# Crop the PSF image with the same size.
+psfcropped=$tmpdir/cropped-psf-$objectid.fits
+psfxcenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS1 -q \
+                 | awk '{print $1/2+0.5}')
+psfycenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS2 -q \
+                 | awk '{print $1/2+0.5}')
+astcrop $psf --hdu=$psfhdu --mode=img \
+        --center=$psfxcenter,$psfycenter \
+        --width=$stampwidth --output=$psfcropped $quiet
 
 
 
 
 
-# Select the same rows in the matching radii
-# ------------------------------------------
-#
-# To compute the flux factor, it is necessary to consider the same radii
-# values. Here, the radii values are extracted from the radial profiles of
-# the input object and the provided PSF image. After that, the two
-# different tables are concatenated into a single one.
-radialprofile_ring=$tmpdir/rprofile-ring-$objectid.fits
-asttable $radialprofile --range=1,$normradiusmin,$normradiusmax \
-         --output=$radialprofile_ring $quiet
-
-psfradialprofile_ring=$tmpdir/rprofile-psf-ring-$objectid.fits
-asttable $psfradialprofile --range=1,$normradiusmin,$normradiusmax \
-         --output=$psfradialprofile_ring $quiet
-
-# Concatenated table. This table has the rows corresponding to the ring
-# over which the flux radius is computed, and 3 columns: radius, STAR
-# radial profile, PSF radial profile.
-radialprofile_ring_both=$tmpdir/rprofile-ring-both-$objectid.fits
-asttable $radialprofile_ring --output=$radialprofile_ring_both $quiet \
-         --catcolumnfile=$psfradialprofile_ring --catcolumns=2
+# Build a radial profile image. It will be used to only select pixels
+# within the requested radial range.
+radcenter=$(echo $stampwidth | awk '{print $1/2+0.5}')
+radradius=$(echo $stampwidth | awk '{print $1+2}')
+radcropped=$tmpdir/cropped-radial-$objectid.fits
+echo "1 $radcenter $radcenter 7 $radradius 0 0 1 1 1" \
+    | astmkprof --background=$psfcropped --clearcanvas \
+                --oversample=1 --output=$radcropped $quiet
 
 
 
 
 
-# Compute the flux factor
-# -----------------------
-#
-# Once a table with the 3 columns has been generated, it is possible to
-# make the ratio of the two radial profiles (STAR and PSF) columns.
-radialprofile_ratio=$tmpdir/rprofile-ratio-$objectid.fits
-asttable $radialprofile_ring_both $quiet \
-         --column=1,2,3 \
-         --column='arith $2 $3 /' \
-         --output=$radialprofile_ratio
-
-# Obtain the flux factor by computing the averaged value of the ratio.
-# Print the flux factor on the screen and save it into the output file.
-fluxfactor=$(aststatistics $radialprofile_ratio --column=4 --$normop --quiet)
-
-# Print the flux factor.
-echo $fluxfactor
-
+# Find the multiplication factor
+multipimg=$tmpdir/for-factor-$objectid.fits
+astarithmetic $cropped -h1 set-i \
+              $psfcropped -h1 set-p \
+              $radcropped -h1 set-r \
+              r $normradiusmin lt r $normradiusmax ge or set-m \
+              i p / m nan where -o$multipimg $quiet
+aststatistics $multipimg --sclipparams=$sigmaclip  --sigclip-median
 
 
 

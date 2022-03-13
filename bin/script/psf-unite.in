@@ -35,15 +35,15 @@ export LANG=C
 
 # Default option values (can be changed with options on the command-line).
 hdu=1
-core=""
-corehdu=1
-radius=""
+inner=""
 quiet=""
+scale=""
+radius=""
 keeptmp=0
 output=""
 tmpdir=""
+innerhdu=1
 axisratio=1
-fluxfactor=""
 positionangle=0
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -67,7 +67,7 @@ This script is part of GNU Astronomy Utilities $version.
 
 This script will consider two different PSF images to join them into a
 single one. It is intendeed to generate a single PSF by combining different
-PSF regions (core and wings).
+PSF regions (inner and outer).
 
 For more information, please run any of the following commands. In
 particular the first contains a very comprehensive explanation of this
@@ -85,10 +85,10 @@ experienced Gnuastro users and developers. For more information, please run:
 $scriptname options:
  Input:
   -h, --hdu=STR           HDU/extension of all input FITS files.
-  -c, --core=STR          Core PSF FITS image.
-  -C, --corehdu=STR       HDU/extension of the PSF image.
+  -i, --inner=STR         Inner PSF FITS image.
+  -I, --innerhdu=STR      HDU/extension of the inner PSF image.
   -r, --radius=FLT        Radius at which the junction is done (in pixels).
-  -f, --fluxfactor=FLT    Factor by which the inner PSF is multiplied.
+  -s, --scale=FLT         Factor by which the inner PSF is multiplied.
   -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
   -p, --positionangle=FLT Position angle for ellipse mask profile.
 
@@ -187,18 +187,18 @@ do
         -h|--hdu)            hdu="$2";                                  check_v "$1" "$hdu";  shift;shift;;
         -h=*|--hdu=*)        hdu="${1#*=}";                             check_v "$1" "$hdu";  shift;;
         -h*)                 hdu=$(echo "$1"  | sed -e's/-h//');        check_v "$1" "$hdu";  shift;;
-        -c|--core)           core="$2";                                 check_v "$1" "$core";  shift;shift;;
-        -c=*|--core=*)       core="${1#*=}";                            check_v "$1" "$core";  shift;;
-        -c*)                 core=$(echo "$1"  | sed -e's/-c//');       check_v "$1" "$core";  shift;;
-        -C|--corehdu)        corehdu="$2";                              check_v "$1" "$corehdu";  shift;shift;;
-        -C=*|--corehdu=*)    corehdu="${1#*=}";                         check_v "$1" "$corehdu";  shift;;
-        -C*)                 corehdu=$(echo "$1"  | sed -e's/-C//');    check_v "$1" "$corehdu";  shift;;
+        -i|--inner)          inner="$2";                                check_v "$1" "$inner";  shift;shift;;
+        -i=*|--inner=*)      inner="${1#*=}";                           check_v "$1" "$inner";  shift;;
+        -i*)                 inner=$(echo "$1"  | sed -e's/-c//');      check_v "$1" "$inner";  shift;;
+        -I|--innerhdu)       innerhdu="$2";                             check_v "$1" "$innerhdu";  shift;shift;;
+        -I=*|--innerhdu=*)   innerhdu="${1#*=}";                        check_v "$1" "$innerhdu";  shift;;
+        -I*)                 innerhdu=$(echo "$1"  | sed -e's/-C//');   check_v "$1" "$innerhdu";  shift;;
         -r|--radius)         radius="$2";                               check_v "$1" "$radius";  shift;shift;;
         -r=*|--radius=*)     radius="${1#*=}";                          check_v "$1" "$radius";  shift;;
         -r*)                 radius=$(echo "$1"  | sed -e's/-r//');     check_v "$1" "$radius";  shift;;
-        -f|--fluxfactor)     fluxfactor="$2";                           check_v "$1" "$fluxfactor";  shift;shift;;
-        -f=*|--fluxfactor=*) fluxfactor="${1#*=}";                      check_v "$1" "$fluxfactor";  shift;;
-        -f*)                 fluxfactor=$(echo "$1"  | sed -e's/-f//'); check_v "$1" "$fluxfactor";  shift;;
+        -s|--scale)          scale="$2";                                check_v "$1" "$scale";  shift;shift;;
+        -s=*|--scale=*)      scale="${1#*=}";                           check_v "$1" "$scale";  shift;;
+        -s*)                 scale=$(echo "$1"  | sed -e's/-f//');      check_v "$1" "$scale";  shift;;
         -Q|--axisratio)      axisratio="$2";                            check_v "$1" "$axisratio";  shift;shift;;
         -Q=*|--axisratio=*)  axisratio="${1#*=}";                       check_v "$1" "$axisratio";  shift;;
         -Q*)                 axisratio=$(echo "$1"  | sed -e's/-Q//');  check_v "$1" "$axisratio";  shift;;
@@ -245,43 +245,47 @@ done
 
 # If an input image is not given at all.
 if [ x"$inputs" = x ]; then
-    echo "$scriptname: no input FITS image files."
-    echo "Run with '--help' for more information on how to run."
+    cat <<EOF
+$scriptname: no input FITS image files (outer part of the PSF to unite with an inner part). Run with '--help' for more information on how to run
+EOF
     exit 1
 elif [ ! -f $inputs ]; then
     echo "$scriptname: $inputs: No such file or directory."
     exit 1
 fi
 
-# If a core image (--core) is not given at all.
-if [ x"$core" = x ]; then
-    echo "$scriptname: no core image provided."
-    echo "A core image of the PSF to be specified with --stampwidth or -w."
+# If an inner image (--inner) is not given at all.
+if [ x"$inner" = x ]; then
+    cat <<EOF
+$scriptname: no inner FITS image provided. The inner part of the PSF (to unite with the outer part, which is the main argument) can be specified with the '--inner' (or '-i') option as a FITS image
+EOF
     exit 1
-elif [ ! -f $core ]; then
-    echo "$scriptname: $core: No such file or directory."
+elif [ ! -f $inner ]; then
+    echo "$scriptname: $inner: No such file or directory."
     exit 1
 fi
 
 # If a radius (--radius) is not given at all.
 if [ x"$radius" = x ]; then
-    echo "$scriptname: no radius (in pixels) provided."
-    echo "A radius value (in pixels) has to be specified with --radius or -r."
+    cat <<EOF
+$scriptname: no radius (in pixels) provided. All pixels below this radius will be filled with the inner PSf image. You can use '--radius' (or '-r') to specify it
+EOF
     exit 1
 fi
 
-# If a fluxfactor (--fluxfactor) is not given at all.
-if [ x"$fluxfactor" = x ]; then
-    echo "$scriptname: no flux factor provided."
-    echo "A flux factor has to be specified with --fluxfactor or -f."
+# If a scale (--scale) is not given at all.
+if [ x"$scale" = x ]; then
+    cat <<EOF
+$scriptname: no scale factor provided ('--scale' or '-s'). This is necessary to scale the inner region to the outer and is usually determined with the 'astscript-psf-model-scale-factor'. See the Gnuastro tutorial on "Building the extended PSF" for more
+EOF
     exit 1
 fi
 
 
 
 
-# Define a temporal directory and the final output file
-# -----------------------------------------------------
+# Define a temporary directory and the final output file
+# ------------------------------------------------------
 #
 # Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
@@ -293,7 +297,7 @@ fi
 # provide an explicit name. If the user has defined a specific path/name
 # for the output, it will be used for saving the output file.
 bname_outer=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
-bname_core=$(basename $core | sed 's/\.fits/ /' | awk '{print $1}')
+bname_inner=$(basename $inner  | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
   tmpdir=$(pwd)/"$bname_outer"_psfcreatejunction
 fi
@@ -306,7 +310,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output="$bname_outer"_"$bname_core"_psfcreatejunction.fits
+  output="$bname_outer"_"$bname_inner"_psfcreatejunction.fits
 fi
 
 
@@ -351,14 +355,14 @@ ycenter=$(astarithmetic $yaxis float32 2.0 / --quiet)
 
 
 
-# Get the center of the core PSF
-# ------------------------------
+# Get the center of the inner PSF
+# -------------------------------
 #
-# The center of the core PSF is assumed to be at the center of the PSF
+# The center of the inner PSF is assumed to be at the center of the PSF
 # image.  So, the center of the PSF is computed here from the size of the
 # PSF image along the two axis (in pixels). Dimension values are computed
 # as described above.
-psfaxises=$(astfits $core --hdu=$corehdu --quiet \
+psfaxises=$(astfits $inner --hdu=$innerhdu --quiet \
                     --keyvalue ZNAXIS1,ZNAXIS2,NAXIS1,NAXIS2)
 psfnaxises=$(echo $psfaxises \
                   | sed 's/n\/a//g' \
@@ -389,9 +393,9 @@ ypsfcenter=$(astarithmetic $ypsfaxis float32 2.0 / --quiet)
 xdiff=$(astarithmetic $xcenter float32 $xpsfcenter float32 - --quiet)
 ydiff=$(astarithmetic $ycenter float32 $ypsfcenter float32 - --quiet)
 
-coretranslated=$tmpdir/"$bname_core"_translated.fits
-astwarp $core --translate=$xdiff,$ydiff \
-             --output=$coretranslated $quiet
+innertranslated=$tmpdir/"$bname_inner"_translated.fits
+astwarp $inner --translate=$xdiff,$ydiff \
+        --output=$innertranslated $quiet
 
 
 
@@ -430,9 +434,9 @@ yrange=$(echo "$ydiff $yaxis $ycenter" \
 # Once the necessary crop parameters have been computed, use the option
 # '--section' to get the PSF image with the correct size and the center
 # situated where the user has specified.
-corecropped=$tmpdir/"$bname_core"_cropped.fits
-astcrop $coretranslated --mode=img --section=$xrange,$yrange \
-                        --output=$corecropped $quiet
+innercropped=$tmpdir/"$bname_inner"_cropped.fits
+astcrop $innertranslated --mode=img --section=$xrange,$yrange \
+        --output=$innercropped $quiet
 
 
 
@@ -441,16 +445,16 @@ astcrop $coretranslated --mode=img --section=$xrange,$yrange \
 # Flux scaling, zero in the outer part
 # ------------------------------------
 #
-# In order to put the core at the desired level of flux than the outer
-# part, it is necessary to multiply this core by the factor specified by
-# the user with the option --fluxfactor. Here, the cropped image of the
-# core is scaled by using that factor. In addition to that, the nan pixels
-# that came from the cropping are set to zero. This is necessary for the
-# final addition of the two different PSF images.
-corefluxscaled=$tmpdir/"$bname_core"_fluxscaled.fits
-astarithmetic $corecropped --hdu=1 set-i \
+# In order to put the inner image at the desired level of flux than the
+# outer part, it is necessary to multiply the inner part by the factor
+# specified by the user with the option --scale. Here, the cropped image of
+# the inner is scaled by using that factor. In addition to that, the nan
+# pixels that came from the cropping are set to zero. This is necessary for
+# the final addition of the two different PSF images.
+innerfluxscaled=$tmpdir/"$bname_inner"_fluxscaled.fits
+astarithmetic $innercropped --hdu=1 set-i \
               i i isblank 0 where set-z \
-              z $fluxfactor x --output=$corefluxscaled $quiet
+              z $scale x --output=$innerfluxscaled $quiet
 
 
 
@@ -461,65 +465,32 @@ astarithmetic $corecropped --hdu=1 set-i \
 # In order to join the two images properly, it is necessary to consider a
 # general mask. The mask is a circular flat (5) profile with the ones in
 # the center and the zeros in the outer part. It will be used for masking
-# the outer part of the core image, and the core part of the outer image.
+# the outer part of the inner image, and the inner part of the outer image.
 # As a consequence, the final image will be the sum of these two masked
 # images.
 maskimage=$tmpdir/mask-image.fits
 xcentmask=$(astarithmetic $xcenter float32 1.0 + --quiet)
 ycentmask=$(astarithmetic $ycenter float32 1.0 + --quiet)
 echo "1 $xcentmask $ycentmask 5 $radius 1 $positionangle $axisratio 1 1" \
-      | astmkprof --background=$corefluxscaled \
+      | astmkprof --background=$innerfluxscaled \
 		  --mode=img \
                   --clearcanvas \
-                  --mforflatpix \
+                  --mforflatpix --type=uint8 \
                   --output=$maskimage $quiet
 
 
 
 
 
-# Masking both images
-# -------------------
+# Fill inner pixels with inner image
+# ----------------------------------
 #
-# Once both images are centered, flux scaled, and have the same dimensions,
-# it is necessary to mask them properly.  The masking process consist in
-# putting to zero the core of the outer image, and to put zeros in the
-# outer part of the core image: 0=zeros, W = Wings, C = Core.
-
-# - Outer image:
-#   W W W W W W
-#   W W 0 0 W W
-#   W W 0 0 W W
-#   W W W W W W
-#
-# - Core image:
-#   0 0 0 0 0 0
-#   0 0 C C 0 0
-#   0 0 C C 0 0
-#   0 0 0 0 0 0
-
-outer_masked=$tmpdir/"$bname_outer"_outermasked.fits
-astarithmetic $inputs --hdu=1 set-psfouter \
-              $maskimage --hdu=1 set-mask \
-              psfouter mask 1 eq 0 where --output=$outer_masked $quiet
-
-
-core_masked=$tmpdir/"$bname_core"_coremasked.fits
-astarithmetic $corefluxscaled --hdu=1 set-psfinner \
-              $maskimage --hdu=1 set-mask \
-              psfinner mask 1 ne 0 where --output=$core_masked $quiet
-
-
-
-
-
-# Masking both images
-# -------------------
-#
-# Sum the two images to obtain the final output
-astarithmetic $outer_masked --hdu=1 \
-              $core_masked --hdu=1 \
-              2 sum --output=$output $quiet
+# Having the mask from above, we simply replace those pixels in the outer
+# image with the same pixels of the inner image.
+astarithmetic $inputs --hdu=$hdu       set-outer \
+              $innerfluxscaled --hdu=1 set-inner \
+              $maskimage --hdu=1       set-mask \
+              outer mask inner where -o$output $quiet --wcsfile=none
 
 
 

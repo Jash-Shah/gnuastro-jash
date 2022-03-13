@@ -206,23 +206,22 @@ if COND_WARP
 endif
 
 # Script tests.
-SCRIPT_TESTS = script/sort-by-night.sh \
+SCRIPT_TESTS = script/psf-unite.sh \
+               script/psf-stamp.sh \
+               script/psf-subtract.sh \
+               script/sort-by-night.sh \
                script/radial-profile.sh \
-               script/psf-create-junction.sh \
-               script/psf-create-make-stamp.sh \
-               script/psf-model-flux-factor.sh \
-               script/psf-create-select-stars.sh \
-               script/psf-model-scattered-light.sh
+               script/psf-scale-factor.sh \
+               script/psf-select-stars.sh
 
 # We want to have several FITS files as input for this script.
-script/sort-by-night.sh: mkcatalog/aperturephot.sh.log
+script/psf-unite.sh: mkprof/mosaic2.sh.log
+script/psf-stamp.sh: mkprof/mosaic2.sh.log
+script/psf-subtract.sh: mkprof/mosaic2.sh.log
 script/radial-profile.sh: mkprof/mosaic2.sh.log
-script/psf-create-junction.sh: mkprof/mosaic2.sh.log
-script/psf-create-make-stamp.sh: mkprof/mosaic2.sh.log
-script/psf-model-flux-factor.sh: mkprof/mosaic2.sh.log
-script/psf-create-select-stars.sh: segment/segment.sh.log
-script/psf-model-scattered-light.sh: mkprof/mosaic2.sh.log
-
+script/psf-scale-factor.sh: mkprof/mosaic2.sh.log
+script/psf-select-stars.sh: segment/segment.sh.log
+script/sort-by-night.sh: mkcatalog/aperturephot.sh.log
 
 
 # Environment variables for the test scripts.

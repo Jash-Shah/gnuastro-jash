@@ -41,6 +41,7 @@ hdu=""
 quiet=0
 prefix=""
 ds9scale=""
+ds9extra=""
 ds9geometry=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -89,6 +90,7 @@ $scriptname options:
                           for 4K (1800x3000). If not given, the script will
                           attempt to find your screen resolution and find a
                           good match, otherwise, use the default size.
+  -e, --ds9extra=STR      Extra options to pass to DS9 after default ones.
   -s, --ds9scale=STR      Custom value to '-scale' option in DS9.
   -p, --prefix=STR        Directory containing DS9 or TOPCAT executables.
 
@@ -193,6 +195,9 @@ do
         -s|--ds9scale)        ds9scale="$2";                       check_v "$1" "$ds9scale"; shift;shift;;
         -s=*|--ds9scale=*)    ds9scale="${1#*=}";                  check_v "$1" "$ds9scale"; shift;;
         -s*)                  ds9scale=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9scale"; shift;;
+        -e|--ds9extra)        ds9extratmp="$2";                       check_v "$1" "$ds9extratmp"; shift;shift;;
+        -e=*|--ds9extra=*)    ds9extratmp="${1#*=}";                  check_v "$1" "$ds9extratmp"; shift;;
+        -e*)                  ds9extratmp=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9extratmp"; shift;;
         -p|--prefix)          prefix="$2";                         check_v "$1" "$prefix"; shift;shift;;
         -p=*|--prefix=*)      prefix="${1#*=}";                    check_v "$1" "$prefix"; shift;;
         -p*)                  prefix=$(echo "$1"  | sed -e's/-p//');  check_v "$1" "$prefix"; shift;;
@@ -214,6 +219,13 @@ do
         # file name.
         *) inputs="$inputs $1"; shift;;
     esac
+
+    # In case '--ds9extra' was given, add it to any previous values. The
+    # reason is that this option can often become very long and it may be
+    # easier to break it into multiple calls.
+    if [ x"$ds9extratmp" != x ]; then
+        ds9extra="$ds9extra $ds9extratmp"
+    fi
 done
 
 
@@ -328,7 +340,7 @@ else
                                  -zoom to fit -wcs degrees -cmap sls \
 		                 -match frame image -match frame colorbar \
 		                 -frame lock image -colorbar lock yes \
-                                 -lock slice image"
+                                 -lock slice image $ds9extra"
             else
 
 		# 3D multi-extension file: The "Cube" window will slide
@@ -341,7 +353,8 @@ else
 		execom="$ds9exec $ds9scaleopt $ds9geoopt -wcs degrees \
                                  -multiframe $inwithhdu -lock slice image \
                                  -lock frame image -zoom to fit -cmap sls \
-                                 -match frame colorbar -colorbar lock yes"
+                                 -match frame colorbar -colorbar lock yes \
+                                 $ds9extra"
             fi
 
 	# When input was table.

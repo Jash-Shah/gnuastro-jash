@@ -1,4 +1,4 @@
-# Generate a catalog of stars to test the select-stars PSF script
+# Generate two stamps from a mock image to test the PSF stamps script
 #
 # See the Tests subsection of the manual for a complete explanation
 # (in the Installing gnuastro section).
@@ -7,7 +7,7 @@
 #     Raul Infante-Sainz <infantesainz@gmail.com>
 # Contributing author(s):
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
-# Copyright (C) 2021, Free Software Foundation, Inc.
+# Copyright (C) 2015-2021, Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -24,14 +24,15 @@
 # Set the variables (the executable is in the build tree). Do the
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
-prog=psf-create-select-stars
+prog=psf-unite
 execname=../bin/script/astscript-$prog
 
-dep1name=$progbdir/astmatch
-dep2name=$progbdir/astmkcatalog
-fits1name=convolve_spatial_noised.fits
-fits2name=convolve_spatial_noised_detected_segmented.fits
-fits3name=convolve_spatial_noised_detected_segmented_catalog.fits
+fits1name=0_mkprofcat2.fits
+dep1name=$progbdir/astcrop
+dep2name=$progbdir/astfits
+dep3name=$progbdir/astwarp
+dep4name=$progbdir/astmkprof
+dep5name=$progbdir/astarithmetic
 
 
 
@@ -49,8 +50,10 @@ fits3name=convolve_spatial_noised_detected_segmented_catalog.fits
 if [ ! -f $execname ]; then echo "$execname doesn't exist."; exit 77; fi
 if [ ! -f $dep1name ]; then echo "$dep1name doesn't exist."; exit 77; fi
 if [ ! -f $dep2name ]; then echo "$dep2name doesn't exist."; exit 77; fi
+if [ ! -f $dep3name ]; then echo "$dep3name doesn't exist."; exit 77; fi
+if [ ! -f $dep4name ]; then echo "$dep4name doesn't exist."; exit 77; fi
+if [ ! -f $dep5name ]; then echo "$dep5name doesn't exist."; exit 77; fi
 if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
-if [ ! -f $fits2name ]; then echo "$fits2name doesn't exist."; exit 77; fi
 
 
 
@@ -66,18 +69,5 @@ if [ ! -f $fits2name ]; then echo "$fits2name doesn't exist."; exit 77; fi
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
 export PATH="$progbdir:$PATH"
-
-# Create a catalog with appropiate parameters
-$check_with_program astmkcatalog $fits2name \
-                    --ra --dec --magnitude \
-                    --axisratio --output=$fits3name
-
-# Test the script: selecting good stars
-$check_with_program $execname $fits1name --hdu=1 \
-                    --segmented=$fits2name \
-                    --catalog=$fits3name \
-                    --field=magnitude \
-                    --magnituderange=-17,-10 \
-                    --minaxisratio=0.85 \
-                    --mindistdeg=0.05 \
-                    --matchaperturedeg=0.5
+$check_with_program $execname $fits1name --inner=$fits1name \
+                              --scale=3.3 --radius=5

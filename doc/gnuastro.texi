@@ -113,11 +113,11 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 * astscript-radial-profile: (gnuastro)Invoking astscript-radial-profile. Options to this script
 * astscript-ds9-region: (gnuastro)Invoking astscript-ds9-region. Options to this script
 * astscript-fits-view: (gnuastro)Invoking astscript-fits-view. Options to this script
-* astscript-psf-create-select-stars: (gnuastro)Invoking astscript-psf-create-select-stars. Options to this script
-* astscript-psf-create-make-stamp: (gnuastro)Invoking astscript-psf-create-make-stamp. Options to this script
-* astscript-psf-create-junction: (gnuastro)Invoking astscript-psf-create-junction. Options to this script
-* astscript-psf-model-flux-factor: (gnuastro)Invoking astscript-psf-model-flux-factor. Options to this script
-* astscript-psf-model-scattered-light: (gnuastro)Invoking astscript-psf-model-scattered-light. Options to this script
+* astscript-psf-select-stars: (gnuastro)Invoking astscript-psf-select-stars. Options to this script
+* astscript-psf-stamp: (gnuastro)Invoking astscript-psf-stamp. Options to this script
+* astscript-psf-unite: (gnuastro)Invoking astscript-psf-unite. Options to this script
+* astscript-psf-scale-factor: (gnuastro)Invoking astscript-psf-scale-factor. Options to this script
+* astscript-psf-subtract: (gnuastro)Invoking astscript-psf-subtract. Options to this script
 @end direntry
 
 
@@ -683,11 +683,11 @@ Viewing FITS file contents with DS9 or TOPCAT
 PSF construction and subtraction
 
 * Overview of the PSF scripts::  Summary of concepts and methods
-* Invoking astscript-psf-create-select-stars::  Select good starts within an image.
-* Invoking astscript-psf-create-make-stamp::  Make a stamp of each star to stack.
-* Invoking astscript-psf-create-junction::  Merge stacks of different regions of PSF.
-* Invoking astscript-psf-model-flux-factor::  Calculate factor to scale PSF to star.
-* Invoking astscript-psf-model-scattered-light::  Put the PSF in the image to subtract.
+* Invoking astscript-psf-select-stars::  Select good starts within an image.
+* Invoking astscript-psf-stamp::  Make a stamp of each star to stack.
+* Invoking astscript-psf-unite::  Merge stacks of different regions of PSF.
+* Invoking astscript-psf-scale-factor::  Calculate factor to scale PSF to star.
+* Invoking astscript-psf-subtract::  Put the PSF in the image to subtract.
 
 Library
 
@@ -5816,27 +5816,27 @@ For more on Query, see @ref{Query}.
 
 @example
 $ astquery gaia --dataset=edr3 --overlapwith=flat/67510.fits \
-           --range=phot_g_mean_mag,-inf,10 --output=gaia.fits
+           --range=phot_g_mean_mag,-inf,10 \
+           --output=flat/67510-bright.fits
 @end example
 
 Now, we can easily visualize the magnitude and positions of these stars using @command{astscript-ds9-region} and the command below (for more on this script, see @ref{SAO DS9 region files from table})
 
 @example
-$ astscript-ds9-region gaia.fits -cra,dec \
+$ astscript-ds9-region flat/67510-bright.fits -cra,dec \
            --namecol=phot_g_mean_mag \
            --command="ds9 flat/67510.fits -zoom to fit -zscale"
-$ rm gaia.fits
 @end example
 
 You can see that we have several stars between magnitudes 6 to 10.
-Let's use @file{astscript-psf-create-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 6 to 10).
+Let's use @file{astscript-psf-select-stars} in the command below to select the relevant stars in the image (the brightest; with a magnitude between 6 to 10).
 The advantage of using this script (instead of a simple @option{--range} in Table), is that it will also check distances to nearby stars and reject those that are too close (and not good for constructing the PSF).
 Since we have very bright stars in this very wide-field image, we will also increase the distance to nearby neighbors with brighter or similar magnitudes (the default value is 1 arcmin).
 To do this, we will set @option{--mindistdeg=0.02}, which corresponds to 1.2 arcmin.
 
 @example
 $ mkdir outer
-$ astscript-psf-create-select-stars flat/67510.fits \
+$ astscript-psf-select-stars flat/67510.fits \
            --magnituderange=6,10 --mindistdeg=0.02 \
            --output=outer/67510-6-10.fits
 @end example
@@ -5851,7 +5851,7 @@ $ astscript-ds9-region outer/67510-6-10.fits -cra,dec \
 @end example
 
 Now that the catalog of good stars is ready, it is time to construct the individual stamps from the catalog above.
-To do that, we'll use @file{astscript-psf-create-make-stamp}.
+To do that, we'll use @file{astscript-psf-stamp}.
 One of the most important parameters for this script is the normalization radii @code{--normradii}.
 This parameter defines a ring for the flux normalization of each star stamp.
 The normalization of the flux is necessary because each star has a different brightness, and consequently, it is crucial for having all the stamps with the same flux level in the same region.
@@ -5880,7 +5880,7 @@ $ counter=1
 $ mkdir finding-normradii
 $ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp label/67510-seg.fits \
+               astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --stampwidth=1000 \
                     --center=$ra,$dec \
@@ -5920,7 +5920,7 @@ $ counter=1
 $ mkdir outer/stamps
 $ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp label/67510-seg.fits \
+               astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --stampwidth=1000 \
                     --center=$ra,$dec \
@@ -5939,12 +5939,15 @@ Just recall that we need to specify the number of inputs into the stacking opera
 $ imgs=outer/stamps/*.fits
 $ numimgs=$(echo $imgs | wc -w)
 $ astarithmetic $imgs $numimgs 3 0.2 sigclip-mean -g1 \
-                --output=outer/stack.fits
-$ astarithmetic $imgs $numimgs median -g1 --output=outer/stack.fits
+                --output=outer/stack.fits  --wcsfile=none
 @end example
 
 @noindent
-With the command below, we'll compare this stacked PSF with the images of the individual stars that were used to create it.
+Did you notice the @option{--wcsfile=none} option above?
+With it, the stacked image no longer has any WCS information.
+This is natural, because the stacked image doesn't correspond to any specific region of the sky any more.
+
+Let's compare this stacked PSF with the images of the individual stars that were used to create it.
 You clearly see that the number of masked pixels is significantly decreased and the PSF is much more ``cleaner'').
 
 @example
@@ -5985,7 +5988,7 @@ So let's have a look and see how many stars we have in the magnitude range of 12
 
 @example
 $ mkdir inner
-$ astscript-psf-create-select-stars flat/67510.fits \
+$ astscript-psf-select-stars flat/67510.fits \
            --magnituderange=12,13 --mindistdeg=0.01 \
            --output=inner/67510-12-13.fits
 
@@ -6006,7 +6009,7 @@ $ counter=1
 $ mkdir inner/stamps
 $ asttable inner/67510-12-13.fits \
            | while read -r ra dec mag; do
-               astscript-psf-create-make-stamp label/67510-seg.fits \
+               astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --stampwidth=500 \
                     --center=$ra,$dec \
@@ -6019,12 +6022,12 @@ $ asttable inner/67510-12-13.fits \
 $ imgs=inner/stamps/*.fits
 $ numimgs=$(echo $imgs | wc -w)
 $ astarithmetic $imgs $numimgs 3 0.2 sigclip-mean -g1 \
-                --output=inner/stack.fits
+                --output=inner/stack.fits --wcsfile=none
 $ astscript-fits-view inner/stack.fits inner/stamps/*.fits
 @end example
 
 @noindent
-We are ready now to unite the two stacks we have constructed: the outer and the inner parts.
+We are now ready to unite the two stacks we have constructed: the outer and the inner parts.
 
 @node Uniting the different PSF components, Subtracting the PSF, Inner part of the PSF, Building the extended PSF
 @subsection Uniting the different PSF components
@@ -6115,124 +6118,147 @@ We had masked all saturated pixels before, so this divergance for radii smaller 
 This is present in all CCDs and pixels beyond this level should not be used in measurements (or properly corrected).
 @end enumerate
 
-The items above were only listed so you get a good mental/visual understanding of the logic behind the operation of the next script (and to learn how to tune its parameters where necessary): @file{astscript-psf-model-flux-factor}.
+The items above were only listed so you get a good mental/visual understanding of the logic behind the operation of the next script (and to learn how to tune its parameters where necessary): @file{astscript-psf-scale-factor}.
 This script is more general than this particular problem, but can be used for this special case also.
-Its job is to take a model of an object and a larger image.
-It will calculate the radial profile of the model, and the profile of the object at a certain point within the larger image.
-It will divide the centered object profile by the model profile and will use the range of radii you specify to find the flux factor.
-You can multiply its retured value by the model to scale it to your object's flux (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
+Its job is to take a model of an object (PSF, or inner stack in this case) and the position of an instance of that model (a star, or the outer stack in this case) in a larger image.
 
-The basic parameters are the normalization radii (i.e., the radius ring at which the ratio betwen the radial profiles of the outer and inner part is done), and the center of the outer part of the PSF.
-You can also provide a segmentation image with a CLUMPS and OBJECTS extensions in order to mask contaminant sources as explained above.
-The center of the inner PSF is asumed to be in the center of the image.
-Let's obtain that flux factor with the following command:
-
-@c The radial profiles in this script appear to be different from the
-@c radial profiles of the last section.
+Instead of dealing with radial profiles (that enforce a certain shape), this script will put the centers of the inner and outer PSFs over each other and divide the outer by the inner.
+Let's have a look with the command below.
+Just note that we are running it with @option{--keeptmp} so the temporary directory with all the intermediate files remain for further clarification:
 
 @example
-$ astscript-psf-model-flux-factor outer/stack.fits \
-           --psf=inner/stack.fits --center=500,500 \
-           --mode=img --normradii=15,16
+$ astscript-psf-scale-factor outer/stack.fits \
+           --psf=inner/stack.fits --center=501,501 \
+           --mode=img --normradii=10,15 --keeptmp
+$ astscript-fits-view stack_psfmodelscalefactor/cropped-*.fits \
+                      stack_psfmodelscalefactor/for-factor-*.fits
 @end example
 
-The output of this script is a value (98.9177), and the interpretation of the value is the following: it is the number by which you have to multiply the inner stack to have the same pixel values (on average) than the outer stack in the ring of pixels defined by @option{--normradii=15,16}.
-Basically, the script has computed the mean of the ratio of the radial profiles of the two images at the specified normalization radii ring.
+With the second command, you see the four steps of the process: the first two images show the cropped outer and inner stacks (to same width image).
+The third shows the radial position of each pixel (which is used to only keep the pixels within the desired radial range).
+The fourth shows the per-pixel division of the outer by the inner within the requested radii.
+The sigma-clipped median of these pixels is finally reported.
+Unlike the radial profile method (which averages over a circular/elliptical annulus for each radius), this method imposes no a-priori shape on the PSF.
+This makes it very useful for complex PSFs (like the case here).
 
-Once we have obtained the flux factor, we are ready to unite the outer and the inner part of the PSF.
-To do that, we will use the script @file{astscript-psf-create-junction} (for more on this script, see @ref{Invoking astscript-psf-create-junction}).
-The basic parameters are the core part of the PSF @option{--core}, the junction radius @option{--radius}, and the flux factor @option{--fluxfactor}.
-With these parameters provided, the script will consider the input image as reference outer part of the PSF.
-Then, it will scale the inner part by the flux factor, and replace the inner part (radius less than the @option{--radius}) by this image.
-Since the flux factor was computed for a ring of 1 pixel between 15 and 16 pixels, let's make the junction at R=15 pixel and check the result with the following commands:
+To continue, let's remove the temporary directory and re-run the script but with @option{--quiet} mode so we can put the output in a shell variable.
 
 @example
-$ astscript-psf-create-junction outer/stack.fits \
-           --core=inner/stack.fits --radius=15 \
-           --fluxfactor=98.9177 --output=psf-complete.fits
-$ ds9 psf-complete.fits
+$ rm -r stack_psfmodelscalefactor
+$ scale=$(astscript-psf-scale-factor outer/stack.fits \
+                   --psf=inner/stack.fits --center=501,501 \
+                   --mode=img --normradii=10,15 --quiet)
+$ echo $scale
 @end example
 
-The selection of the @option{--normradii} is something that has to be explored from the visual inspection of the radial profiles as well as the images.
-Our best advice is that the final selection of this normalization and junction radius is something that has to be explored.
-So, take your time to play with different values to check how the junction changes.
-A good junction radius is that let no saturation in the central part, high signal to noise ratio in the outer part, and creates a smooth transition in between the two parts.
-For example, check that the values used above @option{--normradii=15,16} and @option{--radius=15} makes a good junction (it is almost impossible to see the transition in the final PSF).
-With the goal of make the search of the junction radius easier, you can use the commands below.
-Check for example that the junction at different radius (R=50) is not a good option (compared with the result we have obtained above).
+Now that we know the scaling factor, we are ready to unite the outer and the inner part of the PSF.
+To do that, we will use the script @file{astscript-psf-unite} with the command below (for more on this script, see @ref{Invoking astscript-psf-unite}).
+The basic parameters are the inner part of the PSF (given to @option{--inner}), the inner part's scale factor (@option{--scale}), and the junction radius (@option{--radius}).
+The inner profile is first scaled, and all the pixels of the outer image within the given radius are replaced with the pixels of the inner image.
+Since the flux factor was computed for a ring of pixels between 10 and 15 pixels, let's set the junction radius to be 12 pixels (roughly in between 10 and 15):
 
 @example
-$ RI=50
-$ RO=51
-$ mkdir junction-radius-test
-
-$ astscript-psf-model-flux-factor outer/stack.fits \
-           --psf=inner/stack.fits --center=250,250 \
-           --mode=img --normradii=$RI,$RO \
-           --segment=label/67510-seg.fits \
-           --output=junction-radius-test/ffactor-$RI-$RO.txt
-
-$ ffactor=$(cat junction-radius-test/ffactor-$RI-$RO.txt)
-$ astscript-psf-create-junction outer/stack.fits \
-           --core=inner/stack.fits --radius=$RI --fluxfactor=$ffactor \
-           --output=junction-radius-test/joined-$RI-$RO.fits
-
-$ ds9 psf-complete.fits junction-radius-test/joined-$RI-$RO.fits
+$ astscript-psf-unite outer/stack.fits \
+           --inner=inner/stack.fits --radius=12 \
+           --scale=$scale --output=psf.fits
 @end example
 
-Now that the complete PSF has been obtained, let's remove non necessary files and continue with the modeling and the subtraction of the stars.
+@noindent
+Let's have a look at the outer stack and the final PSF with the command below.
+Since we want several other DS9 settings to help you directly see the main point, we are using @option{--ds9extra}.
+After DS9 is opened, you can see that the center of the PSF has now been nicely filled.
+You can click on the ``Edit'' button and then the ``Colorbar'' and hold your cursor over the image and move it.
+You can see that besides filling the inner regions nicely, there is also no major discontinuity in the 2D image around the union radius of 12 pixels around the center.
 
 @example
-$ rm -rf junction-radius-test
+$ astscript-fits-view outer/stack.fits psf.fits --ds9scale=minmax \
+           --ds9extra="-scale limits 0 22000 -match scale" \
+           --ds9extra="-lock scale yes -zoom 4 -scale log"
+@end example
+
+Noting demonstrates the effect of a bad analysis, then actually seeing a bad result!
+So let's choose a bad normalization radial range (50 to 60 pixels) and unite the inner and outer parts based on that.
+The last command will open the two PSFs together in DS9, you should be able to immediately see the discontinuity in the union radius.
+
+@example
+$ scale=$(astscript-psf-scale-factor outer/stack.fits \
+                   --psf=inner/stack.fits --center=501,501 \
+                   --mode=img --normradii=50,60 --quiet)
+
+$ astscript-psf-unite outer/stack.fits \
+           --inner=inner/stack.fits --radius=55 \
+           --scale=$scale --output=psf-bad.fits
+
+$ astscript-fits-view psf-bad.fits psf.fits --ds9scale=minmax \
+           --ds9extra="-scale limits 0 50 -match scale" \
+           --ds9extra="-lock scale yes -zoom 4 -scale log"
+@end example
+
+As you see, the selection of the normalization radii is very important.
+The first time you are trying to build the PSF of a new dataset, it has to be explored with a visual inspection of the images and radial profiles.
+Once you have found a good normalization radius for a certain part of the PSF in a survey, you can generally use it comfortably without change.
+But for a new survey, or a different part of the PSF, be sure to repeat the visual checks above to choose the best radii.
+As a summary, a good junction radius is one that:
+
+@itemize
+@item
+Is large enough to not let saturation and non-linearity (from the outer profile) into the inner region.
+@item
+Is small enough to have a sufficiently high signal to noise ratio (from the inner profile)to avoid adding noise in the union radius.
+@end itemize
+
+Now that the complete PSF has been obtained, let's remove that bad-looking PSF, and stick with the nice and clean PSF for the next step in @ref{Subtracting the PSF}.
+
+@example
+$ rm -rf psf-bad.fits
 @end example
 
 @node Subtracting the PSF,  , Uniting the different PSF components, Building the extended PSF
 @subsection Subtracting the PSF
-In the previous sections we have constructed a complete PSF.
-Now we are going to use it for modeling and subtracting each individual star.
-By construction, the pixel values of the PSF came from the normalization of the individual stamps.
-As a consequence, when modeling each individual star, it is necessary to compute what is the factor by which the PSF has to be scaled.
-This is done with the script @file{astscript-psf-model-flux-factor} (for more on this script, see @ref{Invoking astscript-psf-model-flux-factor}).
-Essentially, this step is the same than the calculation of the flux factor described above in @ref{Uniting the different PSF components}.
-The difference is that now we are not aiming to join two different PSF parts but looking for the flux factor that match the star with the PSF.
-Then, we will use the script @file{astscript-psf-model-scattered-light} for allocating the PSF image at the desired coordinates within the appropriate grid.
-Finally, once the star have been modeled by the PSF, we will subtract it.
+Previously (in @ref{Uniting the different PSF components}) we constructed a full PSF, from the central pixel to a radius of 500 pixels.
+Now, let's use the PSF to subtract the scattered light from each individual star in the image.
 
-Let's make the model and subtraction for one single star first.
+By construction, the pixel values of the PSF came from the normalization of the individual stamps (that were created for stars of different magnitudes).
+As a consequence, it is necessary to compute a scale factor to fit that PSF image to each star.
+This is done with the same @file{astscript-psf-scale-factor} command that we used previously in @ref{Uniting the different PSF components}.
+The difference is that now we are not aiming to join two different PSF parts but looking for the necessary scale factor to match the star with the PSF.
+Afterwards, we will use @file{astscript-psf-subtract} for placing the PSF image at the desired coordinates within the same pixel grid as the image.
+Finally, once the stars have been modeled by the PSF, we will subtract it.
+
+First, let's start with a single star.
 Later, when the basic idea has been explained, we will generalize the method for any number of stars.
-With the following command we obtain the coordinates (RA and DEC) and magnitude of the second brightnest star in the catalog we obtained previously (the first one is just at the border of the image).
+With the following command we obtain the coordinates (RA and DEC) and magnitude of the brightest star in the image (which is on the top edge of the image):
 
 @example
-$ asttable gaia.fits --sort phot_g_mean_mag \
-           --column=ra,dec,phot_g_mean_mag --head 2
+$ mkdir single-star
+$ center=$(asttable flat/67510-bright.fits --sort phot_g_mean_mag \
+                    --column=ra,dec --head 1 \
+                    | awk '@{printf "%s,%s", $1, $2@}')
+$ echo $center
 @end example
 
 With the center position of that star, let's obtain the flux factor using the same normalization ring we used for the creation of the outer part of the PSF:
 
 @example
-$ mkdir single-star
-$ astscript-psf-model-flux-factor label/67510-seg.fits \
-           --mode=wcs \
-           --normradii=20,30 \
-           --psf=psf-complete.fits \
-           --segment=label/67510-seg.fits \
-           --center=202.98395469814,47.234397688023 \
-           --output=single-star/fluxfactor.txt
+$ scale=$(astscript-psf-scale-factor label/67510-seg.fits \
+                   --mode=wcs --quiet\
+                   --psf=psf.fits \
+                   --center=$center \
+                   --normradii=10,15 \
+                   --segment=label/67510-seg.fits)
 @end example
 
 Now we have all the information necessary to model the star using the PSF: the position on the sky and the flux factor.
-Let's use this data with the script @file{astscript-psf-model-scattered-light} for modeling this star and have a look with DS9.
+Let's use this data with the script @file{astscript-psf-subtract} for modeling this star and have a look with DS9.
 
 @example
-$ fluxfactor=$(cat single-star/fluxfactor.txt)
-$ astscript-psf-model-scattered-light label/67510-seg.fits \
-          --mode=wcs \
-          --psf=psf-complete.fits \
-          --fluxfactor=$fluxfactor \
-          --center=202.98395469814,47.234397688023 \
-          --output=single-star/star-2.fits
-
-$ ds9 label/67510-seg.fits single-star/star-2.fits
+$ astscript-psf-subtract label/67510-seg.fits \
+           --mode=wcs \
+           --psf=psf.fits \
+           --scale=$scale \
+           --center=$center \
+           --output=single-star/subtracted.fits
+$ astscript-fits-view label/67510-seg.fits single-star/subtracted.fits
 @end example
 
 The result is the complete PSF situated in the sky position we have provided (RA, DEC) with the flux specified by the flux factor value.
@@ -6270,7 +6296,7 @@ $ mkdir models/stars
 $ mkdir models/fluxes
 $ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
-              astscript-psf-model-flux-factor label/67510-seg.fits \
+              astscript-psf-scale-factor label/67510-seg.fits \
                    --mode=wcs \
                    --center=$ra,$dec \
                    --normradii=20,30 \
@@ -6280,7 +6306,7 @@ $ asttable outer/67510-6-10.fits \
 
               fluxfactor=$(cat models/fluxes/flux-$counter.txt)
 
-              astscript-psf-model-scattered-light label/67510-seg.fits \
+              astscript-psf-subtract label/67510-seg.fits \
                    --mode=wcs \
                    --center=$ra,$dec \
                    --psf=psf-complete.fits \
@@ -24651,9 +24677,9 @@ The initial DS9 window geometry (value to DS9's @option{-geometry} option).
 @section PSF construction and subtraction
 
 @c Alternative names
-@c astscript-psf-create-select-stars  --> astscript-psf-select
-@c astscript-psf-create-make-stamp    --> astscript-psf-stamp
-@c astscript-psf-create-junction      --> astscript-psf-unite
+@c astscript-psf-select-stars  --> astscript-psf-select
+@c astscript-psf-stamp    --> astscript-psf-stamp
+@c astscript-psf-unite      --> astscript-psf-unite
 
 The point spread function (PSF) describes how the light of a point-like source is affected by several optical scattering effects (atmosphere, telescope, instrument, etc.).
 The role of the PSF is key in astronomical analysis (for small and large objects), and consequently, having a good characterization of the PSF is fundamental.
@@ -24667,14 +24693,14 @@ Furthermore, before going into the technical details of each script, in a specif
 
 @menu
 * Overview of the PSF scripts::  Summary of concepts and methods
-* Invoking astscript-psf-create-select-stars::  Select good starts within an image.
-* Invoking astscript-psf-create-make-stamp::  Make a stamp of each star to stack.
-* Invoking astscript-psf-create-junction::  Merge stacks of different regions of PSF.
-* Invoking astscript-psf-model-flux-factor::  Calculate factor to scale PSF to star.
-* Invoking astscript-psf-model-scattered-light::  Put the PSF in the image to subtract.
+* Invoking astscript-psf-select-stars::  Select good starts within an image.
+* Invoking astscript-psf-stamp::  Make a stamp of each star to stack.
+* Invoking astscript-psf-unite::  Merge stacks of different regions of PSF.
+* Invoking astscript-psf-scale-factor::  Calculate factor to scale PSF to star.
+* Invoking astscript-psf-subtract::  Put the PSF in the image to subtract.
 @end menu
 
-@node Overview of the PSF scripts, Invoking astscript-psf-create-select-stars, PSF construction and subtraction, PSF construction and subtraction
+@node Overview of the PSF scripts, Invoking astscript-psf-select-stars, PSF construction and subtraction, PSF construction and subtraction
 @subsection Overview of the PSF scripts
 The fundamental ideas of the following methodology are thoroughly described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
 Once the PSF has been obtained, it can be scaled to the magnitude of the point-like sources to subtract.
@@ -24688,11 +24714,11 @@ In general, not all stars are good to construct a PSF.
 For example we don't want contamination from other bright, and nearby objects.
 The first script below is therefore designed for selecting only good candidate stars in your image.
 It will use different criteria, for example good parallax (where available, to avoid confusion with galaxies), not near bright stars, axis ratio, etc.
-For more on this script, see @ref{Invoking astscript-psf-create-select-stars}.
+For more on this script, see @ref{Invoking astscript-psf-select-stars}.
 
 Once the catalog of stars is constructed, another script is in charge of making appropiate stamps of the stars.
 Each stamp is a cropped image of the star with the desired size, normalization of the flux, and mask of the contaminant objects.
-For more on this script, see @ref{Invoking astscript-psf-create-make-stamp}
+For more on this script, see @ref{Invoking astscript-psf-stamp}
 After obtaining a set of star stamps, they can be stacked for obtaining the combined PSF from many stars (for example with @ref{Stacking operators}).
 
 In the combined PSF, the masked background objects of each star's image will be covered and the signal-to-noise ratio will increase, giving a very nice view of the ``clean'' PSF.
@@ -24706,15 +24732,15 @@ For example, in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.0143
 In other cases, we even needed four groups of stars!
 Once clean stacks of different parts of the PSF have been constructed through the steps above, it is therefore necessary to blend them all into one.
 This is done by finding a common radial region in both, and scaling the inner region by a factor to add with the outer region.
-This is not trivial, therefore, a third script is in charge of it, see @ref{Invoking astscript-psf-create-junction}.
+This is not trivial, therefore, a third script is in charge of it, see @ref{Invoking astscript-psf-unite}.
 
 Having constructed the PSF as described above (or by any other procedure), it can be scaled to the brightness of the various stars in the image to get subtracted (and thus remove the extended/bright wings; better showing the background objects of interest).
 Note that the absolute flux of a PSF is meaningless (and in fact, it is usually normalized to have a total sum of unity!), so it should be scaled.
 We therefore have another script that will calculate the scale (multiplication) factor of the PSF for each star.
-For more on the scaling script, see @ref{Invoking astscript-psf-model-flux-factor}.
+For more on the scaling script, see @ref{Invoking astscript-psf-scale-factor}.
 
 Once the flux factor has been computed, a final script is in charge of placing the scaled PSF over the proper location in the image and subtract it.
-For more on the scaling and positioning script, see @ref{Invoking astscript-psf-model-scattered-light}.
+For more on the scaling and positioning script, see @ref{Invoking astscript-psf-subtract}.
 
 As mentioned above, in the following sections, each script has its own documentation and list of options for very detailed customization (if necessary).
 But before going into them, we continue with a practical tutorial to show the usage of scripts in practice; see the tutorial @ref{Building the extended PSF}.
@@ -24723,8 +24749,8 @@ But before going into them, we continue with a practical tutorial to show the us
 
 
 
-@node Invoking astscript-psf-create-select-stars, Invoking astscript-psf-create-make-stamp, Overview of the PSF scripts, PSF construction and subtraction
-@subsection Invoking astscript-psf-create-select-stars
+@node Invoking astscript-psf-select-stars, Invoking astscript-psf-stamp, Overview of the PSF scripts, PSF construction and subtraction
+@subsection Invoking astscript-psf-select-stars
 This installed script will select good star candidates for constructing a PSF.
 It will consider stars within a given range of brightness without nearby contaminant objects.
 To do that, it allows to the user to specify different options.
@@ -24732,7 +24758,7 @@ To do that, it allows to the user to specify different options.
 This script can be used with the following general template:
 
 @example
-$ astscript-psf-create-select-stars [OPTION...] FITS-file
+$ astscript-psf-select-stars [OPTION...] FITS-file
 @end example
 
 @noindent
@@ -24741,7 +24767,7 @@ Examples:
 @example
 ## From the Gaia select the stars in the range of magnitude
 ## between '7' and '9', which overlap with input image.
-$ astscript-psf-create-select-stars image.fits --hdu=1 \
+$ astscript-psf-select-stars image.fits --hdu=1 \
       --magnituderange=7,9 \
       --minaxisratio=0.9 \
       --mindistdeg=0.1 \
@@ -24752,7 +24778,7 @@ $ astscript-psf-create-select-stars image.fits --hdu=1 \
 
 ## Select the stars in the range of magnitude between
 ## 7 and 9 magnitudes from the input catalog.
-$ astscript-psf-create-select-stars image.fits --hdu=1 \
+$ astscript-psf-select-stars image.fits --hdu=1 \
     --catalog=starscatalog.fits \
     --magnituderange=7,9 \
     --minaxisratio=0.9 \
@@ -24865,15 +24891,15 @@ This option is useful for debugging and checking the steps of selecting stars.
 The output name of the final catalog containing good stars.
 @end table
 
-@node Invoking astscript-psf-create-make-stamp, Invoking astscript-psf-create-junction, Invoking astscript-psf-create-select-stars, PSF construction and subtraction
-@subsection Invoking astscript-psf-create-make-stamp
+@node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
+@subsection Invoking astscript-psf-stamp
 This installed script will read an image, the center of an object @option{--center}, the type of the center coordinates @option{--mode} (img or wcs), the normalization radii @option{--normradii}, and the size of the output stamp @option{--stampwidth}.
 With that input, it will generate a stamp centered at the coordinates provided, and normalized by the flux computed in the normalization radius.
 
 This script can be used with the following general template:
 
 @example
-$ astscript-psf-create-make-stamp [OPTION...] FITS-file
+$ astscript-psf-stamp [OPTION...] FITS-file
 @end example
 
 @noindent
@@ -24882,14 +24908,14 @@ Examples:
 @example
 ## Make a stamp around (x,y)=(53,69) of width=151 pixels.
 ## Normalize the stamp within the radii 20 and 30 pixels.
-$ astscript-psf-create-make-stamp image.fits --mode=img \
+$ astscript-psf-stamp image.fits --mode=img \
       --center=53,69 --stampwidth=151 --normradii=20,30 \
       --output=stamp.fits
 
 ## Iterate over a catalog with positions of stars that are
 ## in the the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do \
-    astscript-psf-create-make-stamp image.fits \
+    astscript-psf-stamp image.fits \
         --mode=wcs \
         --stampwidth=150 \
         --center=$ra,$dec \
@@ -25012,8 +25038,8 @@ The main reason of setting this name is to have an unique name for each stamp by
 
 
 
-@node Invoking astscript-psf-create-junction, Invoking astscript-psf-model-flux-factor, Invoking astscript-psf-create-make-stamp, PSF construction and subtraction
-@subsection Invoking astscript-psf-create-junction
+@node Invoking astscript-psf-unite, Invoking astscript-psf-scale-factor, Invoking astscript-psf-stamp, PSF construction and subtraction
+@subsection Invoking astscript-psf-unite
 This installed script will join two PSF images at a given radius.
 This operation is commonly used when the outer part of the PSF has been computed from very bright stars, and consequently, they are saturated in most central part (core).
 In order to have an extended but not saturated PSF in the core, it is necessary to put in the central part the PSF constructed from fainter stars.
@@ -25022,7 +25048,7 @@ This is the main goal of the current script.
 This script can be used with the following general template:
 
 @example
-$ astscript-psf-create-junction [OPTION...] FITS-file
+$ astscript-psf-unite [OPTION...] FITS-file
 @end example
 
 @noindent
@@ -25031,13 +25057,13 @@ Examples:
 @example
 ## Multiply inner.fits by 3 and put it in the center of
 ## outer.fits. The core goes up to a radius of 25 pixels.
-$ astscript-psf-create-junction outer.fits \
+$ astscript-psf-unite outer.fits \
       --core=inner.fits --fluxfactor=3 \
       --radius=25 --output=joined.fits
 
 ## Same example than the above, but considering an
 ## ellipse (instead of a circle).
-$ astscript-psf-create-junction outer.fits \
+$ astscript-psf-unite outer.fits \
       --core=inner.fits --fluxfactor=3 \
       --radius=25 --axisratio=0.5 \
       --positionangle=40 --output=joined.fits
@@ -25077,7 +25103,7 @@ Radius (in pixels) at which the junction of the images is done.
 @itemx --fluxfactor=FLT
 Factor by which the core (@option{--core}) is multiplied.
 This factor is necessary to put the two different parts of the PSF at the same flux level.
-A convenient way of obtaining this value is by using the script @file{astscript-model-flux-factor}, see @ref{Invoking astscript-psf-model-flux-factor}.
+A convenient way of obtaining this value is by using the script @file{astscript-model-scale-factor}, see @ref{Invoking astscript-psf-scale-factor}.
 
 @item -Q FLT
 @itemx --axisratio=FLT
@@ -25108,19 +25134,14 @@ This option is useful for debugging.
 
 
 
-@node Invoking astscript-psf-model-flux-factor, Invoking astscript-psf-model-scattered-light, Invoking astscript-psf-create-junction, PSF construction and subtraction
-@subsection Invoking astscript-psf-model-flux-factor
-This installed script will consider an object within the input image and it will obtain the radial profile of that object.
-In the same way, it will compute the radial profile of a given PSF image.
-Then, by comparing the two radial profiles in the same region, it will calculate the factor by which it is necessary to multiply the PSF image in order to scale it at the same level of flux than the object.
-
-The computation of this flux factor is commonly used when joining two different parts of the same PSF, see @ref{Invoking astscript-psf-create-junction}.
-Also when modeling a star in order to subtract it using the PSF, see @ref{Invoking astscript-psf-model-scattered-light}.
+@node Invoking astscript-psf-scale-factor, Invoking astscript-psf-subtract, Invoking astscript-psf-unite, PSF construction and subtraction
+@subsection Invoking astscript-psf-scale-factor
+This installed script will find the multiplication (scale) factor to multiply with a PSF image in order to scale it to a star within another image (the coordinates of the star in the different image should be given).
 
 This script can be used with the following general template:
 
 @example
-$ astscript-psf-model-flux-factor [OPTION...] FITS-file
+$ astscript-psf-scale-factor [OPTION...] FITS-file
 @end example
 
 @noindent
@@ -25129,13 +25150,13 @@ Examples:
 @example
 ## Compute the flux factor for the object at (x,y)=(53,69) for
 ## the PSF (psf.fits). Compute it in the ring 20-30 pixels.
-$ astscript-psf-model-flux-factor image.fits --mode=img \
+$ astscript-psf-scale-factor image.fits --mode=img \
       --center=53,69 --normradii=20,30 --psf=psf.fits
 
 ## Iterate over a catalog with positions of stars that are
 ## in the the input image to compute their flux factors.
 $ asttable catalog.fits | while read -r ra dec mag; do \
-    astscript-psf-model-flux-factor image.fits \
+    astscript-psf-scale-factor image.fits \
         --mode=wcs \
         --psf=psf.fits \
         --center=$ra,$dec \
@@ -25143,10 +25164,28 @@ $ asttable catalog.fits | while read -r ra dec mag; do \
 
 @end example
 
-The input is an image from which the star is considered.
-The output will be the flux factor: the value by which the PSF image (@option{--psf}) has to be multiplied to put it at the same level than the object specified (@option{--center}), within the ring of pixels specified by the option @option{--normradii}.
-More options are available with the goal of obtaining a good flux factor value.
-A full description of each option is given below.
+The input should be an image containing the star that you want to scale with the PSF.
+The output will be a single number that is printed on the command-line.
+That number is the multiplication factor to multiply with the PSF image (@option{--psf}) to scale it with the given star (which is located in @option{--center} of the input image).
+The scale factor will be calculated within the ring of pixels specified by the option @option{--normradii}.
+
+All the pixels within this ring will be separated from both the PSF and input images.
+For the input image, around the selected coordinate; while masking all other sources (see @option{--segment}).
+The finally selected pixels of the input image will then be divided by those of the PSF image.
+This gives us an image containing one scale factor per pixel.
+The finally reported value is the sigma-clipped median of all the scale factors in the finally-used pixels.
+To fully understand the process, we recommend running this script once with @option{--keeptmp} and inspect the files inside of it.
+
+The most common use-cases of this scale factor are:
+@enumerate
+@item
+To find the factor for joining two different parts of the same PSF, see @ref{Invoking astscript-psf-unite}.
+@item
+When modeling a star in order to subtract it using the PSF, see @ref{Invoking astscript-psf-subtract}.
+@end enumerate
+
+For a full tutorial on how to use this script along with the other @command{astscript-psf-*} scripts in Gnuastro, please see @ref{Building the extended PSF}.
+To allow full customizability, the following options are available with this script.
 
 @table @option
 
@@ -25163,97 +25202,64 @@ The PSF is assumed to be centered in this image.
 @itemx --psfhdu=STR
 The HDU/extension of the PSF image.
 
-@item -f STR
-@itemx --psfprofile=STR
-Filename of the PSF radial profile.
-Instead of using @option{--psf} to provide the PSF image, it is possible to provide the radial profile of the PSF directly.
-By doing this, the script does not calculate the radial profile internally and the execution is faster.
-This is convenient when the same PSF image is used for many stars.
-In this situation, it is necessary to compute the radial profile only once, and then feed the radial profile to this script.
-
-@item -F STR
-@itemx --psfprofilehdu=STR
-The HDU/extension of the PSF radial profile.
-
-@item -C STR,STR
-@itemx --psfprofilecol=STR,STR
-The column names for the radial profile of the PSF.
-It takes two values separated by a comma (@key{,}).
-The values are the column names for the radius and the flux of the radial profile.
+@item -c FLT[,FLT[,...]]
+@itemx --center=FLT[,FLT[,...]]
+The central position of the object to scale with the PSF.
+This parameter is used in @ref{Crop} to center and crop the image.
+The positions along each dimension must be separated by a comma (@key{,}).
+The units of the coordinates are read based on the value to the @option{--mode} option (see below).
 
 @item -O STR
 @itemx --mode=STR
 Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
 This option thus accepts only two values: @option{img} or @option{wcs}.
 
-@item -c FLT[,FLT[,...]]
-@itemx --center=FLT[,FLT[,...]]
-The central position of the object.
-This parameter is used in @ref{Crop} to center and crop the image.
-The positions along each dimension must be separated by a comma (@key{,}).
-The units of the coordinates are read based on the value to the @option{--mode} option, see above.
+@item -n INT,INT
+@itemx --normradii=INT,INT
+Inner and outer radii (in units of pixels) around the central position in which the flux factor is computed.
+The option takes two values separated by a comma (@key{,}).
+The first value is the inner radius, the second is the outer radius.
+These two radius define a ring of pixels around the center that is used for obtaining the flux factor value.
 
 @item -W INT
 @itemx --stampwidth=INT
 Size (width) of the image stamp in pixels.
 This is an intermediate product computed internally by the script.
-By default, the size of the stamp is automatically set to be as small as possible (i.e., two times the external radius of the ring specified by @option{--rnorm}) to make the computation fast.
-As a consequence, this option is only relevant for checking and testing that everything is fine.
-
-@item -n INT[,INT[,...]]
-@itemx --normradii=INT[,INT[,...]]
-Region around the central position in which the flux factor is computed.
-The option takes two values separated by a comma (@key{,}).
-The first value is the inner radius, the second is the outer radius.
-These two radius define a ring of pixels around the center that is used for obtaining the flux factor value.
+By default, the size of the stamp is automatically set to be as small as possible (i.e., two times the external radius of the ring specified by @option{--normradii}) to make the computation fast.
+As a consequence, this option is only relevant for checking and testing that everything is fine (debugging).
 
 @item -S STR
 @itemx --segment=STR
-Filename of a segmentation image from Segment's output.
+Filename of a segmentation image from Segment's output (see @ref{Segment}).
 This image is used to mask all objects that are not the central clump/object.
-The script computes an internal mask that combine the objects and clumps to mask all objects that do not correspond to the central one.
-All clumps of the central object that are not the central clump are also masked.
-The result is that all objects and clumps that contaminate the central source are masked.
-The size of the region that is used for identifying the central clump/object can be specified by the option @option{--corewidth}, see below.
+To obtain an accurate scale factor, it is important to mask all such sources.
+All ``clumps'' of the central object that are not the central clump are also masked.
+Similarly, all ``objects'' that are not the central object will be masked.
+As a result, all objects and clumps that contaminate the central source are masked.
+The size of the region that is used for identifying the central clump/object can be specified by the option @option{--corewidth} (see below).
 
 @item -w INT
 @itemx --corewidth=INT
-Width of the region that is used to compute the central clump/object over the segmentation image @option{--segment}, with the goal of not masking them.
-If a segmentation image is provided, then it is necessary to not mask the central object.
-To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
-Once it has been identified, that pixels are not masked.
-With this option, it is possible to control the size of the central region for computing the central object label (on the segmentation image).
-
-@item -R FLT
-@itemx --rmax=FLT
-By default, the radial profile will be computed up to a radial distance equal to the outer radius of the normalization region (@option{--normradii}).
-If the user wants to compute larger radial profile it is possible with this option.
-Situations in which this option is necessary are those in which the user wants to check individual radial profiles to ensure everything is fine.
-To be able to check the radial profile use the option @option{--keeptmp} to not delete temporary files, see below.
-
-@item -N STR
-@itemx --normop=STR
-The operator for measuring the values within the ring defined by the option @option{--normradii}.
-The operator given to this option will be directly passed to the radial profile script @file{astscript-radial-profile}, see @ref{Generate radial profile}.
-As a consequence, all MakeCatalog measurements (median, mean, sigclip-mean, sigclip-number, etc.) can be used here.
-For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
-In the same way, this operator is used to compute the final flux factor value.
-This calculation is done by dividing the two radial profiles (object and PSF) and then taking the averaged value using this operator.
+Width of the region that is used to find the central clump/object label over the segmentation image given to @option{--segment} (with the goal of not masking them).
+The default size is @code{3}, which should generally be sufficient.
+It is rarely necessary to change this value.
 
 @item -s FLT,FLT
 @itemx --sigmaclip=FLT,FLT
-Sigma clipping parameters: only relevant if sigma-clipping operators are requested by @option{--normop}.
+Sigma clipping parameters used in the end to find the final scale factor from the distribution of all pixels used.
 For more on sigma-clipping, see @ref{Sigma clipping}.
 
 @item -t STR
 @itemx --tmpdir=STR
 Several intermediate files are necessary to obtain the flux factor value.
-All of these temporal files are saved into a temporal directory.
-With this option, you can directly specify this directory.
+All of these temporary files are saved into a temporary directory.
+With this option, you can directly specify the name of this directory.
 By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+Therefore, within a larger project, it is recommended to manually set this in your desired location with your desired name (to avoid conflicting with other instances of this script that may be run together in parallel).
+
 If the directory doesn't exist at run-time, this script will create it.
-Once all temporal files are not necessary, this directory is removed.
-You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+Once the script finishes, this directory is removed.
+To help debugging/understanding the output value, you can disable the deletion of the temporary directory with the @option{--keeptmp} option and inspect all the temporary files (see below).
 
 @item -k
 @itemx --keeptmp
@@ -25265,15 +25271,15 @@ For example, to check that the intermediate images have the desired center, they
 
 
 
-@node Invoking astscript-psf-model-scattered-light,  , Invoking astscript-psf-model-flux-factor, PSF construction and subtraction
-@subsection Invoking astscript-psf-model-scattered-light
+@node Invoking astscript-psf-subtract,  , Invoking astscript-psf-scale-factor, PSF construction and subtraction
+@subsection Invoking astscript-psf-subtract
 This installed script will put the PSF provided into a given position of the sky within the input image.
 It is aimed to model the scattered light field of an input image.
 
 This script can be used with the following general template:
 
 @example
-$ astscript-psf-model-scattered-light [OPTION...] FITS-file
+$ astscript-psf-subtract [OPTION...] FITS-file
 @end example
 
 @noindent
@@ -25282,7 +25288,7 @@ Examples:
 @example
 ## Multiply the the PSF (psf.fits) by 3 and put it into the the
 ## pixel position (x,y)=(53,69) of the input image (image.fits).
-$ astscript-psf-model-scattered-light image.fits \
+$ astscript-psf-subtract image.fits \
     --psf=psf.fits \
     --mode=img \
     --fluxfactor=3 \
@@ -25293,7 +25299,7 @@ $ astscript-psf-model-scattered-light image.fits \
 ## in the the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do
          fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
-         astscript-psf-model-scattered-light image.fits \
+         astscript-psf-subtract image.fits \
              --mode=wcs \
              --psf=psf.fits \
              --fluxfactor=$fluxfactor \
@@ -25341,7 +25347,7 @@ The units of the coordinates are read based on the value to the @option{--mode} 
 @itemx --fluxfactor=FLT
 Factor by which the PSF (@option{--psf}) is multiplied.
 This factor is necessary to put the PSF with the desired flux level.
-A convenient way of obtaining this value is by using the script @file{astscript-model-flux-factor}, see @ref{Invoking astscript-psf-model-flux-factor}.
+A convenient way of obtaining this value is by using the script @file{astscript-model-scale-factor}, see @ref{Invoking astscript-psf-scale-factor}.
 
 @item -t STR
 @itemx --tmpdir=STR

@@ -1,4 +1,4 @@
-# Generate two stamps from a mock image to test the PSF stamps script
+# Generate a simple scattered light field with one single object
 #
 # See the Tests subsection of the manual for a complete explanation
 # (in the Installing gnuastro section).
@@ -24,15 +24,16 @@
 # Set the variables (the executable is in the build tree). Do the
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
-prog=psf-create-junction
+prog=psf-subtract
 execname=../bin/script/astscript-$prog
 
-fits1name=0_mkprofcat2.fits
-dep1name=$progbdir/astcrop
-dep2name=$progbdir/astfits
-dep3name=$progbdir/astwarp
-dep4name=$progbdir/astmkprof
-dep5name=$progbdir/astarithmetic
+fits1name=mkprofcat1.fits
+dep1name=$progbdir/astfits
+dep2name=$progbdir/astcrop
+dep3name=$progbdir/asttable
+dep4name=$progbdir/astarithmetic
+dep5name=$progbdir/aststatistics
+dep6name=$progbdir/astscript-radial-profile
 
 
 
@@ -53,6 +54,7 @@ if [ ! -f $dep2name ]; then echo "$dep2name doesn't exist."; exit 77; fi
 if [ ! -f $dep3name ]; then echo "$dep3name doesn't exist."; exit 77; fi
 if [ ! -f $dep4name ]; then echo "$dep4name doesn't exist."; exit 77; fi
 if [ ! -f $dep5name ]; then echo "$dep5name doesn't exist."; exit 77; fi
+if [ ! -f $dep6name ]; then echo "$dep6name doesn't exist."; exit 77; fi
 if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
 
 
@@ -69,5 +71,7 @@ if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
 export PATH="$progbdir:$PATH"
-$check_with_program $execname $fits1name --core=$fits1name \
-                              --fluxfactor=3.3 --radius=5
+x=$($dep1name $fits1name -h1 | awk '/^NAXIS1/{print $3/2}')
+y=$($dep1name $fits1name -h1 | awk '/^NAXIS2/{print $3/2}')
+$check_with_program $execname $fits1name --center=$x,$y --mode=img \
+                                         --psf=$fits1name --scale=3.3

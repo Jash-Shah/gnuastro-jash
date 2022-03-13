@@ -1,4 +1,4 @@
-# Generate two stamps from a mock image to test the PSF stamps script
+# Compute the flux factor of one object by itself
 #
 # See the Tests subsection of the manual for a complete explanation
 # (in the Installing gnuastro section).
@@ -24,13 +24,12 @@
 # Set the variables (the executable is in the build tree). Do the
 # basic checks to see if the executable is made or if the defaults
 # file exists (basicchecks.sh is in the source tree).
-prog=psf-create-make-stamp
+prog=psf-scale-factor
 execname=../bin/script/astscript-$prog
 
-fits1name=0_mkprofcat2.fits
-
-dep1name=$progbdir/astcrop
-dep2name=$progbdir/astfits
+fits1name=mkprofcat1.fits
+dep1name=$progbdir/astfits
+dep2name=$progbdir/astcrop
 dep3name=$progbdir/asttable
 dep4name=$progbdir/astarithmetic
 dep5name=$progbdir/aststatistics
@@ -72,6 +71,8 @@ if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
 # Since we want the script to recognize the programs that it will use from
 # this same build of Gnuastro, we'll add the current directory to PATH.
 export PATH="$progbdir:$PATH"
-x=$($dep2name $fits1name -h1 | awk '/^NAXIS1/{print $3/2}')
-y=$($dep2name $fits1name -h1 | awk '/^NAXIS2/{print $3/2}')
-$check_with_program $execname $fits1name --center=$x,$y --mode=img --stampwidth=100,100
+x=$($dep1name $fits1name -h1 | awk '/^NAXIS1/{print $3/2}')
+y=$($dep1name $fits1name -h1 | awk '/^NAXIS2/{print $3/2}')
+$check_with_program $execname $fits1name --center=$x,$y --mode=img \
+                                         --psf=$fits1name \
+                                         --normradii=5,10
