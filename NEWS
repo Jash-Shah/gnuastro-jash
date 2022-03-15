@@ -18,7 +18,8 @@ See the end of the file for license conditions.
      provided that you can easily activate (as described in the
      manual). Once activated, simply clicking on FITS file(s) in your
      graphic environment will open DS9 or TOPCAT depending on their
-     contents.
+     contents. This script was suggested and partly written by Sepideh
+     Eskandarlou.
    - A set of installed scripts to enable easy estimation and subtraction
      of the extended PSF (in a highly modular and easily scalable
      manner). They are primarily based on the method described in

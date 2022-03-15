@@ -6176,7 +6176,7 @@ $ astscript-fits-view outer/stack.fits psf.fits --ds9scale=minmax \
            --ds9extra="-lock scale yes -zoom 4 -scale log"
 @end example
 
-Noting demonstrates the effect of a bad analysis, then actually seeing a bad result!
+Nothing demonstrates the effect of a bad analysis, then actually seeing a bad result!
 So let's choose a bad normalization radial range (50 to 60 pixels) and unite the inner and outer parts based on that.
 The last command will open the two PSFs together in DS9, you should be able to immediately see the discontinuity in the union radius.
 
@@ -6329,7 +6329,8 @@ So we should sort the catalog by brightness and come down from the brightest.
 We should only subtract stars where the scale factor is less than the S/N of the PSF (in relation to the data).
 @end itemize
 
-Since it can get a little complex, its easier to put it in a script (that is heavily commented for you to easily understand every step; especially if you put it in a good text editor with color-coding!).
+Since it can get a little complex, its easier to implement this step as a script (that is heavily commented for you to easily understand every step; especially if you put it in a good text editor with color-coding!).
+You will notice that script also creates a @file{.log} file, which shows which star was subtracted and which one wasn't (this is important, and will be used below!).
 
 @example
 #!/bin/bash
@@ -6347,6 +6348,12 @@ snlevel=$(ls outer/stamps/*.fits | wc -l | awk '@{print sqrt($1)@}')
 # final file (this will be over-written after each subtraction).
 subtracted=subtracted/$tileid.fits
 cp label/$tileid-seg.fits $subtracted
+
+# Name of log-file to keep status of the subtraction of each star.
+logname=subtracted/$tileid.log
+echo "# Column 1: RA   [deg, f64] Right ascension of star." >  $logname
+echo "# Column 2: Dec  [deg, f64] Declination of star."     >> $logname
+echo "# Column 3: Stat [deg, f64] Status (1: subtracted)"   >> $logname
 
 # Go over each item in the bright star catalog:
 asttable flat/67510-bright.fits -cra,dec --sort phot_g_mean_mag  \
@@ -6383,9 +6390,18 @@ asttable flat/67510-bright.fits -cra,dec --sort phot_g_mean_mag  \
 
         # Rename the temporary subtracted file to the final one:
         mv $subtmp $subtracted
+
+        # Keep the status for this star.
+        status=1
     else
-	echo "$center: $scale is larger than $snlevel"
+        # Let the user know this star didn't work, and keep the status
+        # for this star.
+        echo "$center: $scale is larger than $snlevel"
+        status=0
     fi
+
+    # Keep the status in a log file.
+    echo "$ra $dec $status" >> $logname
 done
 @end example
 
@@ -6402,16 +6418,26 @@ $ astscript-fits-view label/67510-seg.fits subtracted/67510.fits
 
 Can you visually find the stars that have been subtracted?
 Its a little hard, isn't it?
-This shows that you done a good job (the sky-noise is visually untouched)!
-So let's subtract the actual image from the PSF-subtracted image to see the scattered light field.
-You can then easily zoom-in to the subtracted regions to find the stars and check the subtraction.
+This shows that you done a good job this time (the sky-noise is not significantly affected)!
+So let's subtract the actual image from the PSF-subtracted image to see the scattered light field of the subtracted stars.
+With the second command below we'll zoom into the brightest subtracted star, but of course feel free to zoom-out and inspect the others also.
 
 @example
 $ astarithmetic label/67510-seg.fits subtracted/67510.fits - \
                 --output=scattered-light.fits -g1
 
+$ center=$(asttable subtracted/67510.log --equal=Stat,1 --head=1 \
+                    -cra,dec | awk '@{printf "%s,%s", $1, $2@}')
+
 $ astscript-fits-view label/67510-seg.fits subtracted/67510.fits \
-                      scattered-light.fits
+                      scattered-light.fits \
+                      --ds9center=$center --ds9mode=wcs \
+                      --ds9extra="-scale limits -0.5 1.5 -match scale" \
+                      --ds9extra="-lock scale yes -zoom 10" \
+                      --ds9extra="-tile mode column"
+
+## We can always make it easily, so let's remove this.
+$ rm scattered-light.fits
 @end example
 
 In general you see that the subtraction has been done nicely and almost all the extended wings of the PSF have been subtracted.
@@ -11821,7 +11847,7 @@ astarithmetic $scaled abs $zeropoint counts-to-mag \
 # Convert the Surface brightness image into PDF.
 sbpdf=$bdir/sb.pdf
 astconvertt $sb --colormap=gray --borderwidth=0 \
-	    --fluxhigh=$sbhigh --fluxlow=$sblow --output=$sbpdf
+            --fluxhigh=$sbhigh --fluxlow=$sblow --output=$sbpdf
 
 # Specify the coordinates of the scale line (specifying a certain
 # width in kpc). We will put it on the top-right side of the image (5%
@@ -11830,7 +11856,7 @@ coverage=$(astfits $sb --skycoverage --quiet | awk 'NR==2')
 scalelinedec=$(echo $coverage | awk '{print $4-($4-$3)*0.05}')
 scalelinerastart=$(echo  $coverage | awk '{print $1+($2-$1)*0.05}')
 scalelineraend=$(astcosmiccal --redshift=$redshift --arcsectandist \
-		     | awk '{start='$scalelinerastart'; \
+                     | awk '{start='$scalelinerastart'; \
                              width='$scalelineinkpc'/$1/3600; \
                              print start+width}')
 
