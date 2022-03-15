@@ -540,8 +540,8 @@ radcenter=$(echo $stampwidth | awk '{print $1/2+0.5}')
 radradius=$(echo $stampwidth | awk '{print $1+2}')
 radcropped=$tmpdir/cropped-radial-$objectid.fits
 echo "1 $radcenter $radcenter 7 $radradius 0 0 1 1 1" \
-    | astmkprof --background=$psfcropped --clearcanvas \
-                --oversample=1 --output=$radcropped $quiet
+     | astmkprof --background=$psfcropped --clearcanvas \
+                 --oversample=1 --output=$radcropped $quiet
 
 
 

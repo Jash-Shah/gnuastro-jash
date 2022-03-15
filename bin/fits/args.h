@@ -166,7 +166,7 @@ struct argp_option program_options[] =
     {
       "remove",
       UI_KEY_REMOVE,
-      "STR",
+      "STR/INT",
       0,
       "Remove extension from input file.",
       UI_GROUP_EXTENSION_MANIPULATION,
@@ -179,7 +179,7 @@ struct argp_option program_options[] =
     {
       "copy",
       UI_KEY_COPY,
-      "STR",
+      "STR/INT",
       0,
       "Copy extension to output file.",
       UI_GROUP_EXTENSION_MANIPULATION,
@@ -192,7 +192,7 @@ struct argp_option program_options[] =
     {
       "cut",
       UI_KEY_CUT,
-      "STR",
+      "STR/INT",
       0,
       "Copy extension to output and remove from input.",
       UI_GROUP_EXTENSION_MANIPULATION,

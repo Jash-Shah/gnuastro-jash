@@ -40,8 +40,10 @@ export LANG=C
 hdu=""
 quiet=0
 prefix=""
+ds9mode=""
 ds9scale=""
 ds9extra=""
+ds9center=""
 ds9geometry=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -92,6 +94,8 @@ $scriptname options:
                           good match, otherwise, use the default size.
   -e, --ds9extra=STR      Extra options to pass to DS9 after default ones.
   -s, --ds9scale=STR      Custom value to '-scale' option in DS9.
+  -c, --ds9center=FLT,FLT Coordinates of center in shown DS9 window.
+  -O, --ds9mode=img/wcs   Coord system to interpret '--ds9center' (img/wcs).
   -p, --prefix=STR        Directory containing DS9 or TOPCAT executables.
 
  Operating mode:
@@ -195,9 +199,15 @@ do
         -s|--ds9scale)        ds9scale="$2";                       check_v "$1" "$ds9scale"; shift;shift;;
         -s=*|--ds9scale=*)    ds9scale="${1#*=}";                  check_v "$1" "$ds9scale"; shift;;
         -s*)                  ds9scale=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9scale"; shift;;
-        -e|--ds9extra)        ds9extratmp="$2";                       check_v "$1" "$ds9extratmp"; shift;shift;;
-        -e=*|--ds9extra=*)    ds9extratmp="${1#*=}";                  check_v "$1" "$ds9extratmp"; shift;;
+        -e|--ds9extra)        ds9extratmp="$2";                    check_v "$1" "$ds9extratmp"; shift;shift;;
+        -e=*|--ds9extra=*)    ds9extratmp="${1#*=}";               check_v "$1" "$ds9extratmp"; shift;;
         -e*)                  ds9extratmp=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9extratmp"; shift;;
+        -c|--ds9center)       ds9center="$2";                      check_v "$1" "$ds9center"; shift;shift;;
+        -c=*|--ds9center=*)   ds9center="${1#*=}";                 check_v "$1" "$ds9center"; shift;;
+        -c*)                  ds9center=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9center"; shift;;
+        -O|--ds9mode)         ds9mode="$2";                       check_v "$1" "$ds9mode"; shift;shift;;
+        -O=*|--ds9mode=*)     ds9mode="${1#*=}";                  check_v "$1" "$ds9mode"; shift;;
+        -O*)                  ds9mode=$(echo "$1"  | sed -e's/-s//');  check_v "$1" "$ds9mode"; shift;;
         -p|--prefix)          prefix="$2";                         check_v "$1" "$prefix"; shift;shift;;
         -p=*|--prefix=*)      prefix="${1#*=}";                    check_v "$1" "$prefix"; shift;;
         -p*)                  prefix=$(echo "$1"  | sed -e's/-p//');  check_v "$1" "$prefix"; shift;;
@@ -232,6 +242,37 @@ done
 
 
 
+# If center coordinates (--center) is not given at all.
+if [ x"$ds9center" != x ]; then
+
+    # Make sure only two values are given.
+    ncenter=$(echo $ds9center | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$ncenter != x2 ]; then
+        echo "$scriptname: '--ds9center' (or '-c') only takes two values, but $ncenter were given."
+        exit 1
+    fi
+
+    # With '--ds9center', its also necessary to give a mode (--ds9mode).
+    modeerrorinfo="Depending on the nature of the central coordinates, please give either 'img' (for pixel coordinates) or 'wcs' (for RA,Dec) to the '--ds9mode' (or '-O') option."
+    if [ x"$ds9mode" = x ]; then
+        echo "$scriptname: no coordinate mode provided! $modeerrorinfo"
+        exit 1
+
+    # Make sure the value to '--mode' is either 'wcs' or 'img'.
+    elif [ $ds9mode = "wcs" ] || [ $ds9mode = "img" ]; then
+        junk=1
+    else
+        cat <<EOF
+$scriptname: '$ds9mode' not acceptable for '--ds9mode' (or '-O'). $modeerrorinfo
+EOF
+        exit 1
+    fi
+fi
+
+
+
+
+
 # Set a good geometry if the user hasn't given any. So far, we just depend
 # on 'xrandr' to find the screen resolution, if it doesn't exist, then we
 # won't set this option at all and let DS9 use its default size.
@@ -246,7 +287,6 @@ if [ x"$ds9geometry" = x ]; then
                         | grep '*' \
                         | sed 's/x/ /' \
                         | awk 'NR==1{w=0.75*$2; printf "%dx%d\n", w, $2}')
-
     fi
 fi
 ds9geoopt="-geometry $ds9geometry"
@@ -268,6 +308,21 @@ elif [ "$ds9scale" = "minmax" ]; then
      ds9scale="mode minmax"
 fi
 ds9scaleopt="-scale $ds9scale"
+
+
+
+
+
+# Set the DS9 pan option.
+ds9pan=""
+if [ x"$ds9center" != x ]; then
+    ds9pancent=$(echo $ds9center | awk 'BEGIN{FS=","} {print $1, $2}')
+    if [ $ds9mode = wcs ]; then
+        ds9pan="-pan to $ds9pancent wcs fk5"
+    else
+        ds9pan="-pan to $ds9pancent image"
+    fi
+fi
 
 
 
@@ -340,7 +395,7 @@ else
                                  -zoom to fit -wcs degrees -cmap sls \
 		                 -match frame image -match frame colorbar \
 		                 -frame lock image -colorbar lock yes \
-                                 -lock slice image $ds9extra"
+                                 -lock slice image $ds9pan $ds9extra"
             else
 
 		# 3D multi-extension file: The "Cube" window will slide
@@ -354,7 +409,7 @@ else
                                  -multiframe $inwithhdu -lock slice image \
                                  -lock frame image -zoom to fit -cmap sls \
                                  -match frame colorbar -colorbar lock yes \
-                                 $ds9extra"
+                                 $ds9pan $ds9extra"
             fi
 
 	# When input was table.

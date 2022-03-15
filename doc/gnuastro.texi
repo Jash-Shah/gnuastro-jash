@@ -6258,79 +6258,177 @@ $ astscript-psf-subtract label/67510-seg.fits \
            --scale=$scale \
            --center=$center \
            --output=single-star/subtracted.fits
-$ astscript-fits-view label/67510-seg.fits single-star/subtracted.fits
+
+$ astscript-fits-view label/67510-seg.fits single-star/subtracted.fits \
+           --ds9center=$center --ds9mode=wcs --ds9extra="-zoom 4"
 @end example
 
-The result is the complete PSF situated in the sky position we have provided (RA, DEC) with the flux specified by the flux factor value.
-Those pixels on this image that don't correspond to the PSF image are set to zero, and the size of the image is exactly the same as the input image provided.
-So, we are ready to make the subtraction of the modeled star by the PSF.
-It is only necessary to use a simple Arithmetic subtraction to obtain it.
-Let's do and check the result:
+You will notice that there is something wrong with this ``subtraction''!
+The box of the PSF extended PSF is clearly visible!
+The the sky noise under the box is clearly larger than the rest of the noise in the image.
+Before reading on, please try to think about the cause of this yourself.
+
+To understand the cause, let's look at the scale factor, the number of stamps used to build the outer part (and its square root):
 
 @example
-$ astarithmetic label/67510-seg.fits --hdu=1 \
-                single-star/star-2.fits --hdu=1 \
-                - --output=single-star/star-2-subtracted.fits
-
-$ ds9 label/67510-seg.fits single-star/star-2-subtracted.fits
+$ echo $scale
+$ ls outer/stamps/*.fits | wc -l
+$ ls outer/stamps/*.fits | wc -l | awk '@{print sqrt($1)@}'
 @end example
 
-By comparing the original and the subtracted image, it can be clearly seen how the star has been removed.
-Still there are some residuals, specially in the central part and those corresponding to the diffraction spikes.
-It is important to note that the number of the stars used in this example is small.
-The consequence of this low number of stars is that the outer part of the PSF is very noisy, and consequently, there are a lot of residuals in the PSF subtracted image.
-With more and brighter stars the PSF would have been better determined (i.e., less noise in the outer part).
+You see that the scale is almost 19!
+As a result, the PSF has been multiplied by 19 before being subtracted.
+However, the outer part of the PSF was created with only a handful of star stamps.
+When you stack @mymath{N} images, the stack's signal-to-noise ratio (S/N) improves by @mymath{\sqrt{N}}.
+We had 8 images for the outer part, so the S/N has only improved by a factor of just under 3!
+When we multiply the final stacked PSF with 19, we are also scaling up the noise by that same factor.
+So the stacked image's noise-level is $19/3=6.3$ times larger than the noise of the input image.
+This terrible noise-level is what you clearly see as the footprint of the PSF.
+
+To confirm this, let's use the commands below to subtract the faintest of the bright-stars catalog (note the use of @option{--tail} when finding the central position).
+You will notice that the scale factor (@mymath{\sim1.3}) is now smaller than 3.
+So when we multiply the PSF with this factor, the PSF's noise level is lower than our input image and we shouldn't see any footprint like before.
+Note also that we are using a larger zoom factor, because this star is smaller in the image.
+
+@example
+$ center=$(asttable flat/67510-bright.fits --sort phot_g_mean_mag \
+                    --column=ra,dec --tail 1 \
+                    | awk '@{printf "%s,%s", $1, $2@}')
+
+$ scale=$(astscript-psf-scale-factor label/67510-seg.fits \
+                   --mode=wcs --quiet\
+                   --psf=psf.fits \
+                   --center=$center \
+                   --normradii=10,15 \
+                   --segment=label/67510-seg.fits)
+$ echo $scale
+
+$ astscript-psf-subtract label/67510-seg.fits \
+           --mode=wcs \
+           --psf=psf.fits \
+           --scale=$scale \
+           --center=$center \
+           --output=single-star/subtracted.fits
+
+$ astscript-fits-view label/67510-seg.fits single-star/subtracted.fits \
+           --ds9center=$center --ds9mode=wcs --ds9extra="-zoom 10"
+@end example
+
+In a large survey like J-PLUS, its easy to use more and more bright stars from different pointings (ideally with similar FWHM and similar telescope properties@footnote{For example in J-PLUS, the baffle of the secondary mirror was adjusted in 2017 because it produced extra spikes in the PSF. So all images after that date have a PSF with 4 spikes (like this one), while those before it have many more spikes.}) to improve the S/N of the PSF.
+As explained before, we designed the output files of this tutorial with the @code{67510} (which is this image's pointing label in J-PLUS) where necessary so you see how easy it is to add more pointings to use in the creation of the PSF.
+
+Let's consider now more than one single star.
+We should have two things in mind:
+
+@itemize
+@item
+The brightest (subtract-able, see the point below) star should be the first star to be subtracted.
+This is because of its extended wings which may affect the scale factor of nearby stars.
+So we should sort the catalog by brightness and come down from the brightest.
+@item
+We should only subtract stars where the scale factor is less than the S/N of the PSF (in relation to the data).
+@end itemize
+
+Since it can get a little complex, its easier to put it in a script (that is heavily commented for you to easily understand every step; especially if you put it in a good text editor with color-coding!).
+
+@example
+#!/bin/bash
+
+# Abort the script on first error.
+set -e
+
+# ID of tile to subtract stars from.
+tileid=67510
+
+# Get S/N level of the final PSF in relation to the actual data:
+snlevel=$(ls outer/stamps/*.fits | wc -l | awk '@{print sqrt($1)@}')
+
+# Put a copy of the image we want to subtract the PSF from in the
+# final file (this will be over-written after each subtraction).
+subtracted=subtracted/$tileid.fits
+cp label/$tileid-seg.fits $subtracted
+
+# Go over each item in the bright star catalog:
+asttable flat/67510-bright.fits -cra,dec --sort phot_g_mean_mag  \
+    | while read -r ra dec; do
+
+    # Put a comma between the RA/Dec to pass to options.
+    center=$(echo $ra $dec | awk '@{printf "%s,%s", $1, $2@}')
+
+    # Calculate the scale value
+    scale=$(astscript-psf-scale-factor label/67510-seg.fits \
+                   --mode=wcs --quiet\
+                   --psf=psf.fits \
+                   --center=$center \
+                   --normradii=10,15 \
+                   --segment=label/67510-seg.fits)
+
+    # Subtract this star if the scale factor is less than the S/N
+    # level calculated above.
+    check=$(echo $snlevel $scale \
+                | awk '@{if($1>$2) c="good"; else c="bad"; print c@}')
+    if [ $check = good ]; then
+
+        # A temporary file to subtract this star.
+        subtmp=subtracted/$tileid-tmp.fits
+
+        # Subtract this star from the image where all previous stars
+        # were subtracted.
+        astscript-psf-subtract $subtracted \
+                 --mode=wcs \
+                 --psf=psf.fits \
+                 --scale=$scale \
+                 --center=$center \
+                 --output=$subtmp
+
+        # Rename the temporary subtracted file to the final one:
+        mv $subtmp $subtracted
+    else
+	echo "$center: $scale is larger than $snlevel"
+    fi
+done
+@end example
+
+Copy the contents above into a file called @file{subtract-psf-from-cat.sh} and run the following commands.
+Just note that in the script above, we assumed the output is written in the @file{subtracted/}, directory, so we'll first make that.
+
+@example
+$ mkdir subtracted
+$ chmod +x subtract-psf-from-cat.sh
+$ ./subtract-psf-from-cat.sh
+
+$ astscript-fits-view label/67510-seg.fits subtracted/67510.fits
+@end example
+
+Can you visually find the stars that have been subtracted?
+Its a little hard, isn't it?
+This shows that you done a good job (the sky-noise is visually untouched)!
+So let's subtract the actual image from the PSF-subtracted image to see the scattered light field.
+You can then easily zoom-in to the subtracted regions to find the stars and check the subtraction.
+
+@example
+$ astarithmetic label/67510-seg.fits subtracted/67510.fits - \
+                --output=scattered-light.fits -g1
+
+$ astscript-fits-view label/67510-seg.fits subtracted/67510.fits \
+                      scattered-light.fits
+@end example
+
+In general you see that the subtraction has been done nicely and almost all the extended wings of the PSF have been subtracted.
+The central regions of the stars aren't perfectly subtracted:
+
+@itemize
+@item
+Some may get too dark at the center.
+This may be due to the non-linearity of the CCD counting (as discussed previously in @ref{Uniting the different PSF components}).
+
+@item
+Others may have a strong gradient: one side is too positive and one side is too negative (only in the very central few pixels).
+This is due to the non-accurate positioning: most probably this happens because of imperfect astrometry.
+@end itemize
+
 Note also that during this process we assumed that the PSF doesn't vary with the CCD position or any other parameter.
 In other words, we are obtaining an averaged PSF model from a few star stamps that are naturally different, and this also explains the residuals on each subtracted star.
-
-Let's consider now more than one single stars.
-With the command belows you will be able to subtract the stars that we have used for constructing the PSF.
-Please, remember always to check each step.
-
-First we iterate over the catalog of stars to obtain the flux factor and generate the model of each star:
-
-@example
-$ counter=1
-$ mkdir models
-$ mkdir models/stars
-$ mkdir models/fluxes
-$ asttable outer/67510-6-10.fits \
-           | while read -r ra dec mag; do
-              astscript-psf-scale-factor label/67510-seg.fits \
-                   --mode=wcs \
-                   --center=$ra,$dec \
-                   --normradii=20,30 \
-                   --psf=psf-complete.fits \
-                   --segment=label/67510-seg.fits \
-                   --output=models/fluxes/flux-$counter.txt
-
-              fluxfactor=$(cat models/fluxes/flux-$counter.txt)
-
-              astscript-psf-subtract label/67510-seg.fits \
-                   --mode=wcs \
-                   --center=$ra,$dec \
-                   --psf=psf-complete.fits \
-                   --fluxfactor $fluxfactor \
-                   --output=models/stars/star-$counter.fits
-
-              counter=$((counter+1))
-             done
-@end example
-
-We have generated the model of each star.
-Now, let's sum all of them to generate the complete scattered light field model and subtract it from the original image.
-
-@example
-$ imgs=models/stars/star*.fits
-$ numimgs=$(echo $imgs | wc -w)
-$ astarithmetic $imgs $numimgs sum -g1 \
-                --output=models/scattered-light-field.fits
-
-$ astarithmetic label/67510-seg.fits \
-                models/scattered-light-field.fits \
-                -g1 - --output=models/scattered-light-subtracted.fits
-$ ds9 label/67510-seg.fits models/scattered-light-subtracted.fits
-@end example
 
 We let as an interesting exercise the modeling and subraction of other stars, for example, the non saturated stars of the image.
 By doing this, you will notice that in the core region the residuals are different compared to the residuals of brightner stars that we have obtained.
@@ -24667,6 +24765,16 @@ or @option{--ds9scale=zscale} equivalent to @option{--ds9scale="mode zscale"}.
 or @option{--ds9scale=minmax} equivalent to @option{--ds9scale="mode minmax"}.
 @end table
 
+@item -c=FLT,FLT
+@itemx --ds9center=FLT,FLT
+The central coordinate for DS9's view of the FITS image after it opens.
+This is equivalent to the ``Pan'' button in DS9.
+The nature of the coordinates will be determined by the @option{--ds9mode} option that is described below.
+
+@item -O img/wcs
+@itemx --ds9mode=img/wcs
+The coordinate system (or mode) to interpret the values given to @option{--ds9center}.
+This can either be @option{img} (or DS9's ``Image'' coordinates) or @option{wcs} (or DS9's ``wcs fk5'' coordinates).
 
 @item -g INTxINT
 @itemx --ds9geometry=INTxINT
