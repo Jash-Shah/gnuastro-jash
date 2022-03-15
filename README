@@ -126,6 +126,28 @@ very similarly (with minor differences, as explained in the book).
     keyword name for a date, this script separates the files in the same
     night (possibly over two calendar days).
 
+  - astscript-psf-select-stars: Find all the stars within an image that are
+    suitable for constructing an extended PSF. If the image has WCS, this
+    script can automatically query Gaia to find the good stars.
+
+  - astscript-psf-stamp: build a crop (stamp) of a certain width around a
+    star at a certain coordinate in a larger image. This script will do
+    sub-pixel re-positioning to make sure the star is centered and can
+    optionally mask all other background sources).
+
+  - astscript-psf-scale-factor: Given a PSF model, and the central
+    coordinates of a star in an image, find the scale factor that has to be
+    multiplied by the PSF to scale it to that star.
+
+  - astscript-psf-unite: Unite the various components of a PSF into
+    one. Because of saturation and non-linearity, to get a good estimate of
+    the extended PSF, its necessary to construct various parts from
+    different magnitude ranges.
+
+  - astscript-psf-subtract: Given the model of a PSF and the central
+    coordinates of a star in the image, do sub-pixel re-positioning of the
+    PSF, scale it to the star and subtract it from the image.
+
 All the programs share the same basic command-line user interface and a set
 of common options for the comfort of both the users and
 developers. Gnuastro is written to comply fully with the GNU coding

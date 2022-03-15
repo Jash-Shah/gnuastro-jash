@@ -35970,100 +35970,71 @@ they do).
 @table @asis
 
 @item Arithmetic
-(@file{astarithmetic}, see @ref{Arithmetic}) For arithmetic operations on
-multiple (theoretically unlimited) number of datasets (images). It has a
-large and growing set of arithmetic, mathematical, and even statistical
-operators (for example @command{+}, @command{-}, @command{*}, @command{/},
-@command{sqrt}, @command{log}, @command{min}, @command{average},
-@command{median}).
+(@file{astarithmetic}, see @ref{Arithmetic}) For arithmetic operations on multiple (theoretically unlimited) number of datasets (images).
+It has a large and growing set of arithmetic, mathematical, and even statistical operators (for example @command{+}, @command{-}, @command{*}, @command{/}, @command{sqrt}, @command{log}, @command{min}, @command{average}, @command{median}).
 
 @item BuildProgram
-(@file{astbuildprog}, see @ref{BuildProgram}) Compile, link and run
-programs that depend on the Gnuastro library (see @ref{Gnuastro
-library}). This program will automatically link with the libraries that
-Gnuastro depends on, so there is no need to explicitly mention them every
-time you are compiling a Gnuastro library dependent program.
+(@file{astbuildprog}, see @ref{BuildProgram}) Compile, link and run programs that depend on the Gnuastro library (see @ref{Gnuastro library}).
+This program will automatically link with the libraries that Gnuastro depends on, so there is no need to explicitly mention them every time you are compiling a Gnuastro library dependent program.
 
 @item ConvertType
-(@file{astconvertt}, see @ref{ConvertType}) Convert astronomical data files
-(FITS or IMH) to and from several other standard image and data formats,
-for example TXT, JPEG, EPS or PDF.
+(@file{astconvertt}, see @ref{ConvertType}) Convert astronomical data files (FITS or IMH) to and from several other standard image and data formats, for example TXT, JPEG, EPS or PDF.
 
 @item Convolve
-(@file{astconvolve}, see @ref{Convolve}) Convolve (blur or smooth) data
-with a given kernel in spatial and frequency domain on multiple
-threads. Convolve can also do de-convolution to find the appropriate kernel
-to PSF-match two images.
+(@file{astconvolve}, see @ref{Convolve}) Convolve (blur or smooth) data with a given kernel in spatial and frequency domain on multiple threads.
+Convolve can also do de-convolution to find the appropriate kernel to PSF-match two images.
 
 @item CosmicCalculator
-(@file{astcosmiccal}, see @ref{CosmicCalculator}) Do cosmological
-calculations, for example the luminosity distance, distance modulus,
-comoving volume and many more.
+(@file{astcosmiccal}, see @ref{CosmicCalculator}) Do cosmological calculations, for example the luminosity distance, distance modulus, comoving volume and many more.
 
 @item Crop
-(@file{astcrop}, see @ref{Crop}) Crop region(s) from an image and stitch
-several images if necessary. Inputs can be in pixel coordinates or world
-coordinates.
+(@file{astcrop}, see @ref{Crop}) Crop region(s) from an image and stitch several images if necessary.
+Inputs can be in pixel coordinates or world coordinates.
 
 @item Fits
-(@file{astfits}, see @ref{Fits}) View and manipulate FITS file extensions
-and header keywords.
+(@file{astfits}, see @ref{Fits}) View and manipulate FITS file extensions and header keywords.
 
 @item MakeCatalog
-(@file{astmkcatalog}, see @ref{MakeCatalog}) Make catalog of labeled image
-(output of NoiseChisel). The catalogs are highly customizable and adding
-new calculations/columns is very straightforward.
+(@file{astmkcatalog}, see @ref{MakeCatalog}) Make catalog of labeled image (output of NoiseChisel).
+The catalogs are highly customizable and adding new calculations/columns is very straightforward.
 
 @item MakeNoise
-(@file{astmknoise}, see @ref{MakeNoise}) Make (add) noise to an image, with
-a large set of random number generators and any seed.
+(@file{astmknoise}, see @ref{MakeNoise}) Make (add) noise to an image, with a large set of random number generators and any seed.
 
 @item MakeProfiles
-(@file{astmkprof}, see @ref{MakeProfiles}) Make mock 2D profiles in an
-image. The central regions of radial profiles are made with a configurable
-2D Monte Carlo integration. It can also build the profiles on an
-over-sampled image.
+(@file{astmkprof}, see @ref{MakeProfiles}) Make mock 2D profiles in an image.
+The central regions of radial profiles are made with a configurable 2D Monte Carlo integration.
+It can also build the profiles on an over-sampled image.
 
 @item Match
-(@file{astmatch}, see @ref{Match}) Given two input catalogs, find the rows
-that match with each other within a given aperture (may be an ellipse).
+(@file{astmatch}, see @ref{Match}) Given two input catalogs, find the rows that match with each other within a given aperture (may be an ellipse).
 
 @item NoiseChisel
-(@file{astnoisechisel}, see @ref{NoiseChisel}) Detect signal in noise. It
-uses a technique to detect very faint and diffuse, irregularly shaped
-signal in noise (galaxies in the sky), using thresholds that are below the
-Sky value, see @url{http://arxiv.org/abs/1505.01664, arXiv:1505.01664}.
+(@file{astnoisechisel}, see @ref{NoiseChisel}) Detect signal in noise.
+It uses a technique to detect very faint and diffuse, irregularly shaped signal in noise (galaxies in the sky), using thresholds that are below the Sky value, see @url{http://arxiv.org/abs/1505.01664, arXiv:1505.01664}.
 
 @item Query
-(@file{astquery}, see @ref{Query}) High-level interface to query
-pre-defined remote, or external databases, and directly download the
-required sub-tables on the command-line.
+(@file{astquery}, see @ref{Query}) High-level interface to query pre-defined remote, or external databases, and directly download the required sub-tables on the command-line.
 
 @item Segment
-(@file{astsegment}, see @ref{Segment}) Segment detected regions based on
-the structure of signal and the input dataset's noise properties.
+(@file{astsegment}, see @ref{Segment}) Segment detected regions based on the structure of signal and the input dataset's noise properties.
 
 @item Statistics
-(@file{aststatistics}, see @ref{Statistics}) Statistical calculations on
-the input dataset (column in a table, image or datacube).
+(@file{aststatistics}, see @ref{Statistics}) Statistical calculations on the input dataset (column in a table, image or datacube).
 
 @item Table
-(@file{asttable}, @ref{Table}) Convert FITS binary and ASCII tables into
-other such tables, print them on the command-line, save them in a plain
-text file, or get the FITS table information.
+(@file{asttable}, @ref{Table}) Convert FITS binary and ASCII tables into other such tables, print them on the command-line, save them in a plain text file, or get the FITS table information.
 
 @item Warp
-(@file{astwarp}, see @ref{Warp}) Warp image to new pixel grid. Any
-projective transformation or Homography can be applied to the input images.
+(@file{astwarp}, see @ref{Warp}) Warp image to new pixel grid.
+Any projective transformation or Homography can be applied to the input images.
 
 @end table
 
-The programs listed above are designed to be highly modular and
-generic. Hence, they are naturally for lower-level operations. In Gnuastro,
-higher-level operations (combining multiple programs, or running a program
-in a special way), are done with installed Bash scripts (all prefixed with
-@code{astscript-}). They can be run just like a program and behave very
-similarly (with minor differences, see @ref{Installed scripts}).
+The programs listed above are designed to be highly modular and generic.
+Hence, they are naturally for lower-level operations.
+In Gnuastro, higher-level operations (combining multiple programs, or running a program in a special way), are done with installed Bash scripts (all prefixed with @code{astscript-}).
+They can be run just like a program and behave very similarly (with minor differences, see @ref{Installed scripts}).
 
 @table @code
 @item astscript-ds9-region
@@ -36078,6 +36049,30 @@ The object can be at any location in the image, using various measures (median, 
 
 @item astscript-sort-by-night
 (See @ref{Sort FITS files by night}) Given a list of FITS files, and a HDU and keyword name (for a date), this script separates the files in the same night (possibly over two calendar days).
+
+@item astscript-psf-*
+The following scripts are used to estimate the extended PSF estimation and subtraction as described in the tutorial @ref{Building the extended PSF}:
+
+@table @code
+@item astscript-psf-select-stars
+(see @ref{Invoking astscript-psf-select-stars}) Find all the stars within an image that are suitable for constructing an extended PSF.
+If the image has WCS, this script can automatically query Gaia to find the good stars.
+
+@item astscript-psf-stamp
+(see @ref{Invoking astscript-psf-stamp}) build a crop (stamp) of a certain width around a star at a certain coordinate in a larger image.
+This script will do sub-pixel re-positioning to make sure the star is centered and can optionally mask all other background sources).
+
+@item astscript-psf-scale-factor
+(see @ref{Invoking astscript-psf-scale-factor}) Given a PSF model, and the central coordinates of a star in an image, find the scale factor that has to be multiplied by the PSF to scale it to that star.
+
+@item astscript-psf-unite
+(see @ref{Invoking astscript-psf-unite}) Unite the various components of a PSF into one.
+Because of saturation and non-linearity, to get a good estimate of the extended PSF, its necessary to construct various parts from different magnitude ranges.
+
+@item astscript-psf-subtract
+(see @ref{Invoking astscript-psf-subtract}) Given the model of a PSF and the central coordinates of a star in the image, do sub-pixel re-positioning of the PSF, scale it to the star and subtract it from the image.
+@end table
+
 @end table
 
 

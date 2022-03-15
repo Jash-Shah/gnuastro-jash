@@ -14,11 +14,40 @@ See the end of the file for license conditions.
      SAO DS9 and TOPCAT are free software packages that are heavily used in
      astrophysics. When opening in DS9, files will be opened as "match"ed
      and "lock"ed frames, enabling easy visual comparison. For GUIs that
-     conform to the freedesktop.org standrads, a '.desktop' file is also
+     conform to the freedesktop.org standards, a '.desktop' file is also
      provided that you can easily activate (as described in the
      manual). Once activated, simply clicking on FITS file(s) in your
      graphic environment will open DS9 or TOPCAT depending on their
      contents.
+   - A set of installed scripts to enable easy estimation and subtraction
+     of the extended PSF (in a highly modular and easily scalable
+     manner). They are primarily based on the method described in
+     Infante-Sainz et al. 2020
+     (https://ui.adsabs.harvard.edu/abs/2020MNRAS.491.5317I) and primarily
+     maintained by Raul Infante-Sainz himself and the help of Sepideh
+     Eskandarlou. A full tutorial on real data from the J-PLUS survey
+     (http://j-plus.es) has also been added to the tutorials chapter to
+     describe in full detail how to run these scripts in a generic way (on
+     any survey). These installed scripts all have a 'astscript-psf-*'
+     prefix in their names:
+        - astscript-psf-select-stars: Find all the stars within an image
+          that are suitable for constructing an extended PSF. If the image
+          has WCS, this script can automatically query Gaia to find the
+          good stars.
+        - astscript-psf-stamp: build a crop (stamp) of a certain width
+          around a star at a certain coordinate in a larger image. This
+          script will do sub-pixel re-positioning to make sure the star is
+          centered and can optionally mask all other background sources).
+        - astscript-psf-scale-factor: Given a PSF model, and the central
+          coordinates of a star in an image, find the scale factor that has
+          to be multiplied by the PSF to scale it to that star.
+        - astscript-psf-unite: Unite the various components of a PSF into
+          one. Because of saturation and non-linearity, to get a good
+          estimate of the extended PSF, its necessary to construct various
+          parts from different magnitude ranges.
+        - astscript-psf-subtract: Given the model of a PSF and the central
+          coordinates of a star in the image, do sub-pixel re-positioning
+          of the PSF, scale it to the star and subtract it from the image.
 
   Book:
    - New section called "Skewness cased by signal and its measurement"
