@@ -4680,7 +4680,9 @@ $ ds9 -mecube r_detected.fits -zscale -cmap sls -zoom to fit
 @end example
 
 When looking at the raw input image (which is very ``shallow'': less than a minute exposure!), you don't see anything so far out of the galaxy.
-You might just think to yourself that ``this is all noise, I have just dug too deep and I'm following systematics''! If you feel like this, have a look at the deep images of this system in @url{https://arxiv.org/abs/1501.04599, Watkins et al. [2015]}, or a 12 hour deep image of this system (with a 12-inch telescope): @url{https://i.redd.it/jfqgpqg0hfk11.jpg}@footnote{The image is taken from this Reddit discussion: @url{https://www.reddit.com/r/Astronomy/comments/9d6x0q/12_hours_of_exposure_on_the_whirlpool_galaxy/}}.
+You might just think to yourself that ``this is all noise, I have just dug too deep and I'm following systematics''!
+If you feel like this, have a look at the deep images of this system in @url{https://arxiv.org/abs/1501.04599, Watkins et al. [2015]}, or a 12 hour deep image of this system (with a 12-inch telescope):
+@url{https://i.redd.it/jfqgpqg0hfk11.jpg}@footnote{The image is taken from this Reddit discussion: @url{https://www.reddit.com/r/Astronomy/comments/9d6x0q/12_hours_of_exposure_on_the_whirlpool_galaxy/}}.
 In these deeper images you clearly see how the outer edges of the M51 group follow this exact structure, below in @ref{Achieved surface brightness level}, we'll measure the exact level.
 
 As the gradient in the @code{SKY} extension shows, and the deep images cited above confirm, the galaxy's signal extends even beyond this.
@@ -7704,7 +7706,10 @@ $ ./configure LDFLAGS=-L/home/name/.local/lib            \
 
 It can be annoying/buggy to do this when configuring every software that depends on such libraries.
 Hence, you can define these two variables in the most relevant startup file (discussed above).
-The convention on using these variables doesn't include a colon to separate values (as @command{PATH}-like variables do), they use white space characters and each value is prefixed with a compiler option@footnote{These variables are ultimately used as options while building the programs, so every value has be an option name followed be a value as discussed in @ref{Options}.}: note the @option{-L} and @option{-I} above (see @ref{Options}), for @option{-I} see @ref{Headers}, and for @option{-L}, see @ref{Linking}.
+The convention on using these variables doesn't include a colon to separate values (as @command{PATH}-like variables do).
+They use white space characters and each value is prefixed with a compiler option@footnote{These variables are ultimately used as options while building the programs.
+Therefore every value has be an option name followed be a value as discussed in @ref{Options}.}.
+Note the @option{-L} and @option{-I} above (see @ref{Options}), for @option{-I} see @ref{Headers}, and for @option{-L}, see @ref{Linking}.
 Therefore we have to keep the value in double quotation signs to keep the white space characters and adding the following two lines to the startup file of choice:
 
 @example
@@ -7721,7 +7726,11 @@ To use programs that depend on these libraries, you need to add @file{~/.local/l
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/name/.local/lib
 @end example
 
-If you also want to access the Info (see @ref{Info}) and man pages (see @ref{Man pages}) documentations add @file{~/.local/share/info} and @file{~/.local/share/man} to your @command{INFOPATH}@footnote{Info has the following convention: ``If the value of @command{INFOPATH} ends with a colon [or it isn't defined] ..., the initial list of directories is constructed by appending the build-time default to the value of @command{INFOPATH}.'' So when installing in a non-standard directory and if @command{INFOPATH} was not initially defined, add a colon to the end of @command{INFOPATH} as shown below, otherwise Info will not be able to find system-wide installed documentation:@*@command{echo 'export INFOPATH=$INFOPATH:/home/name/.local/share/info:' >> ~/.bashrc}@* Note that this is only an internal convention of Info, do not use it for other @command{*PATH} variables.} and @command{MANPATH} environment variables respectively.
+If you also want to access the Info (see @ref{Info}) and man pages (see @ref{Man pages}) documentations add @file{~/.local/share/info} and @file{~/.local/share/man} to your @command{INFOPATH}@footnote{Info has the following convention: ``If the value of @command{INFOPATH} ends with a colon [or it isn't defined] ..., the initial list of directories is constructed by appending the build-time default to the value of @command{INFOPATH}.''
+So when installing in a non-standard directory and if @command{INFOPATH} was not initially defined, add a colon to the end of @command{INFOPATH} as shown below.
+Otherwise Info will not be able to find system-wide installed documentation:
+@*@command{echo 'export INFOPATH=$INFOPATH:/home/name/.local/share/info:' >> ~/.bashrc}@*
+Note that this is only an internal convention of Info: do not use it for other @command{*PATH} variables.} and @command{MANPATH} environment variables respectively.
 
 @cindex Search directory order
 @cindex Order in search directory

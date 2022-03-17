@@ -280,7 +280,7 @@ fi
 # won't set this option at all and let DS9 use its default size.
 ds9geoopt=""
 if [ x"$ds9geometry" = x ]; then
-    if type xrandr > /dev/null 2>/dev/null; then
+    if command -v xrandr > /dev/null 2>/dev/null; then
 
         # The line with a '*' is the resolution of the used screen. We will
         # then extract the height (second value) and set DS9's geometry

@@ -654,7 +654,7 @@ arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
   gal_data_t *out;
   double subsec=NAN;
   char *subsecstr=NULL;
-  char *unit, *name, *comment;
+  char *unit=NULL, *name=NULL, *comment=NULL;
 
   /* Input dataset. */
   gal_data_t *in=arithmetic_stack_pop(stack, operator, NULL);

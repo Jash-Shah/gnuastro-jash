@@ -438,7 +438,8 @@ astcrop $inputs --hdu=$hdu --mode=img \
 #
 # Given a certain extension ('CLUMPS' or 'OBJECTS'), find the respective
 # label.
-find_central_label () {
+find_central_label() {
+
   # Input arguments
   hdu=$1
 
@@ -447,8 +448,9 @@ find_central_label () {
       CLUMPS) labname=clump;;
       OBJECTS) labname=object;;
       *) cat <<EOF
-$scriptname: ERROR: a bug! Please contact us at bug-gnuastro@gnu.org to fix the problem. The first argument to 'find_central_label' function is not 'CLUMPS' or 'OBJECTS'
+$scriptname: ERROR: a bug! Please contact us at bug-gnuastro@gnu.org to fix the problem. The first argument to 'find_central_label' is not 'CLUMPS' or 'OBJECTS'
 EOF
+         exit 1
       ;;
   esac
 

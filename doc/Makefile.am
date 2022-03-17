@@ -153,7 +153,10 @@ dist_man_MANS = $(MAYBE_ARITHMETIC_MAN) $(MAYBE_BUILDPROG_MAN) \
   $(MAYBE_MKCATALOG_MAN) $(MAYBE_MKNOISE_MAN) $(MAYBE_MKPROF_MAN) \
   $(MAYBE_NOISECHISEL_MAN) $(MAYBE_QUERY_MAN) $(MAYBE_SEGMENT_MAN) \
   $(MAYBE_STATISTICS_MAN) $(MAYBE_TABLE_MAN) $(MAYBE_WARP_MAN) \
-  man/astscript-ds9-region.1 man/astscript-radial-profile.1 \
+  man/astscript-ds9-region.1 man/astscript-fits-view.1 \
+  man/astscript-psf-scale-factor.1 man/astscript-psf-select-stars.1 \
+  man/astscript-psf-stamp.1 man/astscript-psf-subtract.1 \
+  man/astscript-psf-unite.1 man/astscript-radial-profile.1 \
   man/astscript-sort-by-night.1
 
 
@@ -254,6 +257,36 @@ man/astscript-ds9-region.1: $(top_srcdir)/bin/script/ds9-region.in   \
                             $(ALLMANSDEP)
 	$(MAYBE_HELP2MAN) -n "Create an SAO DS9 region file from a table" \
 	                  --libtool $(toputildir)/script/astscript-ds9-region
+
+man/astscript-fits-view.1: $(top_srcdir)/bin/script/fits-view.in   \
+                            $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "View FITS images in DS9 and tables in TOPCAT based on contents" \
+	                  --libtool $(toputildir)/script/astscript-fits-view
+
+man/astscript-psf-scale-factor.1: $(top_srcdir)/bin/script/psf-scale-factor.in \
+                                  $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "Find factor to scale PSF to a given star in an image" \
+	                  --libtool $(toputildir)/script/astscript-psf-scale-factor
+
+man/astscript-psf-select-stars.1: $(top_srcdir)/bin/script/psf-select-stars.in \
+                                  $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "Select good stars for constructing the PSF" \
+	                  --libtool $(toputildir)/script/astscript-psf-select-stars
+
+man/astscript-psf-stamp.1: $(top_srcdir)/bin/script/psf-stamp.in \
+                           $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "Make normalized stamp of star with background objects masked" \
+	                  --libtool $(toputildir)/script/astscript-psf-stamp
+
+man/astscript-psf-subtract.1: $(top_srcdir)/bin/script/psf-subtract.in \
+                              $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "Subtract a given PSF model from the image of star" \
+	                  --libtool $(toputildir)/script/astscript-psf-subtract
+
+man/astscript-psf-unite.1: $(top_srcdir)/bin/script/psf-unite.in \
+                           $(ALLMANSDEP)
+	$(MAYBE_HELP2MAN) -n "Unite the outer and inner regions of the PSF into one" \
+	                  --libtool $(toputildir)/script/astscript-psf-unite
 
 man/astscript-radial-profile.1: $(top_srcdir)/bin/script/radial-profile.in   \
                                 $(ALLMANSDEP)
