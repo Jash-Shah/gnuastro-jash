@@ -6487,6 +6487,16 @@ $ astscript-fits-view label/67510-seg.fits subtracted/67510.fits \
 $ rm scattered-light.fits
 @end example
 
+You will probably have noticed that in the scattered light field there are some patches that correspond to the saturation of the stars.
+Since we obtained the scattered light field by subtracting PSF-subtracted image from the original image, it is natural that we have such saturated regions.
+To solve such inconvinience, this script also has an option to not make the subtraction of the PSF but to give as output the modeled star.
+For doing that, it is necessary to run the script with the option @option{--modelonly}.
+We encourage the reader to obtain such scattered light field model.
+In some scenarios it could be interesting having such way of correcting the PSF.
+For example, if there are many faint stars that can be modeled at the same time because their flux don't affect each other.
+In such situation, the task could be easily paralelized without having to wait to model the brighter stars before the fainter ones.
+At the end, once all stars have been modeled, a simple Arithmetic command could be used to sum the different modeled-PSF stamps to obtain the entire scattered light field.
+
 In general you see that the subtraction has been done nicely and almost all the extended wings of the PSF have been subtracted.
 The central regions of the stars aren't perfectly subtracted:
 
@@ -25508,8 +25518,9 @@ For example, to check that the intermediate images have the desired center, they
 
 @node Invoking astscript-psf-subtract,  , Invoking astscript-psf-scale-factor, PSF construction and subtraction
 @subsection Invoking astscript-psf-subtract
-This installed script will put the PSF provided into a given position of the sky within the input image.
-It is aimed to model the scattered light field of an input image.
+This installed script will put the provided PSF into a given position of the sky within the input image, and then it will subtract it.
+It is aimed to model and subtract the scattered light field of an input image.
+It is also possible to obtain the modeled star with the PSF (and not make the subtraction of it from the original image).
 
 This script can be used with the following general template:
 
@@ -25521,33 +25532,37 @@ $ astscript-psf-subtract [OPTION...] FITS-file
 Examples:
 
 @example
-## Multiply the the PSF (psf.fits) by 3 and put it into the the
-## pixel position (x,y)=(53,69) of the input image (image.fits).
+## Multiply the the PSF (psf.fits) by 3 and subtract it from the
+## input image (image.fits) at the pixel position (x,y)=(53,69).
 $ astscript-psf-subtract image.fits \
     --psf=psf.fits \
     --mode=img \
-    --fluxfactor=3 \
+    --scale=3 \
     --center=53,69 \
     --output=star-53_69.fits
 
 ## Iterate over a catalog with positions of stars that are
 ## in the the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do
-         fluxfactor=$(cat fluxfactor-"$ra"_"$dec".txt)
+         scale=$(cat fluxfactor-"$ra"_"$dec".txt)
          astscript-psf-subtract image.fits \
              --mode=wcs \
              --psf=psf.fits \
-             --fluxfactor=$fluxfactor \
+             --scale=$scale \
              --center=$ra,$dec; done
 
 @end example
 
 The input is an image from which the star is considered.
-The result is an image with the same dimensions than the input, but with the PSF (@option{--psf}) situated in the position specified by @option{--center}, and with the flux level specified by @option{--fluxfactor}.
-The region not covered by the PSF are set to zero values.
+The result is the same image but with the star subtracted (modeled by the PSF).
+The modeling of the star is done with the PSF image specified with the option @option{--psf}, and flux-scaled with the option @option{--scale} at the position defined by @option{--center}.
+Instead of obtaining the PSF-subtracted image, it is also possible to obtain the modeled star by the PSF.
+To to that, use the option @option{--modelonly}.
+With this option, the output will an image with the same size as the original one with the PSF situated in the center and flux-scaled.
+In this case, the region not covered by the PSF are set to zero values.
+
 Note that this script works over individual objects.
 As a consequence, to generate a scattered light field of many stars it is necessary to make multiple calls and then combine all the individual modeled stars.
-
 A full description of each option is given below.
 
 @table @option
@@ -25578,11 +25593,11 @@ The positions along each dimension must be separated by a comma (@key{,}).
 The number of values given to this option must be the same as the dimensions of the input dataset.
 The units of the coordinates are read based on the value to the @option{--mode} option, see above.
 
-@item -f FLT
-@itemx --fluxfactor=FLT
+@item -s FLT
+@itemx --scale=FLT
 Factor by which the PSF (@option{--psf}) is multiplied.
 This factor is necessary to put the PSF with the desired flux level.
-A convenient way of obtaining this value is by using the script @file{astscript-model-scale-factor}, see @ref{Invoking astscript-psf-scale-factor}.
+A convenient way of obtaining this value is by using the script @file{astscript-scale-factor}, see @ref{Invoking astscript-psf-scale-factor}.
 
 @item -t STR
 @itemx --tmpdir=STR
@@ -25599,6 +25614,11 @@ You can disable the deletion of the temporary directory with the @option{--keept
 Don't delete the temporary directory (see description of @option{--tmpdir} above).
 This option is useful for debugging.
 For example, to check that the intermediate images have the desired center, flux level, etc.
+
+@item -m
+@itemx --modelonly
+Don't make the subtraction of the modeled star by the PSF.
+This option is useful when the user wants to obtain the scattered light field given by the PSF modeled star.
 @end table
 
 

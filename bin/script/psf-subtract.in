@@ -44,6 +44,7 @@ center=""
 keeptmp=0
 output=""
 tmpdir=""
+modelonly=0
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -93,6 +94,7 @@ $scriptname options:
   -o, --output            Output table with the radial profile.
   -t, --tmpdir            Directory to keep temporary files.
   -k, --keeptmp           Keep temporal/auxiliar files.
+  -m, --modelonly         Give the model as output (don't subtract it).
 
  Operating mode:
   -?, --help              Print this help list.
@@ -202,14 +204,16 @@ do
         -s*)                 scale=$(echo "$1"  | sed -e's/-f//');      check_v "$1" "$scale";  shift;;
 
         # Output parameters
-        -k|--keeptmp)     keeptmp=1; shift;;
-        -k*|--keeptmp=*)  on_off_option_error --keeptmp -k;;
-        -t|--tmpdir)      tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
-        -t=*|--tmpdir=*)  tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
-        -t*)              tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
-        -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
-        -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
-        -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
+        -k|--keeptmp)        keeptmp=1; shift;;
+        -k*|--keeptmp=*)     on_off_option_error --keeptmp -k;;
+        -m|--modelonly)      modelonly=1; shift;;
+        -m*|--modelonly=*)   on_off_option_error --modelonly -m;;
+        -t|--tmpdir)         tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
+        -t=*|--tmpdir=*)     tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
+        -t*)                 tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
+        -o|--output)         output="$2";                          check_v "$1" "$output"; shift;shift;;
+        -o=*|--output=*)     output="${1#*=}";                     check_v "$1" "$output"; shift;;
+        -o*)                 output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
 
         # Non-operating options.
         -q|--quiet)       quiet="--quiet"; shift;;
@@ -329,10 +333,12 @@ objectid="$xcoord"_"$ycoord"
 # an explicit name. If the user has defined a specific path/name for the
 # output, it will be used for saving the output file. If the user does not
 # specify a output name, then a default value containing the center and
-# mode will be generated.
+# mode will be generated. Moreover, if the user specify the option
+# --modelonly, then the output will be the modeled PSF (not subtracted from
+# the original image).
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x"$tmpdir" = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_psfmodelscatteredlight
+  tmpdir=$(pwd)/"$bname_prefix"_subtracted
 fi
 
 if [ -d "$tmpdir" ]; then
@@ -341,9 +347,13 @@ else
   mkdir -p "$tmpdir"
 fi
 
-# Output
+# Output, subtract or model only
 if [ x"$output" = x ]; then
-  output="$bname_prefix"_psfmodelscatteredlight_$objectid.fits
+  if [ x"$modelonly" = x1 ]; then
+    output="$bname_prefix"_model_$objectid.fits
+  else
+    output="$bname_prefix"_subtracted_$objectid.fits
+  fi
 fi
 
 
@@ -503,9 +513,12 @@ astcrop $psftranslated --mode=img --section=$xrange,$yrange \
 
 
 
-# Put nan values as zero values
-# -----------------------------
+# Final output: PSF-subtracted or PSF-model star
+# ----------------------------------------------
 #
+# Here, the final output is generated. By default, the final result is the
+# PSF-subtracted image. But, if the user uses the option --modelonly, then
+# the output will be the modeled PSF (not subtraction of the PSF is done).
 # In the vast majority of the cases, having zeros in the outer parts of the
 # astronomical images is not a good idea. It is better to have them as nan
 # values. However, for the scattered light field modeling, it is better to
@@ -513,9 +526,15 @@ astcrop $psftranslated --mode=img --section=$xrange,$yrange \
 # zero values, it is possible to make the addition of different modeled
 # stars (using the PSF) or the subtraction without having nan values in the
 # final subtracted image.
-astarithmetic $psfcropped --hdu=1 set-i \
-              i i isblank 0 where set-psf \
-              $inputs --hdu=$hdu psf - --output=$output $quiet
+if [ x"$modelonly" = x0 ]; then
+  astarithmetic $psfcropped --hdu=1 set-i \
+                i i isblank 0 where set-psf \
+                $inputs --hdu=$hdu psf - --output=$output $quiet
+else
+  astarithmetic $psfcropped --hdu=1 set-i \
+                i i isblank 0 where --output=$output $quiet
+
+fi
 
 
 
