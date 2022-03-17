@@ -8,7 +8,7 @@
 # Contributing author(s):
 #   Mohammad Akhlaghi <mohammad@akhlaghi.org>
 #   Zahra Sharbaf <zahra.sharbaf2@gmail.com>
-# Copyright (C) 2021, Free Software Foundation, Inc.
+# Copyright (C) 2021-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -132,7 +132,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -177,6 +177,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these (`-l*') will account for both the case where we
 #   have an equal sign and where we don't.
+inputs=""
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -225,7 +226,7 @@ do
 
         # Not an option (not starting with a `-'): assumed to be input FITS
         # file name.
-        *) inputs="$1 $inputs"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 
 done
@@ -287,7 +288,7 @@ if [ x"$mode" = x ]; then
     echo "$scriptname: no coordinate mode provided! $modeerrorinfo"
     exit 1
 # Make sure the value to '--mode' is either 'wcs' or 'img'.
-elif [ $mode = "wcs" ] || [ $mode = "img" ]; then
+elif [ "$mode" = wcs    -o    "$mode" = img ]; then
     junk=1
 else
     cat <<EOF
@@ -330,18 +331,18 @@ objectid="$xcoord"_"$ycoord"
 # specify a output name, then a default value containing the center and
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
-if [ x$tmpdir = x ]; then \
+if [ x"$tmpdir" = x ]; then \
   tmpdir=$(pwd)/"$bname_prefix"_psfmodelscatteredlight
 fi
 
-if [ -d $tmpdir ]; then
+if [ -d "$tmpdir" ]; then
   junk=1
 else
-  mkdir -p $tmpdir
+  mkdir -p "$tmpdir"
 fi
 
 # Output
-if [ x$output = x ]; then
+if [ x"$output" = x ]; then
   output="$bname_prefix"_psfmodelscatteredlight_$objectid.fits
 fi
 
@@ -356,7 +357,7 @@ fi
 # (RA/DEC), then transform them to IMG (pixel). Here, this is done by using
 # the WCS information from the original input image. If the original
 # coordinates were done in IMG, then just use them.
-if [ $mode = wcs ]; then
+if [ "$mode" = wcs ]; then
   xycenter=$(echo "$xcoord,$ycoord" \
                   | asttable  --column='arith $1 $2 wcs-to-img' \
                               --wcsfile=$inputs --wcshdu=$hdu $quiet)

@@ -16,7 +16,7 @@
 #     Raul Infante-Sainz <infantesainz@gmail.com>
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 #     Carlos Morales-Socorro <cmorsoc@gmail.com>
-# Copyright (C) 2020-2021, Free Software Foundation, Inc.
+# Copyright (C) 2020-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -156,7 +156,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -203,8 +203,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these ('-l*') will account for both the case where we
 #   have an equal sign and where we don't.
-
-
+inputs=""
 while [ $# -gt 0 ]
 do
    case "$1" in
@@ -277,7 +276,7 @@ do
 
        # Not an option (not starting with a `-'): assumed to be input FITS
        # file name.
-       *) inputs="$1 $input"; shift;;
+       *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
    esac
 done
 
@@ -293,7 +292,7 @@ if [ x"$inputs" = x ]; then
     echo " $scriptname: no input image file specified."
     echo "Run with '--help' for more information on how to run."
     exit 1
-elif [ ! -f $inputs ]; then
+elif [ ! -f "$inputs" ]; then
     echo "$scriptname: $inputs: No such file or directory."
     exit 1
 fi
@@ -402,18 +401,18 @@ parallax_error=$(echo "$parallaxanderrorcolumn" \
 # specify an output name, then a default value containing the field, min,
 # and max magnitudes will will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
-if [ x$tmpdir = x ]; then \
+if [ x"$tmpdir" = x ]; then \
   tmpdir=$(pwd)/"$bname_prefix"_psfcreateselectstar_"$field"_"$brightmag"_"$faintmag"
 fi
 
-if [ -d $tmpdir ]; then
+if [ -d "$tmpdir" ]; then
   junk=1
 else
-  mkdir -p $tmpdir
+  mkdir -p "$tmpdir"
 fi
 
 # Default output catalog file
-if [ x$output = x ]; then
+if [ x"$output" = x ]; then
   output="$bname_prefix"_psfcreateselectstar_"$field"_"$brightmag"_"$faintmag".fits
 fi
 
@@ -474,7 +473,7 @@ if [ x"$catalog" != x ]; then
     else
 
         # Make a file for output of 'asttable'.
-        if [ -f $catalog_main ]; then
+        if [ -f "$catalog_main" ]; then
             echo "External Catalog already exists "
         else
             # Select stars with magnitude between brighter to fainter.

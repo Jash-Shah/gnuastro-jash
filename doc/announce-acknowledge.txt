@@ -3,6 +3,7 @@ Alphabetically ordered list to acknowledge in the next release.
 Sergio Chueca Urzay
 Tamara Civera Lorenzo
 Andres Del Pino Molina
+Alexey Dokuchaev
 Alessandro Ederoclite
 Sepideh Eskandarlou
 Juan Antonio Fernández Ontiveros

@@ -133,7 +133,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -178,6 +178,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these ('-l*') will account for both the case where we
 #   have an equal sign and where we don't.
+inputs=""
 while [ $# -gt 0 ]
 do
     # Initialize 'tcol':
@@ -230,7 +231,7 @@ do
 
         # Not an option (not starting with a '-'): assumed to be input FITS
         # file name.
-        *) input="$1 $input"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 
     # If a column was given, add it to possibly existing previous columns
@@ -247,7 +248,7 @@ done
 # ===================
 
 # Make sure only two columns are given, then set the columns.
-if [ x$col = x ]; then
+if [ x"$col" = x ]; then
     echo "$scriptname: no columns specified, you can use '--column' (or '-c')"
     exit 1
 else
@@ -258,8 +259,10 @@ else
     fi
 fi
 
-# Make sure the value to '--mode' is either 'wcs' or 'img'.
-if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+# Make sure the value to '--mode' is either 'wcs' or 'img'. Note: '-o'
+# means "or" and is preferred to '[ ] || [ ]' because only a single
+# invocation of 'test' is done. Run 'man test' for more.
+if [ "$mode" = wcs   -o   $mode = "img" ]; then
     junk=1
 else
     echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
@@ -291,13 +294,13 @@ fi
 # Initalize the radius value if not given. If we are in WCS mode, select a
 # 3 arcsecond radius and if we are in image mode, select a 5 pixel radius.
 if [ x"$radius" = x ]; then
-    if [ $mode = "wcs" ]; then radius=1
+    if [ "$mode" = wcs ]; then radius=1
     else                       radius=3
     fi
 fi
 
 # Set the units of the radius.
-if [ x$mode = x"wcs" ]; then unit="\""; else unit=""; fi
+if [ x"$mode" = xwcs ]; then unit="\""; else unit=""; fi
 
 
 
@@ -314,7 +317,7 @@ if [ x"$namecol" != x ]; then
     printf "# Region name (or label) column: $namecol\n" >> $out
 fi
 printf "global color=%s width=%d\n" $color $width >> $out
-if [ $mode = "wcs" ]; then  printf "fk5\n" >> $out
+if [ "$mode" = wcs ]; then  printf "fk5\n" >> $out
 else                        printf "image\n" >> $out;   fi
 
 

@@ -7,7 +7,7 @@
 #     Raul Infante-Sainz <infantesainz@gmail.com>
 # Contributing author(s):
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
-# Copyright (C) 2015-2021, Free Software Foundation, Inc.
+# Copyright (C) 2015-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright

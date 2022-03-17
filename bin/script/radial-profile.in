@@ -159,7 +159,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -204,6 +204,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these (`-l*') will account for both the case where we
 #   have an equal sign and where we don't.
+inputs=""
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -276,7 +277,7 @@ do
 
         # Not an option (not starting with a `-'): assumed to be input FITS
         # file name.
-        *) inputs="$1 $inputs"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 
     # If a measurment was given, add it to possibly existing previous
@@ -315,8 +316,10 @@ if [ x"$center" != x ]; then
     fi
 fi
 
-# Make sure the value to '--mode' is either 'wcs' or 'img'.
-if [ $mode = "wcs" ] || [ $mode = "img" ]; then
+# Make sure the value to '--mode' is either 'wcs' or 'img'. Note: '-o'
+# means "or" and is preferred to '[ ] || [ ]' because only a single
+# invocation of 'test' is done. Run 'man test' for more.
+if [ "$mode" = wcs   -o    $mode = "img" ]; then
     junk=1
 else
     echo "$scriptname: value to '--mode' ('-m') should be 'wcs' or 'img'"
@@ -360,7 +363,7 @@ else
 
     # The central position is in image mode; we should just separate each
     # coordinate.
-    if [ $mode = img ]; then
+    if [ "$mode" = img ]; then
         xcenter=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
         ycenter=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 
@@ -423,15 +426,15 @@ fi
 # generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 defaultname=$(pwd)/"$bname_prefix"_radial_profile_$mode"_$xcenter"_"$ycenter"
-if [ x$output = x ]; then output="$defaultname.fits"; fi
+if [ x"$output" = x ]; then output="$defaultname.fits"; fi
 
 # Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
 # be constructed.  If the user set the directory, then make it. This
 # directory will be deleted at the end of the script if the user does not
 # want to keep it (with the `--keeptmp' option).
-if [ x$tmpdir = x ]; then tmpdir=$defaultname; fi
-if [ -d $tmpdir ]; then junk=1; else mkdir $tmpdir; fi
+if [ x"$tmpdir" = x ]; then tmpdir=$defaultname; fi
+if [ -d "$tmpdir" ]; then junk=1; else mkdir $tmpdir; fi
 
 
 
@@ -497,9 +500,9 @@ valuesbase=values.fits
 values=$tmpdir/$valuesbase
 valuesstdbase=valuesstd.fits
 valuesstd=$tmpdir/$valuesstdbase
-if [ x$oversample = x ]; then
+if [ x"$oversample" = x ]; then
     cd $tmpdir; ln -fs $cropbase $valuesbase; cd $curdir
-    if [ x"$instd" != x ] && [ -f "$instd" ]; then
+    if [ x"$instd" != x   -a   -f "$instd" ]; then
         cd $tmpdir; ln -fs $cropstdbase $valuesstdbase; cd $curdir
     fi
 else
@@ -507,7 +510,7 @@ else
     ycenter=$(echo $ycenter | awk '{print '$oversample'*$1}')
     rmax=$(echo    $rmax    | awk '{print '$oversample'*$1}')
     astwarp $crop --scale=$oversample,$oversample -o$values
-    if [ x"$instd" != x ] && [ -f "$instd" ]; then
+    if [ x"$instd" != x    -a    -f "$instd" ]; then
         astwarp $cropstd --scale=$oversample,$oversample -o$valuesstd
     fi
 fi

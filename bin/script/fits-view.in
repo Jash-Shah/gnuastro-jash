@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # View the contents of FITS files using DS9 (if there is an image in any of
 # the HDUs) or TopCat (when there is a table). This script can be called
@@ -136,7 +136,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -227,7 +227,7 @@ do
 
         # Not an option (not starting with a '-'): assumed to be input FITS
         # file name.
-        *) inputs="$inputs $1"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 
     # In case '--ds9extra' was given, add it to any previous values. The
@@ -258,8 +258,10 @@ if [ x"$ds9center" != x ]; then
         echo "$scriptname: no coordinate mode provided! $modeerrorinfo"
         exit 1
 
-    # Make sure the value to '--mode' is either 'wcs' or 'img'.
-    elif [ $ds9mode = "wcs" ] || [ $ds9mode = "img" ]; then
+    # Make sure the value to '--mode' is either 'wcs' or 'img'. Note: '-o'
+    # means "or" and is preferred to '[ ] || [ ]' because only a single
+    # invocation of 'test' is done. Run 'man test' for more.
+    elif [ "$ds9mode" = wcs   -o    "$ds9mode" = img ]; then
         junk=1
     else
         cat <<EOF
@@ -302,7 +304,10 @@ ds9geoopt="-geometry $ds9geometry"
 #
 #    zscale  --> mode zscale
 #    minmax  --> mode minmax
-if [ x"$ds9scale" = x ] || [ "$ds9scale" = "zscale" ]; then
+#
+# Note: '-o' means "or" and is preferred to '[ ] || [ ]' because only a
+# single invocation of 'test' is done. Run 'man test' for more.
+if [ x"$ds9scale" = x    -o    "$ds9scale" = "zscale" ]; then
     ds9scale="mode zscale"
 elif [ "$ds9scale" = "minmax" ]; then
      ds9scale="mode minmax"
@@ -344,7 +349,7 @@ fi
 
 # To allow generic usage, if no input file is given (the `if' below is
 # true), then just open an empty ds9.
-if [ "x$inputs" == "x" ]; then
+if [ x"$inputs" = x ]; then
     $ds9exec $ds9geoopt
 else
     # Select the first input.
@@ -359,13 +364,13 @@ else
 
     # If the first input existed and was a FITS file, then `check' will be
     # 0 ('astfits' was successful).
-    if [ "$check" == "0" ]; then
+    if [ "$check" = 0 ]; then
 
 	# Input is image or table.
 	type=$(astfits $input1 --hasimagehdu)
 
 	# If the file was a image, then  `check` will be 1.
-	if [ "$type" == "1" ]; then
+	if [ "$type" = 1 ]; then
 
             # If a HDU is given, add it to all the input file names (within
             # square brackets for DS9).
@@ -380,14 +385,14 @@ else
             n0=$(astfits $input1 -h0 | awk '$1=="NAXIS"{print $3}')
 
             # Find the number of dimensions.
-            if [ "$n0" == "0" ]; then
+            if [ "$n0" = 0 ]; then
 		ndim=$(astfits $input1 -h1 | awk '$1=="NAXIS"{print $3}')
             else
 		ndim=$n0
             fi;
 
             # Open DS9 based on the number of dimension.
-            if [ "$ndim" = "2" ]; then
+            if [ "$ndim" = 2 ]; then
 
 		# 2D multi-extension file: use the "Cube" window to
 		# flip/slide through the extensions.
@@ -436,7 +441,7 @@ else
 
     # 'astfits' couldn't open the file.
     else
-        if [ -f $input1 ]; then
+        if [ -f "$input1" ]; then
 	    echo "'$input1' isn't a FITS file."
         else
 	    echo "'$input1' doesn't exist."

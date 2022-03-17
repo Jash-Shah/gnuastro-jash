@@ -6,8 +6,9 @@
 # Original author:
 #   Raul Infante-Sainz <infantesainz@gmail.com>
 # Contributing author(s):
+#   Mohammad Akhlaghi <mohammad@akhlaghi.org>
 #   Carlos Morales-Socorro <cmorsoc@gmail.com>
-# Copyright (C) 2021, Free Software Foundation, Inc.
+# Copyright (C) 2021-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -135,7 +136,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -180,6 +181,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these (`-l*') will account for both the case where we
 #   have an equal sign and where we don't.
+inputs=""
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -231,7 +233,7 @@ do
 
         # Not an option (not starting with a `-'): assumed to be input FITS
         # file name.
-        *) inputs="$1 $inputs"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 
 done
@@ -260,7 +262,7 @@ if [ x"$inner" = x ]; then
 $scriptname: no inner FITS image provided. The inner part of the PSF (to unite with the outer part, which is the main argument) can be specified with the '--inner' (or '-i') option as a FITS image
 EOF
     exit 1
-elif [ ! -f $inner ]; then
+elif [ ! -f "$inner" ]; then
     echo "$scriptname: $inner: No such file or directory."
     exit 1
 fi

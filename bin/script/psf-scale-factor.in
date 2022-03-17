@@ -143,7 +143,7 @@ EOF
 
 # Functions to check option values and complain if necessary.
 on_off_option_error() {
-    if [ "x$2" = x ]; then
+    if [ x"$2" = x ]; then
         echo "$scriptname: '$1' doesn't take any values"
     else
         echo "$scriptname: '$1' (or '$2') doesn't take any values"
@@ -188,6 +188,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these (`-l*') will account for both the case where we
 #   have an equal sign and where we don't.
+inputs=""
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -248,7 +249,7 @@ do
 
         # Not an option (not starting with a `-'): assumed to be input FITS
         # file name.
-        *) inputs="$1 $inputs"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 
 done
@@ -266,7 +267,7 @@ if [ x"$inputs" = x ]; then
 $scriptname: no input FITS image files. Run with '--help' for more information on how to run
 EOF
     exit 1
-elif [ ! -f $inputs ]; then
+elif [ ! -f "$inputs" ]; then
     echo "$scriptname: $inputs: No such file or directory"
     exit 1
 fi
@@ -317,8 +318,11 @@ if [ x"$mode" = x ]; then
 $scriptname: no coordinate mode provided. You can use '--mode' (or '-O'), acceptable values are 'img' (for pixel coordinate) or 'wcs' (for celestial coordinates)
 EOF
     exit 1
-# Make sure the value to '--mode' is either 'wcs' or 'img'.
-elif [ $mode = "wcs" ] || [ $mode = "img" ]; then
+
+# Make sure the value to '--mode' is either 'wcs' or 'img'. Note: '-o'
+# means "or" and is preferred to '[ ] || [ ]' because only a single
+# invocation of 'test' is done. Run 'man test' for more.
+elif [ "$mode" = wcs     -o     "$mode" = img ]; then
     junk=1
 else
     cat <<EOF
@@ -365,14 +369,14 @@ objectid="$xcoord"_"$ycoord"
 # specify a output name, then a default value containing the center and
 # mode will be generated.
 bname_prefix=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
-if [ x$tmpdir = x ]; then \
+if [ x"$tmpdir" = x ]; then \
     tmpdir=$(pwd)/"$bname_prefix"_psfmodelscalefactor
 fi
 
-if [ -d $tmpdir ]; then
+if [ -d "$tmpdir" ]; then
     junk=1
 else
-    mkdir -p $tmpdir
+    mkdir -p "$tmpdir"
 fi
 
 
@@ -386,7 +390,7 @@ fi
 # (RA/DEC), then transform them to IMG (pixel). Here, this is done by using
 # the WCS information from the original input image. If the original
 # coordinates were done in IMG, then just use them.
-if [ $mode = wcs ]; then
+if [ "$mode" = wcs ]; then
     xycenter=$(echo "$xcoord,$ycoord" \
                    | asttable  --column='arith $1 $2 wcs-to-img' \
                                --wcsfile=$inputs --wcshdu=$hdu $quiet)
