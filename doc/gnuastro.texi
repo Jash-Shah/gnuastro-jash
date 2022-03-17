@@ -5483,7 +5483,7 @@ When saturation occurs, the sharp peak of the profile is lost (like cutting off 
 To see this saturation noise run the last command again and in SAO DS9, set the ``Scale'' to ``min max'' and zoom into the center.
 You will see the noisy saturation pixels at the center of the star in red.
 
-This noise-at-the-peak disrupts Segment's assumption to expand clumps from a local maxima: in each noisy peak is being treated as a separate local maxima and thus a separate clump.
+This noise-at-the-peak disrupts Segment's assumption to expand clumps from a local maxima: each noisy peak is being treated as a separate local maxima and thus a separate clump.
 For more on how Segment defines clumps, see Section 3.2.1 and Figure 8 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi @& Ichikawa 2015}.
 To have the center identified as a single clump, we should mask these saturated pixels in a way that suites Segment's non-parametric methodology.
 
@@ -5492,8 +5492,8 @@ The saturation level is usually fixed for any survey or input data that you rece
 Let's make a smaller crop of @mymath{50\times50} pixels around the star with the first command below.
 With the next command, please look at the crop with DS9 to visually understand the problem.
 You will see the saturated pixels as the noisy red pixels in the center of the image.
-A non-saturated star will have a single pixel as the maximum and won't have a such a large area covered by a noisy constant value (find a few stars in the image and see for your self).
-Visual and qualitative inspection of the process is very imporant for understanding the solution.
+A non-saturated star will have a single pixel as the maximum and won't have a such a large area covered by a noisy constant value (find a few stars in the image and see for yourself).
+Visual and qualitative inspection of the process is very important for understanding the solution.
 
 @example
 $ astcrop saturated.fits --mode=wcs --widthinpix --width=50 \
@@ -5521,7 +5521,7 @@ Histogram:
  |----------------------------------------------------------------------
 @end example
 
-The peak you see in the right end (larger values) of the histogram shows the saturated pixels (a constant level, with some scatter due to the large Poisson noise)
+The peak you see in the right end (larger values) of the histogram shows the saturated pixels (a constant level, with some scatter due to the large Poisson noise).
 If there was no saturation, the number of pixels should have decreased at increasing values; until reaching the maximum value of the profile in one pixel.
 But that is not the case here.
 Please try this experiment on a non-saturated (fainter) star to see what we mean.
@@ -5624,7 +5624,7 @@ Try to find it.
 But we aren't done yet!
 Please zoom-in to that central bright star and have another look on the edges of the vertical ``bleeding'' saturated pixels, there are strong positive/negative values touching it (almost like ``waves'').
 These will also cause problems and have to be masked!
-So with a small addition to the previous command, let's dilate the saturated regions (with 2-connectivity, or 8-connected neighbors) two times and have another look:
+So with a small addition to the previous command, let's dilate the saturated regions (with 2-connectivity, or 8-connected neighbors) four times and have another look:
 
 @example
 $ astarithmetic saturated.fits set-i i i 2200 gt \
@@ -5840,7 +5840,7 @@ We are now ready to start building the outer parts of the PSF in @ref{Building o
 
 @node Building outer part of PSF, Inner part of the PSF, One object for the whole detection, Building the extended PSF
 @subsection Building outer part of PSF
-In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars and won't cause over-fragmentation of objects in the outskirts of stars.
+In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars and not having over-fragmentation of objects in the outskirts of stars.
 We are now ready to start building the extended PSF.
 
 First we will build the outer parts of the PSF, so we want the brightest stars.
@@ -5948,7 +5948,7 @@ Such a ring ensures having a high number of pixels so the estimation of the flux
 Also, at such distance from the center the signal to noise is high and there are not obvious features that can affect the normalization.
 Note that the profiles are different because we are considering a wide range of magnitudes, so the fainter stars are much more noisy.
 However, in this tutorial we will keep these stars in order to have a higher number of stars for the outer part.
-In a real case scenario, we should look for stars with a much more similar brightness (smaller range of magnitudes) to not we will lose signal to noise as a consequence of the inclusion of fainter stars.
+In a real case scenario, we should look for stars with a much more similar brightness (smaller range of magnitudes) to not lose signal to noise as a consequence of the inclusion of fainter stars.
 
 @example
 $ rm -r finding-normradii
@@ -5984,7 +5984,7 @@ With it, the stacked image no longer has any WCS information.
 This is natural, because the stacked image doesn't correspond to any specific region of the sky any more.
 
 Let's compare this stacked PSF with the images of the individual stars that were used to create it.
-You clearly see that the number of masked pixels is significantly decreased and the PSF is much more ``cleaner'').
+You can clearly see that the number of masked pixels is significantly decreased and the PSF is much more ``cleaner''.
 
 @example
 $ astscript-fits-view outer/stack.fits outer/stamps/*.fits
@@ -6070,7 +6070,7 @@ We are now ready to unite the two stacks we have constructed: the outer and the 
 @node Uniting the different PSF components, Subtracting the PSF, Inner part of the PSF, Building the extended PSF
 @subsection Uniting the different PSF components
 
-In @ref{Building outer part of PSF} we built the outer part of the extened PSF and the inner part was built in @ref{Inner part of the PSF}.
+In @ref{Building outer part of PSF} we built the outer part of the extended PSF and the inner part was built in @ref{Inner part of the PSF}.
 The outer part was built with very bright stars, and the inner part using fainter stars to not have saturation in the core of the PSF.
 The next step is to join these two parts in order to have a single PSF.
 First of all, let's have a look at the two stacks and also to their radial profiles to have a good feeling of the task.
@@ -6192,7 +6192,7 @@ $ echo $scale
 Now that we know the scaling factor, we are ready to unite the outer and the inner part of the PSF.
 To do that, we will use the script @file{astscript-psf-unite} with the command below (for more on this script, see @ref{Invoking astscript-psf-unite}).
 The basic parameters are the inner part of the PSF (given to @option{--inner}), the inner part's scale factor (@option{--scale}), and the junction radius (@option{--radius}).
-The inner profile is first scaled, and all the pixels of the outer image within the given radius are replaced with the pixels of the inner image.
+The inner part is first scaled, and all the pixels of the outer image within the given radius are replaced with the pixels of the inner image.
 Since the flux factor was computed for a ring of pixels between 10 and 15 pixels, let's set the junction radius to be 12 pixels (roughly in between 10 and 15):
 
 @example
@@ -6214,7 +6214,7 @@ $ astscript-fits-view outer/stack.fits psf.fits --ds9scale=minmax \
            --ds9extra="-lock scale yes -zoom 4 -scale log"
 @end example
 
-Nothing demonstrates the effect of a bad analysis, then actually seeing a bad result!
+Nothing demonstrates the effect of a bad analysis than actually seeing a bad result!
 So let's choose a bad normalization radial range (50 to 60 pixels) and unite the inner and outer parts based on that.
 The last command will open the two PSFs together in DS9, you should be able to immediately see the discontinuity in the union radius.
 
@@ -6232,7 +6232,7 @@ $ astscript-fits-view psf-bad.fits psf.fits --ds9scale=minmax \
            --ds9extra="-lock scale yes -zoom 4 -scale log"
 @end example
 
-As you see, the selection of the normalization radii is very important.
+As you see, the selection of the normalization radii and the unite radius are very important.
 The first time you are trying to build the PSF of a new dataset, it has to be explored with a visual inspection of the images and radial profiles.
 Once you have found a good normalization radius for a certain part of the PSF in a survey, you can generally use it comfortably without change.
 But for a new survey, or a different part of the PSF, be sure to repeat the visual checks above to choose the best radii.
@@ -6242,7 +6242,7 @@ As a summary, a good junction radius is one that:
 @item
 Is large enough to not let saturation and non-linearity (from the outer profile) into the inner region.
 @item
-Is small enough to have a sufficiently high signal to noise ratio (from the inner profile)to avoid adding noise in the union radius.
+Is small enough to have a sufficiently high signal to noise ratio (from the inner profile) to avoid adding noise in the union radius.
 @end itemize
 
 Now that the complete PSF has been obtained, let's remove that bad-looking PSF, and stick with the nice and clean PSF for the next step in @ref{Subtracting the PSF}.
@@ -6288,7 +6288,7 @@ With the center position of that star, let's obtain the flux factor using the sa
 
 @example
 $ scale=$(astscript-psf-scale-factor label/67510-seg.fits \
-                   --mode=wcs --quiet\
+                   --mode=wcs --quiet \
                    --psf=psf.fits \
                    --center=$center \
                    --normradii=10,15 \
@@ -6311,8 +6311,8 @@ $ astscript-fits-view label/67510-seg.fits single-star/subtracted.fits \
 @end example
 
 You will notice that there is something wrong with this ``subtraction''!
-The box of the PSF extended PSF is clearly visible!
-The the sky noise under the box is clearly larger than the rest of the noise in the image.
+The box of the extended PSF is clearly visible!
+The sky noise under the box is clearly larger than the rest of the noise in the image.
 Before reading on, please try to think about the cause of this yourself.
 
 To understand the cause, let's look at the scale factor, the number of stamps used to build the outer part (and its square root):
@@ -6329,7 +6329,7 @@ However, the outer part of the PSF was created with only a handful of star stamp
 When you stack @mymath{N} images, the stack's signal-to-noise ratio (S/N) improves by @mymath{\sqrt{N}}.
 We had 8 images for the outer part, so the S/N has only improved by a factor of just under 3!
 When we multiply the final stacked PSF with 19, we are also scaling up the noise by that same factor.
-So the stacked image's noise-level is $19/3=6.3$ times larger than the noise of the input image.
+So the stacked image's noise-level is @mymath{19/3=6.3} times larger than the noise of the input image.
 This terrible noise-level is what you clearly see as the footprint of the PSF.
 
 To confirm this, let's use the commands below to subtract the faintest of the bright-stars catalog (note the use of @option{--tail} when finding the central position).
@@ -6343,7 +6343,7 @@ $ center=$(asttable flat/67510-bright.fits --sort phot_g_mean_mag \
                     | awk '@{printf "%s,%s", $1, $2@}')
 
 $ scale=$(astscript-psf-scale-factor label/67510-seg.fits \
-                   --mode=wcs --quiet\
+                   --mode=wcs --quiet \
                    --psf=psf.fits \
                    --center=$center \
                    --normradii=10,15 \
@@ -6504,7 +6504,7 @@ Note also that during this process we assumed that the PSF doesn't vary with the
 In other words, we are obtaining an averaged PSF model from a few star stamps that are naturally different, and this also explains the residuals on each subtracted star.
 
 We let as an interesting exercise the modeling and subraction of other stars, for example, the non saturated stars of the image.
-By doing this, you will notice that in the core region the residuals are different compared to the residuals of brightner stars that we have obtained.
+By doing this, you will notice that in the core region the residuals are different compared to the residuals of brighter stars that we have obtained.
 
 In general, in this tutorial we have showed how to deal with the most important challenges for constructing an extended PSF.
 Each image or dataset will have its own particularities that you will have to take into account when constructing the PSF.
