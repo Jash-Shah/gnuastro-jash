@@ -6494,7 +6494,7 @@ For doing that, it is necessary to run the script with the option @option{--mode
 We encourage the reader to obtain such scattered light field model.
 In some scenarios it could be interesting having such way of correcting the PSF.
 For example, if there are many faint stars that can be modeled at the same time because their flux don't affect each other.
-In such situation, the task could be easily paralelized without having to wait to model the brighter stars before the fainter ones.
+In such situation, the task could be easily parallelized without having to wait to model the brighter stars before the fainter ones.
 At the end, once all stars have been modeled, a simple Arithmetic command could be used to sum the different modeled-PSF stamps to obtain the entire scattered light field.
 
 In general you see that the subtraction has been done nicely and almost all the extended wings of the PSF have been subtracted.
@@ -24990,7 +24990,8 @@ Just don't forget to run every command, and try to tweek its steps based on the 
 @subsection Invoking astscript-psf-select-stars
 This installed script will select good star candidates for constructing a PSF.
 It will consider stars within a given range of brightness without nearby contaminant objects.
-To do that, it allows to the user to specify different options.
+To do that, it allows to the user to specify different options described here.
+A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
 The executable name is @file{astscript-psf-select-stars}, with the following general template:
 
 @example
@@ -25010,8 +25011,7 @@ $ astscript-psf-select-stars image.fits \
 
 The input of this script is an image, and the output is a catalog of stars with brightness in the requested range of magnitudes (provided with @option{--magnituderange}).
 The output catalog will also only contain stars that are sufficiently distant (@option{--mindistdeg}) from all other brighter, and some fainter stars.
-It is possible to consider different datasets with the option @option{--dataset}.
-By default, Gaia eDR3 dataset is considered: @option{--dataset="gaia --dataset=edr3"}
+It is possible to consider different datasets with the option @option{--dataset} (by default, Gaia eDR3 dataset is considered)
 All stars that are @option{--faintmagdiff} fainter than the faintest limit will also be accounted for, when selecting good stars.
 The @option{--magnituderange}, and @option{--mindistdeg} are mandatory: if not specified the code will abort.
 
@@ -25119,13 +25119,14 @@ Recall that the axis ratio is only used when you also give a segmented image wit
 @item -t
 @itemx --tmpdir
 Directory to keep temporary files during the execution of the script.
+If the directory doesn't exist at run-time, this script will create it.
 By default, upon completion of the script, this directory will be deleted.
 However, if you would like to keep the intermediate files, you can use the @option{--keeptmp} option.
 
 @item -k
 @itemx --keeptmp
 Do not remove the temporary directory (see description of @option{--keeptmp}).
-This option is useful for debugging and checking the steps of selecting stars.
+This option is useful for debugging and checking the outputs of internal steps.
 
 @item -o STR
 @itemx --output=STR
@@ -25143,10 +25144,10 @@ The output name of the final catalog containing good stars.
 
 @node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
 @subsection Invoking astscript-psf-stamp
-This installed script will read an image, the center of an object @option{--center}, the type of the center coordinates @option{--mode} (img or wcs), the normalization radii @option{--normradii}, and the size of the output stamp @option{--stampwidth}.
-With that input, it will generate a stamp centered at the coordinates provided, and normalized by the flux computed in the normalization radius.
-
-This script can be used with the following general template:
+This installed script will will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel re-gridding if necessary) and normalized at a certain normalization radius.
+Optionally, it will also mask all the other background sources.
+A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
+The executable name is @file{astscript-psf-stamp}, with the following general template:
 
 @example
 $ astscript-psf-stamp [OPTION...] FITS-file
@@ -25175,8 +25176,8 @@ $ asttable catalog.fits | while read -r ra dec mag; do \
 @end example
 
 The input is an image from which the stamp of the stars are constructed.
-There are mandatory options that the user has to specify: @option{--mode}, @option{--center}, @option{--stampwidth}, @option{--normradii}.
-The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}, and normalized by the value computed within the ring around the center at a radial distance between the two radius specified by the option @option{--normradii}.
+There are mandatory options that the user has to specify: @option{--mode}, @option{--center}, @option{--stampwidth} and @option{--normradii}.
+The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}, and normalized by the value computed within the ring around the center (at a radial distance between the two radius specified by the option @option{--normradii}).
 More options are available with the goal of obtaining better stamps.
 A full description of each option is given below.
 
@@ -25191,8 +25192,8 @@ The HDU/extension of the input image to use.
 Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
 This option thus accepts only two values: @option{img} or @option{wcs}.
 
-@item -c FLT[,FLT[,...]]
-@itemx --center=FLT[,FLT[,...]]
+@item -c FLT,FLT
+@itemx --center=FLT,FLT
 The central position of the object.
 This option is used for placing the center of the stamp.
 This parameter is used in @ref{Crop} to center and crop the image.
@@ -25204,31 +25205,38 @@ The units of the coordinates are read based on the value to the @option{--mode} 
 Size (width) of the output image stamp in pixels.
 The size of the output image will be always an odd number of pixels.
 As a consequence, if the user specify an even number, the final size will be the specified size plus 1 pixel.
-This is necessary to place the specified coordinate position by @option{--center} in the center of the central pixel.
+This is necessary to place the specified coordinate (given to @option{--center}) in the center of the central pixel.
+This is very important (and necessary) in the case of the centers of stars, therefore a sub-pixel translation will be performed internally to ensure this.
 
-@item -n INT[,INT[,...]]
-@itemx --normradii=INT[,INT[,...]]
-Region around the central position in which the normalization is computed.
-This option takes two values separated by a comma (@key{,}).
+@item -n FLT,FLT
+@itemx --normradii=FLT,FLT
+Minimum and maximum radius of ring to to normalize the image.
+This option takes two values, separated by a comma (@key{,}).
 The first value is the inner radius, the second is the outer radius.
-These two radius define a ring of pixels around the center that is used for obtaining the normalization value.
 
 @item -S STR
 @itemx --segment=STR
-Filename of a segmentation image from Segment's output.
-This image is used to mask all objects that are not the central clump/object.
-The script computes an internal mask that combine the objects and clumps to mask all objects that do not correspond to the central one.
-All clumps of the central object that are not the central clump are also masked.
-The result is that all objects and clumps that contaminate the central source are masked.
-The size of the region that is used for identifying the central clump/object can be specified by the option @option{--corewidth}, see below.
+Optional filename of a segmentation image from Segment's output (must contain the @code{CLUMPS} and @code{OBJECT} HDUs).
+For more on the definition of ``objects'' and ``clumps'', see @ref{Segment}.
+If given, Segment's output is used to mask all background sources from the large foreground object (a bright star):
+@itemize
+@item
+Objects that are not the central object.
+@item
+Clumps (within the central object) that are not the central clump.
+@end itemize
+The result is that all objects and clumps that contaminate the central source are masked, while the diffuse flux of the central object remains.
+The size of the region that is used for identifying the central clump/object label can be specified by the option @option{--corewidth}, see below.
 
 @item -w INT
 @itemx --corewidth=INT
-Width of the region that is used to compute the central clump/object over the segmentation image @option{--segment}, with the goal of not masking them.
-If a segmentation image is provided, then it is necessary to not mask the central object.
-To do that, a central region is considered in order to compute the values of the central object on the segmentation image.
-Once it has been identified, that pixels are not masked.
-With this option, it is possible to control the size of the central region for computing the central object label (on the segmentation image).
+Width of the region that is used to compute the central clump/object label over the segmentation image @option{--segment}, with the goal of not masking them.
+It is rarely necessary to change this option.
+
+If a segmentation image is provided, then it is necessary to not mask the central object+clump (see description of @option{--segment}).
+To do that, the clump and object images are cropped around the coordinate given to @option{--center}, but on the two labeled images.
+Assuming a single value exists within the crop, the IDs of the respective object and clump are found.
+Therefore it is necessary for this option to be small (the program will abort if more than one label exists within it).
 
 @item -N STR
 @itemx --normop=STR
@@ -25254,21 +25262,17 @@ This parameter is used directly in the @file{astscript-radial-profile} script.
 Sigma clipping parameters: only relevant if sigma-clipping operators are requested by @option{--normop}.
 For more on sigma-clipping, see @ref{Sigma clipping}.
 
-@item -t STR
-@itemx --tmpdir=STR
-Several intermediate files are necessary to obtain the stamp image.
-All of these temporal files are saved into a temporal directory.
-With this option, you can directly specify this directory.
-By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+@item -t
+@itemx --tmpdir
+Directory to keep temporary files during the execution of the script.
 If the directory doesn't exist at run-time, this script will create it.
-Once the radial profile has been obtained, this directory is removed.
-You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+By default, upon completion of the script, this directory will be deleted.
+However, if you would like to keep the intermediate files, you can use the @option{--keeptmp} option.
 
 @item -k
 @itemx --keeptmp
-Don't delete the temporary directory (see description of @option{--tmpdir} above).
-This option is useful for debugging.
-For example, to check that the intermediate images have the desired center, they are properly masked, etc.
+Do not remove the temporary directory (see description of @option{--keeptmp}).
+This option is useful for debugging and checking the outputs of internal steps.
 
 @item -o STR
 @itemx --output=STR
@@ -25283,11 +25287,9 @@ The main reason of setting this name is to have an unique name for each stamp by
 @node Invoking astscript-psf-unite, Invoking astscript-psf-scale-factor, Invoking astscript-psf-stamp, PSF construction and subtraction
 @subsection Invoking astscript-psf-unite
 This installed script will join two PSF images at a given radius.
-This operation is commonly used when the outer part of the PSF has been computed from very bright stars, and consequently, they are saturated in most central part (core).
-In order to have an extended but not saturated PSF in the core, it is necessary to put in the central part the PSF constructed from fainter stars.
-This is the main goal of the current script.
-
-This script can be used with the following general template:
+This operation is commonly used when merging (uniting) the inner and outer parts of the PSF.
+A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
+The executable name is @file{astscript-psf-unite}, with the following general template:
 
 @example
 $ astscript-psf-unite [OPTION...] FITS-file
@@ -25297,25 +25299,26 @@ $ astscript-psf-unite [OPTION...] FITS-file
 Examples:
 
 @example
-## Multiply inner.fits by 3 and put it in the center of
-## outer.fits. The core goes up to a radius of 25 pixels.
+## Multiply inner.fits by 3 and put it in the center (within a radius of
+## 25 pixels) of outer.fits. The core goes up to a radius of 25 pixels.
 $ astscript-psf-unite outer.fits \
-      --core=inner.fits --scale=3 \
-      --radius=25 --output=joined.fits
+           --core=inner.fits --scale=3 \
+           --radius=25 --output=joined.fits
 
 ## Same example than the above, but considering an
 ## ellipse (instead of a circle).
 $ astscript-psf-unite outer.fits \
-      --core=inner.fits --scale=3 \
-      --radius=25 --axisratio=0.5 \
-      --positionangle=40 --output=joined.fits
+           --core=inner.fits --scale=3 \
+           --radius=25 --axisratio=0.5 \
+           --positionangle=40 --output=joined.fits
 
 @end example
 
 The junction is done by considering the input image as the outer part.
-The central part is specified by the option @option{--inner} and it is multiplied by the factor @option{--scale}.
-Then, the inner image is cropped and appened to the outer image at a radius specified by the option @option{--radius} (in pixels).
-The factor by which the inner part is multiplied has to be explicitly provided, see below to know how to compute it.
+The central part is specified by FITS image given to @option{--inner} and it is multiplied by the factor @option{--scale}.
+All pixels within @option{--radius} (in pixels) of the center of the outer part are then replaced with the inner image.
+
+The scale factor to multiply with the inner part has to be explicitly provided (see the description of @option{--scale} below).
 Note that this script assumes that PSF is centered in both images.
 More options are available with the goal of obtaining a good junction.
 A full description of each option is given below.
@@ -25337,42 +25340,54 @@ After that, it will be appened to the outer part (input image).
 @itemx --innerhdu=STR
 The HDU/extension of the inner PSF (option @option{--inner}).
 
-@item -r FLT
-@itemx --radius=FLT
-Radius (in pixels) at which the junction of the images is done.
-
 @item -f FLT
 @itemx --scale=FLT
 Factor by which the inner part (@option{--inner}) is multiplied.
 This factor is necessary to put the two different parts of the PSF at the same flux level.
 A convenient way of obtaining this value is by using the script @file{astscript-model-scale-factor}, see @ref{Invoking astscript-psf-scale-factor}.
+There is also a full tutorial on using all the @command{astscript-psf-*} installed scripts together, see  @ref{Building the extended PSF}.
+We recommend doing that tutorial before starting to work on your own datasets.
+
+@item -r FLT
+@itemx --radius=FLT
+Radius (in pixels) at which the junction of the images is done.
+All pixels in the outer image within this radius (from its center) will be replaced with the pixels of the inner image (that has been scaled).
+By default, a circle is assumed for the shape of the inner region, but this can be tweaked with @option{--axisratio} and @option{--positionangle} (see below).
 
 @item -Q FLT
 @itemx --axisratio=FLT
-By default, the junction is done at a radius specified by @option{--radius} assuming a circular shape.
-However, in some situations it could be a good idea to make an ellipse shape, for example if the PSF is not circulary symmetric.
-With this option, the axis ratio of the ellipse can be specified.
+Axis ratio of ellipse to define the inner regio.
+By default this option has a value of 1.0, so all central pixels (of the outer image) within a circle of radius @option{--radius} are replaced with the scaled inner image pixels.
+With this option, you can customize the shape of pixels to take from the inner and outer profiles.
+
+For a PSF, it will usually not be necessary to change this option:
+even if the PSF is non-circular, the inner and outer parts will both have the same ellipticity.
+So if the scale factor is chosen accurately, using a circle to select which pixels from the inner image to use in the outer image will be irrelevant.
 
 @item -p FLT
 @itemx --positionangle=FLT
-Position angle of the ellipse (in degrees).
-Similar option than @option{--axisratio} (see above) to specify the shape of the ellipse.
+Position angle of the ellipse (in degrees) to define which central pixels of the outer image to replace with the scaled inner image.
+Similar to @option{--axisratio} (see above).
 
-@item -t STR
-@itemx --tmpdir=STR
-Several intermediate files are necessary to obtain the junction.
-All of these temporal files are saved into a temporal directory.
-With this option, you can directly specify this directory.
-By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+@item -t
+@itemx --tmpdir
+Directory to keep temporary files during the execution of the script.
 If the directory doesn't exist at run-time, this script will create it.
-Once the junction image has been obtained, this directory is removed.
-You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+By default, upon completion of the script, this directory will be deleted.
+However, if you would like to keep the intermediate files, you can use the @option{--keeptmp} option.
 
 @item -k
 @itemx --keeptmp
-Don't delete the temporary directory (see description of @option{--tmpdir} above).
-This option is useful for debugging.
+Do not remove the temporary directory (see description of @option{--keeptmp}).
+This option is useful for debugging and checking the outputs of internal steps.
 @end table
+
+
+
+
+
+
+
 
 
 
@@ -25380,9 +25395,9 @@ This option is useful for debugging.
 @subsection Invoking astscript-psf-scale-factor
 This installed script will compute the multiplicative factor (scale) that is necessary to match the PSF to a given star.
 The match in flux is done within a ring of pixels.
-With this script, it is also possible to compute the scale factor by which it is necessary to multiply the inner part of the PSF when uniting two parts of the PSF.
-
-This script can be used with the following general template:
+It can also be used to compute the scale factor to multiply the inner part of the PSF with the outer part during the creation of a PSF.
+A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
+The executable name is @file{astscript-psf-scale-factor}, with the following general template:
 
 @example
 $ astscript-psf-scale-factor [OPTION...] FITS-file
@@ -25397,20 +25412,20 @@ Examples:
 $ astscript-psf-scale-factor image.fits --mode=img \
       --center=53,69 --normradii=20,30 --psf=psf.fits
 
-## Iterate over a catalog with positions of stars that are
-## in the the input image to compute their scale factors.
+## Iterate over a catalog with RA,Dec positions of stars that are in
+## the input image to compute their scale factors.
 $ asttable catalog.fits | while read -r ra dec mag; do \
     astscript-psf-scale-factor image.fits \
         --mode=wcs \
         --psf=psf.fits \
-        --center=$ra,$dec \
+        --center=$ra,$dec --quiet \
         --normradii=20,30 > scale-"$ra"-"$dec".txt; done
 
 @end example
 
 The input should be an image containing the star that you want to match in flux with the PSF.
 The output will be a single number that is printed on the command-line.
-That number is the multiplicative factor to scale the PSF image (@option{--psf}) to match in flux with the given star (which is located in @option{--center} of the input image).
+That number is the multiplicative factor to scale the PSF image (given to @option{--psf}) to match in flux with the given star (which is located in @option{--center} coordinate of the input image).
 The scale factor will be calculated within the ring of pixels specified by the option @option{--normradii}.
 
 All the pixels within this ring will be separated from both the PSF and input images.
@@ -25418,7 +25433,7 @@ For the input image, around the selected coordinate; while masking all other sou
 The finally selected pixels of the input image will then be divided by those of the PSF image.
 This gives us an image containing one scale factor per pixel.
 The finally reported value is the sigma-clipped median of all the scale factors in the finally-used pixels.
-To fully understand the process, we recommend running this script once with @option{--keeptmp} and inspect the files inside of the temporary directory.
+To fully understand the process on first usage, we recommend that you run this script with @option{--keeptmp} and inspect the files inside of the temporary directory.
 
 The most common use-cases of this scale factor are:
 @enumerate
@@ -25446,12 +25461,12 @@ The PSF is assumed to be centered in this image.
 @itemx --psfhdu=STR
 The HDU/extension of the PSF image.
 
-@item -c FLT[,FLT[,...]]
-@itemx --center=FLT[,FLT[,...]]
+@item -c FLT,FLT
+@itemx --center=FLT,FLT
 The central position of the object to scale with the PSF.
-This parameter is used in @ref{Crop} to center and crop the image.
+This parameter is passed to Gnuastro's Crop program make a crop for further processing (see @ref{Crop}).
 The positions along each dimension must be separated by a comma (@key{,}).
-The units of the coordinates are read based on the value to the @option{--mode} option (see below).
+The units of the coordinates are interpreted based on the value to the @option{--mode} option (see below).
 
 @item -O STR
 @itemx --mode=STR
@@ -25460,56 +25475,58 @@ This option thus accepts only two values: @option{img} or @option{wcs}.
 
 @item -n INT,INT
 @itemx --normradii=INT,INT
-Inner and outer radii (in units of pixels) around the central position in which the scale factor is computed.
+Inner (inclusive) and outer (exclusive) radii (in units of pixels) around the central position in which the scale factor is computed.
 The option takes two values separated by a comma (@key{,}).
 The first value is the inner radius, the second is the outer radius.
-These two radius define a ring of pixels around the center that is used for obtaining the flux factor value.
+These two radii define a ring of pixels around the center that is used for obtaining the scale factor value.
 
 @item -W INT
 @itemx --stampwidth=INT
 Size (width) of the image stamp in pixels.
 This is an intermediate product computed internally by the script.
 By default, the size of the stamp is automatically set to be as small as possible (i.e., two times the external radius of the ring specified by @option{--normradii}) to make the computation fast.
-As a consequence, this option is only relevant for checking and testing that everything is fine (debugging).
+As a consequence, this option is only relevant for checking and testing that everything is fine (debugging; it will usually not be necessary).
 
 @item -S STR
 @itemx --segment=STR
-Filename of a segmentation image from Segment's output (see @ref{Segment}).
-This image is used to mask all objects that are not the central clump/object.
-To obtain an accurate scale factor, it is important to mask all such sources.
-All ``clumps'' of the central object that are not the central clump are also masked.
-Similarly, all ``objects'' that are not the central object will be masked.
-As a result, all objects and clumps that contaminate the central source are masked.
-The size of the region that is used for identifying the central clump/object can be specified by the option @option{--corewidth} (see below).
+Optional filename of a segmentation image from Segment's output (must contain the @code{CLUMPS} and @code{OBJECT} HDUs).
+For more on the definition of ``objects'' and ``clumps'', see @ref{Segment}.
+If given, Segment's output is used to mask all background sources from the large foreground object (a bright star):
+@itemize
+@item
+Objects that are not the central object.
+@item
+Clumps (within the central object) that are not the central clump.
+@end itemize
+The result is that all objects and clumps that contaminate the central source are masked, while the diffuse flux of the central object remains.
+The size of the region that is used for identifying the central clump/object label can be specified by the option @option{--corewidth}, see below.
 
 @item -w INT
 @itemx --corewidth=INT
-Width of the region that is used to find the central clump/object label over the segmentation image given to @option{--segment} (with the goal of not masking them).
-The default size is @code{3}, which should generally be sufficient.
-It is rarely necessary to change this value.
+Width of the region that is used to compute the central clump/object label over the segmentation image @option{--segment}, with the goal of not masking them.
+It is rarely necessary to change this option.
+
+If a segmentation image is provided, then it is necessary to not mask the central object+clump (see description of @option{--segment}).
+To do that, the clump and object images are cropped around the coordinate given to @option{--center}, but on the two labeled images.
+Assuming a single value exists within the crop, the IDs of the respective object and clump are found.
+Therefore it is necessary for this option to be small (the program will abort if more than one label exists within it).
 
 @item -s FLT,FLT
 @itemx --sigmaclip=FLT,FLT
 Sigma clipping parameters used in the end to find the final scale factor from the distribution of all pixels used.
 For more on sigma-clipping, see @ref{Sigma clipping}.
 
-@item -t STR
-@itemx --tmpdir=STR
-Several intermediate files are necessary to obtain the flux factor value.
-All of these temporary files are saved into a temporary directory.
-With this option, you can directly specify the name of this directory.
-By default (when this option isn't called), it will be built in the running directory and given an input-based name.
-Therefore, within a larger project, it is recommended to manually set this in your desired location with your desired name (to avoid conflicting with other instances of this script that may be run together in parallel).
-
+@item -t
+@itemx --tmpdir
+Directory to keep temporary files during the execution of the script.
 If the directory doesn't exist at run-time, this script will create it.
-Once the script finishes, this directory is removed.
-To help debugging/understanding the output value, you can disable the deletion of the temporary directory with the @option{--keeptmp} option and inspect all the temporary files (see below).
+By default, upon completion of the script, this directory will be deleted.
+However, if you would like to keep the intermediate files, you can use the @option{--keeptmp} option.
 
 @item -k
 @itemx --keeptmp
-Don't delete the temporary directory (see description of @option{--tmpdir} above).
-This option is useful for debugging.
-For example, to check that the intermediate images have the desired center, they are properly masked, etc.
+Do not remove the temporary directory (see description of @option{--keeptmp}).
+This option is useful for debugging and checking the outputs of internal steps.
 @end table
 
 
@@ -25517,11 +25534,12 @@ For example, to check that the intermediate images have the desired center, they
 
 @node Invoking astscript-psf-subtract,  , Invoking astscript-psf-scale-factor, PSF construction and subtraction
 @subsection Invoking astscript-psf-subtract
-This installed script will put the provided PSF into a given position on the sky within the input image, and then it will subtract it.
-It is aimed to model and subtract the scattered light field of an input image.
+This installed script will put the provided PSF into a given position within the input image (implementing sub-pixel adjustments where necessary), and then it will subtract it.
+It is aimed at modeling and subtracting the scattered light field of an input image.
 It is also possible to obtain the modeled star with the PSF (and not make the subtraction of it from the original image).
 
-This script can be used with the following general template:
+A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
+The executable name is @file{astscript-psf-subtract}, with the following general template:
 
 @example
 $ astscript-psf-subtract [OPTION...] FITS-file
@@ -25584,35 +25602,34 @@ The HDU/extension of the PSF image.
 Interpret the center position of the object (values given to @option{--center}) in image or WCS coordinates.
 This option thus accepts only two values: @option{img} or @option{wcs}.
 
-@item -c FLT[,FLT[,...]]
-@itemx --center=FLT[,FLT[,...]]
+@item -c FLT,FLT
+@itemx --center=FLT,FLT
 The central position of the object.
 This parameter is used in @ref{Crop} to center and crop the image.
 The positions along each dimension must be separated by a comma (@key{,}).
 The number of values given to this option must be the same as the dimensions of the input dataset.
 The units of the coordinates are read based on the value to the @option{--mode} option, see above.
 
+If the central position doesn't fall in the center of a pixel in the input image, the PSF is re-sampled with sub-pixel change in the pixel grid before subtraction.
+
 @item -s FLT
 @itemx --scale=FLT
 Factor by which the PSF (@option{--psf}) is multiplied.
 This factor is necessary to put the PSF with the desired flux level.
 A convenient way of obtaining this value is by using the script @file{astscript-scale-factor}, see @ref{Invoking astscript-psf-scale-factor}.
+For a full tutorial on using the @command{astscript-psf-*} scripts together, see @ref{Building the extended PSF}.
 
-@item -t STR
-@itemx --tmpdir=STR
-Several intermediate files are necessary to obtain the output.
-All of these temporal files are saved into a temporal directory.
-With this option, you can directly specify this directory.
-By default (when this option isn't called), it will be built in the running directory and given an input-based name.
+@item -t
+@itemx --tmpdir
+Directory to keep temporary files during the execution of the script.
 If the directory doesn't exist at run-time, this script will create it.
-Once all temporal files are not necessary, this directory is removed.
-You can disable the deletion of the temporary directory with the @option{--keeptmp} option, see below.
+By default, upon completion of the script, this directory will be deleted.
+However, if you would like to keep the intermediate files, you can use the @option{--keeptmp} option.
 
 @item -k
 @itemx --keeptmp
-Don't delete the temporary directory (see description of @option{--tmpdir} above).
-This option is useful for debugging.
-For example, to check that the intermediate images have the desired center, flux level, etc.
+Do not remove the temporary directory (see description of @option{--keeptmp}).
+This option is useful for debugging and checking the outputs of internal steps.
 
 @item -m
 @itemx --modelonly
