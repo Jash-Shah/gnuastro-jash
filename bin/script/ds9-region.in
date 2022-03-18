@@ -6,6 +6,7 @@
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
 #     Samane Raji <samaneraji@protonmail.com>
+#     Raul Infante-Sainz <infantesainz@gmail.com>
 # Copyright (C) 2021-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it under
@@ -309,8 +310,8 @@ if [ x"$mode" = xwcs ]; then unit="\""; else unit=""; fi
 # Write the metadata in the output.
 printf "# Region file format: DS9 version 4.1\n" > $out
 printf "# Created by $scriptname (GNU Astronomy Utilities) $version\n" >> $out
-if [ x"$input" = x ]; then printf "# Input from stdin\n" >> $out
-else          printf "# Input file: $input (hdu $hdu)\n" >> $out
+if [ x"$inputs" = x ]; then printf "# Input from stdin\n" >> $out
+else          printf "# Input file: $inputs (hdu $hdu)\n" >> $out
 fi
 printf "# Columns: $col\n" >> $out
 if [ x"$namecol" != x ]; then
@@ -327,7 +328,7 @@ else                        printf "image\n" >> $out;   fi
 # Write each region's results (when no input file is given, read from the
 # standard input).
 if [ x"$namecol" = x ]; then
-    if [ x"$input" = x ]; then
+    if [ x"$inputs" = x ]; then
         cat /dev/stdin \
             | asttable --column=$col \
             | while read a b; do \
@@ -335,14 +336,14 @@ if [ x"$namecol" = x ]; then
                          $a $b $radius $unit >> $out; \
               done
     else
-        asttable $input --hdu=$hdu --column=$col \
+        asttable $inputs --hdu=$hdu --column=$col \
             | while read a b; do \
                   printf "circle(%f,%f,%f%s)\n" \
                          $a $b $radius $unit >> $out; \
               done
     fi
 else
-    if [ x"$input" = x ]; then
+    if [ x"$inputs" = x ]; then
         cat /dev/stdin \
             | asttable --column=$col --column=$namecol \
             | while read a b c; do \
@@ -350,7 +351,7 @@ else
                          $a $b $radius $unit $c >> $out; \
               done
     else
-        asttable $input --hdu=$hdu --column=$col --column=$namecol \
+        asttable $inputs --hdu=$hdu --column=$col --column=$namecol \
             | while read a b c; do \
                   printf "circle(%f,%f,%f%s) # text={%g}\n" \
                          $a $b $radius $unit $c >> $out; \
