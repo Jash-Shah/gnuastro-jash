@@ -301,7 +301,7 @@ fi
 bname_outer=$(basename $inputs | sed 's/\.fits/ /' | awk '{print $1}')
 bname_inner=$(basename $inner  | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x$tmpdir = x ]; then \
-  tmpdir=$(pwd)/"$bname_outer"_psfcreatejunction
+  tmpdir=$(pwd)/"$bname_outer"_unite
 fi
 
 if [ -d $tmpdir ]; then
@@ -312,7 +312,7 @@ fi
 
 # Output
 if [ x$output = x ]; then
-  output="$bname_outer"_"$bname_inner"_psfcreatejunction.fits
+  output="$bname_outer"_"$bname_inner"_unite.fits
 fi
 
 
@@ -491,8 +491,9 @@ echo "1 $xcentmask $ycentmask 5 $radius 1 $positionangle $axisratio 1 1" \
 # image with the same pixels of the inner image.
 astarithmetic $inputs --hdu=$hdu       set-outer \
               $innerfluxscaled --hdu=1 set-inner \
-              $maskimage --hdu=1       set-mask \
-              outer mask inner where -o$output $quiet --wcsfile=none
+              $maskimage --hdu=1       set-mask  \
+              outer mask inner where             \
+              --wcsfile=none --output=$output $quiet
 
 
 

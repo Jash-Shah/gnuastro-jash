@@ -382,7 +382,7 @@ objectid="$xcoord"_"$ycoord"
 # mode will be generated.
 bname_prefix=$(basename "$inputs" | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x"$tmpdir" = x ]; then \
-  tmpdir=$(pwd)/"$bname_prefix"_psfcreatemakestamp
+  tmpdir=$(pwd)/"$bname_prefix"_stamp
 fi
 
 if [ -d "$tmpdir" ]; then
@@ -393,7 +393,7 @@ fi
 
 # Output
 if [ x"$output" = x ]; then
-  output="$bname_prefix"_psfcreatemakestamp_$objectid.fits
+  output="$bname_prefix"_stamp_$objectid.fits
 fi
 
 
