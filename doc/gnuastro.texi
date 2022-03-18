@@ -250,7 +250,7 @@ Tutorials
 * Sufi simulates a detection::  Simulating a detection.
 * General program usage tutorial::  Tutorial on many programs in generic scenario.
 * Detecting large extended targets::  NoiseChisel for huge extended targets.
-* Building the extended PSF::
+* Building the extended PSF::   How to extract an extended PSF from science data.
 
 Sufi simulates a detection
 
@@ -292,7 +292,7 @@ Building the extended PSF
 
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
-* One object for the whole detection::
+* One object for the whole detection::  Avoiding over-segmentation in objects.
 * Building outer part of PSF::  Building the outermost PSF wings.
 * Inner part of the PSF::       Going towards the PSF center.
 * Uniting the different PSF components::  Merging all the components into one PSF.
@@ -1675,6 +1675,11 @@ Besides the interesting scientific questions in these low-surface brightness fea
 This is an important issue, especially in wide surveys.
 Because bright/large galaxies and stars@footnote{Stars also have similarly large and extended wings due to the point spread function, see @ref{PSF}.}, cover a significant fraction of the survey area.
 
+@ref{Building the extended PSF} tackles an important problem in astronomy: how the extract the PSF of an image, to the largest possible extent, without assuming any functional form.
+In Gnuastro we have multiple installed scripts for this job.
+Their usage and logic behind best tuning them for the particular step, is fully described in this tutorial, on a real dataset.
+The tutorial concluds with subtracting that extended PSF from the science image; thus giving you a cleaner image (with no scattered light of the brighter stars) for your higher-level analysis.
+
 In these tutorials, we have intentionally avoided too many cross references to make it more easy to read.
 For more information about a particular program, you can visit the section with the same name as the program in this book.
 Each program section in the subsequent chapters starts by explaining the general concepts behind what it does, for example see @ref{Convolve}.
@@ -1685,7 +1690,7 @@ For an explanation of the conventions we use in the example codes through the bo
 * Sufi simulates a detection::  Simulating a detection.
 * General program usage tutorial::  Tutorial on many programs in generic scenario.
 * Detecting large extended targets::  NoiseChisel for huge extended targets.
-* Building the extended PSF::
+* Building the extended PSF::   How to extract an extended PSF from science data.
 @end menu
 
 
@@ -5403,7 +5408,7 @@ An overview of the process is given in @ref{Overview of the PSF scripts}.
 @menu
 * Preparing input for extended PSF::  Which stars should be used?
 * Saturated pixels and Segment's clumps::  Saturation is a major hurdle!
-* One object for the whole detection::
+* One object for the whole detection::  Avoiding over-segmentation in objects.
 * Building outer part of PSF::  Building the outermost PSF wings.
 * Inner part of the PSF::       Going towards the PSF center.
 * Uniting the different PSF components::  Merging all the components into one PSF.
@@ -5443,6 +5448,15 @@ $ astscript-fits-view flat/67510.fits
 
 @noindent
 Please zoom into the edges again, you will see that they now have the same noise-level as the rest of the image (the problematic parts are now gone).
+
+
+
+
+
+
+
+
+
 
 @node Saturated pixels and Segment's clumps, One object for the whole detection, Preparing input for extended PSF, Building the extended PSF
 @subsection Saturated pixels and Segment's clumps
@@ -5666,6 +5680,15 @@ If the issue was only clumps (like in a normal deep image processing), this was 
 However, in the scenario here, with the very extended wings of the bright stars, it usually happens that background objects become ``clumps'' in the outskirts and will rip the bright star outskirts into separate ``objects''.
 In the next section (@ref{One object for the whole detection}), we'll describe how you can modify Segment to avoid this issue.
 
+
+
+
+
+
+
+
+
+
 @node One object for the whole detection, Building outer part of PSF, Saturated pixels and Segment's clumps, Building the extended PSF
 @subsection One object for the whole detection
 
@@ -5806,6 +5829,15 @@ $ rm cat.fits
 @noindent
 We are now ready to start building the outer parts of the PSF in @ref{Building outer part of PSF}.
 
+
+
+
+
+
+
+
+
+
 @node Building outer part of PSF, Inner part of the PSF, One object for the whole detection, Building the extended PSF
 @subsection Building outer part of PSF
 In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars and won't cause over-fragmentation of objects in the outskirts of stars.
@@ -5903,7 +5935,9 @@ $ astscript-fits-view finding-normradii/cropped-masked*.fits
 @end example
 
 @noindent
-If everything looks good in the image, let's open all the radial profiles and visually check those:
+If everything looks good in the image, let's open all the radial profiles and visually check those with the command below.
+Note that @command{astscript-fits-view} calls the @command{topcat} graphic user interface (GUI) program to visually inspect (plot) tables.
+If you don't already have it, see @ref{TOPCAT}.
 
 @example
 $ astscript-fits-view finding-normradii/rprofile*.fits
@@ -5963,20 +5997,13 @@ In a large survey like J-PLUS (that we are using here), you can simply look into
 Infact, the J-PLUS DR2 tile ID of the field above was intentially preserved during the steps above to show how easy it is to use images from other fields and blend them all into the output PSF.
 
 
-@c -------------------------------------------
-@c If its worth adding this part?
-@c -------------------------------------------
-@c To fill those regions, we can use the radial profile of the stacked PSF.
-@c Obtaining the radial profile for a simple (square, with a single, circular object), image is very easy:
-@c
-@c @example
-@c $ astscript-radial-profile outer/stack.fits -oouter/stack-radial.fits
-@c $ echo "1 251 251 8 300 0 0 1 1 1" \
-@c        | astmkprof --background=outer/stack.fits --clearcanvas \
-@c                    --customtable=outer/stack-radial.fits
-@c
-@c @end example
-@c -------------------------------------------
+
+
+
+
+
+
+
 
 @node Inner part of the PSF, Uniting the different PSF components, Building outer part of PSF, Building the extended PSF
 @subsection Inner part of the PSF
@@ -6030,6 +6057,15 @@ $ astscript-fits-view inner/stack.fits inner/stamps/*.fits
 
 @noindent
 We are now ready to unite the two stacks we have constructed: the outer and the inner parts.
+
+
+
+
+
+
+
+
+
 
 @node Uniting the different PSF components, Subtracting the PSF, Inner part of the PSF, Building the extended PSF
 @subsection Uniting the different PSF components
@@ -6214,6 +6250,15 @@ Now that the complete PSF has been obtained, let's remove that bad-looking PSF, 
 @example
 $ rm -rf psf-bad.fits
 @end example
+
+
+
+
+
+
+
+
+
 
 @node Subtracting the PSF,  , Uniting the different PSF components, Building the extended PSF
 @subsection Subtracting the PSF
@@ -6732,6 +6777,18 @@ Just be sure to have it when you run @command{astquery}, otherwise you'll get an
 GPL Ghostscript's executable (@command{gs}) is called by ConvertType to compile a PDF file from a source PostScript file, see @ref{ConvertType}.
 Therefore its headers (and libraries) are not needed.
 
+@item SAO DS9
+SAO DS9 (@command{ds9}) is a visualization tool for FITS images.
+Gnuastro's @command{astscript-fits-view} program to visualize FITS images.
+We have a full appendix on it and how to install it in @ref{SAO DS9}.
+Since it is a run-time dependency, it can be installed at any later time (after building and installing Gnuastro).
+
+@item TOPCAT
+SAO DS9 (@command{ds9}) is a visualization tool for astronomical tables.
+Gnuastro's @command{astscript-fits-view} program uses it to visualize tables.
+We have a full appendix on it and how to install it in @ref{TOPCAT}.
+Since it is a run-time dependency, it can be installed at any later time (after building and installing Gnuastro).
+
 @end table
 
 
@@ -6974,8 +7031,9 @@ All of them use Debian's Advanced Packaging Tool (APT, for example @command{apt-
 @example
 $ sudo apt-get install ghostscript libtool-bin libjpeg-dev  \
                        libtiff-dev libgit2-dev curl lzip    \
+                       saods9 topcat                        \
                                                             \
-                       libgsl0-dev libcfitsio-dev wcslib-dev
+                       libgsl-dev libcfitsio-dev wcslib-dev
 @end example
 
 @noindent
@@ -6999,6 +7057,7 @@ If the latter isn't available on your system, you can use @command{yum} instead 
 @example
 $ sudo dnf install ghostscript libtool libjpeg-devel     \
                    libtiff-devel libgit2-devel lzip curl \
+                   ds9 topcat                            \
                                                          \
                    gsl-devel cfitsio-devel wcslib-devel
 @end example
@@ -7017,26 +7076,29 @@ If not already installed, first obtain Homebrew by following the instructions at
 Homebrew manages packages in different `taps'.
 To install WCSLIB (discussed in @ref{Mandatory dependencies}) via Homebrew you will need to @command{tap} into @command{brewsci/science} first (the tap may change in the future, but can be found by calling @command{brew search wcslib}).
 @example
-$ brew install ghostscript libtool libjpeg libtiff \
-               libgit2 curl lzip                   \
-                                                   \
+$ brew install ghostscript libtool libjpeg libtiff  \
+               libgit2 curl lzip saoimageds9 topcat \
+                                                    \
                gsl cfitsio
 $ brew tap brewsci/science
 $ brew install wcslib
 @end example
 
 @item @command{pacman} (Arch Linux)
-@cindex Arch Linux
+@cindex Arch GNU/Linux
 @cindex @command{pacman}
 @url{https://en.wikipedia.org/wiki/Arch_Linux,Arch Linux} is a smaller GNU/Linux distribution, which follows the KISS principle (``keep it simple, stupid'') as a general guideline.
 It ``focuses on elegance, code correctness, minimalism and simplicity, and expects the user to be willing to make some effort to understand the system's operation''.
-Arch Linux uses ``Package manager'' (Pacman) to manage its packages/components.
+Arch GNU/Linux uses ``Package manager'' (Pacman) to manage its packages/components.
 @example
 $ sudo pacman -S ghostscript libtool libjpeg libtiff \
                  libgit2 curl lzip                   \
                                                      \
                  gsl cfitsio wcslib
 @end example
+
+SAO DS9 and TOPCAT aren't available in the standard Arch GNU/Linux repositories.
+However, installing and using both is very easy from their own webpages, as described in @ref{SAO DS9} and @ref{TOPCAT}.
 
 @item @command{zypper} (openSUSE and SUSE Linux Enterprise Server)
 @cindex openSUSE
@@ -7050,7 +7112,7 @@ packages.
 @example
 $ sudo zypper install ghostscript_any libtool pkgconfig   \
               libcurl-devel libgit2-devel libjpeg62-devel \
-              libtiff-devel curl                          \
+              libtiff-devel curl ds9 topcat               \
                                                           \
               gsl-devel cfitsio-devel wcslib-devel
 @end example

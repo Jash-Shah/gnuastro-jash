@@ -705,6 +705,16 @@ AM_CONDITIONAL([COND_HASGHOSTSCRIPT], [test "x$has_ghostscript" = "xyes"])
 
 
 
+# Check DS9 and TOPCAT
+AC_CHECK_PROG(has_ds9, ds9, [yes], [no])
+AS_IF([test "x$has_ds9" = "xno"], [anywarnings=yes])
+AC_CHECK_PROG(has_topcat, topcat, [yes], [no])
+AS_IF([test "x$has_topcat" = "xno"], [anywarnings=yes])
+
+
+
+
+
 # If any necessary dependency is missing inform the user and abort.
 AS_IF([test "x$missing_mandatory" = "xyes"],
       [
@@ -741,6 +751,10 @@ AS_IF([test "x$missing_mandatory" = "xyes"],
                       [ AS_ECHO([" - Missing Libgit2: https://libgit2.org"])                      ])
                 AS_IF([test "x$has_curl" = "x0"],
                       [ AS_ECHO([" - Missing cURL: https://curl.haxx.se"])                        ])
+                AS_IF([test "x$has_ds9" = "xno"],
+                      [ AS_ECHO([" - Missing SAO DS9: https://sites.google.com/cfa.harvard.edu/saoimageds9"]) ])
+                AS_IF([test "x$has_topcat" = "xno"],
+                      [ AS_ECHO([" - Missing TOPCAT: http://www.star.bris.ac.uk/~mbt/topcat/"]) ])
                 AS_IF([test "x$usable_libtool" = "xno"],
                       [ AS_ECHO([" - Unusable GNU Libtool: https://www.gnu.org/s/libtool"])
                         AS_IF([test "x$has_gnulibtool" = "xyes"],
@@ -1239,6 +1253,22 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    build of Gnuastro, you can continue for now. But to use 'astquery',"])
                AS_ECHO(["    don't forget to install cURL later (before using 'astquery' for the"])
                AS_ECHO(["    first time)."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_ds9" = "xno"],
+              [dependency_notice=yes
+               AS_ECHO(["  - (GUI only) SAO ds9 (https://sites.google.com/cfa.harvard.edu/saoimageds9)"])
+               AS_ECHO(["    couldn't be found. DS9 is called by 'astscript-fits-view' to visually"])
+               AS_ECHO(["    inspect FITS images. This doesn't affect the building of Gnuastro. So you"])
+               AS_ECHO(["    can safely install it later (after building and installing Gnuasro)."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_topcat" = "xno"],
+              [dependency_notice=yes
+               AS_ECHO(["  - (GUI only) TOPCAT (http://www.star.bris.ac.uk/~mbt/topcat) couldn't be"])
+               AS_ECHO(["    found. TOPCAT is called by 'astscript-fits-view' to visually inspect"])
+               AS_ECHO(["    astronomical tables. This doesn't affect the building of Gnuastro. So "])
+               AS_ECHO(["    you can safely install it later (after building and installing Gnuasro)."])
                AS_ECHO([]) ])
 
         # Notice for obtaining the optional dependencies using a package
