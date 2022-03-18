@@ -109,9 +109,9 @@ $scriptname options:
                           ra, dec, magnitude, parrallax, parrallax_error.
   -a, --matchaperturedeg=FLT Aperture, in pixels, to match catalogue ra and
                           dec coordinates with clumps' ra and dec.
-  -F, --faintmagdiff      The difference from the faintest star which the user will
-                          be determined the faintest star in "--magnituderange"
-                          option.
+  -F, --faintmagdiff      The difference from the faintest star which the user
+                          will be determined the faintest star in
+                          '--magnituderange' option.
   -b, --brightmag         The limit for selecting wider range of bright stars.
 
  Output:

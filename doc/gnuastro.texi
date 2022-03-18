@@ -5602,7 +5602,7 @@ $ astarithmetic saturated.fits set-i i i 2200 gt nan where \
 $ astscript-fits-view sat-masked.fits --ds9scale=minmax
 @end example
 
-You will see see the peaks of several bright stars, not just the central very bright star.
+You will see the peaks of several bright stars, not just the central very bright star.
 Zoom into each of the peaks you see.
 Besides the central very bright one that we were looking at closely until now, only one other star is saturated (its center is NaN, or Not-a-Number).
 Try to find it.
@@ -22139,9 +22139,10 @@ Everything else after that (when the pixel index and its radial profile have ent
 Assume we have a `point' source, or a source that is far smaller than the maximum resolution (a pixel).
 When we take an image of it, it will `spread' over an area.
 To quantify that spread, we can define a `function'.
-This is how the point spread function or the PSF of an image is defined.
-This `spread' can have various causes, for example in ground based astronomy, due to the atmosphere.
-In practice we can never surpass the `spread' due to the diffraction of the lens aperture.
+This is how the ``point spread function'' or the PSF of an image is defined.
+
+This `spread' can have various causes, for example in ground-based astronomy, due to the atmosphere.
+In practice we can never surpass the `spread' due to the diffraction of the telescope aperture (even in Space!).
 Various other effects can also be quantified through a PSF.
 For example, the simple fact that we are sampling in a discrete space, namely the pixels, also produces a very small `spread' in the image.
 
@@ -22153,7 +22154,8 @@ Convolution is the mathematical process by which we can apply a `spread' to an i
 The Brightness of an object should remain unchanged after convolution, see @ref{Brightness flux magnitude}.
 Therefore, it is important that the sum of all the pixels of the PSF be unity.
 The PSF image also has to have an odd number of pixels on its sides so one pixel can be defined as the center.
-In MakeProfiles, the PSF can be set by the two methods explained below.
+
+In MakeProfiles, the PSF can be set by the two methods explained below:
 
 @table @asis
 
@@ -22210,8 +22212,10 @@ They also show how the Moffat PSF contains the Gaussian PSF as a limiting case w
 @item An input FITS image
 An input image file can also be specified to be used as a PSF.
 If the sum of its pixels are not equal to 1, the pixels will be multiplied by a fraction so the sum does become 1.
-@end table
 
+Gnuastro has tools to extract the non-parametric (extended) PSF of any image as a FITS file (assuming there are a sufficient number of stars in it), see @ref{Building the extended PSF}.
+This method is not perfect (will have noise if you don't have many stars), but it is the actual PSF of the data that is not forced into any parametric form.
+@end table
 
 While the Gaussian is only dependent on the FWHM, the Moffat function is also dependent on @mymath{\beta}.
 Comparing these two functions with a fixed FWHM gives the following results:
@@ -24819,20 +24823,20 @@ The initial DS9 window geometry (value to DS9's @option{-geometry} option).
 @node PSF construction and subtraction,  , Viewing FITS file contents with DS9 or TOPCAT, Installed scripts
 @section PSF construction and subtraction
 
-@c Alternative names
-@c astscript-psf-select-stars  --> astscript-psf-select
-@c astscript-psf-stamp    --> astscript-psf-stamp
-@c astscript-psf-unite      --> astscript-psf-unite
-
 The point spread function (PSF) describes how the light of a point-like source is affected by several optical scattering effects (atmosphere, telescope, instrument, etc.).
-The role of the PSF is key in astronomical analysis (for small and large objects), and consequently, having a good characterization of the PSF is fundamental.
-In many situations the PSF can be obtained by modeling it with analytical functions (Gaussian, Moffat, etc.), see @ref{PSF}.
-However, in other scenarios, it is necessary to obtain an empirical (non-parametric) and extended PSF.
-For this reason, here we have developed a set of scripts with the aim of constructing the PSF using point-like sources from the same astronomical images that the science is derived from.
+Since the light all astrophysical sources undergoes all these effects, characterizing the PSF is key in astronomical analysis (for small and large objects).
+Consequently, having a good characterization of the PSF is fundamental to any analysis.
+
+In some situations@footnote{An example scenario where a parametric PSF may be enough: you are only interested in very small, high redshift objects that only extended a handful of pixels.} a parametric (analytical) model is sufficient for the PSF (Gaussian, Moffat, etc., see @ref{PSF}).
+However, once you are interested in objects that are larger than a handful of pixels, it is almost impossible to find an analytic function to adequately characterize the PSF.
+Therefore, it is necessary to obtain an empirical (non-parametric) and extended PSF.
+In this section we describe a set of installed scrips in Gnuastro that will let you construct the non-parametric PSF using point-like sources.
+They allow you to derive the PSF from the same astronomical images that the science is derived from (without assuming any analytical function).
 
 The scripts are based on the concepts described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
 But to be complete, we first give a summary of the logic and overview of their combined usage in @ref{Overview of the PSF scripts}.
-Furthermore, before going into the technical details of each script, in a specific tutorial devoted to this at @ref{Building the extended PSF}, we encourage you to do that tutorial after the overview below.
+Furthermore, before going into the technical details of each script, we encourage you to go through the tutorial that is devoted to this at @ref{Building the extended PSF}.
+The tutorial uses a real dataset and includes all the logic and reasoning behind every step of the usage in every installed script.
 
 @menu
 * Overview of the PSF scripts::  Summary of concepts and methods
@@ -24845,18 +24849,32 @@ Furthermore, before going into the technical details of each script, in a specif
 
 @node Overview of the PSF scripts, Invoking astscript-psf-select-stars, PSF construction and subtraction, PSF construction and subtraction
 @subsection Overview of the PSF scripts
-The fundamental ideas of the following methodology are thoroughly described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
-Once the PSF has been obtained, it can be scaled to the magnitude of the point-like sources to subtract.
-We therefore also have a script for this.
-We describe the technical implementation of some scripts developed with the aim of constructing an empirical PSF, and then, use that PSF for correcting the scattered light.
-All scripts are independent of each other, meaning this that you are free to use all of them as you wish (for example only some of them, using them for other purposes, or running independent parts in parallel).
 
-For constructing the PSF, the basic idea is to crop images of stars (with other sources masked), scale them properly, and finally stack all of them together.
-As a consequence, the first step would be to obtain a catalog of stars within the datasets.
-In general, not all stars are good to construct a PSF.
+To obtain an extended and non-parametric PSF, several steps are necessary and we will go through them here.
+The fundamental ideas of the following methodology are thoroughly described in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}).
+A full tutorial is also available in @ref{Building the extended PSF}.
+The tutorial will go through the full process on a pre-selected dataset, but will describe the logic behind every step in away that can easily be modified/generalized to other datasets.
+
+This section is basically just a summary of that tutorial.
+We could have put all these steps into one large program (installed script), however this would introduce several problems.
+The most prominent of these problems are:
+
+@itemize
+@item
+The command would require @emph{many} options, making it very complex to run every time.
+@item
+You usually have many stars in an image, and many of the steps can be optimized or parallelized depending on the particular analysis scenario.
+Predicting all the possible optimizations for all the possible usage scenarios would make the code extremely complex (filled with many unforeseen bugs!).
+@end itemize
+
+Therefore, following the modularity principle of software engineering, after several years of working on this, we have broken the full job into the smallest number of independent steps as separate scripts.
+All scripts are independent of each other, meaning this that you are free to use all of them as you wish (for example only some of them, using another program for a certain step, using them for other purposes, or running independent parts in parallel).
+
+For constructing the PSF from your dataset, the first step is to obtain a catalog of stars within it (you can't use galaxies to build the PSF!).
+But you can't blindly use all the stars either!
 For example we don't want contamination from other bright, and nearby objects.
 The first script below is therefore designed for selecting only good candidate stars in your image.
-It will use different criteria, for example good parallax (where available, to avoid confusion with galaxies), not near bright stars, axis ratio, etc.
+It will use different criteria, for example good parallax (where available, to avoid confusion with galaxies), not being near to bright stars, axis ratio, etc.
 For more on this script, see @ref{Invoking astscript-psf-select-stars}.
 
 Once the catalog of stars is constructed, another script is in charge of making appropiate stamps of the stars.
@@ -24866,13 +24884,15 @@ After obtaining a set of star stamps, they can be stacked for obtaining the comb
 
 In the combined PSF, the masked background objects of each star's image will be covered and the signal-to-noise ratio will increase, giving a very nice view of the ``clean'' PSF.
 However, is usually necessary to obtain different regions of the same PSF from different stars.
-For example, to construct the far wings it is necessary to consider very bright stars.
+For example, to construct the far outer wings of the PSF, it is necessary to consider very bright stars.
 However, these stars will be saturated in the most inner part, and immediately outside of the saturation level, they will be deformed due to non-linearity effects.
 Consequently, fainter stars are necessary for the inner regions.
 
 Therefore, you need to repeat the steps above for certain stars (in a certain magnitude range) to obtain the PSF in certain radial ranges.
 For example, in Infante-Sainz et al. (2020, @url{https://arxiv.org/abs/1911.01430}), the final PSF was constructed from three regions (and thus, using stars from three ranges in magnitude).
 In other cases, we even needed four groups of stars!
+But in the example dataset from the tutorial, only two groups are necessary (see @ref{Building the extended PSF}).
+
 Once clean stacks of different parts of the PSF have been constructed through the steps above, it is therefore necessary to blend them all into one.
 This is done by finding a common radial region in both, and scaling the inner region by a factor to add with the outer region.
 This is not trivial, therefore, a third script is in charge of it, see @ref{Invoking astscript-psf-unite}.
@@ -24882,11 +24902,11 @@ Note that the absolute flux of a PSF is meaningless (and in fact, it is usually 
 We therefore have another script that will calculate the scale (multiplication) factor of the PSF for each star.
 For more on the scaling script, see @ref{Invoking astscript-psf-scale-factor}.
 
-Once the flux factor has been computed, a final script is in charge of placing the scaled PSF over the proper location in the image and subtract it.
+Once the flux factor has been computed, a final script is in charge of placing the scaled PSF over the proper location in the image, and subtracting it.
 For more on the scaling and positioning script, see @ref{Invoking astscript-psf-subtract}.
 
 As mentioned above, in the following sections, each script has its own documentation and list of options for very detailed customization (if necessary).
-But before going into them, we continue with a practical tutorial to show the usage of scripts in practice; see the tutorial @ref{Building the extended PSF}.
+But if you are new to these scripts, before continuing, we recommend that you do the tutorial @ref{Building the extended PSF}, just don't forget to run every command, and try to tweek its steps based on the logic to nicely understand it.
 
 
 
@@ -24897,8 +24917,7 @@ But before going into them, we continue with a practical tutorial to show the us
 This installed script will select good star candidates for constructing a PSF.
 It will consider stars within a given range of brightness without nearby contaminant objects.
 To do that, it allows to the user to specify different options.
-
-This script can be used with the following general template:
+The executable name is @file{astscript-psf-select-stars}, with the following general template:
 
 @example
 $ astscript-psf-select-stars [OPTION...] FITS-file
@@ -24908,37 +24927,20 @@ $ astscript-psf-select-stars [OPTION...] FITS-file
 Examples:
 
 @example
-## From the Gaia select the stars in the range of magnitude
-## between '7' and '9', which overlap with input image.
-$ astscript-psf-select-stars image.fits --hdu=1 \
-      --magnituderange=7,9 \
-      --minaxisratio=0.9 \
-      --mindistdeg=0.1 \
-      --matchaperturedeg=0.25 \
-      --faintmagdiff=4 \
-      --brightmag=-10 \
-      --output=catalog.fits
-
-## Select the stars in the range of magnitude between
-## 7 and 9 magnitudes from the input catalog.
-$ astscript-psf-select-stars image.fits --hdu=1 \
-    --catalog=starscatalog.fits \
-    --magnituderange=7,9 \
-    --minaxisratio=0.9 \
-    --mindistdeg=0.1 \
-    --matchaperturedeg=0.25 \
-    --faintmagdiff=4 \
-    --brightmag=-10 \
-    --output=catalog.fits
-
+## Select all stars within 'image.fits' with magnitude in range
+## of 6 to 10; only keeping those that are less than 0.02 degrees
+## from other nearby stars.
+$ astscript-psf-select-stars image.fits \
+           --magnituderange=6,10 --mindistdeg=0.02
 @end example
 
-The input of this script is an image that gives us a table of stars in range of magnitudes between 7 to 9 as output.
-It is possible to provide the range of magnitude with the option @option{--magnituderange}.
-The @option{--magnituderange}, @option{--minaxisratio}, @option{--mindistdeg} and @option{--matchaperturedeg} are mandatory and if these are not specified the code will be aborted. In the below, explains more about these options.
+The input of this script is an image, and the output is a catalog of stars in requested range of magnitudes (provided with @option{--magnituderange}).
+The output catalog will also only contain stars that are sufficiently distant (@option{--mindistdeg}) from all brighter, and some fainter stars.
+All stars that are @option{--faintmagdiff} fainter than the faintest limit will also be accounted for, when selecting good stars.
+The @option{--magnituderange}, and @option{--mindistdeg} are mandatory: if not specified the code will abort.
 
-The output of this script is a file whose name can be specified with the @option{--output} option.
-More options are available with the goal of obtaining good selected stars.
+The output of this script is a file whose name can be specified with the (optional) @option{--output} option.
+If not given, an automatically generated name will be used for the output.
 A full description of each option is given below.
 
 @table @option
@@ -24949,63 +24951,60 @@ The HDU/extension of the input image to use.
 
 @item -S STR
 @itemx --segmented=STR
-Segmentation file obtained by @option{astsegment}.
+Optional segmentation file obtained by @ref{Segment}.
 It should have two extensions (@option{CLUMPS} and @option{OBJECTS}).
-A catalog of @option{CLUMPS} is computed and matched with a Gaia catalog.
-
-@item -d STR
-@itemx --dataset=STR
-It is possible to specify the dataset from which the catalog is downloaded.
-This is done with the option @option{--dataset} that is used by @option{astquery}.
-The value of this option is @option{gaia --dataset=edr3} by default.
-
-@item -f STR
-@itemx --field=STR
-Name of the column for the brightness of the objects.
-By default, the value of this option is @option{phot_g_mean_mag} (that corresponds to the name of the magnitude in the Gaia catalog).
-
-@item -m INT[,INT[,...]]
-@itemx --magnituderange=INT[,INT[,...]]
-This option is one of the essential parameter for selecting the stars.
-This option give two values, which based on that the minimum and maximum values magnitude of stars are determined.
-
-@item -r STR
-@itemx --racolumn=STR
-With this option the name of the rightascension column are determined.
-If the user does not determine this option the, by default the 'ra' considered for rightascension column.
-
-@item -d STR
-@itemx --deccolumn=STR
-Such as above option this option determined the declination column.
-And if the user does not provide this option the 'dec' value will be considered.
-
-@item -p STR[,STR[,...]]
-@itemx --parallaxanderrorcolumn=STR[,STR[,...]]
-With this option the user can provide the parallax and parallax error columns name.
-If the user does not provide thi soption, the script does not provide stars with good parallax.
+If given, a catalog of @option{CLUMPS} will be computed and matched with the Gaia catalog to reject those objects that are too elliptical (see @option{--minaxisratio}).
+The matching will occur on an aperture (in degrees) specified by @option{--matchaperturedeg}.
 
 @item -a FLT
 @itemx --matchaperturedeg=FLT
-This option determines the aperture (in degrees) for matching the catalog from gaia with the clumps catalog.
+This option determines the aperture (in degrees) for matching the catalog from gaia with the clumps catalog that is produced by the segmentation image given to @option{--segmented}.
+The default value is 10 arc-seconds.
 
-@item -F INT
-@itemx --faintmagdiff
-This option has been used to select the stars that are fainter than the main faint stars, and user just should provide this difference how much should be.
-For more clarity in next option explain about it more.
+@item -c STR
+@itemx --catalog=STR
+Optional reference catalog to use for selecting stars (instead of querying an external catalog like Gaia).
+When this option is given, @option{--dataset} (described below) will be ignored and no internet connection will be necessary.
 
-@item -b INT
-@itemx --brightmag
-This option have determined the value of the brightest star that has been selected the neighbor of the main star.
-For checking the neighbors of the main stars we should attention to the star that are brighter that the main star, and the faint stars that their brightness are close to the main star.
-For checking this main point the options @option{--faintmagdiff} and @option{--brightmag} has been considered.
-For instance if the user want select the stars in the range of magnitude between 8 to 10, and if choose the values 4 and -10 for the @option{--faintmagdiff} and @option{--brightmag}, respectively.
-The neighbor of the main stars that have magnitude between -10 to 14 has been checked and finally the stars in the range of magnitude between 8 to 10 that have not any neighbor (in the range of magnitude between -10 to 14) has been selected.
+@item -d STR
+@itemx --dataset=STR
+Optional dataset to query (with @ref{Query}).
+It should contain the database and dataset entries to Query.
+Its value will be immediately given to @command{astquery}.
+By default, its value is @code{gaia --dataset=edr3} (so it connects to the Gaia database and requests the early data release 3).
 
-@item -Q FLT
-@itemx --minaxisratio=FLT
-Select stars only with axis ratio values greater than the value specified by this option.
-Only stars with axis ratio between @option{--minaxisratio} to 1.0 will be selected.
-The
+It is possible to specify a different dataset from which the catalog is downloaded.
+In that case, the necessary column names may also differ, so you also have to set @option{--racolumn}, @option{--deccolumn} and @option{--field}.
+See their description for more.
+
+@item -r STR
+@itemx --racolumn=STR
+The name of the column containing the Right Ascension (RA) in the requested dataset (@option{--dataset}).
+If the user does not determine this option the, by default the @code{ra} will be assumed.
+
+@item -d STR
+@itemx --deccolumn=STR
+The name of the column containing the Declination (Dec) in the requested dataset (@option{--dataset}).
+If the user does not determine this option the, by default the @code{dec} will be assumed.
+
+@item -f STR
+@itemx --field=STR
+The name of the column containing the magnitude in the requested dataset (@option{--dataset}).
+The output will only contain stars that have a value in this column, between the values given to @option{--magnituderange} (see below).
+By default, the value of this option is @option{phot_g_mean_mag} (that corresponds to the name of the magnitude in the Gaia catalog).
+
+@item -m FLT,FLT
+@itemx --magnituderange=FLT,FLT
+The acceptable range of values for the column in @option{--field}.
+This option is mandatory and no default value is assumed.
+
+@item -p STR,STR
+@itemx --parallaxanderrorcolumn=STR,STR
+With this option the user can provide the parallax and parallax error column names in the requested dataset.
+When given, the output will only contain stars where the parallax has a signal-to-noise ratio larger than 3.
+If the user does not provide this option, the script will not use parallax information in selecting the stars.
+
+In the case of Gaia, if you want to use parallax to further limit the good stars, you can pass @option{parallax,parallax_error}.
 
 @item -D FLT
 @itemx --mindistdeg=FLT
@@ -25013,10 +25012,32 @@ Stars with nearby bright stars closer than this distance are rejected.
 The default value is 1 arc minute.
 For fainter stars (when constructing the center of the PSF), you should decrease the value.
 
-@item -c STR
-@itemx --catalog=STR
-Optional reference catalog to use for selecting stars.
-If a file is given to this option, the script won't query external databases (for example Gaia).
+@item -b INT
+@itemx --brightmag=INT
+The brightest star magnitude to avoid (should be brighter than the brightest of @option{--magnituderange}).
+The basic idea is this: if a user asks for stars with magnitude 6 to 10 and one of those stars is near a magnitude 3 star, that star (with a magnitude of 6 to 10) should be rejected!
+Therefore, when considering proximity to nearby stars, it is important to use a larger magnitude range than the user's requested magnitude range for good stars.
+The acceptable proximity is defined by @option{--mindistdeg}.
+
+With this option, you specify the brightest limit for the proximity check.
+The default value is a magnitude of @mymath{-10}, so you'll rarely need to change or customize this option!
+
+The faint limit of the proximity check is specified by @option{--faintmagdiff}.
+As the name suggests, this is a ``diff'' or relative value.
+The default value is 4.
+Therefore if the user wants to build the PSF with stars in the magnitude range of 6 to 10, the faintest stars used for the proximity check will have a magnitude of 14: @mymath{10+4}.
+In summary, by default, the proximity check will be done with stars in the magnitude range @mymath{-10} to @mymath{14}.
+
+@item -F INT
+@itemx --faintmagdiff
+The magnitude difference of the faintest star used for proximity checks to the faintest limit of @option{--magnituderange}.
+For more, see the description of @option{--brightmag}.
+
+@item -Q FLT
+@itemx --minaxisratio=FLT
+Minimum acceptable axis ratio for the selected stars.
+In other words, only stars with axis ratio between @option{--minaxisratio} to 1.0 will be selected.
+Recall that the axis ratio is only used when you also give a segmented image with @option{--segmented}.
 
 @item -t
 @itemx --tmpdir
@@ -25033,6 +25054,15 @@ This option is useful for debugging and checking the steps of selecting stars.
 @itemx --output=STR
 The output name of the final catalog containing good stars.
 @end table
+
+
+
+
+
+
+
+
+
 
 @node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
 @subsection Invoking astscript-psf-stamp
