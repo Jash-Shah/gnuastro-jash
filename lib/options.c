@@ -301,16 +301,17 @@ gal_options_print_citation(struct argp_option *option, char *arg,
                "Acknowledgement\n"
                "---------------\n"
                "This work was partly done using GNU Astronomy Utilities "
-               "(Gnuastro, ascl.net/1801.009) version %s. Work on Gnuastro "
-               "has been funded by the Japanese Ministry of Education, "
-               "Culture, Sports, Science, and Technology (MEXT) scholarship "
-               "and its Grant-in-Aid for Scientific Research (21244012, "
-               "24253003), the European Research Council (ERC) advanced "
-               "grant 339659-MUSICOS, European Union’s Horizon 2020 research "
-               "and innovation programme under Marie Sklodowska-Curie grant "
-               "agreement No 721463 to the SUNDIAL ITN, and from the Spanish "
-               "Ministry of Economy and Competitiveness (MINECO) under grant "
-               "number AYA2016-76219-P. ", PACKAGE_VERSION)<0 )
+               "(Gnuastro, ascl.net/1801.009) version %s. Work on "
+               "Gnuastro has been funded by the Japanese Ministry of "
+               "Education, Culture, Sports, Science, and Technology "
+               "(MEXT) scholarship and its Grant-in-Aid for Scientific "
+               "Research (21244012, 24253003), the European Research "
+               "Council (ERC) advanced grant 339659-MUSICOS, the "
+               "Spanish Ministry of Economy and Competitiveness "
+               "(MINECO, grant number AYA2016-76219-P) and the "
+               "NextGenerationEU grant through the Recovery and "
+               "Resilience Facility project ICTS-MRR-2021-03-CEFCA.",
+               PACKAGE_VERSION)<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
   printf("%s\n", gnuastro_acknowledgement);
   free(gnuastro_acknowledgement);
