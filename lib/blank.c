@@ -563,6 +563,11 @@ gal_blank_flag(gal_data_t *input)
   gal_data_t *out;
   char **str=input->array, **strf=str+input->size;
 
+  /* The datasets may be empty. In this case the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(input->size==0 || input->array==NULL) return input;
+
+  /* Do all the checks and allocations if a blank is actually present! */
   if( gal_blank_present(input, 0) )
     {
       /* Allocate a non-cleared output array, we are going to parse the

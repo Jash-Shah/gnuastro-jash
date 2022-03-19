@@ -622,17 +622,20 @@ arithmetic_distance(struct tableparams *p, gal_data_t **stack, int operator)
                      p->cp.minmapsize, p->cp.quietmmap, colname, NULL,
                      colcomment);
 
-  /* Measure the distances.  */
-  o=out->array;
-  a1=a->array; a2=a->next->array;
-  b1=b->array; b2=b->next->array;
-  if(a->size==1 || b->size==1) /* One of them is a single point. */
-    for(i=0;i<a->size;++i)
-      for(j=0;j<b->size;++j)
-        o[a->size>b->size?i:j] = distance_func(a1[i], a2[i], b1[j], b2[j]);
-  else                         /* Both have the same length. */
-    for(i=0;i<a->size;++i)     /* (all were originally from the same table) */
-      o[i] = distance_func(a1[i], a2[i], b1[i], b2[i]);
+  /* Measure the distances (if the dataset isn't empty: it can be!). */
+  if(out->size>0 && out->array)
+    {
+      o=out->array;
+      a1=a->array; a2=a->next->array;
+      b1=b->array; b2=b->next->array;
+      if(a->size==1 || b->size==1) /* One of them is a single point. */
+        for(i=0;i<a->size;++i)
+          for(j=0;j<b->size;++j)
+            o[a->size>b->size?i:j] = distance_func(a1[i], a2[i], b1[j], b2[j]);
+      else                     /* Both have the same length. */
+        for(i=0;i<a->size;++i) /* (all were originally from the same table) */
+          o[i] = distance_func(a1[i], a2[i], b1[i], b2[i]);
+    }
 
   /* Clean up and put the output dataset onto the stack. */
   gal_list_data_free(a);
@@ -690,21 +693,26 @@ arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
                      p->cp.minmapsize, p->cp.quietmmap, name, unit,
                      comment);
 
-  /* Convert each input string into number of seconds. */
-  iarr=out->array;
-  for(i=0; i<in->size; ++i)
+  /* Convert each input string into number of seconds. Note that it is
+     possible to have an empty dataset, in that case, we shouldn't do
+     anything.*/
+  if(out->size>0 && out->array)
     {
-      /* Read the number of seconds and sub-seconds and write into the
-         output. */
-      v=gal_fits_key_date_to_seconds(strarr[i], &subsecstr,
-                                     &subsec);
-      iarr[i] = ( v==GAL_BLANK_SIZE_T
-                  ? GAL_BLANK_INT64
-                  : ( operator == ARITHMETIC_TABLE_OP_DATETOSEC
-                      ? v
-                      : (isnan(subsec)
-                         ? v*1000
-                         : v*1000 + (int64_t)(subsec*1000) ) ) );
+      iarr=out->array;
+      for(i=0; i<in->size; ++i)
+        {
+          /* Read the number of seconds and sub-seconds and write into the
+             output. */
+          v=gal_fits_key_date_to_seconds(strarr[i], &subsecstr,
+                                         &subsec);
+          iarr[i] = ( v==GAL_BLANK_SIZE_T
+                      ? GAL_BLANK_INT64
+                      : ( operator == ARITHMETIC_TABLE_OP_DATETOSEC
+                          ? v
+                          : (isnan(subsec)
+                             ? v*1000
+                             : v*1000 + (int64_t)(subsec*1000) ) ) );
+        }
     }
 
   /* Clean up and put the resulting calculation back on the stack. */
@@ -819,7 +827,8 @@ arithmetic_operator_run(struct tableparams *p,
          arguments it uses depend on the operator. In other words, when the
          operator doesn't need three operands, the extra arguments will be
          ignored. */
-      gal_list_data_add(stack, gal_arithmetic(token->operator, p->cp.numthreads,
+      gal_list_data_add(stack, gal_arithmetic(token->operator,
+                                              p->cp.numthreads,
                                               flags, d1, d2, d3) );
 
       /* Reset the meta-data for the element that was just put on the

@@ -868,9 +868,22 @@ gal_data_copy_to_allocated(gal_data_t *in, gal_data_t *out)
   /* Correct the sizes of the output to be the same as the input. If it is
      equal, there is no problem, if not, the size information will be
      changed, so if you want to use this allocated space again, be sure to
-     re-set the size parameters. */
+     re-set the size parameters.
+
+     As defined in 'gal_data_initialize', when there is no dataset, 'dsize'
+     should be NULL. So if 'in->dsize==NULL', but 'out->dsize!=NULL', then
+     we should free 'out->dsize' and set it to NULL. Alternatively, if
+     'out' hasn't allocated a 'dsize', but 'in' already has one, allocate
+     'out->dsize', then fill it. */
   out->size=in->size;
-  memcpy(out->dsize, in->dsize, in->ndim * sizeof *(in->dsize) );
+  if(in->dsize)
+    {
+      if(out->dsize==NULL)
+        out->dsize=gal_pointer_allocate(GAL_TYPE_SIZE_T, in->ndim, 0,
+                                        __func__, "out->dsize");
+      memcpy(out->dsize, in->dsize, in->ndim * sizeof *(in->dsize) );
+    }
+  else if(out->dsize) { free(out->dsize); out->dsize=NULL; }
 }
 
 

@@ -263,6 +263,8 @@ See the end of the file for license conditions.
               (that guarantees monotonicity) not used in Gnuastro's
               library, even if it is present and found at configure time;
               found and fixed by Pedram Ashofteh Ardakani.
+  bug #62204: Column arithmetic crashes when there are no rows; reported by
+              Zohreh Ghaffari.
 
 
 

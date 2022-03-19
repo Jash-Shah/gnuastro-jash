@@ -2311,9 +2311,19 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
   int status, *stat=NULL, ncoord=coords->size, nelem;
   double *phi=NULL, *theta=NULL, *world=NULL, *pixcrd=NULL, *imgcrd=NULL;
 
+  /* It can happen that the input datasets are empty. In this case, simply
+     return them. */
+  if(coords->size==0 || coords->array==NULL)
+    {
+      if(inplace) return coords;
+      else error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                 "'%s' to fix the problem. The input has no data and "
+                 "'inplace' is not called", __func__, PACKAGE_BUGREPORT);
+    }
+
   /* Some sanity checks. */
-  wcs_convert_sanity_check_alloc(coords, wcs, __func__, &stat, &phi, &theta,
-                                 &world, &pixcrd, &imgcrd);
+  wcs_convert_sanity_check_alloc(coords, wcs, __func__, &stat, &phi,
+                                 &theta, &world, &pixcrd, &imgcrd);
   nelem=wcs->naxis; /* We have to make sure a WCS is given first. */
 
 
@@ -2323,7 +2333,8 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 
 
   /* Use WCSLIB's wcss2p for the conversion. */
-  status=wcss2p(wcs, ncoord, nelem, world, phi, theta, imgcrd, pixcrd, stat);
+  status=wcss2p(wcs, ncoord, nelem, world, phi, theta, imgcrd,
+                pixcrd, stat);
   if(status)
     error(EXIT_FAILURE, 0, "%s: wcss2p ERROR %d: %s", __func__, status,
           wcs_errmsg[status]);

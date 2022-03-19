@@ -182,6 +182,11 @@ arithmetic_not(gal_data_t *data, int flags)
   uint8_t *o;
   gal_data_t *out;
 
+  /* The dataset may be empty. In this case the output should also be empty
+     (we can have tables and images with 0 rows or pixels!). */
+  if(data->size==0 || data->array==NULL) return data;
+
+
   /* Allocate the output array. */
   out=gal_data_alloc(NULL, GAL_TYPE_UINT8, data->ndim, data->dsize,
                      data->wcs, 0, data->minmapsize, data->quietmmap,
@@ -237,6 +242,10 @@ arithmetic_bitwise_not(int flags, gal_data_t *in)
   int32_t    *ii32 = in->array,  *ii32f = ii32 + in->size,   *oi32;
   uint64_t   *iu64 = in->array,  *iu64f = iu64 + in->size,   *ou64;
   int64_t    *ii64 = in->array,  *ii64f = ii64 + in->size,   *oi64;
+
+  /* The dataset may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(in->size==0 || in->array==NULL) return in;
 
   /* Check the type */
   switch(in->type)
@@ -312,6 +321,10 @@ static gal_data_t *
 arithmetic_abs(int flags, gal_data_t *in)
 {
   gal_data_t *out;
+
+  /* The dataset may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(in->size==0 || in->array==NULL) return in;
 
   /* Set the output array. */
   if(flags & GAL_ARITHMETIC_FLAG_INPLACE)
@@ -502,6 +515,10 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
   gal_data_t *o;
   double pi=3.14159265358979323846264338327;
 
+  /* The dataset may be empty. In this case, the output should also be empty
+     (we can have tables and images with 0 rows or pixels!). */
+  if(in->size==0 || in->array==NULL) return in;
+
   /* See if the operation should be done in place. The output of these
      operators is defined in the floating point space. So even if the input
      is integer type and user requested inplace opereation, if its not a
@@ -626,8 +643,14 @@ static gal_data_t *
 arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
 {
   gal_data_t *out=NULL;
-  int ip=(flags & GAL_ARITHMETIC_FLAG_INPLACE) || (flags & GAL_ARITHMETIC_FLAG_FREE);
+  int ip= (    (flags & GAL_ARITHMETIC_FLAG_INPLACE)
+            || (flags & GAL_ARITHMETIC_FLAG_FREE)    );
 
+  /* The dataset may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(input->size==0 || input->array==NULL) return input;
+
+  /* Do the operation. */
   switch(operator)
     {
     case GAL_ARITHMETIC_OP_MINVAL:   out=gal_statistics_minimum(input);break;
@@ -673,7 +696,8 @@ arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
 
 /* The size operator. Reports the size along a given dimension. */
 static gal_data_t *
-arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
+arithmetic_mknoise(int operator, int flags, gal_data_t *in,
+                   gal_data_t *arg)
 {
   gsl_rng *rng;
   const char *rng_name;
@@ -684,6 +708,10 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in, gal_data_t *arg)
   /* Column counter in case '--envseed' is given and we have multiple
      columns. */
   static unsigned long colcounter=0;
+
+  /* The dataset may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(in->size==0 || in->array==NULL) return in;
 
   /* Sanity checks. */
   if(arg->size!=1)
@@ -802,6 +830,7 @@ arithmetic_size(int operator, int flags, gal_data_t *in, gal_data_t *arg)
 {
   size_t one=1, arg_val;
   gal_data_t *usearg=NULL, *out=NULL;
+
 
   /* Sanity checks on argument (dimension number): it should be an integer,
      and have a size of 1. */
@@ -932,8 +961,22 @@ static void
 arithmetic_where(int flags, gal_data_t *out, gal_data_t *cond,
                  gal_data_t *iftrue)
 {
+  size_t i;
   int chb;    /* Read as: "Condition-Has-Blank" */
   unsigned char *c=cond->array, cb=GAL_BLANK_UINT8;
+
+  /* The datasets may be empty. In this case the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(    out->size==0    || out->array==NULL
+      || cond->size==0   || cond->array==NULL
+      || iftrue->size==0 || iftrue->array==NULL )
+    {
+      if(flags & GAL_ARITHMETIC_FLAG_FREE)
+        { gal_data_free(cond); gal_data_free(iftrue); }
+      if(out->array) {free(out->array); out->array=NULL;}
+      if(out->dsize) for(i=0;i<out->ndim;++i) out->dsize[i]=0;
+      out->size=0; return;
+    }
 
   /* The condition operator has to be unsigned char. */
   if(cond->type!=GAL_TYPE_UINT8)
@@ -1550,6 +1593,11 @@ arithmetic_multioperand(int operator, int flags, gal_data_t *list,
               "operator must be same", __func__,
               gal_arithmetic_operator_string(operator));
 
+      /* Make sure they actually have any data. */
+      if(tmp->size==0 || tmp->array==NULL)
+        error(EXIT_FAILURE, 0, "%s: atleast one input operand doesn't "
+              "have any data", __func__);
+
       /* Check the sizes. */
       if( gal_dimension_is_different(list, tmp) )
         error(EXIT_FAILURE, 0, "%s: the sizes of all operands to the '%s' "
@@ -1781,6 +1829,16 @@ arithmetic_binary(int operator, int flags, gal_data_t *l, gal_data_t *r)
   int quietmmap=l->quietmmap && r->quietmmap;
 
 
+  /* The datasets may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if( l->size==0 || l->array==NULL || r->size==0 || r->array==NULL )
+    {
+      if(l->array==0 || l->array==NULL)
+        {   if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(r); return l;}
+      else {if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(l); return r;}
+    }
+
+
   /* Simple sanity check on the input sizes */
   if( !( (flags & GAL_ARITHMETIC_FLAG_NUMOK) && (l->size==1 || r->size==1))
       && gal_dimension_is_different(l, r) )
@@ -1948,6 +2006,17 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
   double pi=3.14159265358979323846264338327;
   int quietmmap=il->quietmmap && ir->quietmmap;
 
+
+  /* The datasets may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if( il->size==0 || il->array==NULL || ir->size==0 || ir->array==NULL )
+    {
+      if(il->array==0 || il->array==NULL)
+        {   if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(ir); return il;}
+      else {if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(il); return ir;}
+    }
+
+
   /* Simple sanity check on the input sizes */
   if( !( (flags & GAL_ARITHMETIC_FLAG_NUMOK) && (il->size==1 || ir->size==1))
       && gal_dimension_is_different(il, ir) )
@@ -2067,6 +2136,19 @@ arithmetic_box_around_ellipse(gal_data_t *d1, gal_data_t *d2,
     error(EXIT_FAILURE, 0, "%s: the three operands to this "
           "function don't have the same number of elements",
           __func__);
+
+  /* The datasets may be empty. In this case the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(    d1->size==0 || d1->array==NULL
+      || d2->size==0 || d2->array==NULL
+      || d3->size==0 || d3->array==NULL )
+    {
+      if(flags & GAL_ARITHMETIC_FLAG_FREE)
+        { gal_data_free(d2); gal_data_free(d3); }
+      if(d1->array) {free(d1->array); d1->array=NULL;}
+      if(d1->dsize) for(i=0;i<d1->ndim;++i) d1->dsize[i]=0;
+      d1->size=0; return d1;
+    }
 
   /* Convert the two inputs into double. Note that if the user doesn't want
      to free the inputs, we should make a copy of 'a_data' and 'b_data'
@@ -2665,7 +2747,6 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       d2 = va_arg(va, gal_data_t *);
       out=arithmetic_binary(operator, flags, d1, d2);
       break;
-
     case GAL_ARITHMETIC_OP_BITNOT:
       d1 = va_arg(va, gal_data_t *);
       out=arithmetic_bitwise_not(flags, d1);
