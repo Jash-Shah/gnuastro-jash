@@ -182,6 +182,7 @@ EOF
 #   if a value is appended to the short format it should crash. So in the
 #   second test for these ('-l*') will account for both the case where we
 #   have an equal sign and where we don't.
+inputs=""
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -224,7 +225,7 @@ do
 
         # Not an option (not starting with a '-'): assumed to be input FITS
         # file name.
-        *) inputs="$1 $inputs"; shift;;
+        *) if [ x"$inputs" = x ]; then inputs="$1"; else inputs="$inputs $1"; fi; shift;;
     esac
 done
 
