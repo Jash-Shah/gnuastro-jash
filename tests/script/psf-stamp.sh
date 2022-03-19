@@ -74,4 +74,7 @@ if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
 export PATH="$progbdir:$PATH"
 x=$($dep2name $fits1name -h1 | awk '/^NAXIS1/{print $3/2}')
 y=$($dep2name $fits1name -h1 | awk '/^NAXIS2/{print $3/2}')
-$check_with_program $execname $fits1name --center=$x,$y --mode=img --stampwidth=100,100
+$check_with_program $execname $fits1name --center=$x,$y --mode=img \
+                              --stampwidth=100,100 \
+                              --output=$prog.fits \
+                              --tmpdir=tmpdir-$prog

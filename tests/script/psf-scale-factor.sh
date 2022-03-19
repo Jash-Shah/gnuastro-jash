@@ -74,5 +74,5 @@ export PATH="$progbdir:$PATH"
 x=$($dep1name $fits1name -h1 | awk '/^NAXIS1/{print $3/2}')
 y=$($dep1name $fits1name -h1 | awk '/^NAXIS2/{print $3/2}')
 $check_with_program $execname $fits1name --center=$x,$y --mode=img \
-                                         --psf=$fits1name \
-                                         --normradii=5,10
+                              --psf=$fits1name --normradii=5,10 \
+                              --tmpdir=tmpdir-$prog

@@ -74,10 +74,12 @@ $check_with_program astmkcatalog $fits2name \
 
 # Test the script: selecting good stars
 $check_with_program $execname $fits1name --hdu=1 \
-                    --segmented=$fits2name \
-                    --catalog=$fits3name \
-                    --field=magnitude \
-                    --magnituderange=-17,-10 \
-                    --minaxisratio=0.85 \
-                    --mindistdeg=0.05 \
-                    --matchaperturedeg=0.5
+                              --segmented=$fits2name \
+                              --catalog=$fits3name \
+                              --field=magnitude \
+                              --magnituderange=-17,-10 \
+                              --minaxisratio=0.85 \
+                              --mindistdeg=0.05 \
+                              --matchaperturedeg=0.5 \
+                              --output=$prog.fits \
+                              --tmpdir=tmpdir-$prog

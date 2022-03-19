@@ -70,4 +70,6 @@ if [ ! -f $fits1name ]; then echo "$fits1name doesn't exist."; exit 77; fi
 # this same build of Gnuastro, we'll add the current directory to PATH.
 export PATH="$progbdir:$PATH"
 $check_with_program $execname $fits1name --inner=$fits1name \
-                              --scale=3.3 --radius=5
+                              --scale=3.3 --radius=5 \
+                              --output=$prog.fits \
+                              --tmpdir=tmpdir-$prog
