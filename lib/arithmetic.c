@@ -2,9 +2,10 @@
 Arithmetic operations on data structures
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
-Original author:
+Corresponding author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -30,6 +31,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdarg.h>
 
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 
 #include <gnuastro/box.h>
@@ -513,7 +515,6 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
   uint8_t otype;
   int inplace=0;
   gal_data_t *o;
-  double pi=3.14159265358979323846264338327;
 
   /* The dataset may be empty. In this case, the output should also be empty
      (we can have tables and images with 0 rows or pixels!). */
@@ -557,7 +558,8 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
                          NULL, NULL, NULL);
     }
 
-  /* Start setting the operator and operands. */
+  /* Start setting the operator and operands. The mathematical constant
+     'PI' is imported from the GSL as M_PI. */
   switch(operator)
     {
     case GAL_ARITHMETIC_OP_SQRT:
@@ -567,17 +569,17 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
     case GAL_ARITHMETIC_OP_LOG10:
       UNIARY_FUNCTION_ON_ELEMENT( log10, +0, +0);         break;
     case GAL_ARITHMETIC_OP_SIN:
-      UNIARY_FUNCTION_ON_ELEMENT( sin,   *pi/180.0f, +0); break;
+      UNIARY_FUNCTION_ON_ELEMENT( sin,   *M_PI/180.0f, +0); break;
     case GAL_ARITHMETIC_OP_COS:
-      UNIARY_FUNCTION_ON_ELEMENT( cos,   *pi/180.0f, +0); break;
+      UNIARY_FUNCTION_ON_ELEMENT( cos,   *M_PI/180.0f, +0); break;
     case GAL_ARITHMETIC_OP_TAN:
-      UNIARY_FUNCTION_ON_ELEMENT( tan,   *pi/180.0f, +0); break;
+      UNIARY_FUNCTION_ON_ELEMENT( tan,   *M_PI/180.0f, +0); break;
     case GAL_ARITHMETIC_OP_ASIN:
-      UNIARY_FUNCTION_ON_ELEMENT( asin,  +0, *180.0f/pi); break;
+      UNIARY_FUNCTION_ON_ELEMENT( asin,  +0, *180.0f/M_PI); break;
     case GAL_ARITHMETIC_OP_ACOS:
-      UNIARY_FUNCTION_ON_ELEMENT( acos,  +0, *180.0f/pi); break;
+      UNIARY_FUNCTION_ON_ELEMENT( acos,  +0, *180.0f/M_PI); break;
     case GAL_ARITHMETIC_OP_ATAN:
-      UNIARY_FUNCTION_ON_ELEMENT( atan,  +0, *180.0f/pi); break;
+      UNIARY_FUNCTION_ON_ELEMENT( atan,  +0, *180.0f/M_PI); break;
     case GAL_ARITHMETIC_OP_SINH:
       UNIARY_FUNCTION_ON_ELEMENT( sinh,  +0, +0);         break;
     case GAL_ARITHMETIC_OP_COSH:
@@ -2003,7 +2005,6 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
   int final_otype;
   size_t out_size, minmapsize;
   gal_data_t *l, *r, *o=NULL;
-  double pi=3.14159265358979323846264338327;
   int quietmmap=il->quietmmap && ir->quietmmap;
 
 
@@ -2072,7 +2073,7 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
     case GAL_ARITHMETIC_OP_POW:
       BINFUNC_F_OPERATOR_SET( pow,   +0 );         break;
     case GAL_ARITHMETIC_OP_ATAN2:
-      BINFUNC_F_OPERATOR_SET( atan2, *180.0f/pi ); break;
+      BINFUNC_F_OPERATOR_SET( atan2, *180.0f/M_PI ); break;
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:
       BINFUNC_F_OPERATOR_SET( gal_units_counts_to_mag, +0 ); break;
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:

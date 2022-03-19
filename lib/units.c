@@ -6,6 +6,7 @@ Original author:
      Kartik Ohri <kartikohri13@gmail.com>
 Contributing author(s):
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2020-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -29,6 +30,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <gsl/gsl_math.h>
 
 #include <gnuastro/type.h>
 #include <gnuastro/pointer.h>
@@ -409,12 +412,13 @@ gal_units_counts_to_jy(double counts, double zeropoint_ab)
 /**********************************************************************/
 /****************         Distance conversions        *****************/
 /**********************************************************************/
-/* Convert Astronomical Units (AU) to Parsecs (PC). From the definition
-   of Parsecs, 648000/pi AU = 1 PC. So   */
+/* Convert Astronomical Units (AU) to Parsecs (PC). From the definition of
+   Parsecs, 648000/pi AU = 1 PC. The mathematical constant 'PI' is imported
+   from the GSL as M_PI. So: */
 double
 gal_units_au_to_pc(double au)
 {
-  return au / 648000.0f * 3.14159265358979323846264338327f;
+  return au / 648000.0f * M_PI;
 }
 
 
@@ -426,7 +430,7 @@ gal_units_au_to_pc(double au)
 double
 gal_units_pc_to_au(double au)
 {
-  return au * 648000.0f / 3.14159265358979323846264338327f;
+  return au * 648000.0f / M_PI;
 }
 
 
