@@ -1532,22 +1532,29 @@ Adrian Bunk,
 Rosa Calvi,
 Mark Calabretta
 Nushkia Chamba,
+Sergio Chueca Urzay,
+Tamara Civera Lorenzo,
 Benjamin Clement,
 Nima Dehdilani,
+Andr@'es Del Pino Molina,
 Antonio Diaz Diaz,
 Alexey Dokuchaev,
 Pierre-Alain Duc,
+Alessandro Ederoclite,
 Elham Eftekhari,
 Paul Eggert,
 Sepideh Eskandarlou,
+Juan Antonio Fernández Ontiveros,
 Gaspar Galaz,
 Andr@'es García-Serra Romero,
 Zohre Ghaffari,
 Th@'er@`ese Godefroy,
 Giulia Golini,
+Martin Guerrero Roncel,
 Madusha Gunawardhana,
 Bruno Haible,
 Stephen Hamer,
+Zahra Hosseini,
 Leslie Hunt,
 Takashi Ichikawa,
 Ra@'ul Infante Sainz,
@@ -1564,6 +1571,7 @@ Clotilde Laigle,
 Floriane Leclercq,
 Alan Lefor,
 Javier Licandro,
+Alejandro Lumbreras Calle,
 Sebasti@'an Luna Valero,
 Alberto Madrigal,
 Guillaume Mahler,
@@ -1584,6 +1592,7 @@ Marcel Popescu,
 Bob Proulx,
 Joseph Putko,
 Samane Raji,
+Ignacio Ruiz Cejudo,
 Teymoor Saifollahi,
 Joanna Sakowska,
 Elham Saremi,
@@ -1594,6 +1603,7 @@ Zahra Sharbaf,
 David Shupe,
 Leigh Smith,
 Jenny Sorce,
+Manuel S@'anchez-Benavente,
 Lee Spitler,
 Richard Stallman,
 Michael Stein,
@@ -1604,7 +1614,9 @@ Juan C. Tello,
 Vincenzo Testa,
 @'Eric Thi@'ebaut,
 Ignacio Trujillo,
+Peter Teuben,
 David Valls-Gabaud,
+Jes@'us Varela,
 Aaron Watkins,
 Richard Wilbur,
 Michael H.F. Wilkinson,
@@ -1678,7 +1690,7 @@ Because bright/large galaxies and stars@footnote{Stars also have similarly large
 @ref{Building the extended PSF} tackles an important problem in astronomy: how the extract the PSF of an image, to the largest possible extent, without assuming any functional form.
 In Gnuastro we have multiple installed scripts for this job.
 Their usage and logic behind best tuning them for the particular step, is fully described in this tutorial, on a real dataset.
-The tutorial concluds with subtracting that extended PSF from the science image; thus giving you a cleaner image (with no scattered light of the brighter stars) for your higher-level analysis.
+The tutorial concludes with subtracting that extended PSF from the science image; thus giving you a cleaner image (with no scattered light of the brighter stars) for your higher-level analysis.
 
 In these tutorials, we have intentionally avoided too many cross references to make it more easy to read.
 For more information about a particular program, you can visit the section with the same name as the program in this book.
@@ -1953,7 +1965,7 @@ All this trouble was certainly worth it because now there is no dimming on the e
 
 The final step to simulate a real observation would be to add noise to the image.
 Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a magnitude of 7 that night.
-For more on how the background value deterimnes the noise, see @ref{Noise basics}.
+For more on how the background value determines the noise, see @ref{Noise basics}.
 So using these values he ran MakeNoise:
 
 @example
@@ -2320,7 +2332,7 @@ $ for f in f105w f125w f160w; do \
 Please open these images and inspect them with the same @command{ds9} command you used above.
 You will see how it is nicely flat now and doesn't have varying depths.
 In the example above, the polygon vertices are in degrees, but you can also replace them with sexagesimal coordinates (for example using @code{03h32m44.9794} or @code{03:32:44.9794} instead of @code{53.187414} instead of the first RA and @code{-27d46m44.9472} or @code{-27:46:44.9472} instead of the first Dec).
-To futher simplify things, you can even define your polygon visually as a DS9 ``region'', save it as a ``region file'' and give that file to crop.
+To further simplify things, you can even define your polygon visually as a DS9 ``region'', save it as a ``region file'' and give that file to crop.
 But we need to continue, so if you are interested to learn more, see @ref{Crop}.
 
 Another important result of this crop is that regions with no data now have a NaN (Not-a-Number, or a blank value) value.
@@ -3720,7 +3732,7 @@ You can add two histograms with each other, or you can use advanced features of 
 
 @noindent
 With the first command below, you can activate the grid feature of DS9 to actually see the coordinate grid, as well as values on each line.
-With the second command, DS9 will even read the labels of the axises and use them to generate an almost publication-ready plot.
+With the second command, DS9 will even read the labels of the axes and use them to generate an almost publication-ready plot.
 
 @example
 $ ds9 cmd.fits -cmap sls -zoom to fit -grid yes
@@ -4771,7 +4783,7 @@ Histogram:
 @cindex Skewness
 This histogram shows a roughly symmetric noise distribution, so let's have a look at its skewness.
 The most commonly used definition of skewness is known as the ``Pearson's first skewness coefficient''.
-It measures the difference between the mean and median, in untis of the standard deviation (STD):
+It measures the difference between the mean and median, in units of the standard deviation (STD):
 
 @dispmath{\rm{Skewness}\equiv\frac{(\rm{mean}-\rm{median})}{\rm{STD}}}
 
@@ -4861,7 +4873,7 @@ The ASCII histogram of @file{det-masked.fits} was approximately symmetric, while
 The heavier right-side tail is a clear visual demonstration of skewness that is cased by the signal in the un-masked image.
 
 Having visually confirmed the skewness, let's quantify it with Pearson's first skewness coefficient.
-Like before, we can simply use Gnuastro's Statisics and AWK for the measurement and calculation:
+Like before, we can simply use Gnuastro's Statistics and AWK for the measurement and calculation:
 
 @verbatim
 $ aststatistics r_detected.fits --mean --median --std \
@@ -5420,7 +5432,7 @@ An overview of the process is given in @ref{Overview of the PSF scripts}.
 We will use an image of the M51 galaxy group in the r (SDSS) band of the Javalambre Photometric Local Universe Survey (J-PLUS) to extract its extended PSF.
 For more information on J-PLUS, and its unique features visit: @url{http://www.j-plus.es}.
 
-First, let's download the image from the J-PLUS webpage using @code{wget}.
+First, let's download the image from the J-PLUS web page using @code{wget}.
 But to have a generalize-able, and easy to read command, we'll define some base variables (in all-caps) first.
 After the download is complete, open the image with SAO DS9 (or any other FITS viewer you prefer!) to have a feeling of the data (and of course, enjoy the beauty of M51 in such a wide field of view):
 
@@ -5432,7 +5444,7 @@ $ wget $urlbase$urlend -O jplus-dr2/67510.fits.fz
 $ astscript-fits-view jplus-dr2/67510.fits.fz
 @end example
 
-Afer enjoying the large field of view, have a closer look at the edges of the image.
+After enjoying the large field of view, have a closer look at the edges of the image.
 Please zoom in to the corners.
 You will see that on the edges, the pixel values are either zero or with significantly different values than the main body of the image.
 This is due to the dithering pattern that was used to make this image and happens in all imaging surveys@footnote{Recall the cropping in a previous tutorial for a similar reason (varying ``depth'' across the image): @ref{Dataset inspection and cropping}.}.
@@ -5633,7 +5645,7 @@ $ astarithmetic saturated.fits set-i i i 2200 gt \
 $ astscript-fits-view sat-masked.fits --ds9scale=minmax
 @end example
 
-Now that saturated pixels (and their problematic neighbors) have been masked, we can convolve the image (recall that Segment will use the convolved image for identifing clumps) with the command below.
+Now that saturated pixels (and their problematic neighbors) have been masked, we can convolve the image (recall that Segment will use the convolved image for identifying clumps) with the command below.
 However, we will use the Spatial Domain convolution which can account for blank pixels (for more on the pros and cons of spatial and frequency domain convolution, see @ref{Spatial vs. Frequency domain}).
 We will also create a Gaussian kernel with @mymath{\rm{FWHM}=2} pixels, truncated at @mymath{5\times\rm{FWHM}}.
 
@@ -5738,7 +5750,7 @@ Since the image is not too deep (made from few exposures), it doesn't have stron
 @end itemize
 @noindent
 Furthermore, since both NoiseChisel and Segment need a convolved image, we'll do the convolution before and feed it to both (to save running time).
-But in the first comand below, let's delete all the temporary files we made above.
+But in the first command below, let's delete all the temporary files we made above.
 
 Since the image is large (+300 MB), to avoid wasting storage, any temporary file that is no longer necessary for later processing is deleted after it is used.
 You can visually check each of them with DS9 before deleting them (or not delete them at all!).
@@ -5845,7 +5857,7 @@ We are now ready to start building the extended PSF.
 
 First we will build the outer parts of the PSF, so we want the brightest stars.
 You will see we have several bright stars in this very large field of view, but we don't yet have a feeling how many they are, and at what magnitudes.
-So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than g-magnitude 10 in Gaia early data relase 3, or eDR3).
+So let's use Gnuastro's Query program to find the magnitudes of the brightest stars (those brighter than g-magnitude 10 in Gaia early data release 3, or eDR3).
 For more on Query, see @ref{Query}.
 
 @example
@@ -5928,7 +5940,7 @@ $ asttable outer/67510-6-10.fits \
 
 First let's have a look at all the masked postage stamps of the cropped stars.
 Once they all open, feel free to zoom-in, they are all matched and locked.
-It is always good to check the different stamps to ensure the quality and posible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
+It is always good to check the different stamps to ensure the quality and possible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
 
 @example
 $ astscript-fits-view finding-normradii/cropped-masked*.fits
@@ -5993,8 +6005,8 @@ $ astscript-fits-view outer/stack.fits outer/stamps/*.fits
 However, the saturation in the center still remains.
 Also, because we didn't have too many images, some regions still are very noisy.
 If we had more bright stars in our selected magnitude range, we could have filled those outer remaining patches.
-In a large survey like J-PLUS (that we are using here), you can simply look into other fields that were observed soon before/after the tile ID 67510 that we used here (to have a similar PSF) and get more stars in those images to add to these.
-Infact, the J-PLUS DR2 tile ID of the field above was intentially preserved during the steps above to show how easy it is to use images from other fields and blend them all into the output PSF.
+In a large survey like J-PLUS (that we are using here), you can simply look into other fields that were observed soon before/after the image ID 67510 that we used here (to have a similar PSF) and get more stars in those images to add to these.
+In fact, the J-PLUS DR2 image ID of the field above was intentionally preserved during the steps above to show how easy it is to use images from other fields and blend them all into the output PSF.
 
 
 
@@ -6013,7 +6025,7 @@ But the central part that was affected by saturation and non-linearity is still 
 In this section, we will use the same steps before to make stacks of more inner regions of the PSF to ultimately unite them all into a single PSF in @ref{Uniting the different PSF components}.
 
 For the outer PSF, we selected stars in the magnitude range of 6 to 10.
-So let's have a look and see how many stars we have in the magnitude range of 12 to 13 with a more relaxed condition on the minimum distance for neighbours, @option{--mindistdeg=0.01} (36 arcsec, since these stars are fainter), and use the ds9 region script to visually inspect them:
+So let's have a look and see how many stars we have in the magnitude range of 12 to 13 with a more relaxed condition on the minimum distance for neighbors, @option{--mindistdeg=0.01} (36 arcsec, since these stars are fainter), and use the ds9 region script to visually inspect them:
 
 @example
 $ mkdir inner
@@ -6026,7 +6038,7 @@ $ astscript-ds9-region inner/67510-12-13.fits -cra,dec \
            --command="ds9 flat/67510.fits -zoom to fit -zscale"
 @end example
 
-We have 41 stars, but if you zoom into their centers, you will see that they don't have any major bleeding-vertical saturations any more.
+We have 41 stars, but if you zoom into their centers, you will see that they don't have any major bleeding-vertical saturation any more.
 Only the very central core of some of the stars is saturated.
 We can therefore use these stars to fill the strong bleeding footprints that were present in the outer stack of @file{outer/stack.fits}.
 Similar to before, let's build ready-to-stack crops of these stars.
@@ -6105,16 +6117,16 @@ The rest of the steps are done in this window.
 In the bottom settings, within the left panel, click on the ``Axes'' item.
 This will allow customization of the plot axises.
 @item
-In the bottom-right panel, click on the box infront of ``Y Log'' to make the vertical axis logarithmtic-scaled.
+In the bottom-right panel, click on the box in front of ``Y Log'' to make the vertical axis logarithmic-scaled.
 @item
 On the ``Layers'' menu, select ``Add Position Control'' to allow adding the profile of the inner region.
 After it, you will see that a new red-blue scatter plot icon opened on the bottom-left menu (with a title of @code{<no table>}).
 @item
-On the bottom-right panel, in the drop-down menue infront of @code{Table:}, select @code{2: profile.fits}.
+On the bottom-right panel, in the drop-down menu in front of @code{Table:}, select @code{2: profile.fits}.
 Afterwards, you will see the radial profile of the inner stack as the newly added blue plot.
 Our goal here is to find the factor that is necessary to multiply with the inner profile so it matches the outer one.
 @item
-On the bottom-right panel, infront of @code{Y:}, you will see @code{MEAN}.
+On the bottom-right panel, in front of @code{Y:}, you will see @code{MEAN}.
 Click in the white-space after it, and type this: @code{*100}.
 This will display the @code{MEAN} column of the inner profile, after multiplying it by 100.
 Afterwards, you will see that the inner profile (blue) matches more cleanly with the outer (red); especially in the smaller radii.
@@ -6137,7 +6149,7 @@ Click-and-hold your mouse to see the inner parts of the two profiles (in the ran
 You will see that for radii less than 40 pixels, the inner profile (blue) points loose their scatter (and thus have a good signal-to-noise ratio).
 @item
 Zoom-in to the plot and follow the profiles until smaller radii (for example 10 pixels).
-You see that for each radius, the inner (blue) points are consistantly above the outer (red) points.
+You see that for each radius, the inner (blue) points are consistently above the outer (red) points.
 This shows that the @mymath{\times100} factor we selected above was too much.
 @item
 In the bottom-right panel, change the @code{100} to @code{80} and zoom-in to the same region.
@@ -6152,7 +6164,7 @@ But before continuing, let's focus on another important point about the central 
 While you are zoomed-in (from the step above), follow (click-and-drag) the profile towards smaller radii.
 You will see that smaller than a radius of 10, they start to diverge.
 But this time, the outer (red) profile is getting a shallower slope and diverges significantly from about the radius of 8.
-We had masked all saturated pixels before, so this divergance for radii smaller than 10 shows the effect of the CCD's non-linearity (where the number of electrons will not be linearly correlated with the number of incident photons).
+We had masked all saturated pixels before, so this divergence for radii smaller than 10 shows the effect of the CCD's non-linearity (where the number of electrons will not be linearly correlated with the number of incident photons).
 This is present in all CCDs and pixels beyond this level should not be used in measurements (or properly corrected).
 @end enumerate
 
@@ -6328,7 +6340,7 @@ As a result, the PSF has been multiplied by 19 before being subtracted.
 However, the outer part of the PSF was created with only a handful of star stamps.
 When you stack @mymath{N} images, the stack's signal-to-noise ratio (S/N) improves by @mymath{\sqrt{N}}.
 We had 8 images for the outer part, so the S/N has only improved by a factor of just under 3!
-When we multiply the final stacked PSF with 19, we are also scaling up the noise by that same factor.
+When we multiply the final stacked PSF with 19, we are also scaling up the noise by that same factor (most importantly: in the outer most regions where there is almost no signal).
 So the stacked image's noise-level is @mymath{19/3=6.3} times larger than the noise of the input image.
 This terrible noise-level is what you clearly see as the footprint of the PSF.
 
@@ -6385,19 +6397,19 @@ You will notice that script also creates a @file{.log} file, which shows which s
 # Abort the script on first error.
 set -e
 
-# ID of tile to subtract stars from.
-tileid=67510
+# ID of image to subtract stars from.
+imageid=67510
 
 # Get S/N level of the final PSF in relation to the actual data:
 snlevel=$(ls outer/stamps/*.fits | wc -l | awk '@{print sqrt($1)@}')
 
 # Put a copy of the image we want to subtract the PSF from in the
 # final file (this will be over-written after each subtraction).
-subtracted=subtracted/$tileid.fits
-cp label/$tileid-seg.fits $subtracted
+subtracted=subtracted/$imageid.fits
+cp label/$imageid-seg.fits $subtracted
 
 # Name of log-file to keep status of the subtraction of each star.
-logname=subtracted/$tileid.log
+logname=subtracted/$imageid.log
 echo "# Column 1: RA   [deg, f64] Right ascension of star." >  $logname
 echo "# Column 2: Dec  [deg, f64] Declination of star."     >> $logname
 echo "# Column 3: Stat [deg, f64] Status (1: subtracted)"   >> $logname
@@ -6424,7 +6436,7 @@ asttable flat/67510-bright.fits -cra,dec --sort phot_g_mean_mag  \
     if [ $check = good ]; then
 
         # A temporary file to subtract this star.
-        subtmp=subtracted/$tileid-tmp.fits
+        subtmp=subtracted/$imageid-tmp.fits
 
         # Subtract this star from the image where all previous stars
         # were subtracted.
@@ -6489,7 +6501,7 @@ $ rm scattered-light.fits
 
 You will probably have noticed that in the scattered light field there are some patches that correspond to the saturation of the stars.
 Since we obtained the scattered light field by subtracting PSF-subtracted image from the original image, it is natural that we have such saturated regions.
-To solve such inconvinience, this script also has an option to not make the subtraction of the PSF but to give as output the modeled star.
+To solve such inconvenience, this script also has an option to not make the subtraction of the PSF but to give as output the modeled star.
 For doing that, it is necessary to run the script with the option @option{--modelonly}.
 We encourage the reader to obtain such scattered light field model.
 In some scenarios it could be interesting having such way of correcting the PSF.
@@ -6513,7 +6525,7 @@ This is due to the non-accurate positioning: most probably this happens because 
 Note also that during this process we assumed that the PSF doesn't vary with the CCD position or any other parameter.
 In other words, we are obtaining an averaged PSF model from a few star stamps that are naturally different, and this also explains the residuals on each subtracted star.
 
-We let as an interesting exercise the modeling and subraction of other stars, for example, the non saturated stars of the image.
+We let as an interesting exercise the modeling and subtraction of other stars, for example, the non saturated stars of the image.
 By doing this, you will notice that in the core region the residuals are different compared to the residuals of brighter stars that we have obtained.
 
 In general, in this tutorial we have showed how to deal with the most important challenges for constructing an extended PSF.
@@ -6962,7 +6974,7 @@ If the following line is present, it is also necessary to comment/remove it.
 <policy domain="delegate" rights="none" pattern="gs" />
 @end example
 
-To learn more about the ImageMagic security policy please see: @url{https://imagemagick.org/script/security-policy.php}.
+To learn more about the ImageMagick security policy please see: @url{https://imagemagick.org/script/security-policy.php}.
 
 To check that you have a working ImageMagick in your system, you can try this command:
 
@@ -7108,7 +7120,7 @@ $ sudo pacman -S ghostscript libtool libjpeg libtiff \
 @end example
 
 SAO DS9 and TOPCAT aren't available in the standard Arch GNU/Linux repositories.
-However, installing and using both is very easy from their own webpages, as described in @ref{SAO DS9} and @ref{TOPCAT}.
+However, installing and using both is very easy from their own web pages, as described in @ref{SAO DS9} and @ref{TOPCAT}.
 
 @item @command{zypper} (openSUSE and SUSE Linux Enterprise Server)
 @cindex openSUSE
@@ -12479,7 +12491,7 @@ Return the number of milli-seconds from the Unix epoch time (00:00:00 Thursday, 
 The input (popped) operand should be a string column in the FITS date format (most generally: @code{YYYY-MM-DDThh:mm:ss.ddd...}, where @code{.ddd} is the optional sub-second component).
 
 The returned operand will be named @code{UNIXMILLISEC} (short for Unix milli-seconds) and will be a 64-bit, signed integer, see @ref{Numeric data types}.
-The returned value is not a floating point type because for large numbers, floating point datatypes loose single-digit precision (which is important here).
+The returned value is not a floating point type because for large numbers, floating point data types loose single-digit precision (which is important here).
 
 Other than the units of the output, this operator behaves similarly to @code{date-to-sec}.
 See the description of that operator for an example.
@@ -12522,7 +12534,7 @@ Two conditions are mandatory for adding rows:
 The number of columns used from the new tables must be equal to the number of columns in memory, by the time control reaches here.
 @item
 The data type of each column (see @ref{Numeric data types}) should be the same as the respective column in memory by the time control reaches here.
-If the datatypes are different, you can use the type conversion operators of Table's column arithmetic on the inputs in a separate command first (see @ref{Numerical type conversion operators} and @ref{Column arithmetic}).
+If the data types are different, you can use the type conversion operators of Table's column arithmetic on the inputs in a separate command first (see @ref{Numerical type conversion operators} and @ref{Column arithmetic}).
 @end itemize
 
 @item Row selection by value in a column
@@ -12925,7 +12937,7 @@ For example @code{--equal=NAME,"  myname "}.
 @cartouche
 @noindent
 @strong{Strings with a comma (,):} When your desired column values contain a comma, you need to put a `@code{\}' before the internal comma (within the value).
-Otherwise, the comma will be interpreted as a delimiter between multiple values, and anything after it will be interpretted as a separate string.
+Otherwise, the comma will be interpreted as a delimiter between multiple values, and anything after it will be interpreted as a separate string.
 For example, assume column @code{AB} of your @file{table.fits} contains this value: `@code{cd,ef}' in your desired rows.
 To extract those rows, you should use the command below:
 @example
@@ -13035,7 +13047,7 @@ For the precedence of this operation in relation to others, see @ref{Operation p
 For example if your final output table (possibly after column arithmetic, or adding new columns) has blank values (NaN in floating point types) in the @code{magnitude} and @code{sn} columns, with @code{--noblankend=magnitude,sn}, the output will not contain any rows with blank values in these two columns.
 
 If you want blank values to be removed from the main input table _before_ any further processing (like adding columns, sorting or column arithmetic), you should use the @option{--noblank} option.
-With the @option{--noblank} option, the column(s) that is(are) given doesn't necessarily have to be in the output (it is just temporarily used for reading the inputs and selecting rows, but doens't necessarily need to be present in the output).
+With the @option{--noblank} option, the column(s) that is(are) given doesn't necessarily have to be in the output (it is just temporarily used for reading the inputs and selecting rows, but doesn't necessarily need to be present in the output).
 However, the column(s) given to this option should exist in the output.
 
 If you want @emph{all} columns to be checked, simply set the value to @code{_all} (in other words: @option{--noblankend=_all}).
@@ -14364,7 +14376,7 @@ $ ls -lh int-*.fits flt-*.fits
 The 8-bit integer images are only 24MB, while the 64-bit floating point images are 191 MB!
 Besides helping in storage (on your disk, or in RAM, while the program is running), the small size of these files also helps in faster reading of the inputs.
 Furthermore, CPUs can process integer operations much faster than floating points.
-In the integers, the ones with a smaller width (number of bits) can be processed much faster. You can see this witht he two commands below where you will add the integer images with each other and the floats with each other:
+In the integers, the ones with a smaller width (number of bits) can be processed much faster. You can see this with the two commands below where you will add the integer images with each other and the floats with each other:
 
 @example
 $ astarithmetic flt-1.fits flt-2.fits + -oflt-sum.fits -g1
@@ -14388,7 +14400,7 @@ For more on the range (for integers) and precision (for floats), see @ref{Numeri
 @end cartouche
 
 There is a price to be paid for this improved efficiency in integers: your wisdom!
-If you have not selected your types wisely, strange situtations may happen.
+If you have not selected your types wisely, strange situations may happen.
 For example try the command below:
 
 @example
@@ -19059,7 +19071,7 @@ By default the output will have the same pixel size as the input, but with the @
 The key things to remember are:
 @itemize
 @item
-The measurements to find the thresholds are done on tiles that cover the whole image in a tesselation.
+The measurements to find the thresholds are done on tiles that cover the whole image in a tessellation.
 Recall that you can set the size of tiles with @option{--tilesize} and check them with @option{--checktiles}.
 Therefore except for the first and last extensions, the rest only show tiles.
 @item
@@ -19112,7 +19124,7 @@ The pixels in this image can only have three values:
 @item 0
 These pixels had a value below the quantile threshold.
 @item 1
-These pixels had a value above the quantile threshod, but below the threshold for no erosion.
+These pixels had a value above the quantile threshold, but below the threshold for no erosion.
 Therefore in the next step, NoiseChisel will erode (set them to 0) these pixels if they are touching a 0-valued pixel.
 @item 2
 These pixels had a value above the no-erosion threshold.
@@ -21622,7 +21634,7 @@ If an elliptical aperture is necessary, it can even get more complicated, see @r
 Such operations are not simple, and will consume many cycles of your CPU!
 As a result, this basic algorithm will become terribly slow as your datasets grow in size.
 For example when N or M exceed hundreds of thousands (which is common in the current days with datasets like the European Space Agency's Gaia mission).
-Therefore that basic parsing algoritm will take too much time and more efficient ways to @emph{find the nearest neighbor} need to be found.
+Therefore that basic parsing algorithm will take too much time and more efficient ways to @emph{find the nearest neighbor} need to be found.
 Gnuastro's Match currently has algorithms for finding the nearest neighbor:
 
 @table @asis
@@ -21646,7 +21658,7 @@ To use this sorting method in Match, use @option{--kdtree=disable}.
 
 @item k-d tree based
 The k-d tree concept is much more abstract, but powerful (addressing all the caveats of the sort-based method described above.).
-In short a k-d tree is a partitioning of a k-dimentional space (``k'' is just a place-holder, so together with ``d'' for dimension, ``k-d'' means ``any number of dimensions''!).
+In short a k-d tree is a partitioning of a k-dimensional space (``k'' is just a place-holder, so together with ``d'' for dimension, ``k-d'' means ``any number of dimensions''!).
 The k-d tree of table A is another table with the same number of rows, but only two integer columns: the integers contain the row indexs (counting from zero) of the left and right ``branch'' (in the ``tree'') of that row.
 With a k-d tree we can find the nearest point with much fewer (statistically) checks, compared to always parsing from the top-down.
 For more on the k-d tree concept and Gnuastro's implementation, please see @ref{K-d tree}.
@@ -21690,9 +21702,9 @@ However, this will introduce an important bias: @mymath{A_i} may actually be clo
 But because @mymath{B_j} happened to be before @mymath{B_k} in your table, @mymath{A_i} was removed from the potential search domain of @mymath{B_k}.
 The good match (@mymath{B_k} with @mymath{A_i} will therefore be lost, and replaced by a false match between @mymath{B_j} and @mymath{A_i}!
 
-In a single-dimentional match, this bias depends on the sorting of your two datasets (leading to different matches if you shuffle your datasets).
+In a single-dimensional match, this bias depends on the sorting of your two datasets (leading to different matches if you shuffle your datasets).
 But it will get more complex as you add dimensionality.
-For example catalogs dervied from 2D images or 3D cubes, where you have 2 and 3 different coordinates for each point.
+For example catalogs derived from 2D images or 3D cubes, where you have 2 and 3 different coordinates for each point.
 
 To address this problem, in Gnuastro (the Match program, or the matching functions of the library) similar to above, we first parse over the elements of B.
 But we won't associate the first nearest-neighbor with a match!
@@ -21832,7 +21844,7 @@ In this case, the output file (possibly given by the @option{--output} option) w
 @strong{@option{--log} isn't thread-safe}: As described above, when @option{--logasoutput} is not called, the Log file has a fixed name for all calls to Match.
 Therefore if a separate log is requested in two simultaneous calls to Match in the same directory, Match will try to write to the same file.
 This will cause problems like unreasonable log file, undefined behavior, or a crash.
-Remember that @option{--log} is mainly intended for debuging purposes, if you want the log file with a specific name, simply use @option{--logasoutput} (which will also be faster, since no arranging of the input columns is necessary).
+Remember that @option{--log} is mainly intended for debugging purposes, if you want the log file with a specific name, simply use @option{--logasoutput} (which will also be faster, since no arranging of the input columns is necessary).
 @end cartouche
 
 @table @option
@@ -21859,7 +21871,7 @@ Use the given FITS file as a k-d tree (that was previously constructed with Matc
 The FITS file should have two columns with an unsigned 32-bit integer data type and a @code{KDTROOT} keyword that contains the index of the root of the k-d tree.
 For more on Gnuastro's k-d tree format, see @ref{K-d tree}.
 @item disable
-Don't use the k-d tree algorithm for finding the nearest neighbor, intead, use the sort-based method.
+Don't use the k-d tree algorithm for finding the nearest neighbor, instead, use the sort-based method.
 @end table
 
 @item --kdtreehdu=STR
@@ -23163,7 +23175,7 @@ Then the flux of that pixel, after adding noise, is @emph{a random value} taken 
 In astronomical instruments, @mymath{B} is enhanced by adding a ``bias'' level to each pixel before the shutter is even opened (for the exposure to start).
 As the exposure is ongoing and photo-electrons are accumulating from the astronomical objects, a ``dark'' current (due to thermal radiation of the instrument) also builds up in the pixels.
 The ``dark'' current will accumulate even when the shutter is closed, but the CCD electronics are working (hence the name ``dark'').
-This added dark level further enhaces the mean value in a real observation compared to the raw background value (from the atmosphere for example).
+This added dark level further enhances the mean value in a real observation compared to the raw background value (from the atmosphere for example).
 
 Since this type of noise is inherent in the objects we study, it is usually measured on the same scale as the astronomical objects, namely the magnitude system, see @ref{Brightness flux magnitude}.
 It is then internally converted to the flux scale for further processing.
@@ -23179,7 +23191,7 @@ To better understand the correlation between the mean (or background) value and 
 Consider the profile of your galaxy to be analogous to the profile of a ship that is sailing in the sea.
 The height of the ship would therefore be analogous to the maximum flux difference between your galaxy's minimum and maximum values.
 Furthermore, let's take the depth of the sea to represent the background value: a deeper sea, corresponds to a brighter background.
-In this analogy, the ``noise'' would be the height of the waves that surround the ship: in deeper waters, the waves would also be taller (the squre root of the mean depth at the ship's position).
+In this analogy, the ``noise'' would be the height of the waves that surround the ship: in deeper waters, the waves would also be taller (the square root of the mean depth at the ship's position).
 
 If the ship is in deep waters, the height of waves are greater than when the ship is near to the beach (at lower depths).
 Therefore, when the ship is in the middle of the sea, there are high waves that are capable of hiding a significant part of the ship from our perspective.
@@ -24757,7 +24769,7 @@ $ topcat table-a.fits table-b.fits
 @end example
 
 But usually the default mode is not enough.
-For example in DS9, the window can be too small (not covering the height of your monitor), you probably want to match and lock multiple images, you have a favorite colormap that you prefer to use, or you may want to open a multi-extension FITS file as a cube.
+For example in DS9, the window can be too small (not covering the height of your monitor), you probably want to match and lock multiple images, you have a favorite color map that you prefer to use, or you may want to open a multi-extension FITS file as a cube.
 
 Using the simple commands above, you need to manually do all these in the DS9 window once it opens and this can take several tens of seconds (which is enough to distract you from what you wanted to inspect).
 For example if you have a multi-extension file containing 2D images, one way to load and switch between the each 2D extension is to take the following steps in the SAO DS9 window: @clicksequence{``File''@click{}``Open Other''@click{}``Open Multi Ext Cube''} and then choose the Multi extension FITS file in your computer's file structure.
@@ -24980,7 +24992,7 @@ For more on the scaling and positioning script, see @ref{Invoking astscript-psf-
 
 As mentioned above, in the following sections, each script has its own documentation and list of options for very detailed customization (if necessary).
 But if you are new to these scripts, before continuing, we recommend that you do the tutorial @ref{Building the extended PSF}.
-Just don't forget to run every command, and try to tweek its steps based on the logic to nicely understand it.
+Just don't forget to run every command, and try to tweak its steps based on the logic to nicely understand it.
 
 
 
@@ -25144,7 +25156,7 @@ The output name of the final catalog containing good stars.
 
 @node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
 @subsection Invoking astscript-psf-stamp
-This installed script will will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel re-gridding if necessary) and normalized at a certain normalization radius.
+This installed script will will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel regridding if necessary) and normalized at a certain normalization radius.
 Optionally, it will also mask all the other background sources.
 A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
 The executable name is @file{astscript-psf-stamp}, with the following general template:
@@ -25334,7 +25346,7 @@ The HDU/extension of the input image to use.
 Filename of the inner PSF.
 This image is considered to be the central part of the PSF.
 It will be cropped at the radius specified by the option @option{--radius}, and multiplied by the factor specified by @option{--scale}.
-After that, it will be appened to the outer part (input image).
+After that, it will be appended to the outer part (input image).
 
 @item -I STR
 @itemx --innerhdu=STR
@@ -25356,7 +25368,7 @@ By default, a circle is assumed for the shape of the inner region, but this can 
 
 @item -Q FLT
 @itemx --axisratio=FLT
-Axis ratio of ellipse to define the inner regio.
+Axis ratio of ellipse to define the inner region.
 By default this option has a value of 1.0, so all central pixels (of the outer image) within a circle of radius @option{--radius} are replaced with the scaled inner image pixels.
 With this option, you can customize the shape of pixels to take from the inner and outer profiles.
 
@@ -26989,7 +27001,7 @@ If @code{clear!=0}, then the allocated space is set to zero (cleared).
 This is effectively just a wrapper around C's @code{malloc} or @code{calloc} functions but takes Gnuastro's integer type codes and will also abort with a clear error if there the allocation was not successful.
 The number of allocated bytes is the value given to @code{size} that is multiplied by the returned value of @code{gal_type_sizeof} for the given type.
 So if you want to allocate space for an array of strings you should pass the type @code{GAL_TYPE_STRING}.
-Otherwise, if you just want space for one string (for example 6 bytes for @code{hello}, including the string-termination character), you should se the type @code{GAL_TYPE_UINT8}.
+Otherwise, if you just want space for one string (for example 6 bytes for @code{hello}, including the string-termination character), you should set the type @code{GAL_TYPE_UINT8}.
 
 @cindex C99
 When space cannot be allocated, this function will abort the program with a message containing the reason for the failure.
@@ -32187,7 +32199,7 @@ If internal allocation is necessary and the space is larger than @code{minmapsiz
 @cindex k-d tree matching
 Use the k-d tree concept for finding matches between two catalogs, optionally in parallel (on @code{numthreads} threads).
 The k-d tree of the first input (@code{coord1_kdtree}), and its root index (@code{kdtree_root}), should be constructed and found before calling this function, to do this, you can use the @code{gal_kdtree_create} of @ref{K-d tree}.
-The desired @code{aperture} array is the same as @code{gal_match_sort_based} and discribed at the top of this section.
+The desired @code{aperture} array is the same as @code{gal_match_sort_based} and described at the top of this section.
 
 The final number of matches is returned in @code{nummatched} and the format of the returned dataset (three columns) is described above.
 If internal allocation is necessary and the space is larger than @code{minmapsize}, the space will be not allocated in the RAM, but in a file, see description of @option{--minmapsize} and @code{--quietmmap} in @ref{Processing options}.
@@ -32456,8 +32468,8 @@ When either of the two are NaN, the minimum and maximum will be calculated for i
 The number of bins: must be larger than 0.
 
 @item onebinstart
-A desired value for onebinstart.
-Note that with this option, the bins won't start and end exactly on the given range values, it will be slightly shifted to accommodate this request.
+A desired value to start one bin.
+Note that with this option, the bins won't start and end exactly on the given range values, it will be slightly shifted to accommodate this request (enough for the bin containing the value to start at it).
 If you don't have any preference on where to start a bin, set this to NAN.
 @end table
 @end deftypefun
@@ -32466,7 +32478,7 @@ If you don't have any preference on where to start a bin, set this to NAN.
 @deftypefun {gal_data_t *} gal_statistics_histogram (gal_data_t @code{*input}, gal_data_t @code{*bins}, int @code{normalize}, int @code{maxone})
 @cindex Histogram
 Make a histogram of all the elements in the given dataset with bin values that are defined in the @code{bins} structure (see @code{gal_statistics_regular_bins}, they currently have to be equally spaced).
-The retured histogram is a 1-D @code{gal_data_t} of type @code{GAL_TYPE_FLOAT32}, with the same number of elements as @code{bins}.
+The returned histogram is a 1-D @code{gal_data_t} of type @code{GAL_TYPE_FLOAT32}, with the same number of elements as @code{bins}.
 For each bin, it will contain the number of input elements that fell inside of that bin.
 
 Let's write the center of the @mymath{i}th element of the bin array as @mymath{b_i}, and the fixed half-bin width as @mymath{h}.
@@ -36311,7 +36323,7 @@ export XPA_METHOD=local
 @end example
 
 @item
-Your system may not have the SSL library in its stardard library path, in this case, put this command in your startup file (for example @file{~/.bashrc}):
+Your system may not have the SSL library in its standard library path, in this case, put this command in your startup file (for example @file{~/.bashrc}):
 
 @example
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/ssl/lib"

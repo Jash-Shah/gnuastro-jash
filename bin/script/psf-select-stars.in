@@ -206,7 +206,15 @@ First paper introducing Gnuastro
 
 Acknowledgement
 ---------------
-This work was partly done using GNU Astronomy Utilities (Gnuastro, ascl.net/1801.009) version $version. Work on Gnuastro has been funded by the Japanese Ministry of Education, Culture, Sports, Science, and Technology (MEXT) scholarship and its Grant-in-Aid for Scientific Research (21244012, 24253003), the European Research Council (ERC) advanced grant 339659-MUSICOS, the Spanish Ministry of Economy and Competitiveness (MINECO, grant number AYA2016-76219-P) and the NextGenerationEU grant through the Recovery and Resilience Facility project ICTS-MRR-2021-03-CEFCA.
+This work was partly done using GNU Astronomy Utilities (Gnuastro,
+ascl.net/1801.009) version $version. Work on Gnuastro has been funded by
+the Japanese Ministry of Education, Culture, Sports, Science, and
+Technology (MEXT) scholarship and its Grant-in-Aid for Scientific Research
+(21244012, 24253003), the European Research Council (ERC) advanced grant
+339659-MUSICOS, the Spanish Ministry of Economy and Competitiveness
+(MINECO, grant number AYA2016-76219-P) and the NextGenerationEU grant
+through the Recovery and Resilience Facility project
+ICTS-MRR-2021-03-CEFCA.
                                                ,
                                               {|'--.
                                              {{\    \ $empty
