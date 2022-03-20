@@ -283,7 +283,7 @@ Detecting large extended targets
 
 * Downloading and validating input data::  How to get and check the input data.
 * NoiseChisel optimization::    Detect the extended and diffuse wings.
-* Skewness cased by signal and its measurement::  How signal changes the distribution.
+* Skewness caused by signal and its measurement::  How signal changes the distribution.
 * Image surface brightness limit::  Standards to quantify the noise level.
 * Achieved surface brightness level::  Calculate the outer surface brightness.
 * Extract clumps and objects::  Find sub-structure over the detections.
@@ -4396,7 +4396,7 @@ Due to its more peculiar low surface brightness structure/features, we'll focus 
 @menu
 * Downloading and validating input data::  How to get and check the input data.
 * NoiseChisel optimization::    Detect the extended and diffuse wings.
-* Skewness cased by signal and its measurement::  How signal changes the distribution.
+* Skewness caused by signal and its measurement::  How signal changes the distribution.
 * Image surface brightness limit::  Standards to quantify the noise level.
 * Achieved surface brightness level::  Calculate the outer surface brightness.
 * Extract clumps and objects::  Find sub-structure over the detections.
@@ -4484,7 +4484,7 @@ Here, we don't need the compressed file any more, so we'll just let @command{bun
 $ bunzip2 r.fits.bz2
 @end example
 
-@node NoiseChisel optimization, Skewness cased by signal and its measurement, Downloading and validating input data, Detecting large extended targets
+@node NoiseChisel optimization, Skewness caused by signal and its measurement, Downloading and validating input data, Detecting large extended targets
 @subsection NoiseChisel optimization
 In @ref{Detecting large extended targets} we downloaded the single exposure SDSS image.
 Let's see how NoiseChisel operates on it with its default parameters:
@@ -4519,7 +4519,7 @@ Therefore when non-constant@footnote{by constant, we mean that it has a single v
 For a demonstration, see Figure 1 of @url{https://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.
 This skewness is a good measure of how much faint signal we have in the distribution.
 The skewness can be accurately measured by the difference in the mean and median (assuming no strong outliers): the more distant they are, the more skewed the dataset is.
-This important concept will be discussed more extensively in the next section (@ref{Skewness cased by signal and its measurement}).
+This important concept will be discussed more extensively in the next section (@ref{Skewness caused by signal and its measurement}).
 
 However, skewness is only a proxy for signal when the signal has structure (varies per pixel).
 Therefore, when it is approximately constant over a whole tile, or sub-set of the image, the constant signal's effect is just to shift the symmetric center of the noise distribution to the positive and there won't be any skewness (major difference between the mean and median).
@@ -4730,8 +4730,8 @@ However, given the many problems in existing ``smart'' solutions, such automatic
 So even when they are implemented, we would strongly recommend quality checks for a robust analysis.
 @end cartouche
 
-@node Skewness cased by signal and its measurement, Image surface brightness limit, NoiseChisel optimization, Detecting large extended targets
-@subsection Skewness cased by signal and its measurement
+@node Skewness caused by signal and its measurement, Image surface brightness limit, NoiseChisel optimization, Detecting large extended targets
+@subsection Skewness caused by signal and its measurement
 
 In the previous section (@ref{NoiseChisel optimization}) we showed how to customize NoiseChisel for a single-exposure SDSS image of the M51 group.
 During the customization, we also discussed the skewness caused by signal.
@@ -4928,7 +4928,7 @@ Recall that when defining skewness with Pearson's first skewness coefficient, th
 You can now better appreciate why we discussed quantile so extensively in @ref{NoiseChisel optimization}.
 In case you would like to know more about the usage of the quantile of the mean in Gnuastro, please see @ref{Quantifying signal in a tile}, or watch this video demonstration: @url{https://peertube.stream/w/35b7c398-9fd7-4bcf-8911-1e01c5124585}.
 
-@node Image surface brightness limit, Achieved surface brightness level, Skewness cased by signal and its measurement, Detecting large extended targets
+@node Image surface brightness limit, Achieved surface brightness level, Skewness caused by signal and its measurement, Detecting large extended targets
 @subsection Image surface brightness limit
 @cindex Surface brightness limit
 @cindex Limit, surface brightness
@@ -4938,7 +4938,7 @@ So in this section of the tutorial, we'll measure these values for this image an
 
 @noindent
 Before measuring the surface brightness limit, let's see how reliable our detection was.
-In other words, let's see how ``clean'' our noise is (after masking all detections, as described previously in @ref{Skewness cased by signal and its measurement})
+In other words, let's see how ``clean'' our noise is (after masking all detections, as described previously in @ref{Skewness caused by signal and its measurement})
 
 @example
 $ aststatistics det-masked.fits --quantofmean
@@ -18001,7 +18001,7 @@ Finally, the mode's shift to the positive is the least.
 @cindex Quantile
 Inverting the argument above gives us a robust method to quantify the significance of signal in a dataset: when the mean and median of a distribution are approximately equal we can argue that there is no significant signal.
 In other words: when the quantile of the mean (@mymath{q_{mean}}) is around 0.5.
-This definition of skewness through the quantile of the mean is further introduced with a real image the tutorials, see @ref{Skewness cased by signal and its measurement}.
+This definition of skewness through the quantile of the mean is further introduced with a real image the tutorials, see @ref{Skewness caused by signal and its measurement}.
 
 @cindex Signal-to-noise ratio
 However, in an astronomical image, some of the pixels will contain more signal than the rest, so we can't simply check @mymath{q_{mean}} on the whole dataset.
@@ -23139,7 +23139,7 @@ The probability density function of getting @mymath{k} counts (in each attempt, 
 Because the Poisson distribution is only applicable to positive integer values (note the factorial operator, which only applies to non-negative integers), naturally it is very skewed when @mymath{\lambda} is near zero.
 One qualitative way to understand this behavior is that for smaller values near zero, there simply aren't enough integers smaller than the mean, than integers that are larger.
 Therefore to accommodate all possibilities/counts, it has to be strongly skewed to the positive when the mean is small.
-For more on Skewness, see @ref{Skewness cased by signal and its measurement}.
+For more on Skewness, see @ref{Skewness caused by signal and its measurement}.
 
 @cindex Compare Poisson and Gaussian
 As @mymath{\lambda} becomes larger, the distribution becomes more and more symmetric, and the variance of that distribution is equal to its mean.
