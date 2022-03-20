@@ -6822,16 +6822,15 @@ Therefore its headers (and libraries) are not needed.
 
 @item SAO DS9
 SAO DS9 (@command{ds9}) is a visualization tool for FITS images.
-Gnuastro's @command{astscript-fits-view} program to visualize FITS images.
+Gnuastro's @command{astscript-fits-view} program calls DS9 to visualize FITS images.
 We have a full appendix on it and how to install it in @ref{SAO DS9}.
 Since it is a run-time dependency, it can be installed at any later time (after building and installing Gnuastro).
 
 @item TOPCAT
-SAO DS9 (@command{ds9}) is a visualization tool for astronomical tables.
-Gnuastro's @command{astscript-fits-view} program uses it to visualize tables.
+TOPCAT (@command{topcat}) is a visualization tool for astronomical tables (most commonly: plotting).
+Gnuastro's @command{astscript-fits-view} program calls TOPCAT it to visualize tables.
 We have a full appendix on it and how to install it in @ref{TOPCAT}.
 Since it is a run-time dependency, it can be installed at any later time (after building and installing Gnuastro).
-
 @end table
 
 
