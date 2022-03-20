@@ -81,6 +81,12 @@ all the commits needed for this release have been completed.
    not for upload at this stage, it is only for the version control.
 
 
+ - [STABLE] Remove the development notice on the first page of the PDF: in
+   'doc/gnuastro.texi', put a '@c' at the start of all lines under (not
+   including) '@subtitle for version', until (not including) '@author
+   Mohammad Akhlaghi'.
+
+
  - Commit all these changes:
 
      $ git add -u
@@ -226,6 +232,7 @@ Steps necessary to Package Gnuastro for Debian.
       $ ./bootstrap --copy --gnulib-srcdir=/path/to/gnulib
       $ ./developer-build -p upload-server:folder
 
+
  - Some tips on basic Debian operating system to do the packaging:
 
    After installing Debian from DVD, you may need to tell apt to use an
@@ -264,6 +271,7 @@ Steps necessary to Package Gnuastro for Debian.
    A restart should help in making sure everything that has been updated is
    being used.
 
+
  - It would help to use the most recent versions of packages in Debian. To
    do that, you can update the '/etc/apt/sources.list' file. You can get
    the current releases from this webpage:
@@ -273,6 +281,7 @@ Steps necessary to Package Gnuastro for Debian.
 
      $ sudo apt-get update
      $ sudo apt-get upgrade
+
 
  - If you don't already have the Gnuastro Debian packaging Git repository,
    clone it with the following command (don't forget to upload your public
@@ -373,10 +382,12 @@ Steps necessary to Package Gnuastro for Debian.
 
      $ emacs debian/control   # Only three digits "X.Y.Z"
 
+
  - Check if the years in 'debian/copyright' are up to date (usually on
    first packaging after a new year):
 
      $ emacs debian/copyright
+
 
  - If the soname of the shared libraries has changed:
 
