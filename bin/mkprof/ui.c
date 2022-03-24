@@ -651,31 +651,11 @@ ui_check_options_and_arguments(struct mkprofparams *p)
 /**************************************************************/
 /***************       Preparations         *******************/
 /**************************************************************/
-static void
-ui_read_cols_2d(struct mkprofparams *p)
+static gal_data_t *
+ui_read_cols_general(struct mkprofparams *p, gal_list_str_t *colstrs)
 {
-  int checkblank;
-  size_t i, counter=0;
-  char *colname=NULL, **strarr;
-  gal_data_t *cols, *tmp, *corrtype=NULL;
-  gal_list_str_t *ccol, *lines, *colstrs=NULL;
-
-  /* The coordinate columns are a linked list of strings. */
-  ccol=p->ccol;
-  for(i=0; i<p->ndim; ++i)
-    {
-      gal_list_str_add(&colstrs, ccol->v, 0);
-      ccol=ccol->next;
-    }
-
-  /* Add the rest of the columns in a specific order. */
-  gal_list_str_add(&colstrs, p->fcol, 0);
-  gal_list_str_add(&colstrs, p->rcol, 0);
-  gal_list_str_add(&colstrs, p->ncol, 0);
-  gal_list_str_add(&colstrs, p->pcol, 0);
-  gal_list_str_add(&colstrs, p->qcol, 0);
-  gal_list_str_add(&colstrs, p->mcol, 0);
-  gal_list_str_add(&colstrs, p->tcol, 0);
+  gal_data_t *cols;
+  gal_list_str_t *lines;
 
   /* Reverse the order to make the column orders correspond to how we added
      them here and avoid possible bugs. */
@@ -695,8 +675,45 @@ ui_read_cols_2d(struct mkprofparams *p)
   if(p->catname==NULL)
     gal_checkset_allocate_copy("standard-input", &p->catname);
 
-  /* Set the number of objects. */
+  /* Set the number of objects and return the columns. */
   p->num = cols ? cols->size : 0;
+  return cols;
+}
+
+
+
+
+
+static void
+ui_read_cols_2d(struct mkprofparams *p)
+{
+  int checkblank;
+  size_t i, counter=0;
+  char *colname=NULL, **strarr;
+  gal_list_str_t *ccol, *colstrs=NULL;
+  gal_data_t *cols, *tmp, *corrtype=NULL;
+
+  /* The coordinate columns are a linked list of strings. */
+  ccol=p->ccol;
+  for(i=0; i<p->ndim; ++i)
+    {
+      gal_list_str_add(&colstrs, ccol->v, 0);
+      ccol=ccol->next;
+    }
+
+  /* Add the rest of the columns in a specific order. Later (before
+     reading), we will reverse them, this order here helps in readability
+     at this stage */
+  gal_list_str_add(&colstrs, p->fcol, 0);
+  gal_list_str_add(&colstrs, p->rcol, 0);
+  gal_list_str_add(&colstrs, p->ncol, 0);
+  gal_list_str_add(&colstrs, p->pcol, 0);
+  gal_list_str_add(&colstrs, p->qcol, 0);
+  gal_list_str_add(&colstrs, p->mcol, 0);
+  gal_list_str_add(&colstrs, p->tcol, 0);
+
+  /* Read the columns. */
+  cols=ui_read_cols_general(p, colstrs);
 
   /* Put each column's data in the respective internal array. */
   while(cols!=NULL)
@@ -887,8 +904,8 @@ ui_read_cols_3d(struct mkprofparams *p)
   int checkblank;
   size_t i, counter=0;
   char *colname=NULL, **strarr;
+  gal_list_str_t *ccol, *colstrs=NULL;
   gal_data_t *cols, *tmp, *corrtype=NULL;
-  gal_list_str_t *lines, *ccol, *colstrs=NULL;
 
   /* The 3D-specific columns are not mandatory in 'args.h', so we need to
      check here if they are given or not before starting to read them. */
@@ -905,7 +922,9 @@ ui_read_cols_3d(struct mkprofparams *p)
       ccol=ccol->next;
     }
 
-  /* Put the columns a specific order to read. */
+  /* Add the rest of the columns in a specific order. Later (before
+     reading), we will reverse them, this order here helps in readability
+     at this stage */
   gal_list_str_add(&colstrs, p->fcol,  0);
   gal_list_str_add(&colstrs, p->rcol,  0);
   gal_list_str_add(&colstrs, p->ncol,  0);
@@ -917,19 +936,8 @@ ui_read_cols_3d(struct mkprofparams *p)
   gal_list_str_add(&colstrs, p->mcol,  0);
   gal_list_str_add(&colstrs, p->tcol,  0);
 
-  /* Reverse the order to make the column orders correspond to how we added
-     them here and avoid possible bugs. */
-  gal_list_str_reverse(&colstrs);
-
-  /* Read the desired columns from the file. */
-  lines=gal_options_check_stdin(p->catname, p->cp.stdintimeout, "input");
-  cols=gal_table_read(p->catname, p->cp.hdu, lines, colstrs,
-                      p->cp.searchin, p->cp.ignorecase, p->cp.numthreads,
-                      p->cp.minmapsize, p->cp.quietmmap, NULL);
-  gal_list_str_free(lines, 1);
-
-  /* Set the number of objects. */
-  p->num=cols->size;
+  /* Read the columns. */
+  cols=ui_read_cols_general(p, colstrs);
 
   /* Put each column's data in the respective internal array. */
   while(cols!=NULL)
