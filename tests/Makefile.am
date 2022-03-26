@@ -86,10 +86,11 @@ if COND_CONVERTT
 endif
 if COND_CONVOLVE
   MAYBE_CONVOLVE_TESTS = convolve/spatial.sh convolve/frequency.sh \
-                         convolve/spectrum-1d.sh
+                         convolve/psf-match.sh convolve/spectrum-1d.sh
 
   convolve/spectrum-1d.sh: prepconf.sh.log
   convolve/spatial.sh: mkprof/mosaic1.sh.log
+  convolve/psf-match.sh: mkprof/mosaic1.sh.log
   convolve/frequency.sh: mkprof/mosaic1.sh.log
 endif
 if COND_COSMICCAL
@@ -227,6 +228,7 @@ script/sort-by-night.sh: mkcatalog/aperturephot.sh.log
 # Environment variables for the test scripts.
 AM_TESTS_ENVIRONMENT = \
 export LANG=C; \
+export AWK=$(AWK); \
 export mkdir_p="$(MKDIR_P)"; \
 export progbdir=programs-built; \
 export topsrc=$(abs_top_srcdir); \

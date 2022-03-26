@@ -57,4 +57,5 @@ if [ ! -f $cat      ]; then echo "$cat does not exist.";   exit 77; fi
 # debugging when the developer doesn't have access to the user's system.
 $check_with_program $execname $cat --mergedsize=100,100 \
                     --output=mkprofcat1.fits \
-    && mv 0_mkprofcat1.fits psf.fits
+    && mv 0_mkprofcat1.fits psf.fits \
+    && mv 1_mkprofcat1.fits psf-sharp.fits

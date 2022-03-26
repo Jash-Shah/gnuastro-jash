@@ -16907,8 +16907,9 @@ $ astconvolve --kernel=psf.fits mockimg.fits
 ## Convolve in the spatial domain:
 $ astconvolve observedimg.fits --kernel=psf.fits --domain=spatial
 
-## Find the kernel to match sharper and blurry PSF images:
-$ astconvolve --kernel=sharperimage.fits --makekernel=10           \
+## Find the kernel to match sharper and blurry PSF images (they both
+## have to have the same pixel size).
+$ astconvolve --kernel=sharperimage.fits --makekernel=10 \
               blurryimage.fits
 
 ## Convolve a Spectrum (column 14 in the FITS table below) with a
@@ -16998,20 +16999,28 @@ For a full discussion, please see @ref{Edges in the spatial domain}.
 
 @item -m INT
 @itemx --makekernel=INT
-(@option{=INT}) If this option is called, Convolve will do de-convolution (see @ref{Convolution theorem}).
-The image specified by the @option{--kernel} option is assumed to be the sharper (less blurry) image and the input image is assumed to be the more blurry image.
+If this option is called, Convolve will do PSF-matching: the output will be the kernel that you should convolve with the sharper image to obtain the blurry one (see @ref{Convolution theorem}).
+The two images must have the same size (number of pixels).
+This option is not yet supported in 1-dimensional datasets.
+In effect, it is only necessary to give the two PSFs of your two datasets, find the matching kernel based on that, then apply that kernel to the higher-resolution (sharper image).
+
+The image given to the @option{--kernel} option is assumed to be the sharper (less blurry) image and the input image (with no option) is assumed to be the more blurry image.
 The value given to this option will be used as the maximum radius of the kernel.
 Any pixel in the final kernel that is larger than this distance from the center will be set to zero.
-The two images must have the same size.
 
 Noise has large frequencies which can make the result less reliable for the higher frequencies of the final result.
 So all the frequencies which have a spectrum smaller than the value given to the @option{minsharpspec} option in the sharper input image are set to zero and not divided.
 This will cause the wings of the final kernel to be flatter than they would ideally be which will make the convolved image result unreliable if it is too high.
-Some notes to take into account for a good result:
+
+Some notes to on how to prepare your two input PSFs.
+Note that these (and several other issues that relate to an accurate estimation of the PSF) are practically described in the following tutorial: @ref{Building the extended PSF}.
 
 @itemize
 @item
 Choose a bright (unsaturated) star and use a region box (with Crop for example, see @ref{Crop}) that is sufficiently above the noise.
+
+@item
+Mask all background sources that may be nearby (you can use Segment's clumps, see @ref{Segment}).
 
 @item
 Use Warp (see @ref{Warp}) to warp the pixel grid so the star's center is exactly on the center of the central pixel in the cropped image.
@@ -17022,7 +17031,6 @@ If there are multiple good stars, you can shift all of them, then normalize them
 The shifting might move the center of the star by one pixel in any direction, so crop the central pixel of the warped image to have a clean image for the de-convolution.
 @end itemize
 
-Note that this feature is not yet supported in 1-dimensional datasets.
 
 @item -c
 @itemx --minsharpspec

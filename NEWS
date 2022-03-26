@@ -14,8 +14,10 @@ See the end of the file for license conditions.
 ** Bugs fixed
   bug #62216: MakeProfiles crash when a 3D cube is requested and input
               catalog is from a pipe. Found by Irene Pintos Castro.
-  bug #62220: astscript-psf-stamp crashes when coordinate not in image,
-              found and fixed by Sepideh Eskandarlou.
+  bug #62220: astscript-psf-stamp crashes when coordinate not in image.
+              Found and fixed by Sepideh Eskandarlou.
+  bug #62250: Convolve crashes when doing PSF matching. Found with help of
+              Raul Infante-Sainz.
 
 
 

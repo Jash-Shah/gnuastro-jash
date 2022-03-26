@@ -561,15 +561,15 @@ ui_preparations(struct convolveparams *p)
      argument) is the blurry image. */
   if(p->makekernel)
     {
+      /* Read the kernel. */
+      ui_read_kernel(p);
+
       /* Currently this is not implemented in 1D. */
       if(p->kernel->ndim==1)
         error(EXIT_FAILURE, 0, "'--makekernel' is currently not available "
               "on 1D datasets");
       else
         {
-          /* Read in the kernel array. */
-          ui_read_kernel(p);
-
           /* Make sure the size of the kernel is the same as the input */
           if( p->input->dsize[0]!=p->kernel->dsize[0]
               || p->input->dsize[1]!=p->kernel->dsize[1] )
