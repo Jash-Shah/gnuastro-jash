@@ -504,11 +504,20 @@ fi
 # Crop the original image around the object
 # -----------------------------------------
 #
-# Crop the object around its center with the given stamp size width.
+# Crop the object around its center with the given stamp size width. It may
+# happen that the given coordinate is fully outside of the image (within
+# the requested stamp-width). In this case Crop won't generate any output,
+# so we are checking the output name here.
 cropped=$tmpdir/cropped-$objectid.fits
 astcrop $inputs --hdu=$hdu --mode=img \
-                --center=$xcenter,$ycenter \
-                --width=$stampwidth --output=$cropped $quiet
+        --center=$xcenter,$ycenter \
+        --width=$stampwidth --output=$cropped $quiet
+if ! [ -f $cropped ]; then
+    cat <<EOF
+$scriptname: ERROR: the coordinate '$center' (in '$mode' mode) is not within the image (within $stampwidth pixels from the edges of the input image).
+EOF
+    exit 1
+fi
 
 
 
@@ -523,13 +532,14 @@ find_central_label() {
 
   # Input arguments
   hdu=$1
+  lab="not-initialized"
 
   # Set the parameters.
   case $hdu in
       CLUMPS) labname=clump;;
       OBJECTS) labname=object;;
       *) cat <<EOF
-$scriptname: ERROR: a bug! Please contact us at bug-gnuastro@gnu.org to fix the problem. The first argument to 'find_central_label' is not 'CLUMPS' or 'OBJECTS'
+$scriptname: ERROR: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. The first argument to 'find_central_label' is not 'CLUMPS' or 'OBJECTS'
 EOF
          exit 1;;
   esac
@@ -538,13 +548,23 @@ EOF
   cropped_core=$tmpdir/cropped-core-$objectid.fits
   astcrop $segment --hdu=$hdu --mode=img $quiet --width=$corewidth \
           --center=$xcenter,$ycenter --output=$cropped_core
-  lab=$(astarithmetic $cropped_core unique --quiet)
-  numlab=$(echo "$lab" | awk '{print NF}')
-  if [ $numlab != 1 ]; then
-    cat <<EOF
+
+  # The coordinate may not be in the image. In this case, Crop will not
+  # create the requested output.
+  if [ -f $cropped_core ]; then
+      lab=$(astarithmetic $cropped_core unique --quiet)
+      numlab=$(echo "$lab" | awk '{print NF}')
+      if [ $numlab != 1 ]; then
+          cat <<EOF
 $scriptname: ERROR: there is more than one $labname label in the core region around the given coordinate (specified by '--corewidth=$corewidth', containing $labname labels: $lab). Therefore it is not possible to unambiguously identify a single $labname. Please decrease the box size given to '--corewidth'.
 EOF
-    exit 1
+          exit 1
+      fi
+
+  # Coordinate was not in image. We'll just report an impossible label so
+  # all non-zero labels are masked.
+  else
+      lab=2147483646 # Largest possible 32-bit integer minus 1.
   fi
 
   # Write the output in a file.
@@ -578,25 +598,37 @@ if [ x"$segment" != x ]; then
   clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
   olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
 
-  # Crop the object and clump image to same size as desired stamp.
-  cropclp=$tmpdir/cropped-clumps-$objectid.fits
-  cropobj=$tmpdir/cropped-objects-$objectid.fits
-  astcrop $segment --hdu=OBJECTS --mode=img \
-          --center=$xcenter,$ycenter \
-          --width=$stampwidth --output=$cropobj $quiet
-  astcrop $segment --hdu=CLUMPS --mode=img \
-          --center=$xcenter,$ycenter \
-          --width=$stampwidth --output=$cropclp $quiet
+  # If for any reason, a clump or object label couldn't be initialized at
+  # the given coordiante, simply ignore this step. But print a warning so
+  # the user is informed of the situation (and that this is a bug: 'clab'
+  # should be initialized!).
+  if [ $clab = "not-initialized" ]; then
+    cat <<EOF
+$scriptname: WARNING: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. For some reason, no clump or object label could be initialized for the given coordinate within the given Segment image.
+EOF
+      cropped_masked=$cropped
+  else
 
-  # Mask all the undesired regions.
-  cropped_masked=$tmpdir/cropped-masked-$objectid.fits
-  astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
-                $cropobj --hdu=1 set-o \
-                $cropclp --hdu=1 set-c \
-                                       \
-                c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
-                o o $olab eq 0 where set-omask \
-                i omask cmask or nan where
+      # Crop the object and clump image to same size as desired stamp.
+      cropclp=$tmpdir/cropped-clumps-$objectid.fits
+      cropobj=$tmpdir/cropped-objects-$objectid.fits
+      astcrop $segment --hdu=OBJECTS --mode=img \
+              --center=$xcenter,$ycenter \
+              --width=$stampwidth --output=$cropobj $quiet
+      astcrop $segment --hdu=CLUMPS --mode=img \
+              --center=$xcenter,$ycenter \
+              --width=$stampwidth --output=$cropclp $quiet
+
+      # Mask all the undesired regions.
+      cropped_masked=$tmpdir/cropped-masked-$objectid.fits
+      astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
+                    $cropobj --hdu=1 set-o \
+                    $cropclp --hdu=1 set-c \
+                    \
+                    c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
+                    o o $olab eq 0 where set-omask \
+                    i omask cmask or nan where
+  fi
 else
   cropped_masked=$cropped
 fi
@@ -636,10 +668,14 @@ if [ x"$normradiusmin" != x   -a   x"$normradiusmax" != x ]; then
     if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
     else                           finalsigmaclip="--sclipparams=$sigmaclip";
     fi
-    normvalue=$(asttable $radialprofile $quiet \
-                         --range=1,$normradiusmin,$normradiusmax \
-                         | aststatistics --column=2 --$normop \
-                                         $finalsigmaclip -q)
+
+    # Select the values within the requested radial range.
+    values=$(asttable $radialprofile $quiet \
+                      --range=1,$normradiusmin,$normradiusmax)
+    if ! normvalue=$(echo "$values" | aststatistics --column=2 --$normop \
+                                                    $finalsigmaclip -q 2> /dev/null); then
+        normvalue=nan
+    fi
 else
     normvalue=1.0
 fi
@@ -661,6 +697,18 @@ fi
 astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
               --output=$output $quiet
 
+
+
+
+
+# Print warning. We are printing this warning here (at the end of the
+# script) because we dont want it to be mixed with the outputs of the
+# previus commands.
+if [ $normvalue = nan ]; then
+    cat <<EOF
+$scriptname: WARNING: all the pixels in the requested normalization radius are NaN. Therefore the output stamp will be fully NaN. When you use this stamp with any stack operator of 'astsrithmetic' (for making the PSF) this image will effectively be ignored
+EOF
+fi
 
 
 

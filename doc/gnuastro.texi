@@ -25209,7 +25209,14 @@ $ asttable catalog.fits | while read -r ra dec mag; do \
 
 The input is an image from which the stamp of the stars are constructed.
 There are mandatory options that the user has to specify: @option{--mode}, @option{--center}, @option{--stampwidth} and @option{--normradii}.
-The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}, and normalized by the value computed within the ring around the center (at a radial distance between the two radius specified by the option @option{--normradii}).
+The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}.
+The output will be ``normalized'' by the value computed within the ring around the center (at a radial distance between the two radii specified by the option @option{--normradii}).
+
+If the given coordinate is not within the image at all (such that the full requested stamp is outside the input image), then this script will abort with a message and a non-zero return value.
+If all the pixels within the normalization radii are NaN, the output stamp will be fully NaN.
+This can happen when the stamp is only partially out of the original image field of view, or there is a bad pixel region over the star.
+A fully NaN image can safely be used with the Stacking operators of Arithmetic (see @ref{Stacking operators}): in effect it will be ignored.
+
 More options are available with the goal of obtaining better stamps.
 A full description of each option is given below.
 
