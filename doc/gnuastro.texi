@@ -1293,7 +1293,7 @@ Unless the designers of a particular program decided to design such a system for
 @cindex GNU Bash
 @cindex Reproducible results
 @cindex CLI: repeating operations
-On the command-line, you can run any series of of actions which can come from various CLI capable programs you have decided your self in any possible permutation with one command@footnote{By writing a shell script and running it, for example see the tutorials in @ref{Tutorials}.}.
+On the command-line, you can run any series of actions which can come from various CLI capable programs you have decided your self in any possible permutation with one command@footnote{By writing a shell script and running it, for example see the tutorials in @ref{Tutorials}.}.
 This allows for much more creativity and exact reproducibility that is not possible to a GUI user.
 For technical and scientific operations, where the same operation (using various programs) has to be done on a large set of data files, this is crucially important.
 It also allows exact reproducibility which is a foundation principle for scientific results.
@@ -1686,7 +1686,7 @@ Therefore these tutorials will greatly help in optimally using Gnuastro's progra
 
 In @ref{Sufi simulates a detection}, we'll start with a fictional@footnote{The two historically motivated tutorials (@ref{Sufi simulates a detection} is not intended to be a historical reference (the historical facts of this fictional tutorial used Wikipedia as a reference).
 This form of presenting a tutorial was influenced by the PGF/TikZ and Beamer manuals.
-They are both packages in in @TeX{} and @LaTeX{}, the first is a high-level vector graphic programming environment, while with the second you can make presentation slides.
+They are both packages in @TeX{} and @LaTeX{}, the first is a high-level vector graphic programming environment, while with the second you can make presentation slides.
 On a similar topic, there are also some nice words of wisdom for Unix-like systems called @url{http://catb.org/esr/writings/unix-koans, Rootless Root}.
 These also have a similar style but they use a mythical figure named Master Foo.
 If you already have some experience in Unix-like systems, you will definitely find these Unix Koans entertaining/educative.} tutorial explaining how Abd al-rahman Sufi (903 -- 986 A.D., the first recorded description of ``nebulous'' objects in the heavens is attributed to him) could have used some of Gnuastro's programs for a realistic simulation of his observations and see if his detection of nebulous objects was trust-able.
@@ -2175,7 +2175,7 @@ In short, you often don't need to type the full name of the program you want to 
 Gnuastro contains a large number of programs and it is natural to forget the details of each program's options or inputs and outputs.
 Therefore, before starting the analysis steps of this tutorial, let's review how you can access this book to refresh your memory any time you want, without having to take your hands off the keyboard.
 
-When you install Gnuastro, this book is also installed on your system along with all the programs and libraries, so you don't need an internet connection to to access/read it.
+When you install Gnuastro, this book is also installed on your system along with all the programs and libraries, so you don't need an internet connection to access/read it.
 Also, by accessing this book as described below, you can be sure that it corresponds to your installed version of Gnuastro.
 
 @cindex GNU Info
@@ -2992,7 +2992,7 @@ $ astscript-fits-view xdf-f160w_detected.fits
 A ``cube'' window opens along with DS9's main window.
 The buttons and horizontal scroll bar in this small new window can be used to navigate between the extensions.
 In this mode, all DS9's settings (for example zoom or color-bar) will be identical between the extensions.
-Try zooming into to one part and flipping through the extensions to see how the galaxies were detected along with the Sky and Sky standard deviation values for that region.
+Try zooming into one part and flipping through the extensions to see how the galaxies were detected along with the Sky and Sky standard deviation values for that region.
 Just have in mind that NoiseChisel's job is @emph{only} detection (separating signal from noise), We'll do segmentation on this result later to find the individual galaxies/peaks over the detected pixels.
 
 Each HDU/extension in a FITS file is an independent dataset (image or table) which you can delete from the FITS file, or copy/cut to another file.
@@ -7999,7 +7999,7 @@ Gnuastro comes with a script to simplify this process of configuring and buildin
 @subsection Separate build and source directories
 
 The simple steps of @ref{Quick start} will mix the source and built files.
-This can cause inconvenience for developers or enthusiasts following the the most recent work (see @ref{Version controlled source}).
+This can cause inconvenience for developers or enthusiasts following the most recent work (see @ref{Version controlled source}).
 The current section is mainly focused on this later group of Gnuastro users.
 If you just install Gnuastro on major releases (following @ref{Announcements}), you can safely ignore this section.
 
@@ -8520,7 +8520,7 @@ Just note that checking about 5 characters at the end of a name string is much m
 
 @end itemize
 
-Through out this book and in the command-line outputs, whenever we want to generalize all such astronomical data formats in a text place holder, we will use @file{ASTRdata}, we will assume that the extension is also part of this name.
+Through out this book and in the command-line outputs, whenever we want to generalize all such astronomical data formats in a text place-holder, we will use @file{ASTRdata}, we will assume that the extension is also part of this name.
 Any file ending with these names is directly passed on to CFITSIO to read.
 Therefore you don't necessarily have to have these files on your computer, they can also be located on an FTP or HTTP server too, see the CFITSIO manual for more information.
 
@@ -9948,7 +9948,7 @@ In the event of a crash, the memory-mapped files will not be deleted and you hav
 
 This brings us to managing the memory-mapped files in your non-volatile memory.
 In other words: knowing where they are saved, or intentionally placing them in different places of your file system, or deleting them when necessary.
-As the examples above show, memory-mapped files are stored in a sub-directory of the the running directory called @file{gnuastro_mmap}.
+As the examples above show, memory-mapped files are stored in a sub-directory of the running directory called @file{gnuastro_mmap}.
 If this directory doesn't exist, Gnuastro will automatically create it when memory mapping becomes necessary.
 Alternatively, it may happen that the @file{gnuastro_mmap} sub-directory exists and isn't writable, or it can't be created.
 In such cases, the memory-mapped file for each dataset will be created in the running directory with a @file{gnuastro_mmap_} prefix.
@@ -10296,7 +10296,7 @@ The fraction which defines the remainder significance along all dimensions can b
 The best tile size is directly related to the spatial properties of the property you want to study (for example, gradient on the image).
 In practice we assume that the gradient is not present over each tile.
 So if there is a strong gradient (for example in long wavelength ground based images) or the image is of a crowded area where there isn't too much blank area, you have to choose a smaller tile size.
-A larger mesh will give more pixels and and so the scatter in the results will be less (better statistics).
+A larger mesh will give more pixels and so the scatter in the results will be less (better statistics).
 
 @cindex CCD
 @cindex Amplifier
@@ -10877,7 +10877,7 @@ image-b.fits 2      774    672
 image-c.fits 2      387    336
 @end example
 
-Another advantage of a table output is that you can directly write the the table to a file.
+Another advantage of a table output is that you can directly write the table to a file.
 For example if you add @option{--output=fileinfo.fits}, the information above will be printed into a FITS table.
 You can also pipe it into @ref{Table} to select files based on certain properties, to sort them based on another property, or any other operation that can be done with Table (including @ref{Column arithmetic}).
 For example with the command below, you can select all the files that have a size larger than 500 pixels in both dimensions.
@@ -11589,7 +11589,7 @@ for f in $r $g $b; do
 done
 @end example
 
-Once you have have saved the file and come back to your command-line you can run the script like this:
+Once you have saved the file and come back to your command-line you can run the script like this:
 
 @example
 $ chmod +x my-align.sh
@@ -12056,7 +12056,7 @@ After reading the input file(s) the number of color channels in all the inputs w
 
 Some formats can allow more than one color channel (for example in the JPEG format, see @ref{Recognized file formats}).
 If there is one input dataset (color channel) the output will be gray-scale, if three input datasets (color channels) are given, they are respectively considered to be the red, green and blue color channels.
-Finally, if there are four color channels they will be be cyan, magenta, yellow and black (CMYK colors).
+Finally, if there are four color channels they will be cyan, magenta, yellow and black (CMYK colors).
 
 The value to @option{--output} (or @option{-o}) can be either a full file name or just the suffix of the desired output format.
 In the former case, it will used for the output.
@@ -12944,7 +12944,7 @@ This option can also be called multiple times, so @option{--equal=ID,4,5 --equal
 @cartouche
 @noindent
 @strong{Equality and floating point numbers:} Floating point numbers are only approximate values (see @ref{Numeric data types}).
-In this context, their equality depends on how the the input table was originally stored (as a plain text table or as an ASCII/binary FITS table).
+In this context, their equality depends on how the input table was originally stored (as a plain text table or as an ASCII/binary FITS table).
 If you want to select floating point numbers, it is strongly recommended to use the @option{--range} option and set a very small interval around your desired number, don't use @option{--equal} or @option{--notequal}.
 @end cartouche
 
@@ -13089,7 +13089,7 @@ The first value (before the first comma) given to this option is the column's id
 It can either be a counter (positive integer, counting from 1), or a name (the column's name in the output if this option wasn't called).
 
 After the to-be-updated column is identified, at least one other string should be given, with a maximum of three strings.
-The first string after the original name will the the selected column's new name.
+The first string after the original name will the selected column's new name.
 The next (optional) string will be the selected column's unit and the third (optional) will be its comments.
 If the two optional strings aren't given, the original column's units or comments will remain unchanged.
 
@@ -14307,7 +14307,7 @@ Furthermore, if you need to leave a value for later processing, you will need to
 
 Gnuastro provides libraries where you can also use infix notation in C or C++ programs.
 However, Gnuastro's programs are primarily designed to be run on the command-line and the level of complexity that infix notation requires can be annoying/confusing to write on the command-line (where they can get confused with the shell's parenthesis or variable definitions).
-Therefore Gnuastro's Arithmetic and Table (when doing column arithmetic) programs use the the post-fix notation, also known as @url{https://en.wikipedia.org/wiki/Reverse_Polish_notation, reverse polish notation}.
+Therefore Gnuastro's Arithmetic and Table (when doing column arithmetic) programs use the post-fix notation, also known as @url{https://en.wikipedia.org/wiki/Reverse_Polish_notation, reverse polish notation}.
 For example, instead of writing @command{5+6}, we write @command{5 6 +}.
 
 The Wikipedia article on the reverse polish notation provides some excellent explanation on this notation but here we will give a short summary here for self-sufficiency.
@@ -14340,7 +14340,7 @@ The result is @command{11} which is pushed to the top of the stack.
 
 To visualize this, you can think of the @code{+} operator as an oven with a place for two dishes.
 You pick up the top-most dish (that has the number 6 in it) and put it in the oven.
-The top dish is now the one that has has the number 5.
+The top dish is now the one that has the number 5.
 You also pick it up and put it in the oven, and close the oven door.
 When the oven has finished its cooking, it produces a single output (in one dish, with the number 11 inside of it).
 You take that output dish and put it back on the table.
@@ -15133,7 +15133,7 @@ The number of the nearest non-blank neighbors used to calculate the median is gi
 The distance of the nearest non-blank neighbors is irrelevant in this interpolation.
 The neighbors of each blank pixel will be parsed in expanding circular rings (for 2D images) or spherical surfaces (for 3D cube) and each non-blank element over them is stored in memory.
 When the requested number of non-blank neighbors have been found, their median is used to replace that blank element.
-For example the line below replaces each blank element with the the median of the nearest 5 pixels.
+For example the line below replaces each blank element with the median of the nearest 5 pixels.
 
 @example
 $ astarithmetic image.fits 5 interpolate-medianngb
@@ -15511,7 +15511,7 @@ This is a major waste of storage space!
 @cindex Flag (mask) images
 @cindex Mask (flag) images
 A much more optimal solution is to use the bits within each pixel to store different flags!
-In other words, if you have an 8-bit pixel, use each bit as as a flag to mark if a certain condition has happened on a certain pixel or not.
+In other words, if you have an 8-bit pixel, use each bit as a flag to mark if a certain condition has happened on a certain pixel or not.
 For example, let's set the following standard based on the four cases mentioned above: the first bit will show that a cosmic ray has hit that pixel.
 So if a pixel is only affected by cosmic rays, it will have this sequence of bits (note that the bit-counting starts from the right): @code{00000001}.
 The second bit shows that the pixel was saturated (@code{00000010}), the third bit shows that it has known problems (@code{00000100}) and the fourth bit shows that it was affected by vignetting (@code{00001000}).
@@ -16924,7 +16924,7 @@ Some of the options are the same between Convolve and some other Gnuastro progra
 Therefore, to avoid repetition, they will not be repeated here.
 For the full list of options shared by all Gnuastro programs, please see @ref{Common options}.
 In particular, in the spatial domain, on a multi-dimensional datasets, convolve uses Gnuastro's tessellation to speed up the run, see @ref{Tessellation}.
-Common options related to tessellation are described in in @ref{Processing options}.
+Common options related to tessellation are described in @ref{Processing options}.
 
 1-dimensional datasets (for example spectra) are only read as columns within a table (see @ref{Tables} for more on how Gnuastro programs read tables).
 Note that currently 1D convolution is only implemented in the spatial domain and thus kernel-matching is also not supported.
@@ -20956,7 +20956,7 @@ If two values are given, the first is the object label and the second is the ID 
 
 The output is a table with three columns (its type is determined with the @option{--tableformat} option, see @ref{Input output options}).
 The first two columns are the position of the first pixel in each random sampling of this particular object/clump.
-The the third column is the measured flux over that region.
+The third column is the measured flux over that region.
 If the region overlapped with a detection or masked pixel, then its measured value will be a NaN (not-a-number).
 The total number of rows is thus unknown, but you can be sure that the number of rows with non-NaN measurements is the number given to the @option{--upnum} option.
 
@@ -21323,7 +21323,7 @@ For more on the definition of the surface brightness, see @ref{Brightness flux m
 @item --sberror
 Error in measuring the surface brightness (the @option{--surfacebrightness} column).
 This column will use the value given to @option{--spatialresolution} in the processing (in pixels).
-For more on @option{--spatialresolution}, see see @ref{MakeCatalog inputs and basic settings} and for the equation used to derive the surface brightness error, see @ref{Surface brightness error of each detection}.
+For more on @option{--spatialresolution}, see @ref{MakeCatalog inputs and basic settings} and for the equation used to derive the surface brightness error, see @ref{Surface brightness error of each detection}.
 
 @item --areaxy
 @cindex IFU: Integral Field Unit
@@ -21748,7 +21748,7 @@ This will give us the best match between the two catalogs, independent of any so
 Both the B-in-A and A-in-B will also keep the distances, so distances are only measured once.
 
 @noindent
-In summary, here are the points to consider when selecting an algorithm, or the order of your inputs (for optimal speed, the match will the the same):
+In summary, here are the points to consider when selecting an algorithm, or the order of your inputs (for optimal speed, the match will be the same):
 @itemize
 @item
 For larger datasets, the k-d tree based method (when running on all threads possible) is much more faster than the classical sort-based method.
@@ -24800,7 +24800,7 @@ But usually the default mode is not enough.
 For example in DS9, the window can be too small (not covering the height of your monitor), you probably want to match and lock multiple images, you have a favorite color map that you prefer to use, or you may want to open a multi-extension FITS file as a cube.
 
 Using the simple commands above, you need to manually do all these in the DS9 window once it opens and this can take several tens of seconds (which is enough to distract you from what you wanted to inspect).
-For example if you have a multi-extension file containing 2D images, one way to load and switch between the each 2D extension is to take the following steps in the SAO DS9 window: @clicksequence{``File''@click{}``Open Other''@click{}``Open Multi Ext Cube''} and then choose the Multi extension FITS file in your computer's file structure.
+For example if you have a multi-extension file containing 2D images, one way to load and switch between each 2D extension is to take the following steps in the SAO DS9 window: @clicksequence{``File''@click{}``Open Other''@click{}``Open Multi Ext Cube''} and then choose the Multi extension FITS file in your computer's file structure.
 
 @cindex @option{-mecube} (DS9)
 The method above is a little tedious to do every time you want view a multi-extension FITS file.
@@ -25184,7 +25184,7 @@ The output name of the final catalog containing good stars.
 
 @node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
 @subsection Invoking astscript-psf-stamp
-This installed script will will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel regridding if necessary) and normalized at a certain normalization radius.
+This installed script will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel regridding if necessary) and normalized at a certain normalization radius.
 Optionally, it will also mask all the other background sources.
 A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
 The executable name is @file{astscript-psf-stamp}, with the following general template:
@@ -25204,7 +25204,7 @@ $ astscript-psf-stamp image.fits --mode=img \
       --output=stamp.fits
 
 ## Iterate over a catalog with positions of stars that are
-## in the the input image. Use WCS coordinates.
+## in the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do \
     astscript-psf-stamp image.fits \
         --mode=wcs \
@@ -25257,7 +25257,7 @@ This is very important (and necessary) in the case of the centers of stars, ther
 
 @item -n FLT,FLT
 @itemx --normradii=FLT,FLT
-Minimum and maximum radius of ring to to normalize the image.
+Minimum and maximum radius of ring to normalize the image.
 This option takes two values, separated by a comma (@key{,}).
 The first value is the inner radius, the second is the outer radius.
 
@@ -25596,7 +25596,7 @@ $ astscript-psf-subtract [OPTION...] FITS-file
 Examples:
 
 @example
-## Multiply the the PSF (psf.fits) by 3 and subtract it from the
+## Multiply the PSF (psf.fits) by 3 and subtract it from the
 ## input image (image.fits) at the pixel position (x,y)=(53,69).
 $ astscript-psf-subtract image.fits \
     --psf=psf.fits \
@@ -25606,7 +25606,7 @@ $ astscript-psf-subtract image.fits \
     --output=star-53_69.fits
 
 ## Iterate over a catalog with positions of stars that are
-## in the the input image. Use WCS coordinates.
+## in the input image. Use WCS coordinates.
 $ asttable catalog.fits | while read -r ra dec mag; do
          scale=$(cat scale-"$ra"_"$dec".txt)
          astscript-psf-subtract image.fits \
@@ -25621,7 +25621,7 @@ The input is an image from which the star is considered.
 The result is the same image but with the star subtracted (modeled by the PSF).
 The modeling of the star is done with the PSF image specified with the option @option{--psf}, and flux-scaled with the option @option{--scale} at the position defined by @option{--center}.
 Instead of obtaining the PSF-subtracted image, it is also possible to obtain the modeled star by the PSF.
-To to that, use the option @option{--modelonly}.
+To do that, use the option @option{--modelonly}.
 With this option, the output will be an image with the same size as the original one with the PSF situated in the star coordinates and flux-scaled.
 In this case, the region not covered by the PSF are set to zero values.
 
@@ -26727,14 +26727,14 @@ some systems, @code{int} may be 2 bytes (16-bits, the minimum required by
 the standard) and on others it may be 4 bytes (32-bits, common in modern
 systems).
 
-With every type, a unique ``blank'' value (or place holder showing the
+With every type, a unique ``blank'' value (or place-holder showing the
 absence of data) can be defined. Please see @ref{Library blank values} for
 constants that Gnuastro recognizes as a blank value for each type. See
 @ref{Numeric data types} for more explanation on the limits and particular
 aspects of each type.
 
 @deffn {Global integer} GAL_TYPE_INVALID
-This is just a place holder to specifically mark that no type has been set.
+This is just a place-holder to specifically mark that no type has been set.
 @end deffn
 
 @deffn {Global integer} GAL_TYPE_BIT
@@ -27105,13 +27105,10 @@ you only use these, and never make any assumption on the value of a type's
 blank value.
 
 @cindex NaN
-The IEEE NaN blank value type is defined to fail on any comparison, so if
-you are dealing with floating point types, you cannot use equality (a NaN
-will @emph{not} be equal to a NaN). If you know your dataset if floating
-point, you can use the @code{isnan} function in C's @file{math.h}
-header. For a description of numeric data types see @ref{Numeric data
-types}. For the constants identifying integers, please see @ref{Library
-data types}.
+The IEEE NaN blank value type is defined to fail on any comparison, so if you are dealing with floating point types, you cannot use equality (a NaN will @emph{not} be equal to a NaN).
+If you know your dataset is floating point, you can use the @code{isnan} function in C's @file{math.h} header.
+For a description of numeric data types see @ref{Numeric data types}.
+For the constants identifying integers, please see @ref{Library data types}.
 
 @deffn {Global integer}  GAL_BLANK_UINT8
 Blank value for an unsigned, 8-bit integer.
@@ -30482,7 +30479,7 @@ In other cases, this function will return a NaN.
 
 @deftypefun int gal_wcs_coverage (char @code{*filename}, char @code{*hdu}, size_t @code{*ondim}, double @code{**ocenter}, double @code{**owidth}, double @code{**omin}, double @code{**omax})
 Find the sky coverage of the image HDU (@code{hdu}) within @file{filename}.
-The the number of dimensions is written into @code{ndim}, and space for the various output arrays is internally allocated and filled with the respective values.
+The number of dimensions is written into @code{ndim}, and space for the various output arrays is internally allocated and filled with the respective values.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_wcs_world_to_img (gal_data_t @code{*coords}, struct wcsprm @code{*wcs}, int @code{inplace})
@@ -31352,7 +31349,7 @@ The main dataset (allocated block) which you want to create a tessellation
 over (only used for its sizes). So @code{input} may be a tile also.
 
 @item regular
-The the size of the regular tiles along each of the input's dimensions. So
+The size of the regular tiles along each of the input's dimensions. So
 it must have the same number of elements as the dimensions of @code{input}
 (or @code{input->ndim}).
 
@@ -32140,7 +32137,7 @@ solution. So if you are interested, please have a look there for more.
 We are in contact with the GSL developers and in the
 future@footnote{Gnuastro's @url{http://savannah.gnu.org/task/?14497, Task
 14497}. If this task is still ``postponed'' when you are reading this and
-you are interested to help, your help would be very welcome. Both Gnuastro
+you are interested to help, your contributions would be very welcome. Both Gnuastro
 and GSL developers are very busy, hence both would appreciate your help.}
 we will submit these implementations to GSL. If they are finally
 incorporated there, we will delete this section in future versions.
@@ -32175,7 +32172,7 @@ Each table can have other columns too, for example one can have brightness measu
 
 The matching functions here will use the coordinate columns of the two tables to find a permutation for each, and the total number of matched rows (@mymath{N_{match}}).
 This will enable you to match by the positions if you like.
-A a higher level, you can apply the permutation to the brightness or morphology columns to merge the catalogs over the @mymath{N_{match}} rows.
+At a higher level, you can apply the permutation to the brightness or morphology columns to merge the catalogs over the @mymath{N_{match}} rows.
 The input and output data formats of the functions are the some and described below before the actual functions.
 Each function also has extra arguments due to the particular algorithm it uses for the matching.
 
@@ -33199,7 +33196,7 @@ The parametric interpolations discussed below are wrappers around the interpolat
 To identify the different GSL interpolation types, Gnuastro's @file{gnuastro/interpolate.h} header file contains macros that are discussed below.
 The GSL wrappers provided here are not yet complete because we are too busy.
 If you need them, please consider helping us in adding them to Gnuastro's library.
-Your would be very welcome and appreciated.
+Your contributions would be very welcome and appreciated.
 
 @deffn Macro GAL_INTERPOLATE_NEIGHBORS_METRIC_RADIAL
 @deffnx Macro GAL_INTERPOLATE_NEIGHBORS_METRIC_MANHATTAN
@@ -33235,7 +33232,7 @@ When @code{tl!=NULL}, then it is assumed that the @code{input->array} contains o
 If several datasets have the same set of blank values, you don't need to call this function multiple times.
 When @code{aslinkedlist} is non-zero, then @code{input} will be seen as a @ref{List of gal_data_t}.
 In this case, the same neighbors will be used for all the datasets in the list.
-Of course, the values for each dataset will be different, so a different value will be written in the each dataset, but the neighbor checking that is the most CPU intensive part will only be done once.
+Of course, the values for each dataset will be different, so a different value will be written in e ach dataset, but the neighbor checking that is the most CPU intensive part will only be done once.
 
 This is a non-parametric and robust function for interpolation.
 The interpolated values are also always within the range of the non-blank values and strong outliers do not get created.
@@ -33244,7 +33241,7 @@ This is because it is non-parametric and if there aren't enough neighbors, step-
 @end deftypefun
 
 @deffn Macro GAL_INTERPOLATE_1D_INVALID
-This is just a place holder to manage errors.
+This is just a place-holder to manage errors.
 @end deffn
 @deffn Macro GAL_INTERPOLATE_1D_LINEAR
 [From GSL:] Linear interpolation. This interpolation method does not
@@ -33829,7 +33826,7 @@ polygon(53.187414,-27.779152,53.159507,-27.759633,...)
 In this final section of @ref{Library}, we give some example Gnuastro
 programs to demonstrate various features in the library. All these programs
 have been tested and once Gnuastro is installed you can compile and run
-them with with Gnuastro's @ref{BuildProgram} program that will take care of
+them with Gnuastro's @ref{BuildProgram} program that will take care of
 linking issues. If you don't have any FITS file to experiment on, you can
 use those that are generated by Gnuastro after @command{make check} in the
 @file{tests/} directory, see @ref{Quick start}.
@@ -34098,7 +34095,7 @@ linking/compilation of this program, along with a first run, see Gnuastro's
 names in the first two lines of @code{main}. The input and output names may
 be @file{.txt} and @file{.fits} tables, @code{gal_table_read} and
 @code{gal_table_write} will be able to write to both formats. For plain
-text tables see see @ref{Gnuastro text table format}.
+text tables see @ref{Gnuastro text table format}.
 
 This example program reads three columns from a table. The first two
 columns are selected by their name (@code{NAME1} and @code{NAME2}) and the
@@ -35841,7 +35838,7 @@ That way we can be sure that all the code in FSF projects is free code, whose fr
 @end quotation
 
 Please get in touch with the Gnuastro maintainer (currently Mohammad Akhlaghi, mohammad -at- akhlaghi -dot- org) to follow the procedures.
-It is possible to do this for each change (good for for a single contribution), and also more generally for all the changes/additions you do in the future within Gnuastro.
+It is possible to do this for each change (good for a single contribution), and also more generally for all the changes/additions you do in the future within Gnuastro.
 So if you have already assigned the copyright of your work on another GNU software to the FSF, it should be done again for Gnuastro.
 The FSF has staff working on these legal issues and the maintainer will get you in touch with them to do the paperwork.
 The maintainer will just be informed in the end so your contributions can be merged within the Gnuastro source code.
