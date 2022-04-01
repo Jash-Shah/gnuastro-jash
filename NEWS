@@ -18,6 +18,8 @@ See the end of the file for license conditions.
               Found and fixed by Sepideh Eskandarlou.
   bug #62250: Convolve crashes when doing PSF matching. Found with help of
               Raul Infante-Sainz.
+  bug #62252: Radial profile giving one larger radius in high axis-ratio
+              profile. Found and fixed by Sepideh Eskandarlou.
 
 
 

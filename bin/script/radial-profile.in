@@ -710,18 +710,29 @@ astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
 #
 # But before anything, we need to set the options to print the other
 # columns untouched (we only want to change the first column).
+outraw=$tmpdir/out-raw.fits
 restcols=$(astfits $cat -h1 \
                | awk '/^TFIELDS/{for(i=2;i<=$3;++i) printf "-c%d ", i}')
 if [ x"$oversample" != x ]; then
     asttable $cat -c'arith OBJ_ID float32 '$oversample' / 1 -' $restcols \
-             -o$output --colmetadata=ARITH_3,RADIUS,pix,"Radial distance"
+             -o$outraw --colmetadata=ARITH_3,RADIUS,pix,"Radial distance"
 elif [ x"$undersample" != x ]; then
     asttable $cat -c'arith OBJ_ID float32 '$undersample' x 1 -' $restcols \
-             -o$output --colmetadata=ARITH_3,RADIUS,pix,"Radial distance"
+             -o$outraw --colmetadata=ARITH_3,RADIUS,pix,"Radial distance"
 else
-    asttable $cat -c'arith OBJ_ID float32 1 -' $restcols -o$output \
+    asttable $cat -c'arith OBJ_ID float32 1 -' $restcols -o$outraw \
              --colmetadata=1,RADIUS,pix,"Radial distance"
 fi
+
+
+
+
+# Due to a possible position angle and axis ratio, it is possible to get at
+# least one extra radial aperture (that is given to
+# MakeCatalog). Therefore, once the final radii are set (accounting for
+# over/under sampling), we should make sure that the final output doesn't
+# contain radii larger than what the user asked for.
+asttable $outraw --range=RADIUS,0,$rmax --output=$output
 
 
 
