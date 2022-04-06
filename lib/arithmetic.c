@@ -502,10 +502,38 @@ arithmetic_units_degree_to_dec(double decimal)
             "UNIARY_FUNCTION_ON_ELEMENT", in->type);                    \
     }
 
-
-#define UNIFUNC_RUN_FUNCTION_ON_ELEMENT_STRING(OT, OP){                 \
+#define UNIFUNC_RUN_FUNCTION_ON_ELEMENT_SEXAGESIMAL(OT, OP){            \
     OT *oa=o->array;                                                    \
-    char **ia=in->array, **iaf=ia + in->size;                           \
+    char **ia, **iaf;                                                   \
+    /* If the input dataset isn't a string (it was parsed as a */       \
+    /* number, stop the program and let the user know what to do. */    \
+    /* This can happen with the Arithmetic program, for example if */   \
+    /* this command is called: 'astarithmetic 16 ra-to-deg'. */         \
+    if(in->type!=GAL_TYPE_STRING)                                       \
+      error(EXIT_FAILURE, 0, "%s: the input should be a string in "     \
+            "the format of %s (where the '_' are place-holders for "    \
+            "numbers). This error may happen when you are calling a "   \
+            "command like \"astarithmetic 16 %s\" or \"echo %s | "      \
+            "asttable -c'arith $1 %s'\". In such cases, please use "    \
+            "this command: "                                            \
+            "\"echo %s | asttable\" (by default, when a string type "   \
+            "isn't specified for a column, and it conforms to the "     \
+            "pattern above, 'asttable' does the conversion "            \
+            "internally; this is the cause of the second type of "      \
+            "error above). The '%s' operator is only relevant for "     \
+            "many sexagesimal values in a string-type table column",    \
+            gal_arithmetic_operator_string(operator),                   \
+            ( operator==GAL_ARITHMETIC_OP_RA_TO_DEGREE                  \
+              ? "'_h_m_s' or '_h_m_'"                                   \
+              : "'_d_m_s' or '_d_m_'" ),                                \
+            gal_arithmetic_operator_string(operator),                   \
+            ( operator==GAL_ARITHMETIC_OP_RA_TO_DEGREE                  \
+              ? "16h0m0" : "16d0m0" ),                                  \
+            gal_arithmetic_operator_string(operator),                   \
+            ( operator==GAL_ARITHMETIC_OP_RA_TO_DEGREE                  \
+              ? "16h0m0" : "16d0m0" ),                                  \
+            gal_arithmetic_operator_string(operator));                  \
+    iaf = (ia=in->array) + in->size;                                    \
     do *oa++ = OP(*ia++); while(ia<iaf);                                \
 }
 
@@ -605,10 +633,10 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
     case GAL_ARITHMETIC_OP_AU_TO_LY:
       UNIARY_FUNCTION_ON_ELEMENT( gal_units_au_to_ly, +0, +0); break;
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_STRING(double, gal_units_ra_to_degree);
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_SEXAGESIMAL(double, gal_units_ra_to_degree);
       break;
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:
-      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_STRING(double, gal_units_dec_to_degree);
+      UNIFUNC_RUN_FUNCTION_ON_ELEMENT_SEXAGESIMAL(double, gal_units_dec_to_degree);
       break;
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:
       UNIARY_FUNCTION_ON_ELEMENT_OUTPUT_STRING(arithmetic_units_degree_to_ra);

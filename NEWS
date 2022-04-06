@@ -20,6 +20,9 @@ See the end of the file for license conditions.
               Raul Infante-Sainz.
   bug #62252: Radial profile giving one larger radius in high axis-ratio
               profile. Found and fixed by Sepideh Eskandarlou.
+  bug #62253: Arithmetic: segmentation fault when invalid input given for
+              'ra-to-degree' or 'deg-to-degree' operators. Found by Pedram
+              Ashofte Ardakani.
 
 
 
