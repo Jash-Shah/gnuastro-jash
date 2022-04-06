@@ -11189,11 +11189,11 @@ In the latter case (when the keyword values exist but can't be verified), the Fi
 By default this function will also print a short description of the @code{DATASUM} AND @code{CHECKSUM} keywords.
 You can suppress this extra information with @code{--quiet} option.
 
-@item --copykeys=INT:INT
-Copy the input's keyword records in the given range (inclusive) to the
-output HDU (specified with the @option{--output} and @option{--outhdu}
+@item --copykeys=INT:INT/STR,STR
+Copy the input's keyword records, which can be given as a range (inclusive) or a list of Keyword names as comma-separated strings to the output HDU (specified with the @option{--output} and @option{--outhdu}
 options, for the filename and HDU/extension respectively).
 
+If a range of Keywords is to be given :
 The given string to this option must be two integers separated by a colon (@key{:}).
 The first integer must be positive (counting of the keyword records starts from 1).
 The second integer may be negative (zero is not acceptable) or an integer larger than the first.
@@ -11205,6 +11205,13 @@ To see the header keywords of the input with a number before them, you can pipe 
 
 @example
 $ astfits input.fits -h1 | cat -n
+@end example
+
+If a list of keywords is to be given:
+The given string to this option must be a comma separated list of Keywords.
+
+@example
+$ astfits input.fits --copykeys=BITPIX,NAXIS -h0 --output=output.fits --outhdu=0
 @end example
 
 @item --outhdu
