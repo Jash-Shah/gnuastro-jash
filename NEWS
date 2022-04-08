@@ -7,6 +7,15 @@ See the end of the file for license conditions.
 
 ** New features
 
+  astscript-radial-profile:
+   --zeroisnotblank: new option to account for zero-valued pixels in the
+     profile measurement. By default, during the internal cropping phase,
+     zero-valued pixels are set to blank (and thus not considered during
+     the profile measurement). When this option is called, it is directly
+     passed to the internal cropping command ('astcrop' has an option with
+     the same name). This was suggested by Ignacio Ruiz Cejudo and
+     implemented by Sepideh Eskandarlou.
+
 ** Removed features
 
 ** Changed features

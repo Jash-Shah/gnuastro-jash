@@ -56,6 +56,7 @@ measuretmp=""
 oversample=""
 undersample=""
 positionangle=0
+zeroisnotblank=""
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -126,6 +127,7 @@ $scriptname options:
       --cite              BibTeX citation for this program.
   -q, --quiet             Don't print any extra information in stdout.
   -V, --version           Print program version.
+  -Z, --zeroisnotblank    0.0 in float or double images are not blank.
 
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
@@ -263,14 +265,16 @@ do
         -d*)             stdhdu=$(echo "$1"  | sed -e's/-d//');  check_v "$1" "$stdhdu";  shift;;
 
         # Non-operating options.
-        -q|--quiet)       quiet="--quiet"; shift;;
-        -q*|--quiet=*)    on_off_option_error --quiet -q;;
-        -?|--help)        print_help; exit 0;;
-        -'?'*|--help=*)   on_off_option_error --help -?;;
-        -V|--version)     print_version; exit 0;;
-        -V*|--version=*)  on_off_option_error --version -V;;
-        --cite)           astfits --cite; exit 0;;
-        --cite=*)         on_off_option_error --cite;;
+        -q|--quiet)             quiet="--quiet"; shift;;
+        -q*|--quiet=*)          on_off_option_error --quiet -q;;
+        -?|--help)              print_help; exit 0;;
+        -'?'*|--help=*)         on_off_option_error --help -?;;
+        -V|--version)           print_version; exit 0;;
+        -V*|--version=*)        on_off_option_error --version -V;;
+        --cite)                 astfits --cite; exit 0;;
+        --cite=*)               on_off_option_error --cite;;
+        -Z|--zeroisnotblank)    zeroisnotblank="--zeroisnotblank"; shift;;
+        -Z*|--zeroisnotblank=*) on_off_option_error --zeroisnotblank -Z;;
 
         # Unrecognized option:
         -*) echo "$scriptname: unknown option '$1'"; exit 1;;
@@ -463,10 +467,11 @@ cropstdbase=crop-std.fits
 cropstd=$tmpdir/$cropstdbase
 cropwidth=$(echo $rmax | awk '{print $1*2+1}')
 astcrop $inputs --hdu=$hdu --center=$xcenter,$ycenter --mode=img \
-        --width=$cropwidth --output=$crop $quiet
+        --width=$cropwidth $zeroisnotblank --output=$crop $quiet
 if [ x"$instd" != x ] && [ -f "$instd" ]; then
     astcrop $instd --hdu="$stdhdu" --center=$xcenter,$ycenter \
-            --mode=img --width=$cropwidth --output=$cropstd $quiet
+            --mode=img --width=$cropwidth $zeroisnotblank \
+            --output=$cropstd $quiet
 fi
 
 
