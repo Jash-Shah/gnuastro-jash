@@ -24589,10 +24589,10 @@ This is necessary when you request measurements like Magnitude, or Surface brigh
 
 @item -Z
 @itemx --zeroisnotblank
-By default, all the zero-valued pixels in radial profile do not consider.
-This option is exactly the same as option @option{--zeroisnotblank} in @command{astcrop}.
-When this option has been used, the zero-valued pixels do not considered as blank, and all the zero-valued pixels has been used in computing the radial profile.
-
+Account for zero-valued pixels in the profile.
+By default, such pixels are not considered (when this script crops the necessary region of the image before generating the profile).
+The long format of this option is identical to a similarly named option in Crop (see @ref{Invoking astcrop}).
+When this option is called, it is passed directly to Crop, therefore the zero-valued pixels are not considered as blank and used in the profile creation.
 
 @item -v INT
 @itemx --oversample=INT
