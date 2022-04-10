@@ -136,6 +136,17 @@ profiles_custom_table(struct mkonthread *mkp)
 
 
 
+/* This is just a place-holder function, but will never be used. */
+double
+profiles_custom_image(struct mkonthread *mkp)
+{
+  return NAN;
+}
+
+
+
+
+
 /* The integral of the Gaussian from -inf to +inf equals the square root of
    PI. So from zero to +inf it equals half of that.*/
 double

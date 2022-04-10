@@ -68,11 +68,12 @@ static char
 args_doc[] = "[Options] [Catalog]";
 
 const char
-doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" will create a FITS image "
-  "containing any number of mock astronomical profiles based on an input "
-  "catalog. All the profiles will be built from the center outwards. First "
-  "by Monte Carlo integration, then using the central pixel position. The "
-  "tolerance level specifies when the switch will occur.\n"
+doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" will create a FITS "
+  "image containing any number of mock astronomical profiles based on "
+  "an input catalog. All the profiles will be built from the center "
+  "outwards. First by Monte Carlo integration, then using the central "
+  "pixel position. The tolerance level specifies when the switch will "
+  "occur.\n"
   GAL_STRINGS_MORE_HELP_INFO
   /* After the list of options: */
   "\v"
@@ -127,8 +128,11 @@ ui_profile_name_read(char *string, size_t row)
   else if ( !strcmp("azimuth", string) )
     return PROFILE_DISTANCE;
 
-  else if ( !strcmp("custom", string) )
-    return PROFILE_CUSTOM;
+  else if ( !strcmp("custom-prof", string) )
+    return PROFILE_CUSTOM_PROF;
+
+  else if ( !strcmp("custom-img", string) )
+    return PROFILE_CUSTOM_IMG;
 
   else if ( !strcmp(GAL_BLANK_STRING, string) )
     error(EXIT_FAILURE, 0, "atleast one profile function is blank");
@@ -136,11 +140,11 @@ ui_profile_name_read(char *string, size_t row)
   else
     {
       if(row)
-        error(EXIT_FAILURE, 0, "'%s' not recognized as a profile function "
-              "name in row %zu", string, row);
+        error(EXIT_FAILURE, 0, "'%s' not recognized as a profile "
+              "function name in row %zu", string, row);
       else
-        error(EXIT_FAILURE, 0, "'%s' not recognized as a profile function "
-              "name in values to '--kernel' option", string);
+        error(EXIT_FAILURE, 0, "'%s' not recognized as a profile "
+              "function name in values to '--kernel' option", string);
     }
 
   return PROFILE_INVALID;
@@ -162,7 +166,9 @@ ui_profile_name_write(int profile_code)
     case PROFILE_FLAT:           return "flat";
     case PROFILE_CIRCUMFERENCE:  return "circum";
     case PROFILE_DISTANCE:       return "distance";
+    case PROFILE_CUSTOM_PROF:    return "custom-prof";
     case PROFILE_AZIMUTH:        return "azimuth";
+    case PROFILE_CUSTOM_IMG:     return "custom-img";
     default:
       error(EXIT_FAILURE, 0, "%s: %d not recognized as a profile code",
             __func__, profile_code);
@@ -312,20 +318,21 @@ ui_parse_kernel(struct argp_option *option, char *arg,
         case 2: nc += sprintf(sstr+nc, "%s,",    profile); break;
         case 3: nc += sprintf(sstr+nc, "%s-3d,", profile); break;
         default:
-          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
-                "fix the problem. %u is not a recognized kernel "
-                "dimensionality", __func__, PACKAGE_BUGREPORT, kernel->flag);
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+                "to fix the problem. %u is not a recognized kernel "
+                "dimensionality", __func__, PACKAGE_BUGREPORT,
+                kernel->flag);
         }
 
       /* Write the values into a string. */
       for(i=0;i<kernel->size;++i)
         {
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
-            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
-                  "can address the problem. The number of necessary "
-                  "characters in the statically allocated string has become "
-                  "too close to %d", __func__, PACKAGE_BUGREPORT,
-                  GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s "
+                  "so we can address the problem. The number of "
+                  "necessary characters in the statically allocated "
+                  "string has become too close to %d", __func__,
+                  PACKAGE_BUGREPORT, GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
           nc += sprintf(sstr+nc, "%g,", darray[i]);
         }
       sstr[nc-1]='\0';
@@ -386,15 +393,16 @@ ui_parse_kernel(struct argp_option *option, char *arg,
           dstr=c+1;
           if( (dstr[1]!='d' && dstr[1]!='D') || dstr[2]!='\0')
             error(EXIT_FAILURE, 0, "bad formatting in '--kernel' "
-                  "dimensionality. The dimensionality suffix must be either "
-                  "2d, 3d (not case sensitive). You have given '%s'", dstr);
+                  "dimensionality. The dimensionality suffix must be "
+                  "either 2d, 3d (not case sensitive). You have given "
+                  "'%s'", dstr);
           switch(dstr[0])
             {
             case '2': kernel->flag=2; break;
             case '3': kernel->flag=3; break;
             default:
-              error(EXIT_FAILURE, 0, "only 2 or 3 dimensional kernels can "
-                    "currently be built, you have asked for a %c "
+              error(EXIT_FAILURE, 0, "only 2 or 3 dimensional kernels "
+                    "can currently be built, you have asked for a %c "
                     "dimensional kernel", dstr[0]);
             }
         }
@@ -542,9 +550,9 @@ ui_read_check_only_options(struct mkprofparams *p)
      not called.  */
   if( p->mcolisbrightness==0 && isnan(p->zeropoint) )
     error(EXIT_FAILURE, 0, "no zeropoint magnitude given. A zeropoint "
-          "magnitude is necessary when '--mcolisbrightness' is not called "
-          "(i.e., when the contents of '--mcol' must be interpretted as "
-          "a magnitude, not brightness).");
+          "magnitude is necessary when '--mcolisbrightness' is not "
+          "called (i.e., when the contents of '--mcol' must be "
+          "interpretted as a magnitude, not brightness).");
 
   /* Make sure no zero value is given for the '--mergedsize' option (only
      when it is necessary). */
@@ -553,6 +561,28 @@ ui_read_check_only_options(struct mkprofparams *p)
       if(p->dsize[i]==0)
         error(EXIT_FAILURE, 0, "values to '--mergedsize' option must not "
               "be zero");
+
+  /* First, make sure all calls to '--customimg' and '--customimghdu' are
+     put into a single list, then make sure that if '--customimg' is given,
+     '--customimghdu' is also given. */
+  gal_options_merge_list_of_csv(&p->customimghdu);
+  gal_options_merge_list_of_csv(&p->customimgname);
+  if(p->customimgname && p->customimghdu==NULL)
+    error(EXIT_FAILURE, 0, "no '--customimghdu' given: when "
+          "'--customimg' is given, it is necessary to also specify "
+          "a HDU. If '--customimghdu' is given only once, it can be "
+          "used for any number of '--customimg's. Otherwise (if the "
+          "HDUs of different inputs differ), it is necessary to "
+          "have the same number of calls to both '--customimg' and "
+          "'--customimghdu'");
+  if(gal_list_str_number(p->customimghdu)!=1
+     && ( gal_list_str_number(p->customimghdu)
+          < gal_list_str_number(p->customimgname) ) )
+    error(EXIT_FAILURE, 0, "incorrect number of '--customimghdu' "
+          "options are given: you should either give it once "
+          "(same HDU in all images), or it should be called "
+          "at least the same number of times that you have calld "
+          "'--customimg'");
 }
 
 
@@ -689,6 +719,7 @@ ui_read_cols_2d(struct mkprofparams *p)
 {
   int checkblank;
   size_t i, counter=0;
+  size_t numcustomimg=0;
   char *colname=NULL, **strarr;
   gal_list_str_t *ccol, *colstrs=NULL;
   gal_data_t *cols, *tmp, *corrtype=NULL;
@@ -762,17 +793,19 @@ ui_read_cols_2d(struct mkprofparams *p)
 
               /* Check if they are in the correct range. */
               for(i=0;i<p->num;++i)
-                if(p->f[i]<=PROFILE_INVALID || p->f[i]>=PROFILE_MAXIMUM_CODE)
+                if(p->f[i]<=PROFILE_INVALID
+                   || p->f[i]>=PROFILE_MAXIMUM_CODE)
                   error(EXIT_FAILURE, 0, "%s: row %zu, the function "
-                        "code is %u. It should be >%d and <%d. Please run "
-                        "again with '--help' and check the acceptable "
+                        "code is %u. It should be >%d and <%d. Please "
+                        "run again with '--help' and check the acceptable "
                         "codes.\n\nAlternatively, you can use alphabetic "
-                        "strings to specify the profile functions, see the "
-                        "explanations under 'fcol' from the command "
-                        "below (press the 'SPACE' key to go down, and the "
-                        "'q' to return back to the command-line):\n\n"
+                        "strings to specify the profile functions, see "
+                        "the explanations under 'fcol' from the command "
+                        "below (press the 'SPACE' key to go down, and "
+                        "the 'q' to return back to the command-line):\n\n"
                         "    $ info %s\n", p->catname, i+1, p->f[i],
-                        PROFILE_INVALID, PROFILE_MAXIMUM_CODE, PROGRAM_EXEC);
+                        PROFILE_INVALID, PROFILE_MAXIMUM_CODE,
+                        PROGRAM_EXEC);
             }
           break;
 
@@ -813,10 +846,12 @@ ui_read_cols_2d(struct mkprofparams *p)
 
           /* Check if there is no negative or >1.0f axis ratio. */
           for(i=0;i<p->num;++i)
-            if( p->f[i]!=PROFILE_POINT && (p->q1[i]<=0.0f || p->q1[i]>1.0f) )
-              error(EXIT_FAILURE, 0, "%s: row %zu, the axis ratio value %g "
-                    "is not acceptable for a '%s' profile. It has to be >0 "
-                    "and <=1", p->catname, i+1, p->q1[i],
+            if( p->f[i]!=PROFILE_POINT
+                && p->f[i]!=PROFILE_CUSTOM_IMG
+                && (p->q1[i]<=0.0f || p->q1[i]>1.0f) )
+              error(EXIT_FAILURE, 0, "%s: row %zu, the axis ratio value "
+                    "%g is not acceptable for a '%s' profile. It has to "
+                    "be >0 and <=1", p->catname, i+1, p->q1[i],
                     ui_profile_name_write(p->f[i]));
           break;
 
@@ -825,7 +860,7 @@ ui_read_cols_2d(struct mkprofparams *p)
           colname="magnitude ('mcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->m=corrtype->array;
-          checkblank=0;          /* Magnitude can be NaN: to mask regions. */
+          checkblank=0;       /* Magnitude can be NaN: to mask regions. */
           break;
 
 
@@ -836,10 +871,12 @@ ui_read_cols_2d(struct mkprofparams *p)
 
           /* Check if there is no negative or zero truncation radius. */
           for(i=0;i<p->num;++i)
-            if(p->f[i]!=PROFILE_POINT && p->t[i]<=0.0f)
+            if(p->t[i]<=0.0f
+               && p->f[i]!=PROFILE_POINT
+               && p->f[i]!=PROFILE_CUSTOM_IMG )
               error(EXIT_FAILURE, 0, "%s: row %zu, the truncation radius "
-                    "value %g is not acceptable for a '%s' profile. It has "
-                    "to be larger than 0", p->catname, i+1, p->t[i],
+                    "value %g is not acceptable for a '%s' profile. It "
+                    "has to be larger than 0", p->catname, i+1, p->t[i],
                     ui_profile_name_write(p->f[i]));
           break;
 
@@ -873,7 +910,7 @@ ui_read_cols_2d(struct mkprofparams *p)
         }
     }
 
-  /* Multi-column sanity checks. */
+  /* Make sure flat profiles aren't given a value of zero. */
   counter=0;
   if( !p->cp.quiet && (p->mforflatpix || p->mcolisbrightness) )
     for(i=0;i<p->num;++i)
@@ -881,16 +918,43 @@ ui_read_cols_2d(struct mkprofparams *p)
                             || p->f[i]==PROFILE_FLAT
                             || p->f[i]==PROFILE_CIRCUMFERENCE ) )
         {
-          error(0, 0, "WARNING: atleast one single-valued profile (point, "
-                "flat, or circumference profiles) has a magnitude column "
-                "value of 0.0 while '--mforflatpix' or "
-                "'--mcolforbrightness' have also been given. In such cases "
-                "the profile's pixels will have a value of zero and thus "
-                "they will not be identifiable from the zero-valued "
-                "background. If this behavior is intended, this warning "
-                "can be suppressed with the '--quiet' (or '-q') option.\n");
+          error(0, 0, "WARNING: atleast one single-valued profile "
+                "(point, flat, or circumference profiles) has a "
+                "magnitude column value of 0.0 while '--mforflatpix' "
+                "or '--mcolforbrightness' have also been given. In "
+                "such cases the profile's pixels will have a value "
+                "of zero and thus they will not be identifiable from "
+                "the zero-valued background. If this behavior is "
+                "intended, this warning can be suppressed with the "
+                "'--quiet' (or '-q') option.\n");
           break;
         }
+
+  /* Make sure the custom image counters are properly given. */
+  for(i=0;i<p->num;++i)
+    if(p->f[i]==PROFILE_CUSTOM_IMG)
+      {
+        /* For a custom image, the radius column is the counter of the image
+           (given to '--customimg'), so it should be an integer. */
+        if( p->r[i]!=ceil(p->r[i]) )
+          error(EXIT_FAILURE, 0, "the value in the \"radius\" column "
+                "for a 'custom-img' should be an integer (counter of "
+                "the image given to '--customimg'), but in row number "
+                "%zu of the input table, it is '%g'", i, p->r[i]);
+
+        /* Find the largest custom image counter. */
+        if(p->r[i]>numcustomimg) numcustomimg=p->r[i];
+      }
+
+  /* Make sure that a sufficient number of custom images are given (as
+     defined by the largest number of custom image counter. */
+  if(numcustomimg>0
+     && numcustomimg>gal_list_str_number(p->customimgname))
+    error(EXIT_FAILURE, 0, "insufficient number of custom images: "
+          "only %zu image(s) given to '--customimg', but in the "
+          "catalog, at least one row requests custom image number "
+          "%zu (in the \"radius\" column)",
+          gal_list_str_number(p->customimgname), numcustomimg);
 }
 
 
@@ -910,9 +974,9 @@ ui_read_cols_3d(struct mkprofparams *p)
   /* The 3D-specific columns are not mandatory in 'args.h', so we need to
      check here if they are given or not before starting to read them. */
   if(p->p2col==NULL || p->p3col==NULL || p->q2col==NULL)
-    error(EXIT_FAILURE, 0, "at least one of '--p2col', '--p3col', or "
-          "'--q2col' have not been identified. When building a 3D profile, "
-          "these three columns are also mandatory");
+    error(EXIT_FAILURE, 0, "at least one of '--p2col', '--p3col', "
+          "or '--q2col' have not been identified. When building a "
+          "3D profile, these three columns are also mandatory");
 
   /* The coordinate columns are a linked list of strings. */
   ccol=p->ccol;
@@ -991,17 +1055,19 @@ ui_read_cols_3d(struct mkprofparams *p)
                  given as string, a non-matching string will result in an
                  error, so there is no need for this in that scenario. */
               for(i=0;i<p->num;++i)
-                if(p->f[i]<=PROFILE_INVALID || p->f[i]>=PROFILE_MAXIMUM_CODE)
+                if(p->f[i]<=PROFILE_INVALID
+                   || p->f[i]>=PROFILE_MAXIMUM_CODE)
                   error(EXIT_FAILURE, 0, "%s: row %zu, the function "
-                        "code is %u. It should be >%d and <%d. Please run "
-                        "again with '--help' and check the acceptable "
+                        "code is %u. It should be >%d and <%d. Please "
+                        "run again with '--help' and check the acceptable "
                         "codes.\n\nAlternatively, you can use alphabetic "
-                        "strings to specify the profile functions, see the "
-                        "explanations under 'fcol' from the command "
-                        "below (press the 'SPACE' key to go down, and the "
-                        "'q' to return back to the command-line):\n\n"
+                        "strings to specify the profile functions, see "
+                        "the explanations under 'fcol' from the command "
+                        "below (press the 'SPACE' key to go down, and "
+                        "the 'q' to return back to the command-line):\n\n"
                         "    $ info %s\n", p->catname, i+1, p->f[i],
-                        PROFILE_INVALID, PROFILE_MAXIMUM_CODE, PROGRAM_EXEC);
+                        PROFILE_INVALID, PROFILE_MAXIMUM_CODE,
+                        PROGRAM_EXEC);
             }
 
           /* General profile sanity checks. */
@@ -1023,9 +1089,9 @@ ui_read_cols_3d(struct mkprofparams *p)
           /* Check if there is no negative or zero-radius profile. */
           for(i=0;i<p->num;++i)
             if(p->f[i]!=PROFILE_POINT && p->r[i]<=0.0f)
-              error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g is "
-                    "not acceptable for a '%s' profile. It has to be larger "
-                    "than 0", p->catname, i+1, p->r[i],
+              error(EXIT_FAILURE, 0, "%s: row %zu, the radius value %g "
+                    "is not acceptable for a '%s' profile. It has to be "
+                    "larger than 0", p->catname, i+1, p->r[i],
                     ui_profile_name_write(p->f[i]));
           break;
 
@@ -1060,10 +1126,11 @@ ui_read_cols_3d(struct mkprofparams *p)
 
           /* Check if there is no negative or >1.0f axis ratio. */
           for(i=0;i<p->num;++i)
-            if( p->f[i]!=PROFILE_POINT && (p->q1[i]<=0.0f || p->q1[i]>1.0f) )
+            if( p->f[i]!=PROFILE_POINT
+                && (p->q1[i]<=0.0f || p->q1[i]>1.0f) )
               error(EXIT_FAILURE, 0, "%s: row %zu, the first axis ratio "
-                    "value %g is not acceptable for a '%s' profile. It has "
-                    "to be >0 and <=1", p->catname, i+1, p->q1[i],
+                    "value %g is not acceptable for a '%s' profile. It "
+                    "has to be >0 and <=1", p->catname, i+1, p->q1[i],
                     ui_profile_name_write(p->f[i]));
           break;
 
@@ -1074,10 +1141,11 @@ ui_read_cols_3d(struct mkprofparams *p)
 
           /* Check if there is no negative or >1.0f axis ratio. */
           for(i=0;i<p->num;++i)
-            if( p->f[i]!=PROFILE_POINT && (p->q2[i]<=0.0f || p->q2[i]>1.0f) )
+            if( p->f[i]!=PROFILE_POINT
+                && (p->q2[i]<=0.0f || p->q2[i]>1.0f) )
               error(EXIT_FAILURE, 0, "%s: row %zu, the second axis ratio "
-                    "value %g is not acceptable for a '%s' profile. It has "
-                    "to be >0 and <=1", p->catname, i+1, p->q2[i],
+                    "value %g is not acceptable for a '%s' profile. It "
+                    "has to be >0 and <=1", p->catname, i+1, p->q2[i],
                     ui_profile_name_write(p->f[i]));
           break;
 
@@ -1085,7 +1153,7 @@ ui_read_cols_3d(struct mkprofparams *p)
           colname="magnitude ('mcol')";
           corrtype=gal_data_copy_to_new_type_free(tmp, GAL_TYPE_FLOAT32);
           p->m=corrtype->array;
-          checkblank=0;          /* Magnitude can be NaN: to mask regions. */
+          checkblank=0;   /* Magnitude can be NaN: to mask regions. */
           break;
 
         case 13:
@@ -1153,21 +1221,34 @@ ui_prepare_columns(struct mkprofparams *p)
       p->num=1;
 
       /* Allocate the necessary columns. */
-      p->x  = gal_pointer_allocate(GAL_TYPE_FLOAT64, 1, 1, __func__, "p->x");
-      p->y  = gal_pointer_allocate(GAL_TYPE_FLOAT64, 1, 1, __func__, "p->y");
-      p->f  = gal_pointer_allocate(GAL_TYPE_UINT8,   1, 1, __func__, "p->f");
-      p->r  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->r");
-      p->n  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->n");
-      p->p1 = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->p1");
-      p->q1 = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->q1");
-      p->m  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->m");
-      p->t  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->t");
+      p->x  = gal_pointer_allocate(GAL_TYPE_FLOAT64, 1, 1, __func__,
+                                   "p->x");
+      p->y  = gal_pointer_allocate(GAL_TYPE_FLOAT64, 1, 1, __func__,
+                                   "p->y");
+      p->f  = gal_pointer_allocate(GAL_TYPE_UINT8,   1, 1, __func__,
+                                   "p->f");
+      p->r  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                   "p->r");
+      p->n  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                   "p->n");
+      p->p1 = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                   "p->p1");
+      p->q1 = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                   "p->q1");
+      p->m  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                   "p->m");
+      p->t  = gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                   "p->t");
       if(p->ndim==3)
         {
-          p->z =gal_pointer_allocate(GAL_TYPE_FLOAT64, 1, 1, __func__, "p->z");
-          p->p2=gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->p2");
-          p->p3=gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->p3");
-          p->q2=gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__, "p->q2");
+          p->z =gal_pointer_allocate(GAL_TYPE_FLOAT64, 1, 1, __func__,
+                                     "p->z");
+          p->p2=gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                     "p->p2");
+          p->p3=gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                     "p->p3");
+          p->q2=gal_pointer_allocate(GAL_TYPE_FLOAT32, 1, 1, __func__,
+                                     "p->q2");
         }
 
       /* For profiles that need a different number of input values. Note
@@ -1241,20 +1322,31 @@ ui_prepare_columns(struct mkprofparams *p)
         }
     }
 
-  /* If a custom profile is requested, make sure that a custom file is
-     given. */
+  /* If a custom profile or image is requested, make sure that a custom
+     file is given. */
   for(i=0;i<p->num;++i)
-    if(p->f[i]==PROFILE_CUSTOM)
-      {
-        if(p->customname==NULL)
-          error(EXIT_FAILURE, 0, "at least one custom profile requested "
-                "(first occurrence in row %zu), but no file/table was given "
-                "to the '--customtable' option. See the description of "
-                "this '--customtable' for more information on the "
-                "desired format", i+1);
-        break;
-      }
-
+    {
+      if(p->f[i]==PROFILE_CUSTOM_PROF)
+        {
+          if(p->customprofname==NULL)
+            error(EXIT_FAILURE, 0, "at least one custom profile "
+                  "requested (first occurrence in row %zu), but no "
+                  "file/table was given to the '--customtable' "
+                  "option. See the description of '--customtable' "
+                  "for more information on the desired format", i+1);
+          break;
+        }
+      if(p->f[i]==PROFILE_CUSTOM_IMG)
+        {
+          if(p->customimgname==NULL)
+            error(EXIT_FAILURE, 0, "at least one custom image "
+                  "requested (first occurrence in row %zu), but no "
+                  "file/table was given to the '--customimg' "
+                  "option. See the description of '--customimg' "
+                  "for more information on the desired format", i+1);
+          break;
+        }
+    }
 }
 
 
@@ -1273,8 +1365,9 @@ ui_wcs_sanity_check(struct mkprofparams *p)
   if(p->crpix)
     {
       if(p->crpix->size!=ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to '--crpix'. This must be "
-              "the same as the output dimension (%zu)", p->crpix->size, ndim);
+        error(EXIT_FAILURE, 0, "%zu values given to '--crpix'. This "
+              "must be the same as the output dimension (%zu)",
+              p->crpix->size, ndim);
       return 0;
     }
   else return 1;
@@ -1282,8 +1375,9 @@ ui_wcs_sanity_check(struct mkprofparams *p)
   if(p->crval)
     {
       if(p->crval->size!=ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to '--crval'. This must be "
-              "the same as the output dimension (%zu)", p->crval->size, ndim);
+        error(EXIT_FAILURE, 0, "%zu values given to '--crval'. This "
+              "must be the same as the output dimension (%zu)",
+              p->crval->size, ndim);
       return 0;
     }
   else return 1;
@@ -1291,8 +1385,9 @@ ui_wcs_sanity_check(struct mkprofparams *p)
   if(p->cdelt)
     {
       if(p->cdelt->size!=ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to '--cdelt'. This must be "
-              "the same as the output dimension (%zu)", p->cdelt->size, ndim);
+        error(EXIT_FAILURE, 0, "%zu values given to '--cdelt'. This "
+              "must be the same as the output dimension (%zu)",
+              p->cdelt->size, ndim);
       return 0;
     }
   else return 1;
@@ -1300,8 +1395,8 @@ ui_wcs_sanity_check(struct mkprofparams *p)
   if(p->pc)
     {
       if(p->pc->size!=ndim*ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to '--pc'. This must be "
-              "the square as the output dimension (%zu)", p->pc->size,
+        error(EXIT_FAILURE, 0, "%zu values given to '--pc'. This must "
+              "be the square as the output dimension (%zu)", p->pc->size,
               ndim*ndim);
       return 0;
     }
@@ -1310,8 +1405,9 @@ ui_wcs_sanity_check(struct mkprofparams *p)
   if(p->cunit)
     {
       if(p->cunit->size!=ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to '--cunit'. This must be "
-              "the same as the output dimension (%zu)", p->cunit->size, ndim);
+        error(EXIT_FAILURE, 0, "%zu values given to '--cunit'. This "
+              "must be the same as the output dimension (%zu)",
+              p->cunit->size, ndim);
       return 0;
     }
   else return 1;
@@ -1319,8 +1415,9 @@ ui_wcs_sanity_check(struct mkprofparams *p)
   if(p->ctype)
     {
       if(p->ctype->size!=ndim)
-        error(EXIT_FAILURE, 0, "%zu values given to '--ctype'. This must be "
-              "the same as the output dimension (%zu)", p->ctype->size, ndim);
+        error(EXIT_FAILURE, 0, "%zu values given to '--ctype'. This "
+              "must be the same as the output dimension (%zu)",
+              p->ctype->size, ndim);
       return 0;
     }
   else return 1;
@@ -1457,9 +1554,9 @@ ui_prepare_canvas(struct mkprofparams *p)
 
           /* Make sure it has the same number of elements as naxis. */
           if(p->ndim!=nshift)
-            error(EXIT_FAILURE, 0, "%zu and %zu elements given to '--ndim' "
-                  "and '--shift' respectively. These two numbers must be the "
-                  "same", p->ndim, nshift);
+            error(EXIT_FAILURE, 0, "%zu and %zu elements given to "
+                  "'--ndim' and '--shift' respectively. These two "
+                  "numbers must be the same", p->ndim, nshift);
         }
       else
         {
@@ -1467,19 +1564,20 @@ ui_prepare_canvas(struct mkprofparams *p)
              zero. Also, a PSF profile should exist in the image. */
           if(p->prepforconv)
             {
-              /* Check if there is at least one Moffat or Gaussian profile. */
+              /* Check if there is at least one Moffat or Gaussian
+                 profile. */
               for(i=0;i<p->num;++i)
                 if( oneprofile_ispsf(p->f[i]) )
                   {
                     /* Calculate the size of the box holding the PSF. Note:
 
                        - For the Moffat and Gaussian profiles, the radius
-                       column is actually the FWHM which is actually the
-                       diameter, not radius. So we have to divide it by
-                       half.
+                         column is actually the FWHM which is actually the
+                         diameter, not radius. So we have to divide it by
+                         half.
 
-                       - encloseellipse outputs the total width, we only want
-                       half of it for the shift. */
+                       - encloseellipse outputs the total width, we only
+                         want half of it for the shift. */
                     setshift=1;
                     truncr = p->tunitinp ? p->t[i] : p->t[i] * p->r[i]/2;
                     if(p->ndim==2)
@@ -1493,7 +1591,7 @@ ui_prepare_canvas(struct mkprofparams *p)
                         semiaxes[0]  = truncr;
                         semiaxes[1]  = truncr * p->q1[i];
                         semiaxes[2]  = truncr * p->q2[i];
-                        gal_box_bound_ellipsoid( semiaxes, euler_deg, width);
+                        gal_box_bound_ellipsoid(semiaxes, euler_deg, width);
                       }
                   }
 
@@ -1597,21 +1695,22 @@ ui_finalize_coordinates(struct mkprofparams *p)
             }
 
           /* Allocate the list of coordinates. */
-          gal_list_data_add_alloc(&coords, arr, GAL_TYPE_FLOAT64, 1, &p->num,
-                                  NULL, 0, -1, 1, NULL, NULL, NULL);
+          gal_list_data_add_alloc(&coords, arr, GAL_TYPE_FLOAT64, 1,
+                                  &p->num, NULL, 0, -1, 1, NULL, NULL,
+                                  NULL);
         }
 
       /* Convert the world coordinates to image coordinates (inplace). */
       gal_wcs_world_to_img(coords, p->wcs, 1);
 
 
-      /* If any conversions created a WCSLIB error, both the outputs will be
-         set to NaN. */
+      /* If any conversions created a WCSLIB error, both the outputs will
+         be set to NaN. */
       for(i=0;i<p->num;++i)
         if( isnan(p->x[i]) )
-          error(EXIT_FAILURE, 0, "catalog row %zu: WCSLIB could not convert "
-                "(%f, %f) coordinates into image coordinates", i, p->x[i],
-                p->y[i]);
+          error(EXIT_FAILURE, 0, "catalog row %zu: WCSLIB could not "
+                "convert (%f, %f) coordinates into image coordinates",
+                i, p->x[i], p->y[i]);
 
       /* We want the actual arrays of each 'coords' column. So, first we'll
          set all the array elements to NULL, then free it. */
@@ -1654,37 +1753,39 @@ ui_make_log(struct mkprofparams *p)
   if(p->cp.log==0) return;
 
   /* Individual created. */
-  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT8, 1, &p->num, NULL,
-                          1, p->cp.minmapsize, p->cp.quietmmap,
+  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT8, 1, &p->num,
+                          NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
                           "INDIV_CREATED", "bool",
-                          "If an individual image was made (1) or not (0).");
+                          "If an individual image was made (1) or "
+                          "not (0).");
 
   /* Fraction of monte-carlo. */
-  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_FLOAT32, 1, &p->num, NULL,
-                          1, p->cp.minmapsize, p->cp.quietmmap,
+  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_FLOAT32, 1, &p->num,
+                          NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
                           "FRAC_MONTECARLO", "frac",
-                          "Fraction of brightness in Monte-carlo integrated "
-                          "pixels.");
+                          "Fraction of brightness in Monte-carlo "
+                          "integrated pixels.");
 
   /* Number of monte-carlo. */
-  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT64, 1, &p->num, NULL,
-                          1, p->cp.minmapsize, p->cp.quietmmap,
+  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT64, 1, &p->num,
+                          NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
                           "NUM_MONTECARLO", "count",
                           "Number of Monte Carlo integrated pixels.");
 
   /* Magnitude of profile overlap. */
-  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_FLOAT32, 1, &p->num, NULL,
-                          1, p->cp.minmapsize, p->cp.quietmmap, "MAG_OVERLAP",
-                          "mag", "Magnitude of profile's overlap with merged "
+  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_FLOAT32, 1, &p->num,
+                          NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
+                          "MAG_OVERLAP", "mag",
+                          "Magnitude of profile's overlap with merged "
                           "image.");
 
   /* Row number in input catalog. */
   name=gal_fits_name_save_as_string(p->catname, p->cp.hdu);
   if( asprintf(&comment, "Row number of profile in %s.", name)<0 )
     error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT64, 1, &p->num, NULL,
-                          1, p->cp.minmapsize, p->cp.quietmmap, "INPUT_ROW_NO",
-                          "count", comment);
+  gal_list_data_add_alloc(&p->log, NULL, GAL_TYPE_UINT64, 1, &p->num,
+                          NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
+                          "INPUT_ROW_NO", "count", comment);
   free(comment);
   free(name);
 }
@@ -1704,7 +1805,7 @@ ui_read_custom_table(struct mkprofparams *p)
   double *min, *max;
 
   /* Read the input radial table. */
-  cols=gal_table_read(p->customname, p->customhdu,
+  cols=gal_table_read(p->customprofname, p->customprofhdu,
                       NULL, NULL, p->cp.searchin, p->cp.ignorecase,
                       p->cp.numthreads, p->cp.minmapsize,
                       p->cp.quietmmap, NULL);
@@ -1716,7 +1817,8 @@ ui_read_custom_table(struct mkprofparams *p)
           "value. Column 2: the radial interval's higher value. "
           "Column 3: the value to use for pixels within that radius "
           "interval",
-          gal_fits_name_save_as_string(p->customname, p->customhdu),
+          gal_fits_name_save_as_string(p->customprofname,
+                                       p->customprofhdu),
           gal_list_data_number(cols));
 
   /* Make sure none of the three columns are string type. */
@@ -1724,8 +1826,8 @@ ui_read_custom_table(struct mkprofparams *p)
       || cols->next->type==GAL_TYPE_STRING
       || cols->next->next->type==GAL_TYPE_STRING )
     error(EXIT_FAILURE, 0, "%s: the columns should only have numeric "
-          "data types", gal_fits_name_save_as_string(p->customname,
-                                                     p->customhdu));
+          "data types", gal_fits_name_save_as_string(p->customprofname,
+                                                     p->customprofhdu));
 
   /* Fill the final table as a double type. */
   p->custom=gal_data_copy_to_new_type(cols, GAL_TYPE_FLOAT64);
@@ -1740,13 +1842,13 @@ ui_read_custom_table(struct mkprofparams *p)
   max=p->custom->next->array;
   for(i=0;i<p->custom->size;++i)
     if(min[i]>=max[i])
-      error(EXIT_FAILURE, 0, "%s: the first column of row %zu (with value "
-            "%g) is larger or equal to the second column (with value %g). "
-            "However, the first column is the lower-limit of the radial "
-            "interval and the second column is the upper-limit. So the "
-            "first column must have a lower value",
-            gal_fits_name_save_as_string(p->customname,
-                                         p->customhdu), i+1,
+      error(EXIT_FAILURE, 0, "%s: the first column of row %zu (with "
+            "value %g) is larger or equal to the second column (with "
+            "value %g). However, the first column is the lower-limit "
+            "of the radial interval and the second column is the "
+            "upper-limit. So the first column must have a lower value",
+            gal_fits_name_save_as_string(p->customprofname,
+                                         p->customprofhdu), i+1,
             min[i], max[i]);
 
   /* Check if the input table is regular and sorted (which can greatly
@@ -1784,8 +1886,8 @@ ui_read_ndim(struct mkprofparams *p)
 
       /* Make sure the kernel and background are not given together. */
       if(p->backname)
-        error(EXIT_FAILURE, 0, "the '--kernel' and '--background' options "
-              "cannot be called together");
+        error(EXIT_FAILURE, 0, "the '--kernel' and '--background' "
+              "options cannot be called together");
     }
   else
     {
@@ -1803,7 +1905,8 @@ ui_read_ndim(struct mkprofparams *p)
           if(p->nomerged)
             {
               /* Get the number of the background image's dimensions. */
-              dsize=gal_fits_img_info_dim(p->backname, p->backhdu, &p->ndim);
+              dsize=gal_fits_img_info_dim(p->backname, p->backhdu,
+                                          &p->ndim);
               p->ndim=gal_dimension_remove_extra(p->ndim, dsize, NULL);
               free(dsize);
             }
@@ -1821,9 +1924,9 @@ ui_read_ndim(struct mkprofparams *p)
 
           /* Make sure the dimensionality is supported. */
           if(p->ndim!=2 && p->ndim!=3)
-            error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions. Currently "
-                  "only 2 or 3 dimensional outputs can be produced",
-                  p->backname, p->backhdu, p->ndim);
+            error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions. "
+                  "Currently only 2 or 3 dimensional outputs can be "
+                  "produced", p->backname, p->backhdu, p->ndim);
         }
       else
         {
@@ -1835,8 +1938,8 @@ ui_read_ndim(struct mkprofparams *p)
           /* Make sure the dimensionality is supported. */
           if(p->ndim!=2 && p->ndim!=3)
             error(EXIT_FAILURE, 0, "%zu values given to '--mergedsize'. "
-                  "Currently only 2 or 3 dimensional outputs can be produced",
-                  p->ndim);
+                  "Currently only 2 or 3 dimensional outputs can be "
+                  "produced", p->ndim);
         }
     }
 }
@@ -1857,7 +1960,7 @@ ui_preparations(struct mkprofparams *p)
   ui_prepare_columns(p);
 
   /* Read the radial table. */
-  if(p->customname) ui_read_custom_table(p);
+  if(p->customprofname) ui_read_custom_table(p);
 
   /* If the kernel option was given, some parameters need to be
      over-written: */
@@ -1929,7 +2032,8 @@ ui_print_intro(struct mkprofparams *p)
 
   if(p->cp.quiet) return;
 
-  printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s", ctime(&p->rawtime));
+  printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s",
+         ctime(&p->rawtime));
 
   if(p->kernel)
     {

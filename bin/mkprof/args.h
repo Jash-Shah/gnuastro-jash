@@ -88,9 +88,9 @@ struct argp_option program_options[] =
       UI_KEY_CUSTOMTABLE,
       "FITS/TXT",
       0,
-      "File for 'custom' profile.",
+      "File for 'custom-prof' profile.",
       GAL_OPTIONS_GROUP_INPUT,
-      &p->customname,
+      &p->customprofname,
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
@@ -103,8 +103,34 @@ struct argp_option program_options[] =
       0,
       "HDU of table given to '--customtable'.",
       GAL_OPTIONS_GROUP_INPUT,
-      &p->customhdu,
+      &p->customprofhdu,
       GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "customimg",
+      UI_KEY_CUSTOMIMG,
+      "FITS",
+      0,
+      "Image file for 'custom-img' profile.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->customimgname,
+      GAL_TYPE_STRLL,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "customimghdu",
+      UI_KEY_CUSTOMIMGHDU,
+      "INT/STR",
+      0,
+      "HDU of image given to '--customimg'.",
+      GAL_OPTIONS_GROUP_INPUT,
+      &p->customimghdu,
+      GAL_TYPE_STRLL,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
@@ -283,6 +309,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "mcolnocustimg",
+      UI_KEY_MCOLNOCUSTIMG,
+      0,
+      0,
+      "Ignore the value of mcol in 'custom-img'.",
+      UI_GROUP_PROFILES,
+      &p->mcolnocustimg,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "shift",
       UI_KEY_SHIFT,
       "INT[, ...]",
@@ -391,7 +430,7 @@ struct argp_option program_options[] =
       0,
       "sersic (1), moffat (2), gaussian (3), point (4), "
       "flat (5), circumference (6), distance (7), "
-      "radial-table (8), azimuth (9).",
+      "custom-prof (8), azimuth (9), custom-img (10).",
       UI_GROUP_CATALOG,
       &p->fcol,
       GAL_TYPE_STRING,

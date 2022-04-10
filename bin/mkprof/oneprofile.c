@@ -536,6 +536,56 @@ oneprofile_ispsf(uint8_t fcode)
 
 
 
+static gal_data_t *
+oneprofile_custom_img(struct mkprofparams *p, size_t id)
+{
+  float *d, *df;
+  gal_data_t *out;
+  size_t i, imgcounter=0;
+  gal_list_str_t *timg, *thdu;
+
+  /* The identifier of the image (and its HDU) is in the radius column for
+     this type of profile (a custom image). Note that in 'ui.c', we checked
+     that for this profile type, the "radius" column only has integers. */
+  imgcounter=p->r[id];
+
+  /* Load the image. In 'ui.c', we have already checked that the number of
+     images given to '--customimg' is atleast equal to the largest
+     requested profile. Also, note that if only one HDU is given, we'll
+     assume that for all HDUs. */
+  thdu=p->customimghdu;
+  timg=p->customimgname; for(i=1;i<imgcounter;++i) timg=timg->next;
+  if(p->customimghdu->next)
+    for(i=1;i<imgcounter;++i) thdu=thdu->next;
+  out=gal_fits_img_read_to_type(timg->v, thdu->v, GAL_TYPE_FLOAT32,
+                                p->cp.minmapsize, p->cp.quietmmap);
+
+  /* Make sure the image has an odd number of pixels on each side. */
+  if( out->dsize[0]%2==0 || out->dsize[1]%2==0 )
+    error(EXIT_FAILURE, 0, "%s: doesn't have an odd number of pixels in "
+          "both axises, but is %zux%zu pixels. To have a clear centeral "
+          "pixel, it is necessary that the number of pixels in each side "
+          "of the image be an odd number",
+          gal_fits_name_save_as_string(timg->v, thdu->v), out->dsize[1],
+          out->dsize[0]);
+
+  /* If there are NaN pixels in the image, set them to '0' (which makes
+     them ineffective in MakeProfiles). */
+  if( gal_blank_present(out, 1) )
+    {
+      df=(d=out->array)+out->size;
+      out->flag &= !GAL_DATA_FLAG_BLANK_CH;
+      do if( isnan(*d) ) *d=0.0f; while(++d<df);
+    }
+
+  /* Return the image. */
+  return out;
+}
+
+
+
+
+
 /* Prepare all the parameters for any type of profile. */
 void
 oneprofile_set_prof_params(struct mkonthread *mkp)
@@ -704,10 +754,18 @@ oneprofile_set_prof_params(struct mkonthread *mkp)
 
 
 
-    case PROFILE_CUSTOM:
+    case PROFILE_CUSTOM_PROF:
       mkp->profile          = profiles_custom_table;
       mkp->truncr           = tp ? p->t[id] : p->t[id]*p->r[id];
       mkp->correction       = 0;
+      break;
+
+
+
+    case PROFILE_CUSTOM_IMG:
+      mkp->profile          = profiles_custom_image; /* A place holder */
+      mkp->customimg        = oneprofile_custom_img(p, id);
+      mkp->correction       = p->mcolnocustimg ? 0 : 1;
       break;
 
 
@@ -756,24 +814,31 @@ oneprofile_make(struct mkonthread *mkp)
   oneprofile_center_oversampled(mkp);
 
 
-  /* From this point on, the widths will be in the actual pixel widths
-     (with oversampling). */
-  for(i=0;i<ndim;++i)
+  /* If a custom image is provided, there is no need to build a new
+     dataset. */
+  if(mkp->customimg)
+    mkp->ibq->image=mkp->customimg;
+  else
     {
-      mkp->width[i]  *= p->oversample;
-      dsize[ndim-i-1] = mkp->width[i];
+      /* From this point on, the widths will be in the actual pixel widths
+         (with oversampling). */
+      for(i=0;i<ndim;++i)
+        {
+          mkp->width[i]  *= p->oversample;
+          dsize[ndim-i-1] = mkp->width[i];
+        }
+
+
+      /* Allocate and clear the array for this one profile. */
+      mkp->ibq->image=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, ndim, dsize,
+                                     NULL, 1, p->cp.minmapsize,
+                                     p->cp.quietmmap, "MOCK",
+                                     "Brightness", NULL);
+
+
+      /* Build the profile in the image. */
+      oneprofile_pix_by_pix(mkp);
     }
-
-
-  /* Allocate and clear the array for this one profile. */
-  mkp->ibq->image=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, ndim, dsize,
-                                 NULL, 1, p->cp.minmapsize, p->cp.quietmmap,
-                                 "MOCK", "Brightness", NULL);
-
-
-  /* Build the profile in the image. */
-  oneprofile_pix_by_pix(mkp);
-
 
   /* Correct the sum of pixels in the profile so it has the fixed total
      magnitude or pixel value, mkp->correction was set in

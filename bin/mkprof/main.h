@@ -68,8 +68,9 @@ enum profile_types
   PROFILE_FLAT,                 /* Flat profile.               */
   PROFILE_CIRCUMFERENCE,        /* Circumference profile.      */
   PROFILE_DISTANCE,             /* Elliptical radius of pixel. */
-  PROFILE_CUSTOM,               /* Radial prof. in file/table. */
+  PROFILE_CUSTOM_PROF,          /* Radial prof. in file/table. */
   PROFILE_AZIMUTH,              /* Azimuthal angle at distance.*/
+  PROFILE_CUSTOM_IMG,           /* Custom image to insert.     */
 
   PROFILE_MAXIMUM_CODE,         /* Just for a sanity check.    */
 };
@@ -118,8 +119,10 @@ struct mkprofparams
   char            *backname;  /* Name of background image file name.      */
   char             *catname;  /* Name of catalog of parameters.           */
   char             *backhdu;  /* HDU of background image.                 */
-  char          *customname;  /* Table to use for radial profile.         */
-  char           *customhdu;  /* HDU of table to use for radial profile.  */
+  char      *customprofname;  /* Table to use for radial profile.         */
+  char       *customprofhdu;  /* HDU of table to use for radial profile.  */
+  gal_list_str_t *customimgname;  /* Image to insert into the image.      */
+  gal_list_str_t  *customimghdu;  /* HDU of images for custom image.      */
   size_t             *dsize;  /* Size of the output image.                */
   uint8_t       clearcanvas;  /* Pixels in background image set to zero.  */
   gal_data_t        *kernel;  /* Parameters to define a kernel.           */
@@ -152,6 +155,7 @@ struct mkprofparams
   char                *tcol;  /* Truncation of the profiles.              */
   uint8_t       mforflatpix;  /* mcol is flat pixel value (f is 4 or 5).  */
   uint8_t  mcolisbrightness;  /* mcol is total brightness, not magnitude. */
+  uint8_t     mcolnocustimg;  /* mcol should be ignored in 'custom-img'.  */
   gal_data_t         *crpix;  /* CRPIX FITS header keywords.              */
   gal_data_t         *crval;  /* CRVAL FITS header keywords.              */
   gal_data_t         *cdelt;  /* For CDELTi FITS header keywords.         */

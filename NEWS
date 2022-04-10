@@ -7,6 +7,16 @@ See the end of the file for license conditions.
 
 ** New features
 
+  MakeProfiles:
+   - It is now possible to insert a custom image as a new (10th)
+     'custom-img' profile. This is useful when you have no-noise FITS
+     images from numerical simulations for example, and you want to insert
+     those at a certain location within a larger image (while optionally
+     adding existing Sersic, point or other profiles in the same
+     command). The magnitude of the inserted image can be set in the
+     magnitude column of the input catalog. This can be disabled (to use
+     the original image pixel values) using the '--mcolnocustimg' option.
+
   astscript-radial-profile:
    --zeroisnotblank: new option to account for zero-valued pixels in the
      profile measurement. By default, during the internal cropping phase,
@@ -19,6 +29,12 @@ See the end of the file for license conditions.
 ** Removed features
 
 ** Changed features
+
+  MakeProfiles:
+   - The string identifier for custom radial profiles is now called
+     'custom-prof' (until now, it was called 'custom'). This was necessary
+     because of the new custom image feature that has been added. The code
+     for this custom radial profile function (8) hasn't changed.
 
 ** Bugs fixed
   bug #62216: MakeProfiles crash when a 3D cube is requested and input

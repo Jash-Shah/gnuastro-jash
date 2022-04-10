@@ -1171,6 +1171,9 @@ gal_options_merge_list_of_csv(gal_list_str_t **list)
   char *c, **strarr;
   gal_list_str_t *tmp, *in=*list, *out=NULL;
 
+  /* Incase the input is NULL, this option doesn't need to do anything. */
+  if(in==NULL) return;
+
   /* Go over each input and add it to the list. */
   for(tmp=in; tmp!=NULL; tmp=tmp->next)
     {
@@ -1179,7 +1182,7 @@ gal_options_merge_list_of_csv(gal_list_str_t **list)
          two single space characters). This can happen with options have
          have longer scripts and the user is forced to break the line with
          a '\' followed by newline. */
-      for(c=tmp->v;*c!='\0';++c)
+      for(c=tmp->v; *c!='\0'; ++c)
         if(*c=='\\' && *(c+1)=='\n') { *c=' '; *(++c)=' '; }
 
       /* Read the different comma-separated strings into an array (within a
@@ -1241,10 +1244,10 @@ gal_options_parse_sizes_reverse(struct argp_option *option, char *arg,
       for(i=num-1;i>=0;--i)
         {
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
-            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
-                  "can address the problem. The number of necessary "
-                  "characters in the statically allocated string has become "
-                  "too close to %d", __func__, PACKAGE_BUGREPORT,
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s "
+                  "so we can address the problem. The number of necessary "
+                  "characters in the statically allocated string has "
+                  "become too close to %d", __func__, PACKAGE_BUGREPORT,
                   GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
           nc += sprintf(sstr+nc, "%zu,", array[i]);
         }
@@ -1328,10 +1331,10 @@ gal_options_parse_csv_float64(struct argp_option *option, char *arg,
       for(i=0;i<values->size;++i)
         {
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
-            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
-                  "can address the problem. The number of necessary "
-                  "characters in the statically allocated string has become "
-                  "too close to %d", __func__, PACKAGE_BUGREPORT,
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s "
+                  "so we can address the problem. The number of necessary "
+                  "characters in the statically allocated string has "
+                  "become too close to %d", __func__, PACKAGE_BUGREPORT,
                   GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
           nc += sprintf(sstr+nc, "%g,", darray[i]);
         }
@@ -1476,11 +1479,11 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
       for(i=0;i<existing->size;++i)
         {
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
-            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
-                  "can address the problem. The number of necessary "
-                  "characters in the statically allocated string has become "
-                  "too close to %d", __func__, PACKAGE_BUGREPORT,
-                  GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s "
+                  "so we can address the problem. The number of "
+                  "necessary characters in the statically allocated "
+                  "string has become too close to %d", __func__,
+                  PACKAGE_BUGREPORT, GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
           if(str0_f641) nc += sprintf(sstr+nc, "%g,", darray[i]);
           else          nc += sprintf(sstr+nc, "%s,", strarr[i]);
         }
@@ -1512,8 +1515,10 @@ gal_options_parse_name_and_values(struct argp_option *option, char *arg,
 
       /* Read the values. */
       dataset=( str0_f641
-                ? gal_options_parse_list_of_numbers(values, filename, lineno)
-                : gal_options_parse_list_of_strings(values, filename, lineno));
+                ? gal_options_parse_list_of_numbers(values, filename,
+                                                    lineno)
+                : gal_options_parse_list_of_strings(values, filename,
+                                                    lineno));
 
       /* If there actually was a string of numbers, add the dataset to the
          rest. */
@@ -1705,10 +1710,10 @@ gal_options_parse_colon_sep_csv(struct argp_option *option, char *arg,
         {
           /* Make sure we aren't passing the allocated space. */
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
-            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
-                  "can address the problem. The number of necessary "
-                  "characters in the statically allocated string has become "
-                  "too close to %d", __func__, PACKAGE_BUGREPORT,
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s "
+                  "so we can address the problem. The number of necessary "
+                  "characters in the statically allocated string has "
+                  "become too close to %d", __func__, PACKAGE_BUGREPORT,
                   GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
 
           /* Print the two values in the expected format. */

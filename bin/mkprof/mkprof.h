@@ -49,6 +49,7 @@ struct mkonthread
   long        fpixel_i[3];   /* fpixel_i before running overlap.      */
   int          correction;   /* ==1: correct the pixels afterwards.   */
   unsigned long  rng_seed;   /* Seed used to generate this profile.   */
+  gal_data_t   *customimg;   /* Custom image for this profile.        */
 
   /* Random number generator: */
   gsl_rng            *rng;   /* Copy of main random number generator. */

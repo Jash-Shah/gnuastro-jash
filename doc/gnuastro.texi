@@ -22674,18 +22674,26 @@ You can use this for checks or as a first approximation to define your own highe
 In the latter case, just note that the central values are going to be incorrect (see @ref{Sampling from a function}).
 
 @item
-Custom profile with `@code{custom}' or `@code{8}'.
+Custom radial profile with `@code{custom-prof}' or `@code{8}'.
 The values to use for each radial interval should be in the table given to @option{--customtable}. For more, see @ref{MakeProfiles profile settings}.
 
 @item
 Azimuthal angle profile with `@code{azimuth}' or `@code{9}'.
 Every pixel within the truncation radius will be given its azimuthal angle (in degrees, from 0 to 360) from the major axis.
 In combination with the radial distance profile, you can now create complex features in polar coordinates, such as tidal tails or tidal shocks (using the Arithmetic program to mix the radius and azimuthal angle through a function to create your desired features).
+
+@item
+Custom image with `@code{custom-img}' or `@code{10}'.
+The image(s) to use should be given to the @option{--customimg} option (which can be called multiple times for multiple images).
+To identify which one of the images (given to @option{--customimg}) should be used, you should specify their counter in the ``radius'' column below.
+For more, see the description of @code{custom-img} in @ref{MakeProfiles profile settings}.
 @end itemize
 
 @item --rcol=STR/INT
 The radius parameter of the profiles.
 Effective radius (@mymath{r_e}) if S@'ersic, FWHM if Moffat or Gaussian.
+
+For a custom image profile, this option is not interpreted as a radius, but as a counter (identifying which one of the images given to @option{--customimg} should be used for each row).
 
 @item --ncol=STR/INT
 The S@'ersic index (@mymath{n}) or Moffat @mymath{\beta}.
@@ -22789,6 +22797,10 @@ The zero point magnitude (value to the @option{--zeropoint} option) is ignored a
 Recall that the total profile magnitude or brightness that is specified with in the @option{--mcol} column of the input catalog is not an integration to infinity, but the actual sum of pixels in the profile (until the desired truncation radius).
 See @ref{Profile magnitude} for more on this point.
 
+@item --mcolnocustimg
+Don't touch (re-scale) the custom image that should be inserted in @code{custom-img} profile (see the description of @option{--fcol} in @ref{MakeProfiles catalog}).
+By default, MakeProfiles will scale (multiply) the custom image's pixels to have the desired magnitude (or brightness if @option{--mcolisbrightness} is called) in that row.
+
 @item --magatpeak
 The magnitude column in the catalog (see @ref{MakeProfiles catalog}) will be used to find the brightness only for the peak profile pixel, not the full profile.
 Note that this is the flux of the profile's peak pixel in the final output of MakeProfiles.
@@ -22809,10 +22821,10 @@ Also note that in such cases, besides de-convolution, you will have to set @opti
 @end cartouche
 
 @item --customtable FITS/TXT
-The filename of the table to use in the custom profiles (see description of @option{--fcol} in @ref{MakeProfiles catalog}.
+The filename of the table to use in the custom radial profiles (see description of @option{--fcol} in @ref{MakeProfiles catalog}.
 This can be a plain-text table, or FITS table, see @ref{Tables}, if it is a FITS table, you can use @option{--customtablehdu} to specify which HDU should be used (described below).
 
-A custom profile can have any value you want for a given radial profile (including NaN/blank values).
+A custom radial profile can have any value you want for a given radial profile (including NaN/blank values).
 Each interval is defined by its minimum (inclusive) and maximum (exclusive) radius, when a pixel center falls within a radius interval, the value specified for that interval will be used.
 If a pixel is not in the given intervals, a value of 0.0 will be used for that pixel.
 
@@ -22853,9 +22865,41 @@ asttable radial.fits -c'arith $1 1 -' -c1,2 -ocustom.fits
 In case the intervals are different from 1 (for example 0.5), change the @code{$1 1 -} to @code{$1 0.5 -}.
 On a side-note, Gnuastro has features to extract the radial profile of an object from the image, see @ref{Generate radial profile}.
 
-
 @item --customtablehdu INT/STR
 The HDU/extension in the FITS file given to @option{--customtable}.
+
+@item --customimg=STR[,STR]
+A custom FITS image that should be used for the @code{custom-img} profiles (see the description of @option{--fcol} in @ref{MakeProfiles catalog}).
+Multiple files can be given to this option (separated by a comma), and this option can be called multiple times itself (useful when many custom image profiles should be added).
+If the HDU of the images are different, you can use @option{--customimghdu} (described below).
+
+Through the ``radius'' column, MakeProfiles will know which one of the images given to this this option should be used in each row.
+For example let's assume your input catalog (@file{cat.fits}) has the following contents (output of first command below), and you call MakeProfiles like like the second command below to insert four profiles into the background @file{back.fits} image.
+
+The first profile below is Sersic (with an @option{--fcol}, or 4-th column, code of @code{1}).
+So MakeProfiles builds the pixels of the first profile, and all column values are meaningful.
+However, the second, third and fourth inserted objects are custom images (with an @option{--fcol} code of @code{10}).
+For the custom image profiles, you see that the radius column has values of @code{1} or @code{2}.
+This tells MakeProfiles to use the first image given to @option{--customimg} (or @file{gal-1.fits}) for the second and fourth inserted objects.
+The second image given to @option{--customimage} (or @file{gal-2.fits}) will be used for the third inserted object.
+Finally, all three custom image profiles have different magnitudes, and the values in @option{--ncol}, @option{--pcol}, @option{--qcol} and @option{--tcol} are ignored.
+
+@example
+$ cat cat.fits
+1 53.15506 -27.785165 1  20 1 20 0.6 25 5
+2 53.15602 -27.777887 10 1  0 0  0   22 0
+3 53.16440 -27.775876 10 2  0 0  0   24 0
+4 53.16849 -27.787406 10 1  0 0  0   23 0
+
+$ astmkprof cat.fits --mode=wcs --zeropoint=25.68 \
+            --background=back.fits --output=out.fits \
+            --customimg=gal-1.fits --customimg=gal-2.fits
+@end example
+
+@item --customimghdu=INT/STR
+The HDU(s) of the images given to @option{--customimghdu}.
+If this option is only called once, but @option{--customimg} is called many times, MakeProfiles will assume that all images given to @option{--customimg} have the same HDU.
+Otherwise (if the number of HDUs is equal to the number of images), then each image will use its corresponding HDU.
 
 @item -X INT,INT
 @itemx --shift=INT,INT

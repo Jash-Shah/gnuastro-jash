@@ -33,6 +33,9 @@ double
 profiles_custom_table(struct mkonthread *mkp);
 
 double
+profiles_custom_image(struct mkonthread *mkp);
+
+double
 profiles_gaussian_total(double q);
 
 double

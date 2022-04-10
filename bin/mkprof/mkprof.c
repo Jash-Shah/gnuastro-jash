@@ -370,11 +370,12 @@ mkprof_build_single(struct mkonthread *mkp, long *fpixel_i, long *lpixel_i,
           /* If a crop is needed, set the starting pointer. */
           ind=gal_dimension_coord_to_index(ndim, ibq->image->dsize,
                                            start_indiv);
-          ptr=gal_pointer_increment(ibq->image->array, ind, ibq->image->type);
+          ptr=gal_pointer_increment(ibq->image->array, ind,
+                                    ibq->image->type);
         }
       else ptr=ibq->image->array;
-      ibq->overlap_i=gal_data_alloc(ptr, ibq->image->type, ndim, dsize, NULL,
-                                    0, -1, 1, NULL, NULL, NULL);
+      ibq->overlap_i=gal_data_alloc(ptr, ibq->image->type, ndim, dsize,
+                                    NULL, 0, -1, 1, NULL, NULL, NULL);
       ibq->overlap_i->block=ibq->image;
 
 
@@ -512,6 +513,11 @@ mkprof_build(void *inparam)
       /* Find the bounding box size (NOT oversampled). */
       if( p->f[id] == PROFILE_POINT )
         mkp->width[0]=mkp->width[1]=1;
+      else if( p->f[id] == PROFILE_CUSTOM_IMG )
+        {
+          mkp->width[0]=mkp->customimg->dsize[1]; /* 'width' is in */
+          mkp->width[1]=mkp->customimg->dsize[0]; /* FITS order not C. */
+        }
       else
         switch(ndim)
           {
@@ -765,7 +771,7 @@ mkprof(struct mkprofparams *p)
      thread. Note that we only want nt-1 threads to do the
      building. */
   errno=0;
-  mkp=malloc(nt*sizeof *mkp);
+  mkp=calloc(nt, sizeof *mkp);
   if(mkp==NULL)
     error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for 'mkp'",
           __func__, (nt-1)*sizeof *mkp);
