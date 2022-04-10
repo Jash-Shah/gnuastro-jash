@@ -20419,6 +20419,42 @@ The same applies for a stacked image of the field compared to a single-exposure 
 This concept is used by some researchers to define the ``magnitude limit'' or ``detection limit'' at a certain S/N (sometimes 10, 5 or 3 for example, also written as @mymath{10\sigma}, @mymath{5\sigma} or @mymath{3\sigma}).
 To do this, they measure the magnitude and signal-to-noise ratio of all the objects within an image and measure the mean (or median) magnitude of objects at the desired S/N.
 
+For evaluating the Magnitude limit for an image it is required to have a good enough segment's output of the image.
+Then, the ``astmkcatalog'' will help to make a catalog of the segment's output (for clumps and objects extension) that will be written into two extensions (h1 for objects and h2 for clumps).
+Like the following command, you can make catalog with the required column for calculating of magnitude limit.
+We highly recommend you add ``ra'' and ``dec'' columns if you want to have a glance at the objects that have satisfied the magnitude limit unless you can ignore the ``ra'' and ``dec''.
+
+@example
+$ astmkcatalog --ra --dec --magnitude --sn seg-out.fits
+@end example
+
+Remember this issue if you don't mention the required hdu, the ``astmkcatalog'' consider the hdu/objects of segment's output as input for making a catalog and evaluating the magnitude limit.
+Finally, you can use ``asttable'' for selecting a required range of data based on the signal-to-noise column and calculating --median (or --mean) using the ``astarithmetic''.
+The first command below shows the distribution of objects' magnitude (for objects if we use -h1, for clumps if we use -h2) at a determined S/N (in this example @mymath{5\sigma} or S/N=5).
+The second command shows the magnitude limit obtained using the median of the histogram.
+
+@example
+$ asttable catalog.fits -h1 --range=sn,4.8:5.2 --column=magnitude\
+           | astarithmetic 
+@end example
+
+@example
+$ asttable catalog.fits -h1 --range=sn,4.8:5.2 --column=magnitude\
+           | astarithmetic --median
+@end example
+
+The last command that can help you to have a clear view of the magnitude limit is shown here.
+In here, you need to select a narrow range around the obtained magnitude limit, for example in the command below we consider the magnitude limit is obtained 26.
+If you are using -h2 please attention to the true number of columns, in this case you should use -c2,3 --namecol=4.
+It is very easy to take advantage of ``astscript-ds9-region'' for showing the magnitude of this result on the image.
+
+@example
+$ asttable catalog.fits -h1 --range=sn,4.8:5.2 --range=magnitude,25.9:26.1\
+           | astscript-ds9-region -c1,2 --namecol=3 \
+           --command="ds9 seg-out.fits" --width=2 \
+           --radius=1 --color=black
+@end example
+
 However, this method should be used with extreme care!
 This is because the shape of the object becomes important in this method: a sharper object will have a higher @emph{measured} S/N compared to a more diffuse object at the same original magnitude.
 Besides the inherent shape/sharpness of the object, issues like the PSF also become important in this method (because the finally observed shapes of objects are important here): two surveys with the same surface brightness limit (see @ref{Surface brightness limit of image}) will have different magnitude limits if one is taken from space and the other from the ground.
