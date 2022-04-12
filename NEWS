@@ -48,6 +48,9 @@ See the end of the file for license conditions.
   bug #62253: Arithmetic: segmentation fault when invalid input given for
               'ra-to-degree' or 'deg-to-degree' operators. Found by Pedram
               Ashofte Ardakani.
+  bug #62305: Not reading the 'MemFree' keyword in '/proc/meminfo' to find
+              the available RAM (and thus printing an annoying
+              warning). Reported by Juan Miro.
 
 
 

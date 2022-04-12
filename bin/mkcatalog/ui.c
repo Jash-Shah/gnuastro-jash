@@ -836,6 +836,7 @@ ui_read_labels(struct mkcatalogparams *p)
           "currently only supports 2D or 3D datasets", p->objectsfile,
           p->cp.hdu, p->objects->ndim);
 
+
   /* Make sure the '--spectrum' option is not given on a 2D image.  */
   if(p->spectrum && p->objects->ndim!=3)
     error(EXIT_FAILURE, 0, "%s (hdu %s) has %zu dimensions, but '--spectrum' "

@@ -86,6 +86,90 @@ gal_checkset_gsl_rng(uint8_t envseed_bool, const char **name,
 
 
 
+static size_t
+checkset_meminfo_line(char *line, char *keyname, size_t keylen,
+                      char *file)
+{
+  size_t *freemem=NULL, out=GAL_BLANK_SIZE_T;
+  char *linecp, *token, *units="kB", delimiters[] = " ", *saveptr;
+
+  if( !strncmp(line, keyname, keylen) )
+    {
+      /* We need to work on a copied line to avoid messing up the
+         contents of the actual line. */
+      gal_checkset_allocate_copy(line, &linecp);
+
+      /* The first token (which we don't need). */
+      token=strtok_r(linecp, delimiters, &saveptr);
+
+      /* The second token (which is the actual number we want). */
+      token=strtok_r(NULL, delimiters, &saveptr);
+      if(token)
+        {
+          /* Read the token as a number. */
+          if( gal_type_from_string((void **)(&freemem), token,
+                                   GAL_TYPE_SIZE_T) )
+            error(EXIT_SUCCESS, 0, "WARNING: %s: value of '%s' "
+                  "keyword couldn't be read as an integer. Hence "
+                  "the amount of available RAM couldn't be "
+                  "determined. If a large volume of data is "
+                  "provided, the program may crash. Please contact "
+                  "us at '%s' to fix the problem",
+                  file, keyname, PACKAGE_BUGREPORT);
+          else
+            {
+              /* The third token should be the units ('kB'). If it
+                 isn't, there should be an error because we currently
+                 assume kilobytes. */
+              token=strtok_r(NULL, delimiters, &saveptr);
+              if(token)
+                {
+                  /* The units should be 'kB' (for kilobytes). */
+                  if( !strncmp(token, units, 2) )
+                    out=freemem[0]*1000;
+                  else
+                    error(EXIT_SUCCESS, 0, "WARNING: %s: the units of "
+                          "the value of '%s' keyword is (usually 'kB') "
+                          "isn't recognized. Hence the amount of "
+                          "available RAM couldn't be determined. If a "
+                          "large volume of data is provided, the "
+                          "program may crash. Please contact us at "
+                          "'%s' to fix the problem", file, keyname,
+                          PACKAGE_BUGREPORT);
+                }
+              else
+                error(EXIT_SUCCESS, 0, "WARNING: %s: the units of the "
+                      "value of '%s' keyword (usually 'kB') couldn't "
+                      "be read as an integer. Hence the amount of "
+                      "available RAM couldn't be determined. If a "
+                      "large volume of data is provided, the program "
+                      "may crash. Please contact us at '%s' to fix "
+                      "the problem", file, keyname, PACKAGE_BUGREPORT);
+            }
+
+          /* Clean up. */
+          if(freemem) free(freemem);
+        }
+      else
+        error(EXIT_SUCCESS, 0, "WARNING: %s: line with the '%s' "
+              "keyword didn't have a value. Hence the amount of "
+              "available RAM couldn't be determined. If a large "
+              "volume of data is provided, the program may crash. "
+              "Please contact us at '%s' to fix the problem",
+              file, keyname, PACKAGE_BUGREPORT);
+
+      /* Clean up. */
+      free(linecp);
+    }
+
+  /* Return the value. */
+  return out;
+}
+
+
+
+
+
 /* On the Linux kernel, due to "overcommitting" (which is activated by
    default), malloc will not return NULL when we allocate more memory than
    the physically available memory. It is possible to disable overcommiting
@@ -103,11 +187,10 @@ size_t
 gal_checkset_ram_available(int quietmmap)
 {
   FILE *file;
-  int keyfound=0;
-  size_t *freemem=NULL;
+  char *meminfo="/proc/meminfo", *line;
   size_t linelen=80, out=GAL_BLANK_SIZE_T;
-  char *token, *line, *linecp, *saveptr, delimiters[] = " ";
-  char *meminfo="/proc/meminfo", *keyname="MemAvailable", *units="kB";
+  char *key2="MemFree", *key1="MemAvailable";
+  size_t key1len=strlen(key1), key2len=strlen(key2);
 
   /* If /proc/meminfo exists, read it. Otherwise, don't bother doing
      anything. */
@@ -121,88 +204,24 @@ gal_checkset_ram_available(int quietmmap)
               __func__, linelen*sizeof *line);
 
       /* Read it line-by-line until you find 'MemAvailable'.  */
-      while( getline(&line, &linelen, file) != -1 )
-        if( !strncmp(line, keyname, 12) )
-          {
-            /* Necessary for final check: */
-            keyfound=1;
-
-            /* We need to work on a copied line to avoid messing up the
-               contents of the actual line. */
-            gal_checkset_allocate_copy(line, &linecp);
-
-            /* The first token (which we don't need). */
-            token=strtok_r(linecp, delimiters, &saveptr);
-
-            /* The second token (which is the actual number we want). */
-            token=strtok_r(NULL, delimiters, &saveptr);
-            if(token)
-              {
-                /* Read the token as a number. */
-                if( gal_type_from_string((void **)(&freemem), token,
-                                         GAL_TYPE_SIZE_T) )
-                  error(EXIT_SUCCESS, 0, "WARNING: %s: value of '%s' "
-                        "keyword couldn't be read as an integer. Hence "
-                        "the amount of available RAM couldn't be "
-                        "determined. If a large volume of data is "
-                        "provided, the program may crash. Please contact "
-                        "us at '%s' to fix the problem",
-                        meminfo, keyname, PACKAGE_BUGREPORT);
-                else
-                  {
-                    /* The third token should be the units ('kB'). If it
-                       isn't, there should be an error because we currently
-                       assume kilobytes. */
-                    token=strtok_r(NULL, delimiters, &saveptr);
-                    if(token)
-                      {
-                        /* The units should be 'kB' (for kilobytes). */
-                        if( !strncmp(token, units, 2) )
-                          out=freemem[0]*1000;
-                        else
-                          error(EXIT_SUCCESS, 0, "WARNING: %s: the units of "
-                                "the value of '%s' keyword is (usually 'kB') "
-                                "isn't recognized. Hence the amount of "
-                                "available RAM couldn't be determined. If a "
-                                "large volume of data is provided, the "
-                                "program may crash. Please contact us at "
-                                "'%s' to fix the problem", meminfo, keyname,
-                                PACKAGE_BUGREPORT);
-                      }
-                    else
-                      error(EXIT_SUCCESS, 0, "WARNING: %s: the units of the "
-                            "value of '%s' keyword (usually 'kB') couldn't "
-                            "be read as an integer. Hence the amount of "
-                            "available RAM couldn't be determined. If a "
-                            "large volume of data is provided, the program "
-                            "may crash. Please contact us at '%s' to fix "
-                            "the problem", meminfo, keyname, PACKAGE_BUGREPORT);
-                  }
-
-                /* Clean up. */
-                if(freemem) free(freemem);
-              }
-            else
-              error(EXIT_SUCCESS, 0, "WARNING: %s: line with the '%s' "
-                    "keyword didn't have a value. Hence the amount of "
-                    "available RAM couldn't be determined. If a large "
-                    "volume of data is provided, the program may crash. "
-                    "Please contact us at '%s' to fix the problem",
-                    meminfo, keyname, PACKAGE_BUGREPORT);
-
-            /* Clean up. */
-            free(linecp);
-          }
+      while( getline(&line, &linelen, file) != -1
+             && out == GAL_BLANK_SIZE_T )
+        {
+          out=checkset_meminfo_line(line, key1, key1len, meminfo);
+          if( out == GAL_BLANK_SIZE_T )
+            out=checkset_meminfo_line(line, key2, key2len, meminfo);
+        }
 
       /* The file existed but a keyname couldn't be found. In this case we
          should inform the user to be aware that we can't automatically
          determine the available memory. */
-      if(keyfound==0 && quietmmap==0)
-        error(EXIT_SUCCESS, 0, "WARNING: %s: didn't contain a '%s' keyword "
-              "hence the amount of available RAM couldn't be determined. "
-              "If a large volume of data is provided, the program may "
-              "crash. Please contact us at '%s' to fix the problem",
-              meminfo, keyname, PACKAGE_BUGREPORT);
+      if(out==GAL_BLANK_SIZE_T && quietmmap==0)
+        error(EXIT_SUCCESS, 0, "WARNING: %s: didn't contain a '%s' "
+              "or '%s' keywords hence the amount of available RAM "
+              "couldn't be determined. If a large volume of data is "
+              "provided, the program may crash. Please contact us at "
+              "'%s' to fix the problem", meminfo, key1, key2,
+              PACKAGE_BUGREPORT);
 
       /* Close the opened file and free the line. */
       free(line);
