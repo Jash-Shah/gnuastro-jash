@@ -2582,7 +2582,7 @@ $ k=$(astcosmiccal -sz2 | awk '@{print ($1*60)^2@}')
 $ n=$(aststatistics flat-ir/xdf-f160w.fits --number)
 $ r=$(astfits flat-ir/xdf-f160w.fits -h1 | grep CDELT1   \
               | awk '@{print $3@}')
-$ a=$(echo $n $r | awk '@{print $1 * ($2^2) * 3600@}')
+$ a=$(echo $n $r | awk '@{print $1 * ($2*60)^2 @}')
 
 ## Multiply `k' and `a' and divide by 10^6 for value in Mpc^2.
 $ echo $k $a | awk '@{print $1 * $2 / 1e6@}'
