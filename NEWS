@@ -51,6 +51,9 @@ See the end of the file for license conditions.
   bug #62305: Not reading the 'MemFree' keyword in '/proc/meminfo' to find
               the available RAM (and thus printing an annoying
               warning). Reported by Juan Miro.
+  bug #62309: MakeCatalog segmentation fault when clumps image given as
+              main input (objects should be given). Reported by Sepideh
+              Eskandarlou.
 
 
 

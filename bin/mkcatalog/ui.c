@@ -686,23 +686,42 @@ ui_one_tile_per_object_correct_numobjects(struct mkcatalogparams *p)
   start=p->objects->array;
   lf=(l=p->objects->array)+p->objects->size;
   do
-    if(*l>0)
-      {
-        /* Get the coordinates of this pixel. */
-        gal_dimension_index_to_coord(l-start, ndim, p->objects->dsize,
-                                     coord);
+    {
+      /* Small sanity check: the objects image shouldn't have negative
+         values (can happen when the user gives a clump image). */
+      if(*l!=GAL_BLANK_INT32 && *l<0)
+        error(EXIT_FAILURE, 0, "the main labeled image ('OBJECTS' HDU "
+              "when using Segment), shouldn't contain negative values. "
+              "This can happen when you mistakenly give Segment's "
+              "clumps as the main input labeled image. If you want to "
+              "treat clumps as objects, please use 'astarithmetic' to "
+              "convert all negative pixels to 0 before calling "
+              "MakeCatalog. For example this command: "
+              "'astarithmetic file.fits -hCLUMPS set-i i i 0 lt "
+              "0 where'. For this scenario, a better solution is to "
+              "only keep the clumps and give them each a separate "
+              "label with a command like this: 'astarithmetic file.fits "
+              "-hCLUMPS set-i i i 0 gt 2 connected-components'");
 
-        /* Check to see this coordinate is the smallest/largest found so
-           far for this label. Note that labels start from 1, while indexs
-           here start from zero. */
-        min = &minmax[ (*l-1) * width        ];
-        max = &minmax[ (*l-1) * width + ndim ];
-        for(d=0;d<ndim;++d)
-          {
-            if( coord[d] < min[d] ) min[d] = coord[d];
-            if( coord[d] > max[d] ) max[d] = coord[d];
-          }
-      }
+      /* We are on an object. */
+      if(*l>0)
+        {
+          /* Get the coordinates of this pixel. */
+          gal_dimension_index_to_coord(l-start, ndim, p->objects->dsize,
+                                       coord);
+
+          /* Check to see this coordinate is the smallest/largest found so
+             far for this label. Note that labels start from 1, while indexs
+             here start from zero. */
+          min = &minmax[ (*l-1) * width        ];
+          max = &minmax[ (*l-1) * width + ndim ];
+          for(d=0;d<ndim;++d)
+            {
+              if( coord[d] < min[d] ) min[d] = coord[d];
+              if( coord[d] > max[d] ) max[d] = coord[d];
+            }
+        }
+    }
   while(++l<lf);
 
   /* If a label doesn't exist in the image, then write over it and define
