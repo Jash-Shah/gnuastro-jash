@@ -7463,7 +7463,7 @@ To see exactly what has been changed in the source code along with the commit me
 If you want to make changes in the code, have a look at @ref{Developing} to get started easily.
 Be sure to commit your changes in a separate branch (keep your @code{master} branch to follow the official repository) and re-run @command{autoreconf -f} after the commit.
 If you intend to send your work to us, you can safely use your commit since it will be ultimately recorded in Gnuastro's official history.
-If not, please upload your separate branch to a public hosting service, for example @url{https://gitlab.com, GitLab}, and link to it in your report/paper.
+If not, please upload your separate branch to a public hosting service, for example @url{https://codeberg.org, Codeberg}, and link to it in your report/paper.
 Alternatively, run @command{make distcheck} and upload the output @file{gnuastro-X.X.X.XXXX.tar.gz} to a publicly accessible web page so your results can be considered scientific (reproducible) later.
 
 
@@ -9730,8 +9730,11 @@ It is the most common infra-structure to build software today.
 Scientific research methodology is very similar to software development: you start by testing a hypothesis on a small sample of objects/targets with a simple set of steps.
 As you are able to get promising results, you improve the method and use it on a larger, more general, sample.
 In the process, you will confront many issues that have to be corrected (bugs in software development jargon).
-Make a wonderful tool to manage this style of development.
-It has been used to make reproducible papers, for example see @url{https://gitlab.com/makhlaghi/NoiseChisel-paper, the reproduction pipeline} of the paper introducing @ref{NoiseChisel} (one of Gnuastro's programs).
+Make is a wonderful tool to manage this style of development.
+
+Besides the raw data analysis pipeline, Make has been used to for producing reproducible papers, for example see @url{https://gitlab.com/makhlaghi/NoiseChisel-paper, the reproduction pipeline} of the paper introducing @ref{NoiseChisel} (one of Gnuastro's programs).
+In fact the NoiseChisel paper's Make-based workflow was the foundation of a parallel project called @url{http://maneage.org,Maneage} (@emph{Man}aging data lin@emph{eage}): @url{http://maneage.org} that is described more fully in Akhlaghi et al. @url{https://arxiv.org/abs/2006.03018, 2021}.
+Therefore, it is a very useful tool for complex scientific workflows.
 
 @cindex GNU Make
 GNU Make@footnote{@url{https://www.gnu.org/software/make/}} is the most common implementation which (similar to nearly all GNU programs, comes with a wonderful manual@footnote{@url{https://www.gnu.org/software/make/manual/}}).
@@ -36038,57 +36041,36 @@ not technical details.
 @node Production workflow, Forking tutorial, Commit guidelines, Contributing to Gnuastro
 @subsection Production workflow
 
-Fortunately `Pro Git' has done a wonderful job in explaining the different
-workflows in Chapter
-5@footnote{@url{http://git-scm.com/book/en/v2/Distributed-Git-Distributed-Workflows}}
-and in particular the ``Integration-Manager Workflow'' explained there. The
-implementation of this workflow is nicely explained in Section
-5.2@footnote{@url{http://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project}}
-under ``Forked-Public-Project''. We have also prepared a short tutorial in
-@ref{Forking tutorial}. Anything on the master branch should always be
-tested and ready to be built and used. As described in `Pro Git', there are
-two methods for you to contribute to Gnuastro in the Integration-Manager
-Workflow:
+Fortunately `Pro Git' has done a wonderful job in explaining the different workflows in Chapter 5@footnote{@url{http://git-scm.com/book/en/v2/Distributed-Git-Distributed-Workflows}} and in particular the ``Integration-Manager Workflow'' explained there.
+The implementation of this workflow is nicely explained in Section 5.2@footnote{@url{http://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project}} under ``Forked-Public-Project''.
+We have also prepared a short tutorial in @ref{Forking tutorial}.
+Anything on the master branch should always be tested and ready to be built and used.
+As described in `Pro Git', there are two methods for you to contribute to Gnuastro in the Integration-Manager Workflow:
 
 @enumerate
 
 @item
-You can send commit patches by email as fully explained in `Pro Git'. This
-is good for your first few contributions. Just note that raw patches
-(containing only the diff) do not have any meta-data (author name, date,
-etc). Therefore they will not allow us to fully acknowledge your contributions
-as an author in Gnuastro: in the @file{AUTHORS} file and at the start of
-the PDF book. These author lists are created automatically from the version
-controlled source.
+You can send commit patches by email as fully explained in `Pro Git'.
+This is good for your first few contributions.
+Just note that raw patches (containing only the diff) do not have any meta-data (author name, date, etc).
+Therefore they will not allow us to fully acknowledge your contributions as an author in Gnuastro: in the @file{AUTHORS} file and at the start of the PDF book.
+These author lists are created automatically from the version controlled source.
 
-To receive full acknowledgment when submitting a patch, is thus advised to
-use Git's @code{format-patch} tool. See Pro Git's
-@url{https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#Public-Project-over-Email,
-Public project over email} section for a nice explanation. If you would
-like to get more heavily involved in Gnuastro's development, then you can
-try the next solution.
+To receive full acknowledgment when submitting a patch, is thus advised to use Git's @code{format-patch} tool.
+See Pro Git's @url{https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#Public-Project-over-Email, Public project over email} section for a nice explanation.
+If you would like to get more heavily involved in Gnuastro's development, then you can try the next solution.
 
 @item
-You can have your own forked copy of Gnuastro on any hosting site you like
-(GitHub, GitLab, BitBucket, etc) and inform us when your changes are
-ready so we merge them in Gnuastro. This is more suited for people who
-commonly contribute to the code (see @ref{Forking tutorial}).
+You can have your own forked copy of Gnuastro on any hosting site you like (Codeberg, Gitlab, GitHub, BitBucket, etc) and inform us when your changes are ready so we merge them in Gnuastro.
+This is more suited for people who commonly contribute to the code (see @ref{Forking tutorial}).
 
 @end enumerate
 
-In both cases, your commits (with your name and information) will be
-preserved and your contributions will thus be fully recorded in the history
-of Gnuastro and in the @file{AUTHORS} file and this book (second page in
-the PDF format) once they have been incorporated into the official
-repository. Needless to say that in such cases, be sure to follow the bug
-or task trackers (or subscribe to the @command{gnuastro-devel} mailing
-list) and contact us before hand so you don't do something that someone
-else is already working on. In that case, you can get in touch with them
-and help the job go on faster, see @ref{Gnuastro project webpage}. This
-workflow is currently mostly borrowed from the general recommendations of
-Git@footnote{@url{https://github.com/git/git/blob/master/Documentation/SubmittingPatches}}
-and GitHub. But since Gnuastro is currently under heavy development, these
-might change and evolve to better suit our needs.
+In both cases, your commits (with your name and information) will be preserved and your contributions will thus be fully recorded in the history of Gnuastro and in the @file{AUTHORS} file and this book (second page in the PDF format) once they have been incorporated into the official repository.
+Needless to say that in such cases, be sure to follow the bug or task trackers (or subscribe to the @command{gnuastro-devel} mailing list) and contact us before hand so you don't do something that someone else is already working on.
+In that case, you can get in touch with them and help the job go on faster, see @ref{Gnuastro project webpage}.
+This workflow is currently mostly borrowed from the general recommendations of Git@footnote{@url{https://github.com/git/git/blob/master/Documentation/SubmittingPatches}} and GitHub.
+But since Gnuastro is currently under heavy development, these might change and evolve to better suit our needs.
 
 
 
@@ -36097,57 +36079,33 @@ might change and evolve to better suit our needs.
 @node Forking tutorial,  , Production workflow, Contributing to Gnuastro
 @subsection Forking tutorial
 
-This is a tutorial on the second suggested method (commonly known as
-forking) that you can submit your modifications in Gnuastro (see
-@ref{Production workflow}).
+This is a tutorial on the second suggested method (commonly known as forking) that you can submit your modifications in Gnuastro (see @ref{Production workflow}).
 
-To start, please create an empty repository on your hosting service web page
-(we recommend GitLab@footnote{See
-@url{https://www.gnu.org/software/repo-criteria-evaluation.html} for an
-evaluation of the major existing repositories. Gnuastro uses GNU Savannah
-(which also has the highest ranking in the evaluation), but for starters,
-GitLab may be easier.}). If this is your first hosted repository on the
-web page, you also have to upload your public SSH key@footnote{For example
-see this explanation provided by GitLab:
-@url{http://docs.gitlab.com/ce/ssh/README.html}.} for the @command{git
-push} command below to work. Here we'll assume you use the name
-@file{janedoe} to refer to yourself everywhere and that you choose
-@file{gnuastro-janedoe} as the name of your Gnuastro fork. Any online
-hosting service will give you an address (similar to the
-`@file{git@@gitlab.com:...}' below) of the empty repository you have created
-using their web page, use that address in the third line below.
+To start, please create an empty repository on your hosting service web page (we recommend Codeberg since it is fully free software@footnote{See @url{https://www.gnu.org/software/repo-criteria-evaluation.html} for an evaluation of the major existing repositories.
+Gnuastro uses GNU Savannah (which also has the highest ranking in the evaluation), but for starters, Codeberg may be easier (it is fully free software).}).
+If this is your first hosted repository on the web page, you also have to upload your public SSH key@footnote{For example see this explanation provided by Codeberg: @url{https://docs.codeberg.org/security/ssh-key}.} for the @command{git push} command below to work.
+Here we'll assume you use the name @file{janedoe} to refer to yourself everywhere and that you choose @file{gnuastro} as the name of your Gnuastro fork.
+Any online hosting service will give you an address (similar to the `@file{git@@codeberg.org:...}' below) of the empty repository you have created using their web page, use that address in the third line below.
 
 @example
 $ git clone git://git.sv.gnu.org/gnuastro.git
 $ cd gnuastro
-$ git remote add janedoe git@@gitlab.com:janedoe/gnuastro-janedoe.git
+$ git remote add janedoe git@@codeberg.org:janedoe/gnuastro.git
 $ git push janedoe master
 @end example
 
-The full Gnuastro history is now pushed onto your hosting service and the
-@file{janedoe} remote is now also following your @file{master} branch. If
-you run @command{git remote show REMOTENAME} for the @file{origin} and
-@file{janedoe} remotes, you will see their difference: the first has pull
-access and the second doesn't. This nicely summarizes the main idea behind
-this workflow: you push to your remote repository, we pull from it and
-merge it into @file{master}, then you finalize it by pulling from the main
-repository.
+The full Gnuastro history is now pushed onto your hosting service and the @file{janedoe} remote is now also following your @file{master} branch.
+If you run @command{git remote show REMOTENAME} for the @file{origin} and @file{janedoe} remotes, you will see their difference: the first has pull access and the second doesn't.
+This nicely summarizes the main idea behind this workflow: you push to your remote repository, we pull from it and merge it into @file{master}, then you finalize it by pulling from the main repository.
 
-To test (compile) your changes during your work, you will need to bootstrap
-the version controlled source, see @ref{Bootstrapping} for a full
-description. The cloning process above is only necessary for your first
-time setup, you don't need to repeat it. However, please repeat the steps
-below for each independent issue you intend to work on.
+To test (compile) your changes during your work, you will need to bootstrap the version controlled source, see @ref{Bootstrapping} for a full description.
+The cloning process above is only necessary for your first time setup, you don't need to repeat it.
+However, please repeat the steps below for each independent issue you intend to work on.
 
-Let's assume you have found a bug in @file{lib/statistics.c}'s median
-calculating function. Before actually doing anything, please announce it
-(see @ref{Report a bug}) so everyone knows you are working on it or to find
-out others aren't already working on it. With the commands below, you make
-a branch, checkout to it, correct the bug, check if it is indeed fixed, add
-it to the staging area, commit it to the new branch and push it to your
-hosting service. But before all of them, make sure that you are on the
-@file{master} branch and that your @file{master} branch is up to date with
-the main Gnuastro repository with the first two commands.
+Let's assume you have found a bug in @file{lib/statistics.c}'s median  calculating function.
+Before actually doing anything, please announce it (see @ref{Report a bug}) so everyone knows you are working on it or to find out others aren't already working on it.
+With the commands below, you make a branch, checkout to it, correct the bug, check if it is indeed fixed, add it to the staging area, commit it to the new branch and push it to your hosting service.
+But before all of them, make sure that you are on the @file{master} branch and that your @file{master} branch is up to date with the main Gnuastro repository with the first two commands.
 
 @example
 $ git checkout master
@@ -36160,16 +36118,12 @@ $ git commit
 $ git push janedoe bug-median-stats
 @end example
 
-Your new branch is now on your hosted repository. Through the respective
-tacker on Savannah (see @ref{Gnuastro project webpage}) you can then let
-the other developers know that your @file{bug-median-stats} branch is
-ready. They will pull your work, test it themselves and if it is ready to
-be merged into the main Gnuastro history, they will merge it into the
-@file{master} branch. After that is done, you can simply checkout your
-local @file{master} branch and pull all the changes from the main
-repository. After the pull you can run `@command{git log}' as shown below,
-to see how @file{bug-median-stats} is merged with master. To finalize, you
-can push all the changes to your hosted repository and delete the branch:
+Your new branch is now on your hosted repository.
+Through the respective tacker on Savannah (see @ref{Gnuastro project webpage}) you can then let the other developers know that your @file{bug-median-stats} branch is ready.
+They will pull your work, test it themselves and if it is ready to be merged into the main Gnuastro history, they will merge it into the @file{master} branch.
+After that is done, you can simply checkout your local @file{master} branch and pull all the changes from the main repository.
+After the pull you can run `@command{git log}' as shown below, to see how @file{bug-median-stats} is merged with master.
+To finalize, you can push all the changes to your hosted repository and delete the branch:
 
 @example
 $ git checkout master
@@ -36180,14 +36134,10 @@ $ git branch -d bug-median-stats                # delete local branch
 $ git push janedoe --delete bug-median-stats    # delete remote branch
 @end example
 
-Just as a reminder, always keep your work on each issue in a separate local
-and remote branch so work can progress on them independently. After you
-make your announcement, other people might contribute to the branch before
-merging it in to @file{master}, so this is very important. As a final
-reminder: before starting each issue branch from @file{master}, be sure to
-run @command{git pull} in @file{master} as shown above. This will enable
-you to start your branch (work) from the most recent commit and thus
-simplify the final merging of your work.
+Just as a reminder, always keep your work on each issue in a separate local and remote branch so work can progress on them independently.
+After you make your announcement, other people might contribute to the branch before merging it in to @file{master}, so this is very important.
+As a final reminder: before starting each issue branch from @file{master}, be sure to run @command{git pull} in @file{master} as shown above.
+This will enable you to start your branch (work) from the most recent commit and thus simplify the final merging of your work.
 
 
 
