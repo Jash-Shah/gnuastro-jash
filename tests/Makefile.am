@@ -218,9 +218,9 @@ SCRIPT_TESTS = script/psf-unite.sh \
 # We want to have several FITS files as input for this script.
 script/psf-unite.sh: mkprof/mosaic2.sh.log
 script/psf-stamp.sh: mkprof/mosaic2.sh.log
-script/psf-subtract.sh: mkprof/mosaic2.sh.log
+script/psf-subtract.sh: mkprof/mosaic1.sh.log
 script/radial-profile.sh: mkprof/mosaic2.sh.log
-script/psf-scale-factor.sh: mkprof/mosaic2.sh.log
+script/psf-scale-factor.sh: mkprof/mosaic1.sh.log
 script/psf-select-stars.sh: segment/segment.sh.log
 script/sort-by-night.sh: mkcatalog/aperturephot.sh.log
 
