@@ -95,7 +95,7 @@ struct fitsparams
   int                 distortionid;  /* ID of desired distortion.       */
   int               updatechecksum;  /* If CHECKSUM should be update.   */
   long            copykeysrange[2];  /* Start and end of copy.          */
-  gal_list_str_t       *keystocopy;  /* Keyword strings list, to copy.  */
+  gal_data_t         *copykeysname;  /* Keyword names to copy.          */
   gal_fits_list_key_t  *write_keys;  /* Keys to write in the header.    */
   gal_fits_list_key_t *update_keys;  /* Keys to update in the header.   */
   time_t                   rawtime;  /* Starting time of the program.   */

@@ -372,66 +372,57 @@ keywords_verify(struct fitsparams *p, fitsfile **fptr)
 
 
 
-/* To copy keys to output file when --copykeys are given in STR,STR,STR
-    format. */
+/* To copy keys to output file when '--copykeys' is given in 'STR,STR,STR'
+   format. */
 static void
-keywords_copykeys_str(struct fitsparams *p)
+keywords_copykeys_name(struct fitsparams *p, fitsfile *fptr,
+                       char *inkeys, size_t numinkeys,
+                       int *updatechecksum)
 {
-  fitsfile *infptr, *outfptr;
-  gal_list_str_t *input, *tmp;
-  int status=0, updatechecksum=0, checksumexists=0;
-
-  /* Print Keys to Copy. */
-  if (!p->cp.quiet)
-    {
-        printf("Keys to Copy :\n");
-        gal_list_str_print(p->keystocopy);
-    }
-
-  /* Parse  input file, read the keywords and put them in the output
-      (keysll) list. */
-  input=p->input;
-
-  /* Open the input FITS file. */
-  infptr=gal_fits_hdu_open(input->v, p->cp.hdu, READONLY);
-
-  /* Open the output HDU. */
-  outfptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE);
-
-  /* See if a 'CHECKSUM' key exists in the HDU or not (to update in case
-     we wrote anything). */
-  checksumexists=gal_fits_key_exists_fptr(outfptr, "CHECKSUM");
+  size_t i, j;
+  int status=0, found;
+  char **strarr=p->copykeysname->array;
 
   /* Copy the requested headers into the output files header. */
-  for(tmp=p->keystocopy; tmp!=NULL; tmp=tmp->next)
+  for(i=0; i<p->copykeysname->size; ++i)
     {
-      char inkey[80];
-      char *keyname = tmp->v;
+      /* Find the requested key from the set of input keywords that were
+         read before. The FITS standard does specify that the keyword
+         should only have upper-case letters, but CFITSIO does accept small
+         case (and write upper-case), so we'll also ignore case when
+         comparing.*/
+      found=0;
+      for(j=0;j<numinkeys-1;++j) /* numkeys-1: it includes 'END'. */
+        {
+          /* First check the first few characters, if they don't match, see
+             if it stars with 'HIERARCH' (which is placed before long
+             keyword names). */
+          if( !strncasecmp(strarr[i], &inkeys[j*80], strlen(strarr[i])) )
+            found=1;
+          else
+            {
+              if( !strncasecmp("HIERARCH", &inkeys[j*80], 8)
+                  && !strncasecmp(strarr[i], &inkeys[j*80+9],
+                                  strlen(strarr[i])) )
+                found=1;
+            }
 
-      if(fits_read_card(infptr,keyname, inkey, &status))
-        gal_fits_io_error(status,NULL);
+          /* Write the keyword if it was found. */
+          if(found==1)
+            {
+              if(fits_write_record(fptr, &inkeys[j*80], &status))
+                gal_fits_io_error(status, NULL);
+              else { *updatechecksum=1; break; }
+            }
+          }
 
-      if( fits_write_record(outfptr, inkey, &status ) )
-        gal_fits_io_error(status, NULL);
-      else updatechecksum=1;
-
+      /* If the key wasn't found after a full parsing of the keywords,
+         print an error message. */
+      if(found==0)
+        error(EXIT_FAILURE, 0, "%s: no keyword with name '%s' found",
+              gal_fits_name_save_as_string(p->input->v, p->cp.hdu),
+              strarr[i]);
     }
-
-  /* Close the input FITS file. */
-  status=0;
-  if(fits_close_file(infptr, &status))
-    gal_fits_io_error(status, NULL);
-
-  /* If a checksum existed, and we made changes in the file, we should
-     update the checksum. */
-  if(checksumexists && updatechecksum)
-    if( fits_write_chksum(outfptr, &status) )
-      gal_fits_io_error(status, NULL);
-
-  /* Close the output FITS file. */
-  status=0;
-  if(fits_close_file(outfptr, &status))
-    gal_fits_io_error(status, NULL);
 }
 
 
@@ -441,71 +432,55 @@ keywords_copykeys_str(struct fitsparams *p)
 /* To copy keys to output file when --copykeys are given in INT:INT
     format. */
 static void
-keywords_copykeys_range(struct fitsparams *p,char *inkeys,
-                                            size_t numinkeys)
+keywords_copykeys_range(struct fitsparams *p, fitsfile *fptr,
+                        char *inkeys, size_t numinkeys,
+                        int *updatechecksum)
 {
-  fitsfile *fptr;
   size_t i;
   long initial;
-  int status=0, updatechecksum=0, checksumexists=0;
+  int status=0;
+
   /* Initial sanity check. Since 'numinkeys' includes 'END' (counting from
-          1, as we do here), the first keyword must not be larger OR EQUAL to
-          'numinkeys'. */
-      if(p->copykeysrange[0]>=numinkeys)
-        error(EXIT_FAILURE, 0, "%s (hdu %s): first keyword number give "
-              "to '--copykeys' (%ld) is larger than the number of "
-              "keywords in this header (%zu, including the 'END' "
-              "keyword)", p->input->v, p->cp.hdu, p->copykeysrange[0],
-              numinkeys);
+     1, as we do here), the first keyword must not be larger OR EQUAL to
+     'numinkeys'. */
+  if(p->copykeysrange[0]>=numinkeys)
+    error(EXIT_FAILURE, 0, "%s (hdu %s): first keyword number give "
+          "to '--copykeys' (%ld) is larger than the number of "
+          "keywords in this header (%zu, including the 'END' "
+          "keyword)", p->input->v, p->cp.hdu, p->copykeysrange[0],
+          numinkeys);
 
-      /* If the user wanted to count from the end (by giving a negative value),
-        then do that. */
-      if(p->copykeysrange[1]<0)
-        {
-          /* Set the last keyword requested. */
-          initial=p->copykeysrange[1];
-          p->copykeysrange[1] += numinkeys;
+  /* If the user wanted to count from the end (by giving a negative value),
+     then do that. */
+  if(p->copykeysrange[1]<0)
+    {
+      /* Set the last keyword requested. */
+      initial=p->copykeysrange[1];
+      p->copykeysrange[1] += numinkeys;
 
-          /* Sanity check. */
-          if(p->copykeysrange[0]>=p->copykeysrange[1])
-            error(EXIT_FAILURE, 0, "%s (hdu %s): the last keyword given to "
-                  "'--copykeys' (%ld, or %ld after counting from the bottom) "
-                  "is earlier than the first (%ld)", p->input->v, p->cp.hdu,
-                  initial, p->copykeysrange[1], p->copykeysrange[0]);
-        }
+      /* Sanity check. */
+      if(p->copykeysrange[0]>=p->copykeysrange[1])
+        error(EXIT_FAILURE, 0, "%s (hdu %s): the last keyword given to "
+              "'--copykeys' (%ld, or %ld after counting from the bottom) "
+              "is earlier than the first (%ld)", p->input->v, p->cp.hdu,
+              initial, p->copykeysrange[1], p->copykeysrange[0]);
+    }
 
-      /* Final sanity check (on range limit). */
-      if(p->copykeysrange[1]>=numinkeys)
-        error(EXIT_FAILURE, 0, "%s (hdu %s): second keyword number give to "
-              "'--copykeys' (%ld) is larger than the number of keywords in "
-              "this header (%zu, including the 'END' keyword)", p->input->v,
-              p->cp.hdu, p->copykeysrange[1], numinkeys);
+  /* Final sanity check (on range limit). */
+  if(p->copykeysrange[1]>=numinkeys)
+    error(EXIT_FAILURE, 0, "%s (hdu %s): second keyword number give to "
+          "'--copykeys' (%ld) is larger than the number of keywords in "
+          "this header (%zu, including the 'END' keyword)", p->input->v,
+          p->cp.hdu, p->copykeysrange[1], numinkeys);
 
-      /* Open the output HDU. */
-      fptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE);
 
-      /* See if a 'CHECKSUM' key exists in the HDU or not (to update in case we
-        wrote anything). */
-      checksumexists=gal_fits_key_exists_fptr(fptr, "CHECKSUM");
-
-      /* Copy the requested headers into the output. */
-      for(i=p->copykeysrange[0]-1; i<=p->copykeysrange[1]-1; ++i)
-        {
-          if( fits_write_record(fptr, &inkeys[i*80], &status ) )
-            gal_fits_io_error(status, NULL);
-          else updatechecksum=1;
-        }
-
-      /* If a checksum existed, and we made changes in the file, we should
-        update the checksum. */
-      if(checksumexists && updatechecksum)
-        if( fits_write_chksum(fptr, &status) )
-          gal_fits_io_error(status, NULL);
-
-      /* Close the output FITS file. */
-      status=0;
-      if(fits_close_file(fptr, &status))
+  /* Copy the requested headers into the output. */
+  for(i=p->copykeysrange[0]-1; i<=p->copykeysrange[1]-1; ++i)
+    {
+      if( fits_write_record(fptr, &inkeys[i*80], &status ) )
         gal_fits_io_error(status, NULL);
+      else *updatechecksum=1;
+    }
 }
 
 
@@ -515,19 +490,33 @@ keywords_copykeys_range(struct fitsparams *p,char *inkeys,
 static void
 keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
 {
-  /* File pointer used for accessing input and output files*/
+  int status=0;
   fitsfile *fptr;
+  int updatechecksum=0, checksumexists=0;
+
+  /* Open the output HDU. */
+  fptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE);
+
+  /* See if a 'CHECKSUM' key exists in the HDU or not (to update in case we
+     wrote anything). */
+  checksumexists=gal_fits_key_exists_fptr(fptr, "CHECKSUM");
 
   /* Call different functions depending on whether a list or range of
       keywords is given. */
-  if (p->keystocopy)
-    {
-      keywords_copykeys_str(p);
-    }
+  if(p->copykeysname)
+    keywords_copykeys_name(p, fptr, inkeys, numinkeys, &updatechecksum);
   else
-    {
-        keywords_copykeys_range(p,inkeys,numinkeys);
-    }
+    keywords_copykeys_range(p, fptr, inkeys, numinkeys, &updatechecksum);
+
+  /* If a checksum existed, and we made changes in the file, we should
+     update the checksum. */
+  if(checksumexists && updatechecksum)
+    if( fits_write_chksum(fptr, &status) )
+      gal_fits_io_error(status, NULL);
+
+  /* Close the output FITS file. */
+  if(fits_close_file(fptr, &status))
+    gal_fits_io_error(status, NULL);
 }
 
 
@@ -1171,7 +1160,7 @@ keywords(struct fitsparams *p)
 
 
   /* If a list/range of keywords must be copied, get all the keywords as a
-      single string. */
+     single string. */
   if(p->copykeys)
     {
       keywords_open(p, &fptr, READONLY);

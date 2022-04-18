@@ -11189,11 +11189,13 @@ In the latter case (when the keyword values exist but can't be verified), the Fi
 By default this function will also print a short description of the @code{DATASUM} AND @code{CHECKSUM} keywords.
 You can suppress this extra information with @code{--quiet} option.
 
-@item --copykeys=INT:INT/STR,STR
-Copy the input's keyword records, which can be given as a range (inclusive) or a list of Keyword names as comma-separated strings to the output HDU (specified with the @option{--output} and @option{--outhdu}
-options, for the filename and HDU/extension respectively).
+@item --copykeys=INT:INT/STR,STR[,STR]
+Copy the desired set of the input's keyword records, to the to the output (specified with the @option{--output} and @option{--outhdu} for the filename and HDU/extension respectively).
+The keywords to copy can be given either as a range (in the format of @code{INT:INT}, inclusive) or a list of keyword names as comma-separated strings (@code{STR,STR}), the list can have any number of keyword names.
+More details and examples of the two forms are given below:
 
-If a range of Keywords is to be given :
+@table @asis
+@item Range
 The given string to this option must be two integers separated by a colon (@key{:}).
 The first integer must be positive (counting of the keyword records starts from 1).
 The second integer may be negative (zero is not acceptable) or an integer larger than the first.
@@ -11207,12 +11209,31 @@ To see the header keywords of the input with a number before them, you can pipe 
 $ astfits input.fits -h1 | cat -n
 @end example
 
-If a list of keywords is to be given:
-The given string to this option must be a comma separated list of Keywords.
+@item List of names
+The given string to this option must be a comma separated list of keyword names.
+For example, see the command below:
 
 @example
-$ astfits input.fits --copykeys=BITPIX,NAXIS -h0 --output=output.fits --outhdu=0
+$ astfits input.fits -h1 --copykeys=KEY1,KEY2 \
+          --output=output.fits --outhdu=1
 @end example
+
+Please consider the notes below when copying keywords with names:
+@itemize
+@item
+If the number of characters in the name is more than 8, CFITSIO will place a @code{HIERARCH} before it.
+In this case simply give the name and don't give the @code{HIERARCH} (which is a constant and not considered part of the keyword name).
+@item
+If your keyword name is composed only of digits, don't give it as the first name given to @option{--copykeys}.
+Otherwise, it will be confused with the range format above.
+You can safely give an only-digit keyword name as the second, or third requested keywords.
+@item
+If the keyword is repeated more than once in the header, currently only the first instance will be copied.
+In other words, even if you call @option{--copykeys} multiple times with the same keyword name, its first instance will be copied.
+If you need to copy multiple instances of the same keyword, please get in touch with us at @code{bug-gnuastro@@gnu.org}.
+@end itemize
+
+@end table
 
 @item --outhdu
 The HDU/extension to write the output keywords of @option{--copykeys}.

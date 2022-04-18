@@ -386,7 +386,7 @@ struct argp_option program_options[] =
       UI_KEY_COPYKEYS,
       "INT:INT/STR,STR",
       0,
-      "Range/List of keywords to copy to output HDU.",
+      "Range/Names of keywords to copy to output HDU.",
       UI_GROUP_KEYWORD,
       &p->copykeys,
       GAL_TYPE_STRING,

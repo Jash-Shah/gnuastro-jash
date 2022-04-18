@@ -7,6 +7,16 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Fits:
+   --copykeys: can now take any number of keyword names also. For example
+     '--copykeys=KEYNAME1,KEYNAME2,KEYNAME3'. Until now, it was only
+     possible to give this option a range of keyword positions (for example
+     '--copykeys=10:13' to copy the 10th to 13th keywords (inclusive). But
+     now, you can also select non-contiguous set of keywords to copy from
+     one HDU into another HDU (possibly in another file). This was
+     suggested by Juan Antonio Fernández Ontiveros and implemented with the
+     help of Jash Shah.
+
   MakeProfiles:
    - It is now possible to insert a custom image as a new (10th)
      'custom-img' profile. This is useful when you have no-noise FITS

@@ -234,106 +234,125 @@ ui_check_copykeys(struct fitsparams *p)
   /* Initialize the values. */
   p->copykeysrange[0]=p->copykeysrange[1]=GAL_BLANK_LONG;
 
-    /* Parse the string: 'forl': "first-or-last". */
-    while(*pt!='\0')
-      {
-        /* If any alphabet is found then, a list of string keywords
-            are considered. */
-        if (isalpha(*pt))
-          {
-            /* Parse the copykeys string and store name of each keyword
-                in keystocopy list. */
-            char *first = strtok(p->copykeys, ",");
-
-            while(first != NULL)
-              {
-                gal_list_str_add(&p->keystocopy, first, 0);
-                first = strtok(NULL,",");
-              }
-            break;
-          }
-        else if (*pt == ':')
-          {
-            forl='l';
-            ++pt;
-          }
-        else if (*pt == '.')
-          {
-              error(EXIT_FAILURE, 0, "the numbers in the argument to "
-                      "'--section' ('-s') have to be integers. You input "
-                      "includes a float number: %s", p->copykeys);
-          }
-        else if (*pt == ' ' || *pt == '\t')
-          {
-              ++pt;
-          }
-        /* Numerical characters signify the start of a number, so we don't
-              need to increment the pointer and can just break out. */
-        else if (isdigit(*pt))
-          {
-              /* Read the number: */
-              read=strtol(pt, &tailptr, 0);
-
-              /* Check the progress.
-              printf("\n\n------\n%c: %ld (%s)\n", *pt, read, tailptr);
-              */
-
-              /* Make sure if a number was read at all? */
-              if(tailptr==pt) continue;   /* No number was read!        */
-
-              /* Put it in the correct place. */
-              p->copykeysrange[ forl=='f' ? 0 : 1 ]=read;
-              pt=tailptr;
-          }
-        /* else if (*pt == ',')
+  /* Parse the string: 'forl': "first-or-last". */
+  while(*pt!='\0')
+    {
+      switch(*pt)
         {
-              ++group;
-              forl='f';
-              ++pt;
-         } */
-        else
-          {
-            error(EXIT_FAILURE, 0, "value to '--copykeys' must only "
-                      "contain integer numbers and these special "
-                      "characters between them: ':' when necessary. "
-                      "But it is '%s' (the first non-acceptable character"
-                       " is '%c').\n", p->copykeys, *pt);
-          }
+        case ':':
+          forl='l';
+          ++pt;
+          break;
+        case '.':
+          error(EXIT_FAILURE, 0, "the numbers in the argument to "
+                "'--section' ('-s') have to be integers. You input "
+                "includes a float number: %s", p->copykeys);
+          break;
+        case ' ': case '\t':
+          ++pt;
+          break;
+
+        /* Numerical characters signify the start of a number, so we don't
+           need to increment the pointer and can just break out. */
+        case '0': case '1': case '2': case '3': case '4': case '5':
+        case '6': case '7': case '8': case '9': case '-':
+          break;
+
+        /* Identifier for next group of ranges. However, For the time
+           being, we just support one group. So we are commenting the break
+           here for it to follow onto default.
+        case ',':
+          ++group;
+          forl='f';
+          ++pt;
+          break;
+          */
+        default:
+
+          /* If a name is given, it will start with an alphabetic
+             character, a hyphen, or an underscore (we already know that
+             the key doesn't start with a digit, since it would break out
+             of the 'switch'). Recall that according to the FITS standard,
+             a keyword name can only contain digits, alphabetic characters,
+             '-', or '_'. See "Section 4.1.2.1. Keyword name" of the FITS
+             4.0 standard.*/
+          if( isalpha(*pt) || *pt=='-' || *pt=='_' ) break;
+
+          /* Print an error if control reaches here because  */
+          error(EXIT_FAILURE, 0, "value to '--copykeys' must either be a "
+                "range of numbers (for example '--copykeys=10:20') or a "
+                "set of names (for example '--copykeys=KEY1,KEY2', for "
+                "any number of names, note that the first keyword name "
+                "should not contain only digits, thus get interpreted "
+                "as a number). However, your given value ('%s') couldn't "
+                "be interpreted as any of the two (the first "
+                "non-acceptable character is '%c'). If this seems to be "
+                "a problem on the programming side, please report the "
+                "issue to us at '%s'", p->copykeys, *pt,
+                PACKAGE_BUGREPORT);
+          break;
+        }
+
+      /* Read the number: */
+      read=strtol(pt, &tailptr, 0);
+
+      /* Check the progress.
+      printf("\n\n------\n%c: %ld (%s)\n", *pt, read, tailptr);
+      */
+
+      /* If the value couldn't be read as a number, and the first element
+         hasn't been read as a number, parse it as a set of comma-separated
+         strings and break out of the parsing overall. */
+      if(tailptr==pt)
+        {
+          if(p->copykeysrange[0]==GAL_BLANK_LONG)
+            {
+              p->copykeysname=gal_options_parse_csv_strings_raw(pt,
+                                                                NULL, 0);
+              break;
+            }
+          else continue;
+        }
+
+      /* Put it in the correct place. */
+      p->copykeysrange[ forl=='f' ? 0 : 1 ]=read;
+      pt=tailptr;
     }
 
-
-    /* Basic sanity checks. */
-    if (!p->keystocopy)
-      {
-        if( p->copykeysrange[1]==GAL_BLANK_LONG )
-          error(EXIT_FAILURE, 0, "no ending keyword number given to "
-                "'--copykeys'. If you want to copy all the keywords after "
-                " a certain one (without worrying about how many there are)"
-                ", you can use '-1'.\n\nFor example if you want to copy "
-                "all the keywords after the 20th, you can use "
-                "'--copykeys=20,-1'. Generally, you can use negative"
-                "numbers for the last keyword number to "
-                "count from the end.");
-        if( p->copykeysrange[0]<=0 )
-          error(EXIT_FAILURE, 0, "the first number given to "
-                "'--copykeys' must be positive");
-        if( p->copykeysrange[1]>=0 &&
-            p->copykeysrange[0]>=p->copykeysrange[1] )
-          error(EXIT_FAILURE, 0, "the first number (%ld) given to "
-                "'--copykeys' must be smaller than the second (%ld)",
-                p->copykeysrange[0], p->copykeysrange[1]);
-      }
-    else
-      {
-          gal_list_str_reverse(&p->keystocopy);
-      }
+  /* Basic sanity checks. */
+  if( p->copykeysname==NULL )
+    {
+      if( p->copykeysrange[1]==GAL_BLANK_LONG )
+        error(EXIT_FAILURE, 0, "no ending keyword number given to "
+              "'--copykeys'. If you want to copy all the keywords after "
+              "a certain one (without worrying about how many there "
+              "are), you can use '-1'.\n\n"
+              "For example if you want to copy all the keywords after "
+              "the 20th, you can use '--copykeys=20,-1'. Generally, "
+              "you can use negative numbers for the last keyword "
+              "number to count from the end.");
+      if( p->copykeysrange[0]<=0 )
+        error(EXIT_FAILURE, 0, "the first number given to '--copykeys' "
+              "must be positive");
+      if( p->copykeysrange[1]>=0
+          && p->copykeysrange[0]>=p->copykeysrange[1] )
+        error(EXIT_FAILURE, 0, "the first number (%ld) given to "
+              "'--copykeys' must be smaller than the second (%ld)",
+              p->copykeysrange[0], p->copykeysrange[1]);
+    }
 
   /* For a check:
-  printf("copykeys: %ld, %ld\n", p->copykeysrange[0],
-              p->copykeysrange[1]);
+  if( p->copykeysname )
+    {
+      size_t i;
+      char **strarr=p->copykeysname->array;
+      printf("copykeys: ");
+      for(i=0;i<p->copykeysname->size;++i)
+        printf("%s ", strarr[i]);
+    }
+  else
+    printf("copykeys: %ld, %ld\n", p->copykeysrange[0], p->copykeysrange[1]);
   exit(0);
-  printf("Keys To Copy:\n");
-  gal_list_str_print(p->keystocopy);
   */
 }
 
