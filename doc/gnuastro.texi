@@ -292,6 +292,7 @@ General program usage tutorial
 * NoiseChisel optimization for detection::  Check NoiseChisel's operation and improve it.
 * NoiseChisel optimization for storage::  Dramatically decrease output's volume.
 * Segmentation and making a catalog::  Finding true peaks and creating a catalog.
+* Measuring the dataset limits::  One way to measure the ``depth'' of your data.
 * Working with catalogs estimating colors::  Estimating colors using the catalogs.
 * Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
@@ -2145,6 +2146,7 @@ This will help simulate future situations when you are processing your own datas
 * NoiseChisel optimization for detection::  Check NoiseChisel's operation and improve it.
 * NoiseChisel optimization for storage::  Dramatically decrease output's volume.
 * Segmentation and making a catalog::  Finding true peaks and creating a catalog.
+* Measuring the dataset limits::  One way to measure the ``depth'' of your data.
 * Working with catalogs estimating colors::  Estimating colors using the catalogs.
 * Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
@@ -3313,7 +3315,7 @@ rm nc-for-storage.fits.gz
 
 
 
-@node Segmentation and making a catalog, Working with catalogs estimating colors, NoiseChisel optimization for storage, General program usage tutorial
+@node Segmentation and making a catalog, Measuring the dataset limits, NoiseChisel optimization for storage, General program usage tutorial
 @subsection Segmentation and making a catalog
 The main output of NoiseChisel is the binary detection map (@code{DETECTIONS} extension, see @ref{NoiseChisel optimization for detection}).
 which only has two values of 1 or 0.
@@ -3437,8 +3439,217 @@ You can see them with this command (for more, see @ref{Image surface brightness 
 $ astfits cat/xdf-f160w.fits -h1
 @end example
 
+@node Measuring the dataset limits, Working with catalogs estimating colors, Segmentation and making a catalog, General program usage tutorial
+@subsection Measuring the dataset limits
 
-@node Working with catalogs estimating colors, Column statistics color-magnitude diagram, Segmentation and making a catalog, General program usage tutorial
+In @ref{Segmentation and making a catalog}, we created a catalog of the different objects with the image.
+Before measuring colors, or doing any other kind of analysis on the catalogs (and detected objects), it is very important to understand the limitations of the dataset.
+Without understanding the limitations of your dataset, you cannot make any physical interpretation of your results.
+The theory behind the calculations discussed here is thoroughly introduced in @ref{Quantifying measurement limits}.
+
+For example, with the command below, let's sort all the detected clumps in the image by magnitude, and have a look at the RA, Declination, magnitude and S/N columns after sorting:
+
+@example
+$ asttable cat/xdf-f160w.fits -hclumps -cmagnitude,sn \
+           --sort=magnitude --noblank=magnitude
+@end example
+
+As you see, we have clumps with a total magnitude of almost 32!
+Let's have a look at all of those with a magnitude between 31 and 32:
+
+@example
+$ asttable cat/xdf-f160w.fits -hclumps -cra,dec \
+           --range=magnitude,31:32  \
+      | astscript-ds9-region -c1,2 --radius=0.5 \
+           --command="ds9 -mecube seg/xdf-f160w.fits -zscale"
+@end example
+
+There actually does seem to be a true peak under the selected regions, but as you see, they are very small, diffuse and noisy.
+How reliable are the measured magnitudes?
+Using the S/N column from the first command above, you can see that such objects only have a signal to noise of about 1.5.
+
+This brings us to the first method of quantifying your dataset's @emph{magnitude limit}, which is also sometimes called @emph{detection limit} (see @ref{Magnitude limit of image}).
+To estimate the @mymath{5\sigma} detection limit of your dataset, you simply report the median magnitude of the objects that have a signal to noise of (approximately) five.
+This is very easy to calculate with the command below:
+
+@example
+$ asttable cat/xdf-f160w.fits -hclumps --range=sn,4.8:5.2 -cmagnitude \
+           | aststatistics --median
+29.9627
+@end example
+
+But this is unreasonably faint!
+So let's have a look at these objects, to get a feeling of what these clump looks like:
+
+@example
+$ asttable cat/xdf-f160w.fits -hclumps --range=sn,4.8:5.2 \
+           -cra,dec,magnitude \
+           | astscript-ds9-region -c1,2 --namecol=3 \
+                      --width=2 --radius=0.5 \
+                      --command="ds9 -mecube seg/xdf-f160w.fits -zscale"
+@end example
+
+The number you see on top of each region is the clump's magnitude.
+Please go over the objects and have a close look at them!
+It is very important to have a feeling of what your dataset looks like, and how to interpret the numbers to associate an image with them.
+
+Generally, they look very small and seem to be much fainter than what you would expect to be @mymath{5\sigma}.
+The main issue is that MakeCatalog uses individual pixel measurements of signal and noise to estimate this.
+However, during the reduction many exposures are co-added and stacked, mixing the pixels like a small convolution.
+
+@cindex Upper-limit
+A more realistic way to estimate the significance of the detection is to take its footprint, randomly place it in thousands of undetected regions of the image and use that distribution as a reference.
+This is technically known as upper-limit measurements.
+For a full discussion, see @ref{Upper limit magnitude of each detection}).
+
+Since its for each separate object, the upper-limit measurements should be requested as extra columns in MakeCatalog's output.
+For example with the command below, let's generate a new catalog of the F160W filter, but with two extra columns compared to the one in @file{cat/}: the upper-limit magnitude and the upper-limit multiple of sigma.
+
+@example
+$ astmkcatalog seg/xdf-f160w.fits --ids --ra --dec --magnitude --sn \
+               --zeropoint=25.94 --clumpscat --upnsigma=3 \
+               --upperlimitmag --upperlimitsigma \
+               --output=xdf-f160w.fits
+@end example
+
+Let's compare the upper-limit magnitude with the measured magnitude of each clump:
+
+@example
+$ asttable xdf-f160w.fits -hclumps -cmagnitude,upperlimit_mag
+@end example
+
+As you see, in almost all of the cases, the measured magnitude is sufficiently higher than the upper-limit magnitude.
+For these objects, the clump seems to have sufficiently higher brightness than the noisy background.
+Let's use Table's @ref{Column arithmetic} to find only those that have a positive difference:
+
+@example
+$ asttable xdf-f160w.fits -hclumps -cra,dec --noblankend=3 \
+      -c'arith magnitude upperlimit_mag - set-d d d 0 lt nan where'
+@end example
+
+@noindent
+From more than 3500 clumps, this command only gave 177 rows!
+Let's have a look at them:
+
+@example
+$ asttable xdf-f160w.fits -hclumps -cra,dec --noblankend=3 \
+       -c'arith magnitude upperlimit_mag - set-d d d 0 lt nan where' \
+       | astscript-ds9-region -c1,2 --namecol=3 --width=2 \
+                  --radius=0.5 \
+                  --command="ds9 -mecube seg/xdf-f160w.fits -zscale"
+@end example
+
+You see that they are all extremely faint and diffuse/small peaks.
+Therefore, if an object's magnitude is fainter than its upper-limit magnitude, you shouldn't use the magnitude: it is not accurate!
+You should use the upper-limit magnitude instead (with an arrow in your plots to mark which ones are upper-limits).
+
+But the main point (in relation to the magnitude limit) with the upper-limit, is the @code{UPPERLIMIT_SIGMA} column.
+you can think of this as a @emph{realistic} S/N for extremely faint/diffuse/small objects).
+The raw S/N column is simply calculated on a pixel-by-pixel basis, however, the upper-limit sigma is produced by actually taking the label's footprint, and randomly placing it thousands of time over un-detected parts of the image and measuring the brightness of the sky.
+The clump's brightness is then divided by the standard deviation of the resulting distribution to give you exactly how significant it is (accounting for inter-pixel issues like correlated noise, which are strong in this dataset).
+You can actually compare the two values with the command below:
+
+@example
+$ asttable xdf-f160w.fits -hclumps -csn,upperlimit_sigma
+@end example
+
+As you see, the second column (upper-limit sigma) is almost always less than the S/N.
+This clearly shows the effect of corrlated noise!
+If you now use this column as the reference for deriving the magnitude limit, you will see that it will shift by almost 0.5 magnitudes brighter and is now more reasonable:
+
+@example
+$ asttable xdf-f160w.fits -hclumps --range=upperlimit_sigma,4.8:5.2 \
+           -cmagnitude | aststatistics --median
+29.6257
+@end example
+
+We see that the @mymath{5\sigma} detection limit is @mymath{\sim29.6}!
+This is extremely deep!
+For example in the Legacy Survey@footnote{@url{https://www.legacysurvey.org/dr9/description}}, the @mymath{5\sigma} detection limit for @emph{point sources} is approximately 24.5 (5 magnitudes shallower than this image).
+
+An important caveat in this simple calculation is that we should only be looking at point-like objects, not simply everything.
+This is because the shape or radial slope of the profile has an important effect on this measurement: at the same total magnitude, a sharper object will have a higher S/N.
+To be more precise, we should first perform star-galaxy separation, then do this only the objects classified as stars.
+A crude, first-order, method is to use the @option{--axisratio} option so MakeCatalog also measures the axis ratio, then call Table with @option{--range=sn,4.8:5.2} and @option{--range=axis_ratio,0.95:1} (in one command).
+Before continuing, let's remove this temporarily produced catalog:
+
+@example
+$ rm xdf-f160w.fits
+@end example
+
+Another measure of the dataset's limit is the completeness limit (@ref{Completeness limit of each detection}).
+This is necessary when you are looking at populations of objects over the image.
+You want to know until what magnitude you can be sure that you have detected an object (if it was present).
+As described in @ref{Completeness limit of each detection}, the best way to do this is with mock images.
+But a crude, first order result can be obtained from the actual image: by simply plotting the histogram of the magnitudes:
+
+@example
+$ aststatistics cat/xdf-f160w.fits -hclumps -cmagnitude
+...
+Histogram:
+ |                                                           *
+ |                                                      ** ****
+ |                                                   ***********
+ |                                                 *************
+ |                                                ****************
+ |                                             *******************
+ |                                           **********************
+ |                                        **************************
+ |                                 *********************************
+ |                      *********************************************
+ |* *   ** ** **********************************************************
+ |----------------------------------------------------------------------
+@end example
+
+@cindex Number count
+This plot (the histogram of magnitudes; where fainter magnitudes are towards the right) is technically called the dataset's @emph{number count} plot.
+You see that the number of objects increases with magnitude as the magnitudes get fainter (to the right).
+However, beyond a certain magnitude, you see it becomes flat, and soon afterwards, the numbers suddenly drop.
+
+Once you have your catalog, you can easily find this point with the  two commands below.
+First we generate a histogram with fewer bins (to have more numbers in each bin).
+We then use AWK to find the magnitude bin where the number of points decrease compared to the previous bin.
+But we only do this for bins that have more than 50 items (to avoid scatter in the bright end).
+Finally, in Statistics, we have manually set the magnitude range and number of bins so each bin is roughly 0.5 magnitudes thick (with @option{--greaterequal=20}, @option{--lessthan=32} and @option{--numbins=24})
+
+@example
+$ aststatistics cat/xdf-f160w.fits -hclumps -cmagnitude --histogram \
+                --greaterequal=20 --lessthan=32 --numbins=24 \
+                --output=f160w-hist.txt
+$ asttable f160w-hist.txt \
+           | awk '$2>50 && $2<prev@{print $1; exit@} @{prev=$2@}'
+29.10874136289
+@end example
+
+Therefore, to first order (and very crudely!) we can say that if an object is in our field of view and has a magnitude of 29.1 or brighter, we can be highly confident that we have detected it.
+But before continuing, let's clean up behind ourselves:
+
+@example
+$ rm f160w-hist.txt
+@end example
+
+Another important limiting parameter in a processed dataset is the surface brightness limit (@ref{Surface brightness limit of image}).
+The surface brightness limit of a dataset is an important measure for extended structures (for example when you want to look at the outskirts of galaxies).
+In the next tutorial, we have thoroughly described the derivation of the surface brightness limit of a dataset.
+So we will just show the final result here, and encourage you to follow up with that tutorial after finishing this tutorial (see @ref{Image surface brightness limit})
+
+By default, MakeCatalog will estimate the surface brightness limit of a given dataset, and put it in the keywords of the output (all keywords starting with @code{SBL}, which is short for surface brightness limit):
+
+@example
+$ astfits cat/xdf-f160w.fits -h1 | grep SBL
+@end example
+
+As you see, the only one with a unit of @code{mag/arcsec^2} is @code{SBLMAG}.
+It contains the surface brightness limit of the input dataset over @code{SBLAREA} arcsec@mymath{^2} with @code{SBLNSIG} multiples of @mymath{\sigma}.
+In the current version of Gnuastro, @code{SBLAREA=100} and @code{SBLNSIG=3}, so the surface brightness limit of this image is 32.66 mag/arcsec@mymath{^2} (@mymath{3\sigma}, over 100 arcsec@mymath{^2}).
+Therefore, if this default area and multiple of sigma are fine for you@footnote{You can change these values with the @option{--sfmagarea} and @option{--sfmagnsigma}} (these are the most commonly used values), you can simply read the image surface brightness limit from the catalogs produced by MakeCatalog with this command:
+
+@example
+$ astfits cat/*.fits -h1 --keyvalue=SBLMAG
+@end example
+
+
+@node Working with catalogs estimating colors, Column statistics color-magnitude diagram, Measuring the dataset limits, General program usage tutorial
 @subsection Working with catalogs (estimating colors)
 In the previous step we generated catalogs of objects and clumps over our dataset (see @ref{Segmentation and making a catalog}).
 The catalogs are available in the two extensions of the single FITS file@footnote{MakeCatalog can also output plain text tables.
@@ -20288,6 +20499,8 @@ If you need to warp or convolve the image, do it @emph{before} the conversion.
 No measurement on a real dataset can be perfect: you can only reach a certain level/limit of accuracy and a meaningful (scientific) analysis requires an understanding of these limits.
 Different datasets have different noise properties and different detection methods (one method/algorithm/software that is run with a different set of parameters is considered as a different detection method) will have different abilities to detect or measure certain kinds of signal (astronomical objects) and their properties in the dataset.
 Hence, quantifying the detection and measurement limitations with a particular dataset and analysis tool is the most crucial/critical aspect of any high-level analysis.
+In two separate tutorials, we have touched upon some of these points.
+So to see the discussions below in action (on real data), see @ref{Measuring the dataset limits} and @ref{Image surface brightness limit}.
 
 Here, we'll review some of the most commonly used methods to quantify the limits in astronomical data analysis and how MakeCatalog makes it easy to measure them.
 Depending on the higher-level analysis, there are more tests that must be done, but these are relatively low-level and usually necessary in most cases.
@@ -20418,35 +20631,7 @@ The same applies for a stacked image of the field compared to a single-exposure 
 
 This concept is used by some researchers to define the ``magnitude limit'' or ``detection limit'' at a certain S/N (sometimes 10, 5 or 3 for example, also written as @mymath{10\sigma}, @mymath{5\sigma} or @mymath{3\sigma}).
 To do this, they measure the magnitude and signal-to-noise ratio of all the objects within an image and measure the mean (or median) magnitude of objects at the desired S/N.
-
-For evaluating Magnitude limit of an image it is required a good detection of ``NoiseChisel'' @ref{NoiseChisel}, clumps and objects of ``Segment'' @ref{Segment}.
-Then, the ``astmkcatalog'' will help us to make a catalog @ref{MakeCatalog}.
-
-Like the following command, you can make the catalog with the required columns for calculating of magnitude limit.
-We highly recommend you add ``ra'' and ``dec'' columns if you want to have a glance at the objects that have satisfied the magnitude limit unless you can ignore the ``ra'' and ``dec''.
-
-@example
-$ astnoisechisel image.fits --output=nc.fits
-$ astsegment nc.fits --output=seg.fits
-$ astmkcatalog seg.fits --ra --dec --magnitude --sn --output=cat.fits
-@end example
-
-Finally, you can use ``asttable'' for selecting a required range of signal-to-noise.
-Then easily pipe the output of the ``asttable'' to ``astarithmetic and calculate --median.
-
-The first below command shows the distribution of objects' magnitude at a determined S/N (in this example @mymath{5\sigma} or S/N=5).
-Please attention the S/N range is around the 5 because we have selected @mymath{5\sigma}.
-The second command shows the magnitude limit obtained using the median of the histogram.
-
-@example
-$ asttable cat.fits -h1 --range=sn,4.8:5.2 --column=magnitude \
-           | astarithmetic
-@end example
-
-@example
-$ asttable cat.fits -h1 --range=sn,4.8:5.2 --column=magnitude \
-           | astarithmetic --median
-@end example
+A fully working example of deriving the magnitude limit is available in the tutorials section: @ref{Measuring the dataset limits}.
 
 However, this method should be used with extreme care!
 This is because the shape of the object becomes important in this method: a sharper object will have a higher @emph{measured} S/N compared to a more diffuse object at the same original magnitude.

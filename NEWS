@@ -7,6 +7,15 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Book:
+   - New "Measuring the dataset limits" section has been added in second
+     tutorial. Using the catalogs produced during the analysis, it shows
+     how to derive a dataset's magnitude limit, completeness limit
+     (crudely: without simulations), and surface brightness limit. All are
+     important measures in any scientific analysis! This section was
+     written with the help of S. Zahra Hosseini Shahisavandi and Sepideh
+     Eskandarlou.
+
   Fits:
    --copykeys: can now take any number of keyword names also. For example
      '--copykeys=KEYNAME1,KEYNAME2,KEYNAME3'. Until now, it was only
@@ -39,6 +48,10 @@ See the end of the file for license conditions.
 ** Removed features
 
 ** Changed features
+
+  MakeCatalog:
+   --sfmagnsigma: default value changed to 3 (more commonly used).
+   --sfmagarea: default value set to 100 arcsec^2 (more commonly used).
 
   MakeProfiles:
    - The string identifier for custom radial profiles is now called
