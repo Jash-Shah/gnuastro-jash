@@ -3371,7 +3371,7 @@ $ astmkcatalog seg/xdf-f160w.fits --ids --ra --dec --magnitude --sn \
 @noindent
 From the printed statements on the command-line, you see that MakeCatalog read all the extensions in Segment's output for the various measurements it needed.
 To calculate colors, we also need magnitude measurements on the other filters.
-So let's repeat the command above on them, just changing the file names and zeropoint (which we got from the XDF survey web page):
+So let's repeat the command above on them, just changing the file names and zero point (which we got from the XDF survey web page):
 
 @example
 $ astmkcatalog seg/xdf-f125w.fits --ids --ra --dec --magnitude --sn \
@@ -12160,7 +12160,7 @@ Therefore in this section, we'll summarize all the steps in a single script that
 
 @cartouche
 @noindent
-@strong{Necessary files:} To run this script, you will need an image to crop your object from (here assuming its called @file{ah_f160w.fits} with a certain zeropoint) and two @file{my-figure.tex} and @file{report.tex} files that were fully included in @ref{Annotations for figure in paper}.
+@strong{Necessary files:} To run this script, you will need an image to crop your object from (here assuming its called @file{ah_f160w.fits} with a certain zero point) and two @file{my-figure.tex} and @file{report.tex} files that were fully included in @ref{Annotations for figure in paper}.
 Also, we have brought the redshift as a parameter here.
 But if the center of your image always points to your main object, you can also include the Query command to automatically find the object's redshift from NED.
 Alternatively, your image may already be cropped, in this case, you can remove the cropping step and
@@ -14948,7 +14948,7 @@ While the equations for the unit conversions can be easily found on the internet
 @table @command
 
 @item counts-to-mag
-Convert counts (usually CCD outputs) to magnitudes using the given zeropoint.
+Convert counts (usually CCD outputs) to magnitudes using the given zero point.
 The zero point is the first popped operand and the count image or value is the second popped operand.
 
 For example assume you have measured the standard deviation of the noise in an image to be @code{0.1} counts, and the image's zero point is @code{22.5} and you want to measure the @emph{per-pixel} surface brightness limit of the dataset@footnote{The @emph{per-pixel} surface brightness limit is the magnitude of the noise standard deviation. For more on surface brightness see @ref{Brightness flux magnitude}.
@@ -14963,9 +14963,9 @@ Of course, you can also convert every pixel in an image (or table column in Tabl
 For an example of applying this operator on an image, see the description of surface brightness in @ref{Brightness flux magnitude}, where we'll convert an image's pixel values to surface brightness.
 
 @item mag-to-counts
-Convert magnitudes to counts (usually CCD outputs) using the given zeropoint.
+Convert magnitudes to counts (usually CCD outputs) using the given zero point.
 The zero point is the first popped operand and the magnitude value is the second.
-For example if an object has a magnitude of 20, you can estimate the counts corresponding to it (when the image has a zeropoint of 24.8) with this command:
+For example if an object has a magnitude of 20, you can estimate the counts corresponding to it (when the image has a zero point of 24.8) with this command:
 Note that because the output is a single number, we are using @option{--quiet} to avoid printing extra information.
 
 @example
@@ -14975,7 +14975,7 @@ $ astarithmetic 20 24.8 mag-to-counts --quiet
 @item counts-to-jy
 @cindex AB magnitude
 @cindex Magnitude, AB
-Convert counts (usually CCD outputs) to Janskys through an AB-magnitude based zeropoint.
+Convert counts (usually CCD outputs) to Janskys through an AB-magnitude based zero point.
 The top-popped operand is assumed to be the AB-magnitude zero point and the second-popped operand is assumed to be a dataset in units of counts (an image in Arithmetic, and a column in Table's @ref{Column arithmetic}).
 For the full equation and basic definitions, see @ref{Brightness flux magnitude}.
 
@@ -15922,7 +15922,7 @@ This operator takes two arguments: the top/first popped operand is the backgroun
 Except for the noise-model, this operator is very similar to @code{mknoise-sigma} and the examples there apply here too.
 The main difference with @code{mknoise-sigma} is that in a Poisson distribution the scatter/sigma will depend on each element's value.
 
-For example, let's assume you have made a mock image called @file{mock.fits} with @ref{MakeProfiles} and its assumed zeropoint is 22.5 (for more on the zero point, see @ref{Brightness flux magnitude}).
+For example, let's assume you have made a mock image called @file{mock.fits} with @ref{MakeProfiles} and its assumed zero point is 22.5 (for more on the zero point, see @ref{Brightness flux magnitude}).
 Let's assume the background level for the Poisson noise has a value of 19 magnitudes.
 You can first use the @code{mag-to-counts} operator to convert this background magnitude into counts, then feed the background value in counts to @code{mknoise-poisson} operator:
 
@@ -20342,7 +20342,7 @@ It might even be so intertwined with its processing, that adding new columns mig
 @cindex Counts
 Astronomical data pixels are usually in units of counts@footnote{Counts are also known as analog to digital units (ADU).} or electrons or either one divided by seconds.
 To convert from the counts to electrons, you will need to know the instrument gain.
-In any case, they can be directly converted to energy or energy/time using the basic hardware (telescope, camera and filter) information.
+In any case, they can be directly converted to energy or energy/time using the basic hardware (telescope, camera and filter) information (that is summarized in the @emph{zero point}, and we will discuss below).
 We will continue the discussion assuming the pixels are in units of energy/time.
 
 @table @asis
@@ -20396,7 +20396,8 @@ Using the zero point magnitude (@mymath{Z}), we can write the magnitude relation
 @cindex Janskys (Jy)
 @cindex AB magnitude
 @cindex Magnitude, AB
-Having the zero point of an image, you can convert its pixel values to physical units of microJanskys (or @mymath{\mu{}Jy}) to enable direct pixel-based comparisons with images from other instruments@footnote{Comparing data from different instruments assumes instrument and observation signatures are properly corrected, things like the flat-field or the Sky}.
+Having the zero point of an image, you can convert its pixel values to physical units of microJanskys (or @mymath{\mu{}Jy}).
+This enables direct pixel-based comparisons with images from other instruments@footnote{Comparing data from different instruments assumes instrument and observation signatures are properly corrected, things like the flat-field or the Sky absorption}.
 Jansky is a commonly used unit for measuring spectral flux density and one Jansky is equivalent to @mymath{10^{-26} W/m^2/Hz} (watts per square meter per hertz).
 
 This conversion can be done with the fact that in the AB magnitude standard@footnote{@url{https://en.wikipedia.org/wiki/AB_magnitude}}, @mymath{3631Jy} corresponds to the zero-th magnitude, therefore @mymath{B\equiv3631\times10^{6}\mu{Jy}} and @mymath{m\equiv0}.
@@ -20426,6 +20427,36 @@ See @ref{Arithmetic operators} for more.
 @example
 $ astarithmetic sdss.fits 22.5 counts-to-jy
 @end example
+
+@cartouche
+@noindent
+@strong{Be careful with the exposure time:} as described at the start of this section, we are assuming your data are in units of counts/sec.
+As a result, the counts you get from the command above, are only for one second of exposure!
+Please see the discussion below in ``Magnitude to counts'' for more.
+@end cartouche
+
+@item Magnitude to counts (accounting for exposure time)
+@cindex Exposure time
+Until now, we had assumed that the data are in units of counts/sec.
+As a result, the equations given above (in the ``Zero point'' item to convert magnitudes to pixel counts), give the count level for the reference (1 second) exposure.
+But we rarely take 1 second exposures!
+It is therefore very important to take the exposure time into account in scenarios like simulating observations with varying exposure times (where you need to know how many counts the object of a certain magnitude will add to a certain image with a certain exposure time).
+
+To clarify the concept, let's define @mymath{C} as the @emph{counted} electrons (which has a linear relation with the photon energy entering the CCD pixel).
+In this case, if an object of brighness @mymath{B} is observed for @mymath{t} seconds, it will accumulate @mymath{C=B\times t} counts@footnote{Recall that counts another name for ADUs, which already includes the CCD gain.}.
+Therefore, the generic magnitude equation above can be written as:
+@dispmath{m = -2.5\log_{10}(B) + Z = -2.5\log_{10}(C/t) + Z}
+@noindent
+From this, we can derive @mymath{C(t)} in relation to @mymath{C(1)}, or counts from a 1 second exposure, using this relation:
+@dispmath{C(t) = t\times10^{(m-Z)/2.5} = t\times C(1)}
+In other words, you should simply multiply the counts for one second with the number of observed seconds.
+
+Another approach is to shift the time-dependence of the counts into the zero point (after all exposure time is also a hardware issue).
+Let's derive the equation below:
+@dispmath{m = -2.5\log_{10}(C/t) + Z = -2.5\log_{10}(C) + 2.5\log_{10}(t) + Z}
+Therefore, defining an exposure-time-dependent zero point as @mymath{Z(t)}, we can directly correlate a certain object's magnitude with counts after an exposure of @mymath{t} seconds:
+@dispmath{m = -2.5\log_{10}(C) + Z(t) \quad\rm{where}\quad Z(t)=Z + 2.5\log_{10}(t)}
+This solution is useful in programs like @ref{MakeCatalog} or @ref{MakeProfiles}, when you can't (or don't want to: because of the extra storage/speed costs) manipulate the values image (for example divide it by the exposure time to use a counts/sec zero point).
 
 @item Surface brightness
 @cindex Steradian
