@@ -175,22 +175,42 @@ checkset_meminfo_line(char *line, char *keyname, size_t keylen,
    the physically available memory. It is possible to disable overcommiting
    with root permissions, but I have not been able to find any way to do
    this as a normal user. So the only way is to look into the
-   '/proc/meminfo' file (constantly filled by the Linux kernel) and read
+   '/proc/meminfo' file (constantly updated by the Linux kernel) and read
    the available memory from that.
 
    Note that this overcommiting apparently only occurs on Linux. From what
    I have read, other kernels are much more strict and 'malloc' will indeed
    return NULL if there isn't any physical RAM to support it. So if the
    '/proc/meminfo' doesn't exist, we can assume that 'malloc' works as
-   expected, until its inverse is proven. */
+   expected, until its inverse is proven.
+
+   Most GNU/Linux distributions have 'MemAvailable', which is "an estimate
+   of how much memory is available for starting new applications, without
+   swapping" (see [1]). It is therefore the main parameter to check for
+   this purpose. However, on some systems (for example Ubuntu, installed
+   within Windows using Windows Subsystem for Linux), 'MemAvailable' is not
+   defined! So we will have to use 'MemFree' (which is "The amount of
+   physical RAM, in kibibytes, left unused by the system"; from [1]).
+
+   From that description I feel their difference is that the Linux kernel
+   allocates some memory for programs that it starts from the RAM
+   ('MemAvailable'). However, 'MemFree' is the amount of free RAM
+   (independent of the Linux kernel; not including the "Available" space
+   that Linux has allocated for programs it starts). Since Windows
+   Subsystem for Linux doesn't use the Linux kernel, it doesn't have
+   'MemAvailable', and only 'MemFree'.
+
+   [1] https://lynxbee.com/understanding-proc-meminfo-analyzing-linux-memory-utilization
+*/
 size_t
 gal_checkset_ram_available(int quietmmap)
 {
   FILE *file;
+  size_t linelen=80;
   char *meminfo="/proc/meminfo", *line;
-  size_t linelen=80, out=GAL_BLANK_SIZE_T;
-  char *key2="MemFree", *key1="MemAvailable";
-  size_t key1len=strlen(key1), key2len=strlen(key2);
+  char *mastr="MemAvailable", *mfstr="MemFree";
+  size_t mf=GAL_BLANK_SIZE_T, ma=GAL_BLANK_SIZE_T;
+  size_t malen=strlen(mastr), mflen=strlen(mfstr);
 
   /* If /proc/meminfo exists, read it. Otherwise, don't bother doing
      anything. */
@@ -203,24 +223,25 @@ gal_checkset_ram_available(int quietmmap)
         error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for line",
               __func__, linelen*sizeof *line);
 
-      /* Read it line-by-line until you find 'MemAvailable'.  */
+      /* Read it line-by-line until you find the key.  */
       while( getline(&line, &linelen, file) != -1
-             && out == GAL_BLANK_SIZE_T )
+             && (ma == GAL_BLANK_SIZE_T || mf == GAL_BLANK_SIZE_T) )
         {
-          out=checkset_meminfo_line(line, key1, key1len, meminfo);
-          if( out == GAL_BLANK_SIZE_T )
-            out=checkset_meminfo_line(line, key2, key2len, meminfo);
+          if( ma == GAL_BLANK_SIZE_T )
+            ma=checkset_meminfo_line(line, mastr, malen, meminfo);
+          if( mf == GAL_BLANK_SIZE_T )
+            mf=checkset_meminfo_line(line, mfstr, mflen, meminfo);
         }
 
       /* The file existed but a keyname couldn't be found. In this case we
          should inform the user to be aware that we can't automatically
          determine the available memory. */
-      if(out==GAL_BLANK_SIZE_T && quietmmap==0)
+      if(ma==GAL_BLANK_SIZE_T && mf==GAL_BLANK_SIZE_T && quietmmap==0)
         error(EXIT_SUCCESS, 0, "WARNING: %s: didn't contain a '%s' "
               "or '%s' keywords hence the amount of available RAM "
               "couldn't be determined. If a large volume of data is "
               "provided, the program may crash. Please contact us at "
-              "'%s' to fix the problem", meminfo, key1, key2,
+              "'%s' to fix the problem", meminfo, mastr, mfstr,
               PACKAGE_BUGREPORT);
 
       /* Close the opened file and free the line. */
@@ -228,8 +249,9 @@ gal_checkset_ram_available(int quietmmap)
       fclose(file);
     }
 
-  /* Return the final value. */
-  return out;
+  /* If 'MemAvailable' was found, return it. Otherwise, return the value of
+     'MemFree'. */
+  return ma==GAL_BLANK_SIZE_T ? mf : ma;
 }
 
 
