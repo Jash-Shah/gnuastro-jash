@@ -35,6 +35,9 @@ See the end of the file for license conditions.
      command). The magnitude of the inserted image can be set in the
      magnitude column of the input catalog. This can be disabled (to use
      the original image pixel values) using the '--mcolnocustimg' option.
+  --mcolnocustprof: new option to disable scaling of custom radial profiles
+    to required magnitude when building a 2D image from them.
+
 
   astscript-radial-profile:
    --zeroisnotblank: new option to account for zero-valued pixels in the
@@ -58,6 +61,14 @@ See the end of the file for license conditions.
      'custom-prof' (until now, it was called 'custom'). This was necessary
      because of the new custom image feature that has been added. The code
      for this custom radial profile function (8) hasn't changed.
+   - After constructing a custom radial profile (the 'custom-prof'
+     profile), MakeProfiles will scale it to have the desired total
+     magnitude in the input catalog of all profiles. Until now, the 2D
+     images created from a custom radial profile wouldn't be touched and
+     the pixel values would exactly come from the custom radial profile
+     (ignoring the magnitude column of the input catalog). To have the old
+     behavior, use the new '--mcolnocustprof' option. This new
+     functionality was proposed by Elham Saremi.
 
 ** Bugs fixed
   bug #62216: MakeProfiles crash when a 3D cube is requested and input

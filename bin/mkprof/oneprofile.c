@@ -757,7 +757,7 @@ oneprofile_set_prof_params(struct mkonthread *mkp)
     case PROFILE_CUSTOM_PROF:
       mkp->profile          = profiles_custom_table;
       mkp->truncr           = tp ? p->t[id] : p->t[id]*p->r[id];
-      mkp->correction       = 0;
+      mkp->correction       = p->mcolnocustprof ? 0 : 1;
       break;
 
 

@@ -22951,7 +22951,10 @@ In the latter case, just note that the central values are going to be incorrect 
 
 @item
 Custom radial profile with `@code{custom-prof}' or `@code{8}'.
-The values to use for each radial interval should be in the table given to @option{--customtable}. For more, see @ref{MakeProfiles profile settings}.
+The values to use for each radial interval should be in the table given to @option{--customtable}.
+By default, once the profile is built with the given values, it will be scaled to have a total magnitude that you have requested in the magnitude column of the profile (in @option{--mcol}).
+If you want the raw values in the 2D profile (to ignore the magnitude column), use @option{--mcolnocustprof}.
+For more, see the description of @option{--customtable} in @ref{MakeProfiles profile settings}.
 
 @item
 Azimuthal angle profile with `@code{azimuth}' or `@code{9}'.
@@ -23073,6 +23076,10 @@ The zero point magnitude (value to the @option{--zeropoint} option) is ignored a
 Recall that the total profile magnitude or brightness that is specified with in the @option{--mcol} column of the input catalog is not an integration to infinity, but the actual sum of pixels in the profile (until the desired truncation radius).
 See @ref{Profile magnitude} for more on this point.
 
+@item --mcolnocustprof
+Don't touch (re-scale) the custom profile that should be inserted in @code{custom-prof} profile (see the description of @option{--fcol} in @ref{MakeProfiles catalog} or the description of @option{--customtable} below).
+By default, MakeProfiles will scale (multiply) the custom image's pixels to have the desired magnitude (or brightness if @option{--mcolisbrightness} is called) in that row.
+
 @item --mcolnocustimg
 Don't touch (re-scale) the custom image that should be inserted in @code{custom-img} profile (see the description of @option{--fcol} in @ref{MakeProfiles catalog}).
 By default, MakeProfiles will scale (multiply) the custom image's pixels to have the desired magnitude (or brightness if @option{--mcolisbrightness} is called) in that row.
@@ -23140,6 +23147,9 @@ asttable radial.fits -c'arith $1 1 -' -c1,2 -ocustom.fits
 @noindent
 In case the intervals are different from 1 (for example 0.5), change the @code{$1 1 -} to @code{$1 0.5 -}.
 On a side-note, Gnuastro has features to extract the radial profile of an object from the image, see @ref{Generate radial profile}.
+
+By default, once a 2D image is constructed for the radial profile, it will be scaled such that its total magnitude corresponds to the value in the magnitude column (@option{--mcol}) of the main input catalog.
+If you want to disable the scaling and use the raw values in your custom profile (in other words: you want to ignore the magnitude column) you need to call @option{--mcolnocustprof} (see above).
 
 @item --customtablehdu INT/STR
 The HDU/extension in the FITS file given to @option{--customtable}.
