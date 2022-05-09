@@ -88,6 +88,8 @@ See the end of the file for license conditions.
   bug #62309: MakeCatalog segmentation fault when clumps image given as
               main input (objects should be given). Reported by Sepideh
               Eskandarlou.
+  bug #62429: Segment prints one line status-progress line when called with
+              '--quiet'. Reported by Teet Kuutma.
 
 
 

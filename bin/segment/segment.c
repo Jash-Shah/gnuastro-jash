@@ -1518,16 +1518,20 @@ segment(struct segmentparams *p)
   /* Find the clump S/N threshold. */
   if( isnan(p->clumpsnthresh) )
     {
-      gal_timing_report(NULL, "Finding true clumps...", 1);
+      if(!p->cp.quiet)
+        gal_timing_report(NULL, "Finding true clumps...", 1);
       clumps_true_find_sn_thresh(p);
     }
   else
     {
-      if( asprintf(&msg, "Given S/N for true clumps: %g",
-                   p->clumpsnthresh) <0 )
-        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
-      gal_timing_report(NULL, msg, 1);
-      free(msg);
+      if(!p->cp.quiet)
+        {
+          if( asprintf(&msg, "Given S/N for true clumps: %g",
+                       p->clumpsnthresh) <0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+          gal_timing_report(NULL, msg, 1);
+          free(msg);
+        }
     }
 
 
