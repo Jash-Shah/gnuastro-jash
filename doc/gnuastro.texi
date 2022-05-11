@@ -1904,12 +1904,12 @@ If we didn't have an atmosphere and we didn't need an aperture, then stars would
 So Sufi convolved the image with this command:
 
 @example
-$ astconvolve --kernel=0_cat.fits cat_profiles.fits \
+$ astconvolve --kernel=0_cat_profiles.fits cat_profiles.fits \
               --output=cat_convolved.fits
 Convolve started on Sat Oct  6 16:35:32 953
   - Using 8 CPU threads.
   - Input: cat_profiles.fits (hdu: 1)
-  - Kernel: 0_cat.fits (hdu: 1)
+  - Kernel: 0_cat_profiles.fits (hdu: 1)
   - Input and Kernel images padded.                    0.075541 seconds
   - Images converted to frequency domain.              6.728407 seconds
   - Multiplied in the frequency domain.                0.040659 seconds
@@ -1919,7 +1919,7 @@ Convolve started on Sat Oct  6 16:35:32 953
 Convolve finished in:  10.422161 seconds
 
 $ls
-0_cat.fits  cat_convolved.fits  cat_profiles.fits  cat.txt
+0_cat_profiles.fits  cat_convolved.fits  cat_profiles.fits  cat.txt
 @end example
 
 @noindent
@@ -1940,7 +1940,7 @@ Warp started on Sat Oct  6 16:51:59 953
         0.0000   0.0000   1.0000
 
 $ ls
-0_cat.fits          cat_convolved_scaled.fits     cat.txt
+0_cat_profiles.fits       cat_convolved_scaled.fits     cat.txt
 cat_convolved.fits  cat_profiles.fits
 
 $ astfits -p cat_convolved_scaled.fits | grep NAXIS
@@ -1976,8 +1976,8 @@ Crop started on Sat Oct  6 17:03:24 953
 Crop finished in:  0.027204 seconds
 
 $ls
-0_cat.fits          cat_convolved_scaled_cropped.fits  cat_profiles.fits
-cat_convolved.fits  cat_convolved_scaled.fits          cat.txt
+0_cat_profiles.fits cat_convolved_scaled_cropped.fits cat_profiles.fits
+cat_convolved.fits  cat_convolved_scaled.fits   cat.txt
 @end example
 
 @noindent
@@ -1999,8 +1999,8 @@ MakeNoise started on Sat Oct  6 17:05:06 953
 MakeNoise finished in:  0.033491 (seconds)
 
 $ls
-0_cat.fits         cat_convolved_scaled_cropped.fits cat_profiles.fits
-cat_convolved.fits cat_convolved_scaled.fits         cat.txt  out.fits
+0_cat_profiles.fits cat_convolved_scaled_cropped.fits cat_profiles.fits
+cat_convolved.fits   cat_convolved_scaled.fits    cat.txt  out.fits
 @end example
 
 @noindent
@@ -22626,7 +22626,7 @@ The Gaussian function is much sharper than the Moffat functions, even when @myma
 @cindex Modeling stars
 @cindex Stars, modeling
 In MakeProfiles, stars are generally considered to be a point source.
-This is usually the case for extra galactic studies, were nearby stars are also in the field.
+This is usually the case for extra galactic studies, where nearby stars are also in the field.
 Since a star is only a point source, we assume that it only fills one pixel prior to convolution.
 In fact, exactly for this reason, in astronomical images the light profiles of stars are one of the best methods to understand the shape of the PSF and a very large fraction of scientific research is preformed by assuming the shapes of stars to be the PSF of the image.
 
@@ -22672,7 +22672,7 @@ MacArthur et al.@footnote{MacArthur, L. A., S. Courteau, and J. A. Holtzman (200
 A pixel is the ultimate level of accuracy to gather data, we can't get any more accurate in one image, this is known as sampling in signal processing.
 However, the mathematical profiles which describe our models have infinite accuracy.
 Over a large fraction of the area of astrophysically interesting profiles (for example galaxies or PSFs), the variation of the profile over the area of one pixel is not too significant.
-In such cases, the elliptical radius (@mymath{r_{el}} of the center of the pixel can be assigned as the final value of the pixel, see @ref{Defining an ellipse and ellipsoid}).
+In such cases, the elliptical radius (@mymath{r_{el}}) of the center of the pixel can be assigned as the final value of the pixel, (see @ref{Defining an ellipse and ellipsoid}).
 
 @cindex Integration over pixel
 @cindex Gradient over pixel area
@@ -22751,7 +22751,7 @@ After convolution, the profiles become larger and a profile that is normally com
 On one axis, if you want your final (convolved) image to be @mymath{m} pixels and your PSF is @mymath{2n+1} pixels wide, then when calling MakeProfiles, set the axis size to @mymath{m+2n}, not @mymath{m}.
 You also have to shift all the pixel positions of the profile centers on the that axis by @mymath{n} pixels to the positive.
 
-After convolution, you can crop the outer @mymath{n} pixels with the section crop box specification of Crop: @option{--section=n:*-n,n:*-n} assuming your PSF is a square, see @ref{Crop section syntax}.
+After convolution, you can crop the outer @mymath{n} pixels with the section crop box specification of Crop: @option{--section=n+1:*-n,n+1:*-n} (according to the FITS standard, counting is from 1 so we use @code{n+1}) assuming your PSF is a square, see @ref{Crop section syntax}.
 This will also remove all discrete Fourier transform artifacts (blurred sides) from the final image.
 To facilitate this shift, MakeProfiles has the options @option{--xshift}, @option{--yshift} and @option{--prepforconv}, see @ref{Invoking astmkprof}.
 
@@ -22890,7 +22890,7 @@ So a 2D image actually starts from the position (0.5, 0.5), which is the bottom-
 When a @option{--background} image with WCS information is provided or you specify the WCS parameters with the respective options, you may also use RA and Dec to identify the center of each profile (see the @option{--mode} option below).
 
 In MakeProfiles, profile centers do not have to be in (overlap with) the final image.
-Even if only one pixel of the profile within the truncation radius overlaps with the final image size, the profile is built and included in the final image image.
+Even if only one pixel of the profile within the truncation radius overlaps with the final image size, the profile is built and included in the final image.
 Profiles that are completely out of the image will not be created (unless you explicitly ask for it with the @option{--individual} option).
 You can use the output log file (created with @option{--log} to see which profiles were within the image, see @ref{Common options}.
 
@@ -23085,8 +23085,8 @@ Don't touch (re-scale) the custom image that should be inserted in @code{custom-
 By default, MakeProfiles will scale (multiply) the custom image's pixels to have the desired magnitude (or brightness if @option{--mcolisbrightness} is called) in that row.
 
 @item --magatpeak
-The magnitude column in the catalog (see @ref{MakeProfiles catalog}) will be used to find the brightness only for the peak profile pixel, not the full profile.
-Note that this is the flux of the profile's peak pixel in the final output of MakeProfiles.
+The magnitude column in the catalog (see @ref{MakeProfiles catalog}) will be used to set the brightness only for the profile's peak (maximum) pixel, not the full profile.
+Note that this is the flux of the profile's peak (maximum) pixel in the final output of MakeProfiles.
 So beware of the oversampling, see @ref{Oversampling}.
 
 This option can be useful if you want to check a mock profile's total magnitude at various truncation radii.
@@ -23141,7 +23141,7 @@ The first column is the larger interval radius (in units of pixels) and the seco
 You can construct the table to give to @option{--customtable} with the command below (using Gnuastro's @ref{Column arithmetic}).
 
 @example
-asttable radial.fits -c'arith $1 1 -' -c1,2 -ocustom.fits
+asttable radial.txt -c'arith $1 1 -' -c1,2 -ocustom.fits
 @end example
 
 @noindent
@@ -23159,8 +23159,8 @@ A custom FITS image that should be used for the @code{custom-img} profiles (see 
 Multiple files can be given to this option (separated by a comma), and this option can be called multiple times itself (useful when many custom image profiles should be added).
 If the HDU of the images are different, you can use @option{--customimghdu} (described below).
 
-Through the ``radius'' column, MakeProfiles will know which one of the images given to this this option should be used in each row.
-For example let's assume your input catalog (@file{cat.fits}) has the following contents (output of first command below), and you call MakeProfiles like like the second command below to insert four profiles into the background @file{back.fits} image.
+Through the ``radius'' column, MakeProfiles will know which one of the images given to this option should be used in each row.
+For example let's assume your input catalog (@file{cat.fits}) has the following contents (output of first command below), and you call MakeProfiles like the second command below to insert four profiles into the background @file{back.fits} image.
 
 The first profile below is Sersic (with an @option{--fcol}, or 4-th column, code of @code{1}).
 So MakeProfiles builds the pixels of the first profile, and all column values are meaningful.
