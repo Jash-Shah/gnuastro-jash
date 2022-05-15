@@ -2033,7 +2033,8 @@ astmkprof --prepforconv --mergedsize=499,499 --zeropoint=18.0 \
           "$base".txt
 
 # Convolve the created image with the kernel.
-astconvolve --kernel=0_"$base".fits "$base"_profiles.fits \
+astconvolve "$base"_profiles.fits \
+            --kernel=0_"$base"_profiles.fits \
             --output="$base"_convolved.fits
 
 # Scale the image back to the intended resolution.
