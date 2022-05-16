@@ -1,5 +1,6 @@
 Alphabetically ordered list to acknowledge in the next release.
 
+Marjan Akbari
 Faezeh Bijarchian
 Sepideh Eskandarlou
 Sílvia Farras

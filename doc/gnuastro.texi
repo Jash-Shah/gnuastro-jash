@@ -1800,9 +1800,10 @@ $ astmkprof -P
 # Columns, by info (see `--searchin'), or number (starting from 1):
  ccol         2           # Coord. columns (one call for each dim.).
  ccol         3           # Coord. columns (one call for each dim.).
- fcol         4           # sersic (1), moffat (2), gaussian (3),
-                          # point (4), flat (5), circumference (6),
-                          # distance (7), radial-table (8).
+ fcol         4           # sersic (1), moffat (2), gaussian (3), point
+                          # (4), flat (5), circumference (6), distance
+                          # (7), custom-prof (8), azimuth (9),
+                          # custom-img (10).
  rcol         5           # Effective radius or FWHM in pixels.
  ncol         6           # Sersic index or Moffat beta.
  pcol         7           # Position angle.
@@ -1820,71 +1821,238 @@ It is also possible to use column names for the values of these options and chan
 Fortunately MakeProfiles has the capability to also make the PSF which is to be used on the mock image and using the @option{--prepforconv} option, he can also make the mock image to be larger by the correct amount and all the sources to be shifted by the correct amount.
 
 For his initial check he decides to simulate the nebula in the Andromeda constellation.
-The night he was observing, the PSF had roughly a FWHM of about 5 pixels, so as the first row (profile), he defines the PSF parameters and sets the radius column (@code{rcol} above, fifth column) to @code{5.000}, he also chooses a Moffat function for its functional form.
+The night he was observing, the PSF had roughly a FWHM of about 5 pixels, so as the first row (profile) in the table below, he defines the PSF parameters.
+Sufi sets the radius column (@code{rcol} above, fifth column) to @code{5.000}, he also chooses a Moffat function for its functional form.
 Remembering how diffuse the nebula in the Andromeda constellation was, he decides to simulate it with a mock S@'{e}rsic index 1.0 profile.
-He wants the output to be 499 pixels by 499 pixels, so he can put the center of the mock profile in the central pixel of the image (note that an even number doesn't have a central element).
+He wants the output to be 499 pixels by 499 pixels, so he can put the center of the mock profile in the central pixel of the image which is the 250th pixel along both dimensions (note that an even number doesn't have a ``central'' pixel).
 
-Looking at his drawings of it, he decides a reasonable effective radius for it would be 40 pixels on this image pixel scale, he sets the axis ratio and position angle to approximately correct values too and finally he sets the total magnitude of the profile to 3.44 which he had accurately measured.
+Looking at his drawings of it, he decides a reasonable effective radius for it would be 40 pixels on this image pixel scale (second row, 5th column below).
+He also sets the axis ratio (0.4) and position angle (-25 degrees) to approximately correct values too, and finally he sets the total magnitude of the profile to 3.44 which he had measured.
 Sufi also decides to truncate both the mock profile and PSF at 5 times the respective radius parameters.
 In the end he decides to put four stars on the four corners of the image at very low magnitudes as a visual scale.
 While he was preparing the catalog, one of his students approached him and was also following the steps.
 
-Using all the information above, he creates the catalog of mock profiles he wants in a file named @file{cat.txt} (short for catalog) using his favorite text editor and stores it in a directory named @file{simulationtest} in his home directory.
-[The @command{cat} command prints the contents of a file, short for ``concatenation''.
-So please copy-paste the lines after ``@command{cat cat.txt}'' into @file{cat.txt} when the editor opens in the steps above it, note that there are 7 lines, first one starting with @key{#}.
-Also be careful when copying from the PDF format, the Info, web, or text formats shouldn't have any problem]:
+@noindent
+As described above, the catalog of profiles to build will be a table (multiple columns of numbers) like below:
+
+@example
+0  0.000   0.000  2  5   4.7  0.0  1.0  30.0  5.0
+1  250.0   250.0  1  40  1.0  -25  0.4  3.44  5.0
+2  50.00   50.00  4  0   0.0  0.0  0.0  6.00  0.0
+3  450.0   50.00  4  0   0.0  0.0  0.0  6.50  0.0
+4  50.00   450.0  4  0   0.0  0.0  0.0  7.00  0.0
+5  450.0   450.0  4  0   0.0  0.0  0.0  7.50  0.0
+@end example
+
+This contains all the ``data'' to build the profile, and you can easily pass it to Gnuastro's MakeProfiles: since Sufi already knows the columns and expeccted values very good, he has placed the information in the proper columns.
+However, when the student sees this, he just sees a mumble-jumple of numbers!
+Generally, Sufi explains to the student that even if you know the number positions and values very nicely today, in a couple of months you will forget!
+It will then be very hard for you to interpret the numbers properly.
+So you should never use naked data (or data without any extra information).
+
+@cindex Metadata
+Data (or information) that describes other data is called ``metadata''!
+One common example is column names (the name of a column is itself a data element, but data that describes the lower-level data within that column: how to interpret the numbers within it).
+Sufi explains to his student that Gnuastro has a convention for adding metadata within a plain-text file; and guides him to @ref{Gnuastro text table format}.
+Because we don't want metadata to be confused with the actual data, in a plain-text file, we start lines containing metadata with a `@code{#}'.
+For example, see the same data above, but this time with metadata for every column:
+
+@example
+# Column 1:  ID      [counter, u8] Identifier
+# Column 2:  X       [pix,    f32] Horizontal position
+# Column 3:  Y       [pix,    f32] Vertical position
+# Column 4:  PROFILE [name,    u8] Radial profile function
+# Column 5:  R       [pix,    f32] Effective radius
+# Column 6:  N       [n/a,    f32] Sersic index
+# Column 7:  PA      [deg,    f32] Position angle
+# Column 8:  Q       [n/a,    f32] Axis ratio
+# Column 9:  MAG     [log,    f32] Magnitude
+# Column 10: TRUNC   [n/a,    f32] Truncation (multiple of R)
+0  0.000   0.000  2  5   4.7  0.0  1.0  30.0  5.0
+1  250.0   250.0  1  40  1.0  -25  0.4  3.44  5.0
+2  50.00   50.00  4  0   0.0  0.0  0.0  6.00  0.0
+3  450.0   50.00  4  0   0.0  0.0  0.0  6.50  0.0
+4  50.00   450.0  4  0   0.0  0.0  0.0  7.00  0.0
+5  450.0   450.0  4  0   0.0  0.0  0.0  7.50  0.0
+@end example
+
+@noindent
+The numbers now make much more sense to for the student!
+Before continuing, Sufi reminded the student that even though metadata may not be strictly/technically necessary (for the computer programs), metadata are critical for human readers!
+Therefore, a good scientist should never forget to keep metadata with any data that they create, use or archive.
+
+To start simulating the nebula, Sufi creates a directory named @file{simulationtest} in his home directory.
+Note that the @command{pwd} command will print the ``parent working directory'' of the current directory (its a good way to confirm/check your current location in the full file system: it always starts from the root, or `@code{/}').
 
 @example
 $ mkdir ~/simulationtest
 $ cd ~/simulationtest
 $ pwd
 /home/rahman/simulationtest
-$ emacs cat.txt
-$ ls
-cat.txt
-$ cat cat.txt
-# Column 4: PROFILE_NAME [,str6] Radial profile's functional name
- 1  0.0000   0.0000  moffat  5.000  4.765  0.0000  1.000  30.000  5.000
- 2  250.00   250.00  sersic  40.00  1.000  -25.00  0.400  3.4400  5.000
- 3  50.000   50.000  point   0.000  0.000  0.0000  0.000  6.0000  0.000
- 4  450.00   50.000  point   0.000  0.000  0.0000  0.000  6.5000  0.000
- 5  50.000   450.00  point   0.000  0.000  0.0000  0.000  7.0000  0.000
- 6  450.00   450.00  point   0.000  0.000  0.0000  0.000  7.5000  0.000
+@end example
+
+@cindex Redirection
+@cindex Standard output
+It is possible to use a plain-text editor to manually put the catalog contents above into a plain-text file.
+But to easily automate catalog production (in later trials), Sufi decides to fill the input catalog with the redirection features of the command-line (or shell).
+Sufi's student wasn't familiar with this feature of the shell!
+So Sufi decided to do a fast demo; giving the following explanations while running the commands:
+
+Shell redirection allows you to ``re-direct'' the ``standard output'' of a program (which is usually printed by the program on the command-line during its execution; like the output of @command{pwd} above) into a file.
+For example, let's simply ``echo'' (or print to standard output) the line ``This is a test.'':
+
+@example
+$ echo "This is a test."
+This is a test.
 @end example
 
 @noindent
-The zero point magnitude for his observation was 18.
-Now he has all the necessary parameters and runs MakeProfiles with the following command:
+As you see, our statement was simply ``echo''-ed to the standard output!
+To redirect this sentence into a file (instead of simply printing it on the standard output), we can simply use the @code{>} character, followed by the name of the file we want it to be dumped in.
 
 @example
+$ echo "This is a test." > test.txt
+@end example
 
+This time, the @command{echo} command didn't print anything in the terminal.
+Instead, the shell (command-line environment) took the output, and ``re-directed'' it into a file called @file{test.txt}.
+Let's confirm this with the @command{ls} command (@command{ls} is short for ``list'' and will list all the files in the current directory):
+
+@example
+$ ls
+test.txt
+@end example
+
+@noindent
+Now that you confirm the existance of @file{test.txt}, you can see its contents with the @command{cat} command (short for ``concatenation''; because it can also merge multiple files together):
+
+@example
+$ cat test.txt
+This is a test.
+@end example
+
+@noindent
+Now that we have written our first line in @file{test.txt}, let's try adding a second line (don't forget that our final catalog of objects to simulate will have multiple lines):
+
+@example
+$ echo "This is my second line." > test.txt
+$ cat test.txt
+This is my second line.
+@end example
+
+As you see, the first line that you put in the file is no longer present!
+This happens because `@code{>}' always starts dumping content to a file from the start of the file.
+In effect, this means that any possibly pre-existing content is over-written by the new content!
+To append new lines (or dumping new content at the end of existing content), you can use `@code{>>}'.
+For example with the commands below, first we'll write the first sentence (using `@code{>}'), then use `@code{>>}' to add the second and third sentences.
+Finally, we'll print the contents of @file{test.txt} to confirm that all three lines are preserved.
+
+@example
+$ echo "My first sentence."   > test.txt
+$ echo "My second sentence." >> test.txt
+$ echo "My third sentence."  >> test.txt
+$ cat test.txt
+My first sentence.
+My second sentence.
+My third sentence.
+@end example
+
+The student thanked Sufi for this explanation and now feels more comfortable with redirection.
+Therefore Sufi continues with the main project.
+But before that, he deletes the temporary test file:
+
+@example
+$ rm test.txt
+@end example
+
+To put the catalog of profile data and their metadata (that was described above) into a file, Sufi uses the commands below.
+While Sufi was writing these commands, the student complained that ``I could have done in this in a text editor''.
+Sufi reminded the student that it is indeed possible; but it requires manual intervention.
+The advantage of a solution like below is that it can be automated (for example adding more rows; for more profiles in the final image).
+
+@example
+$ echo "# Column 1:  ID    [counter, u8] Identifier" > cat.txt
+$ echo "# Column 2:  X     [pix,    f32] Horizontal position" >> cat.txt
+$ echo "# Column 3:  Y     [pix,    f32] Vertical position" >> cat.txt
+$ echo "# Column 4:  PROF  [name,    u8] Radial profile function" \
+       >> cat.txt
+$ echo "# Column 5:  R     [pix,    f32] Effective radius" >> cat.txt
+$ echo "# Column 6:  N     [n/a,    f32] Sersic index" >> cat.txt
+$ echo "# Column 7:  PA    [deg,    f32] Position angle" >> cat.txt
+$ echo "# Column 8:  Q     [n/a,    f32] Axis ratio" >> cat.txt
+$ echo "# Column 9:  MAG   [log,    f32] Magnitude" >> cat.txt
+$ echo "# Column 10: TRUNC [n/a,    f32] Truncation (multiple of R)" \
+       >> cat.txt
+$ echo "0  0.000   0.000  2  5   4.7  0.0  1.0  30.0  5.0" >> cat.txt
+$ echo "1  250.0   250.0  1  40  1.0  -25  0.4  3.44  5.0" >> cat.txt
+$ echo "2  50.00   50.00  4  0   0.0  0.0  0.0  6.00  0.0" >> cat.txt
+$ echo "3  450.0   50.00  4  0   0.0  0.0  0.0  6.50  0.0" >> cat.txt
+$ echo "4  50.00   450.0  4  0   0.0  0.0  0.0  7.00  0.0" >> cat.txt
+$ echo "5  450.0   450.0  4  0   0.0  0.0  0.0  7.50  0.0" >> cat.txt
+@end example
+
+@noindent
+To make sure if the catalog's content is correct (and there was no typo for example!), Sufi runs `@command{cat cat.txt}', and confirms that it is correct.
+
+@cindex Zero point
+Now that the catalog is created, Sufi is ready to call MakeProfiles to build the image containing these objects.
+He looks into his records and finds that the zero point magnitude for that night and that detector 18.
+The student was a little confused on the concept of zero point, so Sufi pointed him to @ref{Brightness flux magnitude}, which the student can study in detail later.
+Sufi therefore runs MakeProfiles with the command below:
+
+@example
 $ astmkprof --prepforconv --mergedsize=499,499 --zeropoint=18.0 cat.txt
-MakeProfiles started on Sat Oct  6 16:26:56 953
+MakeProfiles @value{VERSION} started on Sat Oct  6 16:26:56 953
   - 6 profiles read from cat.txt
-  - Random number generator (RNG) type: mt19937
-  - Using 8 threads.
-  ---- row 2 complete, 5 left to go
-  ---- row 3 complete, 4 left to go
-  ---- row 4 complete, 3 left to go
+  - Random number generator (RNG) type: ranlxs1
+  - Basic RNG seed: 1652884540
+  - Using 12 threads.
+  ---- row 3 complete, 5 left to go
+  ---- row 4 complete, 4 left to go
+  ---- row 6 complete, 3 left to go
   ---- row 5 complete, 2 left to go
   ---- ./0_cat_profiles.fits created.
-  ---- row 0 complete, 1 left to go
-  ---- row 1 complete, 0 left to go
-  - ./cat_profiles.fits created.                       0.041651 seconds
+  ---- row 1 complete, 1 left to go
+  ---- row 2 complete, 0 left to go
+  - ./cat_profiles.fits created.                       0.092573 seconds
   -- Output: ./cat_profiles.fits
-MakeProfiles finished in 0.267234 seconds
+MakeProfiles finished in 0.293644 seconds
+@end example
 
-$ls
-0_cat_profiles.fits cat_profiles.fits  cat.txt
+Sufi encourages the student to read through the printed output.
+As the statements say, two FITS files should have been created in the running directory.
+So Sufi ran the command below to confirm:
+
+@example
+$ ls
+0_cat_profiles.fits  cat_profiles.fits  cat.txt
 @end example
 
 @cindex Oversample
 @noindent
 The file @file{0_cat_profiles.fits} is the PSF Sufi had asked for, and @file{cat_profiles.fits} is the image containing the main objects in the catalog.
-The size of @file{cat_profiles.fits} was surprising for the student, instead of 499 by 499 (as we had requested), it was 2615 by 2615 pixels (from the command below):
+Sufi opened the main image with the command below (using SAO DS9):
 
 @example
-$ astfits cat_profiles.fits -h1 | grep NAXIS
+$ astscript-fits-view cat_profiles.fits --ds9scale=95
+@end example
+
+The student could clearly see the main elliptical structure in the center.
+However, the size of @file{cat_profiles.fits} was surprising for the student, instead of 499 by 499 (as we had requested), it was 2615 by 2615 pixels (from the command below):
+
+@example
+$ astfits cat_profiles.fits
+Fits (GNU Astronomy Utilities) @value{VERSION}
+Run on Sat Oct  6 16:26:58 953
+-----
+HDU (extension) information: 'cat_profiles.fits'.
+ Column 1: Index (counting from 0, usable with '--hdu').
+ Column 2: Name ('EXTNAME' in FITS standard, usable with '--hdu').
+ Column 3: Image data type or 'table' format (ASCII or binary).
+ Column 4: Size of data in HDU.
+-----
+0      MKPROF-CONFIG   no-data         0
+1      Mock profiles   float32         2615x2615
 @end example
 
 @noindent
@@ -1892,7 +2060,6 @@ So Sufi explained why oversampling is important in modeling, especially for part
 Recall that when you oversample the model (for example by 5 times), for every desired pixel, you get 25 pixels (@mymath{5\times5}).
 Sufi then explained that after convolving (next step below) we will down-sample the image to get our originally desired size/resolution.
 
-Sufi then opened @code{cat_profiles.fits} [you can use any FITS viewer, for example, @command{ds9}].
 After seeing the image, the student complained that only the large elliptical model for the Andromeda nebula can be seen in the center.
 He couldn't see the four stars that we had also requested in the catalog.
 So Sufi had to explain that the stars are there in the image, but the reason that they aren't visible when looking at the whole image at once, is that they only cover a single pixel!
@@ -1917,13 +2084,15 @@ Convolve started on Sat Oct  6 16:35:32 953
   - Padded parts removed.                              0.016767 seconds
   - Output: cat_convolved.fits
 Convolve finished in:  10.422161 seconds
-
-$ls
-0_cat_profiles.fits  cat_convolved.fits  cat_profiles.fits  cat.txt
 @end example
 
 @noindent
-When convolution finished, Sufi opened @file{cat_convolved.fits} and the four stars could be easily seen now.
+When convolution finished, Sufi opened @file{cat_convolved.fits} and the four stars could be easily seen now:
+
+@example
+$ astscript-fits-view cat_convolved.fits --ds9scale=95
+@end example
+
 It was interesting for the student that all the flux in that single pixel is now distributed over so many pixels (the sum of all the pixels in each convolved star is actually equal to the value of the single pixel before convolution).
 Sufi explained how a PSF with a larger FWHM would make the points even wider than this (distributing their flux in a larger area).
 With the convolved image ready, they were prepared to re-sample it to the original pixel scale Sufi had planned [from the @command{$ astmkprof -P} command above, recall that MakeProfiles had over-sampled the image by 5 times].
@@ -1939,31 +2108,26 @@ Warp started on Sat Oct  6 16:51:59 953
         0.0000   0.2000   0.4000
         0.0000   0.0000   1.0000
 
-$ ls
-0_cat_profiles.fits       cat_convolved_scaled.fits     cat.txt
-cat_convolved.fits  cat_profiles.fits
-
-$ astfits -p cat_convolved_scaled.fits | grep NAXIS
-NAXIS   =                    2 / number of data axes
-NAXIS1  =                  523 / length of data axis 1
-NAXIS2  =                  523 / length of data axis 2
+$ astfits cat_convolved_scaled.fits --quiet
+0      WARP-CONFIG     no-data         0
+1      Warped          float32         523x523
 @end example
 
 @noindent
 @file{cat_convolved_scaled.fits} now has the correct pixel scale.
-However, the image is still larger than what we had wanted, it is 523 (@mymath{499+12+12}) by 523 pixels.
+However, the image is still larger than what we had wanted, it is @mymath{523\times523} pixels (not our desired @mymath{499\times499}).
 The student is slightly confused, so Sufi also re-samples the PSF with the same scale by running
 
 @example
 $ astwarp --scale=1/5 --centeroncorner 0_cat_profiles.fits
-$ astfits -p 0_cat_profiles_scaled.fits | grep NAXIS
-NAXIS   =                    2 / number of data axes
-NAXIS1  =                   25 / length of data axis 1
-NAXIS2  =                   25 / length of data axis 2
+$ astfits 0_cat_profiles_scaled.fits --quiet
+0      WARP-CONFIG     no-data         0
+1      Warped          float32         25x25
 @end example
 
 @noindent
-Sufi notes that @mymath{25=(2\times12)+1} and goes on to explain how frequency space convolution will dim the edges and that is why he added the @option{--prepforconv} option to MakeProfiles, see @ref{If convolving afterwards}.
+Sufi notes that @mymath{25=12+12+1} and that @mymath{523=499+12+12}.
+He goes on to explain that frequency space convolution will dim the edges and that is why he added the @option{--prepforconv} option to MakeProfiles above.
 Now that convolution is done, Sufi can remove those extra pixels using Crop with the command below.
 Crop's @option{--section} option accepts coordinates inclusively and counting from 1 (according to the FITS standard), so the crop region's first pixel has to be 13, not 12.
 
@@ -1974,39 +2138,44 @@ Crop started on Sat Oct  6 17:03:24 953
   - Read metadata of 1 image.                          0.001304 seconds
   ---- ...nvolved_scaled_cropped.fits created: 1 input.
 Crop finished in:  0.027204 seconds
-
-$ls
-0_cat_profiles.fits cat_convolved_scaled_cropped.fits cat_profiles.fits
-cat_convolved.fits  cat_convolved_scaled.fits   cat.txt
 @end example
 
 @noindent
-Finally, @file{cat_convolved_scaled_cropped.fits} is @mymath{499\times499} pixels and the mock Andromeda galaxy is centered on the central pixel (open the image in a FITS viewer and confirm this by zooming into the center, note that an even-width image wouldn't have a central pixel).
+To fully convince the student, Sufi checks the size of the output of the crop command above:
+
+@example
+$ astfits cat_convolved_scaled_cropped.fits --quiet
+0      n/a             no-data         0
+1      n/a             float32         499x499
+@end example
+
+@noindent
+Finally, @file{cat_convolved_scaled_cropped.fits} is @mymath{499\times499} pixels and the mock Andromeda galaxy is centered on the central pixel.
 This is the same dimensions as Sufi had desired in the beginning.
 All this trouble was certainly worth it because now there is no dimming on the edges of the image and the profile centers are more accurately sampled.
 
 The final step to simulate a real observation would be to add noise to the image.
 Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a magnitude of 7 that night.
 For more on how the background value determines the noise, see @ref{Noise basics}.
-So using these values he ran MakeNoise:
+So using these values he ran MakeNoise, and with the second command, he visually inspected the image.
 
 @example
 $ astmknoise --zeropoint=18 --background=7 --output=out.fits    \
              cat_convolved_scaled_cropped.fits
-MakeNoise started on Sat Oct  6 17:05:06 953
+MakeNoise @value{VERSION} started on Sat Oct  6 17:05:06 953
   - Generator type: ranlxs1
   - Generator seed: 1428318100
 MakeNoise finished in:  0.033491 (seconds)
 
-$ls
-0_cat_profiles.fits cat_convolved_scaled_cropped.fits cat_profiles.fits
-cat_convolved.fits   cat_convolved_scaled.fits    cat.txt  out.fits
+$ astscript-fits-view out.fits
 @end example
 
 @noindent
 The @file{out.fits} file now contains the noised image of the mock catalog Sufi had asked for.
+The student hadn't observed the nebula in the sky, so when he saw the mock image in SAO DS9 (with the second command above), he understood why Sufi was dubious: it was very diffuse!
+
 Seeing how the @option{--output} option allows the user to specify the name of the output file, the student was confused and wanted to know why Sufi hadn't used it more regularly before?
-Sufi then explained to him that for intermediate steps, you can rely on the automatic output of the programs, see @ref{Automatic output}.
+Sufi explained that for intermediate steps, you can rely on the automatic output of the programs (see @ref{Automatic output}).
 Doing so will give all the intermediate files a similar basic name structure, so in the end you can simply remove them all with the Shell's capabilities, and it will be familiar for other users.
 So Sufi decided to show this to the student by making a shell script from the commands he had used before.
 
@@ -2056,10 +2225,11 @@ rm 0*.fits "$base"*.fits
 @end example
 
 @cindex Comments
-He used this chance to remind the student of the importance of comments in code or shell scripts: when writing the code, you have a good mental picture of what you are doing, so writing comments might seem superfluous and excessive.
+He used this chance to remind the student of the importance of comments in code or shell scripts!
+Just like metadata in a dataset, when writing the code, you have a good mental picture of what you are doing, so writing comments might seem superfluous and excessive.
 However, in one month when you want to re-use the script, you have lost that mental picture and remembering it can be time-consuming and frustrating.
 The importance of comments is further amplified when you want to share the script with a friend/colleague.
-So it is good to accompany any script/code with useful comments while you are writing it (create a good mental picture of what/why you are doing something).
+So it is good to accompany any step of a script, or code, with useful comments while you are writing it (create a good mental picture of why you are doing something: don't just describe the command, but its purpose).
 
 @cindex Gedit
 @cindex GNU Emacs
@@ -2089,11 +2259,25 @@ The student was also happy to hear that he won't need to make it executable agai
 The student was really excited, since now, through simple shell scripting, he could really speed up his work and run any command in any fashion he likes allowing him to be much more creative in his works.
 Until now he was using the graphical user interface which doesn't have such a facility and doing repetitive things on it was really frustrating and some times he would make mistakes.
 So he left to go and try scripting on his own computer.
+He later reminded Sufi that the second tutorial in the Gnuastro book as more complex commands in data analysis, and a more advanced introduction to scripting (see @ref{General program usage tutorial}).
 
 Sufi could now get back to his own work and see if the simulated nebula which resembled the one in the Andromeda constellation could be detected or not.
 Although it was extremely faint@footnote{The brightness of a diffuse object is added over all its pixels to give its final magnitude, see @ref{Brightness flux magnitude}.
 So although the magnitude 3.44 (of the mock nebula) is orders of magnitude brighter than 6 (of the stars), the central galaxy is much fainter.
-Put another way, the brightness is distributed over a large area in the case of a nebula.}, fortunately it passed his detection tests and he wrote it in the draft manuscript that would later become ``Book of fixed stars''.
+Put another way, the brightness is distributed over a large area in the case of a nebula.}.
+Therefore, Sufi ran Gnuastro's detection software (@ref{NoiseChisel}) to see if this object is detectable or not.
+NoiseChisel's output (@file{out_detected.fits}) is a multi-extension FITS file, so he used Gnuastro's @command{astscript-fits-view} program in the second command to see the output:
+
+@example
+$ astnoisechisel out.fits
+
+$ astscript-fits-view out_detected.fits
+@end example
+
+In the ``Cube'' window (that was opened with DS9), if Sufi clicked on the ``Next'' button to see the pixels that were detected to contain significant signal.
+Fortuantely the nebula's shape was detectable and he cound finally confirm that the nebula he kept in his notebook was actually observable.
+He wrote this result in the draft manuscript that would later become ``Book of fixed stars''@footnote{@url{https://en.wikipedia.org/wiki/Book_of_Fixed_Stars}}.
+
 He still had to check the other nebula he saw from Yemen and several other such objects, but they could wait until tomorrow (thanks to the shell script, he only has to define a new catalog).
 It was nearly sunset and they had to begin preparing for the night's measurements on the ecliptic.
 
