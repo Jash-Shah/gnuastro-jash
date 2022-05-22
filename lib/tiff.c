@@ -50,7 +50,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
  *************************************************************/
 #ifndef HAVE_LIBTIFF
 static void
-tiff_error_no_litiff(char *func)
+tiff_error_no_litiff(const char *func)
 {
   error(EXIT_FAILURE, 0, "%s: libtiff was not found during the "
         "configuration of %s on this system. To read from TIFF files, "

@@ -74,7 +74,7 @@ jpeg_error_exit(j_common_ptr cinfo)
 #else
 
 static void
-jpeg_error_no_libjpeg(char *func)
+jpeg_error_no_libjpeg(const char *func)
 {
   error(EXIT_FAILURE, 0, "%s: libjpeg was not found during the "
         "configuration of %s on this system. To read from JPEG files, "
