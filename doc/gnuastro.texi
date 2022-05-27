@@ -12670,8 +12670,8 @@ With this option you can change (decrease) the maximum value.
 By doing so you will decrease the dynamic range.
 It can be useful if you plan to use those values for other purposes.
 
-@item -A INT
-@itemx --forcemin=INT
+@item -A
+@itemx --forcemin
 Enforce the value of @option{--fluxlow} (when its given), even if its smaller than the minimum of the dataset and the output is format supporting color.
 This is particularly useful when you are converting a number of images to a common image format like JPEG or PDF with a single command and want them all to have the same range of colors, independent of the contents of the dataset.
 Note that if the minimum value is smaller than @option{--fluxlow}, then this option is redundant.
@@ -12683,8 +12683,8 @@ By default, when the dataset only has two values, @emph{and} the output format i
 This can greatly help reduce the file size.
 However, when @option{--fluxlow} or @option{--fluxhigh} are called, this optimization is disabled: even though there are only two values (is binary), the difference between them does not correspond to the full contrast of black and white.
 
-@item -B INT
-@itemx --forcemax=INT
+@item -B
+@itemx --forcemax
 Similar to @option{--forcemin}, but for the maximum.
 
 
