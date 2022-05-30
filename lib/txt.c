@@ -352,6 +352,12 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
   /* Go over the line check/fill the column information. */
   while(++ncol)
     {
+      /* If 'line' has already passed the end of the actual string (for
+         example when a string column is the last one and its declared
+         width is larger than the actual number of characters it has in
+         that line). */
+      if(line>=end) break;
+
       /* When we are dealing with a text table, check if there is
          information for this column. For a text image, only the number of
          tokens is important (as the second dimension of the image), so
@@ -361,7 +367,6 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
           { if(col->status==ncol) break; }
       else
         col=NULL;
-
 
       /* If there is information for this column, then check if it is a
          string, and if so, don't use 'strtok_r' (because it might have
@@ -378,18 +383,19 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
               /* Increment line to the end of the string. */
               line = (token=line) + col->disp_width;
 
-              /* If we haven't reached the end of the line, then set a NULL
-                 character where the string ends, so we can use the
-                 token. VERY IMPORTANT: this should not be '<=end'. If the
-                 given width is larger than line, there is no problem, the
-                 '\0' of the line will also be used to end this last
-                 column.*/
+              /* If we haven't reached the end of the line (so 'line<end'),
+                 then set a NULL character where the current token is
+                 expected to end. In this way, we can use the token (while
+                 preserving the line for the rest of the 'while'
+                 loop). VERY IMPORTANT: to do this, 'line' should not be
+                 '<=end'. If the given width is larger than line, there is
+                 no problem, the '\0' of the line will also be used to end
+                 this last column.*/
               if(line<end)
                 {
                   *line++='\0';
                   /* printf(" col %zu: -%s-\n", i, token); */
                 }
-              else break;
             }
           else
             {
@@ -432,7 +438,6 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
             }
         }
     }
-
 
   /* When looking at a text table, 'n' is the number of columns (elements
      in the linked list). But when looking at an image, it is the size of

@@ -90,6 +90,9 @@ See the end of the file for license conditions.
               Eskandarlou.
   bug #62429: Segment prints one line status-progress line when called with
               '--quiet'. Reported by Teet Kuutma.
+  bug #62548: Table doesn't recognize plain-text string column when defined
+              width is larger and it is the last column. Found with the
+              help of Sepideh Eskandarlou.
 
 
 
