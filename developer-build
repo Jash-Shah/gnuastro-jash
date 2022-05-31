@@ -9,6 +9,7 @@
 #   Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
 #   Mosè Giordano <mose@gnu.org>
+#   Raul Infante-Sainz <infantesainz@gmail.com>
 #   Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 # Copyright (C) 2016-2022 Free Software Foundation, Inc.
 #
@@ -47,7 +48,49 @@ upload=0
 install=0
 valgrind=0
 prefix=/usr/local
-top_build_dir=/dev/shm
+
+
+
+
+
+# See if we are on a Linux-based system
+# --------------------------------------
+#
+# Some features are tailored to GNU/Linux systems, while the BSD-based
+# behavior is different. Initially we only tested macOS (hence the name of
+# the variable), but as FreeBSD is also being included in our tests. As
+# more systems get used, we need to tailor these kinds of things better.
+# Here we set the temporary directory.
+kernelname=$(uname -s)
+if [ x$kernelname = xLinux ]; then
+    top_build_dir=/dev/shm
+
+elif [ x$kernelname = xDarwin ]; then
+    top_build_dir=/tmp
+
+else
+    cat <<EOF
+______________________________________________________
+!!!!!!!                 WARNING                !!!!!!!
+
+Gnuastro has been tested on GNU/Linux and Darwin (macOS) systems. But, it
+seems that the current system is not GNU/Linux or Darwin (macOS). If you
+notice any problem during the configure phase, please contact us with this
+web-form:
+
+    https://savannah.gnu.org/support/?group=gnuastro&func=additem
+
+The configuration will continue in 10 seconds...
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+EOF
+    sleep 10
+fi
+
+
+
+
+
 if [ -f .version ]; then
     version=$(cat .version)
 else
@@ -349,10 +392,26 @@ srcdir=$(pwd)
 
 
 
-# Set the number of jobs.
+# Set the number of jobs
+# ----------------------
+#
+# If the user hasn't manually specified the number of threads, see if we
+# can deduce it from the host:
+#  - On systems with GNU Coreutils we have 'nproc'.
+#  - On BSD-based systems (for example FreeBSD and macOS), we have a
+#    'hw.ncpu' in the output of 'sysctl'.
+#  - When none of the above work, just set the number of threads to 1.
 if [ $jobs = 0 ]; then
-    jobs=$(nproc)
+    if type nproc > /dev/null 2> /dev/null; then
+        jobs=$(nproc --all);
+    else
+        jobs=$(sysctl -a | awk '/^hw\.ncpu/{print $2}')
+        if [ x"$jobs" = x ]; then jobs=1; fi
+    fi
+else
+    jobs=1
 fi
+
 
 
 
