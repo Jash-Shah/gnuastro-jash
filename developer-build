@@ -51,40 +51,16 @@ prefix=/usr/local
 
 
 
-
-
-# See if we are on a Linux-based system
-# --------------------------------------
-#
-# Some features are tailored to GNU/Linux systems, while the BSD-based
-# behavior is different. Initially we only tested macOS (hence the name of
-# the variable), but as FreeBSD is also being included in our tests. As
-# more systems get used, we need to tailor these kinds of things better.
-# Here we set the temporary directory.
-kernelname=$(uname -s)
-if [ x$kernelname = xLinux ]; then
+# Check and set the temporary directory
+if [ -d /dev/shm ]; then
     top_build_dir=/dev/shm
 
-elif [ x$kernelname = xDarwin ]; then
+elif [ -d /tmp ]; then
     top_build_dir=/tmp
 
 else
-    cat <<EOF
-______________________________________________________
-!!!!!!!                 WARNING                !!!!!!!
+    top_build_dir=.
 
-Gnuastro has been tested on GNU/Linux and Darwin (macOS) systems. But, it
-seems that the current system is not GNU/Linux or Darwin (macOS). If you
-notice any problem during the configure phase, please contact us with this
-web-form:
-
-    https://savannah.gnu.org/support/?group=gnuastro&func=additem
-
-The configuration will continue in 10 seconds...
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-EOF
-    sleep 10
 fi
 
 
