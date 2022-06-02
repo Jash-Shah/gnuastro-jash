@@ -356,9 +356,9 @@ all-local: bin/completion.bash
 	 echo "Gnuastro $(VERSION), was successfully built.";                        \
 	 echo "Please check the build on your system by running:";                   \
 	 echo;                                                                       \
-	 echo "    make check -j8";                                                  \
+	 echo "    make check -j$(SUGGESTEDJOBS)";                                   \
 	 echo;                                                                       \
-	 echo "(You can change the 8 to the number of CPU threads available.)";      \
+	 echo "(You can change the $(SUGGESTEDJOBS) to any number of CPU threads.)"; \
 	 echo "(The following \"Leaving directory\" notices can be ignored.)";       \
 	 echo "==================================================================="; \
 	 echo "==================================================================="; \

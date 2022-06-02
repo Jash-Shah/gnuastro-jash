@@ -76,6 +76,24 @@ LT_INIT
 
 
 
+# Check the number of jobs. Depending on the operative system (GNU/Linux or
+# macOS), the way of getting the number of cores is different. If the
+# number of cores can not be obtained, set it to 8.
+AC_CHECK_PROG(has_nproc, nproc, [yes], [no])
+AS_IF([test $has_nproc = yes],
+      [jobs=$(nproc --all)],
+      [
+        AC_CHECK_PROG(has_sysctl, sysctl, [yes], [no])
+        AS_IF([test $has_sysctl = yes],
+              [jobs=$(sysctl -a | awk '/^hw\.ncpu/{print $2}')],
+              [jobs=8])
+      ])
+AC_SUBST(SUGGESTEDJOBS, [$jobs])
+
+
+
+
+
 # This macro will let the libraries know that we are now in the Gnuastro
 # build system, not on the user's system. While we are building Gnuastro,
 # we have the important installation information in 'config.h'. But in the
@@ -1304,9 +1322,9 @@ AS_IF([test x$enable_guide_message = xyes],
      )
   AS_ECHO(["To build Gnuastro $PACKAGE_VERSION, please run:"])
   AS_ECHO([])
-  AS_ECHO(["    make -j8"])
+  AS_ECHO(["    make -j$jobs"])
   AS_ECHO([])
-  AS_ECHO(["(You can change the 8 to the number of CPU threads available.)"])
+  AS_ECHO(["(You can change the $jobs to any number of CPU threads.)"])
   AS_ECHO(["(Configure with '--disable-guide-message' for no messages.)"])
   AS_ECHO(["(Please be patient, some libraries can take a few minutes to compile.)"])
   AS_ECHO([=======================================================================])
