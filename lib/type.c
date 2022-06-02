@@ -582,8 +582,13 @@ gal_type_string_to_number(char *string, uint8_t *type)
      force a float and this loop is necessary in such cases. */
   for(c=string; *c!='\0'; ++c) if(*c=='.') { forcedfloat=1; break; }
 
-  /* See if the number is actually an integer: */
-  if( forcedfloat==0 && ceil(d) == d )
+  /* Read the number as an integer if 1) we aren't in forced-float mode, 2)
+     the number is actually an integer ('ceil(d)==d'), and 3) the number
+     fits within interger limits: the maximum value of an unsigned 64-bit
+     integer is ~1.8e19, and the minimum value of a signed 64-bit integer
+     is ~9.2e-18), see the "Numeric data types" section of Gnuastro's
+     book. */
+  if( forcedfloat==0 && ceil(d) == d && d<1.8e19f && d>-1.8e19f )
     {
       /* We know the number is an integer, so we should re-read it again,
          but this time, as an integer, because: 1) floating point numbers
@@ -593,10 +598,20 @@ gal_type_string_to_number(char *string, uint8_t *type)
          secondary because the parsing itself takes more time! */
       l=strtol(string, &tailptr, 0);
       if(*tailptr!='\0')
-        error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
-              "to fix this problem. The string '%s' couldn't be "
-              "parsed with 'strtol', but was parsed by 'strtod'",
-              __func__, PACKAGE_BUGREPORT, string);
+        {
+          /* If 'tailptr' is simply an 'e', the input string was in
+             scientific notation (for example '1e5'). In such cases, the
+             number of decimals is (usually!) enough to fit in a double,
+             and we can simply put the value of 'd' in 'l'. Note that with
+             'ceil(d)==d' we have confirmed that the number is actually an
+             integer (and not a float). */
+          if(*tailptr=='e') l=d;
+          else
+            error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                  "%s to fix this problem. The string '%s' couldn't "
+                  "be parsed with 'strtol', but was parsed by 'strtod'",
+                  __func__, PACKAGE_BUGREPORT, string);
+        }
 
       /* If the number is negative, put it in the signed types (based on
          its value). If its zero or positive, then put it in the unsigned
