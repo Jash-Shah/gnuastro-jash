@@ -93,6 +93,8 @@ See the end of the file for license conditions.
   bug #62548: Table doesn't recognize plain-text string column when defined
               width is larger and it is the last column. Found with the
               help of Sepideh Eskandarlou.
+  bug #62563: Some checks of installed scripts get skipped on macOS. Found
+              and fixed by Raul Infante-Sainz.
   bug #62564: Arithmetic not parsing numbers in scientific notation (for
               example '1e5'). Found by Elham Saremi.
 

@@ -585,10 +585,10 @@ gal_type_string_to_number(char *string, uint8_t *type)
   /* Read the number as an integer if 1) we aren't in forced-float mode, 2)
      the number is actually an integer ('ceil(d)==d'), and 3) the number
      fits within interger limits: the maximum value of an unsigned 64-bit
-     integer is ~1.8e19, and the minimum value of a signed 64-bit integer
-     is ~9.2e-18), see the "Numeric data types" section of Gnuastro's
-     book. */
-  if( forcedfloat==0 && ceil(d) == d && d<1.8e19f && d>-1.8e19f )
+     integer is almost 1.8e19, and the minimum value of a signed 64-bit
+     integer is almost -9.2e18), see the "Numeric data types" section of
+     Gnuastro's book. */
+  if( forcedfloat==0 && ceil(d) == d && d<1.8e19f && d>-9.2e18f )
     {
       /* We know the number is an integer, so we should re-read it again,
          but this time, as an integer, because: 1) floating point numbers
