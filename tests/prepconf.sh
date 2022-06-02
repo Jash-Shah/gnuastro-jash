@@ -101,9 +101,18 @@ done
 
 
 
-# Extract all the executable files in the build directory for 'astscripts'
-# and put a link to them in the temporary directory for all Gnuastro
-# executables. This is because some 'astscript-*'s depend on others.
-for f in $(find $topbuild/bin/script/ -type f -perm /111); do
-    ln -sf $f $progbdir/
+# Extract all the intalled script filenames from the
+# 'bin/script/Makefile.am' and put a link to them in the temporary
+# directory for all Gnuastro executables. This is because some
+# 'astscript-*'s depend on others.
+#
+# Initially we were using 'find' to obtain the script names, but it has
+# portability problems between GNU/Linux and macOS. So we just parse the
+# Makefile.am to obtain them.
+scriptnames=$($AWK '/^bin_SCRIPTS/{parse=1; printf "%s ", $3} \
+                    parse==1 && $1~/^astscript/{printf "%s ", $1; \
+                                                if($2=="") parse=0}' \
+                   $topsrc/bin/script/Makefile.am)
+for f in $scriptnames; do
+    ln -sf $topbuild/bin/script/$f $progbdir/
 done
