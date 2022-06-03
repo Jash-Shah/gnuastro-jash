@@ -367,17 +367,26 @@ fi
 # If a stamp width (--stampwidth) is not given at all.
 if [ x"$stampwidth" = x ]; then
     cat <<EOF
-$scriptname: no stamp width provided. A stamp size (width) has to be specified with '--stampwidth' (or '-w')
+$scriptname: no stamp width provided. A stamp size (width) has to be specified with '--stampwidth' (or '-W')
 EOF
     exit 1
 fi
 
-# If center coordinates (--center) is not given at all.
+# If center coordinates (--center) is not given, assume it is centered.
 if [ x"$center" = x ]; then
+    # Find the size of the image
+    xsize=$(astfits $inputs --hdu=$hdu --keyvalue=NAXIS1 --quiet)
+    ysize=$(astfits $inputs --hdu=$hdu --keyvalue=NAXIS2 --quiet)
+
+    # Find the center of the image
+    xcoord=$(echo $xsize | awk '{if($1%2) print int($1/2); else print int($1/2)+1}')
+    ycoord=$(echo $ysize | awk '{if($1%2) print int($1/2); else print int($1/2)+1}')
+
+    # The center has been computed in pixels, assume pixel coordinates mode
+    mode=img
     cat <<EOF
-$scriptname: no center coordinates provided. Please use '--center' ('-c') to give the central coordinates
+$scriptname: warning: no center provided (--center). Considering that the center of the image is: (x,y)=($xcoord,$ycoord)
 EOF
-    exit 1
 else
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$ncenter != x2 ]; then
@@ -386,12 +395,15 @@ $scriptname: '--center' (or '-c') only take two values, but $ncenter were given 
 EOF
         exit 1
     fi
+    # Obtain the coordinates of the center.
+    xcoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
+    ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 fi
 
 # If a normalization range is not given at all.
 if [ x"$normradii" = x ]; then
     cat <<EOF
-$scriptname: warning: no ring of normalization provided. the stamp won't be normalized
+$scriptname: warning: no ring of normalization provided (--normradii). The stamp won't be normalized
 EOF
 else
     nnormradii=$(echo $normradii | awk 'BEGIN{FS=","}END{print NF}')
@@ -401,19 +413,15 @@ $scriptname: '--normradii' (or '-n') only take two values, but $nnormradii were 
 EOF
         exit 1
     fi
+    # Obtain the minimum/maximum normalization radii.
+    normradiusmin=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $1}')
+    normradiusmax=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $2}')
 fi
-
-# If mode (--mode) is not given at all.
-if [ x"$mode" = x ]; then
-    cat <<EOF
-$scriptname: no coordinate mode provided. The '--mode' ('-O') takes one of the following two values: 'img' (for pixel coordinates) or 'wcs' (for celestial coordinates)
-EOF
-    exit 1
 
 # Make sure the value to '--mode' is either 'wcs' or 'img'. Note: '-o'
 # means "or" and is preferred to '[ ] || [ ]' because only a single
 # invocation of 'test' is done. Run 'man test' for more.
-elif [ "$mode" = wcs     -o      $mode = "img" ]; then
+if [ "$mode" = wcs     -o      $mode = "img" ]; then
     junk=1
 else
     cat <<EOF
@@ -421,25 +429,6 @@ $scriptname: value to '--mode' (or '-O') is not recognized ('$mode'). This optio
 EOF
     exit 1
 fi
-
-
-
-
-
-# Basic parameters: coordinates and normalization radii
-# -----------------------------------------------------
-#
-# Obtain the coordinates of the center as well as the normalization radii
-# ring from the command line arguments.
-xcoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
-ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
-
-normradiusmin=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $1}')
-normradiusmax=$(echo "$normradii" | awk 'BEGIN{FS=","} {print $2}')
-
-# With the center coordinates, generate a specific label for the object
-# consisting in its coordinates.
-objectid="$xcoord"_"$ycoord"
 
 
 
@@ -457,8 +446,9 @@ objectid="$xcoord"_"$ycoord"
 # The final output stamp is also defined here if the user does not provide
 # an explicit name. If the user has defined a specific path/name for the
 # output, it will be used for saving the output file. If the user does not
-# specify a output name, then a default value containing the center and
-# mode will be generated.
+# specify a output name, then a default value containing the center will be
+# generated.
+objectid="$xcoord"_"$ycoord"
 bname_prefix=$(basename "$inputs" | sed 's/\.fits/ /' | awk '{print $1}')
 if [ x"$tmpdir" = x ]; then \
   tmpdir=$(pwd)/"$bname_prefix"_stamp
