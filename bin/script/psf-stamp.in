@@ -98,7 +98,7 @@ $scriptname options:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
-  -W, --stampwidth=INT    Width of the stamp in pixels.
+  -W, --stampwidth=INT,INT Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the normalization value.
   -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
@@ -364,20 +364,14 @@ elif [ ! -f "$inputs" ]; then
     exit 1
 fi
 
-# If a stamp width (--stampwidth) is not given at all.
-if [ x"$stampwidth" = x ]; then
-    cat <<EOF
-$scriptname: no stamp width provided. A stamp size (width) has to be specified with '--stampwidth' (or '-W')
-EOF
-    exit 1
-fi
+# Find the size of the image and check if it is an odd or even number
+xsize=$(astfits $inputs --hdu=$hdu --keyvalue=NAXIS1 --quiet)
+ysize=$(astfits $inputs --hdu=$hdu --keyvalue=NAXIS2 --quiet)
+xsizetype=$(echo $xsize | awk '{if($1%2) print "odd"; else print "even"}')
+ysizetype=$(echo $ysize | awk '{if($1%2) print "odd"; else print "even"}')
 
 # If center coordinates (--center) is not given, assume it is centered.
 if [ x"$center" = x ]; then
-    # Find the size of the image
-    xsize=$(astfits $inputs --hdu=$hdu --keyvalue=NAXIS1 --quiet)
-    ysize=$(astfits $inputs --hdu=$hdu --keyvalue=NAXIS2 --quiet)
-
     # Find the center of the image
     xcoord=$(echo $xsize | awk '{if($1%2) print int($1/2); else print int($1/2)+1}')
     ycoord=$(echo $ysize | awk '{if($1%2) print int($1/2); else print int($1/2)+1}')
@@ -385,7 +379,7 @@ if [ x"$center" = x ]; then
     # The center has been computed in pixels, assume pixel coordinates mode
     mode=img
     cat <<EOF
-$scriptname: warning: no center provided (--center). Considering that the center of the image is: (x,y)=($xcoord,$ycoord)
+$scriptname: warning: no center provided ('--center' or '-c'). Considering that the center of the image is $xcoord,$ycoord
 EOF
 else
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
@@ -398,6 +392,56 @@ EOF
     # Obtain the coordinates of the center.
     xcoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $1}')
     ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
+fi
+
+# If a stamp width (--stampwidth) is not given, assume the same size than
+# the input.  If the input image has an odd number of pixels, it is fine.
+# Otherwise, if the input image has an even number of pixels, then it has
+# to be cropped around the center position and the size will be set to an
+# odd number of pixels. In this case print a warnings.
+if [ x"$stampwidth" = x ]; then
+
+    if [ x"$xsizetype" = xeven ]; then
+        xstampwidth=$(echo $xsize | awk '{print $1+1}')
+        cat <<EOF
+$scriptname: warning: the image along the first dimension (NAXIS1) has an even number of pixels ($xsize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
+EOF
+    elif [ x"$xsizetype" = xodd ]; then
+        xstampwidth=$xsize
+    else
+        cat <<EOF
+$scriptname: warning: the size of the image along the first dimension (NAXIS1) can not be obtained
+EOF
+        exit 1
+    fi
+    if [ x"$ysizetype" = xeven ]; then
+        ystampwidth=$(echo $ysize | awk '{print $1+1}')
+        cat <<EOF
+$scriptname: warning: the image along the second dimension (NAXIS2) has an even number of pixels ($ysize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
+EOF
+    elif [ x"$ysizetype" = xodd ]; then
+        ystampwidth=$ysize
+    else
+        cat <<EOF
+$scriptname: warning: the size of the image along the second dimension (NAXIS2) can not be obtained
+EOF
+        exit 1
+    fi
+    cat <<EOF
+$scriptname: warning: no stamp width provided (--stampwidth or -W). Considering that the stamp width is $xstampwidth x $ystampwidth.
+EOF
+
+else
+    nstampwidth=$(echo $stampwidth | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$nstampwidth != x2 ]; then
+        cat <<EOF
+$scriptname: '--stampwidth' (or '-W') only take two values, but $nstampwidth were given in '$stampwidth'
+EOF
+        exit 1
+    fi
+    # Obtain the coordinates of the center.
+    xstampwidth=$(echo "$stampwidth" | awk 'BEGIN{FS=","} {print $1}')
+    ystampwidth=$(echo "$stampwidth" | awk 'BEGIN{FS=","} {print $2}')
 fi
 
 # If a normalization range is not given at all.
@@ -500,11 +544,12 @@ fi
 # so we are checking the output name here.
 cropped=$tmpdir/cropped-$objectid.fits
 astcrop $inputs --hdu=$hdu --mode=img \
+        --width=$xstampwidth,$ystampwidth \
         --center=$xcenter,$ycenter \
-        --width=$stampwidth --output=$cropped $quiet
+        --output=$cropped $quiet
 if ! [ -f $cropped ]; then
     cat <<EOF
-$scriptname: ERROR: the coordinate '$center' (in '$mode' mode) is not within the image (within $stampwidth pixels from the edges of the input image).
+$scriptname: ERROR: the coordinate '$center' (in '$mode' mode) is not within the image (within $xstampwidth x $ystampwidth pixels from the edges of the input image).
 EOF
     exit 1
 fi
@@ -604,10 +649,10 @@ EOF
       cropobj=$tmpdir/cropped-objects-$objectid.fits
       astcrop $segment --hdu=OBJECTS --mode=img \
               --center=$xcenter,$ycenter \
-              --width=$stampwidth --output=$cropobj $quiet
+              --width=$xstampwidth,$ystampwidth --output=$cropobj $quiet
       astcrop $segment --hdu=CLUMPS --mode=img \
               --center=$xcenter,$ycenter \
-              --width=$stampwidth --output=$cropclp $quiet
+              --width=$xstampwidth,$ystampwidth --output=$cropclp $quiet
 
       # Mask all the undesired regions.
       cropped_masked=$tmpdir/cropped-masked-$objectid.fits
