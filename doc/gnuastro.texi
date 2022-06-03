@@ -148,9 +148,7 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 @subtitle
 @subtitle
 @subtitle
-@subtitle
-@subtitle
-@subtitle
+@subtitle @image{gnuastro-figures/gnuastro, 6cm} { } { } { } { } { } { } { } { } { } { } { } { } { } { } { } { } { } { }
 @subtitle
 @subtitle
 @end iftex
@@ -165,6 +163,7 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 @subtitle @url{http://akhlaghi.org/gnuastro-latest.tar.lz}
 @subtitle To stay up to date with Gnuastro's official releases, please subscribe to this mailing list:
 @subtitle @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}
+@subtitle
 @author Mohammad Akhlaghi
 
 @page
@@ -249,6 +248,7 @@ Introduction
 * Quick start::                 A quick start to installation.
 * Science and its tools::       Some philosophy and history.
 * Your rights::                 User rights.
+* Logo of Gnuastro::            Meaning behind Gnuastro's logo.
 * Naming convention::           About names of programs in Gnuastro.
 * Version numbering::           Understanding version numbers.
 * New to GNU/Linux?::           Suggested GNU/Linux distribution.
@@ -879,6 +879,7 @@ As discussed in @ref{Science and its tools} this is a founding principle of the 
 * Quick start::                 A quick start to installation.
 * Science and its tools::       Some philosophy and history.
 * Your rights::                 User rights.
+* Logo of Gnuastro::            Meaning behind Gnuastro's logo.
 * Naming convention::           About names of programs in Gnuastro.
 * Version numbering::           Understanding version numbers.
 * New to GNU/Linux?::           Suggested GNU/Linux distribution.
@@ -1101,7 +1102,7 @@ However many data we record and analyze, we may just keep repeating the same old
 
 
 
-@node Your rights, Naming convention, Science and its tools, Introduction
+@node Your rights, Logo of Gnuastro, Science and its tools, Introduction
 @section Your rights
 
 @cindex GNU Texinfo
@@ -1130,8 +1131,26 @@ If these programs are modified by someone else and passed on, we want their reci
 The full text of the licenses for the Gnuastro book and software can be respectively found in @ref{GNU General Public License}@footnote{Also available in @url{http://www.gnu.org/copyleft/gpl.html}} and @ref{GNU Free Doc. License}@footnote{Also available in @url{http://www.gnu.org/copyleft/fdl.html}}.
 
 
+@node Logo of Gnuastro, Naming convention, Your rights, Introduction
+@section Logo of Gnuastro
 
-@node Naming convention, Version numbering, Your rights, Introduction
+Gnuastro's logo is an abstract image of a @url{https://en.wikipedia.org/wiki/Barred_spiral_galaxy,barred spiral galaxy}.
+The galaxy is vertically cut in half: on the left side, the beauty of a contiguous galaxy image is visible.
+But on the right, the image gets pixelated, and we only see the parts that are within the pixels.
+The pixels that are more near to the center of the galaxy (which is brighter) are also larger.
+But as we follow the spiral arms (and get more distant from the center), the pixels get smaller (signifying less signal).
+
+This sharp distinction between the contiguous and pixelated view of the galaxy signifies the main struggle in science: in the ``real'' world, objects aren't pixelated or discrete and have no noise.
+However, when we observe nature, we are confined and constrained by the resolution of our data collection (CCD imager in this case).
+
+On the other hand, we read English text from the left and progress towards the right.
+This defins the positioning of the ``real'' and observed halfs of the galaxy: the no-noised and contiguous half (on the left) passes through our observing tools and becomes pixelated and noisy half (on the right).
+It is the job of scientific software like Gnuastro to help interpret the underlying mechanisms of the ``real'' universe from the pixelated and noisy data.
+
+Gnuastro's logo was designed by Marjan Akbari.
+The concept behind it was created after several design iterations with Mohammad Akhlaghi.
+
+@node Naming convention, Version numbering, Logo of Gnuastro, Introduction
 @section Naming convention
 
 @cindex Names, programs

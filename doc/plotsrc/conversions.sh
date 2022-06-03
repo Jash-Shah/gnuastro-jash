@@ -36,13 +36,16 @@ set -o errexit                  # Stop if a program returns false.
 
 
 
-# There should only be two types of files here:
+# There should only be three types of files here:
 #
 #     png: Files that were originally rasterized.
 #          Converts to eps and txt.
 #
 #     eps: vector graphics files.
 #          Converts to pdf, png and txt.
+#
+#     svg: Vector graphics files
+#          Converts to eps, pdf and png.
 FIGDIR=$1
 for FILENAME in $FIGDIR/*
 do
@@ -75,6 +78,18 @@ do
         if [ ! -f $OUTNAME ]; then
             epspdf $FILENAME
             convert -density 150 $FILENAME $OUTNAME
+        fi
+
+    # If we have an SVG file, its Gnuastro's logo. For this we will just
+    # build the EPS and PDF files.
+    elif [ $EXTENSION = "svg" ]; then
+        EPSNAME=$FIGDIR$BASENAME".eps"
+        PDFNAME=$FIGDIR$BASENAME".pdf"
+        if [ ! -f $EPSNAME ]; then
+            convert $FILENAME $EPSNAME
+        fi
+        if [ ! -f $PDFNAME ]; then
+            epspdf $EPSNAME
         fi
     else
         continue
