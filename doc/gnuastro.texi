@@ -25847,6 +25847,9 @@ Clumps (within the central object) that are not the central clump.
 @end itemize
 The result is that all objects and clumps that contaminate the central source are masked, while the diffuse flux of the central object remains.
 The size of the region that is used for identifying the central clump/object label can be specified by the option @option{--corewidth}, see below.
+The non masked object and clump labels are kept into the header of the output image.
+The keywords are @code{CLABEL} and @code{OLABEL}.
+If no segmentation image is used, then their values are set to @code{none}.
 
 @item -w INT
 @itemx --corewidth=INT
@@ -25864,6 +25867,8 @@ The operator for measuring the values within the ring defined by the option @opt
 The operator given to this option will be directly passed to the radial profile script @file{astscript-radial-profile}, see @ref{Generate radial profile}.
 As a consequence, all MakeCatalog measurements (median, mean, sigclip-mean, sigclip-number, etc.) can be used here.
 For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
+The final normalization value is saved into the header of the output image with the keyword @code{NORMVAL}.
+If no normalization is done, then the value is set to @code{1.0}.
 
 @item -Q FLT
 @itemx --axisratio=FLT

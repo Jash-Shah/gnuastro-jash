@@ -685,8 +685,24 @@ fi
 # will become 'float64' also, which will cause problems later when we want
 # to stack them together (some images will be 'float32', some 'float64').
 astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
-              --output=$output $quiet
+              float32 --output=$output $quiet
 
+
+
+
+
+# Keeping meta-data
+# -----------------
+#
+# Some meta-data are useful for later analysis and because of that, they
+# are kept into the header of the output file. The data kept are: object
+# and clump that were not masked and the normalization value. If not masks
+# were applied, then set the clump and object labels to 'none'.
+if [ x"$clab" = x ]; then clab="none"; fi
+if [ x"$olab" = x ]; then olab="none"; fi
+astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
+                --write=CLABEL,$clab,"CLUMP label that was not masked" \
+                --write=OLABEL,$olab,"OBJECT label that was not masked"
 
 
 
