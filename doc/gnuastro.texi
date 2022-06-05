@@ -7808,7 +7808,7 @@ To get a list of the non-version controlled files instead of deleting them, add 
 
 Besides the @file{bootstrap} and @file{bootstrap.conf}, the @file{bootstrapped/} directory and @file{README-hacking} file are also related to the bootstrapping process.
 The former hosts all the imported (bootstrapped) directories.
-Thus, in the version controlled source, it only contains a @file{REAME} file, but in the distributed tar-ball it also contains sub-directories filled with all bootstrapped files.
+Thus, in the version controlled source, it only contains a @file{README} file, but in the distributed tar-ball it also contains sub-directories filled with all bootstrapped files.
 @file{README-hacking} contains a summary of the bootstrapping process discussed in this section.
 It is a necessary reference when you haven't built this book yet.
 It is thus not distributed in the Gnuastro tarball.
