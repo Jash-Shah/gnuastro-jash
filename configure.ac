@@ -491,6 +491,20 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_LIBGIT2], [$has_libgit2],
 AS_IF([test "x$has_libgit2" = "x1"], [], [anywarnings=yes])
 
 
+
+
+
+# Check if the compiler works with static linking
+AS_IF([test "$lt_cv_prog_compiler_static_works" = no ],
+      [ AS_IF([test "$enable_shared" = no ],
+              [ anywarnings=yes;
+                enable_shared_disabled=yes ])
+        enable_shared=yes ])
+
+
+
+
+
 # End of library linking list
 # ---------------------------
 #
@@ -1287,6 +1301,13 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    found. TOPCAT is called by 'astscript-fits-view' to visually inspect"])
                AS_ECHO(["    astronomical tables. This doesn't affect the building of Gnuastro. So "])
                AS_ECHO(["    you can safely install it later (after building and installing Gnuasro)."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$enable_shared_disabled" = "xyes"],
+              [dependency_notice=yes
+               AS_ECHO(["  - Eventhough you have asked to enable the shared libraries, maybe using"])
+               AS_ECHO(["    the '--enable-debug' option, the compiler does not support it. So, we"])
+               AS_ECHO(["    are intentionally disabling this option."])
                AS_ECHO([]) ])
 
         # Notice for obtaining the optional dependencies using a package
