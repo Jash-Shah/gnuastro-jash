@@ -1572,9 +1572,10 @@ reversepolish(struct arithmeticparams *p)
 
 
   /* If the final data structure has more than one element, write it as a
-     FITS file. Otherwise, print it in the standard output. */
+     FITS file. Otherwise, if the user didn't call '--output', print it in
+     the standard output. */
   data=p->operands->data;
-  if(data->size==1 && data->ndim==1 && p->onedasimage==0)
+  if(data->size==1 && data->ndim==1 && p->outnamerequested==0)
     {
       /* Make the string to print the number. */
       printnum=gal_type_to_string(data->array, data->type, 0);

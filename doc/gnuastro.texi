@@ -16342,10 +16342,10 @@ $ astarithmetic img1.fits img2.fits img3.fits median                \
 
 Arithmetic's notation for giving operands to operators is fully described in @ref{Reverse polish notation}.
 The output dataset is last remaining operand on the stack.
-When the output dataset a single number, it will be printed on the command-line.
+When the output dataset a single number, and @option{--output} isn't called, it will be printed on the standard output (command-line).
 When the output is an array, it will be stored as a file.
 
-The name of the final file can be specified with the @option{--output} option, but if its not given, Arithmetic will use ``automatic output'' on the name of the first FITS image encountered to generate an output file name, see @ref{Automatic output}.
+The name of the final file can be specified with the @option{--output} option, but if its not given (and the output dataset has more than one element), Arithmetic will use ``automatic output'' on the name of the first FITS image encountered to generate an output file name, see @ref{Automatic output}.
 By default, if the output file already exists, it will be deleted before Arithmetic starts operation.
 However, this can be disabled with the @option{--dontdelete} option (see below).
 At any point during Arithmetic's operation, you can also write the top operand on the stack to a file, using the @code{tofile} or @code{tofilefree} operators, see @ref{Arithmetic operators}.
@@ -16410,13 +16410,15 @@ This is very important for obtaining reproducible results, for more see @ref{Gen
 
 @item -O
 @itemx --onedasimage
-When final dataset to write as output only has one dimension, write it as a FITS image/array.
+Write final dataset as a FITS image/array even if it has a single dimension.
 By default, if the output is 1D, it will be written as a table, see above.
+If the output has more than one dimension, this option is redundant.
 
 @item -s
 @itemx --onedonstdout
-When final dataset to write as output only has one dimension, print it on the standard output, not in a file.
-By default, if the output is 1D, it will be written as a table, see above.
+Write final dataset (only when it is 1D) to standard output, not as a file.
+By default 1D datasets will be written as a table, see above.
+If the output has more than one dimension, this option is redundant.
 
 @item -D
 @itemx --dontdelete

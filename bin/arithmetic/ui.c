@@ -283,7 +283,11 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
      are already reversed, the first FITS file encountered, is the first
      FITS file given by the user. Also, note that these file name
      operations are only necessary for the first FITS file in the token
-     list. */
+     list. In some scnearios, we need to know if an actual output name was
+     given or if the output name was set automatically. So we'll set
+     'outnamerequested' before automatically filling the output if not
+     given. */
+  p->outnamerequested = cp->output ? 1 : 0;
   for(token=p->tokens; token!=NULL; token=token->next)
     {
       /* Strings given to the 'tofile' operator are also considered as
