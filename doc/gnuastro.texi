@@ -14634,8 +14634,7 @@ The value must either be @option{img} or @option{wcs}, see @ref{Crop modes} for 
 @node Crop output, Crop known issues, Crop options, Invoking astcrop
 @subsubsection Crop output
 
-The string given to @option{--output} option will be interpreted depending
-on how many crops were requested, see @ref{Crop modes}:
+The string given to @option{--output} option will be interpreted depending on how many crops were requested, see @ref{Crop modes}:
 
 @itemize
 @item
@@ -14675,6 +14674,33 @@ The number of input images that were used to create that image.
 A @code{0} if the central few pixels (value to the @option{--checkcenter} option) are blank and @code{1} if they aren't.
 When the crop was not defined by its center (see @ref{Crop modes}), or @option{--checkcenter} was given a value of 0 (see @ref{Invoking astcrop}), the center will not be checked and this column will be given a value of @code{-1}.
 @end enumerate
+
+If the output crop(s) have a single element (pixel in an image) and @option{--oneelemstdout} has been called, no output file will be produced!
+Instead, the single element's value is printed on the standard output.
+See the description of @option{--oneelemstdout} below for more:
+
+@table @option
+@item -t
+@itemx --oneelemstdout
+When a crop only has a single element (a single pixel), print it to the standard output instead of making a file.
+By default (without this option), a single-pixel crop will be saved to a file, just like a crop of any other size.
+
+When a single crop is requested (either through @option{--center}, or a catalog of one row is given), the single value alone is printed with nothing else.
+This makes it easy to immediately write the value into a shell variable for example:
+
+@example
+value=$(astcrop img.fits --mode=wcs --center=1.234,5.678 \
+                --width=1 --widthinpix --oneelemstdout \
+                --quiet)
+@end example
+
+If a catalog of coordinates is given (that would produce multiple crops; or multiple values in this scenario), the solution for a single value won't work!
+Recall that Crop will do the crops in parallel, therefore each time you run it, the order of the rows will be different and not correspond to the order of the inputs.
+
+To allow identification of each value (which row of the input catalog it corresponds to), Crop will first print the name of the would-be created file name, and print the value after it (separated by an empty SPACE character).
+In other words, the file in the first column won't actually be created, but the value of the pixel it would have contained (if this option wasn't called) is printed after it.
+@end table
+
 
 @node Crop known issues,  , Crop output, Invoking astcrop
 @subsubsection Crop known issues

@@ -646,8 +646,9 @@ onecrop(struct onecropparams *crp)
   struct inputimgs *img=&p->imgs[crp->in_ind];
 
   void *array;
-  int returnvalue=1;
+  char *stdoutstring;
   int status=0, anynul=0;
+  int returnvalue=1, hasoneelem=1;
   fitsfile *ifp=crp->infits, *ofp;
   char basekeyname[FLEN_KEYWORD-5];     /* '-5': avoid gcc 8.1+ warnings! */
   gal_fits_list_key_t *headers=NULL;    /* See above comment for more.    */
@@ -674,9 +675,15 @@ onecrop(struct onecropparams *crp)
   /* Find the overlap and apply it if there is any overlap. */
   if( gal_box_overlap(naxes, fpixel_i, lpixel_i, fpixel_o, lpixel_o, ndim) )
     {
-      /* Make the output FITS image and initialize it with an array of
-         NaN or BLANK values. */
-      if(crp->outfits==NULL)
+      /* See if the output only has a single element or not. */
+      for(i=0;i<ndim;++i)
+        if(fpixel_o[i]!=1 || lpixel_o[i]!=1)
+          {hasoneelem=0; break;}
+
+      /* Make the output FITS image and initialize it with an array of NaN
+         or BLANK values. But only when '--oneelemstdout' isn't called and
+         the output is single-element. */
+      if(crp->outfits==NULL && !( p->oneelemstdout && hasoneelem) )
         onecrop_make_array(crp, fpixel_i, lpixel_i, fpixel_o, lpixel_o);
       ofp=crp->outfits;
 
@@ -701,8 +708,8 @@ onecrop(struct onecropparams *crp)
         onecrop_zero_to_nan(array, cropsize, p->type);
 
 
-      /* If a polygon is given, remove all the pixels within or
-         outside of it.*/
+      /* If a polygon is given, remove all the pixels within or outside of
+         it.*/
       if(p->polygon)
         {
           /* A small sanity check until this part supports 3D. */
@@ -719,31 +726,50 @@ onecrop(struct onecropparams *crp)
         }
 
 
-      /* Write the array into the image. */
-      status=0;
-      if( fits_write_subset(ofp, gal_fits_type_to_datatype(p->type),
-                            fpixel_o, lpixel_o, array, &status) )
-        gal_fits_io_error(status, NULL);
+      /* Write the output (either to a file or standard output if its a
+         single element and the user asked for it). */
+      if(crp->outfits)
+        {
+          /* Write the array into the image. */
+          status=0;
+          if( fits_write_subset(ofp, gal_fits_type_to_datatype(p->type),
+                                fpixel_o, lpixel_o, array, &status) )
+            gal_fits_io_error(status, NULL);
 
 
-      /* Write the selected region of this image as a string to include as
-         a FITS keyword. Then we want to delete the last coma ','.*/
-      j=0;
-      for(i=0;i<ndim;++i)
-        j += sprintf(&region[j], "%ld:%ld,", fpixel_i[i], lpixel_i[i]);
-      region[j-1]='\0';
+          /* Write the selected region of this image as a string to include as
+             a FITS keyword. Then we want to delete the last coma ','.*/
+          j=0;
+          for(i=0;i<ndim;++i)
+            j += sprintf(&region[j], "%ld:%ld,", fpixel_i[i], lpixel_i[i]);
+          region[j-1]='\0';
 
 
-      /* A section has been added to the cropped image from this input
-         image, so save the information of this image. */
-      sprintf(basekeyname, "ICF%zu", crp->numimg);
-      gal_fits_key_write_filename(basekeyname, img->name, &headers, 0,
-                                  p->cp.quiet);
-      sprintf(regionkey, "%sPIX", basekeyname);
-      gal_fits_key_list_add_end(&headers, GAL_TYPE_STRING, regionkey,
-                                0, region, 0, "Range of pixels used for "
-                                "this output.", 0, NULL, 0);
-      gal_fits_key_write_in_ptr(&headers, ofp);
+          /* A section has been added to the cropped image from this input
+             image, so save the information of this image. */
+          sprintf(basekeyname, "ICF%zu", crp->numimg);
+          gal_fits_key_write_filename(basekeyname, img->name, &headers, 0,
+                                      p->cp.quiet);
+          sprintf(regionkey, "%sPIX", basekeyname);
+          gal_fits_key_list_add_end(&headers, GAL_TYPE_STRING, regionkey,
+                                    0, region, 0, "Range of pixels used for "
+                                    "this output.", 0, NULL, 0);
+          gal_fits_key_write_in_ptr(&headers, ofp);
+        }
+
+
+      /* The output should be printed in standard output. */
+      else
+        {
+          /* Convert the value into a string. If we only have a single
+             output, then print it without anything else (no identifier is
+             necessary!). Otherwise, use the desired output filename as the
+             identifier. */
+          stdoutstring=gal_type_to_string(array, p->type, 0);
+          if(p->numout==1) printf("%s\n", stdoutstring);
+          else             printf("%s %s\n", crp->name, stdoutstring);
+          free(stdoutstring);
+        }
 
 
       /* Free the allocated array. */

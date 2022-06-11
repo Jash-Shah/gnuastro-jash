@@ -16,6 +16,14 @@ See the end of the file for license conditions.
      written with the help of S. Zahra Hosseini Shahisavandi and Sepideh
      Eskandarlou.
 
+  Crop:
+   --oneelemstdout: when a crop has a single pixel and this option is
+     called, the single pixel's value will be printed on the standard
+     output instead of creating a FITS file. This option can be useful in
+     labeled images like detection maps (when you want to see what label a
+     certain coordiante/pixel corresponds to). This option was suggested by
+     Raul Infante-Sainz.
+
   Fits:
    --copykeys: can now take any number of keyword names also. For example
      '--copykeys=KEYNAME1,KEYNAME2,KEYNAME3'. Until now, it was only

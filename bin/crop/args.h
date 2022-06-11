@@ -128,6 +128,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "oneelemstdout",
+      UI_KEY_ONEELEMSTDOUT,
+      0,
+      0,
+      "Print one element's value on stdout.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->oneelemstdout,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 
