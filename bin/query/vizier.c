@@ -100,6 +100,11 @@ vizier_sanity_checks(struct queryparams *p)
           free(p->datasetstr);
           gal_checkset_allocate_copy("I/350/gaiaedr3", &p->datasetstr);
         }
+      else if( !strcmp(p->datasetstr, "gaiadr3") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("I/355/gaiadr3", &p->datasetstr);
+        }
       else if( !strcmp(p->datasetstr, "galex5") )
         {
           free(p->datasetstr);
