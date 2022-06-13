@@ -110,6 +110,8 @@ See the end of the file for license conditions.
               and fixed by Raul Infante-Sainz.
   bug #62564: Arithmetic not parsing numbers in scientific notation (for
               example '1e5'). Found by Elham Saremi.
+  bug #62590: Failure to build on macOS when building in debugging mode
+              ('./configure --enable-debug'). Found by Raul Infante-Sainz.
   bug #62597: Arithmetic not writing single-valued output into a file when
               called with '--output'. Reported by Raul Infante-Sainz.
 
