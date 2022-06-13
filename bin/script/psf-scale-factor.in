@@ -338,7 +338,7 @@ done
 # If an input image is not given at all.
 if [ x"$inputs" = x ]; then
     cat <<EOF
-$scriptname: no input FITS image files. Run with '--help' for more information on how to run
+$scriptname: ERROR: no input FITS image files. Run with '--help' for more information on how to run
 EOF
     exit 1
 elif [ ! -f "$inputs" ]; then
@@ -349,7 +349,7 @@ fi
 # If a PSF image (--psf) is not given.
 if [ x"$psf" = x ]; then
     cat <<EOF
-$scriptname: no PSF image or profile provided. A PSF image (profile) has to be specified with '--psf' (or '-p').
+$scriptname: ERROR: no PSF image or profile provided. A PSF image (profile) has to be specified with '--psf' (or '-p').
 EOF
     exit 1
 fi
@@ -357,14 +357,14 @@ fi
 # If center coordinates (--center) is not given at all.
 if [ x"$center" = x ]; then
     cat <<EOF
-$scriptname: no center coordinates provided. You can specify the object's central coordinate with '--center' ('-c')
+$scriptname: ERROR: no center coordinates provided. You can specify the object's central coordinate with '--center' ('-c')
 EOF
     exit 1
 else
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$ncenter != x2 ]; then
         cat <<EOF
-$scriptname: '--center' (or '-c') only take two values, but $ncenter were given in '$center'
+$scriptname: ERROR: '--center' (or '-c') only take two values, but $ncenter were given in '$center'
 EOF
         exit 1
     fi
@@ -373,14 +373,14 @@ fi
 # If a normalization range is not given at all.
 if [ x"$normradii" = x ]; then
     cat <<EOF
-$scriptname: no rign of normalization provided. You can use '--normradii' ('-n') to give the radial interval to define normalization
+$scriptname: ERROR: no rign of normalization provided. You can use '--normradii' ('-n') to give the radial interval to define normalization
 EOF
     exit 1
 else
     nnormradii=$(echo $normradii | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nnormradii != x2 ]; then
         cat <<EOF
-$scriptname: '--normradii' (or '-n') only takes two values, but $nnormradii were given
+$scriptname: ERROR: '--normradii' (or '-n') only takes two values, but $nnormradii were given
 EOF
         exit 1
     fi
@@ -389,7 +389,7 @@ fi
 # If mode (--mode) is not given at all.
 if [ x"$mode" = x ]; then
     cat <<EOF
-$scriptname: no coordinate mode provided. You can use '--mode' (or '-O'), acceptable values are 'img' (for pixel coordinate) or 'wcs' (for celestial coordinates)
+$scriptname: ERROR: no coordinate mode provided. You can use '--mode' (or '-O'), acceptable values are 'img' (for pixel coordinate) or 'wcs' (for celestial coordinates)
 EOF
     exit 1
 
@@ -400,7 +400,7 @@ elif [ "$mode" = wcs     -o     "$mode" = img ]; then
     junk=1
 else
     cat <<EOF
-$scriptname: wrong value to --mode (-O) provided. Acceptable values are 'img' (for pixel coordinate) or 'wcs' (for celestial coordinates)
+$scriptname: ERROR: wrong value to --mode (-O) provided. Acceptable values are 'img' (for pixel coordinate) or 'wcs' (for celestial coordinates)
 EOF
     exit 1
 fi
@@ -550,9 +550,11 @@ if [ x"$segment" != x ]; then
     # the user is informed of the situation (and that this is a bug: 'clab'
     # should be initialized!).
     if [ "$clab" = "not-initialized"   -o   "$olab" = "not-initialized" ]; then
-        cat <<EOF
+        if [ x"$quiet" = x ]; then
+            cat <<EOF
 $scriptname: WARNING: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. For some reason, no clump or object label could be initialized for the given coordinate within the given Segment image.
 EOF
+        fi
         cropped_masked=$cropped
 
     else
@@ -561,10 +563,10 @@ EOF
         cropobj=$tmpdir/cropped-objects-$objectid.fits
         astcrop $segment --hdu=OBJECTS --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$xstampwidth,$ystampwidth --output=$cropobj $quiet
+                --width=$stampwidth --output=$cropobj $quiet
         astcrop $segment --hdu=CLUMPS --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$xstampwidth,$ystampwidth --output=$cropclp $quiet
+                --width=$stampwidth --output=$cropclp $quiet
 
         # Mask all the undesired regions.
         cropped_masked=$tmpdir/cropped-masked-$objectid.fits

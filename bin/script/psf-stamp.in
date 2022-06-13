@@ -351,11 +351,13 @@ done
 # If an input image is not given at all.
 if [ x"$inputs" = x ]; then
     cat <<EOF
-$scriptname: no input FITS image files. Run with '--help' for more information on how to run
+$scriptname: ERROR: no input FITS image files (outer part of the PSF to unite with an inner part). Run with '--help' for more information on how to run
 EOF
     exit 1
-elif [ ! -f "$inputs" ]; then
-    echo "$scriptname: $inputs: No such file or directory"
+elif [ ! -f $inputs ]; then
+    cat <<EOF
+$scriptname: ERROR: $inputs, no such file or directory
+EOF
     exit 1
 fi
 
@@ -373,14 +375,16 @@ if [ x"$center" = x ]; then
 
     # The center has been computed in pixels, assume pixel coordinates mode
     mode=img
+    if [ x"$quiet" = x ]; then
     cat <<EOF
-$scriptname: warning: no center provided ('--center' or '-c'). Considering that the center of the image is $xcoord,$ycoord
+$scriptname: WARNING: no center provided ('--center' or '-c'). Considering that the center of the image is $xcoord,$ycoord
 EOF
+    fi
 else
     ncenter=$(echo $center | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$ncenter != x2 ]; then
         cat <<EOF
-$scriptname: '--center' (or '-c') only take two values, but $ncenter were given in '$center'
+$scriptname: ERROR: '--center' (or '-c') only take two values, but $ncenter were given in '$center'
 EOF
         exit 1
     fi
@@ -398,34 +402,39 @@ if [ x"$stampwidth" = x ]; then
 
     if [ x"$xsizetype" = xeven ]; then
         xstampwidth=$(echo $xsize | awk '{print $1+1}')
-        cat <<EOF
-$scriptname: warning: the image along the first dimension (NAXIS1) has an even number of pixels ($xsize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
+        if [ x"$quiet" = x ]; then
+            cat <<EOF
+$scriptname: WARNING: the image along the first dimension (NAXIS1) has an even number of pixels ($xsize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
 EOF
+        fi
     elif [ x"$xsizetype" = xodd ]; then
         xstampwidth=$xsize
     else
         cat <<EOF
-$scriptname: warning: the size of the image along the first dimension (NAXIS1) can not be obtained
+$scriptname: ERROR: the size of the image along the first dimension (NAXIS1) can not be obtained
 EOF
         exit 1
     fi
     if [ x"$ysizetype" = xeven ]; then
         ystampwidth=$(echo $ysize | awk '{print $1+1}')
-        cat <<EOF
-$scriptname: warning: the image along the second dimension (NAXIS2) has an even number of pixels ($ysize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
+        if [ x"$quiet" = x ]; then
+            cat <<EOF
+$scriptname: WARNING: the image along the second dimension (NAXIS2) has an even number of pixels ($ysize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
 EOF
+        fi
     elif [ x"$ysizetype" = xodd ]; then
         ystampwidth=$ysize
     else
         cat <<EOF
-$scriptname: warning: the size of the image along the second dimension (NAXIS2) can not be obtained
+$scriptname: ERROR: the size of the image along the second dimension (NAXIS2) can not be obtained
 EOF
         exit 1
     fi
-    cat <<EOF
-$scriptname: warning: no stamp width provided (--stampwidth or -W). Considering that the stamp width is $xstampwidth x $ystampwidth.
+    if [ x"$quiet" = x ]; then
+        cat <<EOF
+$scriptname: WARNING: no stamp width provided ('--stampwidth' or '-W'). Considering that the stamp width is $xstampwidth x $ystampwidth
 EOF
-
+    fi
 else
     nstampwidth=$(echo $stampwidth | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nstampwidth != x2 ]; then
@@ -441,14 +450,16 @@ fi
 
 # If a normalization range is not given at all.
 if [ x"$normradii" = x ]; then
-    cat <<EOF
-$scriptname: warning: no ring of normalization provided (--normradii). The stamp won't be normalized
+    if [ x"$quiet" = x ]; then
+        cat <<EOF
+$scriptname: WARNING: no ring of normalization provided ('--normradii' or '-n'). The stamp won't be normalized
 EOF
+    fi
 else
     nnormradii=$(echo $normradii | awk 'BEGIN{FS=","}END{print NF}')
     if [ x$nnormradii != x2 ]; then
         cat <<EOF
-$scriptname: '--normradii' (or '-n') only take two values, but $nnormradii were given in '$normradii'
+$scriptname: ERROR: '--normradii' (or '-n') only take two values, but $nnormradii were given in '$normradii'
 EOF
         exit 1
     fi
@@ -464,7 +475,7 @@ if [ "$mode" = wcs     -o      $mode = "img" ]; then
     junk=1
 else
     cat <<EOF
-$scriptname: value to '--mode' (or '-O') is not recognized ('$mode'). This option takes one of the following two values: 'img' (for pixel coordinates) or 'wcs' (for celestial coordinates)
+$scriptname: ERROR: value to '--mode' (or '-O') is not recognized ('$mode'). This option takes one of the following two values: 'img' (for pixel coordinates) or 'wcs' (for celestial coordinates)
 EOF
     exit 1
 fi
@@ -473,8 +484,8 @@ fi
 
 
 
-# Define a temporal directory and thefinal output file
-# ----------------------------------------------------
+# Define a temporal directory and the final output file
+# -----------------------------------------------------
 #
 # Construct the temporary directory. If the user does not specify any
 # directory, then a default one with the base name of the input image will
@@ -614,7 +625,7 @@ EOF
 
         # Mask all the undesired regions.
         cropped_masked=$tmpdir/cropped-masked-$objectid.fits
-        astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
+        astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked $quiet \
                       $cropobj --hdu=1 set-o \
                       $cropclp --hdu=1 set-c \
                       \
@@ -714,9 +725,11 @@ astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
 # script) because we dont want it to be mixed with the outputs of the
 # previus commands.
 if [ $normvalue = nan ]; then
-    cat <<EOF
+    if [ x"$quiet" = x ]; then
+        cat <<EOF
 $scriptname: WARNING: all the pixels in the requested normalization radius are NaN. Therefore the output stamp will be fully NaN. When you use this stamp with any stack operator of 'astsrithmetic' (for making the PSF) this image will effectively be ignored
 EOF
+    fi
 fi
 
 
