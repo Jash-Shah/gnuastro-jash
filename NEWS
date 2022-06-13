@@ -46,6 +46,11 @@ See the end of the file for license conditions.
   --mcolnocustprof: new option to disable scaling of custom radial profiles
     to required magnitude when building a 2D image from them.
 
+  Query:
+   - Short name for Gaia DR3 has been added, so you can access it with the
+     following command:
+         astquery gaia --dataset=dr3 --center=1.234,5.678 \
+                  --radius=0.01
 
   astscript-radial-profile:
    --zeroisnotblank: new option to account for zero-valued pixels in the

@@ -13721,6 +13721,8 @@ A query to @code{gaia} is submitted to @code{https://gea.esac.esa.int/tap-server
 Here is the list of short names for popular datasets within Gaia:
 @itemize
 @item
+@code{dr3 --> gaiadr3.gaia_source}
+@item
 @code{edr3 --> gaiaedr3.gaia_source}
 @item
 @code{dr2 --> gaiadr2.gaia_source}

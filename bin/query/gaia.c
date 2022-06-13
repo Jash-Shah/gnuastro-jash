@@ -69,7 +69,12 @@ gaia_sanity_checks(struct queryparams *p)
   /* Fix the summarized names. */
   if(p->datasetstr)
     {
-      if( !strcmp(p->datasetstr, "edr3") )
+      if( !strcmp(p->datasetstr, "dr3") )
+        {
+          free(p->datasetstr);
+          gal_checkset_allocate_copy("gaiadr3.gaia_source", &p->datasetstr);
+        }
+      else if( !strcmp(p->datasetstr, "edr3") )
         {
           free(p->datasetstr);
           gal_checkset_allocate_copy("gaiaedr3.gaia_source", &p->datasetstr);
