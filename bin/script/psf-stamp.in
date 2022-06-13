@@ -56,7 +56,6 @@ sigmaclip=""
 stampwidth=""
 normop="median"
 positionangle=0
-corewidth="3,3"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
 
@@ -102,7 +101,6 @@ $scriptname options:
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the normalization value.
   -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
-  -w, --corewidth=INT     Area width of the central object in pixels for unmasking.
   -N, --normop=STR        Operator for computing the normalization value
                           (mean, sigclip-mean, etc.).
   -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
@@ -290,9 +288,6 @@ do
         -W|--stampwidth)     stampwidth="$2";                           check_v "$1" "$stampwidth";  shift;shift;;
         -W=*|--stampwidth=*) stampwidth="${1#*=}";                      check_v "$1" "$stampwidth";  shift;;
         -W*)                 stampwidth=$(echo "$1"  | sed -e's/-W//'); check_v "$1" "$stampwidth";  shift;;
-        -w|--corewidth)      corewidth="$2";                            check_v "$1" "$corewidth";  shift;shift;;
-        -w=*|--corewidth=*)  corewidth="${1#*=}";                       check_v "$1" "$corewidth";  shift;;
-        -w*)                 corewidth=$(echo "$1"  | sed -e's/-w//');  check_v "$1" "$corewidth";  shift;;
         -S|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
         -S=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
         -S*)                 segment=$(echo "$1"  | sed -e's/-S//');    check_v "$1" "$segment";  shift;;
@@ -558,57 +553,6 @@ fi
 
 
 
-# Function to find label of desired region
-# ----------------------------------------
-#
-# Given a certain extension ('CLUMPS' or 'OBJECTS'), find the respective
-# label.
-find_central_label() {
-
-  # Input arguments
-  hdu=$1
-  lab="not-initialized"
-
-  # Set the parameters.
-  case $hdu in
-      CLUMPS) labname=clump;;
-      OBJECTS) labname=object;;
-      *) cat <<EOF
-$scriptname: ERROR: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. The first argument to 'find_central_label' is not 'CLUMPS' or 'OBJECTS'
-EOF
-         exit 1;;
-  esac
-
-  # Crop the labeled image.
-  cropped_core=$tmpdir/cropped-core-$objectid.fits
-  astcrop $segment --hdu=$hdu --mode=img $quiet --width=$corewidth \
-          --center=$xcenter,$ycenter --output=$cropped_core
-
-  # The coordinate may not be in the image. In this case, Crop will not
-  # create the requested output.
-  if [ -f $cropped_core ]; then
-      lab=$(astarithmetic $cropped_core unique --quiet)
-      numlab=$(echo "$lab" | awk '{print NF}')
-      if [ $numlab != 1 ]; then
-          cat <<EOF
-$scriptname: ERROR: there is more than one $labname label in the core region around the given coordinate (specified by '--corewidth=$corewidth', containing $labname labels: $lab). Therefore it is not possible to unambiguously identify a single $labname. Please decrease the box size given to '--corewidth'.
-EOF
-          exit 1
-      fi
-
-  # Coordinate was not in image. We'll just report an impossible label so
-  # all non-zero labels are masked.
-  else
-      lab=2147483646 # Largest possible 32-bit integer minus 1.
-  fi
-
-  # Write the output in a file.
-  echo $lab > $tmpdir/cropped-core-$labname-$objectid.txt
-}
-
-
-
-
 # Crop and unlabel the segmentation image
 # ---------------------------------------
 #
@@ -616,6 +560,8 @@ EOF
 # to mask all objects that are not the central one. If not, just consider
 # that the cropped and masked image is the cropped (not masked) image. The
 # process is as follow:
+#   - Compute the central clump and object labels. This is done with the
+#     option '--oneelemstdout' of Crop.
 #   - Crop the original mask image.
 #   - Crop the original mask image to a central region (core), in order to
 #     compute what is the central object id. This is necessary to unmask
@@ -626,46 +572,58 @@ EOF
 #     sky.
 #   - Mask all non zero pixels in the mask image as nan values.
 if [ x"$segment" != x ]; then
+    clab="not-initialized"
+    olab="not-initialized"
+    # Find the object and clump labels of the target. Labels are saved into
+    # plain text files just in case they are necessary for debugging tasks.
+    cropped_core_clump=$tmpdir/cropped-core-clump-$objectid.fits
+    cropped_core_object=$tmpdir/cropped-core-object-$objectid.fits
+    clumplab=$(astcrop $segment --hdu=CLUMPS --mode=img --width=1,1 \
+               --widthinpix --oneelemstdout --center=$xcenter,$ycenter \
+               --output=$cropped_core_clump --quiet)
+    objectlab=$(astcrop $segment --hdu=OBJECTS --mode=img --width=1,1 \
+                --widthinpix --oneelemstdout --center=$xcenter,$ycenter \
+                --output=$cropped_core_object --quiet)
+    echo $clumplab > $tmpdir/cropped-core-clump-$objectid.txt
+    echo $objectlab > $tmpdir/cropped-core-object-$objectid.txt
 
-  # Find the object and clump labels of the target.
-  find_central_label CLUMPS
-  find_central_label OBJECTS
-  clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
-  olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
+    # Read the labels
+    clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
+    olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
 
-  # If for any reason, a clump or object label couldn't be initialized at
-  # the given coordiante, simply ignore this step. But print a warning so
-  # the user is informed of the situation (and that this is a bug: 'clab'
-  # should be initialized!).
-  if [ $clab = "not-initialized" ]; then
-    cat <<EOF
+    # If for any reason, a clump or object label couldn't be initialized at
+    # the given coordiante, simply ignore this step. But print a warning so
+    # the user is informed of the situation (and that this is a bug: 'clab'
+    # should be initialized!).
+    if [ "$clab" = "not-initialized"   -o   "$olab" = "not-initialized" ]; then
+        cat <<EOF
 $scriptname: WARNING: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. For some reason, no clump or object label could be initialized for the given coordinate within the given Segment image.
 EOF
-      cropped_masked=$cropped
-  else
+        cropped_masked=$cropped
 
-      # Crop the object and clump image to same size as desired stamp.
-      cropclp=$tmpdir/cropped-clumps-$objectid.fits
-      cropobj=$tmpdir/cropped-objects-$objectid.fits
-      astcrop $segment --hdu=OBJECTS --mode=img \
-              --center=$xcenter,$ycenter \
-              --width=$xstampwidth,$ystampwidth --output=$cropobj $quiet
-      astcrop $segment --hdu=CLUMPS --mode=img \
-              --center=$xcenter,$ycenter \
-              --width=$xstampwidth,$ystampwidth --output=$cropclp $quiet
+    else
+        # Crop the object and clump image to same size as desired stamp.
+        cropclp=$tmpdir/cropped-clumps-$objectid.fits
+        cropobj=$tmpdir/cropped-objects-$objectid.fits
+        astcrop $segment --hdu=OBJECTS --mode=img \
+                --center=$xcenter,$ycenter \
+                --width=$xstampwidth,$ystampwidth --output=$cropobj $quiet
+        astcrop $segment --hdu=CLUMPS --mode=img \
+                --center=$xcenter,$ycenter \
+                --width=$xstampwidth,$ystampwidth --output=$cropclp $quiet
 
-      # Mask all the undesired regions.
-      cropped_masked=$tmpdir/cropped-masked-$objectid.fits
-      astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
-                    $cropobj --hdu=1 set-o \
-                    $cropclp --hdu=1 set-c \
-                    \
-                    c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
-                    o o $olab eq 0 where set-omask \
-                    i omask cmask or nan where
-  fi
+        # Mask all the undesired regions.
+        cropped_masked=$tmpdir/cropped-masked-$objectid.fits
+        astarithmetic $cropped --hdu=1 set-i --output=$cropped_masked \
+                      $cropobj --hdu=1 set-o \
+                      $cropclp --hdu=1 set-c \
+                      \
+                      c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
+                      o o $olab eq 0 where set-omask \
+                      i omask cmask or nan where
+    fi
 else
-  cropped_masked=$cropped
+    cropped_masked=$cropped
 fi
 
 

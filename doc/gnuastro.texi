@@ -25846,20 +25846,9 @@ Objects that are not the central object.
 Clumps (within the central object) that are not the central clump.
 @end itemize
 The result is that all objects and clumps that contaminate the central source are masked, while the diffuse flux of the central object remains.
-The size of the region that is used for identifying the central clump/object label can be specified by the option @option{--corewidth}, see below.
 The non masked object and clump labels are kept into the header of the output image.
 The keywords are @code{CLABEL} and @code{OLABEL}.
 If no segmentation image is used, then their values are set to @code{none}.
-
-@item -w INT
-@itemx --corewidth=INT
-Width of the region that is used to compute the central clump/object label over the segmentation image @option{--segment}, with the goal of not masking them.
-It is rarely necessary to change this option.
-
-If a segmentation image is provided, then it is necessary to not mask the central object+clump (see description of @option{--segment}).
-To do that, the clump and object images are cropped around the coordinate given to @option{--center}, but on the two labeled images.
-Assuming a single value exists within the crop, the IDs of the respective object and clump are found.
-Therefore it is necessary for this option to be small (the program will abort if more than one label exists within it).
 
 @item -N STR
 @itemx --normop=STR
@@ -26124,17 +26113,6 @@ Objects that are not the central object.
 Clumps (within the central object) that are not the central clump.
 @end itemize
 The result is that all objects and clumps that contaminate the central source are masked, while the diffuse flux of the central object remains.
-The size of the region that is used for identifying the central clump/object label can be specified by the option @option{--corewidth}, see below.
-
-@item -w INT
-@itemx --corewidth=INT
-Width of the region that is used to compute the central clump/object label over the segmentation image @option{--segment}, with the goal of not masking them.
-It is rarely necessary to change this option.
-
-If a segmentation image is provided, then it is necessary to not mask the central object+clump (see description of @option{--segment}).
-To do that, the clump and object images are cropped around the coordinate given to @option{--center}, but on the two labeled images.
-Assuming a single value exists within the crop, the IDs of the respective object and clump are found.
-Therefore it is necessary for this option to be small (the program will abort if more than one label exists within it).
 
 @item -s FLT,FLT
 @itemx --sigmaclip=FLT,FLT
