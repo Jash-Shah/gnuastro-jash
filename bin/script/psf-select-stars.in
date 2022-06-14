@@ -772,12 +772,12 @@ if [ x"$quiet" = x ]; then
    stats_nstars_total=$(asttable $catalog_main | wc -l)
    stats_nstars_noneighbors=$(asttable $output | wc -l)
    stats_nstars_goodparallax=$(asttable $goodparallax | wc -l)
-   echo "Number of downloaded stars from gaia: $stats_nstars_total"
-   echo "Number of stars with good parallax  : $stats_nstars_goodparallax"
-   echo "Number of stars with no neighbors   : $stats_nstars_noneighbors"
+   echo "Number of stars in wider mag-range: $stats_nstars_total"
+   echo "Number of stars with good parallax: $stats_nstars_goodparallax"
+   echo "Number of stars with no neighbors:  $stats_nstars_noneighbors"
    if [ ! -$segmented ]; then
       stats_nstars_matched=$(asttable $qmatch)
-      echo "Number of clumps matched stars      : $stats_nstars_matched"
+      echo "Number of clumps matched stars: $stats_nstars_matched"
    fi
 fi
 
