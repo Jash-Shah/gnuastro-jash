@@ -658,6 +658,17 @@ table_select_by_position(struct tableparams *p)
   size_t i, start, end;
   double *darr = p->rowlimit ? p->rowlimit->array : NULL;
 
+  /* If the head or tail values are given and are larger than the number of
+     rows, just set them to the number of rows (print the all the final
+     rows). This is how the 'head' and 'tail' programs of GNU Coreutils
+     operate. */
+  p->head = ( ((p->head!=GAL_BLANK_SIZE_T) && (p->head > p->table->size))
+              ? p->table->size
+              : p->head );
+  p->tail = ( ((p->tail!=GAL_BLANK_SIZE_T) && (p->tail > p->table->size))
+              ? p->table->size
+              : p->tail );
+
   /* Random row selection (by position, not value). This step is
      independent of the other operations of this function, so as soon as
      its finished return. */
@@ -674,7 +685,8 @@ table_select_by_position(struct tableparams *p)
       return;
     }
 
-  /* Sanity check  */
+  /* Make sure the given values to '--rowlimit' are within the number of
+     rows until this point. */
   if(p->rowlimit)
     {
       if(darr[0]>=p->table->size)
@@ -713,7 +725,7 @@ table_select_by_position(struct tableparams *p)
             {
               /* Set the starting and ending indexs to free the allocated
                  space of each string. */
-              start = p->head!=GAL_BLANK_SIZE_T ? p->head        : 0;
+              start = p->head!=GAL_BLANK_SIZE_T ? p->head : 0;
               end   = ( p->head!=GAL_BLANK_SIZE_T
                         ? p->table->size
                         : p->table->size - p->tail );

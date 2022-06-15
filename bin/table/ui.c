@@ -227,6 +227,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 static void
 ui_read_check_only_options(struct tableparams *p)
 {
+  size_t i;
   double *darr;
   gal_data_t *tmp;
 
@@ -274,14 +275,54 @@ ui_read_check_only_options(struct tableparams *p)
     }
 
   /* Make sure only one of the positional row selection operations is
-     called in this run.*/
-  if(p->rowlimit
-     && p->rowrandom
-     && p->head!=GAL_BLANK_SIZE_T
-     && p->tail!=GAL_BLANK_SIZE_T)
+     called in one run. */
+  if( (p->rowlimit!=NULL)
+      + (p->rowrandom!=0)
+      + (p->head!=GAL_BLANK_SIZE_T)
+      + (p->tail!=GAL_BLANK_SIZE_T) > 1 )
     error(EXIT_FAILURE, 0, "only one of the following options can be "
           "called in one run: '--head', '--tail', '--rowlimit' and "
           "'--rowrandom'");
+
+  /* Make sure the value to '--rowlimit' is in the correct format. */
+  if(p->rowlimit)
+    {
+      /* There should only be two values. */
+      if(p->rowlimit->size!=2)
+        error(EXIT_FAILURE, 0, "only two should be given to "
+              "'--rowlimit' (the top and bottom row numbers specifying "
+              "your desired range)");
+
+      /* Do individual checks. */
+      darr=p->rowlimit->array;
+      for(i=0;i<p->rowlimit->size;++i)
+        {
+          /* Make sure it isn't 0 or negative. */
+          if( darr[i]<=0 )
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') "
+                  "is smaller than, or equal to, zero! This option's "
+                  "values are row-counters (starting from 1), so they "
+                  "must be positive integers", darr[i]);
+
+          /* Make sure its an integer. */
+          if( darr[i] != (size_t)(darr[i]) )
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') is "
+                  "not an integer! This option's values are row-counters "
+                  "so they must be integers.", darr[i]);
+
+          /* Subtract 1 from the value, so it counts from 0. */
+          --darr[i];
+        }
+
+      /* Make sure that the first value is smaller than the second. */
+      if( darr[0] > darr[1] )
+        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) is "
+              "larger than the second (%g). This option's values defines "
+              "a row-counter interval, assuming the first value is the top "
+              "of the desired interval (smaller row counter) and the second "
+              "value is the bottom of the desired interval (larger row "
+              "counter)", darr[0], darr[1]);
+    }
 
   /* If '--colmetadata' is given, make sure none of the given options have
      more than three values. */
@@ -291,11 +332,6 @@ ui_read_check_only_options(struct tableparams *p)
         error(EXIT_FAILURE, 0, "at most three values can be given to each "
               "call of '--colmetadata' ('-m') after the original columns "
               "name or number. But %zu strings have been given", tmp->size);
-
-  /* '--head' and '--tail' shouldn't be called together! */
-  if(p->head!=GAL_BLANK_SIZE_T && p->tail!=GAL_BLANK_SIZE_T)
-    error(EXIT_FAILURE, 0, "'--head' and '--tail' can't be called at "
-          "the same time");
 }
 
 
@@ -1131,8 +1167,7 @@ ui_check_select_sort_after(struct tableparams *p, size_t nselect,
 static void
 ui_preparations(struct tableparams *p)
 {
-  double *darr;
-  size_t i, *colmatch;
+  size_t *colmatch;
   gal_list_str_t *lines;
   size_t nselect=0, origoutncols=0;
   size_t sortindout=GAL_BLANK_SIZE_T;
@@ -1203,59 +1238,6 @@ ui_preparations(struct tableparams *p)
 
   /* Make sure the (possible) output name is writable. */
   gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
-
-
-  /* If the head or tail values are given and are larger than the number of
-     rows, just set them to the number of rows (print the all the final
-     rows). This is how the 'head' and 'tail' programs of GNU Coreutils
-     operate. */
-  p->head = ( ((p->head!=GAL_BLANK_SIZE_T) && (p->head > p->table->size))
-              ? p->table->size
-              : p->head );
-  p->tail = ( ((p->tail!=GAL_BLANK_SIZE_T) && (p->tail > p->table->size))
-              ? p->table->size
-              : p->tail );
-
-  /* If rows are given, do some sanity checks and make sure that they are
-     within the table's limits. */
-  if(p->rowlimit)
-    {
-      /* There should only be two values. */
-      if(p->rowlimit->size!=2)
-        error(EXIT_FAILURE, 0, "only two should be given to "
-              "'--rowlimit' (the top and bottom row numbers specifying "
-              "your desired range)");
-
-      /* Do individual checks. */
-      darr=p->rowlimit->array;
-      for(i=0;i<p->rowlimit->size;++i)
-        {
-          /* Make sure it isn't 0 or negative. */
-          if( darr[i]<=0 )
-            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') "
-                  "is smaller than, or equal to, zero! This option's "
-                  "values are row-counters (starting from 1), so they "
-                  "must be positive integers", darr[i]);
-
-          /* Make sure its an integer. */
-          if( darr[i] != (size_t)(darr[i]) )
-            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') is "
-                  "not an integer! This option's values are row-counters "
-                  "so they must be integers.", darr[i]);
-
-          /* Subtract 1 from the value, so it counts from 0. */
-          --darr[i];
-        }
-
-      /* Make sure that the first value is smaller than the second. */
-      if( darr[0] > darr[1] )
-        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) is "
-              "larger than the second (%g). This option's values defines "
-              "a row-counter interval, assuming the first value is the top "
-              "of the desired interval (smaller row counter) and the second "
-              "value is the bottom of the desired interval (larger row "
-              "counter)", darr[0], darr[1]);
-    }
 
   /* If random rows are desired, we need to define a GSL random number
      generator structure. */

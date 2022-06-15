@@ -114,6 +114,8 @@ See the end of the file for license conditions.
               ('./configure --enable-debug'). Found by Raul Infante-Sainz.
   bug #62597: Arithmetic not writing single-valued output into a file when
               called with '--output'. Reported by Raul Infante-Sainz.
+  bug #62636: Table ignoring '--range' when '--head' is also
+              called. Reported by Sepideh Eskandarlou.
 
 
 
