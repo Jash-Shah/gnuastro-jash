@@ -656,7 +656,7 @@ table_select_by_position(struct tableparams *p)
   char **strarr;
   gal_data_t *col;
   size_t i, start, end;
-  double *darr = p->rowlimit ? p->rowlimit->array : NULL;
+  double *darr = p->rowrange ? p->rowrange->array : NULL;
 
   /* If the head or tail values are given and are larger than the number of
      rows, just set them to the number of rows (print the all the final
@@ -685,16 +685,16 @@ table_select_by_position(struct tableparams *p)
       return;
     }
 
-  /* Make sure the given values to '--rowlimit' are within the number of
+  /* Make sure the given values to '--rowrange' are within the number of
      rows until this point. */
-  if(p->rowlimit)
+  if(p->rowrange)
     {
       if(darr[0]>=p->table->size)
-        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) "
+        error(EXIT_FAILURE, 0, "the first value to '--rowrange' (%g) "
               "is larger than the number of rows (%zu)",
               darr[0]+1, p->table->size);
       else if( darr[1]>=p->table->size )
-        error(EXIT_FAILURE, 0, "the second value to '--rowlimit' (%g) "
+        error(EXIT_FAILURE, 0, "the second value to '--rowrange' (%g) "
               "is larger than the number of rows (%zu)",
               darr[1]+1, p->table->size);
     }
@@ -711,9 +711,9 @@ table_select_by_position(struct tableparams *p)
         {
           /* Parse the rows and free extra pointers. */
           strarr=col->array;
-          if(p->rowlimit)
+          if(p->rowrange)
             {
-              /* Note that the given values to '--rowlimit' started from 1,
+              /* Note that the given values to '--rowrange' started from 1,
                  but in 'ui.c' we subtracted one from it (so at this stage,
                  it starts from 0). */
               start = darr[0];
@@ -734,7 +734,7 @@ table_select_by_position(struct tableparams *p)
         }
 
       /* Make the final adjustment. */
-      if(p->rowlimit)
+      if(p->rowrange)
         {
           /* Move the values up to the top and correct the size. */
           col->size=darr[1]-darr[0]+1;
@@ -1201,7 +1201,7 @@ table(struct tableparams *p)
   if(p->sort) table_sort(p);
 
   /* If the output number of rows is limited, apply them. */
-  if( p->rowlimit
+  if( p->rowrange
       || p->rowrandom
       || p->head!=GAL_BLANK_SIZE_T
       || p->tail!=GAL_BLANK_SIZE_T )

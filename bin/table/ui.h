@@ -72,7 +72,7 @@ enum option_keys_enum
      automatically). */
   UI_KEY_POLYGON         = 1000,
   UI_KEY_ENVSEED,
-  UI_KEY_ROWLIMIT,
+  UI_KEY_ROWRANGE,
   UI_KEY_ROWRANDOM,
   UI_KEY_INPOLYGON,
   UI_KEY_OUTPOLYGON,

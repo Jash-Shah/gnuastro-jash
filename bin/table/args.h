@@ -342,13 +342,13 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
-      "rowlimit",
-      UI_KEY_ROWLIMIT,
+      "rowrange",
+      UI_KEY_ROWRANGE,
       "INT,INT",
       0,
       "Only rows in this row-counter range.",
       UI_GROUP_OUTROWS,
-      &p->rowlimit,
+      &p->rowrange,
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_GE_0,
       GAL_OPTIONS_NOT_MANDATORY,

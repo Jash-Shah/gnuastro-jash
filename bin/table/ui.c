@@ -276,37 +276,37 @@ ui_read_check_only_options(struct tableparams *p)
 
   /* Make sure only one of the positional row selection operations is
      called in one run. */
-  if( (p->rowlimit!=NULL)
+  if( (p->rowrange!=NULL)
       + (p->rowrandom!=0)
       + (p->head!=GAL_BLANK_SIZE_T)
       + (p->tail!=GAL_BLANK_SIZE_T) > 1 )
     error(EXIT_FAILURE, 0, "only one of the following options can be "
-          "called in one run: '--head', '--tail', '--rowlimit' and "
+          "called in one run: '--head', '--tail', '--rowrange' and "
           "'--rowrandom'");
 
-  /* Make sure the value to '--rowlimit' is in the correct format. */
-  if(p->rowlimit)
+  /* Make sure the value to '--rowrange' is in the correct format. */
+  if(p->rowrange)
     {
       /* There should only be two values. */
-      if(p->rowlimit->size!=2)
+      if(p->rowrange->size!=2)
         error(EXIT_FAILURE, 0, "only two should be given to "
-              "'--rowlimit' (the top and bottom row numbers specifying "
+              "'--rowrange' (the top and bottom row numbers specifying "
               "your desired range)");
 
       /* Do individual checks. */
-      darr=p->rowlimit->array;
-      for(i=0;i<p->rowlimit->size;++i)
+      darr=p->rowrange->array;
+      for(i=0;i<p->rowrange->size;++i)
         {
           /* Make sure it isn't 0 or negative. */
           if( darr[i]<=0 )
-            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') "
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowrange') "
                   "is smaller than, or equal to, zero! This option's "
                   "values are row-counters (starting from 1), so they "
                   "must be positive integers", darr[i]);
 
           /* Make sure its an integer. */
           if( darr[i] != (size_t)(darr[i]) )
-            error(EXIT_FAILURE, 0, "%g (value given to '--rowlimit') is "
+            error(EXIT_FAILURE, 0, "%g (value given to '--rowrange') is "
                   "not an integer! This option's values are row-counters "
                   "so they must be integers.", darr[i]);
 
@@ -316,7 +316,7 @@ ui_read_check_only_options(struct tableparams *p)
 
       /* Make sure that the first value is smaller than the second. */
       if( darr[0] > darr[1] )
-        error(EXIT_FAILURE, 0, "the first value to '--rowlimit' (%g) is "
+        error(EXIT_FAILURE, 0, "the first value to '--rowrange' (%g) is "
               "larger than the second (%g). This option's values defines "
               "a row-counter interval, assuming the first value is the top "
               "of the desired interval (smaller row counter) and the second "

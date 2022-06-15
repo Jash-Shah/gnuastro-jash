@@ -83,6 +83,13 @@ See the end of the file for license conditions.
      behavior, use the new '--mcolnocustprof' option. This new
      functionality was proposed by Elham Saremi.
 
+  Table:
+   --rowrange: new name for the old '--rowlimit'. This option takes the
+     range of desired rows based on their position (for example
+     '--rowrange=2,5' will only print rows 2, 3, 4 and 5 of the table). But
+     the old name was very confusing and would not directly convey this
+     behavior.
+
 ** Bugs fixed
   bug #62216: MakeProfiles crash when a 3D cube is requested and input
               catalog is from a pipe. Found by Irene Pintos Castro.

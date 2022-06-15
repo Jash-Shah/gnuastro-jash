@@ -13045,7 +13045,7 @@ The column to sort by can only come from the main input table columns (not colum
 @item
 @option{--rowrandom}: keep only a random number of rows.
 @item
-@option{--rowlimit}: keep only rows within a certain positional interval.
+@option{--rowrange}: keep only rows within a certain positional interval.
 @end itemize
 
 These options limit/select rows based on their position within the table (not their value in any certain column).
@@ -13456,7 +13456,7 @@ When called with @option{--sort}, rows will be sorted in descending order.
 Only print the given number of rows from the @emph{top} of the final table.
 Note that this option only affects the @emph{output} table.
 For example if you use @option{--sort}, or @option{--range}, the printed rows are the first @emph{after} applying the sort sorting, or selecting a range of the full input.
-This option cannot be called with @option{--tail}, @option{--rowlimit} or @option{--rowrandom}.
+This option cannot be called with @option{--tail}, @option{--rowrange} or @option{--rowrandom}.
 For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 @cindex GNU Coreutils
@@ -13467,11 +13467,11 @@ This behavior is taken from the @command{head} program in GNU Coreutils.
 @itemx --tail=INT
 Only print the given number of rows from the @emph{bottom} of the final table.
 See @option{--head} for more.
-This option cannot be called with @option{--head}, @option{--rowlimit} or @option{--rowrandom}.
+This option cannot be called with @option{--head}, @option{--rowrange} or @option{--rowrandom}.
 
-@item --rowlimit=INT,INT
+@item --rowrange=INT,INT
 Only return the rows within the requested positional range (inclusive on both sides).
-Therefore, @code{--rowlimit=5,7} will return 3 of the input rows, row 5, 6 and 7.
+Therefore, @code{--rowrange=5,7} will return 3 of the input rows, row 5, 6 and 7.
 This option will abort if any of the given values is larger than the total number of rows in the table.
 For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
@@ -13486,7 +13486,7 @@ Select @code{INT} rows from the input table by random (assuming a uniform distri
 This option is applied @emph{after} the value-based selection options (like @option{--sort}, @option{--range}, @option{--polygon} and etc).
 On the other hand, only the row counters are randomly selected, this option doesn't change the order.
 Therefore, if @option{--rowrandom} is called together with @option{--sort}, the returned rows are still sorted.
-This option cannot be called with @option{--head}, @option{--tail}, or @option{--rowlimit}.
+This option cannot be called with @option{--head}, @option{--tail}, or @option{--rowrange}.
 For the precedence of this operation in relation to others, see @ref{Operation precedence in Table}.
 
 This option will only have an effect if @code{INT} is larger than the number of rows when it is activated (after the value-based selection options have been applied).

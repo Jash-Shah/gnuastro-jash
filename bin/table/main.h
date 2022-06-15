@@ -107,7 +107,7 @@ struct tableparams
   uint8_t          descending;  /* Sort columns in descending order.    */
   size_t                 head;  /* Output only the no. of top rows.     */
   size_t                 tail;  /* Output only the no. of bottom rows.  */
-  gal_data_t        *rowlimit;  /* Output rows in row-counter range.    */
+  gal_data_t        *rowrange;  /* Output rows in row-counter range.    */
   size_t            rowrandom;  /* Number of rows to show randomly.     */
   uint8_t             envseed;  /* Use the environment for random seed. */
   gal_list_str_t *catcolumnfile; /* Filename to concat column wise.     */
