@@ -79,6 +79,7 @@ pop_number_of_operands(struct arithmeticparams *p, int op, char *token_string,
   /* See if this operator needs any parameters. If so, pop them. */
   switch(op)
     {
+    case GAL_ARITHMETIC_OP_STITCH:
     case GAL_ARITHMETIC_OP_QUANTILE:
       numparams=1;
       break;
@@ -1044,18 +1045,6 @@ arithmetic_tofile(struct arithmeticparams *p, char *token, int freeflag)
 
 
 void
-arithmetic_unique(struct arithmeticparams *p, char *token, int operator)
-{
-  /* Pass the popped operand to the statistics library. */
-  gal_data_t *input = gal_statistics_unique(operands_pop(p, token), 1);
-  operands_add(p, NULL, input);
-}
-
-
-
-
-
-void
 arithmetic_add_dimension(struct arithmeticparams *p, char *token,
                          int operator)
 {
@@ -1279,8 +1268,6 @@ arithmetic_set_operator(char *string, size_t *num_operands)
         { op=ARITHMETIC_OP_COLLAPSE_MEAN;         *num_operands=0; }
       else if (!strcmp(string, "collapse-number"))
         { op=ARITHMETIC_OP_COLLAPSE_NUMBER;       *num_operands=0; }
-      else if (!strcmp(string, "unique"))
-        { op=ARITHMETIC_OP_UNIQUE;                *num_operands=0; }
       else if (!strcmp(string, "add-dimension-slow"))
         { op=ARITHMETIC_OP_ADD_DIMENSION_SLOW;    *num_operands=0; }
       else if (!strcmp(string, "add-dimension-fast"))
@@ -1341,10 +1328,10 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
 
         case -1:
           /* This case is when the number of operands is itself an
-             operand. So except for sigma-clipping (that has other
-             parameters), the first popped operand must be an
-             integer number, we will use that to construct a linked
-             list of any number of operands within the single 'd1'
+             operand. So except for operators that have high-level
+             parameters (like sigma-clipping), the first popped operand
+             must be an integer number, we will use that to construct a
+             linked list of any number of operands within the single 'd1'
              pointer. */
           numop=pop_number_of_operands(p, operator, operator_string, &d2);
           for(i=0;i<numop;++i)
@@ -1414,10 +1401,6 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
         case ARITHMETIC_OP_COLLAPSE_MEAN:
         case ARITHMETIC_OP_COLLAPSE_NUMBER:
           arithmetic_collapse(p, operator_string, operator);
-          break;
-
-        case ARITHMETIC_OP_UNIQUE:
-          arithmetic_unique(p, operator_string, operator);
           break;
 
         case ARITHMETIC_OP_ADD_DIMENSION_SLOW:

@@ -15357,6 +15357,19 @@ With this operator, this job is trivial:
 $ astarithmetic seg-crop.fits unique
 @end example
 
+@item noblank
+Remove all blank elements from the first popped operand.
+Since the blank pixels are being removed, the output dataset will always be single-dimensional, independent of the dimensionality of the input.
+
+Recall that by default, single-dimensional datasets are stored as a table column in the output.
+But you can use @option{--onedasimage} or @option{--onedonstdout} to respectively store them as a single-dimensional FITS array/image, or to print them on the standard output.
+
+For example with the command below, the non-blank pixel values of @file{cropped.fits} are printed on the command-line (the @option{--quiet} option is used to remove the extra information that Arithmetic prints as it reads the inputs, its version and its running time).
+
+@example
+$ astarithmetic cropped.fits nonblank --onedonstdout --quiet
+@end example
+
 @item size
 Size of the dataset along a given FITS (or FORTRAN) dimension (counting from 1).
 The desired dimension should be the first popped operand and the dataset must be the second popped operand.
@@ -15658,6 +15671,54 @@ You can now use the @code{collapse-sum} operator below to ``collapse'' all the 1
 Every pixel in this 2D image will have the flux of the sum of the 100 slices.
 
 @table @command
+
+@item stitch
+Stitch (connect) any number of given images together along the given dimension.
+The output has the same number of dimensions as the input, but the number of pixels along the requested dimension will be different from the inputs.
+The @code{stitch} operator takes atleast three operands:
+@itemize
+@item
+The first popped operand (placed just before @code{stitch}) is the direction (dimension) that the images should be stitched along.
+The first FITS dimension is along the horizontal, therefore a value of @code{1} will stitch them horizontally.
+Similarly, giving a value of @code{2} will result in a vertical stitch.
+
+@item
+The second popped operand is the number of images that should be stitched.
+
+@item
+Depending on the value given to the second popped operand, @code{stitch} will pop the given number of datasets from the stack and stitch them along the given dimension.
+The popped images have to have the same number of pixels along the other dimension.
+The order of the stitching is defined by how they are placed in the command-line, not how they are popped (after being popped, they are placed in a list in the same order).
+@end itemize
+
+For example, in the commands below, we'll first crop out fixed sized regions of @mymath{100\times300} pixels of a larger image (@file{large.fits} first.
+In the first call of Arithmetic below, we will stitch the bottom set of crops together along the first (horizontal) axis.
+In the second Arithmetic call, we will stitch all 6 along both dimensions.
+
+@example
+## Crop the fixed-size regions of a larger image ('-O' is the
+## short form of the '--mode' option).
+$ astcrop large.fits -Oimg --section=1:100,1:300     -oa.fits
+$ astcrop large.fits -Oimg --section=101:200,1:300   -ob.fits
+$ astcrop large.fits -Oimg --section=201:300,1:300   -oc.fits
+$ astcrop large.fits -Oimg --section=1:100,301:600   -od.fits
+$ astcrop large.fits -Oimg --section=101:200,301:600 -oe.fits
+$ astcrop large.fits -Oimg --section=201:300,301:600 -of.fits
+
+## Stitch the bottom three crops into one image.
+$ astarithmetic a.fits b.fits c.fits 3 1 stitch -obottom.fits
+
+# Stitch all the 6 crops along both dimensions
+$ astarithmetic a.fits b.fits c.fits 3 1 stitch \
+                d.fits e.fits f.fits 3 1 stitch \
+                2 2 stitch -g1 -oall.fits
+@end example
+
+The start of the last command is like the one before it (stitching the bottom three crops along the first FITS dimension, producing a @mymath{300\times300} image).
+Later in the same command, we then stitch the top three crops horizontally (again, into a @mymath{300\times300} image)
+This leaves the the two @mymath{300\times300} images on the stack (see @ref{Reverse polish notation}).
+We finally stitch those two along the second dimension.
+This operator is therefore useful in scenarios like placing the CCD amplifiers into one image.
 
 @item collapse-sum
 Collapse the given dataset (second popped operand), by summing all elements along the first popped operand (a dimension in FITS standard: counting from one, from fastest dimension).
@@ -31235,12 +31296,20 @@ The latter two are the opposite.
 @deffnx Macro GAL_ARITHMETIC_OP_MEANVAL
 @deffnx Macro GAL_ARITHMETIC_OP_STDVAL
 @deffnx Macro GAL_ARITHMETIC_OP_MEDIANVAL
-Unary operand statistical operators that will return a single value for
-datasets of any size. These are just wrappers around similar functions in
-@ref{Statistical operations} and are included in @code{gal_arithmetic} only
-for completeness (to use easily in @ref{Arithmetic}). In your programs, it
-will probably be easier if you use those @code{gal_statistics_} functions
-directly.
+Unary operand statistical operators that will return a single value for datasets of any size.
+These are just wrappers around similar functions in @ref{Statistical operations} and are included in @code{gal_arithmetic} only for completeness (to use easily in @ref{Arithmetic}).
+In your programs, it will probably be easier if you use those @code{gal_statistics_} functions directly.
+@end deffn
+
+@deffn  Macro GAL_ARITHMETIC_OP_UNIQUE
+@deffnx Macro GAL_ARITHMETIC_OP_NOBLANK
+Unary operands that will remove some elements from the input dataset.
+The first will return the unique elements, and the second will return the non-blank elements.
+Due to the removal of elements, the dimensionality of the output will be lost.
+
+These are just wrappers over the @code{gal_statistics_unique} and @code{gal_blank_remove}.
+These are just wrappers around similar functions in @ref{Statistical operations} and are included in @code{gal_arithmetic} only for completeness (to use easily in @ref{Arithmetic}).
+In your programs, it will probably be easier if you use those @code{gal_statistics_} functions directly.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_ABS
@@ -31254,20 +31323,13 @@ Unary operand absolute-value operator.
 @deffnx Macro GAL_ARITHMETIC_OP_MEAN
 @deffnx Macro GAL_ARITHMETIC_OP_STD
 @deffnx Macro GAL_ARITHMETIC_OP_MEDIAN
-Multi-operand statistical operations. When @code{gal_arithmetic} is called
-with any of these operators, it will expect only a single operand that will
-be interpreted as a list of datasets (see @ref{List of gal_data_t}). These
-operators can work on multiple threads using the @code{numthreads}
-argument. See the discussion under the @code{min} operator in
-@ref{Arithmetic operators}.
+Multi-operand statistical operations.
+When @code{gal_arithmetic} is called with any of these operators, it will expect only a single operand that will be interpreted as a list of datasets (see @ref{List of gal_data_t}).
+These operators can work on multiple threads using the @code{numthreads} argument.
+See the discussion under the @code{min} operator in @ref{Arithmetic operators}.
 
-The output will be a single dataset with each of its elements replaced by
-the respective statistical operation on the whole list. The type of the
-output is determined from the operator (irrespective of the input type):
-for @code{GAL_ARITHMETIC_OP_MIN} and @code{GAL_ARITHMETIC_OP_MAX}, it will
-be the same type as the input, for @code{GAL_ARITHMETIC_OP_NUMBER}, the
-output will be @code{GAL_TYPE_UINT32} and for the rest, it will be
-@code{GAL_TYPE_FLOAT32}.
+The output will be a single dataset with each of its elements replaced by the respective statistical operation on the whole list.
+The type of the output is determined from the operator (irrespective of the input type): for @code{GAL_ARITHMETIC_OP_MIN} and @code{GAL_ARITHMETIC_OP_MAX}, it will be the same type as the input, for @code{GAL_ARITHMETIC_OP_NUMBER}, the output will be @code{GAL_TYPE_UINT32} and for the rest, it will be @code{GAL_TYPE_FLOAT32}.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_QUANTILE
@@ -31280,14 +31342,10 @@ The output type is the same as the inputs.
 @deffnx Macro GAL_ARITHMETIC_OP_SIGCLIP_MEAN
 @deffnx Macro GAL_ARITHMETIC_OP_SIGCLIP_MEDIAN
 @deffnx Macro GAL_ARITHMETIC_OP_SIGCLIP_NUMBER
-Similar to the operands above (including @code{GAL_ARITHMETIC_MIN}), except
-that when @code{gal_arithmetic} is called with these operators, it requires
-two arguments. The first is the list of datasets like before, and the
-second is the 2-element list of @mymath{\sigma}-clipping parameters. The first
-element in the parameters list is the multiple of sigma and the second is
-the termination criteria (see @ref{Sigma clipping}). The output type of
-@code{GAL_ARITHMETIC_OP_SIGCLIP_NUMBER} will be @code{GAL_TYPE_UINT32} and
-for the rest it will be @code{GAL_TYPE_FLOAT32}.
+Similar to the operands above (including @code{GAL_ARITHMETIC_MIN}), except that when @code{gal_arithmetic} is called with these operators, it requires two arguments.
+The first is the list of datasets like before, and the second is the 2-element list of @mymath{\sigma}-clipping parameters.
+The first element in the parameters list is the multiple of sigma and the second is the termination criteria (see @ref{Sigma clipping}).
+The output type of @code{GAL_ARITHMETIC_OP_SIGCLIP_NUMBER} will be @code{GAL_TYPE_UINT32} and for the rest it will be @code{GAL_TYPE_FLOAT32}.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_MKNOISE_SIGMA
@@ -31309,6 +31367,11 @@ By default these operators will print the random number generator function and s
 Size operator that will return a single value for datasets of any kind. When @code{gal_arithmetic} is called with this operator, it requires two arguments.
 The first is the dataset, and the second is a single integer value.
 The output type is a single integer.
+@end deffn
+
+@deffn Macro GAL_ARITHMETIC_OP_STITCH
+Stitch a list of input datasets along the requested dimension.
+See the description of the @code{stitch} operator in Arithmetic (@ref{Dimensionality changing operators}).
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_POW

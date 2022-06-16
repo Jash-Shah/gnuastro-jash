@@ -705,6 +705,37 @@ arithmetic_from_statistics(int operator, int flags, gal_data_t *input)
 
 
 
+/* Call functions in the 'gnuastro/statistics' library. */
+static gal_data_t *
+arithmetic_to_oned(int operator, int flags, gal_data_t *input)
+{
+  gal_data_t *out=NULL;
+  int inplace=flags & GAL_ARITHMETIC_FLAG_FREE;
+
+  switch(operator)
+    {
+    case GAL_ARITHMETIC_OP_UNIQUE:
+      out=gal_statistics_unique(input, inplace);
+      break;
+    case GAL_ARITHMETIC_OP_NOBLANK:
+      out = inplace ? input : gal_data_copy(input);
+      gal_blank_remove(out);
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! please contact us at "
+            "'%s' to fix the problem. The value '%d' to "
+            "'operator' is not recognized", __func__,
+            PACKAGE_BUGREPORT, operator);
+    }
+
+  /* Return the output dataset. */
+  return out;
+}
+
+
+
+
+
 
 
 
@@ -916,6 +947,150 @@ arithmetic_size(int operator, int flags, gal_data_t *in, gal_data_t *arg)
   return out;
 }
 
+
+
+
+
+static size_t
+arithmetic_stitch_sanity_check(gal_data_t *list, gal_data_t *fdim)
+{
+  float *fitsdim;
+  size_t c, dim;
+  gal_data_t *tmp;
+
+  /* Currently we only have the stitch operator for 2D datasets. */
+  if(list->ndim!=2)
+    error(EXIT_FAILURE, 0, "currently the 'stitch' operator only "
+          "works with 2D datasets (images) but you have given a "
+          "%zu dimensional dataset. Please get in touch with us "
+          "at '%s' to add this feature", list->ndim, PACKAGE_BUGREPORT);
+
+  /* Make sure that the dimention is an integer. */
+  fitsdim=fdim->array;
+  if( fitsdim[0] != ceil(fitsdim[0]) )
+    error(EXIT_FAILURE, 0, "the dimension operand (first popped "
+          "operand) to 'stitch' should be an integer, but it is "
+          "'%g'", fitsdim[0]);
+
+  /* Make sure that the requested dimension is not larger than the input's
+     number of dimensions. */
+  if(fitsdim[0]>list->ndim)
+    error(EXIT_FAILURE, 0, "the dimension operand (first popped "
+          "operand) to 'stitch' is %g, but your input datasets "
+          "only have %zu dimensions", fitsdim[0], list->ndim);
+
+  /* Convert the given dimension (in FITS standard) to C standard. */
+  dim = list->ndim - fitsdim[0];
+
+  /* Go through the list of datasets and make sure the dimensionality is
+     fine.*/
+  c=0;
+  for(tmp=list; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Increment the counter. */
+      ++c;
+
+      /* Make sure they have the same numerical data type. */
+      if(tmp->type!=list->type)
+        error(EXIT_FAILURE, 0, "input dataset number %zu has a "
+              "numerical data type of '%s' while the first "
+              "input has a type of '%s'",
+              c, gal_type_name(tmp->type,1), gal_type_name(list->ndim,1));
+
+      /* Make sure they have the same number of dimensions. */
+      if(tmp->ndim!=list->ndim)
+        error(EXIT_FAILURE, 0, "input dataset number %zu has %zu "
+              "dimensions, while the first input has %zu dimensions",
+              c, tmp->ndim, list->ndim);
+
+      /* Make sure the length along the non-requested dimension in all the
+         inputs are the same. Note that since we currently only support 2D
+         arrays, and that 'dim' is in C standard (has a value of 0 or 1),
+         we can simply say '!dim' to point to the other dimension.*/
+      if( tmp->dsize[!dim]!=list->dsize[!dim])
+        error(EXIT_FAILURE, 0, "input dataset number %zu has %zu "
+              "elements along dimension number %d, while the first "
+              "has %zu elements along that dimension", c,
+              tmp->dsize[!dim], !dim==0 ? 2 : 1, list->dsize[!dim]);
+    }
+
+  /* Return the dimension number that must be used. */
+  return dim;
+}
+
+
+
+
+
+/* Stitch multiple operands along a given dimension. */
+static gal_data_t *
+arithmetic_stitch(int operator, int flags, gal_data_t *list,
+                  gal_data_t *fdim)
+{
+  void *oarr;
+  gal_data_t *tmp, *out;
+  uint8_t type=list->type;
+  size_t i, dim, sum, dsize[2];
+
+  /* In case we are dealing with a single-element list, just return it! */
+  if(list->next==NULL) return list;
+
+  /* Make sure everything is good! */
+  dim=arithmetic_stitch_sanity_check(list, fdim);
+
+  /* Find the size of the final output dataset. */
+  sum=0; for(tmp=list; tmp!=NULL; tmp=tmp->next) sum+=tmp->dsize[dim];
+  dsize[0] = dim==0 ? sum            : list->dsize[0];
+  dsize[1] = dim==0 ? list->dsize[1] : sum;
+
+  /* Allocate the output dataset. */
+  out=gal_data_alloc(NULL, list->type, list->ndim, dsize, list->wcs,
+                     0, list->minmapsize, list->quietmmap, "Stitched",
+                     list->unit, "Stitched dataset");
+
+  /* Write the individual datasets into the output. Note that 'dim' is the
+     dimension counter of the C standard. */
+  oarr=out->array;
+  for(tmp=list; tmp!=NULL; tmp=tmp->next)
+    {
+      switch(dim)
+        {
+
+        /* Vertical stitching (second FITS axis is the vertical axis). */
+        case 0:
+          memcpy(oarr,tmp->array, gal_type_sizeof(type)*tmp->size);
+          oarr += gal_type_sizeof(type)*tmp->size;
+          break;
+
+        /* Horizontal stitching (first FITS axis is the horizontal axis) */
+        case 1:
+
+          /* Copy row-by-row. */
+          for(i=0;i<dsize[0];++i)
+            memcpy(gal_pointer_increment(oarr,       i*dsize[1],      type),
+                   gal_pointer_increment(tmp->array, i*tmp->dsize[1], type),
+                   gal_type_sizeof(type)*tmp->dsize[1]);
+
+          /* Copying has finished, increment the start for the next
+             image. Note that in this scenario, the starting pixel for the
+             next image is on the first row, but tmp->dsize[1] pixels
+             away. */
+          oarr += gal_type_sizeof(type)*tmp->dsize[1];
+          break;
+
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+                "to find and fix the problem. The value of 'dim' is "
+                "'%zu' is not understood", __func__, PACKAGE_BUGREPORT,
+                dim);
+        }
+    }
+
+  /* Clean up and return */
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
+    gal_list_data_free(list);
+  return out;
+}
 
 
 
@@ -2436,6 +2611,12 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "sigclip-std"))
     { op=GAL_ARITHMETIC_OP_SIGCLIP_STD;       *num_operands=-1; }
 
+  /* To one-dimension (only based on values). */
+  else if (!strcmp(string, "unique"))
+    { op=GAL_ARITHMETIC_OP_UNIQUE;            *num_operands=1;  }
+  else if (!strcmp(string, "noblank"))
+    { op=GAL_ARITHMETIC_OP_NOBLANK;           *num_operands=1;  }
+
   /* Adding noise operators. */
   else if (!strcmp(string, "mknoise-sigma"))
     { op=GAL_ARITHMETIC_OP_MKNOISE_SIGMA;     *num_operands=2; }
@@ -2447,6 +2628,10 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   /* The size operator */
   else if (!strcmp(string, "size"))
     { op=GAL_ARITHMETIC_OP_SIZE;              *num_operands=2;  }
+
+  /* Stitching */
+  else if (!strcmp(string, "stitch"))
+    { op=GAL_ARITHMETIC_OP_STITCH;            *num_operands=-1; }
 
   /* Conditional operators. */
   else if (!strcmp(string, "lt" ))
@@ -2598,6 +2783,9 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_STDVAL:          return "stdvalue";
     case GAL_ARITHMETIC_OP_MEDIANVAL:       return "medianvalue";
 
+    case GAL_ARITHMETIC_OP_UNIQUE:          return "unique";
+    case GAL_ARITHMETIC_OP_NOBLANK:         return "noblank";
+
     case GAL_ARITHMETIC_OP_MIN:             return "min";
     case GAL_ARITHMETIC_OP_MAX:             return "max";
     case GAL_ARITHMETIC_OP_NUMBER:          return "number";
@@ -2616,6 +2804,7 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM: return "mknoise-uniform";
 
     case GAL_ARITHMETIC_OP_SIZE:            return "size";
+    case GAL_ARITHMETIC_OP_STITCH:          return "stitch";
 
     case GAL_ARITHMETIC_OP_TO_UINT8:        return "uchar";
     case GAL_ARITHMETIC_OP_TO_INT8:         return "char";
@@ -2743,6 +2932,13 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       out=arithmetic_from_statistics(operator, flags, d1);
       break;
 
+    /* Return 1D array (only values). */
+    case GAL_ARITHMETIC_OP_UNIQUE:
+    case GAL_ARITHMETIC_OP_NOBLANK:
+      d1 = va_arg(va, gal_data_t *);
+      out=arithmetic_to_oned(operator, flags, d1);
+      break;
+
     /* Absolute operator. */
     case GAL_ARITHMETIC_OP_ABS:
       d1 = va_arg(va, gal_data_t *);
@@ -2797,6 +2993,13 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);
       out=arithmetic_size(operator, flags, d1, d2);
+      break;
+
+    /* Stitch multiple datasets. */
+    case GAL_ARITHMETIC_OP_STITCH:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      out=arithmetic_stitch(operator, flags, d1, d2);
       break;
 
     /* Conversion operators. */

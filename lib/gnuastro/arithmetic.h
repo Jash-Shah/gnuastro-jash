@@ -143,6 +143,8 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_MEANVAL,      /* Mean value of array.                  */
   GAL_ARITHMETIC_OP_STDVAL,       /* Standard deviation value of array.    */
   GAL_ARITHMETIC_OP_MEDIANVAL,    /* Median value of array.                */
+  GAL_ARITHMETIC_OP_UNIQUE,       /* Only return unique elements.          */
+  GAL_ARITHMETIC_OP_NOBLANK,      /* Only keep non-blank elements.         */
 
   GAL_ARITHMETIC_OP_MIN,          /* Minimum per pixel of multiple arrays. */
   GAL_ARITHMETIC_OP_MAX,          /* Maximum per pixel of multiple arrays. */
@@ -162,6 +164,8 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_MKNOISE_UNIFORM,/* Uniform noise on every element.     */
 
   GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
+
+  GAL_ARITHMETIC_OP_STITCH,       /* Stitch multiple datasets together.    */
 
   GAL_ARITHMETIC_OP_TO_UINT8,     /* Convert to uint8_t.                   */
   GAL_ARITHMETIC_OP_TO_INT8,      /* Convert to int8_t.                    */

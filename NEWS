@@ -16,6 +16,14 @@ See the end of the file for license conditions.
      written with the help of S. Zahra Hosseini Shahisavandi and Sepideh
      Eskandarlou.
 
+  Arithmetic:
+   - New operators:
+     - stitch: connect any number of input images along the given dimension
+       (for example to stitch the images of separate amplifiers of a CCD
+       into one image).
+     - noblank: Remove blank elements from the input and return a 1D output
+       (irrespective of how many dimensions the input had).
+
   Crop:
    --oneelemstdout: when a crop has a single pixel and this option is
      called, the single pixel's value will be printed on the standard
@@ -60,6 +68,11 @@ See the end of the file for license conditions.
      passed to the internal cropping command ('astcrop' has an option with
      the same name). This was suggested by Ignacio Ruiz Cejudo and
      implemented by Sepideh Eskandarlou.
+
+  Library:
+   - GAL_ARITHMETIC_OP_UNIQUE: to find unique elements in dataset.
+   - GAL_ARITHMETIC_OP_NOBLANK: to remove blank elements from dataset.
+   - GAL_ARITHMETIC_OP_STITCH: to stitch multiple datasets.
 
 ** Removed features
 
