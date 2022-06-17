@@ -15675,7 +15675,7 @@ Every pixel in this 2D image will have the flux of the sum of the 100 slices.
 @item stitch
 Stitch (connect) any number of given images together along the given dimension.
 The output has the same number of dimensions as the input, but the number of pixels along the requested dimension will be different from the inputs.
-The @code{stitch} operator takes atleast three operands:
+The @code{stitch} operator takes at least three operands:
 @itemize
 @item
 The first popped operand (placed just before @code{stitch}) is the direction (dimension) that the images should be stitched along.
@@ -15691,7 +15691,7 @@ The popped images have to have the same number of pixels along the other dimensi
 The order of the stitching is defined by how they are placed in the command-line, not how they are popped (after being popped, they are placed in a list in the same order).
 @end itemize
 
-For example, in the commands below, we'll first crop out fixed sized regions of @mymath{100\times300} pixels of a larger image (@file{large.fits} first.
+For example, in the commands below, we'll first crop out fixed sized regions of @mymath{100\times300} pixels of a larger image (@file{large.fits}) first.
 In the first call of Arithmetic below, we will stitch the bottom set of crops together along the first (horizontal) axis.
 In the second Arithmetic call, we will stitch all 6 along both dimensions.
 
@@ -15717,7 +15717,7 @@ $ astarithmetic a.fits b.fits c.fits 3 1 stitch \
 The start of the last command is like the one before it (stitching the bottom three crops along the first FITS dimension, producing a @mymath{300\times300} image).
 Later in the same command, we then stitch the top three crops horizontally (again, into a @mymath{300\times300} image)
 This leaves the the two @mymath{300\times300} images on the stack (see @ref{Reverse polish notation}).
-We finally stitch those two along the second dimension.
+We finally stitch those two along the second (vertical) dimension.
 This operator is therefore useful in scenarios like placing the CCD amplifiers into one image.
 
 @item collapse-sum
@@ -31194,55 +31194,37 @@ A wrapper for activating the three ``basic'' operations that are commonly necess
 @deffnx Macro GAL_ARITHMETIC_OP_NE
 @deffnx Macro GAL_ARITHMETIC_OP_AND
 @deffnx Macro GAL_ARITHMETIC_OP_OR
-Binary operators (requiring two operands) that accept datasets of any
-recognized type (see @ref{Numeric data types}). When @code{gal_arithmetic}
-is called with any of these operators, it expects two datasets as
-arguments. For a full description of these operators with the same name,
-see @ref{Arithmetic operators}. The first dataset/operand will be put on
-the left of the operator and the second will be put on the right. The
-output type of the first four is determined from the input types (largest
-type of the inputs). The rest (which are all conditional operators) will
-output a binary @code{uint8_t} (or @code{unsigned char}) dataset with
-values of either @code{0} (zero) or @code{1} (one).
+Binary operators (requiring two operands) that accept datasets of any recognized type (see @ref{Numeric data types}).
+When @code{gal_arithmetic} is called with any of these operators, it expects two datasets as arguments.
+For a full description of these operators with the same name, see @ref{Arithmetic operators}.
+The first dataset/operand will be put on the left of the operator and the second will be put on the right.
+The output type of the first four is determined from the input types (largest type of the inputs).
+The rest (which are all conditional operators) will output a binary @code{uint8_t} (or @code{unsigned char}) dataset with values of either @code{0} (zero) or @code{1} (one).
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_NOT
-The logical NOT operator. When @code{gal_arithmetic} is called with this
-operator, it only expects one operand (dataset), since this is a unary
-operator. The output is @code{uint8_t} (or @code{unsigned char}) dataset of
-the same size as the input. Any non-zero element in the input will be
-@code{0} (zero) in the output and any @code{0} (zero) will have a value of
-@code{1} (one).
+The logical NOT operator.
+When @code{gal_arithmetic} is called with this operator, it only expects one operand (dataset), since this is a unary operator.
+The output is @code{uint8_t} (or @code{unsigned char}) dataset of the same size as the input.
+Any non-zero element in the input will be @code{0} (zero) in the output and any @code{0} (zero) will have a value of @code{1} (one).
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_ISBLANK
-A unary operator with output that is @code{1} for any element in the input
-that is blank, and @code{0} for any non-blank element. When
-@code{gal_arithmetic} is called with this operator, it will only expect one
-input dataset. The output dataset will have @code{uint8_t} (or
-@code{unsigned char}) type.
+A unary operator with output that is @code{1} for any element in the input that is blank, and @code{0} for any non-blank element.
+When @code{gal_arithmetic} is called with this operator, it will only expect one input dataset.
+The output dataset will have @code{uint8_t} (or @code{unsigned char}) type.
 
-@code{gal_arithmetic} with this operator is just a wrapper for the
-@code{gal_blank_flag} function of @ref{Library blank values} and this
-operator is just included for completeness in arithmetic operations. So in
-your program, it might be easier to just call @code{gal_blank_flag}.
+@code{gal_arithmetic} with this operator is just a wrapper for the @code{gal_blank_flag} function of @ref{Library blank values} and this operator is just included for completeness in arithmetic operations.
+So in your program, it might be easier to just call @code{gal_blank_flag}.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_WHERE
-The three-operand @emph{where} operator thoroughly discussed in
-@ref{Arithmetic operators}. When @code{gal_arithmetic} is called with this
-operator, it will only expect three input datasets: the first (which is the
-same as the returned dataset) is the array that will be modified. The
-second is the condition dataset (that must have a @code{uint8_t} or
-@code{unsigned char} type), and the third is the value to be used if
-condition is non-zero.
+The three-operand @emph{where} operator thoroughly discussed in @ref{Arithmetic operators}.
+When @code{gal_arithmetic} is called with this operator, it will only expect three input datasets: the first (which is the same as the returned dataset) is the array that will be modified.
+The second is the condition dataset (that must have a @code{uint8_t} or @code{unsigned char} type), and the third is the value to be used if condition is non-zero.
 
-As a result, note that the order of operands when calling
-@code{gal_arithmetic} with @code{GAL_ARITHMETIC_OP_WHERE} is the opposite
-of running Gnuastro's Arithmetic program with the @code{where} operator
-(see @ref{Arithmetic}). This is because the latter uses the reverse-Polish
-notation which isn't necessary when calling a function (see @ref{Reverse
-polish notation}).
+As a result, note that the order of operands when calling @code{gal_arithmetic} with @code{GAL_ARITHMETIC_OP_WHERE} is the opposite of running Gnuastro's Arithmetic program with the @code{where} operator (see @ref{Arithmetic}).
+This is because the latter uses the reverse-Polish notation which isn't necessary when calling a function (see @ref{Reverse polish notation}).
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_SQRT
@@ -31384,25 +31366,20 @@ Binary operator to-power operator. When @code{gal_arithmetic} is called with any
 @deffnx Macro GAL_ARITHMETIC_OP_BITLSH
 @deffnx Macro GAL_ARITHMETIC_OP_BITRSH
 @deffnx Macro GAL_ARITHMETIC_OP_MODULO
-Binary integer-only operand operators. These operators are only defined on
-integer data types. When @code{gal_arithmetic} is called with any of these
-operators, it will expect two operands: the first is put on the left of the
-operator and the second on the right. The ones starting with @code{BIT} are
-the respective bit-wise operators in C and @code{MODULO} is the
-modulo/remainder operator. For a discussion on these operators, please see
+Binary integer-only operand operators.
+These operators are only defined on integer data types.
+When @code{gal_arithmetic} is called with any of these operators, it will expect two operands: the first is put on the left of the operator and the second on the right.
+The ones starting with @code{BIT} are the respective bit-wise operators in C and @code{MODULO} is the modulo/remainder operator.
+For a discussion on these operators, please see
 @ref{Arithmetic operators}.
 
-The output type is determined from the input types and C's internal
-conversions: it is strongly recommended that both inputs have the same type
-(any integer type), otherwise the bit-wise behavior will be determined by
-your compiler.
+The output type is determined from the input types and C's internal conversions: it is strongly recommended that both inputs have the same type (any integer type), otherwise the bit-wise behavior will be determined by your compiler.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_BITNOT
-The unary bit-wise NOT operator. When @code{gal_arithmetic} is called with
-any of these operators, it will expect one operand of an integer type and
-preform the bitwise-NOT operation on it. The output will have the same type
-as the input.
+The unary bit-wise NOT operator.
+When @code{gal_arithmetic} is called with any of these operators, it will expect one operand of an integer type and preform the bitwise-NOT operation on it.
+The output will have the same type as the input.
 @end deffn
 
 
@@ -31416,14 +31393,11 @@ as the input.
 @deffnx Macro GAL_ARITHMETIC_OP_TO_INT64
 @deffnx Macro GAL_ARITHMETIC_OP_TO_FLOAT32
 @deffnx Macro GAL_ARITHMETIC_OP_TO_FLOAT64
-Unary type-conversion operators. When @code{gal_arithmetic} is called with
-any of these operators, it will expect one operand and convert it to the
-requested type. Note that with these operators, @code{gal_arithmetic} is
-just a wrapper over the @code{gal_data_copy_to_new_type} or
-@code{gal_data_copy_to_new_type_free} that are discussed in @code{Copying
-datasets}. It accepts these operators only for completeness and easy usage
-in @ref{Arithmetic}. So in your programs, it might be preferable to
-directly use those functions.
+Unary type-conversion operators.
+When @code{gal_arithmetic} is called with any of these operators, it will expect one operand and convert it to the requested type.
+Note that with these operators, @code{gal_arithmetic} is just a wrapper over the @code{gal_data_copy_to_new_type} or @code{gal_data_copy_to_new_type_free} that are discussed in @code{Copying datasets}.
+It accepts these operators only for completeness and easy usage in @ref{Arithmetic}.
+So in your programs, it might be preferable to directly use those functions.
 @end deffn
 
 @deffn Macro GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE
@@ -31500,22 +31474,17 @@ Arithmetic will automatically deal with the data types internally and choose the
 @end deftypefun
 
 @deftypefun int gal_arithmetic_set_operator (char @code{*string}, size_t @code{*num_operands})
-Return the operator macro/code that corresponds to @code{string}. The
-number of operands that it needs are written into the space that
-@code{*num_operands} points to. If the string couldn't be interpreted as
-an operator, this function will return @code{GAL_ARITHMETIC_OP_INVALID}.
+Return the operator macro/code that corresponds to @code{string}.
+The number of operands that it needs are written into the space that @code{*num_operands} points to.
+If the string couldn't be interpreted as an operator, this function will return @code{GAL_ARITHMETIC_OP_INVALID}.
 
-This function will check @code{string} with the fixed human-readable names
-(using @code{strcmp}) for the operators and return the two numbers. Note
-that @code{string} must only contain the single operator name and nothing
-else (not even any extra white space).
+This function will check @code{string} with the fixed human-readable names (using @code{strcmp}) for the operators and return the two numbers.
+Note that @code{string} must only contain the single operator name and nothing else (not even any extra white space).
 @end deftypefun
 
 @deftypefun {char *} gal_arithmetic_operator_string (int @code{operator})
-Return the human-readable standard string that corresponds to the given
-operator. For example when the input is @code{GAL_ARITHMETIC_OP_PLUS} or
-@code{GAL_ARITHMETIC_OP_MEAN}, the strings @code{+} or @code{mean} will be
-returned.
+Return the human-readable standard string that corresponds to the given operator.
+For example when the input is @code{GAL_ARITHMETIC_OP_PLUS} or @code{GAL_ARITHMETIC_OP_MEAN}, the strings @code{+} or @code{mean} will be returned.
 @end deftypefun
 
 @node Tessellation library, Bounding box, Arithmetic on datasets, Gnuastro library
