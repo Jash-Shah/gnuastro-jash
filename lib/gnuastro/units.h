@@ -83,6 +83,15 @@ double
 gal_units_counts_to_jy(double counts, double zeropoint_ab);
 
 double
+gal_units_jy_to_counts(double jy, double zeropoint_ab);
+
+double
+gal_units_jy_to_mag(double jy);
+
+double
+gal_units_mag_to_jy(double mag);
+
+double
 gal_units_au_to_pc(double au);
 
 double

@@ -394,6 +394,41 @@ gal_units_counts_to_jy(double counts, double zeropoint_ab)
 
 
 
+/* Convert Janskys to pixel values with an AB-magnitude based
+   zero-point. See the "Brightness, Flux, Magnitude and Surface
+   brightness". */
+double
+gal_units_jy_to_counts(double jy, double zeropoint_ab)
+{
+  return jy / 3631 / pow(10, -1 * zeropoint_ab / 2.5);
+}
+
+
+
+
+
+double
+gal_units_jy_to_mag(double jy)
+{
+  double zp=0;
+  return gal_units_counts_to_mag(gal_units_jy_to_counts(jy, zp),zp);
+}
+
+
+
+
+
+double
+gal_units_mag_to_jy(double mag)
+{
+  double zp=0;
+  return gal_units_counts_to_jy(gal_units_mag_to_counts(mag, zp),zp);
+}
+
+
+
+
+
 
 
 

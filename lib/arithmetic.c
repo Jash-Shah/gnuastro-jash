@@ -620,6 +620,10 @@ arithmetic_function_unary(int operator, int flags, gal_data_t *in)
       UNIARY_FUNCTION_ON_ELEMENT( acosh, +0, +0);         break;
     case GAL_ARITHMETIC_OP_ATANH:
       UNIARY_FUNCTION_ON_ELEMENT( atanh, +0, +0);         break;
+    case GAL_ARITHMETIC_OP_MAG_TO_JY:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_mag_to_jy, +0, +0); break;
+    case GAL_ARITHMETIC_OP_JY_TO_MAG:
+      UNIARY_FUNCTION_ON_ELEMENT( gal_units_jy_to_mag, +0, +0); break;
     case GAL_ARITHMETIC_OP_AU_TO_PC:
       UNIARY_FUNCTION_ON_ELEMENT( gal_units_au_to_pc, +0, +0); break;
     case GAL_ARITHMETIC_OP_PC_TO_AU:
@@ -2285,6 +2289,8 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
       BINFUNC_F_OPERATOR_SET( gal_units_mag_to_counts, +0 ); break;
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
       BINFUNC_F_OPERATOR_SET( gal_units_counts_to_jy, +0 ); break;
+    case GAL_ARITHMETIC_OP_JY_TO_COUNTS:
+      BINFUNC_F_OPERATOR_SET( gal_units_jy_to_counts, +0 ); break;
     default:
       error(EXIT_FAILURE, 0, "%s: operator code %d not recognized",
             __func__, operator);
@@ -2558,6 +2564,12 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
     { op=GAL_ARITHMETIC_OP_MAG_TO_COUNTS;     *num_operands=2;  }
   else if (!strcmp(string, "counts-to-jy"))
     { op=GAL_ARITHMETIC_OP_COUNTS_TO_JY;      *num_operands=2;  }
+  else if (!strcmp(string, "jy-to-counts"))
+    { op=GAL_ARITHMETIC_OP_JY_TO_COUNTS;      *num_operands=2;  }
+  else if (!strcmp(string, "mag-to-jy"))
+    { op=GAL_ARITHMETIC_OP_MAG_TO_JY;         *num_operands=1;  }
+  else if (!strcmp(string, "jy-to-mag"))
+    { op=GAL_ARITHMETIC_OP_JY_TO_MAG;         *num_operands=1;  }
   else if( !strcmp(string, "au-to-pc"))
     { op=GAL_ARITHMETIC_OP_AU_TO_PC;          *num_operands=1;  }
   else if( !strcmp(string, "pc-to-au"))
@@ -2768,6 +2780,9 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:   return "counts-to-mag";
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:   return "mag-to-counts";
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:    return "counts-to-jy";
+    case GAL_ARITHMETIC_OP_JY_TO_COUNTS:    return "jy-to-counts";
+    case GAL_ARITHMETIC_OP_MAG_TO_JY:       return "mag-to-jy";
+    case GAL_ARITHMETIC_OP_JY_TO_MAG:       return "jy-to-mag";
     case GAL_ARITHMETIC_OP_AU_TO_PC:        return "au-to-pc";
     case GAL_ARITHMETIC_OP_PC_TO_AU:        return "pc-to-au";
     case GAL_ARITHMETIC_OP_LY_TO_PC:        return "ly-to-pc";
@@ -2901,6 +2916,8 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_PC_TO_LY:
     case GAL_ARITHMETIC_OP_LY_TO_AU:
     case GAL_ARITHMETIC_OP_AU_TO_LY:
+    case GAL_ARITHMETIC_OP_MAG_TO_JY:
+    case GAL_ARITHMETIC_OP_JY_TO_MAG:
     case GAL_ARITHMETIC_OP_RA_TO_DEGREE:
     case GAL_ARITHMETIC_OP_DEC_TO_DEGREE:
     case GAL_ARITHMETIC_OP_DEGREE_TO_RA:
@@ -2912,9 +2929,10 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     /* Binary function operators. */
     case GAL_ARITHMETIC_OP_POW:
     case GAL_ARITHMETIC_OP_ATAN2:
+    case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
+    case GAL_ARITHMETIC_OP_JY_TO_COUNTS:
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:
-    case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);
       out=arithmetic_function_binary_flt(operator, flags, d1, d2);

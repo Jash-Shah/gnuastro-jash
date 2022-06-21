@@ -129,6 +129,9 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_COUNTS_TO_MAG,/* Counts to magnitude. */
   GAL_ARITHMETIC_OP_MAG_TO_COUNTS,/* Magnitude to counts. */
   GAL_ARITHMETIC_OP_COUNTS_TO_JY, /* Counts to Janskys with AB-mag zeropoint. */
+  GAL_ARITHMETIC_OP_JY_TO_COUNTS, /* Janskys to Counts with AB-mag zeropoint. */
+  GAL_ARITHMETIC_OP_MAG_TO_JY,    /* Magnitude to Janskys. */
+  GAL_ARITHMETIC_OP_JY_TO_MAG,    /* Janskys to Magnitude. */
   GAL_ARITHMETIC_OP_AU_TO_PC,     /* Astronomical units (AU) to Parsecs (PC). */
   GAL_ARITHMETIC_OP_PC_TO_AU,     /* Parsecs (PC) to Astronomical units (AU). */
   GAL_ARITHMETIC_OP_LY_TO_PC,     /* Astronomical units (AU) to Parsecs (PC). */

@@ -15222,6 +15222,16 @@ Therefore you can convert the units of SDSS image pixels to Janskys with the com
 $ astarithmetic sdss-image.fits 22.5 counts-to-jy
 @end example
 
+@item jy-to-counts
+Convert Janskys to counts (usually CCD outputs) through an AB-magnitude based zero point.
+This is the inverse operation of the @code{counts-to-jy}, see there for usage example.
+
+@item mag-to-jy
+Convert AB magnitudes to Janskys, see @ref{Brightness flux magnitude}.
+
+@item jy-to-mag
+Convert Janskys to AB magnitude, see @ref{Brightness flux magnitude}.
+
 @item au-to-pc
 @cindex Parsecs
 @cindex Astronomical Units (AU)

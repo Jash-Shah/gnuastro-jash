@@ -23,6 +23,10 @@ See the end of the file for license conditions.
        into one image).
      - noblank: Remove blank elements from the input and return a 1D output
        (irrespective of how many dimensions the input had).
+     - jy-to-counts: convert Janskys to counts using an AB-magnitude-based
+       Zeropoint (the inverse operator 'counts-to-jy' already existed).
+     - mag-to-jy: convert AB magnitudes to Janskys.
+     - jy-to-mag: convert Janskys to AB magnitudes.
 
   Crop:
    --oneelemstdout: when a crop has a single pixel and this option is
