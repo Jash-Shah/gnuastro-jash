@@ -140,6 +140,8 @@ See the end of the file for license conditions.
               called with '--output'. Reported by Raul Infante-Sainz.
   bug #62636: Table ignoring '--range' when '--head' is also
               called. Reported by Sepideh Eskandarlou.
+  bug #62662: Table crashes when column arithmetic is applied after adding
+              rows from another file (with '--catrowfile').
 
 
 

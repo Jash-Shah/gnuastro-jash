@@ -870,7 +870,7 @@ table_catrows_prepare(struct tableparams *p)
   char **strarr;
   char *hdu=NULL;
   int tableformat;
-  gal_data_t *tmp, *out=NULL;
+  gal_data_t *ocol, *tmp;
   size_t i, nrows=p->table->size;
   gal_list_str_t *filell, *hdull;
   size_t numcols, numrows, filledrows=p->table->size;
@@ -885,19 +885,23 @@ table_catrows_prepare(struct tableparams *p)
       nrows+=numrows;
     }
 
-  /* Allocate the new table with the necessary number of rows, then reverse
-     the newly allocated table (its columns were added in a
-     first-in-first-out list).*/
+  /* Change the 'array' component of each column (to preserve the column's
+     'gal_data_t' pointer; since previous preparations have kept that
+     pointer for next steps in some cases like column arithmetic). To do
+     this, we will first allocate a full 'gal_data_t', copy the contents,
+     free the contents of the original column, then replace them with the
+     larger array, and free the temporary 'gal_data_t'. */
   for(tmp=p->table; tmp!=NULL; tmp=tmp->next)
     {
-      /* Allocate the new column. */
-      gal_list_data_add_alloc(&out, NULL, tmp->type, 1, &nrows, NULL,
-                              0, p->cp.minmapsize, p->cp.quietmmap,
-                              tmp->name, tmp->unit, tmp->comment);
+      /* Allocate a temporary dataset (we just want its allocated space,
+         not the actual 'gal_data_t' pointer)! */
+      ocol=gal_data_alloc(NULL, tmp->type, 1, &nrows, NULL,
+                          0, p->cp.minmapsize, p->cp.quietmmap,
+                          tmp->name, tmp->unit, tmp->comment);
 
       /* Put the full contents of the existing column into the new
          column: this will be the first set of rows,  */
-      memcpy(out->array, tmp->array, tmp->size*gal_type_sizeof(tmp->type));
+      memcpy(ocol->array, tmp->array, tmp->size*gal_type_sizeof(tmp->type));
 
       /* If the column type is a string, we should set the input pointers
          to NULL to avoid freeing them later. */
@@ -906,12 +910,22 @@ table_catrows_prepare(struct tableparams *p)
           strarr=tmp->array;
           for(i=0;i<tmp->size;++i) strarr[i]=NULL;
         }
+
+      /* Free the contents of the current column (while keeping its
+         pointer), and replace those of the 'ocol' dataset. */
+      gal_data_free_contents(tmp);
+      tmp->comment=ocol->comment; ocol->comment=NULL;
+      tmp->array=ocol->array;     ocol->array=NULL;
+      tmp->dsize=ocol->dsize;     ocol->dsize=NULL;
+      tmp->name=ocol->name;       ocol->name=NULL;
+      tmp->unit=ocol->unit;       ocol->unit=NULL;
+      tmp->size=ocol->size;
+
+      /* Free the 'ocol' dataset. */
+      gal_data_free(ocol);
     }
-  gal_list_data_reverse(&out);
 
   /* Clean up and return. */
-  gal_list_data_free(p->table);
-  p->table=out;
   return filledrows;
 }
 
