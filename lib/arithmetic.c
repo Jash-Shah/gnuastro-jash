@@ -759,6 +759,51 @@ arithmetic_to_oned(int operator, int flags, gal_data_t *input)
 /***************               Adding noise               **************/
 /***********************************************************************/
 
+static gsl_rng *
+arithmetic_gsl_initialize(int flags, const char **rng_name,
+                          unsigned long *rng_seed, char *operator_str)
+{
+  gsl_rng *rng;
+
+  /* Column counter in case '--envseed' is given and we have multiple
+     columns. */
+  static unsigned long colcounter=0;
+
+  /* Setup the random number generator. For 'envseed', we want to pass a
+     boolean value: either 0 or 1. However, when we say 'flags &
+     GAL_ARITHMETIC_ENVSEED', the returned value is the integer positioning
+     of the envseed bit (for example if its on the fourth bit, the value
+     will be 8). This can cause problems if it is on the 8th bit (or any
+     multiple of 8). So to avoid issues with the bit-positioning of the
+     'ENVSEED', we will return the conditional to see if the result of the
+     bit-wise '&' is larger than 0 or not (binary). */
+  rng=gal_checkset_gsl_rng( (flags & GAL_ARITHMETIC_FLAG_ENVSEED)>0,
+                            rng_name, rng_seed);
+
+  /* If '--envseed' was called, we need to add the column counter to the
+     requested seed (so its not the same for all columns. */
+  if(flags & GAL_ARITHMETIC_FLAG_ENVSEED)
+    {
+      *rng_seed += colcounter++;
+      gsl_rng_set(rng, *rng_seed);
+    }
+
+  /* Print the basic RNG information if requested. */
+  if( (flags & GAL_ARITHMETIC_FLAG_QUIET)==0 )
+    {
+      printf(" - Parameters used for '%s':\n", operator_str);
+      printf("   - Random number generator name: %s\n", *rng_name);
+      printf("   - Random number generator seed: %lu\n", *rng_seed);
+    }
+
+  /* Return the GSL random number generator */
+  return rng;
+}
+
+
+
+
+
 /* The size operator. Reports the size along a given dimension. */
 static gal_data_t *
 arithmetic_mknoise(int operator, int flags, gal_data_t *in,
@@ -769,10 +814,6 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in,
   double *d, *df, arg_v;
   unsigned long rng_seed;
   gal_data_t *out, *targ;
-
-  /* Column counter in case '--envseed' is given and we have multiple
-     columns. */
-  static unsigned long colcounter=0;
 
   /* The dataset may be empty. In this case, the output should also be
      empty (we can have tables and images with 0 rows or pixels!). */
@@ -812,33 +853,9 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in,
           "range for 'mknoise-uniform') must be positive (it is %g)",
           arg_v);
 
-  /* Setup the random number generator. For 'envseed', we want to pass a
-     boolean value: either 0 or 1. However, when we say 'flags &
-     GAL_ARITHMETIC_ENVSEED', the returned value is the integer positioning
-     of the envseed bit (for example if its on the fourth bit, the value
-     will be 8). This can cause problems if it is on the 8th bit (or any
-     multiple of 8). So to avoid issues with the bit-positioning of the
-     'ENVSEED', we will return the conditional to see if the result of the
-     bit-wise '&' is larger than 0 or not (binary). */
-  rng=gal_checkset_gsl_rng( (flags & GAL_ARITHMETIC_FLAG_ENVSEED)>0,
-                            &rng_name, &rng_seed);
-
-  /* If '--envseed' was called, we need to add the column counter to the
-     requested seed. */
-  if(flags & GAL_ARITHMETIC_FLAG_ENVSEED)
-    {
-      rng_seed += colcounter++;
-      gsl_rng_set(rng, rng_seed);
-    }
-
-  /* Print the basic RNG information if requested. */
-  if( (flags & GAL_ARITHMETIC_FLAG_QUIET)==0 )
-    {
-      printf(" - Parameters used for '%s':\n",
-             gal_arithmetic_operator_string(operator));
-      printf("   - Random number generator name: %s\n", rng_name);
-      printf("   - Random number generator seed: %lu\n", rng_seed);
-    }
+  /* Initialize the GSL random number generator. */
+  rng=arithmetic_gsl_initialize(flags, &rng_name, &rng_seed,
+                                gal_arithmetic_operator_string(operator));
 
   /* Add the noise. */
   df=(d=out->array)+out->size;
@@ -864,10 +881,154 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in,
     }
 
   /* Clean up and return */
+  gsl_rng_free(rng);
   if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(arg);
   return out;
 }
 
+
+
+
+
+/* Sanity checks for 'random_from_hist' */
+static void
+arithmetic_random_from_hist_sanity(gal_data_t **inhist, gal_data_t **inbinc,
+                                   gal_data_t *in, int operator)
+{
+  size_t i;
+  double *d, diff, binwidth, binwidth_e;
+  gal_data_t *hist=*inhist, *binc=*inbinc;
+
+  /* The 'hist' and 'bincenter' arrays should be 1-dimensional and both
+     should have the same size. */
+  if(hist->ndim!=1)
+    error(EXIT_FAILURE, 0, "the first popped (nearest) operand to the "
+          "'%s' operator should only have a single dimension. However, "
+          "it has %zu dimensions",
+          gal_arithmetic_operator_string(operator), hist->ndim);
+  if(binc->ndim!=1)
+    error(EXIT_FAILURE, 0, "the second popped (second nearest) operand "
+          "to the '%s' operator should only have a single "
+          "dimension. However, it has %zu dimensions",
+          gal_arithmetic_operator_string(operator), binc->ndim);
+  if(hist->size!=binc->size)
+    error(EXIT_FAILURE, 0, "the first and second popped operands to the "
+          "'%s' operator must have the same size! However, "
+          "they have %zu and %zu elements respectively",
+          gal_arithmetic_operator_string(operator), hist->size,
+          binc->size);
+
+  /* The input type shouldn't be a string. */
+  if( in->type==GAL_TYPE_STRING )
+    error(EXIT_FAILURE, 0, "the input dataset to the '%s' "
+          "operator should have a numerical data type (integer or "
+          "float), but it has a string type",
+          gal_arithmetic_operator_string(operator));
+
+  /* The histogram should be in float64 type, we'll also set the bin
+     centers to float64 to enable easy sanity checks. */
+  *inhist=gal_data_copy_to_new_type_free(hist, GAL_TYPE_FLOAT64);
+  binc=*inbinc=gal_data_copy_to_new_type_free(binc, GAL_TYPE_FLOAT64);
+
+  /* For the 'random-from-hist' operator, we will need to assume that the
+     bins are equally spaced and that they are ascending.*/
+  if(operator==GAL_ARITHMETIC_OP_RANDOM_FROM_HIST)
+    {
+      d=binc->array;
+      binwidth=d[1]-d[0];
+      if(binwidth<0)
+        error(EXIT_FAILURE, 0, "the bins given to the '%s' operator "
+              "should be in ascending order, but the second row "
+              "(%g) is smaller than the first (%g)",
+              gal_arithmetic_operator_string(operator), d[1], d[0]);
+
+      /* Make sure the bins are in ascending order and have a fixed bin
+         width (within floating point errors: hence where 1e-6 comes
+         from). */
+      binwidth_e=binwidth*1e-6;
+      for(i=0;i<binc->size-1;++i)
+        {
+          diff=d[i+1]-d[i];
+          if(diff>binwidth+binwidth_e || diff<binwidth-binwidth_e)
+            error(EXIT_FAILURE, 0, "the bins given to the '%s' operator "
+                  "should be in ascending order, but row %zu (with value "
+                  "%g) is larger than the next row's value (%g)",
+                  gal_arithmetic_operator_string(operator), i+1, d[i],
+                  d[i+1]);
+        }
+    }
+}
+
+
+
+
+
+/* Build a custom noise distribution. */
+static gal_data_t *
+arithmetic_random_from_hist(int operator, int flags, gal_data_t *in,
+                            gal_data_t *binc, gal_data_t *hist)
+{
+  size_t rind;
+  const char *rng_name;
+  gal_data_t *out=NULL;
+  unsigned long rng_seed;
+  gsl_rng *rng=NULL, *rngu=NULL;
+  gsl_ran_discrete_t *disc=NULL;
+  double *b, *d, *df, binwidth, halfbinwidth;
+
+  /* The dataset may be empty. In this case, the output should also be
+     empty (we can have tables and images with 0 rows or pixels!). */
+  if(in->size==0 || in->array==NULL) return in;
+
+  /* Basic sanity checks */
+  arithmetic_random_from_hist_sanity(&hist, &binc, in,
+                                     GAL_ARITHMETIC_OP_RANDOM_FROM_HIST);
+
+  /* Allocate the output dataset (based on the size and dimensions of the
+     input), then free the input. */
+  out=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, in->ndim, in->dsize, in->wcs,
+                     0, in->minmapsize, in->quietmmap, "RANDOM_FROM_HIST",
+                     hist->unit, "Random values from custom distribution");
+
+  /* Initialize the GSL random number generator. */
+  rng=arithmetic_gsl_initialize(flags, &rng_name, &rng_seed,
+                                gal_arithmetic_operator_string(operator));
+  if(operator==GAL_ARITHMETIC_OP_RANDOM_FROM_HIST)
+    rngu=arithmetic_gsl_initialize(flags, &rng_name, &rng_seed,
+                                   "uniform component of 'random-"
+                                   "from-hist'");
+
+  /* Pre-process the descrete random number generator. */
+  disc=gsl_ran_discrete_preproc(hist->size, hist->array);
+
+  /* Apply the random number generator over the output. Note that
+     'gsl_ran_discrete' returns the index to the bin centers table that we
+     can return. */
+  b=binc->array;
+  binwidth=b[1]-b[0];
+  halfbinwidth=binwidth/2;
+  df=(d=out->array)+out->size;
+  do
+    {
+      rind=gsl_ran_discrete(rng, disc);
+      *d = ( operator==GAL_ARITHMETIC_OP_RANDOM_FROM_HIST
+             ? ((b[rind]-halfbinwidth) + gsl_rng_uniform(rngu)*binwidth)
+             : b[rind] );
+    }
+  while(++d<df);
+
+  /* Clean up and return. */
+  gsl_rng_free(rng);
+  if(rngu) gsl_rng_free(rngu);
+  gsl_ran_discrete_free(disc);
+  if(flags & GAL_ARITHMETIC_FLAG_FREE)
+    {
+      gal_data_free(in);
+      gal_data_free(hist);
+      gal_data_free(binc);
+    }
+  return out;
+}
 
 
 
@@ -2419,7 +2580,24 @@ arithmetic_box_around_ellipse(gal_data_t *d1, gal_data_t *d2,
 
 
 
-/* Make a new dataset. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**********************************************************************/
+/****************             New datasets            *****************/
+/**********************************************************************/
 gal_data_t *
 arithmetic_makenew(gal_data_t *sizes)
 {
@@ -2467,6 +2645,113 @@ arithmetic_makenew(gal_data_t *sizes)
 
   /* Clean up and return. */
   free(dsize);
+  return out;
+}
+
+
+
+
+
+gal_data_t *
+gal_arithmetic_load_col(char *str, int searchin, int ignorecase,
+                        size_t minmapsize, int quietmmap)
+{
+  gal_data_t *out=NULL;
+  gal_list_str_t *colid=NULL;
+  char *c, *cf, *copy, *hdu=NULL, *filename=NULL;
+  size_t numthreads=1; /* We only want to read a single column! */
+
+  /* This is the shortest possible string (with each component being given
+     a one character value). Recall that in C, simply putting literal
+     strings after each other, will merge them together into one literal
+     string.*/
+  char *checkstr = ( GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX   "a"
+                     GAL_ARITHMETIC_OPSTR_LOADCOL_FILE "a" );
+
+  /* This function is called on every call of Arithmetic, so before going
+     into any further tests, first make sure the string is long enough, and
+     that it starts with the fixed format string 'FMTCOL'. */
+  if( strlen(str)<strlen(checkstr)
+      || strncmp(str, GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX,
+                 GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX_LEN) ) return NULL;
+
+  /* To separate the components, we need to put '\0's within the input
+     string. But we don't want to ruin the input string (in case it isn't
+     for this purpose), so for the rest of the steps we'll make a copy of
+     the input string and work on that. */
+  gal_checkset_allocate_copy(str, &copy);
+
+  /* Parse the string and separate the components. */
+  gal_list_str_add(&colid,
+                   &copy[GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX_LEN], 0);
+  cf=copy+strlen(str);
+  c=colid->v+1;     /* colID has at least one character long, so we'll */
+  while(c<cf)           /* start the parsing from the next character */
+    {
+      /* If we are on the file-name component, then we can set the end of
+         the column ID component, and set the start of the HDU. But this is
+         only valid if 'hdu' hasn't already been set. */
+      if( !strncmp(c, GAL_ARITHMETIC_OPSTR_LOADCOL_FILE,
+                   GAL_ARITHMETIC_OPSTR_LOADCOL_FILE_LEN ) )
+        {
+          /* If 'filename' or 'hdu' have already been set, then this
+             doesn't conform to the format, and we should leave this
+             function. */
+          if(filename || hdu) { free(copy); return NULL; };
+
+          /* Set the current position to '\0' (to end the column name) */
+          *c='\0';
+
+          /* Set the HDU's starting pointer. */
+          filename=c+GAL_ARITHMETIC_OPSTR_LOADCOL_FILE_LEN;
+          c=filename+1; /* Similar to 'colid->v' above. */
+        }
+
+      /* If we are on a HDU component, steps are very similar to the
+         filename steps above. */
+      else if( !strncmp(c, GAL_ARITHMETIC_OPSTR_LOADCOL_HDU,
+                        GAL_ARITHMETIC_OPSTR_LOADCOL_HDU_LEN) )
+        {
+          if(hdu) { free(copy); return NULL; }
+          *c='\0'; hdu=c+GAL_ARITHMETIC_OPSTR_LOADCOL_HDU_LEN;
+          c=hdu+1;
+        }
+
+      /* If there was no match with HDU or file strings, then simply
+         increment the pointer. */
+      else ++c;
+    }
+
+  /* If a file-name couldn't be identified, then return NULL. */
+  if(filename==NULL) { free(copy); return NULL; }
+
+  /* If a HDU wasn't given and the file is a FITS file, print a warning and
+     use the default "1". */
+  if(hdu==NULL && gal_fits_name_is_fits(filename))
+    error(EXIT_FAILURE, 0, "WARNING: '%s' is a FITS file, but no HDU "
+          "has been given (recall that a FITS file can contain "
+          "multiple HDUs). Please add a '-hdu-AAA' suffix to your "
+          "'"GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX"' operator to specify "
+          "the HDU (where 'AAA' is your HDU name or counter, counting "
+          "from zero); like this: '"GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX
+          "%s"GAL_ARITHMETIC_OPSTR_LOADCOL_FILE"%s"
+          GAL_ARITHMETIC_OPSTR_LOADCOL_HDU"AAA'",
+          filename, colid->v, filename);
+
+  /* Read the column from the table. */
+  out=gal_table_read(filename, hdu, NULL, colid, searchin, ignorecase,
+                     numthreads, minmapsize, quietmmap, NULL);
+
+  /* Make sure that only a single column matched. */
+  if(out->next)
+    error(EXIT_FAILURE, 0, "%s: '%s' matches more than one column! "
+          "To load columns during arithmetic, it is important that "
+          "'load-col' returns only a single column", colid->v,
+          gal_fits_name_save_as_string(filename, hdu));
+
+  /* Clean up and return. */
+  gal_list_str_free(colid, 0);
+  free(copy);
   return out;
 }
 
@@ -2636,6 +2921,10 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
     { op=GAL_ARITHMETIC_OP_MKNOISE_POISSON;   *num_operands=2; }
   else if (!strcmp(string, "mknoise-uniform"))
     { op=GAL_ARITHMETIC_OP_MKNOISE_UNIFORM;   *num_operands=2; }
+  else if (!strcmp(string, "random-from-hist"))
+    { op=GAL_ARITHMETIC_OP_RANDOM_FROM_HIST;  *num_operands=3; }
+  else if (!strcmp(string, "random-from-hist-raw"))
+    { op=GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW; *num_operands=3; }
 
   /* The size operator */
   else if (!strcmp(string, "size"))
@@ -2817,6 +3106,8 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:   return "mknoise-sigma";
     case GAL_ARITHMETIC_OP_MKNOISE_POISSON: return "mknoise-poisson";
     case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM: return "mknoise-uniform";
+    case GAL_ARITHMETIC_OP_RANDOM_FROM_HIST:return "random-from-hist";
+    case GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW:return "random-from-hist-raw";
 
     case GAL_ARITHMETIC_OP_SIZE:            return "size";
     case GAL_ARITHMETIC_OP_STITCH:          return "stitch";
@@ -2997,13 +3288,22 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       out=arithmetic_bitwise_not(flags, d1);
       break;
 
-    /* Adding noise. */
+    /* Random steps. */
     case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
     case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
     case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM:
+    case GAL_ARITHMETIC_OP_RANDOM_FROM_HIST:
+    case GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW:
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);
-      out=arithmetic_mknoise(operator, flags, d1, d2);
+      if(operator==GAL_ARITHMETIC_OP_RANDOM_FROM_HIST
+         || operator==GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW)
+        {
+          d3 = va_arg(va, gal_data_t *);
+          out=arithmetic_random_from_hist(operator, flags, d1, d2, d3);
+        }
+      else
+        out=arithmetic_mknoise(operator, flags, d1, d2);
       break;
 
     /* Size operator */

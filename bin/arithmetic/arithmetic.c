@@ -1339,10 +1339,10 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
           break;
 
         default:
-          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-                "the problem. '%zu' is not recognized as an operand "
-                "counter (with '%s')", __func__, PACKAGE_BUGREPORT,
-                num_operands, operator_string);
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+                "to fix the problem. '%zu' is not recognized as an "
+                "operand counter (with '%s')", __func__,
+                PACKAGE_BUGREPORT, num_operands, operator_string);
         }
 
       /* Run the arithmetic operation. Note that 'gal_arithmetic'
@@ -1455,11 +1455,12 @@ arithmetic_set_name_used_later(void *in, char *name)
 void
 reversepolish(struct arithmeticparams *p)
 {
-  gal_data_t *data;
   size_t num_operands=0;
   gal_list_str_t *token;
+  gal_data_t *data, *col;
   char *hdu, *filename, *printnum;
   int operator=GAL_ARITHMETIC_OP_INVALID;
+  struct gal_options_common_params *cp=&p->cp;
 
   /* Prepare the processing: */
   p->popcounter=0;
@@ -1488,6 +1489,11 @@ reversepolish(struct arithmeticparams *p)
       else if( !strncmp(token->v, GAL_ARITHMETIC_SET_PREFIX,
                         GAL_ARITHMETIC_SET_PREFIX_LENGTH) )
         gal_arithmetic_set_name(&p->setprm, token->v);
+      else if( (col=gal_arithmetic_load_col(token->v, cp->searchin,
+                                            cp->ignorecase,
+                                            cp->minmapsize,
+                                            cp->quietmmap))!=NULL )
+        operands_add(p, NULL, col);
       else if(    gal_array_file_recognized(token->v)
                || gal_arithmetic_set_is_name(p->setprm.named, token->v) )
         operands_add(p, token->v, NULL);
@@ -1500,6 +1506,7 @@ reversepolish(struct arithmeticparams *p)
           data->minmapsize=p->cp.minmapsize;
           operands_add(p, NULL, data);
         }
+
       /* Last option is an operator: the program will abort if the token
          isn't an operator. */
       else
@@ -1543,8 +1550,10 @@ reversepolish(struct arithmeticparams *p)
                                                   p->cp.minmapsize,
                                                   p->cp.quietmmap);
           data=p->operands->data;
-          data->ndim=gal_dimension_remove_extra(data->ndim, data->dsize, NULL);
-          if(!p->cp.quiet) printf(" - %s (hdu %s) is read.\n", filename, hdu);
+          data->ndim=gal_dimension_remove_extra(data->ndim, data->dsize,
+                                                NULL);
+          if(!p->cp.quiet)
+            printf(" - %s (hdu %s) is read.\n", filename, hdu);
         }
       else
         error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "

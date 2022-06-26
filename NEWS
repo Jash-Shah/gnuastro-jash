@@ -17,7 +17,7 @@ See the end of the file for license conditions.
      Eskandarlou.
 
   Arithmetic:
-   - New operators:
+   - New operators (also available in Table's column arithmetic):
      - stitch: connect any number of input images along the given dimension
        (for example to stitch the images of separate amplifiers of a CCD
        into one image).
@@ -27,6 +27,21 @@ See the end of the file for license conditions.
        Zeropoint (the inverse operator 'counts-to-jy' already existed).
      - mag-to-jy: convert AB magnitudes to Janskys.
      - jy-to-mag: convert Janskys to AB magnitudes.
+     - load-col-%-from-%-hdu-%: Load a certain column into the operands
+       stack. The name or number of the column is the first '%'. The file
+       name hosting that column is the second '%', and HDU (if the file is
+       a FITS file), is identified by third '%'. This can be used to load
+       columns outside the main table in Table's column arithmetic or by
+       operators that need columns as input parameters (like the new
+       'random_from_hist' operator).
+     - random-from-hist-raw: return a set of random points based on a
+       custom distribution defined by its histogram. See the description
+       and complete examples in the book for more.
+     - random-from-hist: Similar to 'random-from-hist-raw', but within each
+       bin, the final returned value is itself the result of a uniform
+       sampling (to make the final distribution less descrete). See the
+       example in the book for selecting random star magnitudes based on
+       Gaia's observed magnitude distribution.
 
   Crop:
    --oneelemstdout: when a crop has a single pixel and this option is
@@ -77,6 +92,11 @@ See the end of the file for license conditions.
    - GAL_ARITHMETIC_OP_UNIQUE: to find unique elements in dataset.
    - GAL_ARITHMETIC_OP_NOBLANK: to remove blank elements from dataset.
    - GAL_ARITHMETIC_OP_STITCH: to stitch multiple datasets.
+   - GAL_ARITHMETIC_OP_RANDOM_FROM_HIST: the new 'random-from-hist' operator.
+   - GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW: the new 'random-from-hist-raw' op.
+   - gal_arithmetic_load_col: Low-level function for parsing the string of
+     the newly added 'load-col' operator, mentioned in the Arithmetic
+     section above.
 
 ** Removed features
 

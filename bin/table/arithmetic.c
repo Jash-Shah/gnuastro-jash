@@ -58,6 +58,7 @@ arithmetic_add_new_to_end(struct arithmetic_token **list)
 
   /* Initialize its elements. */
   node->next=NULL;
+  node->loadcol=NULL;
   node->name_def=NULL;
   node->name_use=NULL;
   node->constant=NULL;
@@ -246,7 +247,7 @@ arithmetic_init_addcol(char *token, struct arithmetic_token *node,
   if(num==GAL_BLANK_SIZE_T)     /* ID is a string. */
     {
       for(i=0;i<numcols;++i)
-        if( !strcasecmp(id, colinfo[i].name) )
+        if( colinfo[i].name && !strcasecmp(id, colinfo[i].name) )
           { inmaininput=1; break; }
     }
   else                          /* ID is a number. */
@@ -264,7 +265,7 @@ arithmetic_init_addcol(char *token, struct arithmetic_token *node,
     }
   else
     {
-      gal_checkset_allocate_copy(id, &node->id_at_usage); /* Future usage. */
+      gal_checkset_allocate_copy(id, &node->id_at_usage);/* Future usage. */
       node->num_at_usage=num;   /* Avoid converting to a number again! */
       node->index=GAL_BLANK_SIZE_T; /* Crash if not used properly! */
     }
@@ -283,9 +284,11 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
   void *num;
   size_t one=1;
   uint8_t ntype;
+  gal_data_t *col;
   char *delimiter=" \t";
   struct arithmetic_token *atmp, *node=NULL;
   char *token=NULL, *lasttoken=NULL, *saveptr;
+  struct gal_options_common_params *cp=&p->cp;
 
   /* Parse all the given tokens. */
   token=strtok_r(expression, delimiter, &saveptr);
@@ -313,6 +316,13 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
               gal_checkset_allocate_copy(token, &node->name_def);
             }
 
+          /* This is a 'load-col' operator. */
+          else if( (col=gal_arithmetic_load_col(token, cp->searchin,
+                                                cp->ignorecase,
+                                                cp->minmapsize,
+                                                cp->quietmmap))!=NULL )
+            node->loadcol=col;
+
           /* Non-pre-defined situation.*/
           else
             {
@@ -336,8 +346,10 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
       token=strtok_r(NULL, delimiter, &saveptr);
     }
 
-  /* A small sanity check: the last added token must be an operator. */
-  if( node==NULL || node->operator==GAL_ARITHMETIC_OP_INVALID )
+  /* A small sanity check: the last added token must be an operator (unless
+     its a 'loadcol'). */
+  if(node==NULL
+     || (node->loadcol==NULL && node->operator==GAL_ARITHMETIC_OP_INVALID))
     error(EXIT_FAILURE, 0, "last token in arithmetic column ('%s') "
           "is not a recognized operator", lasttoken);
 }
@@ -872,9 +884,9 @@ arithmetic_operator_run(struct tableparams *p,
           break;
 
         default:
-          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
-                "the problem. '%zu' is not recognized as an operand "
-                "counter (with '%s')", __func__, PACKAGE_BUGREPORT,
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s "
+                "to fix the problem. '%zu' is not recognized as an "
+                "operand counter (with '%s')", __func__, PACKAGE_BUGREPORT,
                 token->num_operands,
                 arithmetic_operator_name(token->operator));
         }
@@ -997,11 +1009,19 @@ arithmetic_reverse_polish(struct tableparams *p,
       if(token->operator!=GAL_ARITHMETIC_OP_INVALID)
         arithmetic_operator_run(p, token, &setprm, &stack);
 
+
       /* We are on a named variable. */
       else if( token->name_use )
         gal_list_data_add(&stack,
                           gal_arithmetic_set_copy_named(&setprm,
                                                         token->name_use));
+
+      /* We are on a column loaded from another file. */
+      else if( token->loadcol )
+        {
+          gal_list_data_add(&stack, token->loadcol);
+          token->loadcol=NULL;
+        }
 
       /* Constant number: just put it ontop of the stack. */
       else if(token->constant)

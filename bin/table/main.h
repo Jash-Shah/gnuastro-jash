@@ -69,6 +69,7 @@ struct arithmetic_token
   char       *id_at_usage;  /* OPERAND: col identifier at usage time.     */
   size_t     num_at_usage;  /* OPERAND: col number at usage.              */
   gal_data_t    *constant;  /* OPERAND: a constant/single number.         */
+  gal_data_t     *loadcol;  /* OPERAND: column from another file.         */
   char          *name_def;  /* Name given to the 'set-' operator.         */
   char          *name_use;  /* If this a usage of a name.                 */
   struct arithmetic_token *next;  /* Pointer to next token.               */
