@@ -772,8 +772,8 @@ table_catcolumn(struct tableparams *p)
 {
   size_t counter=1;
   gal_list_str_t *filell, *hdull;
-  gal_data_t *tocat, *final, *newcol;
   char *tmpname, *hdu=NULL, cstr[100];
+  gal_data_t *col, *tocat, *final, *newcol;
   struct gal_options_common_params *cp=&p->cp;
 
   /* Go over all the given files. */
@@ -816,13 +816,20 @@ table_catcolumn(struct tableparams *p)
         for(newcol=tocat; newcol!=NULL; newcol=newcol->next)
           if(newcol->name)
             {
-              /* Add the counter suffix to the column name. */
-              sprintf(cstr, "-%zu", counter);
-              tmpname=gal_checkset_malloc_cat(newcol->name, cstr);
+              /* If the new column's name is identical (case-insensitive)
+                 to an existing name in the existing table so far, we need
+                 to add a suffix. */
+              for(col=p->table; col!=NULL; col=col->next)
+                if( col->name && strcasecmp(col->name, newcol->name)==0 )
+                  {
+                    /* Add the counter suffix to the column name. */
+                    sprintf(cstr, "-%zu", counter);
+                    tmpname=gal_checkset_malloc_cat(newcol->name, cstr);
 
-              /* Free the old name and put in the new one. */
-              free(newcol->name);
-              newcol->name=tmpname;
+                    /* Free the old name and put in the new one. */
+                    free(newcol->name);
+                    newcol->name=tmpname;
+                  }
             }
 
       /* Find the final column of the main table and add this table.*/

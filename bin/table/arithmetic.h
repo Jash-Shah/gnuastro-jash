@@ -53,13 +53,11 @@ enum arithmetic_operators
 /* Functions */
 void
 arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
-                gal_list_str_t **toread, size_t *totcalled, char *expression);
+                gal_list_str_t **colstoread, size_t *totcalled,
+                char *expression, gal_data_t *colinfo, size_t numcols);
 
 void
 arithmetic_token_free(struct arithmetic_token *list);
-
-void
-arithmetic_indexs_final(struct tableparams *p, size_t *colmatch);
 
 void
 arithmetic_operate(struct tableparams *p);

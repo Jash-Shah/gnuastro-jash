@@ -3943,7 +3943,8 @@ $ asttable cat/xdf-f160w.fits -hCLUMPS --output=three-in-one.fits \
 $ asttable three-in-one.fits -i
 @end example
 
-As you see, to avoid confusion in column names, Table has intentionally appended a @code{-1} to the column names of the first concatenated table (so for example we have the original @code{RA} column, and another one called @code{RA-1}).
+As you see, to avoid confusion in column names, Table has intentionally appended a @code{-1} to the column names of the first concatenated table if the column names are already present in the original table.
+For example we have the original @code{RA} column, and another one called @code{RA-1}).
 Similarly a @code{-2} has been added for the columns of the second concatenated table.
 
 However, this example clearly shows a problem with this full concatenation: some columns are identical (for example @code{HOST_OBJ_ID} and @code{HOST_OBJ_ID-1}), or not needed (for example @code{RA-1} and @code{DEC-1} which are not necessary here).
@@ -12818,12 +12819,21 @@ By default the output column of the arithmetic operation will be given a generic
 But meta data are critically important and it is good practice to always have short, but descriptive, names for each columns, units and also some comments for more explanation.
 To add metadata to a column, you can use the @option{--colmetadata} option that is described in @ref{Invoking asttable} and @ref{Operation precedence in Table}.
 
-Finally, since the arithmetic expressions are a value to @option{--column}, it doesn't necessarily have to be a separate option, so the commands above are also identical to the command below (note that this only has one @option{-c} option).
+Since the arithmetic expressions are a value to @option{--column}, it doesn't necessarily have to be a separate option, so the commands above are also identical to the command below (note that this only has one @option{-c} option).
 Just be very careful with the quoting!
+With the @option{--colmetadata} option, we are also giving a name, units and a comment to the third column.
 
 @example
-$ asttable table.fits -cAWAV,SPECTRUM,'arith AWAV 1e10 x'
+$ asttable table.fits -cAWAV,SPECTRUM,'arith AWAV 1e10 x' \
+           --colmetadata=3,AWAV_A,angstrom,"Wavelength (in Angstroms)"
 @end example
+
+In case you need to append columns from other tables (with @option{--catcolumnfile}), you can use those extra columns in column arithmetic also.
+The easiest, and most robust, way is that your columns of interest (in all files whose columns are to be merged) have different names.
+In this scenario, you can simply use the names of the columns you plan to append.
+If there are similar names, note that by default Table appends a @code{-N} to similar names (where @code{N} is the file counter given to @option{--catcolumnfile}, see the description of @option{--catcolumnfile} for more).
+Using column numbers can get complicated: if the number is smaller than the main input's number of columns, the main input's column will be used.
+Otherwise (when the requested column number is larger than the main input's number of columns), the final output (after appending all the columns from all the possible files) column number will be used.
 
 Almost all the arithmetic operators of @ref{Arithmetic operators} are also supported for column arithmetic in Table.
 In particular, the few that are not present in the Gnuastro library@footnote{For a list of the Gnuastro library arithmetic operators, please see the macros starting with @code{GAL_ARITHMETIC_OP} and ending with the operator name in @ref{Arithmetic on datasets}.} aren't yet supported for column arithmetic.
@@ -13260,10 +13270,12 @@ Note that the columns given to @option{--catcolumns} must be present in all the 
 If the file given to this option is a FITS file, its necessary to also define the corresponding HDU/extension with @option{--catcolumnhdu}.
 Also note that no operation (for example row selection, arithmetic or etc) is applied to the table given to this option.
 
-If the appended columns have a name, the column names of each file will be appended with a @code{-N}, where @code{N} is a counter starting from 1 for each appended file.
+If the appended columns have a name, and their name is already present in the table before adding those columns, the column names of each file will be appended with a @code{-N}, where @code{N} is a counter starting from 1 for each appended table.
+Just note that in the FITS standard (and thus in Gnuastro), column names are not case-sensitive.
+
 This is done because when concatenating columns from multiple tables (more than two) into one, they may have the same name, and its not good practice to have multiple columns with the same name.
 You can disable this feature with @option{--catcolumnrawname}.
-Generally, you can use the @option{--colmetadata} option to update column metadata.
+Generally, you can use the @option{--colmetadata} option to update column metadata in the same command, after all the columns have been concatenated.
 
 For example, let's assume you have two catalogs of the same objects (same number of rows) in different filters.
 Such that @file{f160w-cat.fits} has a @code{MAGNITUDE} column that has the magnitude of each object in the @code{F160W} filter and similarly @file{f105w-cat.fits}, also has a @code{MAGNITUDE} column, but for the @code{F105W} filter.

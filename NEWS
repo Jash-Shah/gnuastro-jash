@@ -101,6 +101,12 @@ See the end of the file for license conditions.
      functionality was proposed by Elham Saremi.
 
   Table:
+   --catcolumnfile: the '-N' suffix (where 'N' is a counter for the files
+     with concatenated, or appended, column) is only added if a column with
+     a identical column name (not case sensitive) existed in the
+     table. Until now, this suffix would be added to all the newly
+     concatenated columns (recall that the suffix addition can be disabled
+     in general with the '--catcolumnrawname' option).
    --rowrange: new name for the old '--rowlimit'. This option takes the
      range of desired rows based on their position (for example
      '--rowrange=2,5' will only print rows 2, 3, 4 and 5 of the table). But
@@ -142,6 +148,7 @@ See the end of the file for license conditions.
               called. Reported by Sepideh Eskandarlou.
   bug #62662: Table crashes when column arithmetic is applied after adding
               rows from another file (with '--catrowfile').
+  bug #62674: Column arithmetic can't use columns from --catcolumnfile.
 
 
 

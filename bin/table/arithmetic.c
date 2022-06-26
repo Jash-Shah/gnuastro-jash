@@ -61,7 +61,9 @@ arithmetic_add_new_to_end(struct arithmetic_token **list)
   node->name_def=NULL;
   node->name_use=NULL;
   node->constant=NULL;
+  node->id_at_usage=NULL;
   node->index=GAL_BLANK_SIZE_T;
+  node->num_at_usage=GAL_BLANK_SIZE_T;
   node->operator=GAL_ARITHMETIC_OP_INVALID;
 
   /* If the list already has elements, go to the last node in the list and
@@ -216,15 +218,72 @@ arithmetic_set_operator(struct tableparams *p, char *string,
 
 
 
+/* When a column identifier (name or number) is identified, we need to make
+   sure if that the identifier belongs to the first input or not. */
+static void
+arithmetic_init_addcol(char *token, struct arithmetic_token *node,
+                       gal_list_str_t **colstoread, size_t *totcalled,
+                       gal_data_t *colinfo, size_t numcols)
+{
+  char *id;
+  int inmaininput=0;
+  size_t i, num=GAL_BLANK_SIZE_T;
+
+  /* This needs to be defined after 'num'. */
+  void *numptr=&num;
+
+  /* Set the identifier. */
+  id = ( (token[0]=='$' && isdigit(token[1]))
+         ? &token[1]       /* Column num. (starting with '$'). */
+         : token );        /* Column name, just add it.        */
+
+  /* See if the column identifier is a number, then 'num' will not be a
+     blank value. */
+  if( gal_type_from_string(&numptr, id, GAL_TYPE_SIZE_T) )
+    num=GAL_BLANK_SIZE_T;
+
+  /* See if the column exists in the main input catalog. */
+  if(num==GAL_BLANK_SIZE_T)     /* ID is a string. */
+    {
+      for(i=0;i<numcols;++i)
+        if( !strcasecmp(id, colinfo[i].name) )
+          { inmaininput=1; break; }
+    }
+  else                          /* ID is a number. */
+    if(num<=numcols) inmaininput=1;
+
+  /* If the given ID is in the main input, then add it to the list of
+     columns to read ('colstoread') from the main input. Otherwise, keep
+     the ID for usage at the time of arithmetic (can happen when
+     '--catcolumnfile' is used).*/
+  if(inmaininput)
+    {
+      gal_list_str_add(colstoread, id, 1);
+      node->index=*totcalled;
+      *totcalled+=1;
+    }
+  else
+    {
+      gal_checkset_allocate_copy(id, &node->id_at_usage); /* Future usage. */
+      node->num_at_usage=num;   /* Avoid converting to a number again! */
+      node->index=GAL_BLANK_SIZE_T; /* Crash if not used properly! */
+    }
+}
+
+
+
+
+
 /* Initialize each column from an arithmetic operation. */
 void
 arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
-                gal_list_str_t **toread, size_t *totcalled, char *expression)
+                gal_list_str_t **colstoread, size_t *totcalled,
+                char *expression, gal_data_t *colinfo, size_t numcols)
 {
   void *num;
   size_t one=1;
   uint8_t ntype;
-  char *str, *delimiter=" \t";
+  char *delimiter=" \t";
   struct arithmetic_token *atmp, *node=NULL;
   char *token=NULL, *lasttoken=NULL, *saveptr;
 
@@ -268,14 +327,8 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
               /* If it wasn't found to be a pre-defined name, then its a
                  column operand (column number or name). */
               if(node->name_use==NULL)
-                {
-                  str = ( (token[0]=='$' && isdigit(token[1]))
-                          ? &token[1]   /* Column number (starting with '$'). */
-                          : token );    /* Column name, just add it.          */
-                  gal_list_str_add(toread, str, 1);
-                  node->index=*totcalled;
-                  *totcalled+=1;
-                }
+                arithmetic_init_addcol(token, node, colstoread,
+                                       totcalled, colinfo, numcols);
             }
         }
 
@@ -285,8 +338,8 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
 
   /* A small sanity check: the last added token must be an operator. */
   if( node==NULL || node->operator==GAL_ARITHMETIC_OP_INVALID )
-    error(EXIT_FAILURE, 0, "last token in arithmetic column ('%s') is not a "
-          "recognized operator", lasttoken);
+    error(EXIT_FAILURE, 0, "last token in arithmetic column ('%s') "
+          "is not a recognized operator", lasttoken);
 }
 
 
@@ -296,7 +349,7 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
 /* Set the final index of each package of columns (possibly containing
    processing columns that will change in number and contents).  */
 void
-arithmetic_indexs_final(struct tableparams *p, size_t *colmatch)
+arithmetic_indexs_final(struct tableparams *p)
 {
   size_t startind;
   size_t i, numcols;
@@ -317,27 +370,31 @@ arithmetic_indexs_final(struct tableparams *p, size_t *colmatch)
             if(atmp->index!=GAL_BLANK_SIZE_T)
               {
                 /* Small sanity check. */
-                if(colmatch[atmp->index]!=1)
-                  error(EXIT_FAILURE, 0, "arithmetic operands can (currently) "
-                        "only correspond to a single column");
+                if(p->colmatch[atmp->index]!=1)
+                  error(EXIT_FAILURE, 0, "arithmetic operands can "
+                        "(currently) only correspond to a single "
+                        "column, but more than one match was found "
+                        "for a column you used in column arithmetic");
 
                 /* Update the index in the full list of read columns. */
-                numcols=0; for(i=0;i<atmp->index;++i) numcols+=colmatch[i];
+                numcols=0;
+                for(i=0;i<atmp->index;++i) numcols+=p->colmatch[i];
                 atmp->index=numcols;
               }
         }
+
       /* A simple column. */
       else
         {
           /* See where the starting column for this patch of simple columns
              is. */
           startind=0;
-          for(i=0;i<tmp->start;++i) startind+=colmatch[i];
+          for(i=0;i<tmp->start;++i) startind+=p->colmatch[i];
 
           /* How many of the read columns are associated with the this
              patch of columns. */
           numcols=0;
-          for(i=0;i<tmp->numsimple;++i) numcols+=colmatch[tmp->start+i];
+          for(i=0;i<tmp->numsimple;++i) numcols+=p->colmatch[tmp->start+i];
 
           /* Update the values. */
           tmp->start=startind;
@@ -872,9 +929,56 @@ arithmetic_operator_run(struct tableparams *p,
 
 
 
+/* When the column identifier (name or number) wasn't in the main input
+   table (for example, it was added with '--catcolumnfile'), we need this
+   function to find the column to work with. */
+gal_data_t *
+arithmetic_read_at_usage(struct tableparams *p,
+                         struct arithmetic_token *token)
+{
+  size_t i;
+
+  /* If the number is blank, then we have a name and should return the
+     first column in the table that has the given name. */
+  if(token->num_at_usage==GAL_BLANK_SIZE_T)
+    {
+      /* Search all the existing columns in the table. */
+      for(i=0; i<p->numcolarray; ++i)
+        if( strcasecmp(p->colarray[i]->name, token->id_at_usage)==0 )
+          return p->colarray[i];
+
+      /* If control reaches here, then the requested name didn't exist in
+         the table. */
+      error(EXIT_FAILURE, 0, "'%s' doesn't correspond to the name of "
+            "any column in the table until this column arithmetic",
+            token->id_at_usage);
+    }
+
+  /* We already have the desired column number. */
+  else
+    if(token->num_at_usage > p->numcolarray)
+      error(EXIT_FAILURE, 0, "%zu is an invalid column number: the "
+            "table only has %zu columns before this column arithmetic "
+            "step", token->num_at_usage, p->numcolarray);
+    else
+      return p->colarray[token->num_at_usage-1];
+
+  /* If control reaches here, there is a bug! In then end, simply return
+     NULL to avoid compiler warnings. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to find the "
+        "cause and fix it. This function should not reach this point",
+        __func__, PACKAGE_BUGREPORT);
+  return NULL;
+}
+
+
+
+
+
 /* Apply reverse polish mechanism for this column. */
 static void
-arithmetic_reverse_polish(struct tableparams *p, struct column_pack *outpack)
+arithmetic_reverse_polish(struct tableparams *p,
+                          struct column_pack *outpack)
 {
   struct arithmetic_token *token;
   gal_data_t *single, *stack=NULL;
@@ -904,6 +1008,15 @@ arithmetic_reverse_polish(struct tableparams *p, struct column_pack *outpack)
         {
           gal_list_data_add(&stack, token->constant);
           token->constant=NULL;
+        }
+
+      /* The column wasn't in the main input. */
+      else if(token->id_at_usage)
+        {
+          gal_list_data_add(&stack, arithmetic_read_at_usage(p, token));
+          token->num_at_usage=GAL_BLANK_SIZE_T;
+          free(token->id_at_usage);
+          token->id_at_usage=NULL;
         }
 
       /* A column from the table. */
@@ -974,6 +1087,9 @@ arithmetic_operate(struct tableparams *p)
 {
   size_t i;
   struct column_pack *outpack;
+
+  /* Set the final indexs and define 'colarray'. */
+  arithmetic_indexs_final(p);
 
   /* From now on, we will be looking for columns from the index in
      'colarray', so to keep things clean, we'll set all the 'next' elements

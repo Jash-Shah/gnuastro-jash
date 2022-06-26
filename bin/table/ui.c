@@ -581,6 +581,7 @@ ui_print_info_exit(struct tableparams *p)
   if(p->filename==NULL) p->filename="Standard-input";
   gal_list_str_free(lines, 1);
 
+
   /* If there was no actual data in the file, then inform the user */
   if(allcols==NULL)
     error(EXIT_FAILURE, 0, "%s: no usable data rows", p->filename);
@@ -617,13 +618,15 @@ ui_print_info_exit(struct tableparams *p)
    has comma-separated values. If they do then the list will be updated to
    be fully separate. */
 static void
-ui_columns_prepare(struct tableparams *p)
+ui_columns_prepare(struct tableparams *p, gal_list_str_t *lines)
 {
+  int tableformat;
   gal_data_t *strs;
   char *c, **strarr;
-  size_t i, totcalled=0;
+  gal_data_t *colinfo=NULL;
   struct column_pack *node, *last;
-  gal_list_str_t *tmp, *toread=NULL;
+  gal_list_str_t *tmp, *colstoread=NULL;
+  size_t i, totcalled=0, numcols, numrows;
 
   /* Go over the whole original list (where each node may have more than
      one value separated by a comma. */
@@ -645,37 +648,49 @@ ui_columns_prepare(struct tableparams *p)
       /* Go over all the given colum names/numbers. */
       for(i=0;i<strs->size;++i)
         {
-          /* See if this is an arithmetic column to be processed, or the
-             contents should just be printed. */
+          /* See if this is an arithmetic column to be processed, or its
+             just a "simple" column (where  */
           if(!strncmp(strarr[i], ARITHMETIC_CALL, ARITHMETIC_CALL_LENGTH))
             {
+              /* Arithmetic operations may be done on columns from other
+                 files (for example with '--catcolumnfile'). We therefore
+                 need to check if the requested column is in the main input
+                 file or not. If not, it should be set when column
+                 arithmetic starts. To do this, we need to get the input's
+                 column information. */
+              if(colinfo==NULL)
+                colinfo=gal_table_info(p->filename, p->cp.hdu, lines,
+                                       &numcols, &numrows, &tableformat);
+
               /* If this is the first arithmetic operation and the user has
                  already asked for some columns, we'll need to put all
                  previously requested simply-printed columns into an
                  'outcols' structure, then add this arithmetic operation's
                  'outcols'. */
-              if(p->outcols==NULL && toread)
+              if(p->outcols==NULL && colstoread)
                 {
                   /* Allocate an empty structure and set the necessary
                      pointers. */
                   node=ui_outcols_add_new_to_end(&p->outcols);
                   node->start=0;
-                  node->numsimple=gal_list_str_number(toread);
+                  node->numsimple=gal_list_str_number(colstoread);
                   totcalled=node->numsimple;
                 }
 
               /* Add a new column pack, then read all the tokens (while
                  specifying which columns it needs). */
               node=ui_outcols_add_new_to_end(&p->outcols);
-              arithmetic_init(p, &node->arith, &toread, &totcalled,
-                              strarr[i]+ARITHMETIC_CALL_LENGTH);
+              arithmetic_init(p, &node->arith, &colstoread, &totcalled,
+                              strarr[i]+ARITHMETIC_CALL_LENGTH, colinfo,
+                              numcols);
               free(strarr[i]);
             }
+
           /* This is a simple column (no change in values). */
           else
             {
               /* Add this column to the list of columns to read. */
-              gal_list_str_add(&toread, strarr[i], 0);
+              gal_list_str_add(&colstoread, strarr[i], 0);
 
               /* See if we have packaged the output columns. */
               if(p->outcols)
@@ -741,11 +756,15 @@ ui_columns_prepare(struct tableparams *p)
     }
   */
 
-  /* Delete the old list, then reverse the 'toread' list, and put it into
-     'p->columns'. */
+  /* Free the information from all the columns (that may have been gathered
+     if it was necessary). */
+  if(colinfo) gal_data_array_free(colinfo, numcols, 0);
+
+  /* Delete the old list, then reverse the 'colstoread' list, and put it
+     into 'p->columns'. */
   gal_list_str_free(p->columns, 1);
-  gal_list_str_reverse(&toread);
-  p->columns=toread;
+  gal_list_str_reverse(&colstoread);
+  p->columns=colstoread;
 }
 
 
@@ -1167,7 +1186,6 @@ ui_check_select_sort_after(struct tableparams *p, size_t nselect,
 static void
 ui_preparations(struct tableparams *p)
 {
-  size_t *colmatch;
   gal_list_str_t *lines;
   size_t nselect=0, origoutncols=0;
   size_t sortindout=GAL_BLANK_SIZE_T;
@@ -1180,12 +1198,12 @@ ui_preparations(struct tableparams *p)
     ui_print_info_exit(p);
 
 
-  /* Prepare the column names. */
-  ui_columns_prepare(p);
-
-
   /* If the input is from stdin, save it as 'lines'. */
   lines=gal_options_check_stdin(p->filename, p->cp.stdintimeout, "input");
+
+
+  /* Prepare the column names. */
+  ui_columns_prepare(p, lines);
 
 
   /* If any kind of row-selection is requested set 'p->selection' to 1. */
@@ -1202,17 +1220,17 @@ ui_preparations(struct tableparams *p)
 
   /* If we have any arithmetic operations, we need to make sure how many
      columns match every given column name. */
-  colmatch = ( p->outcols
-               ? gal_pointer_allocate(GAL_TYPE_SIZE_T,
-                                      gal_list_str_number(p->columns), 1,
-                                      __func__, "colmatch")
-               : NULL);
+  p->colmatch = ( p->outcols
+                  ? gal_pointer_allocate(GAL_TYPE_SIZE_T,
+                                         gal_list_str_number(p->columns),
+                                         1, __func__, "p->colmatch")
+                  : NULL);
 
 
   /* Read the necessary columns. */
   p->table=gal_table_read(p->filename, cp->hdu, lines, p->columns,
                           cp->searchin, cp->ignorecase, cp->numthreads,
-                          cp->minmapsize, p->cp.quietmmap, colmatch);
+                          cp->minmapsize, p->cp.quietmmap, p->colmatch);
   if(p->filename==NULL) p->filename="stdin";
   gal_list_str_free(lines, 1);
 
@@ -1231,21 +1249,17 @@ ui_preparations(struct tableparams *p)
           "non-blank lines)", p->filename);
 
 
-  /* Set the final indexs. */
-  if(p->outcols)
-    arithmetic_indexs_final(p, colmatch);
-
-
   /* Make sure the (possible) output name is writable. */
   gal_checkset_writable_remove(p->cp.output, 0, p->cp.dontdelete);
+
 
   /* If random rows are desired, we need to define a GSL random number
      generator structure. */
   if(p->rowrandom)
     p->rng=gal_checkset_gsl_rng(p->envseed, &p->rng_name, &p->rng_seed);
 
+
   /* Clean up. */
-  free(colmatch);
   if(selectindout) free(selectindout);
   if(selecttypeout) free(selecttypeout);
 }
@@ -1371,6 +1385,7 @@ ui_free_report(struct tableparams *p)
   if(p->wcshdu) free(p->wcshdu);
   gal_list_data_free(p->noblank);
   gal_list_str_free(p->columns, 1);
+  if(p->colmatch) free(p->colmatch);
   if(p->colarray) free(p->colarray);
   gal_list_data_free(p->colmetadata);
   gal_list_str_free(p->catcolumnhdu, 1);
