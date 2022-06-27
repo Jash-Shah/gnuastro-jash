@@ -16341,7 +16341,7 @@ $ aststatistics random.fits --asciihist --numasciibins=50
 As you see, the 10000 pixels in the image only have values 1, 2, 3 or 4 (which were the values in the bins column of @file{histogram.txt}), and the number of times each of these values occurs follows the @mymath{y=x^2} distribution.
 
 Generally, any value given in the bins column will be used for the final output values.
-For example in the command below, in the step that we generated the histogram, we are adding the bins by 20 (while keeping the same probability distribution of @mymath{y=x^2}).
+For example in the command below (for generating a histogram from an analytical function), we are adding the bins by 20 (while keeping the same probability distribution of @mymath{y=x^2}).
 If you re-run the Arithmetic command above after this, you will notice that the pixels values are now one of the following 21, 22, 23 or 24 (instead of 1, 2, 3, or 4).
 But the shape of the histogram of the resulting random distribution will be unchanged.
 
@@ -16360,9 +16360,9 @@ It is therefore recommended to use a type-conversion operator after this operato
 For the list of type conversion operators, see @ref{Numerical type conversion operators}.
 Recall that you already know the values returned by this operator (they are one of the values in the bins column).
 
-For example, in the example above, the whole image only have values 1, 2, 3 or 4.
+For example, in the example above, the whole image only has values 1, 2, 3 or 4.
 Since they are always positive and are below 255, we can safely place them in an unsigned 8-bit integer (see @ref{Numeric data types}) with the command below (note the @code{uint8} after the operator name, and that we are using a different name for the output).
-After builing the image, we are listing the two outputs, while printing their size with @command{ls -l}:
+After building the new image, let's have a look at the sizes of the two images with @command{ls -l}:
 
 @example
 $ astarithmetic 100 100 2 makenew \
@@ -16376,24 +16376,24 @@ $ ls -lh random.fits random-u8.fits
 -rw-r--r-- 1 name name 17K Jan 01 13:45 random-u8.fits
 @end example
 
-As you see, when using the proper data type, we can shrink the size of the file significantly without loosing any information (from 85 kilobytes to 17 kilobytes).
-This difference can be felt much better for larger (real-world) datasets, so be sure to consider the output data type when using this operator.
+As you see, when using a suitable data type, we can shrink the size of the file significantly without loosing any information (from 85 kilobytes to 17 kilobytes).
+This difference can be felt much better for larger (real-world) datasets, so be sure to always set the output data type after calling this operator.
 
 
 @item random-from-hist
 Similar to @code{random-from-hist-raw}, but don't return the exact bin value, instead return a random value from a uniform distribution within each bin.
-Therefore the following limitations have to be taken into account (compared to @code{random-from-hist-raw}:
+Therefore the following limitations have to be taken into account (compared to @code{random-from-hist-raw}):
 @itemize
 @item
-The bins should be represented by their center (the number in the bin column).
+The number associated with each bin (in the bin column) should be its center.
 @item
-The bins have to be in descending order.
+The bins have to be in descending order (so the second row in the bin column is larger than the first).
 @item
 The bin widths (distance from one bin to another) have to be fixed.
 @end itemize
 
-For example, in the commands below, let's replace @code{random-from-hist-raw} with @code{random-from-hist} in the example of the description of @code{random-from-hist-raw}.
-Note how we are manually converting the output of this operator into single-precision floating point (32-bit, since 64-bit precision is statistically meaningless in this scenario and we don't want to waste storage, memory and running time):
+For a demonstration, let's replace @code{random-from-hist-raw} with @code{random-from-hist} in the example of the description of @code{random-from-hist-raw}.
+Note how we are manually converting the output of this operator into single-precision floating point (32-bit, since the default 64-bit precision is statistically meaningless in this scenario and we don't want to waste storage, memory and running time):
 @example
 $ echo "" | awk '@{for(i=1;i<5;++i) print i, i*i@}' \
                 > histogram.txt
@@ -16424,7 +16424,7 @@ Instead, the values within each bin are selected from a uniform distribution cov
 This creates the step-like feature in the histogram of the output.
 
 Of course, this extra uniform random number generation can make your program slower so be sure to check if it is worth it.
-In particular, one way to avoid this (and use @command{random-from-hist-raw} with a more contiguous-looking output distribution) is to simply use a higher-resolution histogram (assuming it is possible: you have a sufficient number of data points, or its an analytical expression that you can sample at smaller bin sizes).
+In particular, one way to avoid this (and use @command{random-from-hist-raw} with a more contiguous-looking output distribution) is to simply use a higher-resolution histogram (assuming it is possible: you have a sufficient number of data points, or you have an analytical expression that you can sample at smaller bin sizes).
 
 To better demonstrate this operator and its practical usage in everyday research, let's look at another example:
 Assume you want to get 100 random star magnitudes that follow the real-world Gaia Data release 3 magnitude distribution within a radius of 2 degrees around the (RA,Dec) coordinate of (1.23,4.56).
