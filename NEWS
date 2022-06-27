@@ -33,7 +33,7 @@ See the end of the file for license conditions.
        a FITS file), is identified by third '%'. This can be used to load
        columns outside the main table in Table's column arithmetic or by
        operators that need columns as input parameters (like the new
-       'random_from_hist' operator).
+       'random-from-hist' operator).
      - random-from-hist-raw: return a set of random points based on a
        custom distribution defined by its histogram. See the description
        and complete examples in the book for more.
