@@ -583,32 +583,23 @@ fi
 #     sky.
 #   - Mask all non zero pixels in the mask image as nan values.
 if [ x"$segment" != x ]; then
-    clab="not-initialized"
-    olab="not-initialized"
+
     # Find the object and clump labels of the target. Labels are saved into
     # plain text files just in case they are necessary for debugging tasks.
-    cropped_core_clump=$tmpdir/cropped-core-clump-$objectid.fits
-    cropped_core_object=$tmpdir/cropped-core-object-$objectid.fits
-    clumplab=$(astcrop $segment --hdu=CLUMPS --mode=img --width=1,1 \
-               --widthinpix --oneelemstdout --center=$xcenter,$ycenter \
-               --output=$cropped_core_clump --quiet)
-    objectlab=$(astcrop $segment --hdu=OBJECTS --mode=img --width=1,1 \
-                --widthinpix --oneelemstdout --center=$xcenter,$ycenter \
-                --output=$cropped_core_object --quiet)
-    echo $clumplab > $tmpdir/cropped-core-clump-$objectid.txt
-    echo $objectlab > $tmpdir/cropped-core-object-$objectid.txt
-
-    # Read the labels
-    clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
-    olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
+    clab=$(astcrop $segment --hdu=CLUMPS --mode=img --width=1,1 \
+                   --oneelemstdout --center=$xcenter,$ycenter \
+                   --quiet)
+    olab=$(astcrop $segment --hdu=OBJECTS --mode=img --width=1,1 \
+                   --oneelemstdout --center=$xcenter,$ycenter \
+                   --quiet)
 
     # If for any reason, a clump or object label couldn't be initialized at
     # the given coordiante, simply ignore this step. But print a warning so
     # the user is informed of the situation (and that this is a bug: 'clab'
     # should be initialized!).
-    if [ "$clab" = "not-initialized"   -o   "$olab" = "not-initialized" ]; then
+    if [ x"$clab" = x   -o   x"$olab" = x ]; then
         cat <<EOF
-$scriptname: WARNING: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. For some reason, no clump or object label could be initialized for the given coordinate within the given Segment image.
+$scriptname: WARNING: no clump or object label could be found in '$segment' for the coordinate $center
 EOF
         cropped_masked=$cropped
 
@@ -712,11 +703,16 @@ astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
 # are kept into the header of the output file. The data kept are: object
 # and clump that were not masked and the normalization value. If not masks
 # were applied, then set the clump and object labels to 'none'.
-if [ x"$clab" = x ]; then clab="none"; fi
-if [ x"$olab" = x ]; then olab="none"; fi
-astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
-                --write=CLABEL,$clab,"CLUMP label that was not masked" \
-                --write=OLABEL,$olab,"OBJECT label that was not masked"
+if [ x"$clab" = x ]; then
+    if ! [ x"$normvalue" = xnan ]; then
+        astfits $output --write=NORMVAL,$normvalue,"Normalization value"
+    fi
+else
+    astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
+            --write=CLABEL,$clab,"CLUMP label that was not masked" \
+            --write=OLABEL,$olab,"OBJECT label that was not masked"
+fi
+
 
 
 
