@@ -554,6 +554,13 @@ ui_read_check_only_options(struct mkprofparams *p)
           "called (i.e., when the contents of '--mcol' must be "
           "interpretted as a magnitude, not brightness).");
 
+  /* The kernel should always be normalized to 1.0. So '--magatpeak' should
+     never be called with '--kernel'. */
+  if(p->kernel && p->magatpeak)
+    error(EXIT_FAILURE, 0, "the kernel created by '--kernel' should "
+          "always be normalized (sum of its values) to 1.0. Therefore "
+          "it shouldn't be called with '--magatpeak'");
+
   /* Make sure no zero value is given for the '--mergedsize' option (only
      when it is necessary). */
   if(p->dsize && p->backname==NULL)
@@ -1272,7 +1279,7 @@ ui_prepare_columns(struct mkprofparams *p)
       p->n[0]  = n;
       p->p1[0] = 0.0f;
       p->q1[0] = 1.0f;
-      p->m[0]  = 0.0f;
+      p->m[0]  = p->mcolisbrightness ? 1.0f : p->zeropoint;
       p->t[0]  = t;
       if(p->ndim==3)
         {

@@ -171,6 +171,9 @@ See the end of the file for license conditions.
   bug #62674: Column arithmetic can't use columns from --catcolumnfile.
   bug #62678: Radial profile script using values image instead of STD image
               when '--instd' not used. Found and fixed by Raul Infante-Sainz.
+  bug #62679: MakeProfiles kernel only normalized when zeropoint is
+              zero. Found by Raul Infante-Sainz.
+
 
 
 
