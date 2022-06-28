@@ -584,8 +584,7 @@ fi
 #   - Mask all non zero pixels in the mask image as nan values.
 if [ x"$segment" != x ]; then
 
-    # Find the object and clump labels of the target. Labels are saved into
-    # plain text files just in case they are necessary for debugging tasks.
+    # Find the object and clump labels of the target.
     clab=$(astcrop $segment --hdu=CLUMPS --mode=img --width=1,1 \
                    --oneelemstdout --center=$xcenter,$ycenter \
                    --quiet)
@@ -604,6 +603,11 @@ EOF
         cropped_masked=$cropped
 
     else
+        # To help in debugging (when '--quiet' is not called)
+        if [ x"$quiet" = x ]; then
+            echo "$segment: at $center, found clump $clab in object $olab"
+        fi
+
         # Crop the object and clump image to same size as desired stamp.
         cropclp=$tmpdir/cropped-clumps-$objectid.fits
         cropobj=$tmpdir/cropped-objects-$objectid.fits
