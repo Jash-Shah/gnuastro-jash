@@ -173,6 +173,9 @@ See the end of the file for license conditions.
               when '--instd' not used. Found and fixed by Raul Infante-Sainz.
   bug #62679: MakeProfiles kernel only normalized when zeropoint is
               zero. Found by Raul Infante-Sainz.
+  bug #62680: MakeProfiles using WCS-options when --background is given and
+              the background doesn't have WCS. Found with the help of Raul
+              Infante-Sainz.
 
 
 

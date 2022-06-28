@@ -23385,7 +23385,7 @@ Besides the main/merged image containing all the profiles in the catalog, it is 
 
 If an image is given to the @option{--background} option, the pixels of that image are used as the background value for every pixel hence flux value of each profile pixel will be added to the pixel in that background value.
 You can disable this with the @code{--clearcanvas} option (which will initialize the background to zero-valued pixels and build profiles over that).
-With the @option{--background} option, the values to all options relating to the ``canvas'' (output size and WCS) will be ignored if specified, for example @option{--oversample}, @option{--mergedsize}, and @option{--prepforconv}.
+With the @option{--background} option, the values to all options relating to the ``canvas'' (output size and WCS) will be ignored if specified: @option{--oversample}, @option{--mergedsize}, @option{--prepforconv}, @option{--crpix}, @option{--crval}, @option{--cdelt}, @option{--cdelt}, @option{--pc}, @option{cunit} and @option{ctype}.
 
 The sections below discuss the options specific to MakeProfiles based on context: the input catalog settings which can have many rows for different profiles are discussed in @ref{MakeProfiles catalog}, in @ref{MakeProfiles profile settings}, we discuss how you can set general profile settings (that are the same for all the profiles in the catalog).
 Finally @ref{MakeProfiles output dataset} and @ref{MakeProfiles log file} discuss the outputs of MakeProfiles and how you can configure them.
@@ -23440,7 +23440,8 @@ See @ref{Selecting table columns} for a thorough discussion on the values to the
 The value for the profile center in the catalog (the @option{--ccol} option) can be a floating point number so the profile center can be on any sub-pixel position.
 Note that pixel positions in the FITS standard start from 1 and an integer is the pixel center.
 So a 2D image actually starts from the position (0.5, 0.5), which is the bottom-left corner of the first pixel.
-When a @option{--background} image with WCS information is provided or you specify the WCS parameters with the respective options, you may also use RA and Dec to identify the center of each profile (see the @option{--mode} option below).
+When a @option{--background} image with WCS information is provided, or you specify the WCS parameters with the respective options@footnote{The options to set the WCS are the following: @option{--crpix}, @option{--crval}, @option{--cdelt}, @option{--cdelt}, @option{--pc}, @option{cunit} and @option{ctype}.
+Just recall that these options are only used if @option{--background} is not given: if the image you give to @option{--background} doesn't have WCS, these options will not be used and you can't use WCS-mode coordinates like RA or Dec.}, you may also use RA and Dec to identify the center of each profile (see the @option{--mode} option below).
 
 In MakeProfiles, profile centers do not have to be in (overlap with) the final image.
 Even if only one pixel of the profile within the truncation radius overlaps with the final image size, the profile is built and included in the final image.
@@ -23792,7 +23793,7 @@ The extension that contains the image should be specified with the @option{--bac
 When a background image is specified, it will be used to derive all the information about the output image.
 Hence, the following options will be ignored: @option{--mergedsize}, @option{--oversample}, @option{--crpix}, @option{--crval} (generally, all other WCS related parameters) and the output's data type (see @option{--type} in @ref{Input output options}).
 
-The image will act like a canvas to build the profiles on: profile pixel values will be summed with the background image pixel values.
+The background image will act like a canvas to build the profiles on: profile pixel values will be summed with the background image pixel values.
 With the @option{--replace} option you can disable this behavior and replace the profile pixels with the background pixels.
 If you want to use all the image information above, except for the pixel values (you want to have a blank canvas to build the profiles on, based on an input image), you can call @option{--clearcanvas}, to set all the input image's pixels to zero before starting to build the profiles over it (this is done in memory after reading the input, so nothing will happen to your input file).
 
@@ -23918,6 +23919,11 @@ If you look into the headers of a FITS image with WCS for example you will see a
 You can see the FITS headers with Gnuastro's @ref{Fits} program using a command like this: @command{$ astfits -p image.fits}.
 
 If the values given to any of these options does not correspond to the number of dimensions in the output dataset, then no WCS information will be added.
+Also recall that if you use the @option{--background} option, all of these options are ignored.
+Such that if the image given to @option{--background} doesn't have any WCS, the output of MakeProfiles will also not have any WCS, even if these options are given@footnote{If you want to add profiles @emph{and} WCS over the background image (to produce your output), you need more than one command:
+1. You should use @option{--mergedsize} in MakeProfiles to manually set the output number of pixels equal to your desired background image (so the background is zero).
+In this mode, you can use these WCS-related options to define the WCS.
+2. Then use Arithmetic to add the pixels of your mock image to the background (see @ref{Arithmetic}.}.
 
 @table @option
 

@@ -1647,10 +1647,29 @@ ui_prepare_canvas(struct mkprofparams *p)
     }
 
 
-  /* Make the WCS structure of the output data structure if it has not
-     been set yet. */
+  /* Make the WCS structure of the output data structure (if it has not
+     been set when reading the background image). */
   if(p->wcs==NULL)
-    ui_prepare_wcs(p);
+    {
+      if(p->backname)
+        {
+          /* If the background image didn't have WCS, the output shouldn't
+             have any either! So let the user know. */
+          if(p->cp.quiet==0)
+            error(EXIT_SUCCESS, 0, "WARNING: no WCS in image given to "
+                  "'--background': %s! The output will therefore also "
+                  "not have any WCS. If you want to use the "
+                  "MakeProfiles WCS options ('--crpix', '--crval' and "
+                  "etc) to manually set the WCS of your output image, "
+                  "please do _not_ use '--background' and give the "
+                  "final size (in pixels) of your desired output through "
+                  "the '--mergedsize' option. You can suppress this "
+                  "warning with the '--quiet' option",
+                  gal_fits_name_save_as_string(p->backname, p->backhdu));
+        }
+      else
+        ui_prepare_wcs(p);
+    }
 
 
   /* Set the name, comments and units of the final merged output. */
