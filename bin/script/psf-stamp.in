@@ -605,7 +605,7 @@ EOF
     else
         # To help in debugging (when '--quiet' is not called)
         if [ x"$quiet" = x ]; then
-            echo "$segment: at $center, found clump $clab in object $olab"
+            echo "$scriptname: $segment: at $center, found clump $clab in object $olab"
         fi
 
         # Crop the object and clump image to same size as desired stamp.
