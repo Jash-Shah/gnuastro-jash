@@ -169,7 +169,8 @@ See the end of the file for license conditions.
   bug #62662: Table crashes when column arithmetic is applied after adding
               rows from another file (with '--catrowfile').
   bug #62674: Column arithmetic can't use columns from --catcolumnfile.
-
+  bug #62678: Radial profile script using values image instead of STD image
+              when '--instd' not used. Found and fixed by Raul Infante-Sainz.
 
 
 

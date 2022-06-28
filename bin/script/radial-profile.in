@@ -541,7 +541,7 @@ else
      # When 'instd' is a file, put the 'valuesstd' as the option value
      # (which has been warped/cropped and created in the previous section).
      if [ -f "$instd" ]; then
-         finalinstd="--instd=$valuesstd"
+         finalinstd="--instd=$valuesstd --stdhdu=1"
 
      # When 'instd' is a number, simply give the number as the value.
      else
@@ -696,9 +696,9 @@ fi
 # elliptical apertures) and the original input image for measuring the
 # values.
 cat=$tmpdir/catalog.fits
-astmkcatalog $apertures -h1 --valuesfile=$values --valueshdu=1 --ids \
+astmkcatalog $apertures --hdu=1 --valuesfile=$values --valueshdu=1 --ids \
              $finalinstd $finalmeasure $finalsigmaclip $finalzp \
-	     --stdhdu=1 --output=$cat $quiet
+	     --output=$cat $quiet
 
 
 
