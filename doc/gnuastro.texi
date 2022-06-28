@@ -2175,7 +2175,7 @@ This is the same dimensions as Sufi had desired in the beginning.
 All this trouble was certainly worth it because now there is no dimming on the edges of the image and the profile centers are more accurately sampled.
 
 The final step to simulate a real observation would be to add noise to the image.
-Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a magnitude of 7 that night.
+Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a @emph{per-pixel} magnitude of 7 that night.
 For more on how the background value determines the noise, see @ref{Noise basics}.
 So using these values he ran MakeNoise, and with the second command, he visually inspected the image.
 
@@ -16245,7 +16245,17 @@ If you need this feature please send us an email at @code{bug-gnuastro@@gnu.org}
 @item mknoise-poisson
 @cindex Poisson noise
 Add Poisson noise to each element of the input dataset (see @ref{Photon counting noise}).
-This operator takes two arguments: the top/first popped operand is the background value (in units of electron counts), the next popped operand is the dataset that the noise should be added to.
+This operator takes two arguments: 1. the first popped operand (just before the operator) is the @emph{per-pixel} background value (in units of electron counts).
+2. The second popped operand is the dataset that the noise should be added to.
+
+@cindex Dark night
+@cindex Gray night
+@cindex Nights (dark or gray)
+Recall that the background values reported by observatories (for example to define dark or gray nights), or in papers, is usually reported in units of magnitudes per arcseconds square.
+You need to do the conversion to counts per pixel manually.
+The conversion of magnitudes to counts is described below.
+For converting arcseconds squared to number of pixels, you can use the @option{--pixelscale} option of @ref{Fits}.
+For example @code{astfits image.fits --pixelscale}.
 
 Except for the noise-model, this operator is very similar to @code{mknoise-sigma} and the examples there apply here too.
 The main difference with @code{mknoise-sigma} is that in a Poisson distribution the scatter/sigma will depend on each element's value.
@@ -24248,8 +24258,9 @@ One line examples:
 ## (this is independent of the pixel value: not Poission noise)
 $ astmknoise --sigma=100 image.fits
 
-## Add noise to input image assuming a background magnitude (with
-## zero point magnitude of 0) and a certain instrumental noise:
+## Add noise to the input image assuming a per-pixel background
+## magnitude (with zero point magnitude of 0) and an
+## instrumental noise of 20.
 $ astmknoise --background=-10 -z0 --instrumental=20 mockimage.fits
 @end example
 
@@ -24266,7 +24277,7 @@ This is done for future reproducibility.
 @itemx --background=FLT
 The background value (per pixel) that will be added to each pixel value (internally) to simulate Poisson noise, see @ref{Photon counting noise}.
 By default the units of this value are assumed to be in magnitudes, hence a @option{--zeropoint} is also necessary.
-If the background is in units of counts, you need add @option{--bgisbrightness}, see @ref{Brightness flux magnitude}
+If the background is in units of counts, you need add @option{--bgisbrightness}, see @ref{Brightness flux magnitude}.
 
 Internally, the value given to this option will be converted to counts (@mymath{b}, when @option{--bgisbrightness} is called, the value will be used directly).
 Assuming the pixel value is @mymath{p}, the random value for that pixel will be taken from a Gaussian distribution with mean of @mymath{p+b} and standard deviation of @mymath{\sqrt{p+b}}.
