@@ -68,6 +68,10 @@ See the end of the file for license conditions.
      Raul Infante-Sainz.
 
   Fits:
+   - When no option is specified (thus printing the HDU metadata in the
+     given file), the units of the HDUs are also printed as a new
+     column. For tables, it will be blank ('n/a'); because tables have
+     separate units on each column (use 'asttable table.fits -i').
    --copykeys: can now take any number of keyword names also. For example
      '--copykeys=KEYNAME1,KEYNAME2,KEYNAME3'. Until now, it was only
      possible to give this option a range of keyword positions (for example
