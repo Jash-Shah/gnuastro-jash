@@ -1368,8 +1368,8 @@ struct argp_option program_options[] =
       ui_column_codes_ll
     },
     {
-      "std",
-      UI_KEY_STD,
+      "skystd",
+      UI_KEY_SKYSTD,
       0,
       0,
       "Sky standard deviation (per pixel).",

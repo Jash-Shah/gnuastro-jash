@@ -1572,8 +1572,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           oiflag[ OCOL_SUMSKY ] = ciflag[ CCOL_SUMSKY ] = 1;
           break;
 
-        case UI_KEY_STD:
-          name           = "STD";
+        case UI_KEY_SKYSTD:
+          name           = "SKY_STD";
           unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Sky standard deviation under object.";
           ccomment       = ocomment;
@@ -2629,7 +2629,7 @@ columns_fill(struct mkcatalog_passparams *pp)
           ((float *)colarr)[oind] = MKC_RATIO(oi[OCOL_SUMSKY], oi[OCOL_NUMSKY]);
           break;
 
-        case UI_KEY_STD:
+        case UI_KEY_SKYSTD:
           ((float *)colarr)[oind] = sqrt( MKC_RATIO( oi[ OCOL_SUMVAR ],
                                                      oi[ OCOL_NUMVAR ]) );
           break;
@@ -2991,7 +2991,7 @@ columns_fill(struct mkcatalog_passparams *pp)
                                                  ci[ CCOL_NUMSKY] );
             break;
 
-          case UI_KEY_STD:
+          case UI_KEY_SKYSTD:
             ((float *)colarr)[cind] = sqrt( MKC_RATIO( ci[ CCOL_SUMVAR ],
                                                        ci[ CCOL_NUMVAR ] ));
             break;

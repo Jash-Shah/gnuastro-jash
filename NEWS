@@ -123,6 +123,7 @@ See the end of the file for license conditions.
 ** Changed features
 
   MakeCatalog:
+   --skystd: new name for old '--std' (see bug #62685).
    --sfmagnsigma: default value changed to 3 (more commonly used).
    --sfmagarea: default value set to 100 arcsec^2 (more commonly used).
 
@@ -198,6 +199,10 @@ See the end of the file for license conditions.
               Infante-Sainz.
   bug #62683: Arithmetic's 'set-' operator not working after the 'makenew'
               operator. Found by Raul Infante-Sainz.
+  bug #62685: MakeCatalog's '--std' option is wrongly interpreted as the
+              standard deviation of the values image, while it is actually
+              the root mean square of the Sky standard deviation
+              pixels. Found by Raul Infante-Sainz.
 
 
 
