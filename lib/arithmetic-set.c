@@ -102,9 +102,10 @@ gal_arithmetic_set_name(struct gal_arithmetic_set_params *p, char *token)
   /* Pop the top operand, then add it to the list of named datasets, but
      only if it is used in later tokens. If it isn't, free the popped
      dataset. The latter case (to define a name, but not use it), is
-     obviously a redundant operation, but that is upto the user, we
-     shouldn't worry about it here. We should just have everything in
-     place, so no crashes occur or no extra memory is consumed. */
+     obviously a redundant operation, but that is upto the user and may
+     happen in scripts where the operands and operators list is
+     automatically generated. We should just have everything in place, so
+     no crashes occur or no extra memory is consumed. */
   if( p->used_later(p, varname) )
     {
       /* Add the top popped operand to the list of names. */
@@ -112,7 +113,7 @@ gal_arithmetic_set_name(struct gal_arithmetic_set_params *p, char *token)
 
       /* Write the requested name into this dataset. But note that 'name'
          MUST be already empty. So to be safe, we'll do a sanity check. */
-      if(p->named->name )
+      if(p->named->name)
         error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
               "fix the problem. The 'name' element should be NULL at "
               "this point, but it isn't", __func__, PACKAGE_BUGREPORT);

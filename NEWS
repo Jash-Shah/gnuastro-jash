@@ -176,6 +176,8 @@ See the end of the file for license conditions.
   bug #62680: MakeProfiles using WCS-options when --background is given and
               the background doesn't have WCS. Found with the help of Raul
               Infante-Sainz.
+  bug #62683: Arithmetic's 'set-' operator not working after the 'makenew'
+              operator. Found by Raul Infante-Sainz.
 
 
 

@@ -2639,9 +2639,8 @@ arithmetic_makenew(gal_data_t *sizes)
     }
 
   /* allocate the necessary dataset. */
-  out=gal_data_alloc(NULL, GAL_TYPE_UINT8, ndim, dsize, NULL, 1, minmapsize,
-                     quietmmap, "EMPTY", "NOT-SET",
-                     "Empty dataset created by arithmetic.");
+  out=gal_data_alloc(NULL, GAL_TYPE_UINT8, ndim, dsize, NULL, 1,
+                     minmapsize, quietmmap, NULL, NULL, NULL);
 
   /* Clean up and return. */
   free(dsize);
