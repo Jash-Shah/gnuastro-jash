@@ -1578,6 +1578,18 @@ reversepolish(struct arithmeticparams *p)
     }
   else
     {
+      /* If the user has requested a name, units or comments for the FITS
+         file, insert them into the dataset here. */
+      if(p->metaname)
+        { if(data->name) free(data->name);
+          gal_checkset_allocate_copy(p->metaname, &data->name); }
+      if(p->metaunit)
+        { if(data->unit) free(data->unit);
+          gal_checkset_allocate_copy(p->metaunit, &data->unit); }
+      if(p->metacomment)
+        { if(data->comment) free(data->comment);
+          gal_checkset_allocate_copy(p->metacomment, &data->comment); }
+
       /* Put a copy of the WCS structure from the reference image, it
          will be freed while freeing 'data'. */
       data->wcs=p->refdata.wcs;
@@ -1587,6 +1599,8 @@ reversepolish(struct arithmeticparams *p)
                         "ARITHMETIC", 0);
       else
         gal_fits_img_write(data, p->cp.output, NULL, PROGRAM_NAME);
+
+      /* Let the user know that the job is done. */
       if(!p->cp.quiet)
         printf(" - Write (final): %s\n", p->cp.output);
     }

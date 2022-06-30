@@ -42,6 +42,22 @@ See the end of the file for license conditions.
        sampling (to make the final distribution less descrete). See the
        example in the book for selecting random star magnitudes based on
        Gaia's observed magnitude distribution.
+   - New options to add metadata (standard FITS keywords) to your output
+     for easy understanding of the data in the future, or by your
+     colleagues if you share the output). Until now, to have this feature,
+     you needed to call Fits on the output of Arithmetic (for setting the
+     HDU name to "my-sum" for example):
+         astarithmetic img-a.fits img-b.fits + --output=sum.fits
+         astfits sum.fits --write=EXTNAME,"my-sum"
+     But with the following commands, you can add important metadata to the
+     output of Arithmetic in the same command and simplify your scripts:
+       --metaname: Metadata name of the output (FITS keyword: 'EXTNAME').
+       --metaunit: Unit of the output's pixels (FITS keyword: 'BUNIT').
+       --metacomment: Description of the data (FITS keyword: 'COMMENT').
+     Like the following for the example above:
+         astarithmetic img-a.fits img-b.fits + --metaname="my-sum" \
+                       --output=sum.fits
+
 
   Crop:
    --oneelemstdout: when a crop has a single pixel and this option is

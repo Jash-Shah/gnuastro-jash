@@ -520,7 +520,10 @@ freeandreport(struct arithmeticparams *p, struct timeval *t1)
   /* Free the simple strings. */
   free(p->cp.output);
   if(p->wcshdu) free(p->wcshdu);
+  if(p->metaname) free(p->metaname);
+  if(p->metaunit) free(p->metaunit);
   if(p->globalhdu) free(p->globalhdu);
+  if(p->metacomment) free(p->metacomment);
 
   /* If there are any remaining HDUs in the hdus linked list, then
      free them. */

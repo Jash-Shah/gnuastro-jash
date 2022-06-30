@@ -16765,6 +16765,28 @@ For more, see the description of @option{--wcsfile}.
 Use the environment for the random number generator settings in operators that need them (for example @code{mknoise-sigma}).
 This is very important for obtaining reproducible results, for more see @ref{Generating random numbers}.
 
+@item -n STR
+@itemx --metaname=STR
+Metadata (name) of the output dataset.
+For a FITS image or table, the string given to this option is written in the @code{EXTNAME} or @code{TTYPE1} keyword (respectively).
+
+If this keyword is present in a FITS extension, it will be printed in the table output of a command like @command{astfits image.fits} (for images) or @command{asttable table.fits -i} (for tables).
+This metadata can be very helpful for yourself in the future (when you have forgotten the details), so its recommended to use this option for files that should be archived or shared with colleagues.
+
+@item -u STR
+@itemx --metaunit=STR
+Metadata (units) of the output dataset.
+For a FITS image or table, the string given to this option is written in the @code{BUNIT} or @code{TTYPE1} keyword respectively.
+In the case of tables, recall that the Arithmetic program only outputs a single column, you should use column arithmetic in Table for more than one column (see @ref{Column arithmetic}).
+For more on the importance of metadata, see the description of @option{--metaname}.
+
+@item -c STR
+@itemx --metacomment=STR
+Metadata (comments) of the output dataset.
+For a FITS image or table, the string given to this option is written in the @code{COMMENT} or @code{TCOMM1} keyword respectively.
+In the case of tables, recall that the Arithmetic program only outputs a single column, you should use column arithmetic in Table for more than one column (see @ref{Column arithmetic}).
+For more on the importance of metadata, see the description of @option{--metaname}.
+
 @item -O
 @itemx --onedasimage
 Write final dataset as a FITS image/array even if it has a single dimension.

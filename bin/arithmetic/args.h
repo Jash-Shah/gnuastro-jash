@@ -113,6 +113,45 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "metaname",
+      UI_KEY_METANAME,
+      "STR",
+      0,
+      "Internal name (FITS images: EXTNAME keyword).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->metaname,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "metaunit",
+      UI_KEY_METAUNIT,
+      "STR",
+      0,
+      "Internal units (FITS images: BUNIT keyword).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->metaunit,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "metacomment",
+      UI_KEY_METACOMMENT,
+      "STR",
+      0,
+      "Internal comments (FITS images: COMMENT keyword).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->metacomment,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
     {0}
   };
