@@ -203,6 +203,8 @@ See the end of the file for license conditions.
               standard deviation of the values image, while it is actually
               the root mean square of the Sky standard deviation
               pixels. Found by Raul Infante-Sainz.
+  bug #62694: Radial profile script overestimates the surface brightness
+              error. Found and fixed with the help of Raul Infante-Sainz.
 
 
 

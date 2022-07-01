@@ -695,10 +695,25 @@ fi
 # a catalogue using the segmentation image previously generated (the
 # elliptical apertures) and the original input image for measuring the
 # values.
+#
+# --spatialresolution=0.0: in a radial profile, the areas used for each
+#   measurement are pre-determined analytically, so the error in area
+#   (relevant for the estimation of the surface brightness error for
+#   example) should be considered as zero. The default value is '2.0' which
+#   will give over-estimated error bars in the center.
+#
+#   We tested this by making a mock profile and adding different noise
+#   realizations (just changing the random number generator seed). The
+#   radial profiles of each noise realization were then measured and their
+#   scatter was compared with the '--sberror' column of MakeCatalog when
+#   given to this radial profile script. We saw that without
+#   '--spatialresolution=0.0', the measured errors were overestimated in
+#   the center, but after adding this, the '--sberror' column was nicely
+#   consistent with the scatter in the mock profiles at central radii.
 cat=$tmpdir/catalog.fits
 astmkcatalog $apertures --hdu=1 --valuesfile=$values --valueshdu=1 --ids \
              $finalinstd $finalmeasure $finalsigmaclip $finalzp \
-	     --output=$cat $quiet
+	     --spatialresolution=0.0 --output=$cat $quiet
 
 
 
