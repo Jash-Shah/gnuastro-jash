@@ -117,13 +117,22 @@ See the end of the file for license conditions.
    - gal_arithmetic_load_col: Low-level function for parsing the string of
      the newly added 'load-col' operator, mentioned in the Arithmetic
      section above.
+   - gal_statistics_std_from_sums: return the standard deviation using the
+     sum, sum of squares and number of a distribution.
 
 ** Removed features
 
 ** Changed features
 
   MakeCatalog:
-   --skystd: new name for old '--std' (see bug #62685).
+   --std: measures the standard deviation of the object/clump pixels of the
+          values image. Until now, there was no column to calculate this,
+          and the '--std' column returned the _sky_ standard deviation over
+          the object/clump labels (from the standard deviation image,
+          ignoring the values image). But that was confusing, especially
+          since we have columns like '--mean' or '--median' which only use
+          the values image (see bug #62685).
+   --skystd: new name for old '--std', see description of '--std' above.
    --sfmagnsigma: default value changed to 3 (more commonly used).
    --sfmagarea: default value set to 100 arcsec^2 (more commonly used).
 

@@ -578,8 +578,9 @@ parse_objects(struct mkcatalog_passparams *pp)
 
                   /* General flux summations. */
                   if(xybin) xybinarr[ pind ]=2;
-                  if(oif[ OCOL_NUM ]) oi[ OCOL_NUM ]++;
-                  if(oif[ OCOL_SUM ]) oi[ OCOL_SUM ] += *V;
+                  if(oif[ OCOL_NUM ])   oi[ OCOL_NUM   ]++;
+                  if(oif[ OCOL_SUM ])   oi[ OCOL_SUM   ] += *V;
+                  if(oif[ OCOL_SUMP2 ]) oi[ OCOL_SUMP2 ] += *V * *V;
 
                   /* Get the necessary clump information. */
                   if(p->clumps && *C>0)
@@ -986,8 +987,9 @@ parse_clumps(struct mkcatalog_passparams *pp)
                       goodvalue=1;
 
                       /* Fill in the necessary information. */
-                      if(cif[ CCOL_NUM   ]) ci[ CCOL_NUM ]++;
-                      if(cif[ CCOL_SUM   ]) ci[ CCOL_SUM ] += *V;
+                      if(cif[ CCOL_NUM   ]) ci[ CCOL_NUM   ]++;
+                      if(cif[ CCOL_SUM   ]) ci[ CCOL_SUM   ] += *V;
+                      if(cif[ CCOL_SUMP2 ]) ci[ CCOL_SUMP2 ] += *V * *V;
                       if(cif[ CCOL_NUMXY ])
                         ((uint8_t *)(xybin[cind].array))[ pind ] = 2;
 

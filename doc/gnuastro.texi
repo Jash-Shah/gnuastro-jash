@@ -22043,6 +22043,10 @@ If no usable pixels are present over the clump or object (for example they are a
 The mean sky subtracted value of pixels within the object or clump.
 For clumps, the average river flux is subtracted from the sky subtracted mean.
 
+@item --std
+The standard deviation of the pixels within the object or clump.
+For clumps, the river pixels are not subtracted because that is a constant (per pixel) value and should not affect the standard deviation.
+
 @item --median
 The median sky subtracted value of pixels within the object or clump.
 For clumps, the average river flux is subtracted from the sky subtracted median.
@@ -22203,9 +22207,9 @@ See the description under @option{--halfsumradius} for more on converting area t
 Because of its non-parametric nature, this column is most reliable on clumps and should only be used in objects with great caution.
 This is because objects can have more than one clump (peak with true signal) and multiple peaks are not treated separately in objects, so the result of this column will be biased.
 
-Also, because of its non-parametric nature, this FWHM it does not account for the PSF, and it will be strongly affected by noise if the object is faint.
-So when half the maximum value (which can be requested using the @option{--maximum} column) is too close to the local noise level (which can be requested using the @option{--std} column), the value returned in this column is meaningless (its just noise peaks which are randomly distributed over the area).
-You can therefore use the @option{--maximum} and @option{--std} columns to remove unreliable FWHMs.
+Also, because of its non-parametric nature, this FWHM it does not account for the PSF, and it will be strongly affected by noise if the object is faint/diffuse
+So when half the maximum value (which can be requested using the @option{--maximum} column) is too close to the local noise level (which can be requested using the @option{--skystd} column), the value returned in this column is meaningless (its just noise peaks which are randomly distributed over the area).
+You can therefore use the @option{--maximum} and @option{--skystd} columns to remove, or flag, unreliable FWHMs.
 For example if a labeled region's maximum is less than 2 times the sky standard deviation, the value will certainly be unreliable (half of that is @mymath{1\sigma}!).
 For a more reliable value, this fraction should be around 4 (so half the maximum is 2@mymath{\sigma}).
 
@@ -22403,7 +22407,7 @@ For more, see the description of @option{--spectrum} in @ref{MakeCatalog measure
 @cindex Limit, Surface brightness
 When possible, MakeCatalog will also measure the full input's noise level (also known as surface brightness limit, see @ref{Quantifying measurement limits}).
 Since these measurements are related to the noise and not any particular labeled object, they are stored as keywords in the output table.
-Furthermore, they are only possible when a standard deviation image has been loaded (done automatically for any column measurement that involves noise, for example @option{--sn} or @option{--std}).
+Furthermore, they are only possible when a standard deviation image has been loaded (done automatically for any column measurement that involves noise, for example @option{--sn}, @option{--magnitudeerr} or @option{--skystd}).
 But if you just want the surface brightness limit and no noise-related column, you can use @option{--forcereadstd}.
 All these keywords start with @code{SBL} (for ``surface brightness limit'') and are described below:
 
@@ -33221,6 +33225,13 @@ This function will calculate both values in one pass over the
 dataset. Hence when both the mean and standard deviation of a dataset are
 necessary, this function is much more efficient than calling
 @code{gal_statistics_mean} and @code{gal_statistics_std} separately.
+@end deftypefun
+
+@deftypefun double gal_statistics_std_from_sums (double @code{sum}, double @code{sump2}, size_t @code{num})
+Return the standard deviation from the values that can be obtained in a single pass through the distribution: @code{sum}: the sum of the elements, @code{sump2}: the sum of the power-of-2 of each element, and @code{num}: the number of elements.
+
+This is a low-level function that is only useful after the distribution of values has been parsed (and the three input arguments are calculated).
+It is the lower-level function that is used in functions like @code{gal_statistics_std}, or other components of Gnuastro that measure the standard deviation (for example MakeCatalog's @option{--std} column).
 @end deftypefun
 
 @cindex Median
