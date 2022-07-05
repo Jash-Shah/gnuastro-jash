@@ -595,8 +595,14 @@ gal_type_string_to_number(char *string, uint8_t *type)
          can only preserve a certain number of decimals precisely after a
          certain number of decimals, they loose precision. 2) Integer
          comparisons (that are done below) are faster, but this is
-         secondary because the parsing itself takes more time! */
-      l=strtol(string, &tailptr, 0);
+         secondary because the parsing itself takes more time!
+
+         The string is being parsed as an integer in base-10 (third
+         argument of 'strtol'). This should not be '0', otherwise 'strtol'
+         will parse strings starting with '0' in octal radix and strings
+         starting in '0x' in hexagesimal radix (these aren't used in data
+         analysis, only in computer science). */
+      l=strtol(string, &tailptr, 10);
       if(*tailptr!='\0')
         {
           /* If 'tailptr' is simply an 'e', the input string was in
@@ -606,11 +612,7 @@ gal_type_string_to_number(char *string, uint8_t *type)
              'ceil(d)==d' we have confirmed that the number is actually an
              integer (and not a float). */
           if(*tailptr=='e') l=d;
-          else
-            error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
-                  "%s to fix this problem. The string '%s' couldn't "
-                  "be parsed with 'strtol', but was parsed by 'strtod'",
-                  __func__, PACKAGE_BUGREPORT, string);
+          else return NULL;
         }
 
       /* If the number is negative, put it in the signed types (based on

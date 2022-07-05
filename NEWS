@@ -214,6 +214,9 @@ See the end of the file for license conditions.
               pixels. Found by Raul Infante-Sainz.
   bug #62694: Radial profile script overestimates the surface brightness
               error. Found and fixed with the help of Raul Infante-Sainz.
+  bug #62710: Plain-text integers starting with 0 are read in the octal
+              base (which is common in software engineering, but not in
+              data analysis). Found by Manuel Sánchez-Benavente.
 
 
 

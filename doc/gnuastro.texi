@@ -27903,13 +27903,43 @@ When you need to read many numbers into an array, @code{out} would be an array, 
 Read @code{string} into smallest type that can host the number, the allocated space for the number will be returned and the type of the number will be put into the memory that @code{type} points to.
 If @code{string} couldn't be read as a number, this function will return @code{NULL}.
 
-This function calls the C library's @code{strtod} function to read @code{string} as a double-precision floating point number.
-When successful, it will check the value to put it in the smallest numerical data type that can handle it.
-However, if @code{string} is successfully parsed as a number @emph{and} there is @code{.} in @code{string}, it will force the number into floating point types.
+This function first calls the C library's @code{strtod} function to read @code{string} as a double-precision floating point number.
+When successful, it will check the value to put it in the smallest numerical data type that can handle it: for example @code{120} and @code{50000} will be read as a signed 8-bit integer and unsigned 16-bit integer types.
+When reading as an integer, the C library's @code{strtol} function is used (in base-10) to parse the string again.
+This re-parsing as an integer is necessary because integers with many digits (for example the unix epoch seconds) will not be accurately stored as a floating point and we can't use the result of @code{strtod}.
+
+When @code{string} is successfully parsed as a number @emph{and} there is @code{.} in @code{string}, it will force the number into floating point types.
 For example @code{"5"} is read as an integer, while @code{"5."} or @code{"5.0"}, or @code{"5.00"} will be read as a floating point (single-precision).
 
-For the ranges acceptable by each type see @ref{Numeric data types}.
-For integers, the range is clear, but for floating point types, this function will count the number of significant digits and determine if the given string is single or double precision as described in that section.
+For floating point types, this function will count the number of significant digits and determine if the given string is single or double precision as described in @ref{Numeric data types}.
+
+For integers, negative numbers will always be placed in signed types (as expected).
+If a positive integer falls below the maximum of a signed type of a certain width, it will be signed (for example @code{10} and @code{150} will be defined as a signed and unsigned 8-bit integer respectively).
+In other words, even though @code{10} can be unsigned, it will be read as a signed 8-bit integer.
+This is done to respect the C implicit type conversion in binary operators, where signed integers will be interpreted as unsigned, when the otehr operand is an unsigned integer of the same width.
+
+For example, see the short program below.
+It will print @code{-50 is larger than 100000} (which is wrong!).
+This happens because when a negative number is parsed as an unsigned, the value is effectively subtracted from the maximum and @mymath{4294967295-50} is indeed larger than 100000 (recall that @mymath{4294967295} is the largest unsigned 32-bit integer, see @ref{Numeric data types}).
+
+@example
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+int
+main(void)
+@{
+  int32_t  a=-50;
+  uint32_t b=100000;
+  printf("%d is %s than %d\n", a,
+         a>b ? "larger" : "less or equal", b);
+  return 0;
+@}
+@end example
+
+However, if we read 100000 as a signed 32-bit integer, there won't be any problem and the printed sentence will be logically correct (for someone who doesn't know anything about numeric data types: users of your programs).
+For the advantages of integers, see @ref{Integer benefits and pitfalls}.
 @end deftypefun
 
 @node Pointers, Library blank values, Library data types, Gnuastro library

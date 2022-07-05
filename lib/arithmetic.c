@@ -2112,25 +2112,10 @@ arithmetic_binary_out_type(int operator, gal_data_t *l, gal_data_t *r)
 
 
 
-/* Binary arithmetic's type checks: According to C's automatic type
-   conversion in binary operators, the unsigned types have higher
-   precedence for the same width. As a result, something like the following
-   will prove correct (the value after 'check:' will be '1').
-
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include <stdint.h>
-
-        int
-        main(void)
-        {
-          int32_t a=-50;
-          uint32_t b=10000;
-
-          uint8_t o=a>b;
-          printf("check: %u\n", o);
-          return 0;
-        }
+/* Binary arithmetic's type checks: According to C's implicity/automatic
+   type conversion in binary operators, the unsigned types have higher
+   precedence for the same width. See the description of
+   'gal_type_string_to_number' in the Gnuastro book for an example.
 
    To avoid this situation, it is therefore necessary to print a message
    and let the user know that strange situations like above may occur. Just
