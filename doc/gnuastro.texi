@@ -903,26 +903,30 @@ As discussed in @ref{Science and its tools} this is a founding principle of the 
 @cindex GNU Tar
 @cindex Uncompress source
 @cindex Source, uncompress
-The latest official release tarball is always available as @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.gz, @file{gnuastro-latest.tar.gz}}.
-For better compression (faster download), and robust archival features, an @url{http://www.nongnu.org/lzip/lzip.html, Lzip} compressed tarball is also available at @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz, @file{gnuastro-latest.tar.lz}}, see @ref{Release tarball} for more details on the tarball release@footnote{The Gzip library and program are commonly available on most systems.
-However, Gnuastro recommends Lzip as described above and the beta-releases are also only distributed in @file{tar.lz}.
-You can download and install Lzip's source (in @file{.tar.gz} format) from its web page and follow the same process as below: Lzip has no dependencies, so simply decompress, then run @command{./configure}, @command{make}, @command{sudo make install}.}.
+The latest official release tarball is always available as @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz, @file{gnuastro-latest.tar.lz}}.
+The @url{http://www.nongnu.org/lzip/lzip.html, Lzip} format is used for better compression (smaller output size, thus faster download), and robust archival features and standards.
+For historical reasons (those users that don't yet have Lzip), the Gzip'd tarball@footnote{The Gzip library and program are commonly available on most systems.
+However, Gnuastro recommends Lzip as described above and the beta-releases are also only distributed in @file{tar.lz}.} is available at the same URL (just change the @file{.lz} suffix above to @file{.gz}; however, the Lzip'd file is recommended).
+See @ref{Release tarball} for more details on the tarball release.
 
 Let's assume the downloaded tarball is in the @file{TOPGNUASTRO} directory.
-The first two commands below can be used to decompress the source.
-If you download @file{tar.lz} and your Tar implementation doesn't recognize Lzip (the second command fails), run the third and fourth lines@footnote{In case Tar doesn't directly uncompress your @file{.tar.lz} tarball, you can merge the separate calls to Lzip and Tar (shown in the main body of text) into one command by directly piping the output of Lzip into Tar with a command like this: @command{$ lzip -cd gnuastro-0.5.tar.lz | tar -xf -}}.
-Note that lines starting with @code{##} don't need to be typed.
+You can follow the commands below to download and un-compress the Gnuastro source.
+You need to have the @command{lzip} program for the decompression (see @ref{Dependencies from package managers})
+If your Tar implementation doesn't recognize Lzip (the third command fails), run the fourth command.
+Note that lines starting with @code{##} don't need to be typed (they are only a description of the following command):
 
 @example
 ## Go into the download directory.
 $ cd TOPGNUASTRO
 
-## Also works on `tar.gz'. GNU Tar recognizes both formats.
-$ tar xf gnuastro-latest.tar.lz
+## If you don't already have the tarball, you can download it:
+$ wget http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz
+
+## If this fails, run the next command.
+$ tar -xf gnuastro-latest.tar.lz
 
 ## Only when the previous command fails.
-$ lzip -d gnuastro-latest.tar.lz
-$ tar xf gnuastro-latest.tar
+$ lzip -cd gnuastro-latest.tar.lz | tar -xf -
 @end example
 
 Gnuastro has three mandatory dependencies and some optional dependencies for extra functionality, see @ref{Dependencies} for the full list.
@@ -936,18 +940,18 @@ $ ./configure
 $ make -j8                         # Replace 8 with no. CPU threads.
 $ make check -j8                   # Replace 8 with no. CPU threads.
 $ sudo make install
-$ echo "source /usr/local/share/gnuastro/completion.bash" >> ~/.bashrc
+@c $ echo "source /usr/local/share/gnuastro/completion.bash" >> ~/.bashrc
 @end example
 
-@noindent
-The last command is to enable Gnuastro's custom TAB completion in Bash.
-For more on this useful feature, see @ref{Shell TAB completion}).
+@c @noindent
+@c The last command is to enable Gnuastro's custom TAB completion in Bash.
+@c For more on this useful feature, see @ref{Shell TAB completion}).
 
 For each program there is an `Invoke ProgramName' sub-section in this book which explains how the programs should be run on the command-line (for example @ref{Invoking asttable}).
 
-Some complete Tutorials are also available in this book with common Gnuastro usage scenarios in astronomical research.
+In @ref{Tutorials}, we have prepared some complete tutorials with common Gnuastro usage scenarios in astronomical research.
 They even contain links to download the necessary data, and thoroughly describe every step of the process (the science, statistics and optimal usage of the command-line).
-We therefore strongly recommend to follow the tutorials before starting to use Gnuastro, see @ref{Tutorials}.
+We therefore recommend to read (an run the commands in) the tutorials before starting to use Gnuastro.
 
 
 
