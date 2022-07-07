@@ -29747,7 +29747,7 @@ simple and basic operation, like reading an image or table column into
 memory, will require a special sequence of CFITSIO function calls which can
 be inconvenient and buggy to manage in separate locations. To ease this
 process, Gnuastro's library provides wrappers for CFITSIO functions. With
-these, it much easier to read, write, or modify FITS file data, header
+these, it becomes much easier to read, write, or modify FITS file data, header
 keywords and extensions. Hence, if you feel these functions don't exactly
 do what you want, we strongly recommend reading the CFITSIO manual to use
 its great features directly (afterwards, send us your wrappers so we can
@@ -29838,7 +29838,7 @@ One important issue to consider is that CFITSIO's types are not fixed width
 (for example @code{long} may be 32-bits or 64-bits on different
 systems). However, Gnuastro's types are defined by their width. These
 functions will use information on the host system to do the proper
-conversion. To have a portable (usable on different systems) code, is thus
+conversion. To have a portable (usable on different systems) code, it is thus
 recommended to use these functions and not to assume a fixed correspondence
 between CFITSIO and Gnuastro's types.
 
@@ -30350,13 +30350,13 @@ won't close @code{fitsfile}, so you can still add other extensions to it
 after this function or make other modifications.
 @end deftypefun
 
-@deftypefun void gal_fits_img_write (gal_data_t @code{*data}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
+@deftypefun void gal_fits_img_write (gal_data_t @code{*input}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
 Write the @code{input} dataset into the FITS file named @file{filename}.
-Also add the @code{headers} keywords to the newly created HDU/extension it
+Also add the @code{headers} keywords to the newly created HDU/extension
 along with your program's name (@code{program_string}).
 @end deftypefun
 
-@deftypefun void gal_fits_img_write_to_type (gal_data_t @code{*data}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string}, int @code{type})
+@deftypefun void gal_fits_img_write_to_type (gal_data_t @code{*input}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string}, int @code{type})
 Convert the @code{input} dataset into @code{type}, then write it into the
 FITS file named @file{filename}. Also add the @code{headers} keywords to
 the newly created HDU/extension along with your program's name
@@ -30367,7 +30367,7 @@ This is just a wrapper for the @code{gal_data_copy_to_new_type} and
 @code{gal_fits_img_write} functions.
 @end deftypefun
 
-@deftypefun void gal_fits_img_write_corr_wcs_str (gal_data_t @code{*data}, char @code{*filename}, char @code{*wcsstr}, int @code{nkeyrec}, double @code{*crpix}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
+@deftypefun void gal_fits_img_write_corr_wcs_str (gal_data_t @code{*input}, char @code{*filename}, char @code{*wcsstr}, int @code{nkeyrec}, double @code{*crpix}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
 Write the @code{input} dataset into @file{filename} using the @code{wcsstr}
 while correcting the @code{CRPIX} values.
 
