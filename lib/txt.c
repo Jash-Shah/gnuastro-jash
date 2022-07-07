@@ -899,14 +899,22 @@ txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "column %zu "
                           "('%s') couldn't be read as a '%s' number.\n\n"
                           "If it was meant to be celestial coordinates (RA "
-                          "or Dec), please use the '_h_m_s' format for RA "
-                          "or '_d_m_s' for Dec. The '_:_:_' format is "
+                          "or Dec), please use the '_h_m_' format for RA "
+                          "or '_d_m_' for Dec. The '_:_:_' format is "
                           "ambiguous (can be used for both RA and Dec). "
                           "Alternatively, you can use the column arithmetic "
                           "operators 'ra-to-degree' or 'dec-to-degree' of "
                           "'asttable' which also accept the '_:_:_' "
-                          "format. For more, please run this command\n\n"
-                          "   $ info gnuastro \"column arithmetic\"",
+                          "format. However, the 'ra-to-degree' or "
+                          "'dec-to-degree' operators require the column "
+                          "to be identified as a string with metadata. "
+                          "Please run the command below to learn more "
+                          "about column metadata and columns with string "
+                          "contents (it is easier to just use the '_h_m_' "
+                          "or '_d_m_' formats which will be automatically "
+                          "converted to degrees without any operators or "
+                          "metadata):\n\n"
+                          "   $ info gnuastro \"Gnuastro text table format\"",
                           colnum, token,
                           gal_type_name(data->type, 1) );
           else
