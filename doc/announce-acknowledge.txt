@@ -2,6 +2,7 @@ Alphabetically ordered list to acknowledge in the next release.
 
 Marjan Akbari
 Faezeh Bijarchian
+Hilderic Browne
 Sepideh Eskandarlou
 Sílvia Farras
 Teet Kuutma

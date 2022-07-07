@@ -300,9 +300,10 @@ fits_print_extension_info(struct fitsparams *p)
       printf(" Column 3: Image data type or 'table' format (ASCII or "
              "binary).\n");
       printf(" Column 4: Size of data in HDU.\n");
-      printf(" Column 5: Units of data in HDU (only images, for tables use 'asttable -i').\n");
+      printf(" Column 5: Units of data in HDU (only images, for tables "
+             "use 'asttable -i').\n");
       if(hasblankunits)
-        printf("           ('%s': no unit in HDU metadata, or is "
+        printf("           ('%s': no unit in HDU metadata, or "
                "HDU is a table)\n", GAL_BLANK_STRING);
       if(hascomments)
         printf(" Column 6: Comments about the HDU (e.g., if its HEALpix, or "
