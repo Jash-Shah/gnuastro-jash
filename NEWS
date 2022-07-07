@@ -218,6 +218,8 @@ See the end of the file for license conditions.
               data analysis). Found by Manuel Sánchez-Benavente.
   bug #62718: Table goes into an infinite loop on some old ASCII FITS
               tables. Found by Hilderic Browne.
+  bug #62720: Table not reading string columns that are shorter than the
+              defined width in the metadata.
 
 
 

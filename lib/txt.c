@@ -36,6 +36,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/units.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/table.h>
+#include <gnuastro/pointer.h>
 
 #include <gnuastro-internal/checkset.h>
 #include <gnuastro-internal/tableintern.h>
@@ -936,7 +937,7 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum,
 {
   gal_data_t *data;
   int notenoughcols=0;
-  size_t i, n=0, strwidth;
+  size_t i, len, n=0, strwidth;
   char *end, *line, *tmpstr, *aline=NULL;
 
   /* Make a copy of the input line if necessary. */
@@ -979,16 +980,21 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum,
              copy the necessary number of characters into the 'tmpstr'
              string. We need to allocate this because the string column may
              be immediately (next character) followed by the next
-             column. This leaves us no space to put the '\0' character. */
+             column. This leaves us no space to copy the '\0'
+             character. Therefore we will add '\0' after 'strncpy'.
+
+             Also, it may happen (for example with plain-text editors that
+             remove trailing white space) that the width defined for the
+             last column becomes larger than the actual length of the
+             line. We should therefore first check how many characters we
+             should actually copy (may be less than 'disp_width'). See
+             https://savannah.gnu.org/bugs/index.php?62720 */
           strwidth=colinfo[n-1].disp_width;
-          errno=0;
-          tmpstr=malloc(strwidth+1);
-          if(tmpstr==NULL)
-            error(EXIT_FAILURE, errno, "%s: %zu bytes couldn't be allocated "
-                  "for variable 'tmpstr'", __func__, strwidth+1);
-          if(line+strwidth<end) strncpy(tmpstr, line, strwidth);
-          else                  strncpy(tmpstr, line, end-line);
-          tmpstr[strwidth]='\0';
+          len = (line+strwidth)<end ? strwidth : end-line;
+          tmpstr=gal_pointer_allocate(GAL_TYPE_UINT8, len+1, 0,
+                                      __func__, "tmpstr");
+          strncpy(tmpstr, line, len);
+          tmpstr[len]='\0';
           tokens[n]=tmpstr;
 
           /* Increment the line pointer beyond to the next token.*/
