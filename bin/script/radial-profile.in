@@ -568,12 +568,21 @@ fi
 # axisratio     -- axis ratio.
 # rmax          -- magnitude of the profile within the truncation radius (rmax).
 # 1             -- Truncation in radius unit.
+#
+# After making the apertures image, we will set the central pixel to have
+# the radius 1 (to avoid missing the central pixel in later phases.
 radialaperturesbase=radial-raw.fits
 radialapertures=$tmpdir/$radialaperturesbase
+radialaperturesholed=$tmpdir/radial-raw-with-hole.fits
 echo "1 $xcenter $ycenter 7 $rmax 1 $positionangle $axisratio 1 1" \
      | astmkprof --background=$values --backhdu=1 --mforflatpix \
                  --mode=img --clearcanvas --type=int16 $quiet \
-                 --circumwidth=1 --replace --output=$radialapertures
+                 --circumwidth=1 --replace --output=$radialaperturesholed
+astarithmetic $radialaperturesholed set-i \
+              i 0 ne 1 fill-holes set-good \
+              i good i 1 + where \
+              $quiet --output $radialapertures
+rm $radialaperturesholed
 
 
 
@@ -601,19 +610,34 @@ if [ x"$azimuth" != x ]; then
     azimuthapertures=$tmpdir/$azimuthaperturesbase
     echo "1 $xcenter $ycenter 9 $rmax 1 $positionangle $axisratio 1 1" \
          | astmkprof --background=$values --backhdu=1 --mforflatpix \
-                     --mode=img --clearcanvas --type=int16 $quiet \
+                     --mode=img --clearcanvas --type=float32 $quiet \
                      --circumwidth=1 --replace --output=$azimuthapertures
 
     # From the azimuthal aperture image, consider only that portion that
-    # are in between the two specified angles. Set the rest of the pixels
-    # to zero values (on the radial apertures image)
-    astarithmetic $radialapertures -h1 set-radial \
+    # are in between (or outside) the two specified angles. Set the rest of
+    # the pixels to zero values (on the radial apertures image).
+    #
+    # There are two ways that the angle range can be defined:
+    #
+    #   - The first is smaller than the second (for example
+    #     '--azimuth=10,20'). In this case, we will use an 'and' between
+    #     the regions of each angle so the user gets the region between the
+    #     two angles.
+    #
+    #   - The first is smaller than the second (for example
+    #     '--azimuth=355,5') In this case, we assume that the user wants an
+    #     azimuthal range outside the two angles. In the example above, its
+    #     the 10 degrees around the azimuthal angle 0. For this case, we
+    #     should use 'or' between the two regions.
+    condition=$(echo $azimuth_ini $azimuth_fin \
+                     | awk ' {if ($1<$2) print "and"; \
+                              else       print "or"}')
+    astarithmetic --output=$aperturesraw $quiet \
+                  $radialapertures  -h1 set-radial \
                   $azimuthapertures -h1 set-azimuth \
-                  azimuth $azimuth_ini gt \
-                  azimuth $azimuth_fin lt \
-                  and int16 set-arc \
-                  radial arc 1 ne 0 where \
-                  $quiet --output $aperturesraw
+                  azimuth $azimuth_ini ge \
+                  azimuth $azimuth_fin le $condition set-arc \
+                  radial arc 1 uint8 ne 0 uint8 where
 else
     cd $tmpdir; ln -fs $radialaperturesbase $aperturesrawbase; cd $curdir
 fi
@@ -629,29 +653,14 @@ fi
 # number of pixels on each aperture (at each radius) will be larger. Most
 # of times this option is good to average over a larger number of pixels
 # and increase the signal-to-noise ratio of the measurement.
-aperturesrebinnedbase=apertures-rebin.fits
-aperturesrebinned=$tmpdir/$aperturesrebinnedbase
+aperturesbase=apertures.fits
+apertures=$tmpdir/$aperturesbase
 if [ x"$undersample" != x ]; then
     astarithmetic $aperturesraw $undersample / \
-                  $quiet --output $aperturesrebinned
+                  $quiet --output $apertures
 else
-    cd $tmpdir; ln -fs $aperturesrawbase $aperturesrebinnedbase; cd $curdir
+    cd $tmpdir; ln -fs $aperturesrawbase $aperturesbase; cd $curdir
 fi
-
-
-
-
-
-# Fill the central pixel(s)
-# -------------------------
-#
-# The central pixel(s) have a distance of 0! So we need to add a single
-# value to all the profile pixels (but keep the outer parts at 0).
-apertures=$tmpdir/apertures.fits
-astarithmetic $aperturesrebinned set-i \
-              i 0 ne 1 fill-holes set-good \
-              i good i 1 + where \
-              $quiet --output $apertures
 
 
 

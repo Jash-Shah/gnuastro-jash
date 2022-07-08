@@ -172,6 +172,15 @@ See the end of the file for license conditions.
      the old name was very confusing and would not directly convey this
      behavior.
 
+  Radial profile script:
+   --azimuth: if the first azimuthal angle is larger than the second, the
+     outer region between the two angles will be used. For example
+     '--azimuth=80,40' will use the full azimuthal range except for the
+     region with azimuthal angles between 40 and 80 degrees. This can be
+     useful to ignore parts of the profile. See the example in the
+     description of this option on how to visually check the pixels used
+     for the profile.
+
 ** Bugs fixed
   bug #62216: MakeProfiles crash when a 3D cube is requested and input
               catalog is from a pipe. Found by Irene Pintos Castro.
@@ -230,6 +239,10 @@ See the end of the file for license conditions.
               tables. Found by Hilderic Browne.
   bug #62720: Table not reading string columns that are shorter than the
               defined width in the metadata.
+  bug #62721: Radial profile script can't deal with angles around azimuth
+              zero (for example '--azimuth=355,5' to get only the azimuthal
+              range of 10 degrees around the major axis). Found and fixed
+              by Samane Raji.
   bug #62784: Conversion of sexagesimal RA or Dec ignores sign when first
               digit is zero (for example '-00d12m34'). Found by Manuel
               Sánchez-Benavente.
