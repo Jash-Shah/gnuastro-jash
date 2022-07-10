@@ -134,6 +134,16 @@ See the end of the file for license conditions.
    --skystd: new name for old '--std', see description of '--std' above.
    --sfmagnsigma: default value changed to 3 (more commonly used).
    --sfmagarea: default value set to 100 arcsec^2 (more commonly used).
+   --upnum: MakeCatalog won't abort when '--upnum' is too small (less than
+     20). '--upnum' defines the number of random positions for upper-limit
+     measurements, so when its too small, the statistical precision of the
+     result will badly affected and MakeCatalog would abort with an error
+     message. However, in some scenarios (for example when the positions of
+     the random apertures from '--checkuplim' are needed) the actual
+     upper-limit measurements aren't relevant! So from this version,
+     instead of aborting MakeCatalog, it prints a warning and
+     continues. This was suggested by S. Zahra Hosseini Shahisavandi and
+     Ignacio Trujillo.
 
   MakeProfiles:
    - The string identifier for custom radial profiles is now called
