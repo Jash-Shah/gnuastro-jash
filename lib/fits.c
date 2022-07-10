@@ -3028,7 +3028,7 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
   size_t i, index;
   long long *tzero;
   gal_data_t *allcols;
-  int status=0, datatype, *tscal;
+  int status=0, rkstatus=0, datatype, *tscal;
   char keyname[FLEN_KEYWORD]="XXXXXXXXXXXXX", value[FLEN_VALUE];
 
   /* Necessary when a keyword can't be written immediately as it is read in
@@ -3064,37 +3064,18 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
           tfields*sizeof *tzero);
 
 
-  /* Read all the keywords one by one and if they match, then put them in
-     the correct value. Note that we are starting from keyword 9 because
-     according to the FITS standard, the first 8 keys in a FITS table are
-     reserved. */
-  for(i=9; strcmp(keyname, "END"); ++i)
+  /* Read all the keywords one by one. If they match any of the standard
+     Table metadata keywords, then put them in the correct value. Some
+     notes about this loop:
+       - We are starting from keyword 9 because according to the FITS
+         standard, the first 8 keys in a FITS table are reserved.
+       - When 'fits_read_keyn' has been able to read the keyword and its
+         value, it will return '0'. The returned value is also stored in
+         'rkstatus' (Read Keyword STATUS), which we need to check after the
+         loop. */
+  i=8;
+  while( fits_read_keyn(fptr, ++i, keyname, value, NULL, &rkstatus) == 0 )
     {
-
-      /* Read the next keyword. */
-      fits_read_keyn(fptr, i, keyname, value, NULL, &status);
-      switch(status)
-        {
-        /* Everything is good, ignore (this is just a place-holder!) */
-        case 0: break;
-
-        /* It can happen that the 'END' keyword is not read by
-           'fits_read_keyn' (see the file in [1] below, with CFITSIO
-           4.1.0). In that case, the loop will pass this keyword and the
-           next call to 'fits_read_key' will return with a 'status' of
-           'KEY_OUT_BOUNDS'. To stop the loop therefore, we'll simply put
-           an 'END' manually and decrement the counter (for any future
-           checks).
-
-           [1] https://lists.gnu.org/archive/html/bug-gnuastro/2022-07/msg00005.html*/
-        case KEY_OUT_BOUNDS: --i; sprintf(keyname, "END"); status=0; break;
-
-        /* There is an un-expected problem, abort and let the user know
-           about it. */
-        default: gal_fits_io_error (status, NULL); /* An error. */
-        }
-
-
       /* For string valued keywords, CFITSIO's function above, keeps the
          single quotes around the value string, one before and one
          after. 'gal_fits_key_clean_str_value' will remove these single
@@ -3282,9 +3263,17 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             set_display_format(value, &allcols[index], filename, hdu,
                                keyname);
         }
-
-      /* Column zero. */
     }
+
+
+  /* The loop above finishes as soon as the 'status' of 'fits_read_keyn'
+     becomes non-zero. If the status is 'KEY_OUT_BOUNDS', then it shows we
+     have reached the end of the keyword list and there is no
+     problem. Otherwise, there is an unexpected problem and we should abort
+     and inform the user about the problem. */
+  if( rkstatus != KEY_OUT_BOUNDS )
+    gal_fits_io_error(rkstatus, NULL);
+
 
   /* If any columns should be added later because of missing information,
      add them here. */
