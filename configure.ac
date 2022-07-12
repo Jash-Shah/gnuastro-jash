@@ -747,29 +747,32 @@ AS_IF([test "x$has_topcat" = "xno"], [anywarnings=yes])
 
 
 # Check Python3 and NumPy.
-# First check if Python3 is installed, if yes then get its include path
-# then check if NumPy is installed, if yes then get its include path
+# checks if Python3 and NumPy are installed, in that order
+# and gets their include path if true.
 AC_ARG_WITH([python],
             [AS_HELP_STRING([--without-python],
                             [disable support for python])],
             [], [with_python=yes])
-py_check_cmd='from sysconfig import get_paths;
+py_check_cmd='from sysconfig import get_paths; \
               print(get_paths().get("include"))'
-np_check_cmd='from numpy import get_include;
+np_check_cmd='from numpy import get_include; \
               print(get_include())'
-AS_IF([test $with_python = yes],
-      [AC_CHECK_PROG(has_python3, python3, [yes], [no])
-       AS_IF([test $has_python3 = yes],
-       [AS_IF([python3 -c "$py_check_cmd" &> /dev/null],
-        [python_includedir="$(python3 -c "$py_check_cmd")"
-         AC_MSG_CHECKING([if numpy is available in
-                          the python3 installation])
-         AS_IF([python3 -c "$np_check_cmd" &> /dev/null],
-         [numpy_includedir="$(python3 -c "$np_check_cmd")"])
+AS_IF([test "x$with_python" != xno],
+      [
+        AC_CHECK_PROG(has_python3, python3, [yes], [no])
+        AS_IF([test $has_python3 = yes],
+        [ 
+          AC_DEFINE(HAVE_PYTHON, [1],
+                    [Define to 1 if you have Python3.])
+          AC_MSG_CHECKING(if numpy is available in the python3 installation)
+          AS_IF([python3 -c "$py_check_cmd" &> /dev/null],
+                [python_includedir="$(python3 -c "$py_check_cmd")"
+                 AS_IF([python3 -c "$np_check_cmd" &> /dev/null],
+                       [numpy_includedir="$(python3 -c "$np_check_cmd")"])
+                ])
         ])
-       ])
-       AC_SUBST(NUMPY_INCLUDE_DIR, [$numpy_includedir])
-       AC_SUBST(PYTHON_INCLUDE_DIR, [$python_includedir])
+        AC_SUBST(NUMPY_INCLUDE_DIR, [$numpy_includedir])
+        AC_SUBST(PYTHON_INCLUDE_DIR, [$python_includedir])
       ])
 AS_IF([test "x$numpy_includedir" = x],
       [AC_MSG_RESULT([no])],

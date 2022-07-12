@@ -23,11 +23,14 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
 #include <config.h>
 
-// To avoid problem with non-clang compilers not having this macro.
-#if defined(__has_include)
-    #if __has_include(<numpy/arrayobject.h>)
-        # include <numpy/arrayobject.h>
-    #endif
+#include <errno.h>
+#include <error.h>
+
+#ifdef HAVE_PYTHON
+  // This macro needs to be defined before including any NumPy headers
+  // to avoid the compiler from raising a warning message.
+  #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+  #include <numpy/arrayobject.h>
 #endif
 
 #include <gnuastro/python.h>
@@ -44,13 +47,14 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /*************************************************************
  **************           Type codes           ***************
  *************************************************************/
+#ifdef HAVE_PYTHON
+/* Convert Gnuastro type to NumPy datatype. */
 int
-gal_npy_datatype_to_type(uint8_t type)
+gal_npy_type_to_datatype(uint8_t type)
 {
   switch (type)
   {
-  // Currently only converting types directly compatible
-  // between the two.
+  /* Types directly convertible between Gnuastro and NumPy. */
   case GAL_TYPE_INT8:      return NPY_INT8;
   case GAL_TYPE_INT16:     return NPY_INT16;
   case GAL_TYPE_INT32:     return NPY_INT32;
@@ -61,9 +65,10 @@ gal_npy_datatype_to_type(uint8_t type)
   case GAL_TYPE_UINT64:    return NPY_UINT64;
   case GAL_TYPE_FLOAT32:   return NPY_FLOAT32;
   case GAL_TYPE_FLOAT64:   return NPY_FLOAT64;
-  case GAL_TYPE_COMPLEX64: return NPY_COMPLEX64;
   case GAL_TYPE_STRING:    return NPY_STRING;
-  default:                 return GAL_TYPE_INVALID;
+  default:
+    error(EXIT_FAILURE, 0, "%s: type code %d is not a recognized",
+            __func__, type);
   }
 
   return GAL_TYPE_INVALID;
@@ -73,9 +78,11 @@ gal_npy_datatype_to_type(uint8_t type)
 
 
 
+/* Convert Numpy datatype to Gnuastro type. */
 int
-gal_npy_type_to_datatype(uint8_t type)
+gal_npy_datatype_to_type(uint8_t type)
 {
+  /* Types directly convertible between NumPy and Gnuastro. */
   switch (type)
   {
   // Currently only converting types directly compatible
@@ -96,3 +103,4 @@ gal_npy_type_to_datatype(uint8_t type)
   }
   return GAL_TYPE_INVALID;
 }
+#endif

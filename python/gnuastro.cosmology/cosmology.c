@@ -25,6 +25,11 @@
 
 
 
+
+
+
+
+
 static PyObject *velocity_from_z(PyObject *self, PyObject *args)
 {
   double z, vel;
@@ -52,10 +57,12 @@ static PyObject *proper_distance(PyObject *self, PyObject *args, PyObject *keywd
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_proper_distance(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_proper_distance(z, H0, o_lambda_0, o_matter_0,
+                                      o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }
@@ -75,10 +82,12 @@ static PyObject *comoving_volume(PyObject *self, PyObject *args, PyObject *keywd
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_comoving_volume(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_comoving_volume(z, H0, o_lambda_0, o_matter_0,
+                                      o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }
@@ -98,10 +107,12 @@ static PyObject *critical_density(PyObject *self, PyObject *args, PyObject *keyw
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_critical_density(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_critical_density(z, H0, o_lambda_0, o_matter_0,
+                                       o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }
@@ -121,10 +132,12 @@ static PyObject *angular_distance(PyObject *self, PyObject *args, PyObject *keyw
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_angular_distance(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_angular_distance(z, H0, o_lambda_0, o_matter_0,
+                                       o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }
@@ -144,10 +157,12 @@ static PyObject *luminosity_distance(PyObject *self, PyObject *args, PyObject *k
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_luminosity_distance(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_luminosity_distance(z, H0, o_lambda_0, o_matter_0,
+                                          o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }
@@ -167,10 +182,12 @@ static PyObject *distance_modulus(PyObject *self, PyObject *args, PyObject *keyw
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_distance_modulus(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_distance_modulus(z, H0, o_lambda_0, o_matter_0,
+                                       o_radiation_0);
 
   return PyFloat_FromDouble(res);
 
@@ -207,10 +224,12 @@ static PyObject *to_absolute_mag(PyObject *self, PyObject *args, PyObject *keywd
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_to_absolute_mag(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_to_absolute_mag(z, H0, o_lambda_0, o_matter_0,
+                                      o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }
@@ -230,10 +249,12 @@ static PyObject *age(PyObject *self, PyObject *args, PyObject *keywds)
   static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0, &o_radiation_0))
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
     return NULL;
 
-  res = gal_cosmology_age(z, H0, o_lambda_0, o_matter_0, o_radiation_0);
+  res = gal_cosmology_age(z, H0, o_lambda_0, o_matter_0,
+                          o_radiation_0);
 
   return PyFloat_FromDouble(res);
 }

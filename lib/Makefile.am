@@ -97,7 +97,7 @@ pkginclude_HEADERS = gnuastro/config.h $(MAYBE_NUMPY_H) $(headersdir)/arithmetic
   $(headersdir)/interpolate.h $(headersdir)/jpeg.h $(headersdir)/kdtree.h \
   $(headersdir)/label.h $(headersdir)/list.h $(headersdir)/match.h \
   $(headersdir)/pdf.h $(headersdir)/permutation.h $(headersdir)/pointer.h \
-  $(headersdir)/polygon.h $(headersdir)/python.h $(headersdir)/qsort.h $(headersdir)/speclines.h \
+  $(headersdir)/polygon.h $(headersdir)/qsort.h $(headersdir)/speclines.h \
   $(headersdir)/statistics.h $(headersdir)/table.h $(headersdir)/threads.h \
   $(headersdir)/tiff.h $(headersdir)/tile.h $(headersdir)/txt.h \
   $(headersdir)/type.h $(headersdir)/units.h $(headersdir)/wcs.h

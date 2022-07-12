@@ -45,6 +45,18 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+/* Actual header contants (the above were for the Pre-processor). */
+__BEGIN_C_DECLS  /* From C++ preparations */
+
+
+
+
+
+
+
+
+
+
 /*************************************************************
  **************           Type codes           ***************
  *************************************************************/
