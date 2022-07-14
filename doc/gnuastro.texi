@@ -507,7 +507,7 @@ Arithmetic operators
 * Numerical type conversion operators::  Convert the numeric datatype of a dataset.
 * Random number generators::    Random numbers can be used to add noise for example.
 * Elliptical shape operators::  Operations that are focused on an ellipse.
-* Loading external columns::  Read a column from a table into the stack.
+* Loading external columns::    Read a column from a table into the stack.
 * Building new dataset::        How to construct an empty dataset from scratch.
 * Operand storage in memory or a file::  Tools for complex operations in one command.
 
@@ -562,7 +562,7 @@ Statistics
 
 2D Histograms
 
-* 2D histogram as a table::     Format and usage in table format.
+* 2D histogram as a table for plotting::  Format and usage in table format.
 * 2D histogram as an image::    Format and usage in image format
 
 Sky value
@@ -1149,7 +1149,7 @@ This sharp distinction between the contiguous and pixelated view of the galaxy s
 However, when we observe nature, we are confined and constrained by the resolution of our data collection (CCD imager in this case).
 
 On the other hand, we read English text from the left and progress towards the right.
-This defins the positioning of the ``real'' and observed halfs of the galaxy: the no-noised and contiguous half (on the left) passes through our observing tools and becomes pixelated and noisy half (on the right).
+This defines the positioning of the ``real'' and observed halves of the galaxy: the no-noised and contiguous half (on the left) passes through our observing tools and becomes pixelated and noisy half (on the right).
 It is the job of scientific software like Gnuastro to help interpret the underlying mechanisms of the ``real'' universe from the pixelated and noisy data.
 
 Gnuastro's logo was designed by Marjan Akbari.
@@ -1868,8 +1868,8 @@ As described above, the catalog of profiles to build will be a table (multiple c
 5  450.0   450.0  4  0   0.0  0.0  0.0  7.50  0.0
 @end example
 
-This contains all the ``data'' to build the profile, and you can easily pass it to Gnuastro's MakeProfiles: since Sufi already knows the columns and expeccted values very good, he has placed the information in the proper columns.
-However, when the student sees this, he just sees a mumble-jumple of numbers!
+This contains all the ``data'' to build the profile, and you can easily pass it to Gnuastro's MakeProfiles: since Sufi already knows the columns and expected values very good, he has placed the information in the proper columns.
+However, when the student sees this, he just sees a mumble-jumble of numbers!
 Generally, Sufi explains to the student that even if you know the number positions and values very nicely today, in a couple of months you will forget!
 It will then be very hard for you to interpret the numbers properly.
 So you should never use naked data (or data without any extra information).
@@ -1948,7 +1948,7 @@ test.txt
 @end example
 
 @noindent
-Now that you confirm the existance of @file{test.txt}, you can see its contents with the @command{cat} command (short for ``concatenation''; because it can also merge multiple files together):
+Now that you confirm the existence of @file{test.txt}, you can see its contents with the @command{cat} command (short for ``concatenation''; because it can also merge multiple files together):
 
 @example
 $ cat test.txt
@@ -2299,7 +2299,7 @@ $ astscript-fits-view out_detected.fits
 @end example
 
 In the ``Cube'' window (that was opened with DS9), if Sufi clicked on the ``Next'' button to see the pixels that were detected to contain significant signal.
-Fortuantely the nebula's shape was detectable and he cound finally confirm that the nebula he kept in his notebook was actually observable.
+Fortunately the nebula's shape was detectable and he could finally confirm that the nebula he kept in his notebook was actually observable.
 He wrote this result in the draft manuscript that would later become ``Book of fixed stars''@footnote{@url{https://en.wikipedia.org/wiki/Book_of_Fixed_Stars}}.
 
 He still had to check the other nebula he saw from Yemen and several other such objects, but they could wait until tomorrow (thanks to the shell script, he only has to define a new catalog).
@@ -3763,7 +3763,7 @@ $ asttable xdf-f160w.fits -hclumps -csn,upperlimit_sigma
 @end example
 
 As you see, the second column (upper-limit sigma) is almost always less than the S/N.
-This clearly shows the effect of corrlated noise!
+This clearly shows the effect of correlated noise!
 If you now use this column as the reference for deriving the magnitude limit, you will see that it will shift by almost 0.5 magnitudes brighter and is now more reasonable:
 
 @example
@@ -4241,7 +4241,7 @@ $ pdflatex report.tex
 
 Open the newly created @file{report.pdf} and enjoy the exquisite quality.
 The improved quality, blending in with the text, vector-graphics resolution and other features make this plot pleasing to the eye, and let your readers focus on the main point of your scientific argument.
-PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table} for the necessary changes in the preamble.
+PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table for plotting} for the necessary changes in the preamble.
 
 We won't go much deeper into the Statistics program here, but there is so much more you can do with it.
 After finishing the tutorial, see @ref{Statistics}.
@@ -13300,7 +13300,7 @@ For a more complete example, see @ref{Working with catalogs estimating colors}.
 @noindent
 @strong{Loading external columns with Arithmetic:} an alternative way to load external columns into your output is to use column arithmetic (@ref{Column arithmetic})
 In particular the @option{load-col-} operator described in @ref{Loading external columns}.
-But this operator will load only one column per file/HDU everytime it is called.
+But this operator will load only one column per file/HDU every time it is called.
 So if you have many columns to insert, it is much faster to use @option{--catcolumnfile}.
 Because @option{--catcolumnfile} will load all the columns in one opening of the file, and possibly even read them all into memory in parallel!
 @end cartouche
@@ -15010,7 +15010,7 @@ Reading NaN as a floating point number in Gnuastro isn't case-sensitive.
 * Numerical type conversion operators::  Convert the numeric datatype of a dataset.
 * Random number generators::    Random numbers can be used to add noise for example.
 * Elliptical shape operators::  Operations that are focused on an ellipse.
-* Loading external columns::  Read a column from a table into the stack.
+* Loading external columns::    Read a column from a table into the stack.
 * Building new dataset::        How to construct an empty dataset from scratch.
 * Operand storage in memory or a file::  Tools for complex operations in one command.
 @end menu
@@ -16473,7 +16473,7 @@ $ echo 1000 \
                         random-from-hist float32'
 @end example
 
-These colums can easily be placed in the format for @ref{MakeProfiles} to be inserted into an image automatically.
+These columns can easily be placed in the format for @ref{MakeProfiles} to be inserted into an image automatically.
 @end table
 
 @node Elliptical shape operators, Loading external columns, Random number generators, Arithmetic operators
@@ -18426,12 +18426,12 @@ Without specifying any range, the full range of values will be used in each dime
 If you only want to focus on a certain interval of the values in the columns in any dimension you can use the @option{--greaterequal} and @option{--lessthan} options to limit the values along the first/horizontal dimension and @option{--greaterequal2} and @option{--lessthan2} options for the second/vertical dimension.
 
 @menu
-* 2D histogram as a table::     Format and usage in table format.
+* 2D histogram as a table for plotting::  Format and usage in table format.
 * 2D histogram as an image::    Format and usage in image format
 @end menu
 
-@node 2D histogram as a table, 2D histogram as an image, 2D Histograms, 2D Histograms
-@subsubsection 2D histogram as a table
+@node 2D histogram as a table for plotting, 2D histogram as an image, 2D Histograms, 2D Histograms
+@subsubsection 2D histogram as a table for plotting
 
 When called with the @option{--histogram=table} option, Statistics will output a table file with three columns that have the information of every box as a column.
 If you asked for @option{--numbins=N} and @option{--numbins2=M}, all three columns will have @mymath{M\times N} rows (one row for every box/pixel of the 2D histogram).
@@ -18451,7 +18451,7 @@ The second one (@code{FILE.txt}) should be replaced with the name of the file ge
 %%
 %% Then run these commands to build the plot in a LaTeX command.
 %%    mkdir tikz
-%%    pdflatex -shell-escape -halt-on-error plot.tex
+%%    pdflatex --shell-escape --halt-on-error report.tex
 \documentclass@{article@}
 
 %% Load PGFPlots and set it to build the figure separately in a 'tikz'
@@ -18464,22 +18464,27 @@ The second one (@code{FILE.txt}) should be replaced with the name of the file ge
 \tikzexternalize
 \tikzsetexternalprefix@{tikz/@}
 
-%% Start the document
+%% Define colormap for the PGFPlots 2D histogram
+\pgfplotsset@{
+ /pgfplots/colormap=@{hsvwhitestart@}@{
+   rgb255(0cm)=(255,255,255)
+   rgb255(0.10cm)=(128,0,128)
+   rgb255(0.5cm)=(0,0,230)
+   rgb255(1.cm)=(0,255,255)
+   rgb255(2.5cm)=(0,255,0)
+   rgb255(3.5cm)=(255,255,0)
+   rgb255(6cm)=(255,0,0)
+ @}
+@}
+
+%% Start the prinable document
 \begin@{document@}
 
-  You can actually write a full paper here and include many figures!
+  You can write a full paper here and include many figures!
+  Describe what the two axises are, and how you measured them.
+  Also, don't forget to explain what it shows and how to interpret it.
+  You also have separate PDFs for every figure in the `tikz' directory.
   Feel free to change this text.
-
-  %% Define the colormap.
-  \pgfplotsset@{
-    /pgfplots/colormap=@{coldredux@}@{
-      [1cm]
-      rgb255(0cm)=(255,255,255)
-      rgb255(2cm)=(0,192,255)
-      rgb255(4cm)=(0,0,255)
-      rgb255(6cm)=(0,0,0)
-    @}
-  @}
 
   %% Draw the plot.
   \begin@{tikzpicture@}
@@ -18504,10 +18509,31 @@ The second one (@code{FILE.txt}) should be replaced with the name of the file ge
   \end@{axis@}
 \end@{tikzpicture@}
 
+%% End the printable document.
 \end@{document@}
 @end example
 
-@node 2D histogram as an image,  , 2D histogram as a table, 2D Histograms
+Let's assume you have put the @LaTeX{} source above, into a plain-text file called @file{report.tex}.
+The PGFPlots call above is configured to build the plots as separate PDF files in a @file{tikz/} directory@footnote{@url{https://www.ctan.org/pkg/pgf, TiKZ} is the name of the lower-level engine behind PGPlots.}.
+This allows you to directly load those PDFs in your slides or other reports.
+Therefore, before building the PDF report, you should first make a @file{tikz/} directory:
+
+@example
+$ mkdir tikz
+@end example
+
+To build the final PDF, you should run @command{pdflatex} with the @option{--shell-escape} option, so it can build the separate PDF(s) separately.
+We are also adding the @option{--halt-on-error} so it immediately aborts in the case of an error (in the case of an error, by default @LaTeX{} will not abort, it will stop and ask for your input to temporarily change things and try fixing the error, but it has a special interface which can be hard to master).
+
+@example
+$ pdflatex --shell-escape --halt-on-error report.tex
+@end example
+
+@noindent
+You can now open @file{report.pdf} to see your very high quality 2D histogram within your text.
+And if you need the plots separately (for example for slides), you can take the PDF inside the @file{tikz/} directory.
+
+@node 2D histogram as an image,  , 2D histogram as a table for plotting, 2D Histograms
 @subsubsection 2D histogram as an image
 
 When called with the @option{--histogram=image} option, Statistics will output a FITS file with an image/array extension.
@@ -18624,7 +18650,7 @@ $ pdflatex cmd-report.tex
 @end example
 
 The improved quality, blending in with the text, vector-graphics resolution and other features make this plot pleasing to the eye, and let your readers focus on the main point of your scientific argument.
-PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table} for the necessary changes in the preamble.
+PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table for plotting} for the necessary changes in the preamble.
 
 @node  Sigma clipping, Sky value, 2D Histograms, Statistics
 @subsection Sigma clipping
@@ -21032,7 +21058,7 @@ But we rarely take 1 second exposures!
 It is therefore very important to take the exposure time into account in scenarios like simulating observations with varying exposure times (where you need to know how many counts the object of a certain magnitude will add to a certain image with a certain exposure time).
 
 To clarify the concept, let's define @mymath{C} as the @emph{counted} electrons (which has a linear relation with the photon energy entering the CCD pixel).
-In this case, if an object of brighness @mymath{B} is observed for @mymath{t} seconds, it will accumulate @mymath{C=B\times t} counts@footnote{Recall that counts another name for ADUs, which already includes the CCD gain.}.
+In this case, if an object of brightness @mymath{B} is observed for @mymath{t} seconds, it will accumulate @mymath{C=B\times t} counts@footnote{Recall that counts another name for ADUs, which already includes the CCD gain.}.
 Therefore, the generic magnitude equation above can be written as:
 @dispmath{m = -2.5\log_{10}(B) + Z = -2.5\log_{10}(C/t) + Z}
 @noindent
@@ -26121,7 +26147,7 @@ The output name of the final catalog containing good stars.
 
 @node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
 @subsection Invoking astscript-psf-stamp
-This installed script will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel regridding if necessary) and normalized at a certain normalization radius.
+This installed script will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel re-gridding if necessary) and normalized at a certain normalization radius.
 Optionally, it will also mask all the other background sources.
 A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
 The executable name is @file{astscript-psf-stamp}, with the following general template:
@@ -27910,7 +27936,7 @@ If @code{string} couldn't be read as a number, this function will return @code{N
 This function first calls the C library's @code{strtod} function to read @code{string} as a double-precision floating point number.
 When successful, it will check the value to put it in the smallest numerical data type that can handle it: for example @code{120} and @code{50000} will be read as a signed 8-bit integer and unsigned 16-bit integer types.
 When reading as an integer, the C library's @code{strtol} function is used (in base-10) to parse the string again.
-This re-parsing as an integer is necessary because integers with many digits (for example the unix epoch seconds) will not be accurately stored as a floating point and we can't use the result of @code{strtod}.
+This re-parsing as an integer is necessary because integers with many digits (for example the Unix epoch seconds) will not be accurately stored as a floating point and we can't use the result of @code{strtod}.
 
 When @code{string} is successfully parsed as a number @emph{and} there is @code{.} in @code{string}, it will force the number into floating point types.
 For example @code{"5"} is read as an integer, while @code{"5."} or @code{"5.0"}, or @code{"5.00"} will be read as a floating point (single-precision).
@@ -27920,7 +27946,7 @@ For floating point types, this function will count the number of significant dig
 For integers, negative numbers will always be placed in signed types (as expected).
 If a positive integer falls below the maximum of a signed type of a certain width, it will be signed (for example @code{10} and @code{150} will be defined as a signed and unsigned 8-bit integer respectively).
 In other words, even though @code{10} can be unsigned, it will be read as a signed 8-bit integer.
-This is done to respect the C implicit type conversion in binary operators, where signed integers will be interpreted as unsigned, when the otehr operand is an unsigned integer of the same width.
+This is done to respect the C implicit type conversion in binary operators, where signed integers will be interpreted as unsigned, when the other operand is an unsigned integer of the same width.
 
 For example, see the short program below.
 It will print @code{-50 is larger than 100000} (which is wrong!).
@@ -34181,7 +34207,7 @@ When @code{tl!=NULL}, then it is assumed that the @code{input->array} contains o
 If several datasets have the same set of blank values, you don't need to call this function multiple times.
 When @code{aslinkedlist} is non-zero, then @code{input} will be seen as a @ref{List of gal_data_t}.
 In this case, the same neighbors will be used for all the datasets in the list.
-Of course, the values for each dataset will be different, so a different value will be written in e ach dataset, but the neighbor checking that is the most CPU intensive part will only be done once.
+Of course, the values for each dataset will be different, so a different value will be written in each dataset, but the neighbor checking that is the most CPU intensive part will only be done once.
 
 This is a non-parametric and robust function for interpolation.
 The interpolated values are also always within the range of the non-blank values and strong outliers do not get created.
