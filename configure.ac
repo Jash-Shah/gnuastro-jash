@@ -746,7 +746,8 @@ AS_IF([test "x$has_topcat" = "xno"], [anywarnings=yes])
 
 
 
-# Check Python3 and NumPy.
+
+# Check Python3 and NumPy:
 # checks if Python3 and NumPy are installed, in that order
 # and gets their include path if true.
 AC_ARG_WITH([python],
@@ -760,6 +761,7 @@ np_check_cmd='from numpy import get_include; \
 AS_IF([test "x$with_python" != xno],
       [
         AC_CHECK_PROG(has_python3, python3, [yes], [no])
+        AM_PATH_PYTHON(3.0,,[:])
         AS_IF([test $has_python3 = yes],
         [ 
           AC_DEFINE(HAVE_PYTHON, [1],
@@ -778,6 +780,7 @@ AS_IF([test "x$numpy_includedir" = x],
       [AC_MSG_RESULT([no])],
       [AC_MSG_RESULT([yes])])
 AM_CONDITIONAL([COND_NUMPY], [test "x$numpy_includedir" != x])
+
 
 
 
@@ -1133,6 +1136,7 @@ AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  lib/Makefile
                  tests/Makefile
+                 python/Makefile
                  bin/crop/Makefile
                  bin/fits/Makefile
                  bin/warp/Makefile

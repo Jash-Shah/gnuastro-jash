@@ -21,16 +21,20 @@
 
 
 
+
 # Conditional compilation
 headersdir=$(top_srcdir)/lib/gnuastro
 if COND_HASWCSDIS_H
   MAYBE_WCSDISTORTION = wcsdistortion.c
 endif
+# Build the python utilities file,
+# only if Python and NumPy are present. 
 if COND_NUMPY
   MAYBE_NUMPY_C = python.c
   MAYBE_NUMPY_H = $(headersdir)/python.h
   MAYBE_NUMPY_INCLUDE = -I$(NUMPY_INCLUDE_DIR) -I$(PYTHON_INCLUDE_DIR)
 endif
+
 
 
 
