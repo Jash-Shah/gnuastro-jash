@@ -22,6 +22,7 @@
 ## along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
+
 # Builds the extension modules for gnuastro to be used in Python.
 
 # NOTE
@@ -38,6 +39,9 @@ export prefix:=$(prefix)
 export srcdir:=$(srcdir)
 export top_builddir:=$(top_builddir)
 
+pip_install_cmd = pip install $(builddir)/dist/Gnuastro*.whl \
+                              --verbose --user --upgrade
+pip_uninstall_cmd = pip uninstall gnuastro -y
 
 
 all-local: setup-done
@@ -45,10 +49,9 @@ all-local: setup-done
 # This is the main command which builds the
 # extension modules and generates the wheel file for installing.
 setup-done: clean-local \
-						$(srcdir)/setup.py \
-						$(top_builddir)/lib/libgnuastro.la
+            $(srcdir)/setup.py \
+            $(top_builddir)/lib/libgnuastro.la
 	$(PYTHON) $(srcdir)/setup.py build_ext bdist_wheel --verbose
-	echo "Python setup has been completed." > $@
 
 
 
@@ -56,7 +59,7 @@ setup-done: clean-local \
 
 # Cleans the /build /dist and
 # egg-info folders that are made during building.
-clean-local: clean-build clean-dist
+clean-local:
 	rm -rf $(builddir)/Gnuastro.egg-info
 	rm -rf $(builddir)/build
 	rm -rf $(builddir)/dist
@@ -69,12 +72,20 @@ clean-local: clean-build clean-dist
 # using pip. Although, pip needs to be ran not as root
 # so that the package gets installed in the ~/.local folder.
 install-exec-local:
-	sudo -u $(SUDO_USER) pip install $(builddir)/dist/Gnuastro*.whl \
-	                     --verbose --user --upgrade
+	if [ -z "$(SUDO_USER)" ]; then \
+		$(pip_install_cmd); \
+	else \
+		sudo -u $(SUDO_USER) $(pip_install_cmd); \ 
+	fi
+	
 
 
 
 
 
 uninstall-local:
-	sudo -u $(SUDO_USER) pip uninstall gnuastro -y
+	if [ -z "$(SUDO_USER)" ]; then \
+		$(pip_uninstall_cmd); \
+	else \
+		sudo -u $(SUDO_USER) $(pip_uninstall_cmd); \ 
+	fi
