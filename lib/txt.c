@@ -427,14 +427,15 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
               if( gal_type_from_string( &tmpdptr, token, GAL_TYPE_FLOAT64)
                   && isnan( gal_units_ra_to_degree(token) )
                   && isnan( gal_units_dec_to_degree(token) ) )
-                error(EXIT_FAILURE, 0, "'%s' couldn't be read as a number "
-                      "(element %zu of first uncommented line) %f ", token,
-                      ncol, gal_units_ra_to_degree(token));
+                error(EXIT_FAILURE, 0, "'%s' couldn't be read as a "
+                      "number (element %zu of first uncommented line)",
+                      token, ncol);
 
               /* Allocate this column's dataset and set it's 'status' to
                  the column number that it corresponds to. */
               gal_list_data_add_alloc(datall, NULL, GAL_TYPE_FLOAT64, 0,
-                                      NULL, NULL, 0, -1, 1, NULL, NULL, NULL);
+                                      NULL, NULL, 0, -1, 1, NULL, NULL,
+                                      NULL);
               (*datall)->status=ncol;
             }
         }

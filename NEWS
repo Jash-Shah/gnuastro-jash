@@ -230,6 +230,9 @@ See the end of the file for license conditions.
               tables. Found by Hilderic Browne.
   bug #62720: Table not reading string columns that are shorter than the
               defined width in the metadata.
+  bug #62784: Conversion of sexagesimal RA or Dec ignores sign when first
+              digit is zero (for example '-00d12m34'). Found by Manuel
+              Sánchez-Benavente.
 
 
 
