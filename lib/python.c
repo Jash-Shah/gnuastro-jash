@@ -67,8 +67,8 @@ gal_npy_type_to_datatype(uint8_t type)
   case GAL_TYPE_FLOAT64:   return NPY_FLOAT64;
   case GAL_TYPE_STRING:    return NPY_STRING;
   default:
-    error(EXIT_FAILURE, 0, "%s: type code %d is not a recognized",
-            __func__, type);
+    error(EXIT_FAILURE, 0, "%s: type code %d is not convertible"
+            "to NumPy.", __func__, type);
   }
 
   return GAL_TYPE_INVALID;
@@ -99,7 +99,9 @@ gal_npy_datatype_to_type(uint8_t type)
   case NPY_FLOAT64:        return GAL_TYPE_FLOAT64;
   case GAL_TYPE_COMPLEX64: return NPY_COMPLEX64;
   case GAL_TYPE_STRING:    return NPY_STRING;
-  default:                 return GAL_TYPE_INVALID;
+  default:
+    error(EXIT_FAILURE, 0, "%s: type code %d is not convertible"
+            "to Gnuastro.", __func__, type);
   }
   return GAL_TYPE_INVALID;
 }

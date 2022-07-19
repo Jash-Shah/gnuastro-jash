@@ -32,19 +32,23 @@
 
 
 
-
 # Exporting these variables so that they can be
 # used by setup.py script when building the extension modules
 export prefix:=$(prefix)
 export srcdir:=$(srcdir)
-    
+export top_builddir:=$(top_builddir)
 
+
+
+all-local: setup-done
 
 # This is the main command which builds the
 # extension modules and generates the wheel file for installing.
-all-local: $(srcdir)/setup.py $(srcdir)/src/*.c
-	$(PYTHON) $(srcdir)/setup.py build_ext bdist_wheel \
-						--verbose
+setup-done: clean-local \
+						$(srcdir)/setup.py \
+						$(top_builddir)/lib/libgnuastro.la
+	$(PYTHON) $(srcdir)/setup.py build_ext bdist_wheel --verbose
+	echo "Python setup has been completed." > $@
 
 
 
@@ -53,17 +57,9 @@ all-local: $(srcdir)/setup.py $(srcdir)/src/*.c
 # Cleans the /build /dist and
 # egg-info folders that are made during building.
 clean-local: clean-build clean-dist
-	rm -r $(builddir)/Gnuastro.egg-info
-
-clean-build:
-	if [ -d "./build" ]; then \
-		rm -r $(builddir)/build; \
-	fi
-
-clean-dist:
-	if [ -d "./dist" ]; then \
-		rm -r $(builddir)/dist; \
-	fi
+	rm -rf $(builddir)/Gnuastro.egg-info
+	rm -rf $(builddir)/build
+	rm -rf $(builddir)/dist
 
 
 
@@ -73,8 +69,8 @@ clean-dist:
 # using pip. Although, pip needs to be ran not as root
 # so that the package gets installed in the ~/.local folder.
 install-exec-local:
-	sudo -u $(SUDO_USER) pip install $(builddir)/dist/G*.whl \
-											 --verbose
+	sudo -u $(SUDO_USER) pip install $(builddir)/dist/Gnuastro*.whl \
+	                     --verbose --user --upgrade
 
 
 

@@ -15,17 +15,42 @@ descp = '''A package of programs and library functions for \
 # Get the absolute path for the current directory
 here = os.path.abspath(os.path.dirname(__file__))
 
-# Get the paths to where the gnuastro library
-# the source files(.c) for the extension modules
+# Get the paths to where the gnuastro library(libgnuastro),
+# the source files(.h) and the extension modules(.c)
 # are from environment variables defined in the Makefile.
+# src_dir = "./src"
+# include_dir = "./../lib"
+# lib_dir = "/usr/local/lib"
+# include_dir_bld = "./../lib"
+
+# If user already has gnuastro installed, then
+# lib_dir will be required as an argument to library_dirs.
 lib_dir = os.getenv("prefix") + "/lib"
+
+# Path to the source files for the extension
+# modules where the wrapper functions and NumPy
+# converters are written. These will be in the source tree
 src_dir = os.getenv("srcdir") + "/src"
+
+# Include path for the gnuastro
+# header files used in the extension modules.
+include_dir_src = os.getenv("srcdir") + "/../lib"
+
+# The heaader files themselves requre config.h
+# which is built in the /lib directory of build tree.
+include_dir_bld = os.getenv("top_builddir") + "/lib"
+
+# If it's the users first time building gnuastro, or if
+# libgnuastro has been uninstalled, then the library file
+# (.a .la .so) will be in the tmp_lib_dir in the build tree.
+tmp_lib_dir = os.getenv("top_builddir") + "/lib/.libs"
 
 # These arguments will be common while initializing
 # all Extension modules. Hence, can be defined here only once.
-default_ext_args = dict(include_dirs=[get_include()],
+default_ext_args = dict(include_dirs=[include_dir_src, include_dir_bld,
+                                      get_include()],
                         libraries=["gnuastro"],
-                        library_dirs=[lib_dir])
+                        library_dirs=[tmp_lib_dir])
 
 
 
@@ -33,22 +58,22 @@ default_ext_args = dict(include_dirs=[get_include()],
 
 # Utility Functions
 # =================
-'''
-Uses the version specified in the .version file at
-the root of the source, to find the version of Gnuastro.
-'''
 def find_version():
+  '''
+  Uses the version specified in the .version file at
+  the root of the source, to find the version of Gnuastro.
+  '''
   with open(os.path.join(here,"..",".version")) as f:
     ver = f.read()
   return ver
 
 
 
-'''
-Gets the lisence info from the
-license document in the root of the source.
-'''
 def get_license():
+  '''
+  Gets the lisence info from the
+  license document in the root of the source.
+  '''
   with open(os.path.join(here,"..","COPYING")) as f:
     lic = f.read()
   return lic

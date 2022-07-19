@@ -3,13 +3,15 @@
 
 #include <Python.h>
 
-#include <gnuastro/fits.h>
-#include <gnuastro/python.h>
+#include "gnuastro/fits.h"
+#include "gnuastro/python.h"
 
 #include <numpy/arrayobject.h>
 
 
-static PyObject *img_read(PyObject *self, PyObject *args, PyObject *keywds)
+
+static PyObject *
+img_read(PyObject *self, PyObject *args, PyObject *keywds)
 {
   char *fname, *hdu;
   PyObject *out = NULL;
@@ -38,10 +40,15 @@ static PyObject *img_read(PyObject *self, PyObject *args, PyObject *keywds)
   return out;
 }
 
-static PyObject *img_write(PyObject *self, PyObject *args)
+
+
+
+
+static PyObject *
+img_write(PyObject *self, PyObject *args)
 {
   gal_data_t *data;
-  PyObject *data_arr = NULL;
+  PyArrayObject *data_arr = NULL;
   char *filename, *program_string;
   gal_fits_list_key_t *headers = NULL;
   PyObject *arg1 = NULL, *header_list=NULL;
@@ -52,7 +59,7 @@ static PyObject *img_write(PyObject *self, PyObject *args)
     return NULL;
   // printf("Arguments parsed\n");
 
-  data_arr =  PyArray_FROM_OT(arg1, NPY_FLOAT32);
+  data_arr = (PyArrayObject *)PyArray_FROM_OT(arg1, NPY_FLOAT32);
   // printf("Numpy Data Array initialized\n");
 
   data = gal_data_alloc(PyArray_DATA(data_arr), gal_npy_type_to_datatype(PyArray_TYPE(data_arr)),

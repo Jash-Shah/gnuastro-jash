@@ -749,7 +749,12 @@ AS_IF([test "x$has_topcat" = "xno"], [anywarnings=yes])
 
 # Check Python3 and NumPy:
 # checks if Python3 and NumPy are installed, in that order
-# and gets their include path if true.
+# and gets their include path if true. This is done using two
+# python scripts:
+## py_check_cmd: Uses the sysconfig package's get_paths method
+##               to get the include path for Python.h header.
+## np_check_cmd: Uses numpy's get_include methode to get the
+##               include path for NumPy's core C-API.
 AC_ARG_WITH([python],
             [AS_HELP_STRING([--without-python],
                             [disable support for python])],
@@ -767,10 +772,10 @@ AS_IF([test "x$with_python" != xno],
           AC_DEFINE(HAVE_PYTHON, [1],
                     [Define to 1 if you have Python3.])
           AC_MSG_CHECKING(if numpy is available in the python3 installation)
-          AS_IF([python3 -c "$py_check_cmd" &> /dev/null],
-                [python_includedir="$(python3 -c "$py_check_cmd")"
-                 AS_IF([python3 -c "$np_check_cmd" &> /dev/null],
-                       [numpy_includedir="$(python3 -c "$np_check_cmd")"])
+          AS_IF([$PYTHON -c "$py_check_cmd" &> /dev/null],
+                [python_includedir="$($PYTHON -c "$py_check_cmd")"
+                 AS_IF([$PYTHON -c "$np_check_cmd" &> /dev/null],
+                       [numpy_includedir="$($PYTHON -c "$np_check_cmd")"])
                 ])
         ])
         AC_SUBST(NUMPY_INCLUDE_DIR, [$numpy_includedir])
