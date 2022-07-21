@@ -1120,8 +1120,8 @@ static size_t
 arithmetic_stitch_sanity_check(gal_data_t *list, gal_data_t *fdim)
 {
   float *fitsdim;
-  size_t c, dim;
   gal_data_t *tmp;
+  size_t c, dim, otherdim;
 
   /* Currently we only have the stitch operator for 2D datasets. */
   if(list->ndim!=2)
@@ -1169,14 +1169,17 @@ arithmetic_stitch_sanity_check(gal_data_t *list, gal_data_t *fdim)
               c, tmp->ndim, list->ndim);
 
       /* Make sure the length along the non-requested dimension in all the
-         inputs are the same. Note that since we currently only support 2D
-         arrays, and that 'dim' is in C standard (has a value of 0 or 1),
-         we can simply say '!dim' to point to the other dimension.*/
-      if( tmp->dsize[!dim]!=list->dsize[!dim])
+         inputs are the same. Recall that we currently only support 2D
+         datasets, so 'dim' is either '1' or '0' (we are not using '!dim'
+         because some compilers can give the 'logical-not-parentheses'
+         warning). */
+      otherdim = dim ? 0 : 1;
+      if( tmp->dsize[otherdim]!=list->dsize[otherdim])
         error(EXIT_FAILURE, 0, "input dataset number %zu has %zu "
               "elements along dimension number %d, while the first "
               "has %zu elements along that dimension", c,
-              tmp->dsize[!dim], !dim==0 ? 2 : 1, list->dsize[!dim]);
+              tmp->dsize[otherdim], otherdim==0 ? 2 : 1,
+              list->dsize[otherdim]);
     }
 
   /* Return the dimension number that must be used. */

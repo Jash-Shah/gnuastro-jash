@@ -152,18 +152,17 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 @subtitle
 @subtitle
 @end iftex
-@subtitle @strong{Important note:}
-@subtitle This is an @strong{under-development} Gnuastro release (bleeding-edge!).
-@subtitle It is not yet officially released.
-@subtitle The source tarball corresponding to this version is (temporarily) available at this URL:
-@subtitle @url{http://akhlaghi.org/src/gnuastro-@value{VERSION}.tar.lz}
-@subtitle (the tarball link above will not be available after the next official release)
-@subtitle The most recent under-development source and its corresponding book are available at:
-@subtitle @url{http://akhlaghi.org/gnuastro.pdf}
-@subtitle @url{http://akhlaghi.org/gnuastro-latest.tar.lz}
-@subtitle To stay up to date with Gnuastro's official releases, please subscribe to this mailing list:
-@subtitle @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}
-@subtitle
+@c @subtitle @strong{Important note:}
+@c @subtitle This is an @strong{under-development} Gnuastro release (bleeding-edge!).
+@c @subtitle It is not yet officially released.
+@c @subtitle The source tarball corresponding to this version is (temporarily) available at this URL:
+@c @subtitle @url{http://akhlaghi.org/src/gnuastro-@value{VERSION}.tar.lz}
+@c @subtitle (the tarball link above will not be available after the next official release)
+@c @subtitle The most recent under-development source and its corresponding book are available at:
+@c @subtitle @url{http://akhlaghi.org/gnuastro.pdf}
+@c @subtitle @url{http://akhlaghi.org/gnuastro-latest.tar.lz}
+@c @subtitle To stay up to date with Gnuastro's official releases, please subscribe to this mailing list:
+@c @subtitle @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}
 @author Mohammad Akhlaghi
 
 @page
@@ -1570,6 +1569,7 @@ Roland Bacon,
 Roberto Baena Gall@'e,
 Zahra Bagheri,
 Karl Berry,
+Faezeh Bijarchian,
 Leindert Boogaard,
 Nicolas Bouch@'e,
 Stefan Br@"uns,
@@ -1590,12 +1590,14 @@ Alessandro Ederoclite,
 Elham Eftekhari,
 Paul Eggert,
 Sepideh Eskandarlou,
+S@'ilvia Farras,
 Juan Antonio Fernández Ontiveros,
 Gaspar Galaz,
 Andr@'es García-Serra Romero,
 Zohre Ghaffari,
 Th@'er@`ese Godefroy,
 Giulia Golini,
+Craig Gordon,
 Martin Guerrero Roncel,
 Madusha Gunawardhana,
 Bruno Haible,
@@ -1613,10 +1615,12 @@ Mohammad-Reza Khellat,
 Johan Knapen,
 Geoffry Krouchi,
 Martin Kuemmel,
+Teet Kuutma,
 Clotilde Laigle,
 Floriane Leclercq,
 Alan Lefor,
 Javier Licandro,
+Jeremy Lim,
 Alejandro Lumbreras Calle,
 Sebasti@'an Luna Valero,
 Alberto Madrigal,
@@ -1633,6 +1637,7 @@ Dmitrii Oparin,
 Fran@,{c}ois Ochsenbein,
 Bertrand Pain,
 William Pence,
+Irene Pintos Castro,
 Mamta Pommier,
 Marcel Popescu,
 Bob Proulx,

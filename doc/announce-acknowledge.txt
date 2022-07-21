@@ -1,21 +1,5 @@
 Alphabetically ordered list to acknowledge in the next release.
 
-Marjan Akbari
-Faezeh Bijarchian
-Hilderic Browne
-Sepideh Eskandarlou
-Sílvia Farras
-Craig Gordon
-S. Zahra Hosseini Shahisavandi
-Teet Kuutma
-Jeremy Lim
-Juan Miro
-Irene Pintos Castro
-Ignacio Ruiz Cejudo
-Manuel Sánchez-Benavente
-Elham Saremi
-Peter Teuben
-Ignacio Trujillo
 
 
 
