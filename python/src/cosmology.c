@@ -4,16 +4,17 @@
 
 
 
-
-
+// Default values
+// ==============
 #define H0_DEFAULT 67.66
 #define OLAMBDA_DEFAULT 0.6889
 #define OMATTER_DEFAULT 0.3111
 #define ORADIATION_DEFAULT 0.000
 
- /* The names of the arguments as a static array.
-    So that they can be accessed as keyword arguments. */
-// static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
+/* The names of the arguments as a static array.
+  So that they can be accessed as keyword arguments in Python. */
+static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
+
 
 
 
@@ -52,7 +53,8 @@ static PyObject
 
 
 
-static PyObject *proper_distance(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*proper_distance(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -79,7 +81,8 @@ static PyObject *proper_distance(PyObject *self, PyObject *args, PyObject *keywd
 
 
 
-static PyObject *comoving_volume(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*comoving_volume(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -108,7 +111,8 @@ static PyObject *comoving_volume(PyObject *self, PyObject *args, PyObject *keywd
 
 
 
-static PyObject *critical_density(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*critical_density(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -137,7 +141,8 @@ static PyObject *critical_density(PyObject *self, PyObject *args, PyObject *keyw
 
 
 
-static PyObject *angular_distance(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*angular_distance(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -166,7 +171,8 @@ static PyObject *angular_distance(PyObject *self, PyObject *args, PyObject *keyw
 
 
 
-static PyObject *luminosity_distance(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*luminosity_distance(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -195,7 +201,8 @@ static PyObject *luminosity_distance(PyObject *self, PyObject *args, PyObject *k
 
 
 
-static PyObject *distance_modulus(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*distance_modulus(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -225,7 +232,8 @@ static PyObject *distance_modulus(PyObject *self, PyObject *args, PyObject *keyw
 
 
 
-static PyObject *z_from_velocity(PyObject *self, PyObject *args)
+static PyObject
+*z_from_velocity(PyObject *self, PyObject *args)
 {
   double z, vel;
 
@@ -241,7 +249,8 @@ static PyObject *z_from_velocity(PyObject *self, PyObject *args)
 
 
 
-static PyObject *to_absolute_mag(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*to_absolute_mag(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -270,7 +279,8 @@ static PyObject *to_absolute_mag(PyObject *self, PyObject *args, PyObject *keywd
 
 
 
-static PyObject *age(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject
+*age(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -299,67 +309,84 @@ static PyObject *age(PyObject *self, PyObject *args, PyObject *keywds)
 
 
 
+// Method Table
+// ============
+// Define all the methods, with their
+// name, function pointer, argument type and docstring.
 static PyMethodDef
 CosmologyMethods[] = {
                       {
                         "age",
                        (PyCFunction)(void (*)(void))age,
                        METH_VARARGS | METH_KEYWORDS,
-                       "Returns the age of the universe at redshift z in units of Giga years."
+                       "Returns the age of the universe at redshift z in \
+                        units of Giga years."
                       },
                       {
                         "proper_distance",
                         (PyCFunction)(void (*)(void))proper_distance,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Returns the proper distance to an object at redshift z in units of Mega parsecs."
+                        "Returns the proper distance to an object at \
+                         redshift z in units of Mega parsecs."
                       },
                       {
                         "comoving_volume",
                         (PyCFunction)(void (*)(void))comoving_volume,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Returns the comoving volume over 4pi stradian to z in units of Mega parsecs cube."
+                        "Returns the comoving volume over 4pi stradian \
+                         to z in units of Mega parsecs cube."
                       },
                       {
                         "critical_density",
                         (PyCFunction)(void (*)(void))critical_density,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Returns the critical density at redshift z in units of g/cm3."
+                        "Returns the critical density at redshift z in \
+                         units of g/cm3."
                       },
                       {
                         "angular_distance",
                         (PyCFunction)(void (*)(void))angular_distance,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Return the angular diameter distance to an object at redshift z in units of Mega parsecs."
+                        "Return the angular diameter distance to an \
+                         object at redshift z in units of Mega parsecs."
                       },
                       {
                         "luminosity_distance",
                         (PyCFunction)(void (*)(void))luminosity_distance,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Return the luminosity diameter distance to an object at redshift z in units of Mega parsecs."
+                        "Return the luminosity diameter distance to an \
+                         object at redshift z in units of Mega parsecs."
                       },
                       {
                         "distance_modulus",
                         (PyCFunction)(void (*)(void))distance_modulus,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Return the distance modulus at redshift z (with no units)."
+                        "Return the distance modulus at redshift z \
+                         (with no units)."
                       },
                       {
                         "to_absolute_mag",
                         (PyCFunction)(void (*)(void))to_absolute_mag,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Return the conversion from apparent to absolute magnitude for an object at redshift z. This value has to be added to the apparent magnitude to give the absolute magnitude of an object at redshift z."
+                        "Return the conversion from apparent to absolute \
+                         magnitude for an object at redshift z. This \
+                         value has to be added to the apparent magnitude \
+                         to give the absolute magnitude of an object at \
+                         redshift z."
                       },
                       {
                         "velocity_from_z",
                         velocity_from_z,
                         METH_VARARGS,
-                        "Return the velocity (in km/s) corresponding to the given redshift (z)."
+                        "Return the velocity (in km/s) corresponding to \
+                         the given redshift (z)."
                       },
                       {
                         "z_from_velocity",
                         z_from_velocity,
                         METH_VARARGS,
-                        "Return the redshift corresponding to the given velocity (v in km/s)."
+                        "Return the redshift corresponding to the given \
+                         velocity (v in km/s)."
                       },
                       {NULL, NULL, 0, NULL} /* Sentinel */
 };
@@ -368,37 +395,38 @@ CosmologyMethods[] = {
 
 
 
-static struct PyModuleDef cosmology = {
-                                       PyModuleDef_HEAD_INIT,
-                                       "cosmology",
-                                       "This library does the main cosmological calculations that are commonly necessary in extra-galactic astronomical studies. The main variable in this context is the redshift (z). The cosmological input parameters in the functions below are H0, o_lambda_0, o_matter_0, o_radiation_0 which respectively represent the current (at redshift 0) expansion rate (Hubble constant in units of km/sec/Mpc), cosmological constant (Λ), matter and radiation densities.",
-                                       -1,
-                                       CosmologyMethods};
+// Module Definition and Initialization
+// ===================================
+static struct PyModuleDef
+cosmology = {
+              PyModuleDef_HEAD_INIT,
+              "cosmology",
+              "This library does the main cosmological calculations that \
+               are commonly necessary in extra-galactic astronomical \
+               studies. The main variable in this context is the redshift \
+               (z). The cosmological input parameters in the functions \
+               below are H0, o_lambda_0, o_matter_0, o_radiation_0 which \
+               respectively represent the current (at redshift 0) \
+               expansion rate (Hubble constant in units of km/sec/Mpc), \
+               cosmological constant (Λ), matter and radiation densities.",
+              -1,
+              CosmologyMethods
+            };
+
+
 
 PyMODINIT_FUNC
 PyInit_cosmology(void)
 {
-  return PyModule_Create(&cosmology);
+  PyObject *module;
+  module = PyModule_Create(&cosmology);
+  
+  // Error handling
+  if(module == NULL)
+    return NULL;
+  
+  return module;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 int main(int argc, char *argv[])
@@ -411,7 +439,7 @@ int main(int argc, char *argv[])
     }
 
   /* Add a built-in module before Py_initialize. */
-  if (PyImport_AppendInittab("spam", PyInit_cosmology) == -1)
+  if (PyImport_AppendInittab("cosmology", PyInit_cosmology) == -1)
     {
       fprintf(stderr, "Error: could not extend in-built modules table\n");
       exit(1);

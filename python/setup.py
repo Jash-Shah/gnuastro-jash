@@ -18,36 +18,38 @@ here = os.path.abspath(os.path.dirname(__file__))
 # Get the paths to where the gnuastro library(libgnuastro),
 # the source files(.h) and the extension modules(.c)
 # are from environment variables defined in the Makefile.
-# src_dir = "./src"
-# include_dir = "./../lib"
-# lib_dir = "/usr/local/lib"
-# include_dir_bld = "./../lib"
 
-# If user already has gnuastro installed, then
-# lib_dir will be required as an argument to library_dirs.
-lib_dir = os.getenv("prefix") + "/lib"
+# For Debugging:
+# src_dir = "./src"
+# include_dir_src = here + "/../lib"
+# include_dir_bld = "./../lib"
+# lib_dir = "/usr/local/lib"
+# tmp_lib_dir = include_dir_bld + "/.libs"
+
+
 
 # Path to the source files for the extension
 # modules where the wrapper functions and NumPy
-# converters are written. These will be in the source tree
+# converters are written. These will be in the source tree.
 src_dir = os.getenv("srcdir") + "/src"
 
-# Include path for the gnuastro
+# Include path for the gnuastro library
 # header files used in the extension modules.
 include_dir_src = os.getenv("srcdir") + "/../lib"
 
 # The heaader files themselves requre config.h
-# which is built in the /lib directory of build tree.
+# which is built in the 'lib' directory of build tree.
 include_dir_bld = os.getenv("top_builddir") + "/lib"
 
-# If it's the users first time building gnuastro, or if
-# libgnuastro has been uninstalled, then the library file
-# (.a .la .so) will be in the tmp_lib_dir in the build tree.
+# Since the setup.py is called in the 'make' step, the
+# gnuastro library has not currently been installed but the
+# library files are stored in the 'libs/.libs' dir. in the build tree.
 tmp_lib_dir = os.getenv("top_builddir") + "/lib/.libs"
 
 # These arguments will be common while initializing
 # all Extension modules. Hence, can be defined here only once.
-default_ext_args = dict(include_dirs=[include_dir_src, include_dir_bld,
+default_ext_args = dict(include_dirs=[include_dir_src,
+                                      include_dir_bld,
                                       get_include()],
                         libraries=["gnuastro"],
                         library_dirs=[tmp_lib_dir])
