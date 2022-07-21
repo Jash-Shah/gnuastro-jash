@@ -203,7 +203,8 @@ keywords_write_update(struct fitsparams *p, fitsfile **fptr,
         {
           if(u1w2==1)
             {
-              if(keyll->value)
+              if( keyll->value
+                  && gal_blank_is(keyll->value, keyll->type)==0 )
                 {
                   if( fits_update_key(*fptr,
                                       gal_fits_type_to_datatype(keyll->type),
@@ -220,7 +221,8 @@ keywords_write_update(struct fitsparams *p, fitsfile **fptr,
             }
           else if (u1w2==2)
             {
-              if(keyll->value)
+              if( keyll->value
+                  && gal_blank_is(keyll->value, keyll->type)==0 )
                 {
                   if( fits_write_key(*fptr,
                                      gal_fits_type_to_datatype(keyll->type),

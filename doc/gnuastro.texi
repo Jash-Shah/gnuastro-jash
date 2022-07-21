@@ -26205,13 +26205,21 @@ The output will be an image with a size specified by @option{--stampwidth}, cent
 If no center is specified, then it is assumed that the object of interest is already in the center of the image.
 In the same way, if no normalization ring is considered, the output will not be normalized.
 
-If the given coordinate is not within the image at all (such that the full requested stamp is outside the input image), then this script will abort with a message and a non-zero return value.
-If all the pixels within the normalization radii are NaN, the output stamp will be fully NaN.
-This can happen when the stamp is only partially out of the original image field of view, or there is a bad pixel region over the star.
-A fully NaN image can safely be used with the Stacking operators of Arithmetic (see @ref{Stacking operators}): in effect it will be ignored.
+In the following cases, this script will produce a fully NaN-valued stamp (of the size given to @option{--stampwidth}).
+A fully NaN image can safely be used with the stacking operators of Arithmetic (see @ref{Stacking operators}) because they will be ignored.
+In case you don't want to waste storage with fully NaN images, you can compress them with @code{gzip --best output.fits}, and give the resulting @file{.fits.gz} file to Arithmetic.
+@itemize
+@item
+The requested box (center coordinate with desired width) is not within the input image at all.
+@item
+If a normalization radius is requested, and all the pixels within the normalization radii are NaN.
+Here are some scenarios that this can happen:
+1) You have a saturated star (where the saturated pixels are NaN), and your normalization radius falls within the saturated region.
+2) The star is outside the image by more than your larger normalization radius (so there are no pixels for doing normalization), but the full stamp width still overlaps part of the image.
+@end itemize
 
-More options are available with the goal of obtaining better stamps.
-A full description of each option is given below.
+@noindent
+The full set of options are listed below for optimal customization in different scenarios:
 
 @table @option
 

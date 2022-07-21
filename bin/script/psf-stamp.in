@@ -246,6 +246,12 @@ EOF
     fi
 }
 
+all_nan_warning() {
+    cat <<EOF
+$scriptname: WARNING: all the pixels in the requested normalization radius are NaN. Therefore the output stamp will be all NaN. If you later use this stamp (among others) with any stack operator of 'astarithmetic' this image will effectively be ignored, so you can safely continue with stacking all the files
+EOF
+}
+
 
 
 
@@ -547,17 +553,33 @@ fi
 # Crop the object around its center with the given stamp size width. It may
 # happen that the given coordinate is fully outside of the image (within
 # the requested stamp-width). In this case Crop won't generate any output,
-# so we are checking the output name here.
+# so we are checking the existance of the '$cropped' file. If not created
+# we will create a fully NaN-valued image that can be ignored in stacks.
+#
+# We are setting '--checkcenter=0' in Crop so it doesn't check if the
+# central pixel is covered or not (we may be interested in the outer parts
+# of the PSF of a star that is centered outside of the image).
 cropped=$tmpdir/cropped-$objectid.fits
-astcrop $inputs --hdu=$hdu --mode=img \
+astcrop $inputs --hdu=$hdu --mode=img --checkcenter=0 \
         --width=$xstampwidth,$ystampwidth \
         --center=$xcenter,$ycenter \
         --output=$cropped $quiet
 if ! [ -f $cropped ]; then
-    cat <<EOF
-$scriptname: ERROR: the coordinate '$center' (in '$mode' mode) is not within the image (within $xstampwidth x $ystampwidth pixels from the edges of the input image).
-EOF
-    exit 1
+
+    # 'makenew' will generate a fully 0-valued image. Adding (with '+') any
+    # number by NaN will be NaN. Therefore the output of the Arithmetic
+    # command below will be a fully NaN-valued image.
+    astarithmetic $xstampwidth $ystampwidth 2 makenew float32 \
+                  nan + $quiet --output=$output
+
+    # Write an empty 'NORMVAL' keyword (as is expected from this program).
+    astfits $output --write=NORMVAL,nan,"Normalization value"
+
+    # Let the user know what happened.
+    if [ x"$quiet" = x ]; then all_nan_warning; fi
+
+    # Return successfully and don't continue
+    exit 0
 fi
 
 
@@ -708,9 +730,7 @@ astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
 # and clump that were not masked and the normalization value. If not masks
 # were applied, then set the clump and object labels to 'none'.
 if [ x"$clab" = x ]; then
-    if ! [ x"$normvalue" = xnan ]; then
-        astfits $output --write=NORMVAL,$normvalue,"Normalization value"
-    fi
+    astfits $output --write=NORMVAL,$normvalue,"Normalization value"
 else
     astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
             --write=CLABEL,$clab,"CLUMP label that was not masked" \
@@ -724,13 +744,7 @@ fi
 # Print warning. We are printing this warning here (at the end of the
 # script) because we dont want it to be mixed with the outputs of the
 # previus commands.
-if [ $normvalue = nan ]; then
-    if [ x"$quiet" = x ]; then
-        cat <<EOF
-$scriptname: WARNING: all the pixels in the requested normalization radius are NaN. Therefore the output stamp will be fully NaN. When you use this stamp with any stack operator of 'astsrithmetic' (for making the PSF) this image will effectively be ignored
-EOF
-    fi
-fi
+if [ x"$quiet" = x ] && [ $normvalue = nan ]; then all_nan_warning; fi
 
 
 
