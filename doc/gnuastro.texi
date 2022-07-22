@@ -26440,7 +26440,7 @@ The @code{gnuastro.cosmology} module provides the same functions as it's Library
 
 @cartouche
 @noindent For all functions below, the redshift(@code{z}) is the only required argument. The default values taken by the other arguments are:
-@code{H0} = 67.66, @code{olambda} = 0.6889, @code{omatter} = 0.3111, @code{oradiation} = 0.0.
+@code{H0} = 67.66, @code{olambda} = 0.6889, @code{omatter} = 0.3111, @code{oradiation} = 0.0. (Constants from Plank 2018 (arXiv:1807.06209, Table 2))
 
 As the summation of the cosmological constants(@code{olambda}, @code{omatter} and @code{oradiation}) should be @emph{1}, you need to supply all three if you wish to pass your own values.
 @end cartouche

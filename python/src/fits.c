@@ -37,6 +37,8 @@ img_read(PyObject *self, PyObject *args, PyObject *keywds)
   // Default values of minmapsize and quietmap
   int minmapsize = -1, quietmap = 1;
 
+  /* The names of the arguments as a static array.
+  So that they can be accessed as keyword arguments in Python. */
   static char *kwlist[] = {"filename", "hdu", "minmapsize",
                            "quietmap", NULL};
 
@@ -120,14 +122,14 @@ FitsMethods[] = {
 
 
 
-
-static struct PyModuleDef fits = {
-    PyModuleDef_HEAD_INIT,
-    "fits",
-    "FITS Module",
-    -1,
-    FitsMethods
-};
+static struct PyModuleDef
+fits = {
+          PyModuleDef_HEAD_INIT,
+          "fits",
+          "FITS Module",
+          -1,
+          FitsMethods
+       };
 
 
 
