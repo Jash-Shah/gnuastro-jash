@@ -72,9 +72,9 @@ setup-done: $(srcdir)/setup.py
 # Cleans the 'build' 'dist' and
 # '.egg-info' folders that are made during building.
 clean-local:
-	sudo rm -rf $(builddir)/Gnuastro.egg-info
-	sudo rm -rf $(builddir)/build
-	sudo rm -rf $(builddir)/dist
+	rm -rf $(builddir)/Gnuastro.egg-info
+	rm -rf $(builddir)/build
+	rm -rf $(builddir)/dist
 
 
 
