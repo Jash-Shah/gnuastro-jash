@@ -26439,10 +26439,11 @@ constant (@mymath{\Lambda}), matter and radiation densities.
 The @code{gnuastro.cosmology} module provides the same functions as it's Library counterpart, the descriptions of which can be found in the @ref{Cosmology library} section.
 
 @cartouche
-@noindent For all functions below, the redshift(@code{z}) is the only required argument. The default values taken by the other arguments are:
+@noindent
+For all functions below, the redshift(@code{z}) is the only required argument. The default values taken by the other arguments are:
 @code{H0} = 67.66, @code{olambda} = 0.6889, @code{omatter} = 0.3111, @code{oradiation} = 0.0. (Constants from Plank 2018 (arXiv:1807.06209, Table 2))
 
-As the summation of the cosmological constants(@code{olambda}, @code{omatter} and @code{oradiation}) should be @emph{1}, you need to supply all three if you wish to pass your own values.
+As the summation of the cosmological constants(@code{olambda}, @code{omatter} and @code{oradiation}) should be @emph{1}, in order to pass custom values for these, all three have to be provided by the user.
 @end cartouche
 
 @deftypefun float gnuastro.cosmology.age (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
@@ -26543,8 +26544,8 @@ Module = @{
 	"MODULE_NAME",       /* name of module */
 	"Module Definition", /* module documnetation, maybe NULL */
 	-1,                  /* size of per-interpreter state of
-													the module, or -1 if the module
-													keeps state in global variables. */
+	                        the module, or -1 if the module
+                          keeps state in global variables. */
 	ModuleMethods
 @};
 
@@ -26587,10 +26588,10 @@ Convert the returned value to a @url{https://numpy.org/doc/stable/reference/c-ap
 Send the received @code{numpy.array} object as an argument to @code{gnuastro.fits.img_write} alongwith the output FITS image @code{filename}.
 
 @item
-The C wrapper function parses these arguments like before, this time storing the NumPy array as a @code{PyArrayObject}.
+The C wrapper function for the write method parses these arguments like in the case of reading, this time storing the NumPy array as a @code{PyArrayObject}.
 
 @item
-Use @code{gal_data_alloc()} (see @ref{Dataset allocation}) to convert from the input data-array from a @code{PyArrayObject} to @code{gal_data_t}.
+Use @code{gal_data_alloc()} (see @ref{Dataset allocation}) to convert the input data-array from a @code{PyArrayObject} to @code{gal_data_t}.
 
 @item
 Use @code{gal_fits_img_write()} (see @ref{FITS arrays}) to then write this data to the output FITS @code{filename} and return the status.
