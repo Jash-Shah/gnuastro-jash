@@ -41,10 +41,15 @@ include_dir_src = os.getenv("srcdir") + "/../lib"
 # which is built in the 'lib' directory of build tree.
 include_dir_bld = os.getenv("top_builddir") + "/lib"
 
-# Since the setup.py is called in the 'make' step, the
+# Since setup.py is called in the 'make' step, the
 # gnuastro library has not currently been installed but the
 # library files are stored in the 'libs/.libs' dir. in the build tree.
 tmp_lib_dir = os.getenv("top_builddir") + "/lib/.libs"
+
+# After the user has installed the gnuastro Library
+# we want to link to this installed library instead of
+# the tmp_lib_dir, which maybe deleted later on.
+lib_dir = os.getenv("prefix") + "/lib"
 
 # These arguments will be common while initializing
 # all Extension modules. Hence, can be defined here only once.
@@ -52,7 +57,7 @@ default_ext_args = dict(include_dirs=[include_dir_src,
                                       include_dir_bld,
                                       get_include()],
                         libraries=["gnuastro"],
-                        library_dirs=[tmp_lib_dir])
+                        library_dirs=[tmp_lib_dir, lib_dir])
 
 
 
