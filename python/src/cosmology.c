@@ -1,5 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <string.h>
 #include "gnuastro/cosmology.h"
 
 
@@ -13,7 +14,8 @@
 
 /* The names of the arguments as a static array.
   So that they can be accessed as keyword arguments in Python. */
-static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
+static char *
+kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
 
 
@@ -36,25 +38,177 @@ static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
 
 // Functions
 // =========
-static PyObject
-*velocity_from_z(PyObject *self, PyObject *args)
+static PyObject *
+age(PyObject *self, PyObject *args, PyObject *keywds)
 {
-  double z, vel;
-
-  if (!PyArg_ParseTuple(args, "d", &z))
+  double z, res;
+  double H0 = H0_DEFAULT;
+  double o_lambda_0 = OLAMBDA_DEFAULT;
+  double o_matter_0 = OMATTER_DEFAULT;
+  double o_radiation_0 = ORADIATION_DEFAULT;
+  
+  // "d|ddd" indicates that only the first argument
+  // i.e z is the required, and rest are optional args.
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
+    /* the arguments passed don't correspond to the signature
+           described */
     return NULL;
 
-  vel = gal_cosmology_velocity_from_z(z);
+  res = gal_cosmology_age(z, H0, o_lambda_0, o_matter_0,
+                          o_radiation_0);
 
-  return PyFloat_FromDouble(vel);
+  return PyFloat_FromDouble(res);
 }
 
 
 
 
 
-static PyObject
-*proper_distance(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject *
+angular_distance(PyObject *self, PyObject *args, PyObject *keywds)
+{
+  double z, res;
+  double H0 = H0_DEFAULT;
+  double o_lambda_0 = OLAMBDA_DEFAULT;
+  double o_matter_0 = OMATTER_DEFAULT;
+  double o_radiation_0 = ORADIATION_DEFAULT;
+  
+  // "d|ddd" indicates that only the first argument
+  // i.e z is the required, and rest are optional args.
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
+    /* the arguments passed don't correspond to the signature
+           described */
+    return NULL;
+
+  res = gal_cosmology_angular_distance(z, H0, o_lambda_0, o_matter_0,
+                                       o_radiation_0);
+
+  return PyFloat_FromDouble(res);
+}
+
+
+
+
+
+static PyObject *
+comoving_volume(PyObject *self, PyObject *args, PyObject *keywds)
+{
+  double z, res;
+  double H0 = H0_DEFAULT;
+  double o_lambda_0 = OLAMBDA_DEFAULT;
+  double o_matter_0 = OMATTER_DEFAULT;
+  double o_radiation_0 = ORADIATION_DEFAULT;
+
+  // "d|ddd" indicates that only the first argument
+  // i.e z is the required, and rest are optional args.
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
+    /* the arguments passed don't correspond to the signature
+           described */                               
+    return NULL;
+
+  res = gal_cosmology_comoving_volume(z, H0, o_lambda_0, o_matter_0,
+                                      o_radiation_0);
+
+  return PyFloat_FromDouble(res);
+}
+
+
+
+
+
+static PyObject *
+critical_density(PyObject *self, PyObject *args, PyObject *keywds)
+{
+  double z, res;
+  double H0 = H0_DEFAULT;
+  double o_lambda_0 = OLAMBDA_DEFAULT;
+  double o_matter_0 = OMATTER_DEFAULT;
+  double o_radiation_0 = ORADIATION_DEFAULT;
+  
+  // "d|ddd" indicates that only the first argument
+  // i.e z is the required, and rest are optional args.
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
+    /* the arguments passed don't correspond to the signature
+           described */
+    return NULL;
+
+  res = gal_cosmology_critical_density(z, H0, o_lambda_0, o_matter_0,
+                                       o_radiation_0);
+
+  return PyFloat_FromDouble(res);
+}
+
+
+
+
+
+static PyObject *
+distance_modulus(PyObject *self, PyObject *args, PyObject *keywds)
+{
+  double z, res;
+  double H0 = H0_DEFAULT;
+  double o_lambda_0 = OLAMBDA_DEFAULT;
+  double o_matter_0 = OMATTER_DEFAULT;
+  double o_radiation_0 = ORADIATION_DEFAULT;
+  
+  // "d|ddd" indicates that only the first argument
+  // i.e z is the required, and rest are optional args.
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
+    /* the arguments passed don't correspond to the signature
+           described */
+    return NULL;
+
+  res = gal_cosmology_distance_modulus(z, H0, o_lambda_0, o_matter_0,
+                                       o_radiation_0);
+
+  return PyFloat_FromDouble(res);
+
+}
+
+
+
+
+
+static PyObject *
+luminosity_distance(PyObject *self, PyObject *args, PyObject *keywds)
+{
+  double z, res;
+  double H0 = H0_DEFAULT;
+  double o_lambda_0 = OLAMBDA_DEFAULT;
+  double o_matter_0 = OMATTER_DEFAULT;
+  double o_radiation_0 = ORADIATION_DEFAULT;
+  
+  // "d|ddd" indicates that only the first argument
+  // i.e z is the required, and rest are optional args.
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
+                                   &z, &H0, &o_lambda_0, &o_matter_0,
+                                   &o_radiation_0))
+    /* the arguments passed don't correspond to the signature
+           described */
+    return NULL;
+
+  res = gal_cosmology_luminosity_distance(z, H0, o_lambda_0, o_matter_0,
+                                          o_radiation_0);
+
+  return PyFloat_FromDouble(res);
+}
+
+
+
+
+
+static PyObject *
+proper_distance(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
@@ -81,184 +235,14 @@ static PyObject
 
 
 
-static PyObject
-*comoving_volume(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject *
+to_absolute_mag(PyObject *self, PyObject *args, PyObject *keywds)
 {
   double z, res;
   double H0 = H0_DEFAULT;
   double o_lambda_0 = OLAMBDA_DEFAULT;
   double o_matter_0 = OMATTER_DEFAULT;
   double o_radiation_0 = ORADIATION_DEFAULT;
-
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
-
-  // "d|ddd" indicates that only the first argument
-  // i.e z is the required, and rest are optional args.
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0,
-                                   &o_radiation_0))
-    /* the arguments passed don't correspond to the signature
-           described */                               
-    return NULL;
-
-  res = gal_cosmology_comoving_volume(z, H0, o_lambda_0, o_matter_0,
-                                      o_radiation_0);
-
-  return PyFloat_FromDouble(res);
-}
-
-
-
-
-
-static PyObject
-*critical_density(PyObject *self, PyObject *args, PyObject *keywds)
-{
-  double z, res;
-  double H0 = H0_DEFAULT;
-  double o_lambda_0 = OLAMBDA_DEFAULT;
-  double o_matter_0 = OMATTER_DEFAULT;
-  double o_radiation_0 = ORADIATION_DEFAULT;
-
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
-  
-  // "d|ddd" indicates that only the first argument
-  // i.e z is the required, and rest are optional args.
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0,
-                                   &o_radiation_0))
-    /* the arguments passed don't correspond to the signature
-           described */
-    return NULL;
-
-  res = gal_cosmology_critical_density(z, H0, o_lambda_0, o_matter_0,
-                                       o_radiation_0);
-
-  return PyFloat_FromDouble(res);
-}
-
-
-
-
-
-static PyObject
-*angular_distance(PyObject *self, PyObject *args, PyObject *keywds)
-{
-  double z, res;
-  double H0 = H0_DEFAULT;
-  double o_lambda_0 = OLAMBDA_DEFAULT;
-  double o_matter_0 = OMATTER_DEFAULT;
-  double o_radiation_0 = ORADIATION_DEFAULT;
-
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
-  
-  // "d|ddd" indicates that only the first argument
-  // i.e z is the required, and rest are optional args.
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0,
-                                   &o_radiation_0))
-    /* the arguments passed don't correspond to the signature
-           described */
-    return NULL;
-
-  res = gal_cosmology_angular_distance(z, H0, o_lambda_0, o_matter_0,
-                                       o_radiation_0);
-
-  return PyFloat_FromDouble(res);
-}
-
-
-
-
-
-static PyObject
-*luminosity_distance(PyObject *self, PyObject *args, PyObject *keywds)
-{
-  double z, res;
-  double H0 = H0_DEFAULT;
-  double o_lambda_0 = OLAMBDA_DEFAULT;
-  double o_matter_0 = OMATTER_DEFAULT;
-  double o_radiation_0 = ORADIATION_DEFAULT;
-
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
-  
-  // "d|ddd" indicates that only the first argument
-  // i.e z is the required, and rest are optional args.
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0,
-                                   &o_radiation_0))
-    /* the arguments passed don't correspond to the signature
-           described */
-    return NULL;
-
-  res = gal_cosmology_luminosity_distance(z, H0, o_lambda_0, o_matter_0,
-                                          o_radiation_0);
-
-  return PyFloat_FromDouble(res);
-}
-
-
-
-
-
-static PyObject
-*distance_modulus(PyObject *self, PyObject *args, PyObject *keywds)
-{
-  double z, res;
-  double H0 = H0_DEFAULT;
-  double o_lambda_0 = OLAMBDA_DEFAULT;
-  double o_matter_0 = OMATTER_DEFAULT;
-  double o_radiation_0 = ORADIATION_DEFAULT;
-
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
-  
-  // "d|ddd" indicates that only the first argument
-  // i.e z is the required, and rest are optional args.
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0,
-                                   &o_radiation_0))
-    /* the arguments passed don't correspond to the signature
-           described */
-    return NULL;
-
-  res = gal_cosmology_distance_modulus(z, H0, o_lambda_0, o_matter_0,
-                                       o_radiation_0);
-
-  return PyFloat_FromDouble(res);
-
-}
-
-
-
-
-
-static PyObject
-*z_from_velocity(PyObject *self, PyObject *args)
-{
-  double z, vel;
-
-  if (!PyArg_ParseTuple(args, "d", &vel))
-    return NULL;
-
-  z = gal_cosmology_z_from_velocity(vel);
-
-  return PyFloat_FromDouble(z);
-}
-
-
-
-
-
-static PyObject
-*to_absolute_mag(PyObject *self, PyObject *args, PyObject *keywds)
-{
-  double z, res;
-  double H0 = H0_DEFAULT;
-  double o_lambda_0 = OLAMBDA_DEFAULT;
-  double o_matter_0 = OMATTER_DEFAULT;
-  double o_radiation_0 = ORADIATION_DEFAULT;
-
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
   
   // "d|ddd" indicates that only the first argument
   // i.e z is the required, and rest are optional args.
@@ -279,30 +263,34 @@ static PyObject
 
 
 
-static PyObject
-*age(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject *
+velocity_from_z(PyObject *self, PyObject *args)
 {
-  double z, res;
-  double H0 = H0_DEFAULT;
-  double o_lambda_0 = OLAMBDA_DEFAULT;
-  double o_matter_0 = OMATTER_DEFAULT;
-  double o_radiation_0 = ORADIATION_DEFAULT;
+  double z, vel;
 
-  // static char *kwlist[] = {"z", "H0", "olambda", "omatter", "oradiation", NULL};
-  
-  // "d|ddd" indicates that only the first argument
-  // i.e z is the required, and rest are optional args.
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|dddd", kwlist,
-                                   &z, &H0, &o_lambda_0, &o_matter_0,
-                                   &o_radiation_0))
-    /* the arguments passed don't correspond to the signature
-           described */
+  if (!PyArg_ParseTuple(args, "d", &z))
     return NULL;
 
-  res = gal_cosmology_age(z, H0, o_lambda_0, o_matter_0,
-                          o_radiation_0);
+  vel = gal_cosmology_velocity_from_z(z);
 
-  return PyFloat_FromDouble(res);
+  return PyFloat_FromDouble(vel);
+}
+
+
+
+
+
+static PyObject *
+z_from_velocity(PyObject *self, PyObject *args)
+{
+  double z, vel;
+
+  if (!PyArg_ParseTuple(args, "d", &vel))
+    return NULL;
+
+  z = gal_cosmology_z_from_velocity(vel);
+
+  return PyFloat_FromDouble(z);
 }
 
 
@@ -323,11 +311,11 @@ CosmologyMethods[] = {
                         units of Giga years."
                       },
                       {
-                        "proper_distance",
-                        (PyCFunction)(void (*)(void))proper_distance,
+                        "angular_distance",
+                        (PyCFunction)(void (*)(void))angular_distance,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Returns the proper distance to an object at \
-                         redshift z in units of Mega parsecs."
+                        "Return the angular diameter distance to an \
+                         object at redshift z in units of Mega parsecs."
                       },
                       {
                         "comoving_volume",
@@ -344,11 +332,11 @@ CosmologyMethods[] = {
                          units of g/cm3."
                       },
                       {
-                        "angular_distance",
-                        (PyCFunction)(void (*)(void))angular_distance,
+                        "distance_modulus",
+                        (PyCFunction)(void (*)(void))distance_modulus,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Return the angular diameter distance to an \
-                         object at redshift z in units of Mega parsecs."
+                        "Return the distance modulus at redshift z \
+                         (with no units)."
                       },
                       {
                         "luminosity_distance",
@@ -358,11 +346,11 @@ CosmologyMethods[] = {
                          object at redshift z in units of Mega parsecs."
                       },
                       {
-                        "distance_modulus",
-                        (PyCFunction)(void (*)(void))distance_modulus,
+                        "proper_distance",
+                        (PyCFunction)(void (*)(void))proper_distance,
                         METH_VARARGS | METH_KEYWORDS,
-                        "Return the distance modulus at redshift z \
-                         (with no units)."
+                        "Returns the proper distance to an object at \
+                         redshift z in units of Mega parsecs."
                       },
                       {
                         "to_absolute_mag",
@@ -426,43 +414,4 @@ PyInit_cosmology(void)
     return NULL;
   
   return module;
-}
-
-
-int main(int argc, char *argv[])
-{
-  wchar_t *program = Py_DecodeLocale(argv[0], NULL);
-  if (program == NULL)
-    {
-      fprintf(stderr, "Fatal error : cannot decode argv[0]\n");
-      exit(1);
-    }
-
-  /* Add a built-in module before Py_initialize. */
-  if (PyImport_AppendInittab("cosmology", PyInit_cosmology) == -1)
-    {
-      fprintf(stderr, "Error: could not extend in-built modules table\n");
-      exit(1);
-    }
-
-  /* Pass argv[0] to the Python interpreter */
-  Py_SetProgramName(program);
-
-  /* Initialize the Python interpreter.  Required.
-     If this step fails, it will be a fatal error. */
-  Py_Initialize();
-
-  /* Optionally import the module; alternatively,
-     import can be deferred until the embedded script
-     imports it. */
-  char mod_name[] = "cosmology";
-  PyObject *pmodule = PyImport_ImportModule("cosmology");
-  if (!pmodule)
-    {
-      PyErr_Print();
-      fprintf(stderr, "Error: could not import module %s\n", mod_name);
-    }
-
-  PyMem_RawFree(program);
-  return 0;
 }
