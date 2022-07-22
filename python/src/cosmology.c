@@ -302,81 +302,82 @@ z_from_velocity(PyObject *self, PyObject *args)
 // Define all the methods, with their
 // name, function pointer, argument type and docstring.
 static PyMethodDef
-CosmologyMethods[] = {
-                      {
-                        "age",
-                       (PyCFunction)(void (*)(void))age,
-                       METH_VARARGS | METH_KEYWORDS,
-                       "Returns the age of the universe at redshift z in \
-                        units of Giga years."
-                      },
-                      {
-                        "angular_distance",
-                        (PyCFunction)(void (*)(void))angular_distance,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Return the angular diameter distance to an \
-                         object at redshift z in units of Mega parsecs."
-                      },
-                      {
-                        "comoving_volume",
-                        (PyCFunction)(void (*)(void))comoving_volume,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Returns the comoving volume over 4pi stradian \
-                         to z in units of Mega parsecs cube."
-                      },
-                      {
-                        "critical_density",
-                        (PyCFunction)(void (*)(void))critical_density,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Returns the critical density at redshift z in \
-                         units of g/cm3."
-                      },
-                      {
-                        "distance_modulus",
-                        (PyCFunction)(void (*)(void))distance_modulus,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Return the distance modulus at redshift z \
-                         (with no units)."
-                      },
-                      {
-                        "luminosity_distance",
-                        (PyCFunction)(void (*)(void))luminosity_distance,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Return the luminosity diameter distance to an \
-                         object at redshift z in units of Mega parsecs."
-                      },
-                      {
-                        "proper_distance",
-                        (PyCFunction)(void (*)(void))proper_distance,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Returns the proper distance to an object at \
-                         redshift z in units of Mega parsecs."
-                      },
-                      {
-                        "to_absolute_mag",
-                        (PyCFunction)(void (*)(void))to_absolute_mag,
-                        METH_VARARGS | METH_KEYWORDS,
-                        "Return the conversion from apparent to absolute \
-                         magnitude for an object at redshift z. This \
-                         value has to be added to the apparent magnitude \
-                         to give the absolute magnitude of an object at \
-                         redshift z."
-                      },
-                      {
-                        "velocity_from_z",
-                        velocity_from_z,
-                        METH_VARARGS,
-                        "Return the velocity (in km/s) corresponding to \
-                         the given redshift (z)."
-                      },
-                      {
-                        "z_from_velocity",
-                        z_from_velocity,
-                        METH_VARARGS,
-                        "Return the redshift corresponding to the given \
-                         velocity (v in km/s)."
-                      },
-                      {NULL, NULL, 0, NULL} /* Sentinel */
+CosmologyMethods[] =
+{
+  {
+    "age",
+    (PyCFunction)(void (*)(void))age,
+    METH_VARARGS | METH_KEYWORDS,
+    "Returns the age of the universe at redshift z in "
+    "units of Giga years."
+  },
+  {
+    "angular_distance",
+    (PyCFunction)(void (*)(void))angular_distance,
+    METH_VARARGS | METH_KEYWORDS,
+    "Return the angular diameter distance to an "
+    "object at redshift z in units of Mega parsecs."
+  },
+  {
+    "comoving_volume",
+    (PyCFunction)(void (*)(void))comoving_volume,
+    METH_VARARGS | METH_KEYWORDS,
+    "Returns the comoving volume over 4pi stradian "
+    "to z in units of Mega parsecs cube."
+  },
+  {
+    "critical_density",
+    (PyCFunction)(void (*)(void))critical_density,
+    METH_VARARGS | METH_KEYWORDS,
+    "Returns the critical density at redshift z in "
+    "units of g/cm3."
+  },
+  {
+    "distance_modulus",
+    (PyCFunction)(void (*)(void))distance_modulus,
+    METH_VARARGS | METH_KEYWORDS,
+    "Return the distance modulus at redshift z "
+    "(with no units)."
+  },
+  {
+    "luminosity_distance",
+    (PyCFunction)(void (*)(void))luminosity_distance,
+    METH_VARARGS | METH_KEYWORDS,
+    "Return the luminosity diameter distance to an "
+    "object at redshift z in units of Mega parsecs."
+  },
+  {
+    "proper_distance",
+    (PyCFunction)(void (*)(void))proper_distance,
+    METH_VARARGS | METH_KEYWORDS,
+    "Returns the proper distance to an object at "
+    "redshift z in units of Mega parsecs."
+  },
+  {
+    "to_absolute_mag",
+    (PyCFunction)(void (*)(void))to_absolute_mag,
+    METH_VARARGS | METH_KEYWORDS,
+    "Return the conversion from apparent to absolute "
+    "magnitude for an object at redshift z. This "
+    "value has to be added to the apparent magnitude "
+    "to give the absolute magnitude of an object at "
+    "redshift z."
+  },
+  {
+    "velocity_from_z",
+    velocity_from_z,
+    METH_VARARGS,
+    "Return the velocity (in km/s) corresponding to "
+    "the given redshift (z)."
+  },
+  {
+    "z_from_velocity",
+    z_from_velocity,
+    METH_VARARGS,
+    "Return the redshift corresponding to the given "
+    "velocity (v in km/s)."
+  },
+  {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
 
@@ -386,20 +387,21 @@ CosmologyMethods[] = {
 // Module Definition and Initialization
 // ===================================
 static struct PyModuleDef
-cosmology = {
-              PyModuleDef_HEAD_INIT,
-              "cosmology",
-              "This library does the main cosmological calculations that \
-               are commonly necessary in extra-galactic astronomical \
-               studies. The main variable in this context is the redshift \
-               (z). The cosmological input parameters in the functions \
-               below are H0, o_lambda_0, o_matter_0, o_radiation_0 which \
-               respectively represent the current (at redshift 0) \
-               expansion rate (Hubble constant in units of km/sec/Mpc), \
-               cosmological constant (Λ), matter and radiation densities.",
-              -1,
-              CosmologyMethods
-            };
+cosmology =
+{
+  PyModuleDef_HEAD_INIT,
+  "cosmology",
+  "This library does the main cosmological calculations that "
+  "are commonly necessary in extra-galactic astronomical "
+  "studies. The main variable in this context is the redshift "
+  "(z). The cosmological input parameters in the functions "
+  "below are H0, o_lambda_0, o_matter_0, o_radiation_0 which "
+  "respectively represent the current (at redshift 0) "
+  "expansion rate (Hubble constant in units of km/sec/Mpc), "
+  "cosmological constant (Λ), matter and radiation densities.",
+  -1,
+  CosmologyMethods
+};
 
 
 
