@@ -22,6 +22,23 @@
 
 
 
+# Conditional compilation
+headersdir=$(top_srcdir)/lib/gnuastro
+if COND_HASWCSDIS_H
+  MAYBE_WCSDISTORTION = wcsdistortion.c
+endif
+# Build the python utilities file,
+# only if Python and NumPy are present.
+if COND_NUMPY
+  MAYBE_NUMPY_C = python.c
+  MAYBE_NUMPY_H = $(headersdir)/python.h
+  MAYBE_NUMPY_INCLUDE = -I$(NUMPY_INCLUDE_DIR) -I$(PYTHON_INCLUDE_DIR)
+endif
+
+
+
+
+
 ## Necessary flags.
 ##
 ##   $(top_builddir)/bootstrapped/lib: Gnulib headers that are customized
@@ -32,9 +49,13 @@
 ##
 ##   SYSCONFIG_DIR: only necessary in 'options.c' to get the system
 ##       installation directory.
+##
+##   MAYBE_NUMPY_INCLUDE: only necessary in 'python.c' to link the
+##                        numpy C-API.
 AM_CPPFLAGS = -I\$(top_builddir)/bootstrapped/lib \
               -I\$(top_srcdir)/bootstrapped/lib \
-              -DSYSCONFIG_DIR=\"$(sysconfdir)\"
+              -DSYSCONFIG_DIR=\"$(sysconfdir)\" \
+              $(MAYBE_NUMPY_INCLUDE)
 
 
 
@@ -53,18 +74,10 @@ libgnuastro_la_LIBADD = $(top_builddir)/bootstrapped/lib/libgnu.la
 
 
 
-# Conditional compilation
-if COND_HASWCSDIS_H
-  MAYBE_WCSDISTORTION = wcsdistortion.c
-endif
-
-
-
-
 
 # Specify the library .c files
-libgnuastro_la_SOURCES = $(MAYBE_WCSDISTORTION) arithmetic.c \
-  arithmetic-and.c arithmetic-bitand.c arithmetic-bitlsh.c \
+libgnuastro_la_SOURCES = $(MAYBE_NUMPY_C) $(MAYBE_WCSDISTORTION) \
+  arithmetic.c arithmetic-and.c arithmetic-bitand.c arithmetic-bitlsh.c \
   arithmetic-bitor.c arithmetic-bitrsh.c arithmetic-bitxor.c \
   arithmetic-divide.c arithmetic-eq.c arithmetic-ge.c arithmetic-gt.c \
   arithmetic-le.c arithmetic-lt.c arithmetic-minus.c arithmetic-modulo.c \
@@ -83,19 +96,20 @@ libgnuastro_la_SOURCES = $(MAYBE_WCSDISTORTION) arithmetic.c \
 # Installed headers, note that we are not blindly including all '.h' files
 # in the $(headersdir) directory. Some of the header files don't need to be
 # installed.
-headersdir=$(top_srcdir)/lib/gnuastro
-pkginclude_HEADERS = gnuastro/config.h $(headersdir)/arithmetic.h \
-  $(headersdir)/array.h $(headersdir)/binary.h $(headersdir)/blank.h \
-  $(headersdir)/box.h $(headersdir)/convolve.h $(headersdir)/cosmology.h \
+pkginclude_HEADERS = gnuastro/config.h $(MAYBE_NUMPY_H) \
+  $(headersdir)/arithmetic.h $(headersdir)/array.h \
+  $(headersdir)/binary.h $(headersdir)/blank.h $(headersdir)/box.h \
+  $(headersdir)/convolve.h $(headersdir)/cosmology.h \
   $(headersdir)/data.h $(headersdir)/dimension.h $(headersdir)/ds9.h \
   $(headersdir)/eps.h $(headersdir)/fits.h $(headersdir)/git.h \
-  $(headersdir)/interpolate.h $(headersdir)/jpeg.h $(headersdir)/kdtree.h \
-  $(headersdir)/label.h $(headersdir)/list.h $(headersdir)/match.h \
-  $(headersdir)/pdf.h $(headersdir)/permutation.h $(headersdir)/pointer.h \
-  $(headersdir)/polygon.h $(headersdir)/qsort.h $(headersdir)/speclines.h \
-  $(headersdir)/statistics.h $(headersdir)/table.h $(headersdir)/threads.h \
-  $(headersdir)/tiff.h $(headersdir)/tile.h $(headersdir)/txt.h \
-  $(headersdir)/type.h $(headersdir)/units.h $(headersdir)/wcs.h
+  $(headersdir)/interpolate.h $(headersdir)/jpeg.h \
+  $(headersdir)/kdtree.h $(headersdir)/label.h $(headersdir)/list.h \
+  $(headersdir)/match.h $(headersdir)/pdf.h $(headersdir)/permutation.h \
+  $(headersdir)/pointer.h $(headersdir)/polygon.h $(headersdir)/qsort.h \
+  $(headersdir)/speclines.h $(headersdir)/statistics.h \
+  $(headersdir)/threads.h $(headersdir)/tiff.h $(headersdir)/tile.h \
+  $(headersdir)/table.h $(headersdir)/txt.h $(headersdir)/type.h \
+  $(headersdir)/units.h $(headersdir)/wcs.h
 
 
 

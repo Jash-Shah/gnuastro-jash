@@ -123,10 +123,10 @@ gal_fits_name_is_fits(char *name)
 
 
 
-/* IMPORTANT NOTE: if other compression suffixes are add to this function,
-   include them in 'gal_checkset_automatic_output', so the compression
-   suffix can be skipped when the user doesn't specify an output
-   filename.*/
+/* IMPORTANT NOTE: if other compression suffixes are added to this
+   function, include them in 'gal_checkset_automatic_output', so the
+   compression suffix can be skipped when the user doesn't specify an
+   output filename.*/
 int
 gal_fits_suffix_is_fits(char *suffix)
 {
@@ -975,9 +975,9 @@ gal_fits_key_img_blank(uint8_t type)
 {
   void *out=NULL, *tocopy=NULL;
   uint8_t u8=0;          /* Equivalent of minimum in signed   with BZERO. */
-  int16_t s16=INT16_MAX; /* Equivalend of maximum in unsigned with BZERO. */
-  int32_t s32=INT32_MAX; /* Equivalend of maximum in unsigned with BZERO. */
-  int64_t s64=INT64_MAX; /* Equivalend of maximum in unsigned with BZERO. */
+  int16_t s16=INT16_MAX; /* Equivalent of maximum in unsigned with BZERO. */
+  int32_t s32=INT32_MAX; /* Equivalent of maximum in unsigned with BZERO. */
+  int64_t s64=INT64_MAX; /* Equivalent of maximum in unsigned with BZERO. */
 
   switch(type)
     {
