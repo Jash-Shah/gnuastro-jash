@@ -231,6 +231,7 @@ To go to the sections or subsections, you have to click on the menu entries that
 * Modeling and fittings::       Make and fit models.
 * High-level calculations::     Physical calculations.
 * Installed scripts::           Installed scripts that operate like programs.
+* Python::                      Gnuastro's Python Package.
 * Library::                     Gnuastro's library of useful functions.
 * Developing::                  The development environment.
 * Gnuastro programs list::      List and short summary of Gnuastro.
@@ -710,6 +711,17 @@ PSF construction and subtraction
 * Invoking astscript-psf-unite::  Merge stacks of different regions of PSF.
 * Invoking astscript-psf-scale-factor::  Calculate factor to scale PSF to star.
 * Invoking astscript-psf-subtract::  Put the PSF in the image to subtract.
+
+Python
+
+* Python Installation
+* Basic Usage
+* Python Modules
+* Python C Extension Modules
+
+Python Modules
+
+* Cosmology (@code{gnuastro.cosmology})
 
 Library
 
@@ -26684,7 +26696,278 @@ This option is useful when the user wants to obtain the scattered light field gi
 
 
 
-@node Library, Developing, Installed scripts, Top
+@node Python, Library, Installed scripts, Top
+@chapter Python
+The Gnuastro Python package aims to offer all the functionality of the Gnuastro Library but with a higher level of abstracion. While Gnuastro's @ref{Library} provides extensive and fine-tuned functionality for usage in C and C++, it's tough to deny the versitality and ease of usage that a language like Python brings. Not to mention, being dynamically typed and high-level makes it simple for novice users to interact with Gnuastro's programs. Additionally, since many of Gnuastro's use cases require working with images, having access to libraries like @url{https://numpy.org/doc/stable/index.html, NumPy} makes it very accessible for novice developers/users.
+
+Taking into account the extensive use of NumPy for dealing with large data-arrays, the Gnuastro Python package also provides an internal converter which directly provides the user with a NumPy array whenever an image is read, and also provides writing to an output image through an NumPy array.
+
+@cartouche
+@noindent
+@strong{The Gnuastro Python package is currently under heavy development}
+and maybe subject to change in future releases. If you encounter a bug, do let us know by @ref{Report a bug} and we would also be happy if you can @ref{Suggest new feature}.
+@end cartouche
+
+@menu
+* Python Installation:: Installation procedure.
+* Basic Usage:: Some examples on how to use the modules.
+* Python Modules:: Description of all modules.
+* Python C Extension Modules:: Description of the Python wrappers written in C.
+@end menu
+
+
+
+
+
+@node Python Installation, Basic Usage, Python, Python
+@section Installation
+The Gnuastro Python package gets installed by default if a user has Pyhton 3 and NumPy on their current environment. The package is a user installation, i.e. it gets installed in the /home/$USER/.local/lib, so that that it can be used by the current user but doesn't affect the root packages.
+
+If a user wishes for the Python package to @emph{not} be installed, they can simply pass the @code{--without-python} flag to the @code{./configure} script.
+
+
+
+
+
+
+@node Basic Usage, Python Modules, Python Installation, Python
+@section Basic Usage
+The Gnuastro Python package is divided into @ref{Python Modules}, and each module can be imported using @emph{'.'} after the package name as @code{import gnuastro.MODULE_NAME}.
+
+For example:
+@example
+import gnuastro.cosmology
+print(gnuastro.cosmology.age(5))
+@end example
+
+Most functions also provide passing arguments as keywords.
+@example
+import gnuastro.cosmology
+proper_distance = gnuastro.cosmology.proper_distance(H0 = 65, Z = 5,
+                                                     omatter = 0.3,
+                                                     olambda = 0.2,
+                                                     oradiation = 0.5)
+@end example
+
+For functions which are supposed to return or pass a NumPy array, we take an example of a simple program which reads an input FITS image and stores it as a NumPy array, then :
+@example
+import gnuastro.fits
+import numpy
+
+# Here 'in' will be a NumPy array.
+in = gnuastro.fits.img_read(filename = "input.fits", hdu = 0)
+
+if gnuastro.fits.img_write(in, "output.fits"):
+  print("Write successful.")
+else:
+  print("Error in writing file")
+@end example
+
+
+
+
+
+@node Python Modules, Python C Extension Modules, Basic Usage, Python
+@section Python Modules
+The Gnuastro Python Package is split into separate modules. Each of these modules can be imported using @code{import gnuastro.MODULE_NAME} in your Python code. Each module aims to provide the same functionality as it's @ref{Library} counterpart.
+
+@menu
+* Cosmology (@code{gnuastro.cosmology}):: For cosmological calculations.
+@end menu
+
+
+
+
+
+@node Cosmology (@code{gnuastro.cosmology}), , Python Modules, Python Modules
+@section Cosmology (@code{gnuastro.cosmology})
+
+This library does the main cosmological calculations that are commonly
+necessary in extra-galactic astronomical studies. The main variable in this
+context is the redshift (@mymath{z}). The cosmological input parameters in
+the functions below are @code{H0}, @code{o_lambda_0}, @code{o_matter_0},
+@code{o_radiation_0} which respectively represent the current (at redshift
+0) expansion rate (Hubble constant in units of km/sec/Mpc), cosmological
+constant (@mymath{\Lambda}), matter and radiation densities.
+
+The @code{gnuastro.cosmology} module provides the same functions as it's Library counterpart, the descriptions of which can be found in the @ref{Cosmology library} section.
+
+@cartouche
+@noindent
+For all functions below, the redshift(@code{z}) is the only required argument. The default values taken by the other arguments are:
+@code{H0} = 67.66, @code{olambda} = 0.6889, @code{omatter} = 0.3111, @code{oradiation} = 0.0. (Constants from Plank 2018 (arXiv:1807.06209, Table 2))
+
+As the summation of the cosmological constants(@code{olambda}, @code{omatter} and @code{oradiation}) should be @emph{1}, in order to pass custom values for these, all three have to be provided by the user.
+@end cartouche
+
+@deftypefun float gnuastro.cosmology.age (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Returns the age of the universe at redshift @code{z} in units of Giga
+years.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.proper_distance (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Returns the proper distance to an object at redshift @code{z} in units of
+Mega parsecs.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.comoving_volume (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Returns the comoving volume over 4pi stradian to @code{z} in units of Mega
+parsecs cube.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.critical_density (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Returns the critical density at redshift @code{z} in units of
+@mymath{g/cm^3}.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.angular_distance (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Return the angular diameter distance to an object at redshift @code{z} in
+units of Mega parsecs.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.luminosity_distance (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Return the luminosity diameter distance to an object at redshift @code{z}
+in units of Mega parsecs.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.distance_modulus (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Return the distance modulus at redshift @code{z} (with no units).
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.to_absolute_mag (@code{z}=float, @code{H0}=None, @code{olambda}=None, @code{omatter}=None, @code{oradiation}=None)
+Return the conversion from apparent to absolute magnitude for an object at
+redshift @code{z}. This value has to be added to the apparent magnitude to
+give the absolute magnitude of an object at redshift @code{z}.
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.velocity_from_z (@code{z}=float)
+Return the velocity (in km/s) corresponding to the given redshift (@code{z}).
+@end deftypefun
+
+@deftypefun float gnuastro.cosmology.z_from_velocity (@code{v})
+Return the redshift corresponding to the given velocity (@code{v} in km/s).
+@end deftypefun
+
+
+
+
+
+@node Python C Extension Modules, , Python Modules, Python
+@section Python C Extension Modules
+The source of the Python modules are C wrapper functions which are in the @file{python/src} directory. These functions are basicly @url{https://docs.python.org/3/extending/extending.html, Python Extension Modules}, which make use of the @ref{Library} functions. The basic format of a wrapper function is as follows:
+@example
+#include <Python.h>
+
+static PyObject
+*function_name(PyObject *self, PyObject *args)
+@{
+	// Initialize the C variables here which will be
+	// assigned the value from parsing the Python input arguments.
+
+	// This step parses the input args based on a format
+	// string and stores them in the C variables initialized above.
+	if(!PyArg_ParseTuple(args,"format_string", &var1, &var2, ...))
+		return NULL;
+
+	// Now, we call the Gnuastro library function with those arguments
+	result = gal_function_name(var1, var2, ...)
+
+	// Before returning the result, we need to convert it to
+	// a PyObject again, so that it can be interprested by Python.
+	return PyFloat_FromDouble(result)
+@}
+
+static PyMethodDef
+ModuleMethods[] = @{
+
+	/* When using only METH_VARARGS, the function should expect the
+			Python-level parameters to be passed in as a tuple acceptable for
+			parsing via PyArg_ParseTuple(). We can also add functionality to
+			pass keyword arguments. */
+	@{"function_name", function_name, METH_VARARGS, "Perform a function."@},
+			.
+			.
+			.
+	@{NULL, NULL, 0, NULL@} /* Sentinel */
+@};
+
+static struct PyModuleDef
+Module = @{
+	PyModuleDef_HEAD_INIT,
+	"MODULE_NAME",       /* name of module */
+	"Module Definition", /* module documnetation, maybe NULL */
+	-1,                  /* size of per-interpreter state of
+	                        the module, or -1 if the module
+                          keeps state in global variables. */
+	ModuleMethods
+@};
+
+/*
+The initialization function must be named PyInit_name(), where name is
+the name of the module, and should be the only non-static item defined
+in the module file. PyMODINIT_FUNC declares the function as
+PyObject * return type and declares any special linkage declarations
+required by the platform.
+*/
+PyMODINIT_FUNC
+PyInit_spam(void)
+@{
+	/* PyModule_Create(), which returns a module object, and inserts
+		 built-in function objects into the newly created module based upon
+		 the method table (an array of PyMethodDef structures) found in the
+		 module definition. */
+	return PyModule_Create(&astromodule);
+@}
+@end example
+
+For modules which deal with NumPy, we make use of various functions provided by the @url{https://numpy.org/doc/stable/reference/c-api/index.html, NumPy C-API}. The core data structure of Gnuastro is the @code{gal_data_t} container(see @ref{Data containers}). If any function in the Gnuastro Library is passed or returns a value of this type, then we make use of functions provided by the NumPy C-API, to convert it to a NumPy array.
+
+Taking the example of the simple image I/O given in @ref{Basic Usage}, the steps between the Python program and the extension module can be described as:
+
+@enumerate
+@item
+Call the @code{gnuastro.fits.img_read()} function from Python, passing the @code{filename} and @code{hdu} as arguments.
+
+@item
+The C wrapper function parses these arguments and stores them in C variables of appropriate data type (here the @code{filename} and @code{hdu} are strings).
+
+@item
+Call the @code{gal_fits_img_read()} (see @ref{FITS arrays}) with these parsed arguments. This function returns a @code{gal_data_t} type.
+
+@item
+Convert the returned value to a @url{https://numpy.org/doc/stable/reference/c-api/types-and-structures.html#c.PyArrayObject, @code{PyArrayObject}} using one of the @url{https://numpy.org/doc/stable/reference/c-api/array.html#creating-arrays, NumPy array creation functions} and return it.
+
+@item
+Send the received @code{numpy.array} object as an argument to @code{gnuastro.fits.img_write} alongwith the output FITS image @code{filename}.
+
+@item
+The C wrapper function for the write method parses these arguments like in the case of reading, this time storing the NumPy array as a @code{PyArrayObject}.
+
+@item
+Use @code{gal_data_alloc()} (see @ref{Dataset allocation}) to convert the input data-array from a @code{PyArrayObject} to @code{gal_data_t}.
+
+@item
+Use @code{gal_fits_img_write()} (see @ref{FITS arrays}) to then write this data to the output FITS @code{filename} and return the status.
+@end enumerate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@node Library, Developing, Python, Top
 @chapter Library
 
 Each program in Gnuastro that was discussed in the prior chapters (or any program in general) is a collection of functions that is compiled into one executable file which can communicate directly with the outside world.
@@ -30128,7 +30411,7 @@ simple and basic operation, like reading an image or table column into
 memory, will require a special sequence of CFITSIO function calls which can
 be inconvenient and buggy to manage in separate locations. To ease this
 process, Gnuastro's library provides wrappers for CFITSIO functions. With
-these, it much easier to read, write, or modify FITS file data, header
+these, it becomes much easier to read, write, or modify FITS file data, header
 keywords and extensions. Hence, if you feel these functions don't exactly
 do what you want, we strongly recommend reading the CFITSIO manual to use
 its great features directly (afterwards, send us your wrappers so we can
@@ -30219,7 +30502,7 @@ One important issue to consider is that CFITSIO's types are not fixed width
 (for example @code{long} may be 32-bits or 64-bits on different
 systems). However, Gnuastro's types are defined by their width. These
 functions will use information on the host system to do the proper
-conversion. To have a portable (usable on different systems) code, is thus
+conversion. To have a portable (usable on different systems) code, it is thus
 recommended to use these functions and not to assume a fixed correspondence
 between CFITSIO and Gnuastro's types.
 
@@ -30731,13 +31014,13 @@ won't close @code{fitsfile}, so you can still add other extensions to it
 after this function or make other modifications.
 @end deftypefun
 
-@deftypefun void gal_fits_img_write (gal_data_t @code{*data}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
+@deftypefun void gal_fits_img_write (gal_data_t @code{*input}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
 Write the @code{input} dataset into the FITS file named @file{filename}.
-Also add the @code{headers} keywords to the newly created HDU/extension it
+Also add the @code{headers} keywords to the newly created HDU/extension
 along with your program's name (@code{program_string}).
 @end deftypefun
 
-@deftypefun void gal_fits_img_write_to_type (gal_data_t @code{*data}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string}, int @code{type})
+@deftypefun void gal_fits_img_write_to_type (gal_data_t @code{*input}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string}, int @code{type})
 Convert the @code{input} dataset into @code{type}, then write it into the
 FITS file named @file{filename}. Also add the @code{headers} keywords to
 the newly created HDU/extension along with your program's name
@@ -30748,7 +31031,7 @@ This is just a wrapper for the @code{gal_data_copy_to_new_type} and
 @code{gal_fits_img_write} functions.
 @end deftypefun
 
-@deftypefun void gal_fits_img_write_corr_wcs_str (gal_data_t @code{*data}, char @code{*filename}, char @code{*wcsstr}, int @code{nkeyrec}, double @code{*crpix}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
+@deftypefun void gal_fits_img_write_corr_wcs_str (gal_data_t @code{*input}, char @code{*filename}, char @code{*wcsstr}, int @code{nkeyrec}, double @code{*crpix}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
 Write the @code{input} dataset into @file{filename} using the @code{wcsstr}
 while correcting the @code{CRPIX} values.
 
