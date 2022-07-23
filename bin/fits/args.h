@@ -76,6 +76,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "pixelareaarcsec2",
+      UI_KEY_PIXELAREAARCSEC2,
+      0,
+      0,
+      "Pixel area in arc-seconds squared.",
+      UI_GROUP_EXTENSION_INFORMATION,
+      &p->pixelareaarcsec2,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "skycoverage",
       UI_KEY_SKYCOVERAGE,
       0,

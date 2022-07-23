@@ -1221,15 +1221,18 @@ arithmetic_repeat(struct arithmeticparams *p, char *token, int operator)
 /*************      Reverse Polish algorithm       *************/
 /***************************************************************/
 static int
-arithmetic_set_operator(char *string, size_t *num_operands)
+arithmetic_set_operator(char *string, size_t *num_operands, int *inlib)
 {
   /* Use the library's main function for its own operators. */
   int op = gal_arithmetic_set_operator(string, num_operands);
 
+  /* Mark if this operator is in the library or not. */
+  *inlib = op==GAL_ARITHMETIC_OP_INVALID ? 0 : 1;
+
   /* If its not a library operator, check if its an internal operator. */
   if(op==GAL_ARITHMETIC_OP_INVALID)
     {
-      /* Non-library operators. */
+      /* See if its a custom operator to the Arithmetic program. */
       if      (!strcmp(string, "filter-mean"))
         { op=ARITHMETIC_OP_FILTER_MEAN;           *num_operands=0; }
       else if (!strcmp(string, "filter-median"))
@@ -1290,7 +1293,8 @@ arithmetic_set_operator(char *string, size_t *num_operands)
 
 static void
 arithmetic_operator_run(struct arithmeticparams *p, int operator,
-                        char *operator_string, size_t num_operands)
+                        char *operator_string, size_t num_operands,
+                        int inlib)
 {
   size_t i;
   unsigned int numop;
@@ -1301,8 +1305,8 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
   if(p->cp.quiet) flags |= GAL_ARITHMETIC_FLAG_QUIET;
   if(p->envseed)  flags |= GAL_ARITHMETIC_FLAG_ENVSEED;
 
-  /* When 'num_operands!=0', the operator is in the library. */
-  if(num_operands)
+  /* If this operator is in the library, we should pop everything here.  */
+  if(inlib)
     {
       /* Pop the necessary number of operators. Note that the
          operators are poped from a linked list (which is
@@ -1311,6 +1315,9 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
          last (right most, in in-fix notation) input operand.*/
       switch(num_operands)
         {
+        case 0:
+          break;
+
         case 1:
           d1=operands_pop(p, operator_string);
           break;
@@ -1459,8 +1466,8 @@ reversepolish(struct arithmeticparams *p)
   gal_list_str_t *token;
   gal_data_t *data, *col;
   char *hdu, *filename, *printnum;
-  int operator=GAL_ARITHMETIC_OP_INVALID;
   struct gal_options_common_params *cp=&p->cp;
+  int inlib, operator=GAL_ARITHMETIC_OP_INVALID;
 
   /* Prepare the processing: */
   p->popcounter=0;
@@ -1511,8 +1518,8 @@ reversepolish(struct arithmeticparams *p)
          isn't an operator. */
       else
         {
-          operator=arithmetic_set_operator(token->v, &num_operands);
-          arithmetic_operator_run(p, operator, token->v, num_operands);
+          operator=arithmetic_set_operator(token->v, &num_operands, &inlib);
+          arithmetic_operator_run(p, operator, token->v, num_operands, inlib);
         }
 
       /* Increment the token counter. */

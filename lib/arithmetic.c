@@ -33,6 +33,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_const_num.h>
+#include <gsl/gsl_const_mks.h>
 
 #include <gnuastro/box.h>
 #include <gnuastro/list.h>
@@ -1852,7 +1854,7 @@ struct multioperandparams
 
 
 /* Worker function on each thread. */
-void *
+static void *
 multioperand_on_thread(void *in_prm)
 {
   /* Low-level definitions to be done first. */
@@ -2432,6 +2434,10 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
       BINFUNC_F_OPERATOR_SET( pow,   +0 );         break;
     case GAL_ARITHMETIC_OP_ATAN2:
       BINFUNC_F_OPERATOR_SET( atan2, *180.0f/M_PI ); break;
+    case GAL_ARITHMETIC_OP_SB_TO_MAG:
+      BINFUNC_F_OPERATOR_SET( gal_units_sb_to_mag, +0 ); break;
+    case GAL_ARITHMETIC_OP_MAG_TO_SB:
+      BINFUNC_F_OPERATOR_SET( gal_units_mag_to_sb, +0 ); break;
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:
       BINFUNC_F_OPERATOR_SET( gal_units_counts_to_mag, +0 ); break;
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:
@@ -2484,7 +2490,47 @@ arithmetic_function_binary_flt(int operator, int flags, gal_data_t *il,
 
 
 
-gal_data_t *
+/* The list of arguments are:
+     d1: Input data (counts or SB).
+     d2: Zeropoint.
+     d3: Area.      */
+static gal_data_t *
+arithmetic_counts_to_from_sb(int operator, int flags, gal_data_t *d1,
+                             gal_data_t *d2, gal_data_t *d3)
+{
+  gal_data_t *tmp, *out=NULL;
+
+  switch(operator)
+    {
+    case GAL_ARITHMETIC_OP_COUNTS_TO_SB:
+      tmp=arithmetic_function_binary_flt(GAL_ARITHMETIC_OP_COUNTS_TO_MAG,
+                                         flags, d1, d2); /* d2=zeropoint */
+      out=arithmetic_function_binary_flt(GAL_ARITHMETIC_OP_MAG_TO_SB,
+                                         flags, tmp, d3); /* d3=area */
+      break;
+
+    case GAL_ARITHMETIC_OP_SB_TO_COUNTS:
+      tmp=arithmetic_function_binary_flt(GAL_ARITHMETIC_OP_SB_TO_MAG,
+                                         flags, d1, d3); /* d3-->area */
+      out=arithmetic_function_binary_flt(GAL_ARITHMETIC_OP_MAG_TO_COUNTS,
+                                         flags, tmp, d2); /* d2=zeropoint */
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+            "to find and fix the problem. The value of '%d' isn't "
+            "recognized for the 'operator' variable", __func__,
+            PACKAGE_BUGREPORT, operator);
+    }
+
+  return out;
+}
+
+
+
+
+
+static gal_data_t *
 arithmetic_box_around_ellipse(gal_data_t *d1, gal_data_t *d2,
                               gal_data_t *d3, int operator, int flags)
 {
@@ -2568,6 +2614,54 @@ arithmetic_box_around_ellipse(gal_data_t *d1, gal_data_t *d2,
 
 
 
+static gal_data_t *
+arithmetic_constant(int operator)
+{
+  size_t one=1;
+
+  /* Allocate the output dataset. */
+  gal_data_t *out=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &one,
+                                 NULL, 0, -1, 0, NULL, NULL, NULL);
+
+  /* Set the pointer to the value. */
+  double *value=out->array;
+
+  /* Write the desired constant (from GSL). */
+  switch(operator)
+    {
+    case GAL_ARITHMETIC_OP_E:            /* Base of natural logarithm. */
+      value[0]=M_E; break;
+    case GAL_ARITHMETIC_OP_PI:    /* Circle circumfernece to diameter. */
+      value[0]=M_PI; break;
+    case GAL_ARITHMETIC_OP_C:                   /* The speed of light. */
+      value[0]=GSL_CONST_MKS_SPEED_OF_LIGHT;
+    case GAL_ARITHMETIC_OP_G:           /* The gravitational constant. */
+      value[0]=GSL_CONST_MKS_GRAVITATIONAL_CONSTANT;
+    case GAL_ARITHMETIC_OP_H:                     /* Plank's constant. */
+      value[0]=GSL_CONST_MKS_PLANCKS_CONSTANT_H;
+    case GAL_ARITHMETIC_OP_AU:       /* Astronomical Unit (in meters). */
+      value[0]=GSL_CONST_MKS_ASTRONOMICAL_UNIT;
+    case GAL_ARITHMETIC_OP_LY:             /* Light years (in meters). */
+      value[0]=GSL_CONST_MKS_LIGHT_YEAR;
+    case GAL_ARITHMETIC_OP_AVOGADRO:             /* Avogadro's number. */
+      value[0]=GSL_CONST_NUM_AVOGADRO;
+    case GAL_ARITHMETIC_OP_FINESTRUCTURE:  /* Fine-structure constant. */
+      value[0]=GSL_CONST_NUM_FINE_STRUCTURE;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "fix the problem. The value '%d' isn't recognized for the "
+            "variable 'operator'", __func__, PACKAGE_BUGREPORT, operator);
+    }
+
+  /* Return the allocated dataset. */
+  return out;
+}
+
+
+
+
+
 
 
 
@@ -2586,7 +2680,7 @@ arithmetic_box_around_ellipse(gal_data_t *d1, gal_data_t *d2,
 /**********************************************************************/
 /****************             New datasets            *****************/
 /**********************************************************************/
-gal_data_t *
+static gal_data_t *
 arithmetic_makenew(gal_data_t *sizes)
 {
   gal_data_t *out, *tmp, *ttmp;
@@ -2760,6 +2854,7 @@ gal_arithmetic_load_col(char *str, int searchin, int ignorecase,
 
 
 
+
 /**********************************************************************/
 /****************         High-level functions        *****************/
 /**********************************************************************/
@@ -2834,6 +2929,14 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
     { op=GAL_ARITHMETIC_OP_COUNTS_TO_MAG;     *num_operands=2;  }
   else if (!strcmp(string, "mag-to-counts"))
     { op=GAL_ARITHMETIC_OP_MAG_TO_COUNTS;     *num_operands=2;  }
+  else if (!strcmp(string, "sb-to-mag"))
+    { op=GAL_ARITHMETIC_OP_SB_TO_MAG;         *num_operands=2;  }
+  else if (!strcmp(string, "mag-to-sb"))
+    { op=GAL_ARITHMETIC_OP_MAG_TO_SB;         *num_operands=2;  }
+  else if (!strcmp(string, "counts-to-sb"))
+    { op=GAL_ARITHMETIC_OP_COUNTS_TO_SB;      *num_operands=3;  }
+  else if (!strcmp(string, "sb-to-counts"))
+    { op=GAL_ARITHMETIC_OP_SB_TO_COUNTS;      *num_operands=3;  }
   else if (!strcmp(string, "counts-to-jy"))
     { op=GAL_ARITHMETIC_OP_COUNTS_TO_JY;      *num_operands=2;  }
   else if (!strcmp(string, "jy-to-counts"))
@@ -2981,6 +3084,26 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "float64"))
     { op=GAL_ARITHMETIC_OP_TO_FLOAT64;        *num_operands=1;  }
 
+  /* Constants. */
+  else if (!strcmp(string, "e"))
+    { op=GAL_ARITHMETIC_OP_E;                 *num_operands=0;  }
+  else if (!strcmp(string, "pi"))
+    { op=GAL_ARITHMETIC_OP_PI;                *num_operands=0;  }
+  else if (!strcmp(string, "c"))
+    { op=GAL_ARITHMETIC_OP_C;                 *num_operands=0;  }
+  else if (!strcmp(string, "G"))
+    { op=GAL_ARITHMETIC_OP_G;                 *num_operands=0;  }
+  else if (!strcmp(string, "h"))
+    { op=GAL_ARITHMETIC_OP_H;                 *num_operands=0;  }
+  else if (!strcmp(string, "AU"))
+    { op=GAL_ARITHMETIC_OP_AU;                *num_operands=0;  }
+  else if (!strcmp(string, "ly"))
+    { op=GAL_ARITHMETIC_OP_LY;                *num_operands=0;  }
+  else if (!strcmp(string, "avogadro"))
+    { op=GAL_ARITHMETIC_OP_AVOGADRO;          *num_operands=0;  }
+  else if (!strcmp(string, "fine-structure"))
+    { op=GAL_ARITHMETIC_OP_FINESTRUCTURE;     *num_operands=0;  }
+
   /* Surrounding box. */
   else if (!strcmp(string, "box-around-ellipse"))
     { op=GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE;*num_operands=3;  }
@@ -3055,6 +3178,10 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_DEGREE_TO_DEC:   return "degree-to-dec";
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:   return "counts-to-mag";
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:   return "mag-to-counts";
+    case GAL_ARITHMETIC_OP_SB_TO_MAG:       return "sb-to-mag";
+    case GAL_ARITHMETIC_OP_MAG_TO_SB:       return "mag-to-sb";
+    case GAL_ARITHMETIC_OP_COUNTS_TO_SB:    return "counts-to-sb";
+    case GAL_ARITHMETIC_OP_SB_TO_COUNTS:    return "sb-to-counts";
     case GAL_ARITHMETIC_OP_COUNTS_TO_JY:    return "counts-to-jy";
     case GAL_ARITHMETIC_OP_JY_TO_COUNTS:    return "jy-to-counts";
     case GAL_ARITHMETIC_OP_MAG_TO_JY:       return "mag-to-jy";
@@ -3109,6 +3236,16 @@ gal_arithmetic_operator_string(int operator)
     case GAL_ARITHMETIC_OP_TO_INT64:        return "long";
     case GAL_ARITHMETIC_OP_TO_FLOAT32:      return "float32";
     case GAL_ARITHMETIC_OP_TO_FLOAT64:      return "float64";
+
+    case GAL_ARITHMETIC_OP_E:               return "e";
+    case GAL_ARITHMETIC_OP_PI:              return "pi";
+    case GAL_ARITHMETIC_OP_C:               return "c";
+    case GAL_ARITHMETIC_OP_G:               return "G";
+    case GAL_ARITHMETIC_OP_H:               return "h";
+    case GAL_ARITHMETIC_OP_AU:              return "au";
+    case GAL_ARITHMETIC_OP_LY:              return "ly";
+    case GAL_ARITHMETIC_OP_AVOGADRO:        return "avogadro";
+    case GAL_ARITHMETIC_OP_FINESTRUCTURE:   return "fine-structure";
 
     case GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE: return "box-around-ellipse";
 
@@ -3207,13 +3344,25 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     /* Binary function operators. */
     case GAL_ARITHMETIC_OP_POW:
     case GAL_ARITHMETIC_OP_ATAN2:
-    case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
+    case GAL_ARITHMETIC_OP_MAG_TO_SB:
+    case GAL_ARITHMETIC_OP_SB_TO_MAG:
     case GAL_ARITHMETIC_OP_JY_TO_COUNTS:
+    case GAL_ARITHMETIC_OP_COUNTS_TO_JY:
     case GAL_ARITHMETIC_OP_COUNTS_TO_MAG:
     case GAL_ARITHMETIC_OP_MAG_TO_COUNTS:
       d1 = va_arg(va, gal_data_t *);
       d2 = va_arg(va, gal_data_t *);
       out=arithmetic_function_binary_flt(operator, flags, d1, d2);
+      break;
+
+    /* More complex operators. */
+    case GAL_ARITHMETIC_OP_COUNTS_TO_SB:
+    case GAL_ARITHMETIC_OP_SB_TO_COUNTS:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      d3 = va_arg(va, gal_data_t *);
+      out=arithmetic_counts_to_from_sb(operator, flags, d1, d2, d3);
+
       break;
 
     /* Statistical operators that return one value. */
@@ -3320,6 +3469,19 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
     case GAL_ARITHMETIC_OP_TO_FLOAT64:
       d1 = va_arg(va, gal_data_t *);
       out=arithmetic_change_type(d1, operator, flags);
+      break;
+
+    /* Constants. */
+    case GAL_ARITHMETIC_OP_E:
+    case GAL_ARITHMETIC_OP_C:
+    case GAL_ARITHMETIC_OP_G:
+    case GAL_ARITHMETIC_OP_H:
+    case GAL_ARITHMETIC_OP_AU:
+    case GAL_ARITHMETIC_OP_LY:
+    case GAL_ARITHMETIC_OP_PI:
+    case GAL_ARITHMETIC_OP_AVOGADRO:
+    case GAL_ARITHMETIC_OP_FINESTRUCTURE:
+      out=arithmetic_constant(operator);
       break;
 
     /* Calculate the width and height of a box surrounding an ellipse with

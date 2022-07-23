@@ -24,6 +24,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #define COLOR_H
 
 void
+color_name_to_rgb(char *n, float *f);
+
+void
 color_map_prepare(struct converttparams *p);
 
 void

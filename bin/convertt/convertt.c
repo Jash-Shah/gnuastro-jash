@@ -350,14 +350,14 @@ convertt(struct converttparams *p)
     case OUT_FORMAT_EPS:
       if(p->colormap) color_map_prepare(p); else convertt_scale_to_uchar(p);
       gal_eps_write(p->chll, p->cp.output, p->widthincm, p->borderwidth,
-                    p->hex, p->forcemin || p->forcemax, 0);
+                    p->hex, p->forcemin || p->forcemax, 0, p->marks);
       break;
 
     /* PDF */
     case OUT_FORMAT_PDF:
       if(p->colormap) color_map_prepare(p); else convertt_scale_to_uchar(p);
       gal_pdf_write(p->chll, p->cp.output, p->widthincm, p->borderwidth,
-                    p->forcemin || p->forcemax);
+                    p->forcemin || p->forcemax, p->marks);
       break;
 
     /* Not recognized. */

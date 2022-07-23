@@ -352,13 +352,12 @@ fits_datasum(struct fitsparams *p)
 
 
 
-static void
-fits_pixelscale(struct fitsparams *p)
+struct wcsprm *
+fits_read_check_wcs(struct fitsparams *p, size_t *ndim,
+                    char *operation)
 {
   int nwcs=0;
-  size_t i, ndim=0;
   struct wcsprm *wcs;
-  double multip, *pixelscale;
 
   /* Read the desired WCS. */
   wcs=gal_wcs_read(p->input->v, p->cp.hdu, p->cp.wcslinearmatrix,
@@ -366,11 +365,26 @@ fits_pixelscale(struct fitsparams *p)
 
   /* If a WCS doesn't exist, let the user know and return. */
   if(wcs)
-    ndim=wcs->naxis;
+    *ndim=wcs->naxis;
   else
     error(EXIT_FAILURE, 0, "%s (hdu %s): no WCS could be read by WCSLIB, "
-          "hence the pixel-scale cannot be determined", p->input->v,
-          p->cp.hdu);
+          "hence the %s cannot be determined", p->input->v,
+          p->cp.hdu, operation);
+
+  /* Return the WCS. */
+  return wcs;
+}
+
+
+
+
+
+static void
+fits_pixelscale(struct fitsparams *p)
+{
+  size_t i, ndim=0;
+  double multip, *pixelscale;
+  struct wcsprm *wcs=fits_read_check_wcs(p, &ndim, "pixel scale");
 
   /* Calculate the pixel-scale in each dimension. */
   pixelscale=gal_wcs_pixel_scale(wcs);
@@ -470,6 +484,42 @@ fits_pixelscale(struct fitsparams *p)
 }
 
 
+
+
+
+static void
+fits_pixelarea(struct fitsparams *p)
+{
+  double area;
+  size_t i, ndim;
+  double *pixelscale;
+  struct wcsprm *wcs=fits_read_check_wcs(p, &ndim, "pixel area");
+
+  /* Basic sanity checks. */
+  if(ndim!=2)
+    error(EXIT_FAILURE, 0, "the pixel area can only be calculated "
+          "for two dimensional data (images). The given input has "
+          "%zu dimensions", ndim);
+  for(i=0;i<ndim;++i)
+    if( strcmp(wcs->cunit[i], "deg") )
+      error(EXIT_FAILURE, 0, "%s (hdu: %s): dimension %zu doesn't "
+            "have a unit of degrees (value to 'CUNIT%zu'), but "
+            "'%s'! In order to use '--pixelareaarcsec2', the units "
+            "of the WCS have to be in degrees", p->input->v,
+            p->cp.hdu, i+1, i+1, wcs->cunit[i]);
+
+  /* Calculate the pixel-scale in each dimension. */
+  pixelscale=gal_wcs_pixel_scale(wcs);
+
+  /* Calcluate the pixel area (currently only in arcsec^N) */
+  area=1;
+  for(i=0;i<ndim;++i) area *= pixelscale[i]*3600;
+  printf("%g\n", area);
+
+  /* Clean up. */
+  wcsfree(wcs);
+  free(pixelscale);
+}
 
 
 
@@ -822,15 +872,16 @@ fits(struct fitsparams *p)
     case FITS_MODE_HDU:
 
       /* Options that must be called alone. */
-      if(p->numhdus) fits_hdu_number(p);
-      else if(p->datasum)       fits_datasum(p);
-      else if(p->pixelscale)    fits_pixelscale(p);
-      else if(p->skycoverage)   fits_skycoverage(p);
-      else if(p->hasimagehdu)   fits_certain_hdu(p, 0, 0);
-      else if(p->hastablehdu)   fits_certain_hdu(p, 0, 1);
-      else if(p->listimagehdus) fits_certain_hdu(p, 1, 0);
-      else if(p->listtablehdus) fits_certain_hdu(p, 1, 1);
-      else if(p->listallhdus)   fits_list_all_hdus(p);
+      if(p->numhdus)               fits_hdu_number(p);
+      else if(p->datasum)          fits_datasum(p);
+      else if(p->pixelscale)       fits_pixelscale(p);
+      else if(p->pixelareaarcsec2) fits_pixelarea(p);
+      else if(p->skycoverage)      fits_skycoverage(p);
+      else if(p->hasimagehdu)      fits_certain_hdu(p, 0, 0);
+      else if(p->hastablehdu)      fits_certain_hdu(p, 0, 1);
+      else if(p->listimagehdus)    fits_certain_hdu(p, 1, 0);
+      else if(p->listtablehdus)    fits_certain_hdu(p, 1, 1);
+      else if(p->listallhdus)      fits_list_all_hdus(p);
 
       /* Options that can be called together. */
       else

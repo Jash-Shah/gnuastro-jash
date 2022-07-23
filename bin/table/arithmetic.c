@@ -178,9 +178,13 @@ arithmetic_init_wcs(struct tableparams *p, char *operator)
 /* Set the operator code from the given string. */
 static int
 arithmetic_set_operator(struct tableparams *p, char *string,
-                        size_t *num_operands)
+                        size_t *num_operands, int *inlib)
 {
-  int op=gal_arithmetic_set_operator(string, num_operands);;
+  /* Use the library's main function for its own operators. */
+  int op=gal_arithmetic_set_operator(string, num_operands);
+
+  /* Mark if this operator is in the library or not. */
+  *inlib = op==GAL_ARITHMETIC_OP_INVALID ? 0 : 1;
 
   /* Set the operator and number of operands. */
   if( op==GAL_ARITHMETIC_OP_INVALID )
@@ -299,7 +303,9 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
       node=arithmetic_add_new_to_end(arith);
 
       /* See if the token is an operator, if not check other cases.  */
-      node->operator=arithmetic_set_operator(p, token, &node->num_operands);
+      node->operator=arithmetic_set_operator(p, token,
+                                             &node->num_operands,
+                                             &node->inlib);
       if(node->operator==GAL_ARITHMETIC_OP_INVALID)
         {
           /* Token is a single number.*/
@@ -852,8 +858,8 @@ arithmetic_operator_run(struct tableparams *p,
   if(p->cp.quiet) flags |= GAL_ARITHMETIC_FLAG_QUIET;
   if(p->envseed)  flags |= GAL_ARITHMETIC_FLAG_ENVSEED;
 
-  /* When 'num_operands!=0', the operator is in the library. */
-  if(token->num_operands)
+  /* If this operator is in the library, we should pop everything here. */
+  if(token->inlib)
     {
       /* Pop the necessary number of operators. Note that the
          operators are poped from a linked list (which is
@@ -862,6 +868,9 @@ arithmetic_operator_run(struct tableparams *p,
          last (right most, in in-fix notation) input operand.*/
       switch(token->num_operands)
         {
+        case 0:
+          break;
+
         case 1:
           d1=arithmetic_stack_pop(stack, token->operator, NULL);
           break;

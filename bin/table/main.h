@@ -64,6 +64,7 @@ struct arithmetic_token
 {
   /* First layer elements. */
   int            operator;  /* OPERATOR: Code of operator.                */
+  int               inlib;  /* OPERATOR: if operator is in library.       */
   size_t     num_operands;  /* OPERATOR: Number of required operands.     */
   size_t            index;  /* OPERAND: Index in requested columns.       */
   char       *id_at_usage;  /* OPERAND: col identifier at usage time.     */

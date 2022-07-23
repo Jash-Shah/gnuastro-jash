@@ -69,6 +69,10 @@ void
 gal_box_border_from_center(double *center, size_t ndim, long *width,
                            long *fpixel, long *lpixel);
 
+void
+gal_box_border_rotate_around_center(long *fpixel, long *lpixel,
+                                    size_t ndim, float rotate_deg);
+
 int
 gal_box_overlap(long *naxes, long *fpixel_i, long *lpixel_i,
                 long *fpixel_o, long *lpixel_o, size_t ndim);

@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 enum program_args_groups
 {
   UI_GROUP_FLUX = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_MARKS
 };
 
 
@@ -42,8 +43,8 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a d e f j k l n p r s t v y z
-   E G J O Q R W X Y
+   a d e f j k l n p s t v y z
+   E G J Q R W X Y
 */
 enum option_keys_enum
 {
@@ -61,11 +62,30 @@ enum option_keys_enum
   UI_KEY_CHANGE              = 'c',
   UI_KEY_CHANGEAFTERTRUNC    = 'C',
   UI_KEY_INVERT              = 'i',
+  UI_KEY_MODE                = 'O',
+  UI_KEY_MARKCOORDS          = 'r',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
   UI_KEY_COLORMAP            = 1000,
   UI_KEY_RGBTOHSV,
+  UI_KEY_MARKS,
+  UI_KEY_MARKSHDU,
+  UI_KEY_MARKSIZE,
+  UI_KEY_MARKLINEWIDTH,
+  UI_KEY_MARKCOLOR,
+  UI_KEY_MARKSHAPE,
+  UI_KEY_MARKROTATE,
+  UI_KEY_MARKTEXT,
+  UI_KEY_MARKFONT,
+  UI_KEY_MARKFONTSIZE,
+  UI_KEY_LISTCOLORS,
+  UI_KEY_LISTFONTS,
+  UI_KEY_SHOWFONTS,
+  UI_KEY_SIZEINPIX,
+  UI_KEY_SIZEINARCSEC,
+  UI_KEY_SIZEINARCMIN,
+  UI_KEY_MARKTEXTPRECISION,
 };
 
 

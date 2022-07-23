@@ -123,7 +123,7 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_ASIN,         /* Inverse sine (output in deg). */
   GAL_ARITHMETIC_OP_ACOS,         /* Inverse cosine (output in deg). */
   GAL_ARITHMETIC_OP_ATAN,         /* Inverse tangent (output in deg). */
-  GAL_ARITHMETIC_OP_ATAN2,        /* Inv. atan (preserves quad, out in deg). */
+  GAL_ARITHMETIC_OP_ATAN2,        /* Inv. atan (preserves quad, in deg). */
   GAL_ARITHMETIC_OP_SINH,         /* Hyperbolic sine. */
   GAL_ARITHMETIC_OP_COSH,         /* Hyperbolic cosine. */
   GAL_ARITHMETIC_OP_TANH,         /* Hyperbolic tangent. */
@@ -131,12 +131,27 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_ACOSH,        /* Inverse hyperbolic cosine. */
   GAL_ARITHMETIC_OP_ATANH,        /* Inverse hyperbolic tangent. */
 
+  GAL_ARITHMETIC_OP_E,            /* The base of natural logirithm. */
+  GAL_ARITHMETIC_OP_PI,           /* Circle circumference by diameter. */
+
+  GAL_ARITHMETIC_OP_C,            /* The speed of light. */
+  GAL_ARITHMETIC_OP_G,            /* The gravitational constant. */
+  GAL_ARITHMETIC_OP_H,            /* Plank's constant. */
+  GAL_ARITHMETIC_OP_AU,           /* Astronomical Unit (in meters). */
+  GAL_ARITHMETIC_OP_LY,           /* Light years (in meters). */
+  GAL_ARITHMETIC_OP_AVOGADRO,     /* Avogadro's number. */
+  GAL_ARITHMETIC_OP_FINESTRUCTURE,/* Fine-structure constant. */
+
   GAL_ARITHMETIC_OP_RA_TO_DEGREE, /* right ascension to decimal. */
   GAL_ARITHMETIC_OP_DEC_TO_DEGREE,/* declination to decimal. */
   GAL_ARITHMETIC_OP_DEGREE_TO_RA, /* right ascension to decimal. */
   GAL_ARITHMETIC_OP_DEGREE_TO_DEC,/* declination to decimal. */
   GAL_ARITHMETIC_OP_COUNTS_TO_MAG,/* Counts to magnitude. */
   GAL_ARITHMETIC_OP_MAG_TO_COUNTS,/* Magnitude to counts. */
+  GAL_ARITHMETIC_OP_MAG_TO_SB,    /* Magnitude to Surface Brightness. */
+  GAL_ARITHMETIC_OP_SB_TO_MAG,    /* Surface Brightness to Magnitude. */
+  GAL_ARITHMETIC_OP_COUNTS_TO_SB, /* Counts to Surface Brightness. */
+  GAL_ARITHMETIC_OP_SB_TO_COUNTS, /* Surface Brightness to counts. */
   GAL_ARITHMETIC_OP_COUNTS_TO_JY, /* Counts to Janskys with AB-mag zeropoint. */
   GAL_ARITHMETIC_OP_JY_TO_COUNTS, /* Janskys to Counts with AB-mag zeropoint. */
   GAL_ARITHMETIC_OP_MAG_TO_JY,    /* Magnitude to Janskys. */

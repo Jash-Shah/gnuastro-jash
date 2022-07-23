@@ -394,6 +394,51 @@ gal_units_mag_to_counts(double mag, double zeropoint)
 
 
 
+double
+gal_units_mag_to_sb(double mag, double area_arcsec2)
+{
+  return mag+2.5*log10(area_arcsec2);
+}
+
+
+
+
+
+double
+gal_units_sb_to_mag(double sb, double area_arcsec2)
+{
+  return sb-2.5*log10(area_arcsec2);
+}
+
+
+
+
+
+double
+gal_units_counts_to_sb(double counts, double zeropoint,
+                       double area_arcsec2)
+{
+  return gal_units_mag_to_sb(
+                   gal_units_counts_to_mag(counts, zeropoint),
+                   area_arcsec2);
+}
+
+
+
+
+
+double
+gal_units_sb_to_counts(double sb, double zeropoint,
+                       double area_arcsec2)
+{
+  return gal_units_mag_to_counts(
+                   gal_units_sb_to_mag(sb, area_arcsec2),
+                   zeropoint);
+}
+
+
+
+
 /* Convert Pixel values to Janskys with an AB-magnitude based
    zero-point. See the "Brightness, Flux, Magnitude and Surface
    brightness". */

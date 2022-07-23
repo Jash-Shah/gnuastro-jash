@@ -26,6 +26,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <errno.h>
 #include <error.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <inttypes.h>
 
@@ -1341,6 +1342,26 @@ gal_list_data_pop(gal_data_t **list)
       out->next=NULL;
     }
   return out;
+}
+
+
+
+
+
+/* From the input list of datasets, return the first one that has a name
+   equal to the input string 'name'. */
+gal_data_t *
+gal_list_data_select_by_name(gal_data_t *list, char *name)
+{
+  gal_data_t *tmp;
+
+  /* Parse the list and return the desired element. */
+  for(tmp=list;tmp!=NULL;tmp=tmp->next)
+    if(tmp->name && strcmp(tmp->name,name)==0 )
+      return tmp;
+
+  /* If control reaches here, no such name could be found. */
+  return NULL;
 }
 
 

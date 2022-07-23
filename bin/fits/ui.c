@@ -421,8 +421,9 @@ ui_read_check_only_options(struct fitsparams *p)
 
   /* Same for the extension-related options */
   if( p->remove || p->copy || p->cut || p->numhdus || p->datasum
-      || p->pixelscale || p->skycoverage || p->hastablehdu
-      || p->hasimagehdu || p->listtablehdus || p->listimagehdus )
+      || p->pixelscale || p->pixelareaarcsec2 || p->skycoverage
+      || p->hastablehdu || p->hasimagehdu || p->listtablehdus
+      || p->listimagehdus )
     {
       /* A small sanity check. */
       if(p->mode!=FITS_MODE_INVALID)
@@ -431,8 +432,9 @@ ui_read_check_only_options(struct fitsparams *p)
 
       /* Some HDU options cannot be called with other options. */
       stdoutcheck = ( p->numhdus + p->datasum + p->pixelscale
-                      + p->skycoverage + p->hastablehdu + p->hasimagehdu
-                      + p->listtablehdus + p->listimagehdus );
+                      + p->pixelareaarcsec2 + p->skycoverage
+                      + p->hastablehdu + p->hasimagehdu + p->listtablehdus
+                      + p->listimagehdus );
 
       /* Make sure if an output file is needed. */
       if(stdoutcheck)
@@ -456,9 +458,10 @@ ui_read_check_only_options(struct fitsparams *p)
           if( ( p->numhdus || p->hastablehdu || p->hasimagehdu
                 || p->listtablehdus || p->listimagehdus)
               && p->cp.hdu==NULL )
-            error(EXIT_FAILURE, 0, "a HDU (extension) is necessary for the "
-                  "'--datasum', '--pixelscale' or '--skycoverage' options. "
-                  "Please use the '--hdu' (or '-h') option to select one");
+            error(EXIT_FAILURE, 0, "a HDU (extension) is necessary "
+                  "for the options that return information on one HDU "
+                  "(like ""'--pixelscale' or '--skycoverage'. Please "
+                  "use the '--hdu' (or '-h') option to select one");
         }
       else
         {

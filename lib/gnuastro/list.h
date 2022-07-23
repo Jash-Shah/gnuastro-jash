@@ -337,6 +337,9 @@ gal_list_data_add_alloc(gal_data_t **list, void *array, uint8_t type,
 gal_data_t *
 gal_list_data_pop(gal_data_t **list);
 
+gal_data_t *
+gal_list_data_select_by_name(gal_data_t *list, char *name);
+
 void
 gal_list_data_reverse(gal_data_t **list);
 

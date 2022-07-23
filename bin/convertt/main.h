@@ -98,6 +98,25 @@ struct converttparams
   char           *changestr;  /* String of change values.              */
   uint8_t  changeaftertrunc;  /* First convert, then truncate.         */
   uint8_t            invert;  /* ==1: invert the output image.         */
+  char           *marksname;  /* Filename with table with mark info.   */
+  char            *markshdu;  /* HDU of table with mark info.          */
+  char                *mode;  /* Mode of the coordinates for marks.    */
+  gal_list_str_t *markcoords; /* Coordinates of the marks.             */
+  gal_list_str_t  *marksize;  /* Columns containing mark size(s).      */
+  char       *marklinewidth;  /* Column containing mark line width.    */
+  char           *markcolor;  /* Column containing mark color.         */
+  char           *markshape;  /* Column containing mark shape.         */
+  char          *markrotate;  /* Column containing mark rotation.      */
+  char            *marktext;  /* Column containing mark text.          */
+  char            *markfont;  /* Column containing mark font name.     */
+  char        *markfontsize;  /* Column containing mark font size.     */
+  uint8_t        listcolors;  /* List available colors                 */
+  uint8_t         listfonts;  /* List available fonts.                 */
+  uint8_t         showfonts;  /* Show available fonts.                 */
+  uint8_t         sizeinpix;  /* Sizes are in pixels (in WCS-mode).    */
+  uint8_t      sizeinarcsec;  /* Sizes are in arcseconds (in WCS-mode).*/
+  uint8_t      sizeinarcmin;  /* Sizes are in arcminutes (in WCS-mode).*/
+  uint8_t marktextprecision;  /* Precision to convert floats.          */
 
   /* Internal */
   struct change     *change;  /* The value conversion string.          */
@@ -107,6 +126,7 @@ struct converttparams
   int             outformat;  /* The format of the output file.        */
   size_t              numch;  /* Current Channel.                      */
   gal_data_t          *chll;  /* Linked list of color channels.        */
+  gal_data_t         *marks;  /* Information of objects to show.       */
 };
 
 #endif

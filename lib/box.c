@@ -28,6 +28,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <error.h>
 #include <stdlib.h>
 
+#include <gsl/gsl_math.h>
+
 #include <gnuastro/box.h>
 
 
@@ -317,6 +319,93 @@ gal_box_border_from_center(double *center, size_t ndim, long *width,
       printf("fpixel: %ld, %ld, %ld\n", fpixel[0], fpixel[1], fpixel[2]);
       printf("lpixel: %ld, %ld, %ld\n", lpixel[0], lpixel[1], lpixel[2]);
     }
+  */
+}
+
+
+
+
+
+/* Rotate one point */
+static void
+box_border_rotate_point(double *point, double rad)
+{
+  double x = point[0]*cos(rad) - point[1]*sin(rad);
+  double y = point[0]*sin(rad) + point[1]*cos(rad);
+  point[0]=x;
+  point[1]=y;
+}
+
+
+
+
+/* Given a certain 'fpixel' and 'lpixel' of a box, update their values if
+   there is rotation (in relation to the first FITS/horizontal axis). */
+void
+gal_box_border_rotate_around_center(long *fpixel, long *lpixel,
+                                    size_t ndim, float rotate_deg)
+{
+  double minx, miny, maxx, maxy;
+  double rad = rotate_deg * M_PI / 180.0f;
+  double center[2]={ (lpixel[0]+fpixel[0])/2.0f,
+                     (lpixel[1]+fpixel[1])/2.0f };
+
+  /* The four corners in relation to the box's center: 'bl' for
+     bottom-left, 'br' for bottom-right, 'tl' for top-left and 'tr' for
+     top-right. */
+  double bl[2]={fpixel[0]-center[0], fpixel[1]-center[1]};
+  double br[2]={lpixel[0]-center[0], fpixel[1]-center[1]};
+  double tl[2]={fpixel[0]-center[0], lpixel[1]-center[1]};
+  double tr[2]={lpixel[0]-center[0], lpixel[1]-center[1]};
+
+  /* In case we don't have any rotation, there is no purpose for
+     continuing. */
+  if(rotate_deg==0) return;
+
+  /* This function currently only works on 2D inputs. */
+  if(ndim!=2)
+    error(EXIT_FAILURE, 0, "%s: currently only 2D datasets are "
+          "allowed, please contact us at '%s' to generalize",
+          __func__, PACKAGE_BUGREPORT);
+
+  /* For a check
+  printf("bottom-left:  %g, %g\n",   bl[0], bl[1]);
+  printf("bottom-right: %g, %g\n",   br[0], br[1]);
+  printf("top-left:     %g, %g\n",   tl[0], tl[1]);
+  printf("top-right:    %g, %g\n\n", tr[0], tr[1]);
+  */
+
+  /* Rotate the four points. */
+  box_border_rotate_point(bl, rad);
+  box_border_rotate_point(br, rad);
+  box_border_rotate_point(tl, rad);
+  box_border_rotate_point(tr, rad);
+
+  /* For a check
+  printf("bottom-left:  %g, %g\n", bl[0], bl[1]);
+  printf("bottom-right: %g, %g\n", br[0], br[1]);
+  printf("top-left:     %g, %g\n", tl[0], tl[1]);
+  printf("top-right:    %g, %g\n", tr[0], tr[1]);
+  */
+
+  /* Update the first and last points. */
+  minx=bl[0];                    maxx=bl[0];
+  if(br[0]<minx) {minx=br[0];}     if(br[0]>maxx) {maxx=br[0];}
+  if(tl[0]<minx) {minx=tl[0];}     if(tl[0]>maxx) {maxx=tl[0];}
+  if(tr[0]<minx) {minx=tr[0];}     if(tr[0]>maxx) {maxx=tr[0];}
+  miny=bl[1];                    maxy=bl[1];
+  if(br[1]<miny) {miny=br[1];}     if(br[1]>maxy) {maxy=br[1];}
+  if(tl[1]<miny) {miny=tl[1];}     if(tl[1]>maxy) {maxy=tl[1];}
+  if(tr[1]<miny) {miny=tr[1];}     if(tr[1]>maxy) {maxy=tr[1];}
+
+  /* Put the minima and maxima into the first and last pixel
+     coordinates. */
+  fpixel[0]=center[0]+minx;   fpixel[1]=center[1]+miny;
+  lpixel[0]=center[0]+maxx;   lpixel[1]=center[1]+maxy;
+
+  /* For a check:
+  printf("fpixel: %ld, %ld\n", fpixel[0], fpixel[1]);
+  printf("lpixel: %ld, %ld\n", lpixel[0], lpixel[1]);
   */
 }
 

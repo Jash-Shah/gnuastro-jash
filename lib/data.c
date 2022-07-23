@@ -536,7 +536,7 @@ data_copy_from_string(gal_data_t *from, gal_data_t *to)
       }                                                                 \
   }
 
-#define COPY_TO_STR_FLT(CTYPE, BLANK) {                                 \
+#define COPY_TO_STR_FLT(CTYPE, BLANK, FMT) {                            \
     CTYPE *a=from->array;                                               \
     for(i=0;i<from->size;++i)                                           \
       {                                                                 \
@@ -544,7 +544,7 @@ data_copy_from_string(gal_data_t *from, gal_data_t *to)
         else             isblank = a[i]==BLANK ? 1 : 0;                 \
         if(isblank==0)                                                  \
           {                                                             \
-            if( asprintf(&strarr[i], "%f", a[i])<0 )                    \
+            if( asprintf(&strarr[i], FMT, a[i])<0 )                    \
               error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__); \
           }                                                             \
         else gal_checkset_allocate_copy(GAL_BLANK_STRING, &strarr[i]);  \
@@ -557,7 +557,8 @@ static void
 data_copy_to_string(gal_data_t *from, gal_data_t *to)
 {
   size_t i;
-  int isblank;
+  char *fltfmt;
+  int isblank, leftadjust=1;
   char **strarr=to->array, **instrarr=from->array;
 
   /* Sanity check */
@@ -567,6 +568,28 @@ data_copy_to_string(gal_data_t *from, gal_data_t *to)
     error(EXIT_FAILURE, 0, "%s: tile inputs not currently supported "
           "('block' element must be NULL). Please contact us at %s so we "
           "can implement this feature", __func__, PACKAGE_BUGREPORT);
+
+  /* For the two floating point formats, the user may have given a certain
+     width and precision. */
+  if(from->disp_width>0 || from->disp_precision>0)
+    {
+      if(from->disp_width>0)    /* Both width and precision are given. */
+        {
+          if( asprintf(&fltfmt, "%%%s%d.%df",
+                       leftadjust ? "-" : "", from->disp_width,
+                       from->disp_precision)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation error "
+                  "(with width)", __func__);
+        }
+      else                      /* Only precision is given. */
+        {
+          if( asprintf(&fltfmt, "%%.%df", from->disp_precision)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation error "
+                  "(without width)", __func__);
+        }
+    }
+  else
+    gal_checkset_allocate_copy("%g", &fltfmt);
 
   /* Do the copying */
   switch(from->type)
@@ -596,10 +619,10 @@ data_copy_to_string(gal_data_t *from, gal_data_t *to)
       COPY_TO_STR_INT(int64_t,  GAL_BLANK_INT64,  "%"PRId64); break;
 
     case GAL_TYPE_FLOAT32:
-      COPY_TO_STR_FLT(float, GAL_BLANK_FLOAT32);              break;
+      COPY_TO_STR_FLT(float, GAL_BLANK_FLOAT32, fltfmt);      break;
 
     case GAL_TYPE_FLOAT64:
-      COPY_TO_STR_FLT(double, GAL_BLANK_FLOAT32);             break;
+      COPY_TO_STR_FLT(double, GAL_BLANK_FLOAT64, fltfmt);     break;
 
     case GAL_TYPE_STRING:
       for(i=0;i<from->size;++i)

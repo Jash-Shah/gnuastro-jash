@@ -80,6 +80,20 @@ double
 gal_units_mag_to_counts(double mag, double zeropoint);
 
 double
+gal_units_mag_to_sb(double mag, double area_arcsec2);
+
+double
+gal_units_sb_to_mag(double sb, double area_arcsec2);
+
+double
+gal_units_counts_to_sb(double counts, double zeropoint,
+                       double area_arcsec2);
+
+double
+gal_units_sb_to_counts(double sb, double zeropoint,
+                       double area_arcsec2);
+
+double
 gal_units_counts_to_jy(double counts, double zeropoint_ab);
 
 double

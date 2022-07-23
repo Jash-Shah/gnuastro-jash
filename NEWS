@@ -8,6 +8,66 @@ See the end of the file for license conditions.
 
 ** New features
 
+  Book:
+  - Two new sections added to the "General program usage tutorial" for
+    describing how to prepare a FITS image for high quality publication (in
+    PDF), and drawing vector graphics marks from a catalog over it (for
+    example to show your selected galaxies in the field of view). The use
+    the newly added features of ConvertType.
+
+  Arithmetic:
+  - Added new type operators and physical constants. All are also available
+    in Table's column arithmetic also).
+    - e: Base of the natural logarithm (no units).
+    - pi: Fraction of Circle cirumference to diameter (no units).
+    - c: speed of light in vaccume (in units of m/s).
+    - G: Gravitational constant (in units of m^3/kg/s^2).
+    - h: Plank's constant (in units of J/Hz).
+    - au: Astronomical Units (in units of meters).
+    - ly: Light years (in units of meters).
+    - avogadro: Avogadro's constant (in units of 1/mol).
+    - fine-structure: Fine structure constant (no units).
+    - counts-to-sb: convert counts to surface brightness (mag/arcsec^2).
+    - sb-to-counts: convert surface brightness (mag/arcsec^2) to counts.
+    - mag-to-sb: convert magnitudes to surface brightness over a certain area.
+    - sb-to-mag: convert surface brightness to magnitudes over a certain area.
+
+  ConvertType:
+  - It is now possible to draw vector graphics marks from a catalog over
+    the output PDF images. The following options have been added to
+    ConvertType for doing this. See the "General program usage tutorial"
+    for a fully working example.
+    --marks: name of table containing mark information.
+    --markshdu: HDU of table if file given to '--marks' is FITS.
+    --markcoords: name or number of two columns containing coordinates.
+    --mode: if the coordinates are in 'img' (image) or 'wcs' (RA/Dec).
+    --markshape: name or number of column containing the shape of each mark.
+    --markrotate: name or number of column containing rotation of each mark.
+    --marksize: name or number of column containing the size of the mark.
+    --sizeinpix: interpret the values in the size column as pixels.
+    --sizeinarcsec: interpret the values in the size column as arc-seconds.
+    --sizeinarcmin: interpret the values in the size column as arc-minutes.
+    --marklinewidth: name or number of column containing mark's line width.
+    --markcolor: name or number of column containing mark's color.
+    --listcolors: List all the 140 available colors, and show the colors on
+                  24-bit (true color) terminal.
+    --marktext: name or number of column containing text under each mark.
+    --marktextprecision: number of decimals to print as text when the text
+                         column (given to '--marktext') is floating point.
+    --markfont: name or number of column containing the font to use for the
+                the mark text (given to '--marktext').
+    --markfontsize: name or number of column containing the size of the
+                    font to use for the mark text (given to '--marktext').
+    --showfonts: build a demo PDF with one page per font to show the
+                 various available fonts on the system.
+    --listfonts: List the names of the available fonts on the terminal.
+
+  Fits:
+  --pixelareaarcsec2: print the image pixel area in units of arcsec^2 to
+    standard output. Among other things, this is useful in creating a
+    surface brightness image using the new 'counts-to-sb' operator of
+    Arithmetic.
+
   astscript-psf-stamp:
   - sub-pixel warping is applied to ensure that your coordinate is at the
     center of the central pixel of the output image. This results in a
@@ -18,9 +78,33 @@ See the end of the file for license conditions.
     to avoid slowing down you pipeline, you can disable sub-pixel warping
     with this option.
 
+  Library functions:
+  - gal_box_border_rotate_around_center: width of box after rotation.
+  - gal_color_name_to_id: return the ID of a color from its name.
+  - gal_color_id_to_name: return the name of a color from its ID.
+  - gal_color_in_rgb: return the fraction of red-green-blue in given color.
+  - gal_eps_shape_name_to_id: return the ID of a shape from its name.
+  - gal_eps_shape_id_to_name: return the name of a shape from its ID.
+  - gal_list_data_select_by_name: select a dataset from a list by its name.
+  - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
+  - gal_units_sb_to_mag: magnitude from SB and area.
+  - gal_units_counts_to_sb: SB from counts, zeropoint and area.
+  - gal_units_sb_to_counts: counts from SB, zeropoint and area.
+
+
 ** Removed features
 
 ** Changed features
+
+  Book:
+  - The "General program usage tutorial" section is now the first section
+    of the Tutorial chapter, since it introduces the tools at a more basic
+    level. The "Sufi simulates a detection" (which was previously first)
+    has been moved to the fourth section.
+
+  Library
+  - gal_eps_write: an extra argument has been added to draw marks.
+  - gal_pdf_write: similar to 'gal_eps_write'.
 
 ** Bugs fixed
   bug #62861: '--printkeynames' of Fits program gets caught in an infinite

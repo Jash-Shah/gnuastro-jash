@@ -55,6 +55,7 @@ $(finaltarget): all.tex ./tex/*.tex ./conversions.sh | tikz
 	&& cp tikz/all-figure1.eps ../gnuastro-figures/samplingfreq.eps \
 	&& cp tikz/all-figure2.eps ../gnuastro-figures/flatplane.eps \
 	&& cp tikz/all-figure3.eps ../gnuastro-figures/sphereandplane.eps \
+	&& cp tikz/all-figure4.eps ../gnuastro-figures/color-names.eps \
 	&& ./conversions.sh ../gnuastro-figures/ \
 	&& echo "All necessary images created." > $(finaltarget)
 
