@@ -1,0 +1,7 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Gnuastro"  # as it would appear on PyPI
