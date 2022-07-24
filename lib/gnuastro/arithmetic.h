@@ -71,6 +71,15 @@ __BEGIN_C_DECLS  /* From C++ preparations */
                                      | GAL_ARITHMETIC_FLAG_FREE    \
                                      | GAL_ARITHMETIC_FLAG_NUMOK )
 
+/* Operator fixed strings. */
+#define GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX     "load-col-"
+#define GAL_ARITHMETIC_OPSTR_LOADCOL_HDU        "-hdu-"
+#define GAL_ARITHMETIC_OPSTR_LOADCOL_FILE       "-from-"
+#define GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX_LEN strlen(GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX)
+#define GAL_ARITHMETIC_OPSTR_LOADCOL_HDU_LEN    strlen(GAL_ARITHMETIC_OPSTR_LOADCOL_HDU)
+#define GAL_ARITHMETIC_OPSTR_LOADCOL_FILE_LEN   strlen(GAL_ARITHMETIC_OPSTR_LOADCOL_FILE)
+
+
 
 /* Identifiers for each operator. */
 enum gal_arithmetic_operators
@@ -165,6 +174,8 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_MKNOISE_SIGMA,/* Fixed-sigma noise to every element.   */
   GAL_ARITHMETIC_OP_MKNOISE_POISSON,/* Poission noise on every element.    */
   GAL_ARITHMETIC_OP_MKNOISE_UNIFORM,/* Uniform noise on every element.     */
+  GAL_ARITHMETIC_OP_RANDOM_FROM_HIST,/* Randoms from a histogram (uniform).*/
+  GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW,/* Randoms from a histogram (raw).*/
 
   GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
 
@@ -193,6 +204,10 @@ gal_arithmetic_operator_string(int operator);
 
 int
 gal_arithmetic_set_operator(char *string, size_t *num_operands);
+
+gal_data_t *
+gal_arithmetic_load_col(char *str, int searchin, int ignorecase,
+                        size_t minmapsize, int quietmmap);
 
 gal_data_t *
 gal_arithmetic(int operator, size_t numthreads, int flags, ...);

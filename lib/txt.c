@@ -36,6 +36,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/units.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/table.h>
+#include <gnuastro/pointer.h>
 
 #include <gnuastro-internal/checkset.h>
 #include <gnuastro-internal/tableintern.h>
@@ -426,14 +427,15 @@ txt_info_from_first_row(char *in_line, gal_data_t **datall, int format,
               if( gal_type_from_string( &tmpdptr, token, GAL_TYPE_FLOAT64)
                   && isnan( gal_units_ra_to_degree(token) )
                   && isnan( gal_units_dec_to_degree(token) ) )
-                error(EXIT_FAILURE, 0, "'%s' couldn't be read as a number "
-                      "(element %zu of first uncommented line) %f ", token,
-                      ncol, gal_units_ra_to_degree(token));
+                error(EXIT_FAILURE, 0, "'%s' couldn't be read as a "
+                      "number (element %zu of first uncommented line)",
+                      token, ncol);
 
               /* Allocate this column's dataset and set it's 'status' to
                  the column number that it corresponds to. */
               gal_list_data_add_alloc(datall, NULL, GAL_TYPE_FLOAT64, 0,
-                                      NULL, NULL, 0, -1, 1, NULL, NULL, NULL);
+                                      NULL, NULL, 0, -1, 1, NULL, NULL,
+                                      NULL);
               (*datall)->status=ncol;
             }
         }
@@ -899,14 +901,22 @@ txt_read_token(gal_data_t *data, gal_data_t *info, char *token,
             error_at_line(EXIT_FAILURE, 0, filename, lineno, "column %zu "
                           "('%s') couldn't be read as a '%s' number.\n\n"
                           "If it was meant to be celestial coordinates (RA "
-                          "or Dec), please use the '_h_m_s' format for RA "
-                          "or '_d_m_s' for Dec. The '_:_:_' format is "
+                          "or Dec), please use the '_h_m_' format for RA "
+                          "or '_d_m_' for Dec. The '_:_:_' format is "
                           "ambiguous (can be used for both RA and Dec). "
                           "Alternatively, you can use the column arithmetic "
                           "operators 'ra-to-degree' or 'dec-to-degree' of "
                           "'asttable' which also accept the '_:_:_' "
-                          "format. For more, please run this command\n\n"
-                          "   $ info gnuastro \"column arithmetic\"",
+                          "format. However, the 'ra-to-degree' or "
+                          "'dec-to-degree' operators require the column "
+                          "to be identified as a string with metadata. "
+                          "Please run the command below to learn more "
+                          "about column metadata and columns with string "
+                          "contents (it is easier to just use the '_h_m_' "
+                          "or '_d_m_' formats which will be automatically "
+                          "converted to degrees without any operators or "
+                          "metadata):\n\n"
+                          "   $ info gnuastro \"Gnuastro text table format\"",
                           colnum, token,
                           gal_type_name(data->type, 1) );
           else
@@ -928,7 +938,7 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum,
 {
   gal_data_t *data;
   int notenoughcols=0;
-  size_t i, n=0, strwidth;
+  size_t i, len, n=0, strwidth;
   char *end, *line, *tmpstr, *aline=NULL;
 
   /* Make a copy of the input line if necessary. */
@@ -971,16 +981,21 @@ txt_fill(char *in_line, char **tokens, size_t maxcolnum,
              copy the necessary number of characters into the 'tmpstr'
              string. We need to allocate this because the string column may
              be immediately (next character) followed by the next
-             column. This leaves us no space to put the '\0' character. */
+             column. This leaves us no space to copy the '\0'
+             character. Therefore we will add '\0' after 'strncpy'.
+
+             Also, it may happen (for example with plain-text editors that
+             remove trailing white space) that the width defined for the
+             last column becomes larger than the actual length of the
+             line. We should therefore first check how many characters we
+             should actually copy (may be less than 'disp_width'). See
+             https://savannah.gnu.org/bugs/index.php?62720 */
           strwidth=colinfo[n-1].disp_width;
-          errno=0;
-          tmpstr=malloc(strwidth+1);
-          if(tmpstr==NULL)
-            error(EXIT_FAILURE, errno, "%s: %zu bytes couldn't be allocated "
-                  "for variable 'tmpstr'", __func__, strwidth+1);
-          if(line+strwidth<end) strncpy(tmpstr, line, strwidth);
-          else                  strncpy(tmpstr, line, end-line);
-          tmpstr[strwidth]='\0';
+          len = (line+strwidth)<end ? strwidth : end-line;
+          tmpstr=gal_pointer_allocate(GAL_TYPE_UINT8, len+1, 0,
+                                      __func__, "tmpstr");
+          strncpy(tmpstr, line, len);
+          tmpstr[len]='\0';
           tokens[n]=tmpstr;
 
           /* Increment the line pointer beyond to the next token.*/

@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/table.h>
 #include <gnuastro/array.h>
 #include <gnuastro/threads.h>
+#include <gnuastro/arithmetic.h>
 
 #include <gnuastro-internal/timing.h>
 #include <gnuastro-internal/options.h>
@@ -142,8 +143,6 @@ ui_initialize_options(struct arithmeticparams *p,
           break;
 
         case GAL_OPTIONS_KEY_TYPE:
-        case GAL_OPTIONS_KEY_SEARCHIN:
-        case GAL_OPTIONS_KEY_IGNORECASE:
         case GAL_OPTIONS_KEY_STDINTIMEOUT:
           cp->coptions[i].flags=OPTION_HIDDEN;
           break;
@@ -290,11 +289,20 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
   p->outnamerequested = cp->output ? 1 : 0;
   for(token=p->tokens; token!=NULL; token=token->next)
     {
-      /* Strings given to the 'tofile' operator are also considered as
-         outputs and we should delete them before starting the parse. */
+      /* Strings given to the 'tofile' or 'tofilefree' operators are also
+         considered as outputs and we should delete them before starting
+         the parse. */
       if( strncmp(OPERATOR_PREFIX_TOFILE, token->v,
-                  OPERATOR_PREFIX_LENGTH_TOFILE) )
+                  OPERATOR_PREFIX_LENGTH_TOFILE)==0
+          || strncmp(OPERATOR_PREFIX_TOFILEFREE, token->v,
+                  OPERATOR_PREFIX_LENGTH_TOFILEFREE)==0 )
+        {
+          filename=&token->v[ OPERATOR_PREFIX_LENGTH_TOFILE ];
+          gal_checkset_writable_remove(filename, cp->keep, cp->dontdelete);
+        }
 
+      /* This may be a simple filename. */
+      else
         {
           /* This token is a file, count how many mult-extension files we
              have and use the first to set the output filename (if it has
@@ -303,10 +311,13 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
               || gal_fits_file_recognized(token->v) )
             {
               /* Increment the counter for FITS files (if they are
-                 input). Recall that the 'tofile' operator can also have
-                 '.fits' suffixes (they are the names of the output
-                 files). */
-              if( gal_array_name_recognized_multiext(token->v)  )
+                 input). Recall that the 'load-col' operator can also have
+                 '.fits' suffixes, but they aren't relevant here because
+                 they are inputs, and their HDUs are given within the
+                 operator string. */
+              if( strncmp(GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX, token->v,
+                          GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX_LEN)
+                  && gal_array_name_recognized_multiext(token->v)  )
                 ++nummultiext;
 
               /* If no output name is given, we need to extract the output
@@ -315,18 +326,11 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
                 basename=token->v;
             }
 
-          /* This token is a number. Check if a negative dash was present that
-             has been temporarily replaced with 'NEG_DASH_REPLACE' before
-             option parsing. */
+          /* This token is a number. Check if a negative dash was present
+             that has been temporarily replaced with 'NEG_DASH_REPLACE'
+             before option parsing. */
           else if(token->v[0]==NEG_DASH_REPLACE && isdigit(token->v[1]) )
             token->v[0]='-';
-        }
-
-      /* We are on the 'tofile' operator. */
-      else
-        {
-          filename=&token->v[ OPERATOR_PREFIX_LENGTH_TOFILE ];
-          gal_checkset_writable_remove(filename, cp->keep, cp->dontdelete);
         }
     }
 
@@ -342,8 +346,9 @@ ui_check_options_and_arguments(struct arithmeticparams *p)
                                                    "_arith.fits");
       else
         {
-          gal_checkset_allocate_copy("arithmetic.fits", &p->cp.output);
-          gal_checkset_writable_remove(p->cp.output, cp->keep, cp->dontdelete);
+          gal_checkset_allocate_copy("arithmetic.fits", &cp->output);
+          gal_checkset_writable_remove(cp->output, cp->keep,
+                                       cp->dontdelete);
         }
     }
 
@@ -515,7 +520,10 @@ freeandreport(struct arithmeticparams *p, struct timeval *t1)
   /* Free the simple strings. */
   free(p->cp.output);
   if(p->wcshdu) free(p->wcshdu);
+  if(p->metaname) free(p->metaname);
+  if(p->metaunit) free(p->metaunit);
   if(p->globalhdu) free(p->globalhdu);
+  if(p->metacomment) free(p->metacomment);
 
   /* If there are any remaining HDUs in the hdus linked list, then
      free them. */

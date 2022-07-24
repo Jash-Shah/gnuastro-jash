@@ -88,10 +88,12 @@ fits_print_extension_info(struct fitsparams *p)
 {
   uint16_t *ui16;
   fitsfile *fptr;
+  gal_data_t *unitscol;
+  char bunit[FLEN_VALUE];
   size_t i, numext, *dsize, ndim;
-  int hascomments=0, hasblankname=0;
-  char **tstra, **estra, **sstra, **cmstra;
   int j, nc, numhdu, hdutype, status=0, type;
+  char **tstra, **estra, **sstra, **cmstra, **ustra;
+  int hascomments=0, hasblankname=0, hasblankunits=0;
   gal_data_t *tmp, *cols=NULL, *sizecol, *commentscol;
   char *msg, *tstr=NULL, sstr[1000], extname[FLEN_VALUE];
 
@@ -115,6 +117,8 @@ fits_print_extension_info(struct fitsparams *p)
   gal_list_data_add_alloc(&cols, NULL, GAL_TYPE_STRING, 1, &numext, NULL, 1,
                           -1, 1, "HDU_COMMENT", "note", "Possible comment");
   gal_list_data_add_alloc(&cols, NULL, GAL_TYPE_STRING, 1, &numext, NULL, 1,
+                          -1, 1, "HDU_UNITS", "units", "Units of the pixels");
+  gal_list_data_add_alloc(&cols, NULL, GAL_TYPE_STRING, 1, &numext, NULL, 1,
                           -1, 1, "HDU_SIZE", "name", "Size of image or table "
                           "number of rows and columns.");
   gal_list_data_add_alloc(&cols, NULL, GAL_TYPE_STRING, 1, &numext, NULL, 1,
@@ -136,7 +140,10 @@ fits_print_extension_info(struct fitsparams *p)
   sizecol = cols->next->next->next;
   sstra = sizecol->array;
 
-  commentscol = cols->next->next->next->next;
+  unitscol = cols->next->next->next->next;
+  ustra = unitscol->array;
+
+  commentscol = cols->next->next->next->next->next;
   cmstra = commentscol->array;
 
   cols->next->disp_width=15;
@@ -189,6 +196,31 @@ fits_print_extension_info(struct fitsparams *p)
       status=0;
 
 
+      /* Read the extension units (only for images). */
+      if(hdutype==IMAGE_HDU)
+        fits_read_keyword(fptr, "BUNIT", bunit, NULL, &status);
+      switch(status)
+        {
+        case 0:
+          /* For tables, we don't bother reading 'BUNIT', because it is
+             meaningless even if it exists (each colum has its separate
+             units). So 'status' will be zero in this case.*/
+          if(hdutype==IMAGE_HDU)
+            gal_fits_key_clean_str_value(bunit);
+          else /* Its a table HDU. */
+            { sprintf(bunit, "%s", GAL_BLANK_STRING); hasblankunits=1; }
+          break;
+
+        case KEY_NO_EXIST:
+          sprintf(bunit, "%s", GAL_BLANK_STRING); hasblankunits=1;
+          break;
+
+        default:
+          gal_fits_io_error(status, "reading BUNIT keyword");
+        }
+      status=0;
+
+
       /* Check if its a healpix grid. */
       if( gal_fits_hdu_is_healpix(fptr) )
         {
@@ -229,6 +261,7 @@ fits_print_extension_info(struct fitsparams *p)
             case 1: gal_checkset_allocate_copy(extname, estra+i); break;
             case 2: gal_checkset_allocate_copy(tstr, tstra+i);    break;
             case 3: gal_checkset_allocate_copy(sstr, sstra+i);    break;
+            case 4: gal_checkset_allocate_copy(bunit, ustra+i);   break;
             }
           ++j;
         }
@@ -249,7 +282,7 @@ fits_print_extension_info(struct fitsparams *p)
   /* If there weren't any comments, don't print the comment column. */
   if(hascomments==0)
     {
-      sizecol->next=NULL;
+      unitscol->next=NULL;
       gal_data_free(commentscol);
     }
 
@@ -262,13 +295,18 @@ fits_print_extension_info(struct fitsparams *p)
       printf(" Column 2: Name ('EXTNAME' in FITS standard, usable with "
              "'--hdu').\n");
       if(hasblankname)
-        printf("           ('%s' means that no name is specified for this "
-               "HDU)\n", GAL_BLANK_STRING);
+        printf("           ('%s': no name in HDU metadata)\n",
+               GAL_BLANK_STRING);
       printf(" Column 3: Image data type or 'table' format (ASCII or "
              "binary).\n");
       printf(" Column 4: Size of data in HDU.\n");
+      printf(" Column 5: Units of data in HDU (only images, for tables "
+             "use 'asttable -i').\n");
+      if(hasblankunits)
+        printf("           ('%s': no unit in HDU metadata, or "
+               "HDU is a table)\n", GAL_BLANK_STRING);
       if(hascomments)
-        printf(" Column 5: Comments about the HDU (e.g., if its HEALpix, or "
+        printf(" Column 6: Comments about the HDU (e.g., if its HEALpix, or "
                "etc).\n");
       printf("-----\n");
     }

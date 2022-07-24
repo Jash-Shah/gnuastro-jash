@@ -190,6 +190,37 @@ gal_statistics_mean(gal_data_t *input)
 
 
 
+/* Calculate the standard deviation from the already measured (after
+   parsing) sum and the sum of squares. */
+double
+gal_statistics_std_from_sums(double sum, double sump2, size_t num)
+{
+  double ss;
+  switch(num)
+    {
+    case 0: return NAN;  /* No elements: STD: NaN */
+    case 1: return 0.0f; /* Single element, STD: 0.0 */
+    default:
+      /* 'ss' should never be bigger than 'sump2' unless the values are so
+         similar that it happens due to the floating-point error. Since
+         they are so close that their difference has caused this impossible
+         condition, their standard deviation is 0. */
+      ss=sum*sum/num;
+      if(ss>sump2) return 0.0f;
+      else         return sqrt( (sump2-ss)/num );
+    }
+
+  /* Control should not reach this point. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to find "
+        "and fix the problem. Control should not reach this part of "
+        "the function", __func__, PACKAGE_BUGREPORT);
+  return NAN;
+}
+
+
+
+
+
 /* Return the standard deviation of the input dataset as a single element
    dataset of type float64. */
 gal_data_t *
@@ -218,12 +249,8 @@ gal_statistics_std(gal_data_t *input)
       /* Find the 's' and 's2' by parsing the data. */
       GAL_TILE_PARSE_OPERATE(input, out, 0, 1, {++n; s += *i; s2 += *i * *i;});
 
-      /* Write the standard deviation. If the square of the average value
-         is bigger than the average of the squares of the values, we have a
-         floating-point error (due to all the points having an identical
-         value, within floating point erros). So we should just set the
-         standard deviation to zero. */
-      o[0] = (s*s/n > s2) ? 0 : sqrt( (s2-s*s/n)/n );
+      /* Write the standard deviation. */
+      o[0] = gal_statistics_std_from_sums(s, s2, n);
       break;
     }
 
@@ -275,7 +302,7 @@ gal_statistics_mean_std(gal_data_t *input)
          floating-point error (due to all the points having an identical
          value, within floating point erros). So we should just set the
          standard deviation to zero. */
-      o[1] = (s*s/n > s2) ? 0 : sqrt( (s2-s*s/n)/n );
+      o[1] = gal_statistics_std_from_sums(s, s2, n);
       break;
     }
 

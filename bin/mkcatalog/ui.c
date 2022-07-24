@@ -1008,6 +1008,7 @@ ui_necessary_inputs(struct mkcatalogparams *p, int *values, int *sky,
         case OCOL_NUM:                *values        = 1;          break;
         case OCOL_NUMXY:              *values        = 1;          break;
         case OCOL_SUM:                *values        = 1;          break;
+        case OCOL_SUMP2:              *values        = 1;          break;
         case OCOL_SUM_VAR:            *values = *std = 1;          break;
         case OCOL_SUM_VAR_NUM:        *values = *std = 1;          break;
         case OCOL_MEDIAN:             *values        = 1;          break;
@@ -1730,9 +1731,11 @@ ui_preparations_upperlimit(struct mkcatalogparams *p)
 
   /* Check the number of random samples. */
   if( p->upnum < MKCATALOG_UPPERLIMIT_MINIMUM_NUM )
-    error(EXIT_FAILURE, 0, "%zu not acceptable as '--upnum'. The minimum "
-          "acceptable number of random samples for the upper limit "
-          "magnitude is %d", p->upnum, MKCATALOG_UPPERLIMIT_MINIMUM_NUM);
+    error(EXIT_SUCCESS, 0, "WARNING: %zu (value given to '--upnum') will "
+          "produce unreliable upper-limit measurements. This warning will "
+          "be printed for '--upnum' values less than %d. You can suppress "
+          "this warning by adding '--quiet' to your command", p->upnum,
+          MKCATALOG_UPPERLIMIT_MINIMUM_NUM);
 
   /* Check if sigma-clipping parameters have been given. */
   if( isnan(p->upsigmaclip[0]) )

@@ -332,6 +332,11 @@ gal_blank_as_string(uint8_t type, int width)
 int
 gal_blank_is(void *pointer, uint8_t type)
 {
+  /* A small sanity check. */
+  if(pointer==NULL)
+    error(EXIT_FAILURE, 0, "%s: input pointer is NULL", __func__);
+
+  /* Do the checks based on the type. */
   switch(type)
     {
     /* Numeric types */
@@ -347,7 +352,8 @@ gal_blank_is(void *pointer, uint8_t type)
     case GAL_TYPE_FLOAT64:   return isnan( *(double *)(pointer) );
 
     /* String. */
-    case GAL_TYPE_STRING:    if(!strcmp(pointer,GAL_BLANK_STRING)) return 1;
+    case GAL_TYPE_STRING:
+      if(!strcmp(pointer,GAL_BLANK_STRING)) return 1; else return 0;
 
     /* Complex types */
     case GAL_TYPE_COMPLEX32:

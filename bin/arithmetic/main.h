@@ -82,6 +82,9 @@ struct arithmeticparams
   char          *globalhdu;  /* Single HDU for all inputs.              */
   uint8_t      onedasimage;  /* Write 1D outputs as an image not table. */
   uint8_t     onedonstdout;  /* Write 1D outputs on stdout, not table.  */
+  char           *metaname;  /* FITS name (EXTNAME keyword) of output.  */
+  char           *metaunit;  /* FITS name (BUNIT keyword) of output.    */
+  char        *metacomment;  /* FITS comment of output.                 */
 
   /* Operating mode: */
   int        wcs_collapsed;  /* If the internal WCS is already collapsed.*/

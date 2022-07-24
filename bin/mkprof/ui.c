@@ -554,6 +554,13 @@ ui_read_check_only_options(struct mkprofparams *p)
           "called (i.e., when the contents of '--mcol' must be "
           "interpretted as a magnitude, not brightness).");
 
+  /* The kernel should always be normalized to 1.0. So '--magatpeak' should
+     never be called with '--kernel'. */
+  if(p->kernel && p->magatpeak)
+    error(EXIT_FAILURE, 0, "the kernel created by '--kernel' should "
+          "always be normalized (sum of its values) to 1.0. Therefore "
+          "it shouldn't be called with '--magatpeak'");
+
   /* Make sure no zero value is given for the '--mergedsize' option (only
      when it is necessary). */
   if(p->dsize && p->backname==NULL)
@@ -1272,7 +1279,7 @@ ui_prepare_columns(struct mkprofparams *p)
       p->n[0]  = n;
       p->p1[0] = 0.0f;
       p->q1[0] = 1.0f;
-      p->m[0]  = 0.0f;
+      p->m[0]  = p->mcolisbrightness ? 1.0f : p->zeropoint;
       p->t[0]  = t;
       if(p->ndim==3)
         {
@@ -1640,10 +1647,29 @@ ui_prepare_canvas(struct mkprofparams *p)
     }
 
 
-  /* Make the WCS structure of the output data structure if it has not
-     been set yet. */
+  /* Make the WCS structure of the output data structure (if it has not
+     been set when reading the background image). */
   if(p->wcs==NULL)
-    ui_prepare_wcs(p);
+    {
+      if(p->backname)
+        {
+          /* If the background image didn't have WCS, the output shouldn't
+             have any either! So let the user know. */
+          if(p->cp.quiet==0)
+            error(EXIT_SUCCESS, 0, "WARNING: no WCS in image given to "
+                  "'--background': %s! The output will therefore also "
+                  "not have any WCS. If you want to use the "
+                  "MakeProfiles WCS options ('--crpix', '--crval' and "
+                  "etc) to manually set the WCS of your output image, "
+                  "please do _not_ use '--background' and give the "
+                  "final size (in pixels) of your desired output through "
+                  "the '--mergedsize' option. You can suppress this "
+                  "warning with the '--quiet' option",
+                  gal_fits_name_save_as_string(p->backname, p->backhdu));
+        }
+      else
+        ui_prepare_wcs(p);
+    }
 
 
   /* Set the name, comments and units of the final merged output. */

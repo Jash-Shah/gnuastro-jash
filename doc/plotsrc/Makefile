@@ -68,8 +68,13 @@ $(finaltarget): all.tex ./tex/*.tex ./conversions.sh | tikz
 #        NOTE II: All non-plot PNG figures should be listed here.
 #   2. Remove everything in the gnuastro-figures directory
 #   3. Put the actual images back in that directory.
+tokeep = epicycles.png gnuastro.svg README
 clean:
 	rm -rf all.pdf tikz \
-	&& cp ../gnuastro-figures/epicycles.png ./ \
+	&& for f in $(tokeep); do \
+	     cp ../gnuastro-figures/$$f ./$$f-tmp; \
+	   done \
 	&& rm ../gnuastro-figures/* \
-	&& mv epicycles.png ../gnuastro-figures/
+	&& for f in $(tokeep); do \
+	     mv ./$$f-tmp ../gnuastro-figures/$$f; \
+	   done

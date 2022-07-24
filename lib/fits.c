@@ -3028,14 +3028,15 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
   size_t i, index;
   long long *tzero;
   gal_data_t *allcols;
-  int status=0, datatype, *tscal;
+  int status=0, rkstatus=0, datatype, *tscal;
   char keyname[FLEN_KEYWORD]="XXXXXXXXXXXXX", value[FLEN_VALUE];
 
   /* Necessary when a keyword can't be written immediately as it is read in
      the FITS header and it actually depends on other data before. */
-  gal_list_str_t *tmp_n, *later_name=NULL;
-  gal_list_str_t *tmp_v, *later_value=NULL;
+  gal_list_str_t   *tmp_n, *later_name=NULL;
+  gal_list_str_t   *tmp_v, *later_value=NULL;
   gal_list_sizet_t *tmp_i, *later_index=NULL;
+
 
   /* Open the FITS file and get the basic information. */
   fptr=gal_fits_hdu_open_format(filename, hdu, 1);
@@ -3063,21 +3064,25 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
           tfields*sizeof *tzero);
 
 
-  /* Read all the keywords one by one and if they match, then put them in
-     the correct value. Note that we are starting from keyword 9 because
-     according to the FITS standard, the first 8 keys in a FITS table are
-     reserved. */
-  for(i=9; strcmp(keyname, "END"); ++i)
+  /* Read all the keywords one by one. If they match any of the standard
+     Table metadata keywords, then put them in the correct value. Some
+     notes about this loop:
+       - We are starting from keyword 9 because according to the FITS
+         standard, the first 8 keys in a FITS table are reserved.
+       - When 'fits_read_keyn' has been able to read the keyword and its
+         value, it will return '0'. The returned value is also stored in
+         'rkstatus' (Read Keyword STATUS), which we need to check after the
+         loop. */
+  i=8;
+  while( fits_read_keyn(fptr, ++i, keyname, value, NULL, &rkstatus) == 0 )
     {
-      /* Read the next keyword. */
-      fits_read_keyn(fptr, i, keyname, value, NULL, &status);
-
       /* For string valued keywords, CFITSIO's function above, keeps the
          single quotes around the value string, one before and one
          after. 'gal_fits_key_clean_str_value' will remove these single
          quotes and any possible trailing space within the allocated
          space.*/
       if(value[0]=='\'') gal_fits_key_clean_str_value(value);
+
 
       /* COLUMN DATA TYPE. According the the FITS standard, the value of
          TFORM is most generally in this format: 'rTa'. 'T' is actually a
@@ -3095,21 +3100,36 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
              keywords beyond the number of columns, but we don't want to be
              that strict here.*/
           index = strtoul(&keyname[5], &tailptr, 10) - 1;
-          if(index<tfields)     /* Counting from zero was corrected above. */
+          if(index<tfields)  /* Counting from zero was corrected above. */
             {
               /* The FITS standard's value to this option for FITS ASCII
                  and binary files differ. */
               if(*tableformat==GAL_TABLE_FORMAT_AFITS)
-                fits_ascii_tform(value, &datatype, NULL, NULL, &status);
+                {
+                  /* 'repeat' is not defined for ASCII tables in FITS, so
+                     it should be 1 (zero means that the column is empty);
+                     while we actually have one number in each row. */
+                  repeat=1;
+                  fits_ascii_tform(value, &datatype, NULL, NULL, &status);
+                }
               else
-                fits_binary_tform(value, &datatype, &repeat, NULL, &status);
+                {
+                  /* Read the column's numeric data type. */
+                  fits_binary_tform(value, &datatype, &repeat, NULL,
+                                    &status);
 
-              /* Write the "repeat" element into 'allcols->minmapsize', but
+                  /* Set the repeat flag if necessary (recall that by
+                     default 'allcols[index].minmapsize' will be zero! So
+                     we need this flag to confirm that the zero there is
+                     meaningful.*/
+                  if(repeat==0)
+                    allcols[index].flag
+                      |= GAL_TABLEINTERN_FLAG_TFORM_REPEAT_IS_ZERO;
+                }
+
+              /* Write the "repeat" element into 'allcols->minmapsize',
                  also activate the repeat flag within the dataset.*/
               allcols[index].minmapsize = repeat;
-              if(repeat==0)
-                allcols[index].flag
-                  |= GAL_TABLEINTERN_FLAG_TFORM_REPEAT_IS_ZERO;
 
               /* Write the type into the data structure. */
               allcols[index].type=gal_fits_datatype_to_type(datatype, 1);
@@ -3122,23 +3142,24 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
                     {
                       repeat=strtol(value+1, &tailptr, 0);
                       if(*tailptr!='\0')
-                        error(EXIT_FAILURE, 0, "%s (hdu: %s): the value to "
-                              "keyword '%s' ('%s') is not in 'Aw' format "
-                              "(for strings) as required by the FITS "
-                              "standard in %s", filename, hdu, keyname, value,
-                              __func__);
+                        error(EXIT_FAILURE, 0, "%s (hdu: %s): the value "
+                              "to keyword '%s' ('%s') is not in 'Aw' "
+                              "format (for strings) as required by the "
+                              "FITS standard in %s", filename, hdu,
+                              keyname, value, __func__);
                     }
 
                   /* TFORM's 'repeat' element can be zero (signifying a
                      column without any data)! In this case, we want the
                      output to be fully blank, so we need space for the
                      blank string. */
-                  allcols[index].disp_width = ( repeat
-                                                ? repeat
-                                                : strlen(GAL_BLANK_STRING)+1);
+                  allcols[index].disp_width=( repeat
+                                              ? repeat
+                                              : strlen(GAL_BLANK_STRING)+1);
                 }
             }
         }
+
 
       /* COLUMN SCALE FACTOR. */
       else if(strncmp(keyname, "TSCAL", 5)==0)
@@ -3148,11 +3169,12 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             {
               tscal[index]=strtol(value, &tailptr, 0);
               if(*tailptr!='\0')
-                error(EXIT_FAILURE, 0, "%s (hdu: %s): value to %s keyword "
-                      "('%s') couldn't be read as a number in %s", filename,
-                      hdu, keyname, value, __func__);
+                error(EXIT_FAILURE, 0, "%s (hdu: %s): value to %s "
+                      "keyword ('%s') couldn't be read as a number "
+                      "in %s", filename, hdu, keyname, value, __func__);
             }
         }
+
 
       /* COLUMN ZERO VALUE (for signed/unsigned types). */
       else if(strncmp(keyname, "TZERO", 5)==0)
@@ -3168,6 +3190,7 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             }
         }
 
+
       /* COLUMN NAME. All strings in CFITSIO start and finish with single
          quotation marks, CFITSIO puts them in itsself, so if we don't
          remove them here, we might have duplicates later, its easier to
@@ -3180,6 +3203,7 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             gal_checkset_allocate_copy(value, &allcols[index].name);
         }
 
+
       /* COLUMN UNITS. */
       else if(strncmp(keyname, "TUNIT", 5)==0)
         {
@@ -3188,6 +3212,7 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             gal_checkset_allocate_copy(value, &allcols[index].unit);
         }
 
+
       /* COLUMN COMMENTS */
       else if(strncmp(keyname, "TCOMM", 5)==0)
         {
@@ -3195,6 +3220,7 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
           if(index<tfields)
             gal_checkset_allocate_copy(value, &allcols[index].comment);
         }
+
 
       /* COLUMN BLANK VALUE. Note that to interpret the blank value the
          type of the column must already have been defined for this column
@@ -3228,6 +3254,7 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             }
         }
 
+
       /* COLUMN DISPLAY FORMAT */
       else if(strncmp(keyname, "TDISP", 5)==0)
         {
@@ -3236,9 +3263,16 @@ gal_fits_tab_info(char *filename, char *hdu, size_t *numcols,
             set_display_format(value, &allcols[index], filename, hdu,
                                keyname);
         }
-
-      /* Column zero. */
     }
+
+
+  /* The loop above finishes as soon as the 'status' of 'fits_read_keyn'
+     becomes non-zero. If the status is 'KEY_OUT_BOUNDS', then it shows we
+     have reached the end of the keyword list and there is no
+     problem. Otherwise, there is an unexpected problem and we should abort
+     and inform the user about the problem. */
+  if( rkstatus != KEY_OUT_BOUNDS )
+    gal_fits_io_error(rkstatus, NULL);
 
 
   /* If any columns should be added later because of missing information,
@@ -3378,13 +3412,13 @@ fits_tab_read_onecol(void *in_prm)
     = (struct fits_tab_read_onecol_params *)tprm->params;
 
   /* Subsequent definitions. */
-  void *blank;
   char **strarr;
   fitsfile *fptr;
   gal_data_t *col;
   gal_list_sizet_t *tmp;
+  void *blank, *blankuse;
   int isfloat, hdutype, anynul=0, status=0;
-  size_t i, j, c, indout, indin=GAL_BLANK_SIZE_T;
+  size_t i, j, c, strw, indout, indin=GAL_BLANK_SIZE_T;
 
   /* Open the FITS file */
   fptr=gal_fits_hdu_open_format(p->filename, p->hdu, 1);
@@ -3417,12 +3451,19 @@ fits_tab_read_onecol(void *in_prm)
          automatically in 'gal_fits_table_info'. */
       if(col->type==GAL_TYPE_STRING)
         {
+          /* Since the column may contain blank values, and the blank
+             string is pre-defined in Gnuastro, we need to be sure that for
+             each row, a blank string can fit. */
+          strw = ( strlen(GAL_BLANK_STRING) > p->allcols[indin].disp_width
+                   ? strlen(GAL_BLANK_STRING)
+                   : p->allcols[indin].disp_width );
+
+          /* Allocate the space for each row's strings. */
           strarr=col->array;
           for(j=0;j<p->numrows;++j)
             {
               errno=0;
-              strarr[j]=calloc(p->allcols[indin].disp_width+1,
-                               sizeof *strarr[j]);
+              strarr[j]=calloc(strw+1, sizeof *strarr[0]); /* +1 for '\0' */
               if(strarr[j]==NULL)
                 error(EXIT_FAILURE, errno, "%s: allocating %zu bytes for "
                       "strarr[%zu]", __func__,
@@ -3443,38 +3484,53 @@ fits_tab_read_onecol(void *in_prm)
       else
         {
           /* Allocate a blank value for the given type and read/store the
-             column using CFITSIO. Note that for binary tables, we only
-             need blank values for integer types. For binary floating point
-             types, the FITS standard defines blanks as NaN (same as almost
-             any other software like Gnuastro). However if a blank value is
-             specified, CFITSIO will convert other special numbers like
-             'inf' to NaN also. We want to be able to distringuish 'inf'
-             and NaN here, so for floating point types in binary tables, we
-             won't define any blank value. In ASCII tables, CFITSIO doesn't
-             read the 'NAN' values (that it has written itself) unless we
-             specify a blank pointer/value. */
+             column using CFITSIO.
+
+             * For binary tables, we only need blank values for integer
+               types. For binary floating point types, the FITS standard
+               defines blanks as NaN (same as almost any other software
+               like Gnuastro). However if a blank value is specified,
+               CFITSIO will convert other special numbers like 'inf' to NaN
+               also. We want to be able to distringuish 'inf' and NaN here,
+               so for floating point types in binary tables, we won't
+               define any blank value. In ASCII tables, CFITSIO doesn't
+               read the 'NAN' values (that it has written itself) unless we
+               specify a blank pointer/value.
+
+             * 'fits_read_col' takes the pointer to the thing that should
+               be placed in a blank column (for strings, the 'char *')
+               pointer. However, for strings, 'gal_blank_alloc_write' will
+               return a 'char **' pointer! So for strings, we need to
+               dereference the blank. This is why we need 'blankuse'. */
           isfloat = ( col->type==GAL_TYPE_FLOAT32
                       || col->type==GAL_TYPE_FLOAT64 );
           blank = ( ( hdutype==BINARY_TBL && isfloat )
                     ? NULL
                     : gal_blank_alloc_write(col->type) );
-          fits_read_col(fptr, gal_fits_type_to_datatype(col->type), indin+1,
-                        1, 1, col->size, blank, col->array, &anynul, &status);
+          blankuse = ( col->type==GAL_TYPE_STRING
+                       ? *((char **)blank)
+                       : blank);
+          fits_read_col(fptr, gal_fits_type_to_datatype(col->type),
+                        indin+1, 1, 1, col->size, blankuse, col->array,
+                        &anynul, &status);
 
-          /* In the ASCII table format, CFITSIO might not be able to read
-             'INF' or '-INF'. In this case, it will set status to 'BAD_C2D'
-             or 'BAD_C2F'. So, we'll use our own parser for the column
-             values. */
-          if( hdutype==ASCII_TBL
-              && isfloat
-              && (status==BAD_C2D || status==BAD_C2F) )
+          /* In the ASCII table format some things need to be checked. */
+          if( hdutype==ASCII_TBL )
             {
-              fits_tab_read_ascii_float_special(p->filename, p->hdu,
-                                                fptr, col, indin+1, p->numrows,
-                                                p->minmapsize, p->quietmmap);
-              status=0;
+              /* CFITSIO might not be able to read 'INF' or '-INF'. In this
+                case, it will set status to 'BAD_C2D' or 'BAD_C2F'. So,
+                we'll use our own parser for the column values. */
+              if(isfloat && (status==BAD_C2D || status==BAD_C2F) )
+                {
+                  fits_tab_read_ascii_float_special(p->filename, p->hdu,
+                                                    fptr, col, indin+1,
+                                                    p->numrows,
+                                                    p->minmapsize,
+                                                    p->quietmmap);
+                  status=0;
+                }
             }
-          gal_fits_io_error(status, NULL); /* After the 'status' correction. */
+          gal_fits_io_error(status, NULL); /* After 'status' correction. */
 
           /* Clean up and sanity check (just note that the blank value for
              strings, is an array of strings, so we need to free the

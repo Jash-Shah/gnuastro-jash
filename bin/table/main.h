@@ -66,16 +66,20 @@ struct arithmetic_token
   int            operator;  /* OPERATOR: Code of operator.                */
   size_t     num_operands;  /* OPERATOR: Number of required operands.     */
   size_t            index;  /* OPERAND: Index in requested columns.       */
+  char       *id_at_usage;  /* OPERAND: col identifier at usage time.     */
+  size_t     num_at_usage;  /* OPERAND: col number at usage.              */
   gal_data_t    *constant;  /* OPERAND: a constant/single number.         */
+  gal_data_t     *loadcol;  /* OPERAND: column from another file.         */
   char          *name_def;  /* Name given to the 'set-' operator.         */
   char          *name_use;  /* If this a usage of a name.                 */
   struct arithmetic_token *next;  /* Pointer to next token.               */
 };
 
+/*  */
 struct column_pack
 {
   size_t                    start; /* Starting ind. in requested columns. */
-  size_t                numsimple; /* Number of simple columns.           */
+  size_t                numsimple; /* Num. of simple columns (no change). */
   struct arithmetic_token  *arith; /* Arithmetic tokens to use.           */
   struct column_pack        *next; /* Next output column.                 */
 };
@@ -138,6 +142,7 @@ struct tableparams
   gsl_rng                *rng;  /* Main random number generator.        */
   const char        *rng_name;  /* Name of random number generator.     */
   unsigned long int  rng_seed;  /* Random number generator seed.        */
+  size_t            *colmatch;  /* Number of matches found for columns. */
 
   /* For arithmetic operators. */
   gal_list_str_t  *wcstoimg_p;  /* Pointer to the node.                 */

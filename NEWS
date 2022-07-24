@@ -3,7 +3,22 @@ GNU Astronomy Utilities NEWS                          -*- outline -*-
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
-* Noteworthy changes in release X.XX (library XX.X.X) (YYYY-MM-DD) [not yet released]
+
+* Noteworthy changes in release X.XX (library XX.X.X) (XXXX-XX-XX) [not yet released]
+
+** New features
+
+** Removed features
+
+** Changed features
+
+** Bugs fixed
+
+
+
+
+
+* Noteworthy changes in release 0.18 (library 16.0.0) (2022-07-21)
 
 ** New features
 
@@ -17,7 +32,7 @@ See the end of the file for license conditions.
      Eskandarlou.
 
   Arithmetic:
-   - New operators:
+   - New operators (also available in Table's column arithmetic):
      - stitch: connect any number of input images along the given dimension
        (for example to stitch the images of separate amplifiers of a CCD
        into one image).
@@ -27,6 +42,36 @@ See the end of the file for license conditions.
        Zeropoint (the inverse operator 'counts-to-jy' already existed).
      - mag-to-jy: convert AB magnitudes to Janskys.
      - jy-to-mag: convert Janskys to AB magnitudes.
+     - load-col-%-from-%-hdu-%: Load a certain column into the operands
+       stack. The name or number of the column is the first '%'. The file
+       name hosting that column is the second '%', and HDU (if the file is
+       a FITS file), is identified by third '%'. This can be used to load
+       columns outside the main table in Table's column arithmetic or by
+       operators that need columns as input parameters (like the new
+       'random-from-hist' operator).
+     - random-from-hist-raw: return a set of random points based on a
+       custom distribution defined by its histogram. See the description
+       and complete examples in the book for more.
+     - random-from-hist: Similar to 'random-from-hist-raw', but within each
+       bin, the final returned value is itself the result of a uniform
+       sampling (to make the final distribution less descrete). See the
+       example in the book for selecting random star magnitudes based on
+       Gaia's observed magnitude distribution.
+   - New options to add metadata (standard FITS keywords) to your output
+     for easy understanding of the data in the future, or by your
+     colleagues if you share the output). Until now, to have this feature,
+     you needed to call Fits on the output of Arithmetic (for setting the
+     HDU name to "my-sum" for example):
+         astarithmetic img-a.fits img-b.fits + --output=sum.fits
+         astfits sum.fits --write=EXTNAME,"my-sum"
+     But with the following commands, you can add important metadata to the
+     output of Arithmetic in the same command and simplify your scripts:
+       --metaname: Metadata name of the output (FITS keyword: 'EXTNAME').
+       --metaunit: Unit of the output's pixels (FITS keyword: 'BUNIT').
+       --metacomment: Description of the data (FITS keyword: 'COMMENT').
+     Like the following for the example above:
+         astarithmetic img-a.fits img-b.fits + --metaname="my-sum" \
+                       --output=sum.fits
 
   Crop:
    --oneelemstdout: when a crop has a single pixel and this option is
@@ -37,6 +82,10 @@ See the end of the file for license conditions.
      Raul Infante-Sainz.
 
   Fits:
+   - When no option is specified (thus printing the HDU metadata in the
+     given file), the units of the HDUs are also printed as a new
+     column. For tables, it will be blank ('n/a'); because tables have
+     separate units on each column (use 'asttable table.fits -i').
    --copykeys: can now take any number of keyword names also. For example
      '--copykeys=KEYNAME1,KEYNAME2,KEYNAME3'. Until now, it was only
      possible to give this option a range of keyword positions (for example
@@ -77,14 +126,39 @@ See the end of the file for license conditions.
    - GAL_ARITHMETIC_OP_UNIQUE: to find unique elements in dataset.
    - GAL_ARITHMETIC_OP_NOBLANK: to remove blank elements from dataset.
    - GAL_ARITHMETIC_OP_STITCH: to stitch multiple datasets.
+   - GAL_ARITHMETIC_OP_RANDOM_FROM_HIST: the new 'random-from-hist' operator.
+   - GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW: the new 'random-from-hist-raw' op.
+   - gal_arithmetic_load_col: Low-level function for parsing the string of
+     the newly added 'load-col' operator, mentioned in the Arithmetic
+     section above.
+   - gal_statistics_std_from_sums: return the standard deviation using the
+     sum, sum of squares and number of a distribution.
 
 ** Removed features
 
 ** Changed features
 
   MakeCatalog:
+   --std: measures the standard deviation of the object/clump pixels of the
+          values image. Until now, there was no column to calculate this,
+          and the '--std' column returned the _sky_ standard deviation over
+          the object/clump labels (from the standard deviation image,
+          ignoring the values image). But that was confusing, especially
+          since we have columns like '--mean' or '--median' which only use
+          the values image (see bug #62685).
+   --skystd: new name for old '--std', see description of '--std' above.
    --sfmagnsigma: default value changed to 3 (more commonly used).
    --sfmagarea: default value set to 100 arcsec^2 (more commonly used).
+   --upnum: MakeCatalog won't abort when '--upnum' is too small (less than
+     20). '--upnum' defines the number of random positions for upper-limit
+     measurements, so when its too small, the statistical precision of the
+     result will badly affected and MakeCatalog would abort with an error
+     message. However, in some scenarios (for example when the positions of
+     the random apertures from '--checkuplim' are needed) the actual
+     upper-limit measurements aren't relevant! So from this version,
+     instead of aborting MakeCatalog, it prints a warning and
+     continues. This was suggested by S. Zahra Hosseini Shahisavandi and
+     Ignacio Trujillo.
 
   MakeProfiles:
    - The string identifier for custom radial profiles is now called
@@ -101,11 +175,26 @@ See the end of the file for license conditions.
      functionality was proposed by Elham Saremi.
 
   Table:
+   --catcolumnfile: the '-N' suffix (where 'N' is a counter for the files
+     with concatenated, or appended, column) is only added if a column with
+     a identical column name (not case sensitive) existed in the
+     table. Until now, this suffix would be added to all the newly
+     concatenated columns (recall that the suffix addition can be disabled
+     in general with the '--catcolumnrawname' option).
    --rowrange: new name for the old '--rowlimit'. This option takes the
      range of desired rows based on their position (for example
      '--rowrange=2,5' will only print rows 2, 3, 4 and 5 of the table). But
      the old name was very confusing and would not directly convey this
      behavior.
+
+  Radial profile script:
+   --azimuth: if the first azimuthal angle is larger than the second, the
+     outer region between the two angles will be used. For example
+     '--azimuth=80,40' will use the full azimuthal range except for the
+     region with azimuthal angles between 40 and 80 degrees. This can be
+     useful to ignore parts of the profile. See the example in the
+     description of this option on how to visually check the pixels used
+     for the profile.
 
 ** Bugs fixed
   bug #62216: MakeProfiles crash when a 3D cube is requested and input
@@ -142,6 +231,38 @@ See the end of the file for license conditions.
               called. Reported by Sepideh Eskandarlou.
   bug #62662: Table crashes when column arithmetic is applied after adding
               rows from another file (with '--catrowfile').
+  bug #62674: Column arithmetic can't use columns from --catcolumnfile.
+  bug #62678: Radial profile script using values image instead of STD image
+              when '--instd' not used. Found and fixed by Raul Infante-Sainz.
+  bug #62679: MakeProfiles kernel only normalized when zeropoint is
+              zero. Found by Raul Infante-Sainz.
+  bug #62680: MakeProfiles using WCS-options when --background is given and
+              the background doesn't have WCS. Found with the help of Raul
+              Infante-Sainz.
+  bug #62683: Arithmetic's 'set-' operator not working after the 'makenew'
+              operator. Found by Raul Infante-Sainz.
+  bug #62685: MakeCatalog's '--std' option is wrongly interpreted as the
+              standard deviation of the values image, while it is actually
+              the root mean square of the Sky standard deviation
+              pixels. Found by Raul Infante-Sainz.
+  bug #62694: Radial profile script overestimates the surface brightness
+              error. Found and fixed with the help of Raul Infante-Sainz.
+  bug #62710: Plain-text integers starting with 0 are read in the octal
+              base (which is common in software engineering, but not in
+              data analysis). Found by Manuel Sánchez-Benavente.
+  bug #62718: Table goes into an infinite loop on some old ASCII FITS
+              tables. Found by Hilderic Browne.
+  bug #62720: Table not reading string columns that are shorter than the
+              defined width in the metadata.
+  bug #62721: Radial profile script can't deal with angles around azimuth
+              zero (for example '--azimuth=355,5' to get only the azimuthal
+              range of 10 degrees around the major axis). Found and fixed
+              by Samane Raji.
+  bug #62784: Conversion of sexagesimal RA or Dec ignores sign when first
+              digit is zero (for example '-00d12m34'). Found by Manuel
+              Sánchez-Benavente.
+  bug #62794: psf-stamp scripts produces inconsistant outputs on
+              failure. Found by Sepideh Eskandarlou and Nafise Sedighi.
 
 
 

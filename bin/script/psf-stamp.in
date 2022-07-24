@@ -246,6 +246,12 @@ EOF
     fi
 }
 
+all_nan_warning() {
+    cat <<EOF
+$scriptname: WARNING: all the pixels in the requested normalization radius are NaN. Therefore the output stamp will be all NaN. If you later use this stamp (among others) with any stack operator of 'astarithmetic' this image will effectively be ignored, so you can safely continue with stacking all the files
+EOF
+}
+
 
 
 
@@ -547,17 +553,33 @@ fi
 # Crop the object around its center with the given stamp size width. It may
 # happen that the given coordinate is fully outside of the image (within
 # the requested stamp-width). In this case Crop won't generate any output,
-# so we are checking the output name here.
+# so we are checking the existance of the '$cropped' file. If not created
+# we will create a fully NaN-valued image that can be ignored in stacks.
+#
+# We are setting '--checkcenter=0' in Crop so it doesn't check if the
+# central pixel is covered or not (we may be interested in the outer parts
+# of the PSF of a star that is centered outside of the image).
 cropped=$tmpdir/cropped-$objectid.fits
-astcrop $inputs --hdu=$hdu --mode=img \
+astcrop $inputs --hdu=$hdu --mode=img --checkcenter=0 \
         --width=$xstampwidth,$ystampwidth \
         --center=$xcenter,$ycenter \
         --output=$cropped $quiet
 if ! [ -f $cropped ]; then
-    cat <<EOF
-$scriptname: ERROR: the coordinate '$center' (in '$mode' mode) is not within the image (within $xstampwidth x $ystampwidth pixels from the edges of the input image).
-EOF
-    exit 1
+
+    # 'makenew' will generate a fully 0-valued image. Adding (with '+') any
+    # number by NaN will be NaN. Therefore the output of the Arithmetic
+    # command below will be a fully NaN-valued image.
+    astarithmetic $xstampwidth $ystampwidth 2 makenew float32 \
+                  nan + $quiet --output=$output
+
+    # Write an empty 'NORMVAL' keyword (as is expected from this program).
+    astfits $output --write=NORMVAL,nan,"Normalization value"
+
+    # Let the user know what happened.
+    if [ x"$quiet" = x ]; then all_nan_warning; fi
+
+    # Return successfully and don't continue
+    exit 0
 fi
 
 
@@ -583,36 +605,31 @@ fi
 #     sky.
 #   - Mask all non zero pixels in the mask image as nan values.
 if [ x"$segment" != x ]; then
-    clab="not-initialized"
-    olab="not-initialized"
-    # Find the object and clump labels of the target. Labels are saved into
-    # plain text files just in case they are necessary for debugging tasks.
-    cropped_core_clump=$tmpdir/cropped-core-clump-$objectid.fits
-    cropped_core_object=$tmpdir/cropped-core-object-$objectid.fits
-    clumplab=$(astcrop $segment --hdu=CLUMPS --mode=img --width=1,1 \
-               --widthinpix --oneelemstdout --center=$xcenter,$ycenter \
-               --output=$cropped_core_clump --quiet)
-    objectlab=$(astcrop $segment --hdu=OBJECTS --mode=img --width=1,1 \
-                --widthinpix --oneelemstdout --center=$xcenter,$ycenter \
-                --output=$cropped_core_object --quiet)
-    echo $clumplab > $tmpdir/cropped-core-clump-$objectid.txt
-    echo $objectlab > $tmpdir/cropped-core-object-$objectid.txt
 
-    # Read the labels
-    clab=$(cat $tmpdir/cropped-core-clump-$objectid.txt)
-    olab=$(cat $tmpdir/cropped-core-object-$objectid.txt)
+    # Find the object and clump labels of the target.
+    clab=$(astcrop $segment --hdu=CLUMPS --mode=img --width=1,1 \
+                   --oneelemstdout --center=$xcenter,$ycenter \
+                   --quiet)
+    olab=$(astcrop $segment --hdu=OBJECTS --mode=img --width=1,1 \
+                   --oneelemstdout --center=$xcenter,$ycenter \
+                   --quiet)
 
     # If for any reason, a clump or object label couldn't be initialized at
     # the given coordiante, simply ignore this step. But print a warning so
     # the user is informed of the situation (and that this is a bug: 'clab'
     # should be initialized!).
-    if [ "$clab" = "not-initialized"   -o   "$olab" = "not-initialized" ]; then
+    if [ x"$clab" = x   -o   x"$olab" = x ]; then
         cat <<EOF
-$scriptname: WARNING: a bug! Please contact us at 'bug-gnuastro@gnu.org' to fix the problem. For some reason, no clump or object label could be initialized for the given coordinate within the given Segment image.
+$scriptname: WARNING: no clump or object label could be found in '$segment' for the coordinate $center
 EOF
         cropped_masked=$cropped
 
     else
+        # To help in debugging (when '--quiet' is not called)
+        if [ x"$quiet" = x ]; then
+            echo "$scriptname: $segment: at $center, found clump $clab in object $olab"
+        fi
+
         # Crop the object and clump image to same size as desired stamp.
         cropclp=$tmpdir/cropped-clumps-$objectid.fits
         cropobj=$tmpdir/cropped-objects-$objectid.fits
@@ -712,11 +729,14 @@ astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
 # are kept into the header of the output file. The data kept are: object
 # and clump that were not masked and the normalization value. If not masks
 # were applied, then set the clump and object labels to 'none'.
-if [ x"$clab" = x ]; then clab="none"; fi
-if [ x"$olab" = x ]; then olab="none"; fi
-astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
-                --write=CLABEL,$clab,"CLUMP label that was not masked" \
-                --write=OLABEL,$olab,"OBJECT label that was not masked"
+if [ x"$clab" = x ]; then
+    astfits $output --write=NORMVAL,$normvalue,"Normalization value"
+else
+    astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
+            --write=CLABEL,$clab,"CLUMP label that was not masked" \
+            --write=OLABEL,$olab,"OBJECT label that was not masked"
+fi
+
 
 
 
@@ -724,13 +744,7 @@ astfits $output --write=NORMVAL,$normvalue,"Normalization value" \
 # Print warning. We are printing this warning here (at the end of the
 # script) because we dont want it to be mixed with the outputs of the
 # previus commands.
-if [ $normvalue = nan ]; then
-    if [ x"$quiet" = x ]; then
-        cat <<EOF
-$scriptname: WARNING: all the pixels in the requested normalization radius are NaN. Therefore the output stamp will be fully NaN. When you use this stamp with any stack operator of 'astsrithmetic' (for making the PSF) this image will effectively be ignored
-EOF
-    fi
-fi
+if [ x"$quiet" = x ] && [ $normvalue = nan ]; then all_nan_warning; fi
 
 
 

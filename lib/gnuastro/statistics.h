@@ -91,6 +91,9 @@ gal_statistics_std(gal_data_t *input);
 gal_data_t *
 gal_statistics_mean_std(gal_data_t *input);
 
+double
+gal_statistics_std_from_sums(double sum, double sump2, size_t num);
+
 gal_data_t *
 gal_statistics_median(gal_data_t *input, int inplace);
 

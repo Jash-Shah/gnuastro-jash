@@ -149,7 +149,8 @@ operands_add(struct arithmeticparams *p, char *filename, gal_data_t *data)
 
       /* If the 'filename' is the name of a dataset, then use a copy of it.
          otherwise, do the basic analysis. */
-      if( filename && gal_arithmetic_set_is_name(p->setprm.named, filename) )
+      if( filename
+          && gal_arithmetic_set_is_name(p->setprm.named, filename) )
         {
           newnode->filename=NULL;
           newnode->data=gal_arithmetic_set_copy_named(&p->setprm, filename);
@@ -243,15 +244,6 @@ operands_pop(struct arithmeticparams *p, char *operator)
                                  p->cp.quietmmap);
       data->ndim=gal_dimension_remove_extra(data->ndim, data->dsize, NULL);
 
-      /* Arithmetic changes the contents of a dataset, so the old name and
-         metadata (in the FITS 'EXTNAME' keyword for example) must not be
-         used beyond this point. Furthermore, in Arithmetic, the 'name'
-         element is used to identify variables (with the 'set-'
-         operator). */
-      if(data->name)    { free(data->name);    data->name=NULL;    }
-      if(data->unit)    { free(data->unit);    data->unit=NULL;    }
-      if(data->comment) { free(data->comment); data->comment=NULL; }
-
       /* When the reference data structure's dimensionality is non-zero, it
          means that this is not the first image read. So, write its basic
          information into the reference data structure for future
@@ -287,6 +279,13 @@ operands_pop(struct arithmeticparams *p, char *operator)
   else
     data=operands->data;
 
+  /* Arithmetic changes the contents of a dataset, so the old name and
+     metadata (in the FITS 'EXTNAME' keyword for example) must not be used
+     beyond this point. Furthermore, in Arithmetic, the 'name' element is
+     used to identify variables (with the 'set-' operator). */
+  if(data->name)    { free(data->name);    data->name=NULL;    }
+  if(data->unit)    { free(data->unit);    data->unit=NULL;    }
+  if(data->comment) { free(data->comment); data->comment=NULL; }
 
   /* Remove this node from the queue, return the data structure. */
   p->operands=operands->next;

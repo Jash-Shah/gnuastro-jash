@@ -163,7 +163,6 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 @subtitle @url{http://akhlaghi.org/gnuastro-latest.tar.lz}
 @subtitle To stay up to date with Gnuastro's official releases, please subscribe to this mailing list:
 @subtitle @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}
-@subtitle
 @author Mohammad Akhlaghi
 
 @page
@@ -506,8 +505,9 @@ Arithmetic operators
 * Mathematical morphology operators::  Work on binary images, for example erode.
 * Bitwise operators::           Work on bits within one pixel.
 * Numerical type conversion operators::  Convert the numeric datatype of a dataset.
-* Adding noise operators::      Add noise to a dataset.
+* Random number generators::    Random numbers can be used to add noise for example.
 * Elliptical shape operators::  Operations that are focused on an ellipse.
+* Loading external columns::    Read a column from a table into the stack.
 * Building new dataset::        How to construct an empty dataset from scratch.
 * Operand storage in memory or a file::  Tools for complex operations in one command.
 
@@ -562,7 +562,7 @@ Statistics
 
 2D Histograms
 
-* 2D histogram as a table::     Format and usage in table format.
+* 2D histogram as a table for plotting::  Format and usage in table format.
 * 2D histogram as an image::    Format and usage in image format
 
 Sky value
@@ -914,26 +914,30 @@ As discussed in @ref{Science and its tools} this is a founding principle of the 
 @cindex GNU Tar
 @cindex Uncompress source
 @cindex Source, uncompress
-The latest official release tarball is always available as @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.gz, @file{gnuastro-latest.tar.gz}}.
-For better compression (faster download), and robust archival features, an @url{http://www.nongnu.org/lzip/lzip.html, Lzip} compressed tarball is also available at @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz, @file{gnuastro-latest.tar.lz}}, see @ref{Release tarball} for more details on the tarball release@footnote{The Gzip library and program are commonly available on most systems.
-However, Gnuastro recommends Lzip as described above and the beta-releases are also only distributed in @file{tar.lz}.
-You can download and install Lzip's source (in @file{.tar.gz} format) from its web page and follow the same process as below: Lzip has no dependencies, so simply decompress, then run @command{./configure}, @command{make}, @command{sudo make install}.}.
+The latest official release tarball is always available as @url{http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz, @file{gnuastro-latest.tar.lz}}.
+The @url{http://www.nongnu.org/lzip/lzip.html, Lzip} format is used for better compression (smaller output size, thus faster download), and robust archival features and standards.
+For historical reasons (those users that don't yet have Lzip), the Gzip'd tarball@footnote{The Gzip library and program are commonly available on most systems.
+However, Gnuastro recommends Lzip as described above and the beta-releases are also only distributed in @file{tar.lz}.} is available at the same URL (just change the @file{.lz} suffix above to @file{.gz}; however, the Lzip'd file is recommended).
+See @ref{Release tarball} for more details on the tarball release.
 
 Let's assume the downloaded tarball is in the @file{TOPGNUASTRO} directory.
-The first two commands below can be used to decompress the source.
-If you download @file{tar.lz} and your Tar implementation doesn't recognize Lzip (the second command fails), run the third and fourth lines@footnote{In case Tar doesn't directly uncompress your @file{.tar.lz} tarball, you can merge the separate calls to Lzip and Tar (shown in the main body of text) into one command by directly piping the output of Lzip into Tar with a command like this: @command{$ lzip -cd gnuastro-0.5.tar.lz | tar -xf -}}.
-Note that lines starting with @code{##} don't need to be typed.
+You can follow the commands below to download and un-compress the Gnuastro source.
+You need to have the @command{lzip} program for the decompression (see @ref{Dependencies from package managers})
+If your Tar implementation doesn't recognize Lzip (the third command fails), run the fourth command.
+Note that lines starting with @code{##} don't need to be typed (they are only a description of the following command):
 
 @example
 ## Go into the download directory.
 $ cd TOPGNUASTRO
 
-## Also works on `tar.gz'. GNU Tar recognizes both formats.
-$ tar xf gnuastro-latest.tar.lz
+## If you don't already have the tarball, you can download it:
+$ wget http://ftp.gnu.org/gnu/gnuastro/gnuastro-latest.tar.lz
+
+## If this fails, run the next command.
+$ tar -xf gnuastro-latest.tar.lz
 
 ## Only when the previous command fails.
-$ lzip -d gnuastro-latest.tar.lz
-$ tar xf gnuastro-latest.tar
+$ lzip -cd gnuastro-latest.tar.lz | tar -xf -
 @end example
 
 Gnuastro has three mandatory dependencies and some optional dependencies for extra functionality, see @ref{Dependencies} for the full list.
@@ -947,18 +951,18 @@ $ ./configure
 $ make -j8                         # Replace 8 with no. CPU threads.
 $ make check -j8                   # Replace 8 with no. CPU threads.
 $ sudo make install
-$ echo "source /usr/local/share/gnuastro/completion.bash" >> ~/.bashrc
+@c $ echo "source /usr/local/share/gnuastro/completion.bash" >> ~/.bashrc
 @end example
 
-@noindent
-The last command is to enable Gnuastro's custom TAB completion in Bash.
-For more on this useful feature, see @ref{Shell TAB completion}).
+@c @noindent
+@c The last command is to enable Gnuastro's custom TAB completion in Bash.
+@c For more on this useful feature, see @ref{Shell TAB completion}).
 
 For each program there is an `Invoke ProgramName' sub-section in this book which explains how the programs should be run on the command-line (for example @ref{Invoking asttable}).
 
-Some complete Tutorials are also available in this book with common Gnuastro usage scenarios in astronomical research.
+In @ref{Tutorials}, we have prepared some complete tutorials with common Gnuastro usage scenarios in astronomical research.
 They even contain links to download the necessary data, and thoroughly describe every step of the process (the science, statistics and optimal usage of the command-line).
-We therefore strongly recommend to follow the tutorials before starting to use Gnuastro, see @ref{Tutorials}.
+We therefore recommend to read (an run the commands in) the tutorials before starting to use Gnuastro.
 
 
 
@@ -1156,7 +1160,7 @@ This sharp distinction between the contiguous and pixelated view of the galaxy s
 However, when we observe nature, we are confined and constrained by the resolution of our data collection (CCD imager in this case).
 
 On the other hand, we read English text from the left and progress towards the right.
-This defins the positioning of the ``real'' and observed halfs of the galaxy: the no-noised and contiguous half (on the left) passes through our observing tools and becomes pixelated and noisy half (on the right).
+This defines the positioning of the ``real'' and observed halves of the galaxy: the no-noised and contiguous half (on the left) passes through our observing tools and becomes pixelated and noisy half (on the right).
 It is the job of scientific software like Gnuastro to help interpret the underlying mechanisms of the ``real'' universe from the pixelated and noisy data.
 
 Gnuastro's logo was designed by Marjan Akbari.
@@ -1577,6 +1581,7 @@ Roland Bacon,
 Roberto Baena Gall@'e,
 Zahra Bagheri,
 Karl Berry,
+Faezeh Bijarchian,
 Leindert Boogaard,
 Nicolas Bouch@'e,
 Stefan Br@"uns,
@@ -1597,12 +1602,14 @@ Alessandro Ederoclite,
 Elham Eftekhari,
 Paul Eggert,
 Sepideh Eskandarlou,
+S@'ilvia Farras,
 Juan Antonio Fernández Ontiveros,
 Gaspar Galaz,
 Andr@'es García-Serra Romero,
 Zohre Ghaffari,
 Th@'er@`ese Godefroy,
 Giulia Golini,
+Craig Gordon,
 Martin Guerrero Roncel,
 Madusha Gunawardhana,
 Bruno Haible,
@@ -1620,10 +1627,12 @@ Mohammad-Reza Khellat,
 Johan Knapen,
 Geoffry Krouchi,
 Martin Kuemmel,
+Teet Kuutma,
 Clotilde Laigle,
 Floriane Leclercq,
 Alan Lefor,
 Javier Licandro,
+Jeremy Lim,
 Alejandro Lumbreras Calle,
 Sebasti@'an Luna Valero,
 Alberto Madrigal,
@@ -1640,6 +1649,7 @@ Dmitrii Oparin,
 Fran@,{c}ois Ochsenbein,
 Bertrand Pain,
 William Pence,
+Irene Pintos Castro,
 Mamta Pommier,
 Marcel Popescu,
 Bob Proulx,
@@ -1875,8 +1885,8 @@ As described above, the catalog of profiles to build will be a table (multiple c
 5  450.0   450.0  4  0   0.0  0.0  0.0  7.50  0.0
 @end example
 
-This contains all the ``data'' to build the profile, and you can easily pass it to Gnuastro's MakeProfiles: since Sufi already knows the columns and expeccted values very good, he has placed the information in the proper columns.
-However, when the student sees this, he just sees a mumble-jumple of numbers!
+This contains all the ``data'' to build the profile, and you can easily pass it to Gnuastro's MakeProfiles: since Sufi already knows the columns and expected values very good, he has placed the information in the proper columns.
+However, when the student sees this, he just sees a mumble-jumble of numbers!
 Generally, Sufi explains to the student that even if you know the number positions and values very nicely today, in a couple of months you will forget!
 It will then be very hard for you to interpret the numbers properly.
 So you should never use naked data (or data without any extra information).
@@ -1955,7 +1965,7 @@ test.txt
 @end example
 
 @noindent
-Now that you confirm the existance of @file{test.txt}, you can see its contents with the @command{cat} command (short for ``concatenation''; because it can also merge multiple files together):
+Now that you confirm the existence of @file{test.txt}, you can see its contents with the @command{cat} command (short for ``concatenation''; because it can also merge multiple files together):
 
 @example
 $ cat test.txt
@@ -2186,7 +2196,7 @@ This is the same dimensions as Sufi had desired in the beginning.
 All this trouble was certainly worth it because now there is no dimming on the edges of the image and the profile centers are more accurately sampled.
 
 The final step to simulate a real observation would be to add noise to the image.
-Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a magnitude of 7 that night.
+Sufi set the zero point magnitude to the same value that he set when making the mock profiles and looking again at his observation log, he had measured the background flux near the nebula had a @emph{per-pixel} magnitude of 7 that night.
 For more on how the background value determines the noise, see @ref{Noise basics}.
 So using these values he ran MakeNoise, and with the second command, he visually inspected the image.
 
@@ -2306,7 +2316,7 @@ $ astscript-fits-view out_detected.fits
 @end example
 
 In the ``Cube'' window (that was opened with DS9), if Sufi clicked on the ``Next'' button to see the pixels that were detected to contain significant signal.
-Fortuantely the nebula's shape was detectable and he cound finally confirm that the nebula he kept in his notebook was actually observable.
+Fortunately the nebula's shape was detectable and he could finally confirm that the nebula he kept in his notebook was actually observable.
 He wrote this result in the draft manuscript that would later become ``Book of fixed stars''@footnote{@url{https://en.wikipedia.org/wiki/Book_of_Fixed_Stars}}.
 
 He still had to check the other nebula he saw from Yemen and several other such objects, but they could wait until tomorrow (thanks to the shell script, he only has to define a new catalog).
@@ -3770,7 +3780,7 @@ $ asttable xdf-f160w.fits -hclumps -csn,upperlimit_sigma
 @end example
 
 As you see, the second column (upper-limit sigma) is almost always less than the S/N.
-This clearly shows the effect of corrlated noise!
+This clearly shows the effect of correlated noise!
 If you now use this column as the reference for deriving the magnitude limit, you will see that it will shift by almost 0.5 magnitudes brighter and is now more reasonable:
 
 @example
@@ -3955,7 +3965,8 @@ $ asttable cat/xdf-f160w.fits -hCLUMPS --output=three-in-one.fits \
 $ asttable three-in-one.fits -i
 @end example
 
-As you see, to avoid confusion in column names, Table has intentionally appended a @code{-1} to the column names of the first concatenated table (so for example we have the original @code{RA} column, and another one called @code{RA-1}).
+As you see, to avoid confusion in column names, Table has intentionally appended a @code{-1} to the column names of the first concatenated table if the column names are already present in the original table.
+For example we have the original @code{RA} column, and another one called @code{RA-1}).
 Similarly a @code{-2} has been added for the columns of the second concatenated table.
 
 However, this example clearly shows a problem with this full concatenation: some columns are identical (for example @code{HOST_OBJ_ID} and @code{HOST_OBJ_ID-1}), or not needed (for example @code{RA-1} and @code{DEC-1} which are not necessary here).
@@ -4247,7 +4258,7 @@ $ pdflatex report.tex
 
 Open the newly created @file{report.pdf} and enjoy the exquisite quality.
 The improved quality, blending in with the text, vector-graphics resolution and other features make this plot pleasing to the eye, and let your readers focus on the main point of your scientific argument.
-PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table} for the necessary changes in the preamble.
+PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table for plotting} for the necessary changes in the preamble.
 
 We won't go much deeper into the Statistics program here, but there is so much more you can do with it.
 After finishing the tutorial, see @ref{Statistics}.
@@ -12830,12 +12841,21 @@ By default the output column of the arithmetic operation will be given a generic
 But meta data are critically important and it is good practice to always have short, but descriptive, names for each columns, units and also some comments for more explanation.
 To add metadata to a column, you can use the @option{--colmetadata} option that is described in @ref{Invoking asttable} and @ref{Operation precedence in Table}.
 
-Finally, since the arithmetic expressions are a value to @option{--column}, it doesn't necessarily have to be a separate option, so the commands above are also identical to the command below (note that this only has one @option{-c} option).
+Since the arithmetic expressions are a value to @option{--column}, it doesn't necessarily have to be a separate option, so the commands above are also identical to the command below (note that this only has one @option{-c} option).
 Just be very careful with the quoting!
+With the @option{--colmetadata} option, we are also giving a name, units and a comment to the third column.
 
 @example
-$ asttable table.fits -cAWAV,SPECTRUM,'arith AWAV 1e10 x'
+$ asttable table.fits -cAWAV,SPECTRUM,'arith AWAV 1e10 x' \
+           --colmetadata=3,AWAV_A,angstrom,"Wavelength (in Angstroms)"
 @end example
+
+In case you need to append columns from other tables (with @option{--catcolumnfile}), you can use those extra columns in column arithmetic also.
+The easiest, and most robust, way is that your columns of interest (in all files whose columns are to be merged) have different names.
+In this scenario, you can simply use the names of the columns you plan to append.
+If there are similar names, note that by default Table appends a @code{-N} to similar names (where @code{N} is the file counter given to @option{--catcolumnfile}, see the description of @option{--catcolumnfile} for more).
+Using column numbers can get complicated: if the number is smaller than the main input's number of columns, the main input's column will be used.
+Otherwise (when the requested column number is larger than the main input's number of columns), the final output (after appending all the columns from all the possible files) column number will be used.
 
 Almost all the arithmetic operators of @ref{Arithmetic operators} are also supported for column arithmetic in Table.
 In particular, the few that are not present in the Gnuastro library@footnote{For a list of the Gnuastro library arithmetic operators, please see the macros starting with @code{GAL_ARITHMETIC_OP} and ending with the operator name in @ref{Arithmetic on datasets}.} aren't yet supported for column arithmetic.
@@ -13272,10 +13292,12 @@ Note that the columns given to @option{--catcolumns} must be present in all the 
 If the file given to this option is a FITS file, its necessary to also define the corresponding HDU/extension with @option{--catcolumnhdu}.
 Also note that no operation (for example row selection, arithmetic or etc) is applied to the table given to this option.
 
-If the appended columns have a name, the column names of each file will be appended with a @code{-N}, where @code{N} is a counter starting from 1 for each appended file.
+If the appended columns have a name, and their name is already present in the table before adding those columns, the column names of each file will be appended with a @code{-N}, where @code{N} is a counter starting from 1 for each appended table.
+Just note that in the FITS standard (and thus in Gnuastro), column names are not case-sensitive.
+
 This is done because when concatenating columns from multiple tables (more than two) into one, they may have the same name, and its not good practice to have multiple columns with the same name.
 You can disable this feature with @option{--catcolumnrawname}.
-Generally, you can use the @option{--colmetadata} option to update column metadata.
+Generally, you can use the @option{--colmetadata} option to update column metadata in the same command, after all the columns have been concatenated.
 
 For example, let's assume you have two catalogs of the same objects (same number of rows) in different filters.
 Such that @file{f160w-cat.fits} has a @code{MAGNITUDE} column that has the magnitude of each object in the @code{F160W} filter and similarly @file{f105w-cat.fits}, also has a @code{MAGNITUDE} column, but for the @code{F105W} filter.
@@ -13290,6 +13312,15 @@ asttable f160w-cat.fits --output=both.fits \
 
 @noindent
 For a more complete example, see @ref{Working with catalogs estimating colors}.
+
+@cartouche
+@noindent
+@strong{Loading external columns with Arithmetic:} an alternative way to load external columns into your output is to use column arithmetic (@ref{Column arithmetic})
+In particular the @option{load-col-} operator described in @ref{Loading external columns}.
+But this operator will load only one column per file/HDU every time it is called.
+So if you have many columns to insert, it is much faster to use @option{--catcolumnfile}.
+Because @option{--catcolumnfile} will load all the columns in one opening of the file, and possibly even read them all into memory in parallel!
+@end cartouche
 
 @item -u STR/INT
 @itemx --catcolumnhdu=STR/INT
@@ -14994,8 +15025,9 @@ Reading NaN as a floating point number in Gnuastro isn't case-sensitive.
 * Mathematical morphology operators::  Work on binary images, for example erode.
 * Bitwise operators::           Work on bits within one pixel.
 * Numerical type conversion operators::  Convert the numeric datatype of a dataset.
-* Adding noise operators::      Add noise to a dataset.
+* Random number generators::    Random numbers can be used to add noise for example.
 * Elliptical shape operators::  Operations that are focused on an ellipse.
+* Loading external columns::    Read a column from a table into the stack.
 * Building new dataset::        How to construct an empty dataset from scratch.
 * Operand storage in memory or a file::  Tools for complex operations in one command.
 @end menu
@@ -16123,7 +16155,7 @@ For example (assuming numbers can be written as bit strings on the command-line)
 Note that the bitwise operators only work on integer type datasets/numbers.
 @end table
 
-@node Numerical type conversion operators, Adding noise operators, Bitwise operators, Arithmetic operators
+@node Numerical type conversion operators, Random number generators, Bitwise operators, Arithmetic operators
 @subsubsection Numerical type conversion operators
 
 With the operators below you can convert the numerical data type of your input, see @ref{Numeric data types}.
@@ -16178,8 +16210,8 @@ Convert the type of the popped operand to 64-bit (double precision) floating poi
 The internal conversion of C will be used.
 @end table
 
-@node Adding noise operators, Elliptical shape operators, Numerical type conversion operators, Arithmetic operators
-@subsubsection Adding noise operators
+@node Random number generators, Elliptical shape operators, Numerical type conversion operators, Arithmetic operators
+@subsubsection Random number generators
 
 When you simulate data (for example see @ref{Sufi simulates a detection}), everything is ideal and there is no noise!
 The final step of the process is to add simulated noise to the data.
@@ -16234,7 +16266,17 @@ If you need this feature please send us an email at @code{bug-gnuastro@@gnu.org}
 @item mknoise-poisson
 @cindex Poisson noise
 Add Poisson noise to each element of the input dataset (see @ref{Photon counting noise}).
-This operator takes two arguments: the top/first popped operand is the background value (in units of electron counts), the next popped operand is the dataset that the noise should be added to.
+This operator takes two arguments: 1. the first popped operand (just before the operator) is the @emph{per-pixel} background value (in units of electron counts).
+2. The second popped operand is the dataset that the noise should be added to.
+
+@cindex Dark night
+@cindex Gray night
+@cindex Nights (dark or gray)
+Recall that the background values reported by observatories (for example to define dark or gray nights), or in papers, is usually reported in units of magnitudes per arcseconds square.
+You need to do the conversion to counts per pixel manually.
+The conversion of magnitudes to counts is described below.
+For converting arcseconds squared to number of pixels, you can use the @option{--pixelscale} option of @ref{Fits}.
+For example @code{astfits image.fits --pixelscale}.
 
 Except for the noise-model, this operator is very similar to @code{mknoise-sigma} and the examples there apply here too.
 The main difference with @code{mknoise-sigma} is that in a Poisson distribution the scatter/sigma will depend on each element's value.
@@ -16264,9 +16306,194 @@ echo 12 | asttable -c'arith $1 4 mknoise-uniform'
 @end example
 
 Similar to the example in @code{mknoise-sigma}, you can pipe the output of @command{echo} to @command{awk} before passing it to @command{asttable} to generate a full column of uniformly selected values within the same interval.
+
+@item random-from-hist-raw
+Generate random values from a custom distribution (defined by a histogram).
+The output will have a double-precision floating point type (see @ref{Numeric data types}).
+This operator takes three operands:
+@itemize
+@item
+The first popped operand (nearest to the operator) is the histogram values.
+The histogram is a 1-dimensional dataset (a table column) and contains the probability of obtaining a certain interval of values.
+The histogram doesn't have to be normalized: the GNU Scientific Library (or GSL, which is used by Gnuastro for this operator), will normalize it internally.
+The value of each bin (whose probability is given in the histogram) is given in the second popped operand.
+Therefore these two operands have to have the same number of rows.
+@item
+The second popped operand is the bin value (mostly the bin center, but it can be anything).
+The probability of each bin is defined in the histogram operand (first popped operand).
+The bins can have any width (don't have to be evenly spaced), and any order.
+Just make sure that the same row in the bins column corresponds to the same row in the histogram: the number of rows in the bins and histogram must be equal.
+@item
+The third popped operand is the dataset that the random values should be written over.
+Effectively only its size will be used by this operator (all values will be over-written as a double-precision floating point number).
+@end itemize
+
+The first two operands have to be single-dimensional (a table column) and have the same number of rows, but the last popped operand can have any number of dimensions.
+You can use the @code{load-col-} operator to load the two bins and histogram columns from an external file (see @ref{Loading external columns}).
+
+For example, in the command below, we first construct a fake histogram to represent a @mymath{y=x^2} distribution with AWK.
+We aim to distribute random values from this distribution in a @mymath{100\times100} image.
+Therefore, we use the @command{makenew} operator to construct an empty image of that size, use the @command{load-col-} operator to load the histogram columns into Arithmetic and put the output in @file{random.fits}.
+Finally we visually inspect @file{random.fits} with DS9 and also have a look at its pixel distribution with @command{aststatistics}.
+
+@example
+$ echo "" | awk '@{for(i=1;i<5;++i) print i, i*i@}' \
+                > histogram.txt
+
+$ cat histogram.txt
+1 1
+2 4
+3 9
+4 16
+
+$ astarithmetic 100 100 2 makenew \
+                load-col-1-from-histogram.txt \
+                load-col-2-from-histogram.txt \
+                random-from-hist-raw \
+                --output=random.fits
+
+$ astscript-fits-view random.fits
+
+$ aststatistics random.fits --asciihist --numasciibins=50
+ |                                                 *
+ |                                                 *
+ |                                                 *
+ |                                                 *
+ |                                 *               *
+ |                                 *               *
+ |                                 *               *
+ |                *                *               *
+ |                *                *               *
+ |*               *                *               *
+ |*               *                *               *
+ |--------------------------------------------------
+@end example
+
+As you see, the 10000 pixels in the image only have values 1, 2, 3 or 4 (which were the values in the bins column of @file{histogram.txt}), and the number of times each of these values occurs follows the @mymath{y=x^2} distribution.
+
+Generally, any value given in the bins column will be used for the final output values.
+For example in the command below (for generating a histogram from an analytical function), we are adding the bins by 20 (while keeping the same probability distribution of @mymath{y=x^2}).
+If you re-run the Arithmetic command above after this, you will notice that the pixels values are now one of the following 21, 22, 23 or 24 (instead of 1, 2, 3, or 4).
+But the shape of the histogram of the resulting random distribution will be unchanged.
+
+@example
+$ echo "" | awk '@{for(i=1;i<5;++i) print 20+i, i*i@}' \
+                > histogram.txt
+@end example
+
+If you don't want the outputs to have exactly the value of the bin identifier, but be a randomly selected value from a uniform distribution within the bin, you should use @command{random-from-hist} (see below).
+
+As mentioned above, the output will have a double-precision floating point type (see @ref{Numeric data types}).
+Therefore, by default each element of the output will consume 8 bytes (64-bits) of storage.
+This is usually far more than the statistical error/precision of your data (and just results in wasted storage in your file system, or wasted RAM when a program that uses the data is being run, and a slower running time of the program).
+
+It is therefore recommended to use a type-conversion operator after this operator to put the output in the smallest type that can be used to safely store your data without wasting storage, RAM or time.
+For the list of type conversion operators, see @ref{Numerical type conversion operators}.
+Recall that you already know the values returned by this operator (they are one of the values in the bins column).
+
+For example, in the example above, the whole image only has values 1, 2, 3 or 4.
+Since they are always positive and are below 255, we can safely place them in an unsigned 8-bit integer (see @ref{Numeric data types}) with the command below (note the @code{uint8} after the operator name, and that we are using a different name for the output).
+After building the new image, let's have a look at the sizes of the two images with @command{ls -l}:
+
+@example
+$ astarithmetic 100 100 2 makenew \
+                load-col-1-from-histogram.txt \
+                load-col-2-from-histogram.txt \
+                random-from-hist-raw uint8 \
+                --output=random-u8.fits
+
+$ ls -lh random.fits random-u8.fits
+-rw-r--r-- 1 name name 85K Jan 01 13:40 random.fits
+-rw-r--r-- 1 name name 17K Jan 01 13:45 random-u8.fits
+@end example
+
+As you see, when using a suitable data type, we can shrink the size of the file significantly without loosing any information (from 85 kilobytes to 17 kilobytes).
+This difference can be felt much better for larger (real-world) datasets, so be sure to always set the output data type after calling this operator.
+
+
+@item random-from-hist
+Similar to @code{random-from-hist-raw}, but don't return the exact bin value, instead return a random value from a uniform distribution within each bin.
+Therefore the following limitations have to be taken into account (compared to @code{random-from-hist-raw}):
+@itemize
+@item
+The number associated with each bin (in the bin column) should be its center.
+@item
+The bins have to be in descending order (so the second row in the bin column is larger than the first).
+@item
+The bin widths (distance from one bin to another) have to be fixed.
+@end itemize
+
+For a demonstration, let's replace @code{random-from-hist-raw} with @code{random-from-hist} in the example of the description of @code{random-from-hist-raw}.
+Note how we are manually converting the output of this operator into single-precision floating point (32-bit, since the default 64-bit precision is statistically meaningless in this scenario and we don't want to waste storage, memory and running time):
+@example
+$ echo "" | awk '@{for(i=1;i<5;++i) print i, i*i@}' \
+                > histogram.txt
+
+$ astarithmetic 100 100 2 makenew \
+                load-col-1-from-histogram.txt \
+                load-col-2-from-histogram.txt \
+                random-from-hist float32 \
+                --output=random.fits
+
+$ aststatistics random.fits --asciihist --numasciibins=50
+ |                                          *
+ |                                      *** ********
+ |                                      ************
+ |                                     *************
+ |                             *     * *************
+ |                         * ***********************
+ |                         *************************
+ |                         *************************
+ |             *************************************
+ |********* * **************************************
+ |**************************************************
+ |--------------------------------------------------
+@end example
+
+You can see that the pixels of @file{histogram.fits} are no longer just 1, 2, 3 or 4.
+Instead, the values within each bin are selected from a uniform distribution covering that bin.
+This creates the step-like feature in the histogram of the output.
+
+Of course, this extra uniform random number generation can make your program slower so be sure to check if it is worth it.
+In particular, one way to avoid this (and use @command{random-from-hist-raw} with a more contiguous-looking output distribution) is to simply use a higher-resolution histogram (assuming it is possible: you have a sufficient number of data points, or you have an analytical expression that you can sample at smaller bin sizes).
+
+To better demonstrate this operator and its practical usage in everyday research, let's look at another example:
+Assume you want to get 100 random star magnitudes that follow the real-world Gaia Data release 3 magnitude distribution within a radius of 2 degrees around the (RA,Dec) coordinate of (1.23,4.56).
+Let's further assume that you want to distribute them uniformly over an image of size 1000 by 1000 pixels.
+So your desired output table should have three columns, the first two are pixel positions of each star, and the third is the magnitude.
+
+First, we need to query the Gaia database and ask for all the magnitudes in this region of the sky.
+We know that Gaia is not complete for stars fainter than the 20th magnitude, so we'll use the @option{--range} option and only ask for those stars that are brighter than magnitude 20.
+
+@example
+$ astquery gaia --dataset=dr3 --center=1.23,3.45 --radius=2 \
+           --column=phot_g_mean_mag --output=gaia.fits \
+           --range=phot_g_mean_mag,-inf,20
+@end example
+
+We now have more than 25000 magnitudes in @file{gaia.fits}!
+To get a more accurate random sampling of our stars, let's construct a histogram with 500 bins, and generate our three desired randomly selected columns:
+
+@example
+$ aststatistics gaia.fits --histogram --numbins=500 \
+                --output=gaia-hist.fits
+
+$ asttable gaia-hist.fits -i
+
+$ echo 1000 \
+    | awk '@{for(i=0;i<100;++i) print $1/2@}' \
+    | asttable -c'arith $1 500 mknoise-uniform' \
+               -c'arith $1 500 mknoise-uniform' \
+               -c'arith $1 \
+                        load-col-1-from-gaia-hist.fits-hdu-1 \
+                        load-col-2-from-gaia-hist.fits-hdu-1 \
+                        random-from-hist float32'
+@end example
+
+These columns can easily be placed in the format for @ref{MakeProfiles} to be inserted into an image automatically.
 @end table
 
-@node Elliptical shape operators, Building new dataset, Adding noise operators, Arithmetic operators
+@node Elliptical shape operators, Loading external columns, Random number generators, Arithmetic operators
 @subsubsection Elliptical shape operators
 
 The operators here describe certain functions that will be necessary when dealing with objects that have a certain elliptical shape.
@@ -16314,7 +16541,45 @@ $ asttable catalog.fits \
 @end example
 @end table
 
-@node Building new dataset, Operand storage in memory or a file, Elliptical shape operators, Arithmetic operators
+@node Loading external columns, Building new dataset, Elliptical shape operators, Arithmetic operators
+@subsubsection Loading external columns
+
+In the Arithmetic program, you can always load new dataset by simply giving their name.
+However, they can only be images, not a column.
+In the Table program, you can load columns in @ref{Column arithmetic}, but it has to be columns within the same table (and thus the same number of rows).
+However, in some situations, it is necessary to use certain columns of a table in the Arithmetic program, or columns of different rows (from the main input) in Table.
+
+@table @command
+@item load-col-%-from-%
+@itemx load-col-%-from-%-hdu-%
+Load the requested column (first @command{%}) from the requested file (second @command{%}).
+If the file is a FITS file, it is also necessary to specify a HDU using the second form (where the HDU identifier is the third @command{%}.
+For example @command{load-col-MAG-from-catalog.fits-hdu-1} will load the @code{MAG} column from HDU 1 of @code{catalog.fits}.
+
+For example, let's assume you have the following two tables, and you would like to add the first column of the first with the second:
+
+@example
+$ asttable tab-1.fits
+1  43.23
+2  21.91
+3  71.28
+4  18.10
+
+$ cat tab-2.txt
+5
+6
+7
+8
+
+$ asttable tab-1.txt -c'arith $1 load-col-1-from-tab-2.txt +'
+6
+8
+10
+12
+@end example
+@end table
+
+@node Building new dataset, Operand storage in memory or a file, Loading external columns, Arithmetic operators
 @subsubsection Building new dataset
 
 With the operator here, you can create a new dataset from scratch to start certain operations without any input data.
@@ -16331,7 +16596,7 @@ $ astarithmetic 100 200 2 makenew
 @end example
 
 @noindent
-To further extend the example, you can use any of the noise-making operators to add noise to this new dataset (see @ref{Adding noise operators}), like the command below:
+To further extend the example, you can use any of the noise-making operators to add noise to this new dataset (see @ref{Random number generators}), like the command below:
 
 @example
 $ astarithmetic 100 200 2 makenew 5 mknoise-sigma
@@ -16520,6 +16785,28 @@ For more, see the description of @option{--wcsfile}.
 @item --envseed
 Use the environment for the random number generator settings in operators that need them (for example @code{mknoise-sigma}).
 This is very important for obtaining reproducible results, for more see @ref{Generating random numbers}.
+
+@item -n STR
+@itemx --metaname=STR
+Metadata (name) of the output dataset.
+For a FITS image or table, the string given to this option is written in the @code{EXTNAME} or @code{TTYPE1} keyword (respectively).
+
+If this keyword is present in a FITS extension, it will be printed in the table output of a command like @command{astfits image.fits} (for images) or @command{asttable table.fits -i} (for tables).
+This metadata can be very helpful for yourself in the future (when you have forgotten the details), so its recommended to use this option for files that should be archived or shared with colleagues.
+
+@item -u STR
+@itemx --metaunit=STR
+Metadata (units) of the output dataset.
+For a FITS image or table, the string given to this option is written in the @code{BUNIT} or @code{TTYPE1} keyword respectively.
+In the case of tables, recall that the Arithmetic program only outputs a single column, you should use column arithmetic in Table for more than one column (see @ref{Column arithmetic}).
+For more on the importance of metadata, see the description of @option{--metaname}.
+
+@item -c STR
+@itemx --metacomment=STR
+Metadata (comments) of the output dataset.
+For a FITS image or table, the string given to this option is written in the @code{COMMENT} or @code{TCOMM1} keyword respectively.
+In the case of tables, recall that the Arithmetic program only outputs a single column, you should use column arithmetic in Table for more than one column (see @ref{Column arithmetic}).
+For more on the importance of metadata, see the description of @option{--metaname}.
 
 @item -O
 @itemx --onedasimage
@@ -18156,12 +18443,12 @@ Without specifying any range, the full range of values will be used in each dime
 If you only want to focus on a certain interval of the values in the columns in any dimension you can use the @option{--greaterequal} and @option{--lessthan} options to limit the values along the first/horizontal dimension and @option{--greaterequal2} and @option{--lessthan2} options for the second/vertical dimension.
 
 @menu
-* 2D histogram as a table::     Format and usage in table format.
+* 2D histogram as a table for plotting::  Format and usage in table format.
 * 2D histogram as an image::    Format and usage in image format
 @end menu
 
-@node 2D histogram as a table, 2D histogram as an image, 2D Histograms, 2D Histograms
-@subsubsection 2D histogram as a table
+@node 2D histogram as a table for plotting, 2D histogram as an image, 2D Histograms, 2D Histograms
+@subsubsection 2D histogram as a table for plotting
 
 When called with the @option{--histogram=table} option, Statistics will output a table file with three columns that have the information of every box as a column.
 If you asked for @option{--numbins=N} and @option{--numbins2=M}, all three columns will have @mymath{M\times N} rows (one row for every box/pixel of the 2D histogram).
@@ -18181,7 +18468,7 @@ The second one (@code{FILE.txt}) should be replaced with the name of the file ge
 %%
 %% Then run these commands to build the plot in a LaTeX command.
 %%    mkdir tikz
-%%    pdflatex -shell-escape -halt-on-error plot.tex
+%%    pdflatex --shell-escape --halt-on-error report.tex
 \documentclass@{article@}
 
 %% Load PGFPlots and set it to build the figure separately in a 'tikz'
@@ -18194,22 +18481,27 @@ The second one (@code{FILE.txt}) should be replaced with the name of the file ge
 \tikzexternalize
 \tikzsetexternalprefix@{tikz/@}
 
-%% Start the document
+%% Define colormap for the PGFPlots 2D histogram
+\pgfplotsset@{
+ /pgfplots/colormap=@{hsvwhitestart@}@{
+   rgb255(0cm)=(255,255,255)
+   rgb255(0.10cm)=(128,0,128)
+   rgb255(0.5cm)=(0,0,230)
+   rgb255(1.cm)=(0,255,255)
+   rgb255(2.5cm)=(0,255,0)
+   rgb255(3.5cm)=(255,255,0)
+   rgb255(6cm)=(255,0,0)
+ @}
+@}
+
+%% Start the prinable document
 \begin@{document@}
 
-  You can actually write a full paper here and include many figures!
+  You can write a full paper here and include many figures!
+  Describe what the two axises are, and how you measured them.
+  Also, don't forget to explain what it shows and how to interpret it.
+  You also have separate PDFs for every figure in the `tikz' directory.
   Feel free to change this text.
-
-  %% Define the colormap.
-  \pgfplotsset@{
-    /pgfplots/colormap=@{coldredux@}@{
-      [1cm]
-      rgb255(0cm)=(255,255,255)
-      rgb255(2cm)=(0,192,255)
-      rgb255(4cm)=(0,0,255)
-      rgb255(6cm)=(0,0,0)
-    @}
-  @}
 
   %% Draw the plot.
   \begin@{tikzpicture@}
@@ -18234,10 +18526,31 @@ The second one (@code{FILE.txt}) should be replaced with the name of the file ge
   \end@{axis@}
 \end@{tikzpicture@}
 
+%% End the printable document.
 \end@{document@}
 @end example
 
-@node 2D histogram as an image,  , 2D histogram as a table, 2D Histograms
+Let's assume you have put the @LaTeX{} source above, into a plain-text file called @file{report.tex}.
+The PGFPlots call above is configured to build the plots as separate PDF files in a @file{tikz/} directory@footnote{@url{https://www.ctan.org/pkg/pgf, TiKZ} is the name of the lower-level engine behind PGPlots.}.
+This allows you to directly load those PDFs in your slides or other reports.
+Therefore, before building the PDF report, you should first make a @file{tikz/} directory:
+
+@example
+$ mkdir tikz
+@end example
+
+To build the final PDF, you should run @command{pdflatex} with the @option{--shell-escape} option, so it can build the separate PDF(s) separately.
+We are also adding the @option{--halt-on-error} so it immediately aborts in the case of an error (in the case of an error, by default @LaTeX{} will not abort, it will stop and ask for your input to temporarily change things and try fixing the error, but it has a special interface which can be hard to master).
+
+@example
+$ pdflatex --shell-escape --halt-on-error report.tex
+@end example
+
+@noindent
+You can now open @file{report.pdf} to see your very high quality 2D histogram within your text.
+And if you need the plots separately (for example for slides), you can take the PDF inside the @file{tikz/} directory.
+
+@node 2D histogram as an image,  , 2D histogram as a table for plotting, 2D Histograms
 @subsubsection 2D histogram as an image
 
 When called with the @option{--histogram=image} option, Statistics will output a FITS file with an image/array extension.
@@ -18354,7 +18667,7 @@ $ pdflatex cmd-report.tex
 @end example
 
 The improved quality, blending in with the text, vector-graphics resolution and other features make this plot pleasing to the eye, and let your readers focus on the main point of your scientific argument.
-PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table} for the necessary changes in the preamble.
+PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table for plotting} for the necessary changes in the preamble.
 
 @node  Sigma clipping, Sky value, 2D Histograms, Statistics
 @subsection Sigma clipping
@@ -20762,7 +21075,7 @@ But we rarely take 1 second exposures!
 It is therefore very important to take the exposure time into account in scenarios like simulating observations with varying exposure times (where you need to know how many counts the object of a certain magnitude will add to a certain image with a certain exposure time).
 
 To clarify the concept, let's define @mymath{C} as the @emph{counted} electrons (which has a linear relation with the photon energy entering the CCD pixel).
-In this case, if an object of brighness @mymath{B} is observed for @mymath{t} seconds, it will accumulate @mymath{C=B\times t} counts@footnote{Recall that counts another name for ADUs, which already includes the CCD gain.}.
+In this case, if an object of brightness @mymath{B} is observed for @mymath{t} seconds, it will accumulate @mymath{C=B\times t} counts@footnote{Recall that counts another name for ADUs, which already includes the CCD gain.}.
 Therefore, the generic magnitude equation above can be written as:
 @dispmath{m = -2.5\log_{10}(B) + Z = -2.5\log_{10}(C/t) + Z}
 @noindent
@@ -21777,6 +22090,10 @@ If no usable pixels are present over the clump or object (for example they are a
 The mean sky subtracted value of pixels within the object or clump.
 For clumps, the average river flux is subtracted from the sky subtracted mean.
 
+@item --std
+The standard deviation of the pixels within the object or clump.
+For clumps, the river pixels are not subtracted because that is a constant (per pixel) value and should not affect the standard deviation.
+
 @item --median
 The median sky subtracted value of pixels within the object or clump.
 For clumps, the average river flux is subtracted from the sky subtracted median.
@@ -21888,7 +22205,7 @@ If you want to ignore those pixels in the error measurement, set them to zero (w
 The sky flux (per pixel) value under this object or clump.
 This is actually the mean value of all the pixels in the sky image that lie on the same position as the object or clump.
 
-@item --std
+@item --skystd
 The sky value standard deviation (per pixel) for this clump or object.
 This is the square root of the mean variance under the object, or the root mean square.
 
@@ -21937,9 +22254,9 @@ See the description under @option{--halfsumradius} for more on converting area t
 Because of its non-parametric nature, this column is most reliable on clumps and should only be used in objects with great caution.
 This is because objects can have more than one clump (peak with true signal) and multiple peaks are not treated separately in objects, so the result of this column will be biased.
 
-Also, because of its non-parametric nature, this FWHM it does not account for the PSF, and it will be strongly affected by noise if the object is faint.
-So when half the maximum value (which can be requested using the @option{--maximum} column) is too close to the local noise level (which can be requested using the @option{--std} column), the value returned in this column is meaningless (its just noise peaks which are randomly distributed over the area).
-You can therefore use the @option{--maximum} and @option{--std} columns to remove unreliable FWHMs.
+Also, because of its non-parametric nature, this FWHM it does not account for the PSF, and it will be strongly affected by noise if the object is faint/diffuse
+So when half the maximum value (which can be requested using the @option{--maximum} column) is too close to the local noise level (which can be requested using the @option{--skystd} column), the value returned in this column is meaningless (its just noise peaks which are randomly distributed over the area).
+You can therefore use the @option{--maximum} and @option{--skystd} columns to remove, or flag, unreliable FWHMs.
 For example if a labeled region's maximum is less than 2 times the sky standard deviation, the value will certainly be unreliable (half of that is @mymath{1\sigma}!).
 For a more reliable value, this fraction should be around 4 (so half the maximum is 2@mymath{\sigma}).
 
@@ -22137,7 +22454,7 @@ For more, see the description of @option{--spectrum} in @ref{MakeCatalog measure
 @cindex Limit, Surface brightness
 When possible, MakeCatalog will also measure the full input's noise level (also known as surface brightness limit, see @ref{Quantifying measurement limits}).
 Since these measurements are related to the noise and not any particular labeled object, they are stored as keywords in the output table.
-Furthermore, they are only possible when a standard deviation image has been loaded (done automatically for any column measurement that involves noise, for example @option{--sn} or @option{--std}).
+Furthermore, they are only possible when a standard deviation image has been loaded (done automatically for any column measurement that involves noise, for example @option{--sn}, @option{--magnitudeerr} or @option{--skystd}).
 But if you just want the surface brightness limit and no noise-related column, you can use @option{--forcereadstd}.
 All these keywords start with @code{SBL} (for ``surface brightness limit'') and are described below:
 
@@ -23151,7 +23468,7 @@ Besides the main/merged image containing all the profiles in the catalog, it is 
 
 If an image is given to the @option{--background} option, the pixels of that image are used as the background value for every pixel hence flux value of each profile pixel will be added to the pixel in that background value.
 You can disable this with the @code{--clearcanvas} option (which will initialize the background to zero-valued pixels and build profiles over that).
-With the @option{--background} option, the values to all options relating to the ``canvas'' (output size and WCS) will be ignored if specified, for example @option{--oversample}, @option{--mergedsize}, and @option{--prepforconv}.
+With the @option{--background} option, the values to all options relating to the ``canvas'' (output size and WCS) will be ignored if specified: @option{--oversample}, @option{--mergedsize}, @option{--prepforconv}, @option{--crpix}, @option{--crval}, @option{--cdelt}, @option{--cdelt}, @option{--pc}, @option{cunit} and @option{ctype}.
 
 The sections below discuss the options specific to MakeProfiles based on context: the input catalog settings which can have many rows for different profiles are discussed in @ref{MakeProfiles catalog}, in @ref{MakeProfiles profile settings}, we discuss how you can set general profile settings (that are the same for all the profiles in the catalog).
 Finally @ref{MakeProfiles output dataset} and @ref{MakeProfiles log file} discuss the outputs of MakeProfiles and how you can configure them.
@@ -23206,7 +23523,8 @@ See @ref{Selecting table columns} for a thorough discussion on the values to the
 The value for the profile center in the catalog (the @option{--ccol} option) can be a floating point number so the profile center can be on any sub-pixel position.
 Note that pixel positions in the FITS standard start from 1 and an integer is the pixel center.
 So a 2D image actually starts from the position (0.5, 0.5), which is the bottom-left corner of the first pixel.
-When a @option{--background} image with WCS information is provided or you specify the WCS parameters with the respective options, you may also use RA and Dec to identify the center of each profile (see the @option{--mode} option below).
+When a @option{--background} image with WCS information is provided, or you specify the WCS parameters with the respective options@footnote{The options to set the WCS are the following: @option{--crpix}, @option{--crval}, @option{--cdelt}, @option{--cdelt}, @option{--pc}, @option{cunit} and @option{ctype}.
+Just recall that these options are only used if @option{--background} is not given: if the image you give to @option{--background} doesn't have WCS, these options will not be used and you can't use WCS-mode coordinates like RA or Dec.}, you may also use RA and Dec to identify the center of each profile (see the @option{--mode} option below).
 
 In MakeProfiles, profile centers do not have to be in (overlap with) the final image.
 Even if only one pixel of the profile within the truncation radius overlaps with the final image size, the profile is built and included in the final image.
@@ -23558,7 +23876,7 @@ The extension that contains the image should be specified with the @option{--bac
 When a background image is specified, it will be used to derive all the information about the output image.
 Hence, the following options will be ignored: @option{--mergedsize}, @option{--oversample}, @option{--crpix}, @option{--crval} (generally, all other WCS related parameters) and the output's data type (see @option{--type} in @ref{Input output options}).
 
-The image will act like a canvas to build the profiles on: profile pixel values will be summed with the background image pixel values.
+The background image will act like a canvas to build the profiles on: profile pixel values will be summed with the background image pixel values.
 With the @option{--replace} option you can disable this behavior and replace the profile pixels with the background pixels.
 If you want to use all the image information above, except for the pixel values (you want to have a blank canvas to build the profiles on, based on an input image), you can call @option{--clearcanvas}, to set all the input image's pixels to zero before starting to build the profiles over it (this is done in memory after reading the input, so nothing will happen to your input file).
 
@@ -23684,6 +24002,11 @@ If you look into the headers of a FITS image with WCS for example you will see a
 You can see the FITS headers with Gnuastro's @ref{Fits} program using a command like this: @command{$ astfits -p image.fits}.
 
 If the values given to any of these options does not correspond to the number of dimensions in the output dataset, then no WCS information will be added.
+Also recall that if you use the @option{--background} option, all of these options are ignored.
+Such that if the image given to @option{--background} doesn't have any WCS, the output of MakeProfiles will also not have any WCS, even if these options are given@footnote{If you want to add profiles @emph{and} WCS over the background image (to produce your output), you need more than one command:
+1. You should use @option{--mergedsize} in MakeProfiles to manually set the output number of pixels equal to your desired background image (so the background is zero).
+In this mode, you can use these WCS-related options to define the WCS.
+2. Then use Arithmetic to add the pixels of your mock image to the background (see @ref{Arithmetic}.}.
 
 @table @option
 
@@ -24008,8 +24331,9 @@ One line examples:
 ## (this is independent of the pixel value: not Poission noise)
 $ astmknoise --sigma=100 image.fits
 
-## Add noise to input image assuming a background magnitude (with
-## zero point magnitude of 0) and a certain instrumental noise:
+## Add noise to the input image assuming a per-pixel background
+## magnitude (with zero point magnitude of 0) and an
+## instrumental noise of 20.
 $ astmknoise --background=-10 -z0 --instrumental=20 mockimage.fits
 @end example
 
@@ -24026,7 +24350,7 @@ This is done for future reproducibility.
 @itemx --background=FLT
 The background value (per pixel) that will be added to each pixel value (internally) to simulate Poisson noise, see @ref{Photon counting noise}.
 By default the units of this value are assumed to be in magnitudes, hence a @option{--zeropoint} is also necessary.
-If the background is in units of counts, you need add @option{--bgisbrightness}, see @ref{Brightness flux magnitude}
+If the background is in units of counts, you need add @option{--bgisbrightness}, see @ref{Brightness flux magnitude}.
 
 Internally, the value given to this option will be converted to counts (@mymath{b}, when @option{--bgisbrightness} is called, the value will be used directly).
 Assuming the pixel value is @mymath{p}, the random value for that pixel will be taken from a Gaussian distribution with mean of @mymath{p+b} and standard deviation of @mymath{\sqrt{p+b}}.
@@ -25191,16 +25515,38 @@ The axis ratio of the apertures (minor axis divided by the major axis in a 2D el
 By default (when this option isn't given), the radial profile will be circular (axis ratio of 1).
 This parameter is used as the option @option{--qcol} in the generation of the apertures with @command{astmkprof}.
 
-@item -a FLT[,FLT[,...]]
-@itemx --azimuth=FLT[,FLT[,...]]
-Azimuthal angles range (in degrees, from 0 to 360) from the major axis.
-This parameter is used as the option @option{--qcol=azimuth} in the generation of the apertures with @command{astmkprof}.
-For example, if you want to obtain the radial profile only in between 55 and 78 degrees (taking as the reference the major axis), use @command{--azimuth=55,78}.
-
 @item -p FLT
 @itemx --positionangle=FLT
 The position angle (in degrees) of the profiles relative to the first FITS axis (horizontal when viewed in SAO DS9).
 By default, it is @option{--positionangle=0}, which means that the semi-major axis of the profiles will be parallel to the first FITS axis.
+
+@item -a FLT,FLT
+@itemx --azimuth=FLT,FLT
+@cindex Wedge (radial profile)
+@cindex Azimuthal range (radial profile)
+Limit the profile to the given azimuthal angle range (two numbers given to this option, in degrees, from 0 to 360) from the major axis (defined by @option{--positionangle}).
+The radial profile will therefore be created on a wedge-like shape, not the full circle/ellipse.
+
+If the first angle is @emph{smaller} than the second (for example @option{--azimuth=10,80}), the region between, or @emph{inside}, the two angles will be used.
+Otherwise (for example @option{--azimuth=80,10}), the region @emph{outside} the two angles will be used.
+The latter case can be useful when you want to ignore part of the 2D shape (for example due to a bright star that can be contaminating it).
+
+You can visually see the shape of the region used by running this script with @option{--keeptmp} and viewing the @file{values.fits} and @file{apertures.fits} files of the temporary directory with a FITS image viewer like @ref{SAO DS9}.
+You can use @ref{Viewing FITS file contents with DS9 or TOPCAT} to open them together in one instance of DS9, with both frames matched and locked (for easy comparison in case you want to zoom-in or out).
+For example see the commands below (based on your target object, just change the image name, center, position angle and etc):
+
+@example
+## Generate the radial profile
+$ astscript-radial-profile image.fits --center=1.234,6.789 \
+            --mode=wcs --rmax=50 --positionangle=20 \
+            --axisratio=0.8 --azimuth=95,150 --keeptmp \
+            --tmpdir=radial-tmp
+
+## Visually check the values and apertures used.
+$ astscript-fits-view radial-tmp/values.fits \
+                      radial-tmp/apertures.fits
+@end example
+
 
 @item -m STR
 @itemx --measure=STR
@@ -25840,7 +26186,7 @@ The output name of the final catalog containing good stars.
 
 @node Invoking astscript-psf-stamp, Invoking astscript-psf-unite, Invoking astscript-psf-select-stars, PSF construction and subtraction
 @subsection Invoking astscript-psf-stamp
-This installed script will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel regridding if necessary) and normalized at a certain normalization radius.
+This installed script will generate a stamp of fixed size, centered at the provided coordinates (performing sub-pixel re-gridding if necessary) and normalized at a certain normalization radius.
 Optionally, it will also mask all the other background sources.
 A complete tutorial is available to show the operation of this script as a modular component to extract the PSF of a dataset: @ref{Building the extended PSF}.
 The executable name is @file{astscript-psf-stamp}, with the following general template:
@@ -25876,13 +26222,21 @@ The output will be an image with a size specified by @option{--stampwidth}, cent
 If no center is specified, then it is assumed that the object of interest is already in the center of the image.
 In the same way, if no normalization ring is considered, the output will not be normalized.
 
-If the given coordinate is not within the image at all (such that the full requested stamp is outside the input image), then this script will abort with a message and a non-zero return value.
-If all the pixels within the normalization radii are NaN, the output stamp will be fully NaN.
-This can happen when the stamp is only partially out of the original image field of view, or there is a bad pixel region over the star.
-A fully NaN image can safely be used with the Stacking operators of Arithmetic (see @ref{Stacking operators}): in effect it will be ignored.
+In the following cases, this script will produce a fully NaN-valued stamp (of the size given to @option{--stampwidth}).
+A fully NaN image can safely be used with the stacking operators of Arithmetic (see @ref{Stacking operators}) because they will be ignored.
+In case you don't want to waste storage with fully NaN images, you can compress them with @code{gzip --best output.fits}, and give the resulting @file{.fits.gz} file to Arithmetic.
+@itemize
+@item
+The requested box (center coordinate with desired width) is not within the input image at all.
+@item
+If a normalization radius is requested, and all the pixels within the normalization radii are NaN.
+Here are some scenarios that this can happen:
+1) You have a saturated star (where the saturated pixels are NaN), and your normalization radius falls within the saturated region.
+2) The star is outside the image by more than your larger normalization radius (so there are no pixels for doing normalization), but the full stamp width still overlaps part of the image.
+@end itemize
 
-More options are available with the goal of obtaining better stamps.
-A full description of each option is given below.
+@noindent
+The full set of options are listed below for optimal customization in different scenarios:
 
 @table @option
 
@@ -27898,13 +28252,43 @@ When you need to read many numbers into an array, @code{out} would be an array, 
 Read @code{string} into smallest type that can host the number, the allocated space for the number will be returned and the type of the number will be put into the memory that @code{type} points to.
 If @code{string} couldn't be read as a number, this function will return @code{NULL}.
 
-This function calls the C library's @code{strtod} function to read @code{string} as a double-precision floating point number.
-When successful, it will check the value to put it in the smallest numerical data type that can handle it.
-However, if @code{string} is successfully parsed as a number @emph{and} there is @code{.} in @code{string}, it will force the number into floating point types.
+This function first calls the C library's @code{strtod} function to read @code{string} as a double-precision floating point number.
+When successful, it will check the value to put it in the smallest numerical data type that can handle it: for example @code{120} and @code{50000} will be read as a signed 8-bit integer and unsigned 16-bit integer types.
+When reading as an integer, the C library's @code{strtol} function is used (in base-10) to parse the string again.
+This re-parsing as an integer is necessary because integers with many digits (for example the Unix epoch seconds) will not be accurately stored as a floating point and we can't use the result of @code{strtod}.
+
+When @code{string} is successfully parsed as a number @emph{and} there is @code{.} in @code{string}, it will force the number into floating point types.
 For example @code{"5"} is read as an integer, while @code{"5."} or @code{"5.0"}, or @code{"5.00"} will be read as a floating point (single-precision).
 
-For the ranges acceptable by each type see @ref{Numeric data types}.
-For integers, the range is clear, but for floating point types, this function will count the number of significant digits and determine if the given string is single or double precision as described in that section.
+For floating point types, this function will count the number of significant digits and determine if the given string is single or double precision as described in @ref{Numeric data types}.
+
+For integers, negative numbers will always be placed in signed types (as expected).
+If a positive integer falls below the maximum of a signed type of a certain width, it will be signed (for example @code{10} and @code{150} will be defined as a signed and unsigned 8-bit integer respectively).
+In other words, even though @code{10} can be unsigned, it will be read as a signed 8-bit integer.
+This is done to respect the C implicit type conversion in binary operators, where signed integers will be interpreted as unsigned, when the other operand is an unsigned integer of the same width.
+
+For example, see the short program below.
+It will print @code{-50 is larger than 100000} (which is wrong!).
+This happens because when a negative number is parsed as an unsigned, the value is effectively subtracted from the maximum and @mymath{4294967295-50} is indeed larger than 100000 (recall that @mymath{4294967295} is the largest unsigned 32-bit integer, see @ref{Numeric data types}).
+
+@example
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+int
+main(void)
+@{
+  int32_t  a=-50;
+  uint32_t b=100000;
+  printf("%d is %s than %d\n", a,
+         a>b ? "larger" : "less or equal", b);
+  return 0;
+@}
+@end example
+
+However, if we read 100000 as a signed 32-bit integer, there won't be any problem and the printed sentence will be logically correct (for someone who doesn't know anything about numeric data types: users of your programs).
+For the advantages of integers, see @ref{Integer benefits and pitfalls}.
 @end deftypefun
 
 @node Pointers, Library blank values, Library data types, Gnuastro library
@@ -28495,12 +28879,9 @@ tiles that are created from this pointer.
 
 @node Dataset allocation, Arrays of datasets, Generic data container, Library data container
 @subsubsection Dataset allocation
-
 Gnuastro's main data container was defined in @ref{Generic data container}.
-The functions listed in this section describe the most basic operations on
-@code{gal_data_t}: those related to allocation and freeing. These functions
-are declared in @file{gnuastro/data.h} which is also visible from the
-function names (see @ref{Gnuastro library}).
+The functions listed in this section describe the most basic operations on @code{gal_data_t}: those related to allocation and freeing.
+These functions are declared in @file{gnuastro/data.h} which is also visible from the function names (see @ref{Gnuastro library}).
 
 @deftypefun {gal_data_t *} gal_data_alloc (void @code{*array}, uint8_t @code{type}, size_t @code{ndim}, size_t @code{*dsize}, struct wcsprm @code{*wcs}, int @code{clear}, size_t @code{minmapsize}, int @code{quietmmap}, char @code{*name}, char @code{*unit}, char @code{*comment})
 
@@ -30086,7 +30467,7 @@ suffix doesn't have to start with `@key{.}': this function will return
 @code{1} (one) for both @code{fits} and @code{.fits}.
 @end deftypefun
 
-@deftypefun in gal_fits_file_recognized (char @code{*name})
+@deftypefun int gal_fits_file_recognized (char @code{*name})
 Return @code{1} if the given file name (possibly including its contents) is a FITS file.
 This is necessary in when the contents of a FITS file do follow the FITS standard, but it the file doesn't have a Gnuastro-recognized FITS suffix.
 Therefore, it will first call @code{gal_fits_name_is_fits}, if the result is negative, then this function will attempt to open the file with CFITSIO and if it works, it will close it again and return 1.
@@ -31639,6 +32020,12 @@ For more on random number generation in Gnuastro, see @ref{Generating random num
 By default these operators will print the random number generator function and seed (in case the user wants to reproduce the result later), but this can be disabled by activating the bit-flag @code{GAL_ARITHMETIC_FLAG_QUIET} described above.
 @end deffn
 
+@deffn  Macro GAL_ARITHMETIC_OP_RANDOM_FROM_HIST
+@deffnx Macro GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW
+Select random values from a custom distribution (defined by a histogram).
+For more, see the description of the respective operators in @ref{Generating random numbers}.
+@end deffn
+
 @deffn Macro GAL_ARITHMETIC_OP_SIZE
 Size operator that will return a single value for datasets of any kind. When @code{gal_arithmetic} is called with this operator, it requires two arguments.
 The first is the dataset, and the second is a single integer value.
@@ -31706,6 +32093,16 @@ Create a new, zero-valued dataset with an unsigned 8-bit data type.
 The length along each dimension of the dataset should be given as a single list of @code{gal_data_t}s.
 The number of dimensions is derived from the number of nodes in the list and the length along each dimension is the single-valued element within that list.
 Just note that the list should be in the reverse of the desired dimensions.
+@end deffn
+
+@deffn Macro GAL_ARITHMETIC_OPSTR_LOADCOL_HDU
+@deffnx Macro GAL_ARITHMETIC_OPSTR_LOADCOL_FILE
+@deffnx Macro GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX
+@deffnx Macro GAL_ARITHMETIC_OPSTR_LOADCOL_HDU_LEN
+@deffnx Macro GAL_ARITHMETIC_OPSTR_LOADCOL_FILE_LEN
+@deffnx Macro GAL_ARITHMETIC_OPSTR_LOADCOL_PREFIX_LEN
+Constant components of the @command{load-col-} operator (see @ref{Loading external columns}).
+These are just fixed strings (and their lengths) that are placed in between the various components of that operator to allow choosing a certain column of a certain HDU of a certain file.
 @end deffn
 
 @deftypefun {gal_data_t *} gal_arithmetic (int @code{operator}, size_t @code{numthreads}, int @code{flags}, ...)
@@ -31779,6 +32176,14 @@ Note that @code{string} must only contain the single operator name and nothing e
 @deftypefun {char *} gal_arithmetic_operator_string (int @code{operator})
 Return the human-readable standard string that corresponds to the given operator.
 For example when the input is @code{GAL_ARITHMETIC_OP_PLUS} or @code{GAL_ARITHMETIC_OP_MEAN}, the strings @code{+} or @code{mean} will be returned.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_arithmetic_load_col (char @code{*str}, int @code{searchin}, int @code{ignorecase}, size_t @code{minmapsize}, int @code{quietmmap})
+Return the column that corresponds to the identifier in the input string (@code{str}).
+@code{str} is expected to be in the format of the @command{load-col-} operator (see @ref{Loading external columns}).
+This function will extract the column identifier, the file name and the HDU (if necessary) from the string, read the requested column in memory and return it.
+
+See @ref{Table input output} for the macros that can be given to @code{searchin} and @code{ignorecase} and @ref{Generic data container} for the definitions of @code{minmapsize} and @code{quietmmap}.
 @end deftypefun
 
 @node Tessellation library, Bounding box, Arithmetic on datasets, Gnuastro library
@@ -33201,6 +33606,13 @@ necessary, this function is much more efficient than calling
 @code{gal_statistics_mean} and @code{gal_statistics_std} separately.
 @end deftypefun
 
+@deftypefun double gal_statistics_std_from_sums (double @code{sum}, double @code{sump2}, size_t @code{num})
+Return the standard deviation from the values that can be obtained in a single pass through the distribution: @code{sum}: the sum of the elements, @code{sump2}: the sum of the power-of-2 of each element, and @code{num}: the number of elements.
+
+This is a low-level function that is only useful after the distribution of values has been parsed (and the three input arguments are calculated).
+It is the lower-level function that is used in functions like @code{gal_statistics_std}, or other components of Gnuastro that measure the standard deviation (for example MakeCatalog's @option{--std} column).
+@end deftypefun
+
 @cindex Median
 @deftypefun {gal_data_t *} gal_statistics_median (gal_data_t @code{*input}, int @code{inplace})
 Return a single-element dataset containing the median of the non-blank
@@ -34114,7 +34526,7 @@ When @code{tl!=NULL}, then it is assumed that the @code{input->array} contains o
 If several datasets have the same set of blank values, you don't need to call this function multiple times.
 When @code{aslinkedlist} is non-zero, then @code{input} will be seen as a @ref{List of gal_data_t}.
 In this case, the same neighbors will be used for all the datasets in the list.
-Of course, the values for each dataset will be different, so a different value will be written in e ach dataset, but the neighbor checking that is the most CPU intensive part will only be done once.
+Of course, the values for each dataset will be different, so a different value will be written in each dataset, but the neighbor checking that is the most CPU intensive part will only be done once.
 
 This is a non-parametric and robust function for interpolation.
 The interpolated values are also always within the range of the non-blank values and strong outliers do not get created.

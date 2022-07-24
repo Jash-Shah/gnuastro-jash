@@ -130,16 +130,22 @@ gal_units_ra_to_degree(char *convert)
   /* Check whether the string is successfully parsed */
   if(gal_units_extract_decimal(convert, ":hms", val, 3))
     {
-      /* Check whether the first value is in within limits, and add it. */
-      if(val[0]<0.0 || val[0]>24.0) return NAN;
+      /* Check whether the first value is in within limits, and add it. We
+         are using 'signbit(val[0])' instead of 'val[0]<0.0f' because
+         'val[0]<0.0f' can't distinguish negative zero (-0.0) from an
+         unsigned zero (in other words, '-0.0' will be interpretted to be
+         positive). For the declinations it is possible (see the comments
+         in 'gal_units_dec_to_degree'), so a user may mistakenly give that
+         format in Right Ascension. */
+      if(signbit(val[0]) || val[0]>24.0) return NAN;
       decimal += val[0];
 
       /* Check whether value of minutes is within limits, and add it. */
-      if(val[1]<0.0 || val[1]>60.0) return NAN;
+      if(signbit(val[1]) || val[1]>60.0) return NAN;
       decimal += val[1] / 60;
 
       /* Check whether value of seconds is in within limits, and add it. */
-      if(val[2]<0.0 || val[2]>60.0) return NAN;
+      if(signbit(val[2]) || val[2]>60.0) return NAN;
       decimal += val[2] / 3600;
 
       /* Convert value to degrees and return. */
@@ -177,16 +183,23 @@ gal_units_dec_to_degree(char *convert)
          negative and all other values will be positive. In that case, we
          set sign equal to -1. Therefore, we multiply the first value by
          sign to make it positive. The final answer is again multiplied by
-         sign to make its sign same as original. */
-      sign = val[0]<0.0 ? -1 : 1;
+         sign to make its sign same as original.
+
+        We are using 'signbit(val[0])' instead of 'val[0]<0.0f' because
+        'val[0]<0.0f' can't distinguish negative zero (-0.0) from an
+        unsigned zero (in other words, '-0.0' will be interpretted to be
+        positive). In the case of declination, this can happen just below
+        the equator (where the declination is less than one degree), for
+        example '-00d:12:34'*/
+      sign = signbit(val[0]) ? -1 : 1;
       decimal += val[0] * sign;
 
       /* Check whether value of arc-minutes is in within limits. */
-      if(val[1]<0.0 || val[1]>60.0) return NAN;
+      if(signbit(val[1]) || val[1]>60.0) return NAN;
       decimal += val[1] / 60;
 
       /* Check whether value of arc-seconds is in within limits */
-      if (val[2] < 0.0 || val[2] > 60.0) return NAN;
+      if (signbit(val[2]) || val[2] > 60.0) return NAN;
       decimal += val[2] / 3600;
 
       /* Make the sign of the decimal value same as input and return. */

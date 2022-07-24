@@ -33,6 +33,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/wcs.h>
 #include <gnuastro/units.h>
 #include <gnuastro/pointer.h>
+#include <gnuastro/statistics.h>
 
 #include <gnuastro-internal/checkset.h>
 
@@ -1261,6 +1262,21 @@ columns_define_alloc(struct mkcatalogparams *p)
                                    ciflag[ CCOL_RIV_SUM ] = 1;
           break;
 
+        case UI_KEY_STD:
+          name           = "STD";
+          unit           = MKCATALOG_NO_UNIT;
+          ocomment       = "Standard deviation of sky subtracted values.";
+          ccomment       = "Standard deviation of pixels subtracted by rivers.";
+          otype          = GAL_TYPE_FLOAT32;
+          ctype          = GAL_TYPE_FLOAT32;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_GENERAL;
+          disp_width     = 10;
+          disp_precision = 5;
+          oiflag[ OCOL_NUM   ] = ciflag[ CCOL_NUM   ] = 1;
+          oiflag[ OCOL_SUM   ] = ciflag[ CCOL_SUM   ] = 1;
+          oiflag[ OCOL_SUMP2 ] = ciflag[ CCOL_SUMP2 ] = 1;
+          break;
+
         case UI_KEY_MEDIAN:
           name           = "MEDIAN";
           unit           = MKCATALOG_NO_UNIT;
@@ -1572,8 +1588,8 @@ columns_define_alloc(struct mkcatalogparams *p)
           oiflag[ OCOL_SUMSKY ] = ciflag[ CCOL_SUMSKY ] = 1;
           break;
 
-        case UI_KEY_STD:
-          name           = "STD";
+        case UI_KEY_SKYSTD:
+          name           = "SKY_STD";
           unit           = MKCATALOG_NO_UNIT;
           ocomment       = "Sky standard deviation under object.";
           ccomment       = ocomment;
@@ -2550,6 +2566,12 @@ columns_fill(struct mkcatalog_passparams *pp)
                                       : NAN );
           break;
 
+        case UI_KEY_STD:
+          ((float *)colarr)[oind] =
+            gal_statistics_std_from_sums(oi[ OCOL_SUM ], oi[ OCOL_SUMP2 ],
+                                         oi[ OCOL_NUM ]);
+          break;
+
         case UI_KEY_MEDIAN:
           ((float *)colarr)[oind] = ( oi[ OCOL_NUM ]>0.0f
                                       ? oi[ OCOL_MEDIAN ]
@@ -2629,7 +2651,7 @@ columns_fill(struct mkcatalog_passparams *pp)
           ((float *)colarr)[oind] = MKC_RATIO(oi[OCOL_SUMSKY], oi[OCOL_NUMSKY]);
           break;
 
-        case UI_KEY_STD:
+        case UI_KEY_SKYSTD:
           ((float *)colarr)[oind] = sqrt( MKC_RATIO( oi[ OCOL_SUMVAR ],
                                                      oi[ OCOL_NUMVAR ]) );
           break;
@@ -2906,6 +2928,12 @@ columns_fill(struct mkcatalog_passparams *pp)
                                         /ci[CCOL_NUM] );
             break;
 
+          case UI_KEY_STD:
+            ((float *)colarr)[cind] =
+              gal_statistics_std_from_sums(oi[ CCOL_SUM ], oi[ CCOL_SUMP2 ],
+                                           oi[ CCOL_NUM ]);
+            break;
+
           case UI_KEY_MEDIAN:
             ((float *)colarr)[cind] = ( ci[ CCOL_NUM ]>0.0f
                                         ? ci[ CCOL_MEDIAN ] : NAN );
@@ -2991,7 +3019,7 @@ columns_fill(struct mkcatalog_passparams *pp)
                                                  ci[ CCOL_NUMSKY] );
             break;
 
-          case UI_KEY_STD:
+          case UI_KEY_SKYSTD:
             ((float *)colarr)[cind] = sqrt( MKC_RATIO( ci[ CCOL_SUMVAR ],
                                                        ci[ CCOL_NUMVAR ] ));
             break;
