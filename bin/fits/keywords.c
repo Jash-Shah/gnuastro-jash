@@ -331,6 +331,13 @@ keywords_list_key_names(struct fitsparams *p, fitsfile *fptr)
       /* Read the (next) keyword. */
       fits_read_keyn(fptr, i++, keyname, value, comment, &status);
 
+      /* If there is a problem (status is non-zero _and_ not
+         'KEY_OUT_BOUNDS'), abort with an error message. When 'status'
+         becomes 'KEY_OUT_BOUNDS', we have reached the end, so that isn't a
+         problem. */
+      if(status && status!=KEY_OUT_BOUNDS)
+        gal_fits_io_error(status, NULL);
+
       /* Print the keyword name (if its not empty!). */
       if( keyname[0]!='\0' ) printf("%s\n", keyname);
     }
