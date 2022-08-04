@@ -13,6 +13,9 @@ See the end of the file for license conditions.
 ** Changed features
 
 ** Bugs fixed
+  bug #62861: '--printkeynames' of Fits program gets caught in an infinite
+              loop on FITS files that have empty keywords before
+              'END'. Found by Pedram Ashofteh Ardakani.
 
 
 

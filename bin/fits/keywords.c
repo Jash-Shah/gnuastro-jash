@@ -321,16 +321,19 @@ keywords_list_key_names(struct fitsparams *p, fitsfile *fptr)
      printed. */
   keyname[0]='\0';
 
-  /* Go through all the keywords until you reach 'END'. */
-  while( strcmp(keyname, "END") )
-      {
-        /* Print the most recent keyword: this is placed before reading the
-           keyword because we want to stop upon reading 'END'. */
-        if( strlen(keyname) ) printf("%s\n", keyname);
+  /* Once we reach the end of the keywords, 'status' will become non-zero
+     (we shouldn't check with the 'END' keyword name because CFITSIO will
+     never reach it if there are empty keywords immediately before 'END')!
+     For more, see Gnuastro's commit 5f1d2c735e75dd000ed:
+     https://git.savannah.gnu.org/cgit/gnuastro.git/commit/?id=5f1d2c73 */
+  while(status==0)
+    {
+      /* Read the (next) keyword. */
+      fits_read_keyn(fptr, i++, keyname, value, comment, &status);
 
-        /* Read the next keyword. */
-        fits_read_keyn(fptr, i++, keyname, value, comment, &status);
-      }
+      /* Print the keyword name (if its not empty!). */
+      if( keyname[0]!='\0' ) printf("%s\n", keyname);
+    }
 }
 
 
