@@ -1248,6 +1248,11 @@ You might have already noticed that we are not using the name ``Linux'', but ``G
 Please take the time to have a look at the following essays and FAQs for a complete understanding of this very important distinction.
 
 @itemize
+@item
+@url{https://gnu.org/philosophy}
+
+@item
+@url{https://www.gnu.org/gnu/the-gnu-project.html}
 
 @item
 @url{https://www.gnu.org/gnu/gnu-users-never-heard-of-gnu.html}
@@ -1261,6 +1266,8 @@ Please take the time to have a look at the following essays and FAQs for a compl
 @item
 @url{https://www.gnu.org/gnu/gnu-linux-faq.html}
 
+@item
+Recorded talk: @url{https://peertube.stream/w/ddeSSm33R1eFWKJVqpcthN} (first 20 min is about the history of Unix-like operating systems).
 @end itemize
 
 @cindex Linux
@@ -1269,12 +1276,26 @@ Please take the time to have a look at the following essays and FAQs for a compl
 @cindex GCC: GNU Compiler Collection
 @cindex GNU Compiler Collection (GCC)
 In short, the Linux kernel@footnote{In Unix-like operating systems, the kernel connects software and hardware worlds.} is built using the GNU C library (glibc) and GNU compiler collection (gcc).
-The Linux kernel software alone is just a means for other software to access the hardware resources, it is useless alone: to say ``running Linux'', is like saying ``driving your carburetor''.
+The Linux kernel software alone is just a means for other software to access the hardware resources, it is useless alone!
+A normal astronomer (or scientist) will never interact with the kernel directly!
+For example the command-line environment that you interact with is usually GNU Bash.
+It is GNU Bash that then talks to kernel.
 
-To have an operating system, you need lower-level (to build the kernel), and higher-level (to use it) software packages.
-The majority of such software in most Unix-like operating systems are GNU software: ``the whole system is basically GNU with Linux loaded''.
+To better clarify, let's use this analogy inspired from one of the links above@footnote{https://www.gnu.org/gnu/gnu-users-never-heard-of-gnu.html}: saying that you are ``running Linux'' is like saying you are ``driving your engine''.
+The car's engine is the main source of power in the car, no one doubts that.
+But you don't ``drive'' the engine, you drive the ``car''.
+Without the radiator, battery, transmission, wheels, chassis, seats, wind-shield and etc, the engine alone is useless for transportation!
+
+@cindex Window Subsystem for Linux
+To have an operating system, you need lower-level tools (to build the kernel), and higher-level (to use it) software packages.
+For the Linux kernel, both the lower-level and higher-level tools are GNU.
+In other words,``the whole system is basically GNU with Linux loaded''.
+
+You can replace the Linux kernel and still have the GNU shell and higher-level utilities.
+For example using the ``Windows Subsystem for Linux'', you can use almost all GNU tools without the original Linux kernel, but using the host Windows operating system, as in @url{https://ubuntu.com/wsl}.
+Alternatively, you can build a fully functional GNU-based working environment on a macOS or BSD-based operating system (using the host's kernel and C compiler), for example through projects like Maneage (see @url{https://arxiv.org/abs/2006.03018, Akhlaghi et al. 2021}, and its Appendix C with all the GNU software tools that is exactly reproducible on a macOS also).
+
 Therefore to acknowledge GNU's instrumental role in the creation and usage of the Linux kernel and the operating systems that use it, we should call these operating systems ``GNU/Linux''.
-
 
 @menu
 * Command-line interface::      Introduction to the command-line
