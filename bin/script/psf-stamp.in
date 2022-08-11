@@ -647,7 +647,7 @@ EOF
                       $cropobj --hdu=1 set-o \
                       $cropclp --hdu=1 set-c \
                       \
-                      c o $olab ne 0 where c $clab eq -1 where 0 gt set-cmask \
+                      c o $olab ne 0 where c $clab eq -1 where 0 gt 1 dilate set-cmask \
                       o o $olab eq 0 where set-omask \
                       i omask cmask or nan where
     fi
