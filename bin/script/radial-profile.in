@@ -29,8 +29,9 @@
 # Exit the script in the case of failure
 set -e
 
-# To avoid floating points like '23,45' instead of '23.45'.
-export LANG=C
+# 'LC_NUMERIC' is responsible for formatting numbers printed by the OS.  It
+# prevents floating points like '23,45' instead of '23.45'.
+export LC_NUMERIC=C
 
 
 

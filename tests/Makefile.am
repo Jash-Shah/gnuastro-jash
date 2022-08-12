@@ -229,6 +229,7 @@ script/sort-by-night.sh: mkcatalog/aperturephot.sh.log
 AM_TESTS_ENVIRONMENT = \
 export LANG=C; \
 export AWK=$(AWK); \
+export LC_NUMERIC=C; \
 export mkdir_p="$(MKDIR_P)"; \
 export progbdir=programs-built; \
 export topsrc=$(abs_top_srcdir); \

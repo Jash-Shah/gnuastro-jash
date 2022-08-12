@@ -375,6 +375,7 @@ Common program behavior
 * Tessellation::                Tile the dataset into non-overlapping bins.
 * Automatic output::            About automatic output names.
 * Output FITS files::           Common properties when outputs are FITS.
+* Numeric locale::              Decimal point printed like 0.5 instead of 0,5.
 
 Command-line
 
@@ -2681,9 +2682,15 @@ This is especially convenient when you just want to make a small change to your 
 Press the ``up'' key on your keyboard (possibly multiple times) to see your previous command(s) and modify them accordingly.
 @end cartouche
 
+@cartouche
+@strong{Your locale doesn't use `.' as decimal separator:} on systems that don't use an English language environment, dates, numbers and etc can be printed in different formats (for example `0.5' can be written as `0,5').
+With the @code{LC_NUMERIC} line at the start of the script below, we are ensuring a unified format in the outupt of @command{seq}.
+For more, please see @ref{Numeric locale}.
+@end cartouche
+
 @example
 ## If your system language uses ',' (not '.') as decimal separator.
-$ export LANG=C
+$ export LC_NUMERIC=C
 
 ## See the general statistics of non-blank pixel values.
 $ aststatistics flat-ir/xdf-f160w.fits
@@ -2748,40 +2755,6 @@ Just like this manual, you can also access GNU AWK's manual on the command-line 
 Just run @code{info awk}.
 @end cartouche
 
-@cartouche
-@noindent
-@cindex Locale
-@cindex @code{LANG}
-@cindex @code{LC_ALL}
-@cindex Decimal separator
-@cindex Language of command-line
-@strong{Your locale doesn't use `.' as decimal separator:} the input/output of some core operating system tools like @command{awk} or @command{seq} depend on the @url{https://en.wikipedia.org/wiki/Locale_(computer_software), system locale}.
-For example in Spanish and some other languages the decimal separator (symbol used to separate the integer and fractional part of a number), is a comma.
-Therefore in systems that have Spanish as their default Locale, @command{seq} will print half of unity as `@code{0,5}' (instead of `@code{0.5}').
-This can cause problems for parsing the printed numbers in other programs.
-You can check your current locale with the @code{locale} command.
-You can test your default decimal separator with this command:
-
-@example
-seq 0.5 1
-@end example
-
-To avoid these kinds of locale-specific problems (for example another program not being able to read `@code{0,5}' as half of unity), you can change the locale by setting the @code{LANG} environment variable (or the lower-level/generic @code{LC_ALL}).
-You can do it only for a single command (the first one below), or all commands within the running session (the second command below):
-
-@example
-## Change the locale to the standard, only for this 'seq' command.
-$ LANG=C seq 0.5 1
-
-## Change the locale to the standard, for all commands after it.
-$ export LANG=C
-@end example
-
-If you want to change it generally for all future sessions, you can put the second command in your shell's startup file.
-For more on startup files, please see @ref{Installation directory}.
-@end cartouche
-
-
 @node Cosmological coverage, Building custom programs with the library, Angular coverage on the sky, General program usage tutorial
 @subsection Cosmological coverage
 Having found the angular coverage of the dataset in @ref{Angular coverage on the sky}, we can now use Gnuastro to answer a more physically motivated question: ``How large is this area at different redshifts?''.
@@ -2791,7 +2764,7 @@ Combined with the field's area that was measured before, we can calculate the ta
 
 @example
 ## If your system language uses ',' (not '.') as decimal separator.
-$ export LANG=C
+$ export LC_NUMERIC=C
 
 ## Print general cosmological properties at redshift 2 (for example).
 $ astcosmiccal -z2
@@ -2840,10 +2813,11 @@ $ for z in 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0; do        \
 Fortunately, the shell has a useful tool/program to print a sequence of numbers that is nicely called @code{seq}.
 You can use it instead of typing all the different redshifts in this example.
 For example the loop below will calculate and print the tangential coverage of this field across a larger range of redshifts (0.1 to 5) and with finer increments of 0.1.
+For more on the @code{LC_NUMERIC} command, see @ref{Numeric locale}.
 
 @example
 ## If your system language uses ',' (not '.') as decimal separator.
-$ export LANG=C
+$ export LC_NUMERIC=C
 
 ## The loop over the redshifts
 $ for z in $(seq 0.1 0.1 5); do                                  \
@@ -8847,6 +8821,7 @@ When the output is a FITS file, all the programs also store some very useful inf
 * Tessellation::                Tile the dataset into non-overlapping bins.
 * Automatic output::            About automatic output names.
 * Output FITS files::           Common properties when outputs are FITS.
+* Numeric locale::              Decimal point printed like 0.5 instead of 0,5.
 @end menu
 
 @node Command-line, Configuration files, Common program behavior, Common program behavior
@@ -10828,7 +10803,7 @@ ABC01.jpg ABC02.jpg DEF01_detected.fits
 
 
 
-@node Output FITS files,  , Automatic output, Common program behavior
+@node Output FITS files, Numeric locale, Automatic output, Common program behavior
 @section Output FITS files
 
 @cindex FITS
@@ -10927,6 +10902,58 @@ GNUASTRO= '0.7     '           / GNU Astronomy Utilities version.
 END
 @end example
 
+@node Numeric locale,  , Output FITS files, Common program behavior
+@section Numeric locale
+
+@cindex Locale
+@cindex @code{LC_ALL}
+@cindex @code{LC_NUMERIC}
+@cindex Decimal separator
+@cindex Language of command-line
+If your @url{https://en.wikipedia.org/wiki/Locale_(computer_software), system locale} isn't English, it may happen that the `.' is not used as the decimal separator of basic command-line tools for input or output.
+For example in Spanish and some other languages the decimal separator (symbol used to separate the integer and fractional part of a number), is a comma.
+Therefore in such systems, some programs may print @mymath{0.5} as as `@code{0,5}' (instead of `@code{0.5}').
+This mainly happens in some core operating system tools like @command{awk} or @command{seq} depend on the locale.
+This can cause problems for other programs (like those in Gnuastro that expect a `@key{.}' as the decimal separator).
+
+To see the effect, please try the commands below.
+The first one will print @mymath{0.5} in your default locale's format.
+The second set will use the Spanish locale for printing numbers (which will put a comma between the 0 and the 5).
+The third will use the English (US) locale for printing numbers (which will put a point between the 0 and the 5).
+
+@example
+$ seq 0.5 1
+
+$ export LC_NUMERIC=es_ES.utf8
+$ seq 0.5 1
+
+$ export LC_NUMERIC=en_US.utf8
+$ seq 0.5 1
+@end example
+
+@noindent
+With the simple command below, you can check your current locale environment variables for specifying the formats of various things like date, time, monetary, telephone, numbers and etc.
+You can change any of these, by simply giving different values to the respective variable like above.
+For a more complete explanation on each variable, see @url{https://www.baeldung.com/linux/locale-environment-variables}.
+
+@example
+$ locale
+@end example
+
+To avoid these kinds of locale-specific problems (for example another program not being able to read `@code{0,5}' as half of unity), you can change the locale by giving the value of @code{C} to the @code{LC_NUMERIC} environment variable (or the lower-level/generic @code{LC_ALL}).
+You will notice that @code{C} is not a human-language and country identifier like @code{en_US}, it is the programming locale, which is well recognized by programmers in all countries and is available on all Unix-like operating systems (others may not be pre-defined and may need installation).
+You can set the @code{LC_NUMERIC} only for a single command (the first one below: simply defining the variable in the same line), or all commands within the running session (the second command below, or ``exporting'' it to all subsequent commands):
+
+@example
+## Change the numeric locale, only for this 'seq' command.
+$ LC_NUMERIC=C seq 0.5 1
+
+## Change the locale to the standard, for all commands after it.
+$ export LC_NUMERIC=C
+@end example
+
+If you want to change it generally for all future sessions, you can put the second command in your shell's startup file.
+For more on startup files, please see @ref{Installation directory}.
 
 
 

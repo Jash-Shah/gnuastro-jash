@@ -16,6 +16,9 @@ See the end of the file for license conditions.
   bug #62861: '--printkeynames' of Fits program gets caught in an infinite
               loop on FITS files that have empty keywords before
               'END'. Found by Pedram Ashofteh Ardakani.
+  bug #62892: Installed scripts don't account for differing LANG and
+              LC_NUMERIC. Found by Teet Kuutma and fixed by Raul
+              Infante-Sainz.
 
 
 
