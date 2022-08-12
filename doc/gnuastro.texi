@@ -6361,6 +6361,7 @@ Otherwise the script will not generate the radial profile.
 As a consequence, in this step we put the normalization radii equal to the size of the stamps.
 By doing this, the script will generate the radial profile of the entire stamp.
 In this particular step we set it to @code{--normradii=500,510}.
+We also use the @option{--nocentering} option to disable sub-pixel warping in this phase (it is only relevant for the central part of the PSF).
 Furthermore, since there are several stars, we iterate over each row of the catalog using a while loop.
 
 @example
@@ -6370,6 +6371,7 @@ $ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
                astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
+                    --nocentering \
                     --stampwidth=1000 \
                     --center=$ra,$dec \
                     --normradii=500,510 \
@@ -6412,6 +6414,7 @@ $ asttable outer/67510-6-10.fits \
            | while read -r ra dec mag; do
                astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
+                    --nocentering \
                     --stampwidth=1000 \
                     --center=$ra,$dec \
                     --normradii=20,30 \
@@ -26254,9 +26257,20 @@ $ asttable catalog.fits | while read -r ra dec mag; do \
 @end example
 
 The input is an image from which the stamp of the stars are constructed.
-The output will be an image with a size specified by @option{--stampwidth}, centered at the position specified by the option @option{--center}, and normalized ``normalized'' by the value computed within the ring around the center (at a radial distance between the two radii specified by the option @option{--normradii}).
+The output image will have the following properties:
+@itemize
+@item
+A certain width (specified by @option{--stampwidth} in pixels).
+@item
+Centered at the coordinate specified by the option @option{--center} (it can be in image/pixel or WCS coordinates, see @option{--mode}).
 If no center is specified, then it is assumed that the object of interest is already in the center of the image.
-In the same way, if no normalization ring is considered, the output will not be normalized.
+@item
+If the given coordinate has sub-pixel elements (for example pixel coordinates 1.234,4.567), the pixel grid of the output will be warped so your given coordinate falls in the center of the central pixel of the final output.
+This is very important for building the central parts of the PSF, but not too effective for the middle or outer parts (to speed up the program in such cases, you can disable it with the @option{--nocentering} option).
+@item
+Normalized ``normalized'' by the value computed within the ring around the center (at a radial distance between the two radii specified by the option @option{--normradii}).
+If no normalization ring is considered, the output will not be normalized.
+@end itemize
 
 In the following cases, this script will produce a fully NaN-valued stamp (of the size given to @option{--stampwidth}).
 A fully NaN image can safely be used with the stacking operators of Arithmetic (see @ref{Stacking operators}) because they will be ignored.
@@ -26291,7 +26305,18 @@ The central position of the object.
 This option is used for placing the center of the stamp.
 This parameter is used in @ref{Crop} to center and crop the image.
 The positions along each dimension must be separated by a comma (@key{,}).
-The units of the coordinates are read based on the value to the @option{--mode} option, see above.
+The units of the coordinates are read based on the value to the @option{--mode} option, see the examples above.
+
+The given coordinate for the central value can have sub-pixel elements (for example it falls on coordinate 123.4,567.8 of the input image pixel grid).
+In such cases, after cropping, this script will use Gnuastro's @ref{Warp} to shift (or translate) the pixel grid by @mymath{-0.4} pixels along the horizontal and @mymath{1-0.8=0.2} pixels along the vertical.
+Finally the newly added pixels (due to the warping) will be trimmed to have your desired coordinate exactly in the center of the central pixel of the output.
+This is very important (critical!) when you are constructing the central part of the PSF.
+But for the outer parts it is not too effective, so to avoid wasting time for the warping, you can simply use @option{--nocentering} to disable it.
+
+@item -d
+@itemx --nocentering
+Don't do the sub-pixel centering to a new pixel grid.
+See the description of the @option{--center} option for more.
 
 @item -W INT
 @itemx --stampwidth=INT

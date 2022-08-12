@@ -55,6 +55,7 @@ axisratio=1
 normradii=""
 sigmaclip=""
 stampwidth=""
+nocentering=0
 normop="median"
 positionangle=0
 version=@VERSION@
@@ -107,6 +108,7 @@ $scriptname options:
   -Q, --axisratio=FLT     Axis ratio for ellipse maskprofile (A/B).
   -p, --positionangle=FLT Position angle for ellipse mask profile.
   -s, --sigmaclip=FLT,FLT Sigma-clip multiple and tolerance.
+  -d, --nocentering       Don't warp the center coord to central pixel.
 
  Output:
   -o, --output            Output table with the radial profile.
@@ -313,9 +315,10 @@ do
         -Q|--axisratio)      axisratio="$2";                            check_v "$1" "$axisratio";  shift;shift;;
         -Q=*|--axisratio=*)  axisratio="${1#*=}";                       check_v "$1" "$axisratio";  shift;;
         -Q*)                 axisratio=$(echo "$1"  | sed -e's/-Q//');  check_v "$1" "$axisratio";  shift;;
-        -p|--positionangle)     positionangle="$2";                            check_v "$1" "$positionangle";  shift;shift;;
-        -p=*|--positionangle=*) positionangle="${1#*=}";                       check_v "$1" "$positionangle";  shift;;
-        -p*)                    positionangle=$(echo "$1"  | sed -e's/-p//');  check_v "$1" "$positionangle";  shift;;
+        -p|--positionangle)        positionangle="$2";                                  check_v "$1" "$positionangle";  shift;shift;;
+        -p=*|--positionangle=*)    positionangle="${1#*=}";                             check_v "$1" "$positionangle";  shift;;
+        -p*)                       positionangle=$(echo "$1"  | sed -e's/-p//');        check_v "$1" "$positionangle";  shift;;
+
 
 
         # Output parameters
@@ -324,6 +327,8 @@ do
         -t|--tmpdir)      tmpdir="$2";                          check_v "$1" "$tmpdir";  shift;shift;;
         -t=*|--tmpdir=*)  tmpdir="${1#*=}";                     check_v "$1" "$tmpdir";  shift;;
         -t*)              tmpdir=$(echo "$1" | sed -e's/-t//'); check_v "$1" "$tmpdir";  shift;;
+        -d|--nocentering)     nocentering=1; shift;;
+        -d*|--nocentering=*)  on_off_option_error --nocentering -d;;
         -o|--output)      output="$2";                          check_v "$1" "$output"; shift;shift;;
         -o=*|--output=*)  output="${1#*=}";                     check_v "$1" "$output"; shift;;
         -o*)              output=$(echo "$1" | sed -e's/-o//'); check_v "$1" "$output"; shift;;
@@ -647,12 +652,127 @@ EOF
                       $cropobj --hdu=1 set-o \
                       $cropclp --hdu=1 set-c \
                       \
-                      c o $olab ne 0 where c $clab eq -1 where 0 gt 1 dilate set-cmask \
+                      c o $olab ne 0 where c $clab eq -1 where 0 gt \
+                      1 dilate set-cmask \
                       o o $olab eq 0 where set-omask \
                       i omask cmask or nan where
     fi
 else
     cropped_masked=$cropped
+fi
+
+
+
+
+
+# Function to simplify checks in each dimension
+# ---------------------------------------------
+#
+# If the bottom-left edge of the crop is outside the image, the minimum
+# coordinate needs to be modified from the value in the 'ICF1PIX' keyword
+# of the output of the Crop program.
+first_pix_in_img () {
+
+    # This function takes a single argument: the dimension to work on.
+    dim=$1
+
+    # Find the minimim and maximum from the cropped image.
+    if [ $dim = x ]; then
+        width=$xstampwidth
+        min=$(echo "$overlaprange" | awk '{print $1}')
+        max=$(echo "$overlaprange" | awk '{print $2}')
+    elif [ $dim = y ]; then
+        width=$ystampwidth
+        min=$(echo "$overlaprange" | awk '{print $3}')
+        max=$(echo "$overlaprange" | awk '{print $4}')
+    else
+        cat <<EOF
+$scriptname: ERROR: a bug! Please contact with us at bug-gnuastro@gnu.org. The value of 'dim' is "$dim" and not recognized
+EOF
+        exit 1
+    fi
+
+    # Check if it is necessary to correct the position. If the bottom-left
+    # corner of the image (which defines the zero coordinate along both
+    # dimensions) has fallen outside of the image, then the minimum value
+    # of 'ICF1PIX' in that dimension will be '1'.
+    #
+    # Therefore, if the minimum value is not '1', then everything is fine
+    # and no correction is necessary! We'll just return the minimum
+    # value. Otherwise, we need to return a negative minimum pixel value to
+    # obtain the correct position of the object from 'ICF1PIX' (which only
+    # has the region of the input that overlapped with the output). It is
+    # necessary to add '1' because the first pixel has a coordiante of 1,
+    # not 0.
+    if [ $min = 1 ]; then
+        echo "$max $width" | awk '{if($1==$2) print 1; else print $1-$2+1}'
+    else
+        echo $min
+    fi
+}
+
+
+
+
+
+# In the FITS standard, the integer coordinates are defined on the center
+# of each pixel. On the other hand, the centers of objects can be anywhere
+# (not exactly in the center of the pixel!). In this scenario, we should
+# move the center of the object to the center of the pixel with a sub-pixel
+# warp. In this part of the script we will calculate the necessary
+# sub-pixel translation and use Warp to center the object on the pixel
+# grid. The user can disable this with the '--nocentering' option.
+if [ $nocentering = 0 ]; then
+
+    # Read the overlap range from the 'ICF1PIX' keyword (which is printed
+    # in all outputs of Crop).
+    overlaprange=$(astfits $cropped -h1 --keyvalue=ICF1PIX -q \
+                       | sed -e's|:| |g' -e's|,| |')
+
+    # Calculate the position of the bottom-left pixel of the cropped image
+    # in relation to the input image.
+    minx=$(first_pix_in_img x)
+    miny=$(first_pix_in_img y)
+
+    # Due to cropping, the image coordinate should be shifted by a certain
+    # number (integer) of pixels (leaving the sub-pixel center intact).
+    stmcoord=$(echo "$xcenter $ycenter $minx $miny" \
+                   | awk '{printf "%g %g\n", $1-$3+1, $2-$4+1}')
+
+    # Calculate the displacement (or value to give to '--translate' in
+    # Warp), and the new center of the star after translation (or value of
+    # '--center' in Crop):
+    #  1. At first we extract the sub-pixel displacement ('x' and 'y').
+    #  2. If the displacement is larger than 0.5, then after the warp, the
+    #     center will be shifted by one pixel.  Otherwise, if the
+    #     displacement is smaller than 0.5, we shift the grid backwards by
+    #     mutiplying it by -1 and don't add any shift.
+    #  3. Add 'xshift' and 'yshit' valut to integer of x and y coordinate
+    #     and add final value to one.
+    warpcoord=$(echo "$stmcoord" \
+          | awk '{x=$1-int($1); y=$2-int($2); \
+                  if(x>0.5){x=1-x; xshift=1} else {x*=-1; xshift=0}; \
+                  if(y>0.5){y=1-y; yshift=1} else {y*=-1; yshift=0}; \
+                  printf("%f,%f %d,%d\n", x, y, \
+                  int($1)+xshift+1, int($2)+yshift+1)}')
+
+    # Warp image based on the measured displacement (first component of the
+    # output above).
+    warpped=$tmpdir/cropped-masked-warpforcenter-$objectid.fits
+    DXY=$(echo "$warpcoord" | awk '{print $1}')
+    astwarp $cropped_masked --translate=$DXY --output=$warpped
+
+    # Crop image based on the calculated shift (second component of the
+    # output above).
+    centermsk=$tmpdir/cropped-masked-centered-$objectid.fits
+    CXY=$(echo "$warpcoord" | awk '{print $2}')
+    astcrop $warpped -h1 \
+            --mode=img --output=$centermsk \
+            --center=$CXY --width=$xstampwidth,$ystampwidth
+else
+    # If the user did not want to correct the center of image, we'll use
+    # the raw crop as input for the next step.
+    centermsk=$cropped_masked
 fi
 
 
@@ -677,7 +797,7 @@ if [ x"$normradiusmin" != x   -a   x"$normradiusmax" != x ]; then
     if [ x"$sigmaclip" = x ]; then finalsigmaclip=""
     else                           finalsigmaclip="--sigmaclip=$sigmaclip";
     fi
-    astscript-radial-profile $cropped_masked --hdu=1 --rmax=$maxr \
+    astscript-radial-profile $centermsk --hdu=1 --rmax=$maxr \
                              --measure=$normop $finalsigmaclip \
                              --positionangle=$positionangle \
                              --tmpdir=$tmpdir --keeptmp \
@@ -716,7 +836,7 @@ fi
 # but 1.868915 will be read as 'float64'. In the latter case, the output
 # will become 'float64' also, which will cause problems later when we want
 # to stack them together (some images will be 'float32', some 'float64').
-astarithmetic $cropped_masked --hdu=1 $normvalue float32 / \
+astarithmetic $centermsk --hdu=1 $normvalue float32 / \
               float32 --output=$output $quiet
 
 

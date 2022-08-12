@@ -8,6 +8,16 @@ See the end of the file for license conditions.
 
 ** New features
 
+  astscript-psf-stamp:
+  - sub-pixel warping is applied to ensure that your coordinate is at the
+    center of the central pixel of the output image. This results in a
+    _major_ improvement when estimating the center of the PSF.
+  --nocentering: disable sub-pixel warping when creating the PSF stamp. As
+    described above, the sub-pixel warping is critical for the central part
+    of the PSF, but for the outer parts it is statistically negligible. So
+    to avoid slowing down you pipeline, you can disable sub-pixel warping
+    with this option.
+
 ** Removed features
 
 ** Changed features
