@@ -77,6 +77,12 @@ See the end of the file for license conditions.
     of the PSF, but for the outer parts it is statistically negligible. So
     to avoid slowing down you pipeline, you can disable sub-pixel warping
     with this option.
+  --snthresh: if given, the value to this option is assumed to be a
+    signal-to-noise ratio (S/N) threshold and all pixels below that S/N
+    will be masked. This is useful because we are often forced to stack
+    stars of differing magnitudes. While the fainter ones are good for the
+    inner parts of the star, they degrade the stack's outer parts. With
+    this option, the fainter stars won't harm the outer parts.
 
   Library functions:
   - gal_box_border_rotate_around_center: width of box after rotation.
@@ -101,6 +107,16 @@ See the end of the file for license conditions.
     of the Tutorial chapter, since it introduces the tools at a more basic
     level. The "Sufi simulates a detection" (which was previously first)
     has been moved to the fourth section.
+
+  astscript-psf-scale-factor:
+  --widthinpix: new name for the old '--stampwidth' option. This was done
+    to have the same name to a similar option in Crop and help in
+    remembering.
+
+  astscript-psf-stamp:
+  --widthinpix: new name for the old '--stampwidth' option. This was done
+    to have the same name to a similar option in Crop and help in
+    remembering.
 
   Library
   - gal_eps_write: an extra argument has been added to draw marks.

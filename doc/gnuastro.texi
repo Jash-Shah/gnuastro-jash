@@ -6344,7 +6344,7 @@ $ asttable outer/67510-6-10.fits \
                astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --nocentering \
-                    --stampwidth=1000 \
+                    --widthinpix=1000 \
                     --center=$ra,$dec \
                     --normradii=500,510 \
                     --segment=label/67510-seg.fits \
@@ -6387,7 +6387,7 @@ $ asttable outer/67510-6-10.fits \
                astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
                     --nocentering \
-                    --stampwidth=1000 \
+                    --widthinpix=1000 \
                     --center=$ra,$dec \
                     --normradii=20,30 \
                     --segment=label/67510-seg.fits \
@@ -6460,7 +6460,7 @@ Only the very central core of some of the stars is saturated.
 We can therefore use these stars to fill the strong bleeding footprints that were present in the outer stack of @file{outer/stack.fits}.
 Similar to before, let's build ready-to-stack crops of these stars.
 To get a better feeling of the normalization radii, follow the same steps of @ref{Building outer part of PSF} (setting @option{--tmpdir} and @option{--keeptmp}).
-In this case, since the stars are fainter, we can set a smaller size for the individual stamps, @option{--stampwidth=500}, to speed up the calculations:
+In this case, since the stars are fainter, we can set a smaller size for the individual stamps, @option{--widthinpix=500}, to speed up the calculations:
 
 @example
 $ counter=1
@@ -6469,7 +6469,7 @@ $ asttable inner/67510-12-13.fits \
            | while read -r ra dec mag; do
                astscript-psf-stamp label/67510-seg.fits \
                     --mode=wcs \
-                    --stampwidth=500 \
+                    --widthinpix=500 \
                     --center=$ra,$dec \
                     --normradii=5,10 \
                     --segment=label/67510-seg.fits \
@@ -27281,7 +27281,7 @@ Examples:
 ## Make a stamp around (x,y)=(53,69) of width=151 pixels.
 ## Normalize the stamp within the radii 20 and 30 pixels.
 $ astscript-psf-stamp image.fits --mode=img \
-      --center=53,69 --stampwidth=151 --normradii=20,30 \
+      --center=53,69 --widthinpix=151 --normradii=20,30 \
       --output=stamp.fits
 
 ## Iterate over a catalog with positions of stars that are
@@ -27289,7 +27289,7 @@ $ astscript-psf-stamp image.fits --mode=img \
 $ asttable catalog.fits | while read -r ra dec mag; do \
     astscript-psf-stamp image.fits \
         --mode=wcs \
-        --stampwidth=150 \
+        --widthinpix=150 \
         --center=$ra,$dec \
         --normradii=20,30 \
         --output=stamp-"$ra"-"$dec".fits; done
@@ -27300,7 +27300,7 @@ The input is an image from which the stamp of the stars are constructed.
 The output image will have the following properties:
 @itemize
 @item
-A certain width (specified by @option{--stampwidth} in pixels).
+A certain width (specified by @option{--widthinpix} in pixels).
 @item
 Centered at the coordinate specified by the option @option{--center} (it can be in image/pixel or WCS coordinates, see @option{--mode}).
 If no center is specified, then it is assumed that the object of interest is already in the center of the image.
@@ -27312,7 +27312,7 @@ Normalized ``normalized'' by the value computed within the ring around the cente
 If no normalization ring is considered, the output will not be normalized.
 @end itemize
 
-In the following cases, this script will produce a fully NaN-valued stamp (of the size given to @option{--stampwidth}).
+In the following cases, this script will produce a fully NaN-valued stamp (of the size given to @option{--widthinpix}).
 A fully NaN image can safely be used with the stacking operators of Arithmetic (see @ref{Stacking operators}) because they will be ignored.
 In case you don't want to waste storage with fully NaN images, you can compress them with @code{gzip --best output.fits}, and give the resulting @file{.fits.gz} file to Arithmetic.
 @itemize
@@ -27359,7 +27359,7 @@ Don't do the sub-pixel centering to a new pixel grid.
 See the description of the @option{--center} option for more.
 
 @item -W INT
-@itemx --stampwidth=INT
+@itemx --widthinpix=INT
 Size (width) of the output image stamp in pixels.
 The size of the output image will be always an odd number of pixels.
 As a consequence, if the user specify an even number, the final size will be the specified size plus 1 pixel.
@@ -27387,6 +27387,18 @@ The result is that all objects and clumps that contaminate the central source ar
 The non masked object and clump labels are kept into the header of the output image.
 The keywords are @code{CLABEL} and @code{OLABEL}.
 If no segmentation image is used, then their values are set to @code{none}.
+
+@item -T FLT
+@itemx --snthresh=FLT
+Mask all the pixels below the given signal-to-noise ratio (S/N) threshold.
+This option is only valid with the @option{--segment} option (it will use the @code{SKY_STD} extension of the @ref{Segment output}.
+This threshold is applied prior to the possible normalization or centering of the stamp.
+After all pixels below the given threshold are masked, the mask is also dilated by one level to avoid single pixels above the threshold (which are mainly due to noise when the threshold is lower).
+
+This is useful for increasing the S/N of inner parts of each region of the finally stacked PSF.
+As the stars (that are to be stacked) become fainter, the S/N of their outer parts (at a fixed radius) decreases.
+The stack of a higher-S/N image with a lower-S/N image will have an S/N that is lower than the higher one.
+But we can still use the inner parts of those fainter stars (that have sufficiently high S/N).
 
 @item -N STR
 @itemx --normop=STR
@@ -27633,7 +27645,7 @@ The first value is the inner radius, the second is the outer radius.
 These two radii define a ring of pixels around the center that is used for obtaining the scale factor value.
 
 @item -W INT
-@itemx --stampwidth=INT
+@itemx --widthinpix=INT
 Size (width) of the image stamp in pixels.
 This is an intermediate product computed internally by the script.
 By default, the size of the stamp is automatically set to be as small as possible (i.e., two times the external radius of the ring specified by @option{--normradii}) to make the computation fast.

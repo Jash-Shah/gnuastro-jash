@@ -51,10 +51,11 @@ keeptmp=0
 output=""
 tmpdir=""
 segment=""
+snthresh=""
 axisratio=1
 normradii=""
 sigmaclip=""
-stampwidth=""
+widthinpix=""
 nocentering=0
 normop="median"
 positionangle=0
@@ -99,7 +100,9 @@ $scriptname options:
   -h, --hdu=STR           HDU/extension of all input FITS files.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
-  -W, --stampwidth=INT,INT Width of the stamp in pixels.
+  -W, --widthinpix=INT,INT Width of the stamp in pixels.
+  -T, --snthresh=FLT      Mask pixels below this S/N (only when
+                          '--segment' is given).
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the normalization value.
   -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
@@ -294,9 +297,12 @@ do
         -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
         -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
         -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
-        -W|--stampwidth)     stampwidth="$2";                           check_v "$1" "$stampwidth";  shift;shift;;
-        -W=*|--stampwidth=*) stampwidth="${1#*=}";                      check_v "$1" "$stampwidth";  shift;;
-        -W*)                 stampwidth=$(echo "$1"  | sed -e's/-W//'); check_v "$1" "$stampwidth";  shift;;
+        -W|--widthinpix)     widthinpix="$2";                           check_v "$1" "$widthinpix";  shift;shift;;
+        -W=*|--widthinpix=*) widthinpix="${1#*=}";                      check_v "$1" "$widthinpix";  shift;;
+        -W*)                 widthinpix=$(echo "$1"  | sed -e's/-W//'); check_v "$1" "$widthinpix";  shift;;
+        -T|--snthresh)       snthresh="$2";                             check_v "$1" "$snthresh";  shift;shift;;
+        -T=*|--snthresh=*)   snthresh="${1#*=}";                        check_v "$1" "$snthresh";  shift;;
+        -T*)                 snthresh=$(echo "$1"  | sed -e's/-W//');   check_v "$1" "$snthresh";  shift;;
         -S|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
         -S=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
         -S*)                 segment=$(echo "$1"  | sed -e's/-S//');    check_v "$1" "$segment";  shift;;
@@ -405,22 +411,22 @@ EOF
     ycoord=$(echo "$center" | awk 'BEGIN{FS=","} {print $2}')
 fi
 
-# If a stamp width (--stampwidth) is not given, assume the same size than
+# If a stamp width (--widthinpix) is not given, assume the same size than
 # the input.  If the input image has an odd number of pixels, it is fine.
 # Otherwise, if the input image has an even number of pixels, then it has
 # to be cropped around the center position and the size will be set to an
 # odd number of pixels. In this case print a warnings.
-if [ x"$stampwidth" = x ]; then
+if [ x"$widthinpix" = x ]; then
 
     if [ x"$xsizetype" = xeven ]; then
-        xstampwidth=$(echo $xsize | awk '{print $1+1}')
+        xwidthinpix=$(echo $xsize | awk '{print $1+1}')
         if [ x"$quiet" = x ]; then
             cat <<EOF
 $scriptname: WARNING: the image along the first dimension (NAXIS1) has an even number of pixels ($xsize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
 EOF
         fi
     elif [ x"$xsizetype" = xodd ]; then
-        xstampwidth=$xsize
+        xwidthinpix=$xsize
     else
         cat <<EOF
 $scriptname: ERROR: the size of the image along the first dimension (NAXIS1) can not be obtained
@@ -428,14 +434,14 @@ EOF
         exit 1
     fi
     if [ x"$ysizetype" = xeven ]; then
-        ystampwidth=$(echo $ysize | awk '{print $1+1}')
+        ywidthinpix=$(echo $ysize | awk '{print $1+1}')
         if [ x"$quiet" = x ]; then
             cat <<EOF
 $scriptname: WARNING: the image along the second dimension (NAXIS2) has an even number of pixels ($ysize). This may cause some problems with the centering of the stamp. Please, check and consider providing an image with an odd number of pixels
 EOF
         fi
     elif [ x"$ysizetype" = xodd ]; then
-        ystampwidth=$ysize
+        ywidthinpix=$ysize
     else
         cat <<EOF
 $scriptname: ERROR: the size of the image along the second dimension (NAXIS2) can not be obtained
@@ -444,20 +450,20 @@ EOF
     fi
     if [ x"$quiet" = x ]; then
         cat <<EOF
-$scriptname: WARNING: no stamp width provided ('--stampwidth' or '-W'). Considering that the stamp width is $xstampwidth x $ystampwidth
+$scriptname: WARNING: no stamp width provided ('--widthinpix' or '-W'). Considering that the stamp width is $xwidthinpix x $ywidthinpix
 EOF
     fi
 else
-    nstampwidth=$(echo $stampwidth | awk 'BEGIN{FS=","}END{print NF}')
-    if [ x$nstampwidth != x2 ]; then
+    nwidthinpix=$(echo $widthinpix | awk 'BEGIN{FS=","}END{print NF}')
+    if [ x$nwidthinpix != x2 ]; then
         cat <<EOF
-$scriptname: '--stampwidth' (or '-W') only take two values, but $nstampwidth were given in '$stampwidth'
+$scriptname: '--widthinpix' (or '-W') only take two values, but $nwidthinpix were given in '$widthinpix'
 EOF
         exit 1
     fi
     # Obtain the coordinates of the center.
-    xstampwidth=$(echo "$stampwidth" | awk 'BEGIN{FS=","} {print $1}')
-    ystampwidth=$(echo "$stampwidth" | awk 'BEGIN{FS=","} {print $2}')
+    xwidthinpix=$(echo "$widthinpix" | awk 'BEGIN{FS=","} {print $1}')
+    ywidthinpix=$(echo "$widthinpix" | awk 'BEGIN{FS=","} {print $2}')
 fi
 
 # If a normalization range is not given at all.
@@ -567,7 +573,7 @@ fi
 # of the PSF of a star that is centered outside of the image).
 cropped=$tmpdir/cropped-$objectid.fits
 astcrop $inputs --hdu=$hdu --mode=img --checkcenter=0 \
-        --width=$xstampwidth,$ystampwidth \
+        --width=$xwidthinpix,$ywidthinpix \
         --center=$xcenter,$ycenter \
         --output=$cropped $quiet
 if ! [ -f $cropped ]; then
@@ -575,7 +581,7 @@ if ! [ -f $cropped ]; then
     # 'makenew' will generate a fully 0-valued image. Adding (with '+') any
     # number by NaN will be NaN. Therefore the output of the Arithmetic
     # command below will be a fully NaN-valued image.
-    astarithmetic $xstampwidth $ystampwidth 2 makenew float32 \
+    astarithmetic $xwidthinpix $ywidthinpix 2 makenew float32 \
                   nan + $quiet --output=$output
 
     # Write an empty 'NORMVAL' keyword (as is expected from this program).
@@ -641,10 +647,10 @@ EOF
         cropobj=$tmpdir/cropped-objects-$objectid.fits
         astcrop $segment --hdu=OBJECTS --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$xstampwidth,$ystampwidth --output=$cropobj $quiet
+                --width=$xwidthinpix,$ywidthinpix --output=$cropobj $quiet
         astcrop $segment --hdu=CLUMPS --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$xstampwidth,$ystampwidth --output=$cropclp $quiet
+                --width=$xwidthinpix,$ywidthinpix --output=$cropclp $quiet
 
         # Mask all the undesired regions.
         cropped_masked=$tmpdir/cropped-masked-$objectid.fits
@@ -657,6 +663,23 @@ EOF
                       o o $olab eq 0 where set-omask \
                       i omask cmask or nan where
     fi
+
+    # Apply the signal-to-noise threshold if the user provided one.
+    if [ x"$snthresh" != x ]; then
+	cropsnt=$tmpdir/cropped-snt-$objectid.fits
+	cropstd=$tmpdir/cropped-std-$objectid.fits
+	astcrop $segment --hdu=SKY_STD --mode=img \
+                --center=$xcenter,$ycenter \
+                --width=$xwidth,$ywidth \
+		--output=$cropstd $quiet
+	astarithmetic $cropped_masked -h1 set-v \
+		      $cropstd -h1        set-s \
+		      v s /               set-sn \
+		      v sn $snthresh lt \
+		      2 dilate nan where -o$cropsnt
+	mv $cropsnt $cropped_masked
+    fi
+
 else
     cropped_masked=$cropped
 fi
@@ -678,11 +701,11 @@ first_pix_in_img () {
 
     # Find the minimim and maximum from the cropped image.
     if [ $dim = x ]; then
-        width=$xstampwidth
+        width=$xwidthinpix
         min=$(echo "$overlaprange" | awk '{print $1}')
         max=$(echo "$overlaprange" | awk '{print $2}')
     elif [ $dim = y ]; then
-        width=$ystampwidth
+        width=$ywidthinpix
         min=$(echo "$overlaprange" | awk '{print $3}')
         max=$(echo "$overlaprange" | awk '{print $4}')
     else
@@ -768,7 +791,7 @@ if [ $nocentering = 0 ]; then
     CXY=$(echo "$warpcoord" | awk '{print $2}')
     astcrop $warpped -h1 \
             --mode=img --output=$centermsk \
-            --center=$CXY --width=$xstampwidth,$ystampwidth
+            --center=$CXY --width=$xwidthinpix,$ywidthinpix
 else
     # If the user did not want to correct the center of image, we'll use
     # the raw crop as input for the next step.

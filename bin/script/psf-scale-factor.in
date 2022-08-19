@@ -46,7 +46,7 @@ keeptmp=0
 tmpdir=""
 segment=""
 normradii=""
-stampwidth=""
+widthinpix=""
 sigmaclip="3,0.1"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -94,7 +94,7 @@ $scriptname options:
   -P, --psfhdu=STR        HDU/extension of the PSF image.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
-  -W, --stampwidth=INT    Width of the stamp in pixels.
+  -W, --widthinpix=INT    Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the scaling factor value.
   -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
@@ -283,9 +283,9 @@ do
         -n|--normradii)      normradii="$2";                            check_v "$1" "$normradii";  shift;shift;;
         -n=*|--normradii=*)  normradii="${1#*=}";                       check_v "$1" "$normradii";  shift;;
         -n*)                 normradii=$(echo "$1"  | sed -e's/-n//');  check_v "$1" "$normradii";  shift;;
-        -W|--stampwidth)     stampwidth="$2";                           check_v "$1" "$stampwidth";  shift;shift;;
-        -W=*|--stampwidth=*) stampwidth="${1#*=}";                      check_v "$1" "$stampwidth";  shift;;
-        -W*)                 stampwidth=$(echo "$1"  | sed -e's/-W//'); check_v "$1" "$stampwidth";  shift;;
+        -W|--widthinpix)     widthinpix="$2";                           check_v "$1" "$widthinpix";  shift;shift;;
+        -W=*|--widthinpix=*) widthinpix="${1#*=}";                      check_v "$1" "$widthinpix";  shift;;
+        -W*)                 widthinpix=$(echo "$1"  | sed -e's/-W//'); check_v "$1" "$widthinpix";  shift;;
         -S|--segment)        segment="$2";                              check_v "$1" "$segment";  shift;shift;;
         -S=*|--segment=*)    segment="${1#*=}";                         check_v "$1" "$segment";  shift;;
         -S*)                 segment=$(echo "$1"  | sed -e's/-S//');    check_v "$1" "$segment";  shift;;
@@ -487,8 +487,8 @@ fi
 # Otherwise, make the stamp width of the same size than two times the
 # maximum radius for computing the flux factor. This is the maximum radius
 # that is needed for computing the flux value.
-if [ x"$stampwidth" = x ]; then
-    stampwidth=$(astarithmetic $normradiusmax float32 2.0 x 1.0 + --quiet)
+if [ x"$widthinpix" = x ]; then
+    widthinpix=$(astarithmetic $normradiusmax float32 2.0 x 1.0 + --quiet)
 fi
 
 
@@ -502,7 +502,7 @@ fi
 cropped=$tmpdir/cropped-$objectid.fits
 astcrop $inputs --hdu=$hdu --mode=img \
         --center=$xcenter,$ycenter \
-        --width=$stampwidth --output=$cropped $quiet
+        --width=$widthinpix --output=$cropped $quiet
 
 
 
@@ -558,10 +558,10 @@ EOF
         cropobj=$tmpdir/cropped-objects-$objectid.fits
         astcrop $segment --hdu=OBJECTS --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$stampwidth --output=$cropobj $quiet
+                --width=$widthinpix --output=$cropobj $quiet
         astcrop $segment --hdu=CLUMPS --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$stampwidth --output=$cropclp $quiet
+                --width=$widthinpix --output=$cropclp $quiet
 
         # Mask all the undesired regions.
         cropped_masked=$tmpdir/cropped-masked-$objectid.fits
@@ -589,7 +589,7 @@ psfycenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS2 -q \
                  | awk '{print $1/2+0.5}')
 astcrop $psf --hdu=$psfhdu --mode=img \
         --center=$psfxcenter,$psfycenter \
-        --width=$stampwidth --output=$psfcropped $quiet
+        --width=$widthinpix --output=$psfcropped $quiet
 
 
 
@@ -597,8 +597,8 @@ astcrop $psf --hdu=$psfhdu --mode=img \
 
 # Build a radial profile image. It will be used to only select pixels
 # within the requested radial range.
-radcenter=$(echo $stampwidth | awk '{print $1/2+0.5}')
-radradius=$(echo $stampwidth | awk '{print $1+2}')
+radcenter=$(echo $widthinpix | awk '{print $1/2+0.5}')
+radradius=$(echo $widthinpix | awk '{print $1+2}')
 radcropped=$tmpdir/cropped-radial-$objectid.fits
 echo "1 $radcenter $radcenter 7 $radradius 0 0 1 1 1" \
      | astmkprof --background=$psfcropped --clearcanvas \

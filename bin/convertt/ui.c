@@ -334,7 +334,7 @@ ui_list_colors(struct converttparams *p)
   printf("# Column 5: FRAC-B     [frac,   f32] Fraction of Blue.\n");
   printf("# Column 6: HEX        [hex,   str6] Color code in hexadecimal.\n");
   printf("# Column 7: EXAMPLE    [n/a,  str35] Example of color in 24-bit "
-         "terminals\n");
+         "terminals.\n");
 
   /* Print each color's information. */
   for(i=1;i<GAL_COLOR_NUMBER;++i)
