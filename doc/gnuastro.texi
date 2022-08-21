@@ -8014,12 +8014,6 @@ By reading their manuals, installing them and staying up to date with changes/bu
 
 Based on your package manager, you can use any of the following commands to install the mandatory and optional dependencies.
 If your package manager isn't included in the list below, please send us the respective command, so we add it.
-
-As discussed above, we recommend installing the @emph{mandatory} dependencies manually from source (see @ref{Mandatory dependencies}).
-Therefore, in each command below, first the optional dependencies are given.
-The mandatory dependencies are included after an empty line.
-If you would also like to install the mandatory dependencies with your package manager, just ignore the empty line.
-
 For better archivability and compression ratios, Gnuastro's recommended tarball compression format is with the @url{http://lzip.nongnu.org/lzip.html, Lzip} program, see @ref{Release tarball}.
 Therefore, the package manager commands below also contain Lzip.
 
@@ -8038,13 +8032,30 @@ All of it is free software and based on the work of volunteers around the world.
 Many distributions are thus derived from it, for example Ubuntu and Linux Mint.
 This arguably makes Debian-based OSs the largest, and most used, class of GNU/Linux distributions.
 All of them use Debian's Advanced Packaging Tool (APT, for example @command{apt-get}) for managing packages.
+
+@table @asis
+@item Mandatory dependencies
+Without these, Gnuastro can't be built, they are necessary for input/output and low-level mathematics (see @ref{Mandatory dependencies})!
 @example
-$ sudo apt-get install ghostscript libtool-bin libjpeg-dev  \
-                       libtiff-dev libgit2-dev curl lzip    \
-                       saods9 topcat                        \
-                                                            \
-                       libgsl-dev libcfitsio-dev wcslib-dev
+$ sudo apt-get install libgsl-dev libcfitsio-dev \
+                       wcslib-dev
 @end example
+
+@item Optional dependendencies
+If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
+@example
+$ sudo apt-get install ghostscript libtool-bin \
+                       libjpeg-dev libtiff-dev
+                       libgit2-dev curl lzip
+@end example
+
+@item Programs to view FITS images or tables
+These are not used in Gnuastro's build.
+They can just help in viewing the inputs/outputs independent of Gnuastro!
+@example
+$ sudo apt-get install saods9 topcat
+@end example
+@end table
 
 @noindent
 Gnuastro is @url{https://tracker.debian.org/pkg/gnuastro,packaged} in Debian (and thus some of its derivate operating systems).
@@ -8064,13 +8075,30 @@ RHEL requires paid subscriptions for use of its binaries and support.
 But since it is free software, many other teams use its code to spin-off their own distributions based on RHEL.
 Red Hat-based GNU/Linux distributions initially used the ``Yellowdog Updated, Modifier'' (YUM) package manager, which has been replaced by ``Dandified yum'' (DNF).
 If the latter isn't available on your system, you can use @command{yum} instead of @command{dnf} in the command below.
+
+@table @asis
+@item Mandatory dependencies
+Without these, Gnuastro can't be built, they are necessary for input/output and low-level mathematics (see @ref{Mandatory dependencies})!
 @example
-$ sudo dnf install ghostscript libtool libjpeg-devel     \
-                   libtiff-devel libgit2-devel lzip curl \
-                   ds9 topcat                            \
-                                                         \
-                   gsl-devel cfitsio-devel wcslib-devel
+$ sudo dnf install gsl-devel cfitsio-devel \
+                   wcslib-devel
 @end example
+
+@item Optional dependendencies
+If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
+@example
+$ sudo dnf install ghostscript libtool \
+                   libjpeg-devel libtiff-devel \
+                   libgit2-devel lzip curl
+@end example
+
+@item Programs to view FITS images or tables
+These are not used in Gnuastro's build.
+They can just help in viewing the inputs/outputs independent of Gnuastro!
+@example
+$ sudo dnf install saods9 topcat
+@end example
+@end table
 
 @item @command{brew} (macOS)
 @cindex macOS
@@ -8081,18 +8109,33 @@ $ sudo dnf install ghostscript libtool libjpeg-devel     \
 macOS does not come with a package manager pre-installed, but several widely used, third-party package managers exist, such as Homebrew or MacPorts.
 Both are free software.
 Currently we have only tested Gnuastro's installation with Homebrew as described below.
-
 If not already installed, first obtain Homebrew by following the instructions at @url{https://brew.sh}.
+
+@table @asis
+@item Mandatory dependencies
+Without these, Gnuastro can't be built, they are necessary for input/output and low-level mathematics (see @ref{Mandatory dependencies})!
+
 Homebrew manages packages in different `taps'.
-To install WCSLIB (discussed in @ref{Mandatory dependencies}) via Homebrew you will need to @command{tap} into @command{brewsci/science} first (the tap may change in the future, but can be found by calling @command{brew search wcslib}).
+To install WCSLIB via Homebrew you will need to @command{tap} into @command{brewsci/science} first (the tap may change in the future, but can be found by calling @command{brew search wcslib}).
 @example
-$ brew install ghostscript libtool libjpeg libtiff  \
-               libgit2 curl lzip saoimageds9 topcat \
-                                                    \
-               gsl cfitsio
 $ brew tap brewsci/science
-$ brew install wcslib
+$ brew install wcslib gsl cfitsio
 @end example
+
+@item Optional dependendencies
+If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
+@example
+$ brew install ghostscript libtool libjpeg \
+               libtiff libgit2 curl lzip
+@end example
+
+@item Programs to view FITS images or tables
+These are not used in Gnuastro's build.
+They can just help in viewing the inputs/outputs independent of Gnuastro!
+@example
+$ brew install saoimageds9 topcat
+@end example
+@end table
 
 @item @command{pacman} (Arch Linux)
 @cindex Arch GNU/Linux
@@ -8100,15 +8143,28 @@ $ brew install wcslib
 @url{https://en.wikipedia.org/wiki/Arch_Linux,Arch Linux} is a smaller GNU/Linux distribution, which follows the KISS principle (``keep it simple, stupid'') as a general guideline.
 It ``focuses on elegance, code correctness, minimalism and simplicity, and expects the user to be willing to make some effort to understand the system's operation''.
 Arch GNU/Linux uses ``Package manager'' (Pacman) to manage its packages/components.
+
+@table @asis
+@item Mandatory dependencies
+Without these, Gnuastro can't be built, they are necessary for input/output and low-level mathematics (see @ref{Mandatory dependencies})!
 @example
-$ sudo pacman -S ghostscript libtool libjpeg libtiff \
-                 libgit2 curl lzip                   \
-                                                     \
-                 gsl cfitsio wcslib
+$ sudo pacman -S gsl cfitsio wcslib
 @end example
+
+@item Optional dependendencies
+If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
+@example
+$ sudo pacman -S ghostscript libtool libjpeg \
+                 libtiff libgit2 curl lzip
+@end example
+
+@item Programs to view FITS images or tables
+These are not used in Gnuastro's build.
+They can just help in viewing the inputs/outputs independent of Gnuastro!
 
 SAO DS9 and TOPCAT aren't available in the standard Arch GNU/Linux repositories.
 However, installing and using both is very easy from their own web pages, as described in @ref{SAO DS9} and @ref{TOPCAT}.
+@end table
 
 @item @command{zypper} (openSUSE and SUSE Linux Enterprise Server)
 @cindex openSUSE
@@ -8116,22 +8172,40 @@ However, installing and using both is very easy from their own web pages, as des
 @cindex @command{zypper}, OpenSUSE package manager
 SUSE Linux Enterprise Server@footnote{@url{https://www.suse.com/products/server}} (SLES) is the commercial offering which shares code and tools.
 Many additional packages are offered in the Build Service@footnote{@url{https://build.opensuse.org}}.
-openSUSE and SLES use @command{zypper} (cli) and YaST (GUI) for managing repositories and
-packages.
+openSUSE and SLES use @command{zypper} (cli) and YaST (GUI) for managing repositories and packages.
 
-@example
-$ sudo zypper install ghostscript_any libtool pkgconfig   \
-              libcurl-devel libgit2-devel libjpeg62-devel \
-              libtiff-devel curl ds9 topcat               \
-                                                          \
-              gsl-devel cfitsio-devel wcslib-devel
-@end example
-@noindent
+@table @asis
+@item Configuration
 When building Gnuastro, run the configure script with the following @code{CPPFLAGS} environment variable:
 
 @example
 $ ./configure CPPFLAGS="-I/usr/include/cfitsio"
 @end example
+
+@item Mandatory dependencies
+Without these, Gnuastro can't be built, they are necessary for input/output and low-level mathematics (see @ref{Mandatory dependencies})!
+@example
+$ sudo zypper install gsl-devel cfitsio-devel \
+                      wcslib-devel
+@end example
+
+@item Optional dependendencies
+If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
+@example
+$ sudo zypper install ghostscript_any libtool \
+                      pkgconfig libcurl-devel \
+                      libgit2-devel \
+                      libjpeg62-devel \
+                      libtiff-devel curl
+@end example
+
+@item Programs to view FITS images or tables
+These are not used in Gnuastro's build.
+They can just help in viewing the inputs/outputs independent of Gnuastro!
+@example
+$ sudo zypper install ds9 topcat
+@end example
+@end table
 
 @c Gnuastro is @url{https://software.opensuse.org/package/gnuastro,packaged}
 @c in @command{zypper}. Just make sure it is the most recent version.
