@@ -27011,6 +27011,13 @@ This can either be @option{img} (or DS9's ``Image'' coordinates) or @option{wcs}
 @item -g INTxINT
 @itemx --ds9geometry=INTxINT
 The initial DS9 window geometry (value to DS9's @option{-geometry} option).
+
+@item -m
+@itemx --ds9colorbarmulti
+Don't show a single color bar for all the loaded images.
+By default this script will call DS9 in a way that a single color bar is shown for any number of images.
+A single color bar is preferred for two reasons: 1) when there are a lot of images, they consume a large fraction of the display area. 2) the color-bars are locked by this script, so there is no difference between!
+With this option, you can have separate color bars under each image.
 @end table
 
 @node PSF construction and subtraction,  , Viewing FITS file contents with DS9 or TOPCAT, Installed scripts

@@ -68,6 +68,11 @@ See the end of the file for license conditions.
     surface brightness image using the new 'counts-to-sb' operator of
     Arithmetic.
 
+  astscript-fits-view:
+  --ds9colorbarmulti: show a separate color-bar for each image in DS9. By
+    default this script will show a single color-bar for all the images to
+    help save space on the monitor when there are many images.
+
   astscript-psf-stamp:
   - sub-pixel warping is applied to ensure that your coordinate is at the
     center of the central pixel of the output image. This results in a
