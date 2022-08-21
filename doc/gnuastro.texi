@@ -13278,7 +13278,8 @@ $ astconvertt image.fits --marks=marks.fits --output=pdf
 ## if its color):
 $ astconvertt image.jpg -oimage.fits
 
-## Use three plain text 2D arrays to create an RGB JPEG output:
+## Use three 2D arrays to create an RGB JPEG output (two are
+## plain-text, the third is FITS, but all have the same size).
 $ astconvertt f1.txt f2.txt f3.fits -o.jpg
 
 ## Use two images and one blank for an RGB EPS output:
