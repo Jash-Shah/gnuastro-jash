@@ -134,6 +134,8 @@ See the end of the file for license conditions.
   bug #62892: Installed scripts don't account for differing LANG and
               LC_NUMERIC. Found by Teet Kuutma and fixed by Raul
               Infante-Sainz.
+  bug #62937: psf-scale-factor not being quiet, when requested. Found and
+              fixed by Sepideh Eskandarlou.
 
 
 
