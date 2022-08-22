@@ -136,6 +136,8 @@ See the end of the file for license conditions.
               Infante-Sainz.
   bug #62937: psf-scale-factor not being quiet, when requested. Found and
               fixed by Sepideh Eskandarlou.
+  bug #62943: Couldn't read the value of width with '--snthresh' is called.
+              Found and fixed by Sepideh Eskandarlou.
   bug #62944: No warning when the option value isn't immediately after the
               equal sign in long format. Found by Faezeh Bijarchian.
 

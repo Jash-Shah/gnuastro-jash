@@ -670,7 +670,7 @@ EOF
 	cropstd=$tmpdir/cropped-std-$objectid.fits
 	astcrop $segment --hdu=SKY_STD --mode=img \
                 --center=$xcenter,$ycenter \
-                --width=$xwidth,$ywidth \
+                --width=$xwidthinpix,$ywidthinpix \
 		--output=$cropstd $quiet
 	astarithmetic $cropped_masked -h1 set-v \
 		      $cropstd -h1        set-s \
