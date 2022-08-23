@@ -2111,8 +2111,29 @@ gal_options_set_from_key(int key, char *arg, struct argp_option *options,
       /* Check if the key corresponds to this option. */
       if( options[i].key==key )
         {
+          /* It may happen that the user puts a space after the '=' sign of
+             a long option (for example '--hdu= 1'). In this case, Argp
+             will give an empty string to the option and associate the
+             value as a new argument, leading to a confusing error message
+             that only one argument should be given (by programs that need
+             a single argument). So we should check for this condition
+             here. */
+          if(arg && arg[0]=='\0' && cp->quiet==0)
+            error(EXIT_SUCCESS, 0, "WARNING: no value given to the "
+                  "'--%s' option. In other words, its value is an "
+                  "empty string. This may result in undefined behavior "
+                  "(usually a crash in an un-expected part of the "
+                  "program). It can happen when you use an undefined "
+                  "shell variable or if there is an empty space after "
+                  "the '=' sign of long options (for example '--hdu= 1', "
+                  "note the space between the '=' and the '1'; the "
+                  "correct format in such cases is either '--hdu=1' "
+                  "or '--hdu 1'). To supress this warning, please use "
+                  "the '--quiet' (or '-q') option before this option",
+                  options[i].name);
+
           /* When options are read from keys (by this function), they are
-             read from the command-line. On the commandline, the last
+             read from the command-line. On the command-line, the last
              invokation of the option is important. Especially in contexts
              like scripts, this is important because you can change a given
              command-line option (that is not a linked list) by calling it
