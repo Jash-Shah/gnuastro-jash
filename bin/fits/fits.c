@@ -491,7 +491,7 @@ static void
 fits_pixelarea(struct fitsparams *p)
 {
   double area;
-  size_t i, ndim;
+  size_t i, ndim=0;
   double *pixelscale;
   struct wcsprm *wcs=fits_read_check_wcs(p, &ndim, "pixel area");
 
