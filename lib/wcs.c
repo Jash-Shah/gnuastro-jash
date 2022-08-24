@@ -2035,7 +2035,7 @@ gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
           filename, hdu);
 
   /* Get the array information of the image. */
-  fptr=gal_fits_hdu_open(filename, hdu, READONLY);
+  fptr=gal_fits_hdu_open(filename, hdu, READONLY, 1);
   gal_fits_img_info(fptr, &type, ondim, &dsize, &name, &unit);
   fits_close_file(fptr, &status);
   ndim=*ondim;

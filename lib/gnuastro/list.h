@@ -80,6 +80,12 @@ gal_list_str_reverse(gal_list_str_t **list);
 void
 gal_list_str_free(gal_list_str_t *list, int freevalue);
 
+gal_list_str_t *
+gal_list_str_extract(char *string);
+
+char *
+gal_list_str_cat(gal_list_str_t *list);
+
 
 
 

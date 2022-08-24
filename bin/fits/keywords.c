@@ -53,7 +53,7 @@ static void
 keywords_open(struct fitsparams *p, fitsfile **fptr, int iomode)
 {
   if(*fptr==NULL)
-    *fptr=gal_fits_hdu_open(p->input->v, p->cp.hdu, iomode);
+    *fptr=gal_fits_hdu_open(p->input->v, p->cp.hdu, iomode, 1);
 }
 
 
@@ -507,7 +507,7 @@ keywords_copykeys(struct fitsparams *p, char *inkeys, size_t numinkeys)
   int updatechecksum=0, checksumexists=0;
 
   /* Open the output HDU. */
-  fptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE);
+  fptr=gal_fits_hdu_open(p->cp.output, p->outhdu, READWRITE, 1);
 
   /* See if a 'CHECKSUM' key exists in the HDU or not (to update in case we
      wrote anything). */
@@ -946,7 +946,7 @@ keywords_value(struct fitsparams *p)
   for(input=p->input; input!=NULL; input=input->next)
     {
       /* Open the input FITS file. */
-      fptr=gal_fits_hdu_open(input->v, p->cp.hdu, READONLY);
+      fptr=gal_fits_hdu_open(input->v, p->cp.hdu, READONLY, 1);
 
       /* Allocate the array to keep the keys. */
       i=0;

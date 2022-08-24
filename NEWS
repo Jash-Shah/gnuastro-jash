@@ -89,6 +89,19 @@ See the end of the file for license conditions.
     inner parts of the star, they degrade the stack's outer parts. With
     this option, the fainter stars won't harm the outer parts.
 
+  GNU Make extensions:
+  - It is now possible to use custom Gnuastro functions in GNU Make, using
+    its extension facilities with Dynamic libraries. GNU Make is a very
+    powerful workflow manager that is also used for data analysis (not just
+    for compilation). With the Gnaustro Make functions, (astronomical) data
+    analysis becomes even more easier and faster. In the following, you can
+    see the first set of such functions (they all begin with 'astgmk' for
+    "Astronomical GNU Make"):
+    - astgmk-fits-with-keyvalue: Takes a list of files, a HDU, a keyword
+      name and a list of keyword values. It will return only those FITS
+      files that have the requested value(s) in the requested keyword of
+      the requested HDU.
+
   Library functions:
   - gal_box_border_rotate_around_center: width of box after rotation.
   - gal_color_name_to_id: return the ID of a color from its name.
@@ -97,6 +110,8 @@ See the end of the file for license conditions.
   - gal_eps_shape_name_to_id: return the ID of a shape from its name.
   - gal_eps_shape_id_to_name: return the name of a shape from its ID.
   - gal_list_data_select_by_name: select a dataset from a list by its name.
+  - gal_list_str_cat: Concatenate (append) list to a space-separated string.
+  - gal_list_str_extract: Extract space-separated tokens to a list.
   - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
   - gal_units_sb_to_mag: magnitude from SB and area.
   - gal_units_counts_to_sb: SB from counts, zeropoint and area.
@@ -126,6 +141,8 @@ See the end of the file for license conditions.
   Library
   - gal_eps_write: an extra argument has been added to draw marks.
   - gal_pdf_write: similar to 'gal_eps_write'.
+  - gal_fits_hdu_open: new argument to optionally exit program if HDU
+        couldn't be opened.
 
 ** Bugs fixed
   bug #62861: '--printkeynames' of Fits program gets caught in an infinite

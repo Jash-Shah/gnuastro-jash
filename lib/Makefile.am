@@ -21,6 +21,17 @@
 
 
 
+# Conditional compilation
+if COND_HASWCSDIS_H
+  MAYBE_WCSDISTORTION = wcsdistortion.c
+endif
+if COND_HASGNUMAKE_H
+  MAYBE_GNUMAKE = libgnuastro_make.la
+endif
+
+
+
+
 
 ## Necessary flags.
 ##
@@ -45,25 +56,24 @@ AM_CPPFLAGS = -I\$(top_builddir)/bootstrapped/lib \
 # Gnuastro library functions can also benefit from Gnulib's many great
 # features. This also avoids the need for the programs to link separately
 # with Gnulib, they only need to link with the Gnuastro library.
-lib_LTLIBRARIES = libgnuastro.la
+lib_LTLIBRARIES = libgnuastro.la $(MAYBE_GNUMAKE)
+
+# Linking flags for the Gnuastro library.
+libgnuastro_la_LIBADD = $(top_builddir)/bootstrapped/lib/libgnu.la
 libgnuastro_la_LDFLAGS = -version-info $(GAL_LT_VERSION) $(CONFIG_LDADD) \
                          -lc -no-undefined
-libgnuastro_la_LIBADD = $(top_builddir)/bootstrapped/lib/libgnu.la
 
-
-
-
-# Conditional compilation
-if COND_HASWCSDIS_H
-  MAYBE_WCSDISTORTION = wcsdistortion.c
-endif
-
-
+# Gnuastro's GNU Make extensions
+libgnuastro_make_la: libgnuastro.la
+libgnuastro_make_la_LIBADD = libgnuastro.la
+libgnuastro_make_la_LDFLAGS = -version-info $(GAL_LT_VERSION)
 
 
 
 # Specify the library .c files
-libgnuastro_la_SOURCES = $(MAYBE_WCSDISTORTION) \
+libgnuastro_make_la_SOURCES = gnumake.c
+libgnuastro_la_SOURCES = \
+  $(MAYBE_WCSDISTORTION) \
   arithmetic.c \
   arithmetic-and.c \
   arithmetic-bitand.c \

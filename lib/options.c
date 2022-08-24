@@ -900,6 +900,8 @@ gal_options_parse_list_of_numbers(char *string, char *filename, size_t lineno)
 
 
 
+
+
 /* Replacement characters for commented comma (ASCII code 14 for "Shift
    out") or colon (ASCII code 15 for "Shift in"). These are chosen as
    non-printable ASCII characters, that user's will not be typing. */
@@ -943,7 +945,7 @@ gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
           { for(d=c+2; *d!='\0'; ++d) {*(d-1)=*d;} *(d-1)='\0'; }
       }
 
-  /* Make a copy of the input string, and save the tokens */
+  /* Start separating the tokens */
   token=strtok(cp, delimiters);
   gal_list_str_add(&list, token, 1);
   while(token!=NULL)

@@ -172,7 +172,8 @@ int
 gal_fits_hdu_is_healpix(fitsfile *fptr);
 
 fitsfile *
-gal_fits_hdu_open(char *filename, char *hdu, int iomode);
+gal_fits_hdu_open(char *filename, char *hdu, int iomode,
+                  int exitonerror);
 
 fitsfile *
 gal_fits_hdu_open_format(char *filename, char *hdu, int img0_tab1);

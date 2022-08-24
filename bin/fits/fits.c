@@ -101,7 +101,7 @@ fits_print_extension_info(struct fitsparams *p)
   /* Open the FITS file and read the first extension type, upon moving to
      the next extension, we will read its type, so for the first we will
      need to do it explicitly. */
-  fptr=gal_fits_hdu_open(p->input->v, "0", READONLY);
+  fptr=gal_fits_hdu_open(p->input->v, "0", READONLY, 1);
   if (fits_get_hdu_type(fptr, &hdutype, &status) )
     gal_fits_io_error(status, "reading first extension");
 
@@ -325,7 +325,7 @@ fits_hdu_number(struct fitsparams *p)
   int numhdu, status=0;
 
   /* Read the first extension (necessary for reading the rest). */
-  fptr=gal_fits_hdu_open(p->input->v, "0", READONLY);
+  fptr=gal_fits_hdu_open(p->input->v, "0", READONLY, 1);
 
   /* Get the number of HDUs. */
   if( fits_get_num_hdus(fptr, &numhdu, &status) )
@@ -758,7 +758,7 @@ fits_hdu_remove(struct fitsparams *p, int *r)
       hdu=gal_list_str_pop(&p->remove);
 
       /* Open the FITS file at the specified HDU. */
-      fptr=gal_fits_hdu_open(p->input->v, hdu, READWRITE);
+      fptr=gal_fits_hdu_open(p->input->v, hdu, READWRITE, 1);
 
       /* Delete the extension. */
       if( fits_delete_hdu(fptr, &hdutype, &status) )
@@ -821,7 +821,7 @@ fits_hdu_copy(struct fitsparams *p, int cut1_copy0, int *r)
 
       /* Open the FITS file at the specified HDU. */
       in=gal_fits_hdu_open(p->input->v, hdu,
-                           cut1_copy0 ? READWRITE : READONLY);
+                           cut1_copy0 ? READWRITE : READONLY, 1);
 
       /* If the output isn't opened yet, open it.  */
       if(out==NULL)

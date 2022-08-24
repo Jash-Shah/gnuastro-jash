@@ -707,7 +707,7 @@ gal_fits_hdu_datasum(char *filename, char *hdu)
   unsigned long datasum;
 
   /* Read the desired extension (necessary for reading the rest). */
-  fptr=gal_fits_hdu_open(filename, hdu, READONLY);
+  fptr=gal_fits_hdu_open(filename, hdu, READONLY, 1);
 
   /* Calculate the datasum. */
   datasum=gal_fits_hdu_datasum_ptr(fptr);
@@ -755,7 +755,7 @@ gal_fits_hdu_format(char *filename, char *hdu)
   int hdutype, status=0;
 
   /* Open the HDU. */
-  fptr=gal_fits_hdu_open(filename, hdu, READONLY);
+  fptr=gal_fits_hdu_open(filename, hdu, READONLY, 1);
 
   /* Check the type of the given HDU: */
   if (fits_get_hdu_type(fptr, &hdutype, &status) )
@@ -802,7 +802,7 @@ gal_fits_hdu_is_healpix(fitsfile *fptr)
      READONLY:   read-only.
      READWRITE:  read and write.         */
 fitsfile *
-gal_fits_hdu_open(char *filename, char *hdu, int iomode)
+gal_fits_hdu_open(char *filename, char *hdu, int iomode, int exitonerror)
 {
   int status=0;
   char *ffname;
@@ -810,7 +810,11 @@ gal_fits_hdu_open(char *filename, char *hdu, int iomode)
 
   /* Add hdu to filename: */
   if( asprintf(&ffname, "%s[%s#]", filename, hdu)<0 )
-    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+    {
+      if(exitonerror)
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+      else return NULL;
+    }
 
   /* Open the FITS file: */
   if( fits_open_file(&fptr, ffname, iomode, &status) )
@@ -822,31 +826,40 @@ gal_fits_hdu_open(char *filename, char *hdu, int iomode)
            notice. */
         case END_OF_FILE:
           if( hdu[0]=='1' && hdu[1]=='\0' )
-            error(EXIT_FAILURE, 0, "%s: only has one HDU.\n\n"
-                  "You should tell Gnuastro's command-line "
-                  "programs to look for data in the primary HDU with the "
-                  "'--hdu=0' option (or '-h0'). For library users, you can "
-                  "put \"0\" (a string literal) for the function's HDU "
-                  "argument. For more, see the FOOTNOTE below.\n\n"
-                  "Pro TIP: if your desired HDU has a name (value to "
-                  "'EXTNAME' keyword), it is best to just use that name "
-                  "with '--hdu' instead of relying on a counter. You can "
-                  "see the list of HDUs in a FITS file (with their data "
-                  "format, type, size and possibly HDU name) using "
-                  "Gnuastro's 'astfits' program, for example:\n\n"
-                  "    astfits %s\n\n"
-                  "FOOTNOTE -- When writing a new FITS file, Gnuastro leaves "
-                  "the pimary HDU only for metadata. The output datasets "
-                  "(tables, images or cubes) are written after the primary "
-                  "HDU. In this way the keywords of the the first HDU can be "
-                  "used as metadata of the whole file (which may contain many "
-                  "extensions, this is stipulated in the FITS standard). "
-                  "Usually the primary HDU keywords contains the option names "
-                  "and values that the program was run with. Because of this, "
-                  "Gnuastro's default HDU to read data in a FITS file is the "
-                  "second (or '--hdu=1'). This error is commonly caused when "
-                  "the FITS file wasn't created by Gnuastro or by a program "
-                  "respecting this convention.", filename, filename);
+            {
+              if(exitonerror)
+                error(EXIT_FAILURE, 0, "%s: only has one HDU.\n\n"
+                      "You should tell Gnuastro's command-line "
+                      "programs to look for data in the primary HDU "
+                      "with the '--hdu=0' option (or '-h0'). For library "
+                      "users, you can put \"0\" (a string literal) for "
+                      "the function's HDU argument. For more, see the "
+                      "FOOTNOTE below.\n\n"
+                      "Pro TIP: if your desired HDU has a name (value to "
+                      "'EXTNAME' keyword), it is best to just use that "
+                      "name with '--hdu' instead of relying on a "
+                      "counter. You can see the list of HDUs in a FITS "
+                      "file (with their data format, type, size and "
+                      "possibly HDU name) using Gnuastro's 'astfits' "
+                      "program, for example:\n\n"
+                      "    astfits %s\n\n"
+                      "FOOTNOTE -- When writing a new FITS file, "
+                      "Gnuastro leaves the pimary HDU only for metadata. "
+                      "The output datasets (tables, images or cubes) are "
+                      "written after the primary HDU. In this way the "
+                      "keywords of the the first HDU can be used as "
+                      "metadata of the whole file (which may contain "
+                      "many extensions, this is stipulated in the FITS "
+                      "standard). Usually the primary HDU keywords "
+                      "contains the option names and values that the "
+                      "program was run with. Because of this, Gnuastro's "
+                      "default HDU to read data in a FITS file is the "
+                      "second (or '--hdu=1'). This error is commonly "
+                      "caused when the FITS file wasn't created by "
+                      "Gnuastro or by a program respecting this "
+                      "convention.", filename, filename);
+              else return NULL;
+            }
           break;
 
         /* Generic error below is fine for this case */
@@ -856,20 +869,24 @@ gal_fits_hdu_open(char *filename, char *hdu, int iomode)
         /* In case an un-expected error occurs, use the general CFITSIO
            reporting that we have already prepared. */
         default:
-          gal_fits_io_error(status, "opening the given extension/HDU in "
-                            "the given file");
+          if(exitonerror)
+            gal_fits_io_error(status, "opening the given extension/HDU in "
+                              "the given file");
+          else return NULL;
         }
 
-      error(EXIT_FAILURE, 0, "%s: extension/HDU '%s' doesn't exist. Please "
-            "run the following command to see the extensions/HDUs in "
-            "'%s':\n\n"
-            "    $ astfits %s\n\n"
-            "The respective HDU number (or name, when present) may be used "
-            "with the '--hdu' option in Gnuastro's programs (or the 'hdu' "
-            "argument in Gnuastro's libraries) to open the respective HDU. "
-            "If you are using counters/numbers to identify your HDUs, note "
-            "that since Gnuastro uses CFITSIO for FITS input/output, HDU "
-            "counting starts from 0", filename, hdu, filename, filename);
+      if(exitonerror)
+        error(EXIT_FAILURE, 0, "%s: extension/HDU '%s' doesn't exist. Please "
+              "run the following command to see the extensions/HDUs in "
+              "'%s':\n\n"
+              "    $ astfits %s\n\n"
+              "The respective HDU number (or name, when present) may be used "
+              "with the '--hdu' option in Gnuastro's programs (or the 'hdu' "
+              "argument in Gnuastro's libraries) to open the respective HDU. "
+              "If you are using counters/numbers to identify your HDUs, note "
+              "that since Gnuastro uses CFITSIO for FITS input/output, HDU "
+              "counting starts from 0", filename, hdu, filename, filename);
+      else return NULL;
     }
 
   /* Clean up and the pointer. */
@@ -894,7 +911,7 @@ gal_fits_hdu_open_format(char *filename, char *hdu, int img0_tab1)
     error(EXIT_FAILURE, 0, "no HDU specified for %s", filename);
 
   /* Open the HDU. */
-  fptr=gal_fits_hdu_open(filename, hdu, READONLY);
+  fptr=gal_fits_hdu_open(filename, hdu, READONLY, 1);
 
   /* Check the type of the given HDU: */
   if (fits_get_hdu_type(fptr, &hdutype, &status) )
@@ -1988,7 +2005,7 @@ gal_fits_key_write(gal_fits_list_key_t **keylist, char *title,
                    char *filename, char *hdu)
 {
   int status=0;
-  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE);
+  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE, 1);
 
   /* Write the title */
   gal_fits_key_write_title_in_ptr(title, fptr);
@@ -2114,7 +2131,7 @@ gal_fits_key_write_version(gal_fits_list_key_t **keylist, char *title,
                            char *filename, char *hdu)
 {
   int status=0;
-  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE);
+  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE, 1);
 
   /* Write the given keys followed by the versions. */
   gal_fits_key_write_version_in_ptr(keylist, title, fptr);
@@ -2226,7 +2243,7 @@ gal_fits_key_write_config(gal_fits_list_key_t **keylist, char *title,
                           char *extname, char *filename, char *hdu)
 {
   int status=0;
-  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE);
+  fitsfile *fptr=gal_fits_hdu_open(filename, hdu, READWRITE, 1);
 
   /* Delete the two extra comment lines describing the FITS standard that
      CFITSIO puts in when it creates a new extension. We'll set status to 0
@@ -2369,7 +2386,7 @@ gal_fits_img_info_dim(char *filename, char *hdu, size_t *ndim)
 
   /* Open the given header, read the basic image information and close it
      again. */
-  fptr=gal_fits_hdu_open(filename, hdu, READONLY);
+  fptr=gal_fits_hdu_open(filename, hdu, READONLY, 1);
   gal_fits_img_info(fptr, &type, ndim, &dsize, NULL, NULL);
   if( fits_close_file(fptr, &status) ) gal_fits_io_error(status, NULL);
 

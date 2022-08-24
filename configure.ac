@@ -611,6 +611,14 @@ AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_PTHREAD_BARRIER], [$has_pthread_barrier],
                    [System has pthread_barrier])
 AC_SUBST(HAVE_PTHREAD_BARRIER, [$has_pthread_barrier])
 
+# If a GNU Make header can be found (for Gnuastro's GNU Make extensions)
+AC_CHECK_HEADER([gnumake.h], [has_gnumake_h=1],
+                [has_gnumake_h=0; anywarnings=yes])
+AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_GNUMAKE_H], [$has_gnumake_h],
+                   [GNU Make's extension header is present.])
+AC_SUBST(HAVE_GNUMAKE_H, [$has_gnumake_h])
+AM_CONDITIONAL([COND_HASGNUMAKE_H], [test "x$has_gnumake_h" = "x1"])
+
 
 
 
@@ -1285,6 +1293,14 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    build of Gnuastro, you can continue for now. But to use 'astquery',"])
                AS_ECHO(["    don't forget to install cURL later (before using 'astquery' for the"])
                AS_ECHO(["    first time)."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_gnumake_h" = "x0"],
+              [dependency_notice=yes
+               AS_ECHO(["  - GNU Make (https://www.gnu.org/software/make) extension headers "])
+               AS_ECHO(["    'gnumake.h' couldn't be found by the C compiler. If available, "])
+               AS_ECHO(["    Gnuastro can use those headers to add custom GNU Make functions "])
+               AS_ECHO(["    to improve your Makefiles for data analysis workflows."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_ds9" = "xno"],

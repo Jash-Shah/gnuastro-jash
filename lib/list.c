@@ -172,6 +172,97 @@ gal_list_str_free(gal_list_str_t *list, int freevalue)
 
 
 
+/* Replacement characters for commented space (ASCII code 14 for "Shift
+   out"). These are chosen as non-printable ASCII characters, that user's
+   will not be typing. Inspired from 'gal_options_parse_list_of_strings'.*/
+#define LIST_COMMENTED_SPACE 14
+gal_list_str_t *
+gal_list_str_extract(char *string)
+{
+  gal_list_str_t *list=NULL, *tmp;
+  char *c, *d, *cp, *token, *saveptr, delimiters[]=" \t";
+
+  /* Make a copy of the input string, remove all commented delimiters
+     (those with a preceding '\'), this was inspired from
+     'gal_options_parse_list_of_strings'. */
+  gal_checkset_allocate_copy(string, &cp);
+  for(c=cp; *c!='\0'; c++)
+    if(*c=='\\' && c[1]!='\0')
+      {
+        /* If the next character (after the '\') is a delimiter, we need to
+           replace it with a non-delimiter (and not-typed!) character and
+           shift the whole string back by one character to simplify future
+           steps. */
+        if(c[1]==' ')
+          {
+            *c=LIST_COMMENTED_SPACE;
+            for(d=c+2; *d!='\0'; ++d) {*(d-1)=*d;} *(d-1)='\0';
+          }
+      }
+
+  /* Tokenize the string. */
+  token=strtok_r(cp, delimiters, &saveptr);
+  gal_list_str_add(&list, token, 1);
+  while(token!=NULL)
+    {
+      token=strtok_r(NULL, delimiters, &saveptr);
+      if(token!=NULL)
+        gal_list_str_add(&list, token, 1);
+    }
+
+  /* Go over each token and change the temporarily replaced value to a
+     SPACE. */
+  for(tmp=list;tmp!=NULL;tmp=tmp->next)
+    for(c=tmp->v; *c!='\0'; ++c)
+      if(*c==LIST_COMMENTED_SPACE)
+        *c=' ';
+
+  /* Return the list. */
+  gal_list_str_reverse(&list);
+  return list;
+}
+
+
+
+
+
+char *
+gal_list_str_cat(gal_list_str_t *list)
+{
+  size_t bsize=0;
+  char *c, *o, *out;
+  gal_list_str_t *tmp;
+
+  /* If the list is empty, return a NULL pointer. */
+  if(list==NULL) return NULL;
+
+  /* Go over each element of the list and count how many characters there
+     are in it (add one for the space with the next). */
+  for(tmp=list; tmp!=NULL; tmp=tmp->next)
+    {
+      /* Count the characters. If we have a SPACE, we need to add an extra
+         count for the back slash.*/
+      c=tmp->v; do {++bsize; if(*c==' ') ++bsize;} while(*(++c)!='\0');
+      ++bsize; /* For the extra space between characters */
+    }
+
+  /* Allocate the necessary space and write all the strings inside of it,
+     (while also commenting the space characters).*/
+  out=gal_pointer_allocate(GAL_TYPE_STRING, bsize, 0, __func__, "out");
+  o=out;
+  for(tmp=list; tmp!=NULL; tmp=tmp->next)
+    {
+      c=tmp->v;
+      do {if(*c==' ') *o++='\\'; *o++=*c;} while(*(++c)!='\0');
+      *o++=' ';
+    }
+  *o='\0';
+
+  return out;
+}
+
+
+
 
 
 

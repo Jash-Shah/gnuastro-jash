@@ -231,6 +231,7 @@ To go to the sections or subsections, you have to click on the menu entries that
 * Modeling and fittings::       Make and fit models.
 * High-level calculations::     Physical calculations.
 * Installed scripts::           Installed scripts that operate like programs.
+* Makefile extensions::         Use Gnuastro's features as GNU Make functions.
 * Library::                     Gnuastro's library of useful functions.
 * Developing::                  The development environment.
 * Gnuastro programs list::      List and short summary of Gnuastro.
@@ -723,6 +724,11 @@ PSF construction and subtraction
 * Invoking astscript-psf-unite::  Merge stacks of different regions of PSF.
 * Invoking astscript-psf-scale-factor::  Calculate factor to scale PSF to star.
 * Invoking astscript-psf-subtract::  Put the PSF in the image to subtract.
+
+Makefile extensions (for GNU Make)
+
+* Loading the Gnuastro Make functions::
+* Gnuastro Make functions::
 
 Library
 
@@ -7752,6 +7758,13 @@ As a result, you can still build, install and use Gnuastro even if you don't hav
 However, this internal Libtool does not get installed.
 Therefore, after Gnuastro's installation, if you want to use @ref{BuildProgram} to compile and link your own C source code which uses the @ref{Gnuastro library}, you need to have GNU Libtool available on your system (independent of Gnuastro).
 See @ref{Review of library fundamentals} to learn more about libraries.
+
+@item GNU Make extension headers
+@cindex GNU Make
+GNU Make is a workflow management system that can be used to run a series of commands in a specific order, and in parallel if you want.
+GNU Make offers special features to extend it with custom functions within a dynamic library.
+They are defined in the @file{gnumake.h} header.
+If @file{gnumake.h} can be found on your system at configuartion time, Gnuastro will build a custom library that GNU Make can use for extended functionality in (astronomical) data analysis scenarios.
 
 @item libgit2
 @cindex Git
@@ -26246,7 +26259,7 @@ In the latter (when a number is given), the returned value is the same units of 
 
 
 
-@node Installed scripts, Library, High-level calculations, Top
+@node Installed scripts, Makefile extensions, High-level calculations, Top
 @chapter Installed scripts
 
 Gnuastro's programs (introduced in previous chapters) are designed to be highly modular and thus contain lower-level operations on the data.
@@ -27876,6 +27889,87 @@ This option is useful when the user wants to obtain the scattered light field gi
 
 
 
+@node Makefile extensions, Library, Installed scripts, Top
+@chapter Makefile extensions (for GNU Make)
+
+@cindex Make
+@url{https://en.wikipedia.org/wiki/Make_(software), Make} is a build automation tool.
+It can greatly help manage your analysis workflow, even very complex projects with thousands of files and hundreds of processing steps.
+In this book, we have discussed Make previously in the context of parallelization (see @ref{How to run simultaneous operations}).
+It has also been used in
+
+@cindex GNU Make
+GNU Make is the most common and powerful implementation of Make, with many unique additions to the core POSIX standard of Make.
+One of those features is the ability to add extensions using a dynamic library (that Gnuastro provides).
+For the details of this feature from GNU Make's own manual, see its @url{https://www.gnu.org/software/make/manual/html_node/Loading-Objects.html, Loading dynamic objects} section.
+Through this feature, Gnuastro provides additional Make functions that are useful in the context of data analysis.
+
+To use this feature, Gnuastro has to be built in shared library more.
+Gnuastro's Make extensions won't work if you build Gnuastro without shared libraries (for example when you configure Gnuastro with @option{--disable-shared} or @option{--debug}).
+
+@menu
+* Loading the Gnuastro Make functions:: How to find and load Gnuastro's Make library.
+* Gnuastro Make functions::             The available functions.
+@end menu
+
+@node Loading the Gnuastro Make functions, Gnuastro Make functions, Makefile extensions, Makefile extensions
+@section Loading the Gnuastro Make functions
+
+To load Gnuastro's Make functions in your Makefile, you should use the @command{load} command of GNU Make in your Makefile.
+The load command should be given Gnuastro's @file{libgnuastro_make.so} dynamic library, which has been specifically written for being called by GNU Make.
+The generic command looks like this (the @file{/PATH/TO} part should be changed):
+
+@example
+load /PATH/TO/lib/libgnuastro_make.so
+@end example
+
+@noindent
+Here are the possible replacements of the @file{/PATH/TO} component:
+@table @file
+@item /usr/local
+If you installed Gnuastro from source and didn't use the @option{--prefix} option at configuration time, you should use this base directory.
+@item /usr/
+If you installed Gnuastro through your operting system's package manager, it is highly likely that Gnuastro's library is here.
+@item ~/.local
+If you installed Gnuastro from source, but used @option{--prefix} to install Gnuastro in your home directory (as described in @ref{Installation directory}).
+@end table
+
+If you can't find @file{libgnuastro_make.so} in the locations above, the command below should give you its location.
+It assumes that the libraries are in the same base directory as the programs (which is usually the case).
+
+@example
+$ which astfits | sed -e's|bin/astfits|lib/libgnuastro_make.so|'
+@end example
+
+@node Gnuastro Make functions,  , Loading the Gnuastro Make functions, Makefile extensions
+@section Gnuastro Make functions
+
+All Gnuastro Make functions start with the @command{astgmk-} prefix, which is short for ``@emph{Astronomical GNU Make}''.
+After you have loaded Gnuastro's shared library for Makefiles within your Makefile, you can call these functions just like any Make function.
+
+The Make functions in Gnuastro have been recently added (in August 2022), and will be gradually incrasing, as we find the need for more specialized functions.
+
+
+@table @code
+@item $(astgmk-fits-with-keyvalue FITS_FILES, HDU, KEYNAME, KEYVALUES)
+Will select only the FITS files (from a list of many in @code{FITS_FILES}), where the @code{KEYNAME} keyword has the value(s) given in @code{KEYVALUES}.
+Only the HDU given in the @code{HDU} argument will be checked.
+According to the FITS standard, the keyword name is not case sensitive, but the keyword value is.
+
+For example if you have many FITS files in the @file{/datasets/images} directory, the minimal Makefile below will put those with a value of @code{BAR} or @code{BAZ} for the @code{FOO} keyword in HDU number @code{1} in the @code{selected} Make variable.
+Notice how there is no comma between @code{BAR} and @code{BAZ}: you can specify any series of values.
+
+@verbatim
+load /usr/local/lib/libgnuastro_make.so
+
+files := $(wildcard /datasets/images/*.fits)
+selected := $(astgmk-with-keyvalue $(files), 1, FOO, BAR BAZ)
+
+all:
+	echo "Full:     $(words $(files)) files";
+	echo "Selected: $(words $(selected)) files"
+@end verbatim
+@end table
 
 
 
@@ -27890,8 +27984,7 @@ This option is useful when the user wants to obtain the scattered light field gi
 
 
 
-
-@node Library, Developing, Installed scripts, Top
+@node Library, Developing, Makefile extensions, Top
 @chapter Library
 
 Each program in Gnuastro that was discussed in the prior chapters (or any program in general) is a collection of functions that is compiled into one executable file which can communicate directly with the outside world.
@@ -30301,11 +30394,9 @@ structure. All these structures and functions are defined and declared in
 @node List of strings, List of int32_t, Linked lists, Linked lists
 @subsubsection List of strings
 
-Probably one of the most common lists you will be using are lists of
-strings. They are the best tools when you are reading the user's inputs, or
-when adding comments to the output files. Below you can see Gnuastro's
-string list type and several functions to help in adding, removing/popping,
-reversing and freeing the list.
+Probably one of the most common lists you will be using are lists of strings.
+They are the best tools when you are reading the user's inputs, or when adding comments to the output files.
+Below you can see Gnuastro's string list type and several functions to help in adding, removing/popping, reversing and freeing the list.
 
 @deftp {Type (C @code{struct})} gal_list_str_t
 A single node in a list containing a string of characters.
@@ -30319,13 +30410,11 @@ typedef struct gal_list_str_t
 @end deftp
 
 @deftypefun void gal_list_str_add (gal_list_str_t @code{**list}, char @code{*value}, int @code{allocate})
-Add a new node to the list of strings (@code{list}) and update it. The new
-node will contain the string @code{value}. If @code{allocate} is not zero,
-space will be allocated specifically for the string of the new node and the
-contents of @code{value} will be copied into it. This can be useful when
-your string may be changed later in the program, but you want your list to
-remain. Here is one short/simple example of initializing and adding
-elements to a string list:
+Add a new node to the list of strings (@code{list}) and update it.
+The new node will contain the string @code{value}.
+If @code{allocate} is not zero, space will be allocated specifically for the string of the new node and the contents of @code{value} will be copied into it.
+This can be useful when your string may be changed later in the program, but you want your list to remain.
+Here is one short/simple example of initializing and adding elements to a string list:
 
 @example
 gal_list_str_t *strlist=NULL;
@@ -30336,10 +30425,8 @@ gal_list_str_add(&strlist, "second last element of list.");
 @end deftypefun
 
 @deftypefun {char *} gal_list_str_pop (gal_list_str_t @code{**list})
-Pop the top element of @code{list}, change @code{list} to point to the next
-node in the list, and return the string that was in the popped node. If
-@code{*list==NULL}, then this function will also return a @code{NULL}
-pointer.
+Pop the top element of @code{list}, change @code{list} to point to the next node in the list, and return the string that was in the popped node.
+If @code{*list==NULL}, then this function will also return a @code{NULL} pointer.
 @end deftypefun
 
 @deftypefun size_t gal_list_str_number (gal_list_str_t @code{*list})
@@ -30351,11 +30438,11 @@ Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_str_print (gal_list_str_t @code{*list})
-Print the strings within each node of @code{*list} on the standard output
-in the same order that they are stored. Each string is printed on one
-line. This function is mainly good for checking/debugging your program. For
-program outputs, its best to make your own implementation with a better,
-more user-friendly, format. For example the following code snippet.
+Print the strings within each node of @code{*list} on the standard outputin the same order that they are stored.
+Each string is printed on one line.
+This function is mainly good for checking/debugging your program.
+For program outputs, its best to make your own implementation with a better, more user-friendly, format.
+For example the following code snippet.
 
 @example
 size_t i;
@@ -30366,14 +30453,27 @@ for(tmp=list; tmp!=NULL; tmp=tmp->next)
 @end deftypefun
 
 @deftypefun void gal_list_str_reverse (gal_list_str_t @code{**list})
-Reverse the order of the list such that the top node in the list before
-calling this function becomes the bottom node after it.
+Reverse the order of the list such that the top node in the list before calling this function becomes the bottom node after it.
 @end deftypefun
 
 @deftypefun void gal_list_str_free (gal_list_str_t @code{*list}, int @code{freevalue})
-Free every node in @code{list}. If @code{freevalue} is not zero, also free
-the string within the nodes.
+Free every node in @code{list}.
+If @code{freevalue} is not zero, also free the string within the nodes.
 @end deftypefun
+
+@deftypefun {gal_list_str_t *} gal_list_str_extract (char @code{*string})
+Extract space-separated components of the input string.
+If any space element should be kept (and not considered as a delimiter betwen two tokens), precede it with a back-slash (@code{\}).
+@end deftypefun
+
+@deftypefun {char *} gal_list_str_cat (gal_list_str_t @code{*list})
+Concatenate (append) the input list of strings into a single space-separated string.
+The space for the output string is allocated by this function and should be freed when you have finished with it.
+
+If there is any SPACE characters in any of the elements, a back-slash (@code{\}) will be printed before the SPACE character.
+This is necessary, otherwise, a function like @code{gal_list_str_extract} won't be able to extract the elements back into separate elements in a list.
+@end deftypefun
+
 
 
 
@@ -31467,16 +31567,13 @@ dataset is a table column, put a non-zero value into
 @node FITS HDUs, FITS header keywords, CFITSIO and Gnuastro types, FITS files
 @subsubsection FITS HDUs
 
-A FITS file can contain multiple HDUs/extensions. The functions in this
-section can be used to get basic information about the extensions or open
-them. Note that @code{fitsfile} is defined in CFITSIO's @code{fitsio.h}
-which is automatically included by Gnuastro's @file{gnuastro/fits.h}.
+A FITS file can contain multiple HDUs/extensions.
+The functions in this section can be used to get basic information about the extensions or open them.
+Note that @code{fitsfile} is defined in CFITSIO's @code{fitsio.h} which is automatically included by Gnuastro's @file{gnuastro/fits.h}.
 
 @deftypefun {fitsfile *} gal_fits_open_to_write (char @code{*filename})
-If @file{filename} exists, open it and return the @code{fitsfile} pointer
-that corresponds to it. If @file{filename} doesn't exist, the file will be
-created which contains a blank first extension and the pointer to its next
-extension will be returned.
+If @file{filename} exists, open it and return the @code{fitsfile} pointer that corresponds to it.
+If @file{filename} doesn't exist, the file will be created which contains a blank first extension and the pointer to its next extension will be returned.
 @end deftypefun
 
 @deftypefun size_t gal_fits_hdu_num (char @code{*filename})
@@ -31506,28 +31603,25 @@ Return @code{1} if the dataset may be a HEALpix grid and @code{0} otherwise.
 Technically, it is considered to be a HEALPix if the HDU isn't an ASCII table, and has the @code{NSIDE}, @code{FIRSTPIX} and @code{LASTPIX}.
 @end deftypefun
 
-@deftypefun {fitsfile *} gal_fits_hdu_open (char @code{*filename}, char @code{*hdu}, int @code{iomode})
-Open the HDU/extension @code{hdu} from @file{filename} and return a pointer
-to CFITSIO's @code{fitsfile}. @code{iomode} determines how the FITS file
-will be opened using CFITSIO's macros: @code{READONLY} or @code{READWRITE}.
+@deftypefun {fitsfile *} gal_fits_hdu_open (char @code{*filename}, char @code{*hdu}, int @code{iomode}, int @code{exitonerror})
+Open the HDU/extension @code{hdu} from @file{filename} and return a pointer to CFITSIO's @code{fitsfile}.
+@code{iomode} determines how the FITS file will be opened using CFITSIO's macros: @code{READONLY} or @code{READWRITE}.
 
-The string in @code{hdu} will be appended to @file{filename} in square
-brackets so CFITSIO only opens this extension. You can use any formatting
-for the @code{hdu} that is acceptable to CFITSIO. See the description under
-@option{--hdu} in @ref{Input output options} for more.
+The string in @code{hdu} will be appended to @file{filename} in square brackets so CFITSIO only opens this extension.
+You can use any formatting for the @code{hdu} that is acceptable to CFITSIO.
+See the description under @option{--hdu} in @ref{Input output options} for more.
+
+If @code{exitonerror!=0} and the given HDU can't be opened for any reason, the function will exit the program, and print an informative message.
+Otherwise, when the HDU can't be opened, it will just return a NULL pointer.
 @end deftypefun
 
 @deftypefun {fitsfile *} gal_fits_hdu_open_format (char @code{*filename}, char @code{*hdu}, int @code{img0_tab1})
-Open (in read-only format) the @code{hdu} HDU/extension of @file{filename}
-as an image or table. When @code{img0_tab1} is @code{0}(zero) but the HDU
-is a table, this function will abort with an error. It will also abort with
-an error when @code{img0_tab1} is @code{1} (one), but the HDU is an
-image.
+Open (in read-only format) the @code{hdu} HDU/extension of @file{filename} as an image or table.
+When @code{img0_tab1} is @code{0}(zero) but the HDU is a table, this function will abort with an error.
+It will also abort with an error when @code{img0_tab1} is @code{1} (one), but the HDU is an image.
 
-A FITS HDU may contain both tables or images. When your program needs one
-of these formats, you can call this function so if the user provided the
-wrong HDU/file, it will abort and inform the user that the file/HDU is has
-the wrong format.
+A FITS HDU may contain both tables or images.
+When your program needs one of these formats, you can call this function so if the user provided the wrong HDU/file, it will abort and inform the user that the file/HDU is has the wrong format.
 @end deftypefun
 
 
