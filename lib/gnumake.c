@@ -47,7 +47,7 @@ int plugin_is_GPL_compatible=1;
 
 
 /* Names of the separate functions */
-#define GNUMAKE_FUNC_PREFIX "astgmk"
+#define GNUMAKE_FUNC_PREFIX "ast"
 char *with_keyvalue_name=GNUMAKE_FUNC_PREFIX"-fits-with-keyvalue";
 
 

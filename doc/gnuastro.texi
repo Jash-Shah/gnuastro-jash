@@ -727,8 +727,8 @@ PSF construction and subtraction
 
 Makefile extensions (for GNU Make)
 
-* Loading the Gnuastro Make functions::
-* Gnuastro Make functions::
+* Loading the Gnuastro Make functions::  How to find and load Gnuastro's Make library.
+* Gnuastro Make functions::     The available functions.
 
 Library
 
@@ -27908,8 +27908,8 @@ To use this feature, Gnuastro has to be built in shared library more.
 Gnuastro's Make extensions won't work if you build Gnuastro without shared libraries (for example when you configure Gnuastro with @option{--disable-shared} or @option{--debug}).
 
 @menu
-* Loading the Gnuastro Make functions:: How to find and load Gnuastro's Make library.
-* Gnuastro Make functions::             The available functions.
+* Loading the Gnuastro Make functions::  How to find and load Gnuastro's Make library.
+* Gnuastro Make functions::     The available functions.
 @end menu
 
 @node Loading the Gnuastro Make functions, Gnuastro Make functions, Makefile extensions, Makefile extensions
@@ -27944,14 +27944,15 @@ $ which astfits | sed -e's|bin/astfits|lib/libgnuastro_make.so|'
 @node Gnuastro Make functions,  , Loading the Gnuastro Make functions, Makefile extensions
 @section Gnuastro Make functions
 
-All Gnuastro Make functions start with the @command{astgmk-} prefix, which is short for ``@emph{Astronomical GNU Make}''.
+All Gnuastro Make functions start with the @command{ast-} prefix (similar to the programs on the command-line, but with a dash.
 After you have loaded Gnuastro's shared library for Makefiles within your Makefile, you can call these functions just like any Make function.
+For instructions on how to load Gnuastro's Make functions, see @ref{Loading the Gnuastro Make functions}.
 
 The Make functions in Gnuastro have been recently added (in August 2022), and will be gradually incrasing, as we find the need for more specialized functions.
 
 
 @table @code
-@item $(astgmk-fits-with-keyvalue FITS_FILES, HDU, KEYNAME, KEYVALUES)
+@item $(ast-fits-with-keyvalue FITS_FILES, HDU, KEYNAME, KEYVALUES)
 Will select only the FITS files (from a list of many in @code{FITS_FILES}), where the @code{KEYNAME} keyword has the value(s) given in @code{KEYVALUES}.
 Only the HDU given in the @code{HDU} argument will be checked.
 According to the FITS standard, the keyword name is not case sensitive, but the keyword value is.
@@ -27963,7 +27964,7 @@ Notice how there is no comma between @code{BAR} and @code{BAZ}: you can specify 
 load /usr/local/lib/libgnuastro_make.so
 
 files := $(wildcard /datasets/images/*.fits)
-selected := $(astgmk-with-keyvalue $(files), 1, FOO, BAR BAZ)
+selected := $(ast-fits-with-keyvalue $(files), 1, FOO, BAR BAZ)
 
 all:
 	echo "Full:     $(words $(files)) files";
