@@ -728,7 +728,7 @@ PSF construction and subtraction
 Makefile extensions (for GNU Make)
 
 * Loading the Gnuastro Make functions::  How to find and load Gnuastro's Make library.
-* Gnuastro Make functions::     The available functions.
+* Makefile functions of Gnuastro::  The available functions.
 
 Library
 
@@ -27909,10 +27909,10 @@ Gnuastro's Make extensions won't work if you build Gnuastro without shared libra
 
 @menu
 * Loading the Gnuastro Make functions::  How to find and load Gnuastro's Make library.
-* Gnuastro Make functions::     The available functions.
+* Makefile functions of Gnuastro::  The available functions.
 @end menu
 
-@node Loading the Gnuastro Make functions, Gnuastro Make functions, Makefile extensions, Makefile extensions
+@node Loading the Gnuastro Make functions, Makefile functions of Gnuastro, Makefile extensions, Makefile extensions
 @section Loading the Gnuastro Make functions
 
 To load Gnuastro's Make functions in your Makefile, you should use the @command{load} command of GNU Make in your Makefile.
@@ -27941,8 +27941,8 @@ It assumes that the libraries are in the same base directory as the programs (wh
 $ which astfits | sed -e's|bin/astfits|lib/libgnuastro_make.so|'
 @end example
 
-@node Gnuastro Make functions,  , Loading the Gnuastro Make functions, Makefile extensions
-@section Gnuastro Make functions
+@node Makefile functions of Gnuastro,  , Loading the Gnuastro Make functions, Makefile extensions
+@section Makefile functions of Gnuastro
 
 All Gnuastro Make functions start with the @command{ast-} prefix (similar to the programs on the command-line, but with a dash.
 After you have loaded Gnuastro's shared library for Makefiles within your Makefile, you can call these functions just like any Make function.
@@ -27962,7 +27962,7 @@ For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavor
 
 @table @code
 @item $(ast-fits-with-keyvalue FITS_FILES, HDU, KEYNAME, KEYVALUES)
-Will select only the FITS files (from a list of many in @code{FITS_FILES}), where the @code{KEYNAME} keyword has the value(s) given in @code{KEYVALUES}.
+Will select only the FITS files (from a list of many in @code{FITS_FILES}, non-FITS files are ignored), where the @code{KEYNAME} keyword has the value(s) given in @code{KEYVALUES}.
 Only the HDU given in the @code{HDU} argument will be checked.
 According to the FITS standard, the keyword name is not case sensitive, but the keyword value is.
 
@@ -27981,7 +27981,7 @@ all:
 @end verbatim
 
 @item $(ast-fits-unique-keyvalues FITS_FILES, HDU, KEYNAME)
-Will return the unique values given to the FITS keyword (@code{KEYNAME}) in the given HDU of all the input FITS files.
+Will return the unique values given to the given FITS keyword (@code{KEYNAME}) in the given HDU of all the input FITS files (non-FITS files are ignored).
 For example, after the commands below, the @code{keyvalues} variable will contain the unique values given to the @code{FOO} keyword in HDU number 1 of all the FITS files in @file{/datasets/images/*.fits}.
 
 @example
@@ -27990,13 +27990,11 @@ keyvalues := $(ast-fits-unique-keyvalues $(files), 1, FOO)
 @end example
 
 This is useful when you don't know the full range of values a-priori.
-For example, let's assume that you are looking at a night's observations with a telescope.
-Furthermore, the purpose of the FITS image is written in the @code{OBJECT} keyword of the image (which we can assume is in HDU number 1).
-This keyword can have the name of the various science (for example @code{NGC123} and @code{M31}) and calibration targets (for example @code{BIAS} and @code{FLAT}).
+For example, let's assume that you are looking at a night's observations with a telescope and the purpose of the FITS image is written in the @code{OBJECT} keyword of the image (which we can assume is in HDU number 1).
+This keyword can have the name of the various science targets (for example @code{NGC123} and @code{M31}) and calibration targets (for example @code{BIAS} and @code{FLAT}).
 The list of science targets is different from project to project, such that in one night, you can observe multiple projects.
 But the calibration frames have unique names.
-Knowing the calibration keyword values, you can use @code{ast-fits-unique-keyvalues} to extract the science keyword values of the night, and group them together in the next stages to make separate stacks of deep images for each science target.
-For next stages, you can select files based on their keyword values using the @code{ast-fits-with-keyvalue} function.
+Knowing the calibration keyword values, you can extract the science keyword values of the night with the command below (feeding the outupt of this function to Make's @code{filter-out} function).
 
 @example
 calib = BIAS FLAT
@@ -28004,6 +28002,9 @@ files := $(wildcard /datasets/images/*.fits)
 science := $(filter-out $(calib), \
              $(ast-fits-unique-keyvalues $(files), 1, OBJECT))
 @end example
+
+The @code{science} variable will now contain the unique science targets that were observed in your selected FITS images.
+You can use it to group the various exposures together in the next stages to make separate stacks of deep images for each science target (you can select FITS files based on their keyword values using the @code{ast-fits-with-keyvalue} function, which is described separately in this section).
 @end table
 
 
