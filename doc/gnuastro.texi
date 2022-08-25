@@ -27929,7 +27929,7 @@ Here are the possible replacements of the @file{/PATH/TO} component:
 @item /usr/local
 If you installed Gnuastro from source and didn't use the @option{--prefix} option at configuration time, you should use this base directory.
 @item /usr/
-If you installed Gnuastro through your operting system's package manager, it is highly likely that Gnuastro's library is here.
+If you installed Gnuastro through your operating system's package manager, it is highly likely that Gnuastro's library is here.
 @item ~/.local
 If you installed Gnuastro from source, but used @option{--prefix} to install Gnuastro in your home directory (as described in @ref{Installation directory}).
 @end table
