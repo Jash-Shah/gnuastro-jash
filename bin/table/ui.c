@@ -332,6 +332,15 @@ ui_read_check_only_options(struct tableparams *p)
         error(EXIT_FAILURE, 0, "at most three values can be given to each "
               "call of '--colmetadata' ('-m') after the original columns "
               "name or number. But %zu strings have been given", tmp->size);
+
+  /* If '--catcolumns' is given (to only concatenate certain columns), but
+     no file has been given for appending from (to '--catcolumnfile'), then
+     print a warning to let the user know (this may have been a typo!). */
+  if(p->cp.quiet==0 && p->catcolumns && p->catcolumnfile==NULL)
+    error(EXIT_SUCCESS, 0, "WARNING: '--catcolumns' (or '-C') is ignored "
+          "because '--catcolumnfile' (or '-L') was not given to specify "
+          "which file the new columns should come from. To supress this "
+          "warning, please run with '--quiet'");
 }
 
 
