@@ -104,18 +104,21 @@ See the end of the file for license conditions.
 
   Library functions:
   - gal_box_border_rotate_around_center: width of box after rotation.
-  - gal_color_name_to_id: return the ID of a color from its name.
   - gal_color_id_to_name: return the name of a color from its ID.
-  - gal_color_in_rgb: return the fraction of red-green-blue in given color.
-  - gal_eps_shape_name_to_id: return the ID of a shape from its name.
+  - gal_color_in_rgb: return the fraction of red-green-blue in a color.
+  - gal_color_name_to_id: return the ID of a color from its name.
   - gal_eps_shape_id_to_name: return the name of a shape from its ID.
+  - gal_eps_shape_name_to_id: return the ID of a shape from its name.
+  - gal_fits_unique_keyvalues: extract all unique values to a certain
+        keyword in many files.
+  - gal_fits_with_keyvalue: select FITS image with a certain key value.
   - gal_list_data_select_by_name: select a dataset from a list by its name.
   - gal_list_str_cat: Concatenate (append) list to a space-separated string.
   - gal_list_str_extract: Extract space-separated tokens to a list.
-  - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
-  - gal_units_sb_to_mag: magnitude from SB and area.
   - gal_units_counts_to_sb: SB from counts, zeropoint and area.
+  - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
   - gal_units_sb_to_counts: counts from SB, zeropoint and area.
+  - gal_units_sb_to_mag: magnitude from SB and area.
 
 
 ** Removed features

@@ -268,6 +268,13 @@ void
 gal_fits_key_write_config(gal_fits_list_key_t **keylist, char *title,
                           char *extname, char *filename, char *hdu);
 
+gal_list_str_t *
+gal_fits_with_keyvalue(gal_list_str_t *files, char *hdu, char *name,
+                       gal_list_str_t *values);
+
+gal_list_str_t *
+gal_fits_unique_keyvalues(gal_list_str_t *files, char *hdu, char *name);
+
 
 
 

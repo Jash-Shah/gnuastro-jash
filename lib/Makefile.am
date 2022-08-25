@@ -71,7 +71,7 @@ libgnuastro_make_la_LDFLAGS = -version-info $(GAL_LT_VERSION)
 
 
 # Specify the library .c files
-libgnuastro_make_la_SOURCES = gnumake.c
+libgnuastro_make_la_SOURCES = makeplugin.c
 libgnuastro_la_SOURCES = \
   $(MAYBE_WCSDISTORTION) \
   arithmetic.c \

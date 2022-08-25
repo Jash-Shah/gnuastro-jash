@@ -47,8 +47,9 @@ int plugin_is_GPL_compatible=1;
 
 
 /* Names of the separate functions */
-#define GNUMAKE_FUNC_PREFIX "ast"
-char *with_keyvalue_name=GNUMAKE_FUNC_PREFIX"-fits-with-keyvalue";
+#define MAKEPLUGIN_FUNC_PREFIX "ast"
+static char *fits_with_keyvalue_name=MAKEPLUGIN_FUNC_PREFIX"-fits-with-keyvalue";
+static char *fits_unique_keyvalues_name=MAKEPLUGIN_FUNC_PREFIX"-fits-unique-keyvalues";
 
 
 
@@ -57,7 +58,7 @@ char *with_keyvalue_name=GNUMAKE_FUNC_PREFIX"-fits-with-keyvalue";
 /* Select the input files that have the requested value(s) in the requested
    keywords. */
 static int
-gnumake_goodinput(char **argv, size_t numargs, char *name)
+makeplugin_goodinput(char **argv, size_t numargs, char *name)
 {
   char *c;
   size_t i;
@@ -85,59 +86,23 @@ gnumake_goodinput(char **argv, size_t numargs, char *name)
 
 
 static char *
-gnumake_fits_with_keyvalue(const char *caller, unsigned int argc,
-                           char **argv)
+makeplugin_fits_with_keyvalue(const char *caller, unsigned int argc,
+                              char **argv)
 {
-  int status=0;
-  fitsfile *fptr;
-  char keyvalue[FLEN_VALUE];
   gal_list_str_t *outlist=NULL;
   char *name=gal_txt_trim_space(argv[2]);
+  gal_list_str_t *files=NULL, *values=NULL;
   char *out, *hdu=gal_txt_trim_space(argv[1]);
-  gal_list_str_t *f, *v, *files=NULL, *values=NULL;
 
   /* If any of the inputs are empty, then don't bother continuing. */
-  if( gnumake_goodinput(argv, 4, with_keyvalue_name)==0 )
+  if( makeplugin_goodinput(argv, 4, fits_with_keyvalue_name)==0 )
     return NULL;
 
   /* Extract the components in the arguments with possibly multiple
-     values.*/
+     values and find the output files.*/
   files=gal_list_str_extract(argv[0]);
   values=gal_list_str_extract(argv[3]);
-
-  /* Go over the list of files and see if they have the requested
-     keyword(s). */
-  for(f=files; f!=NULL; f=f->next)
-    {
-      /* Open the file. */
-      fptr=gal_fits_hdu_open(f->v, hdu, READONLY, 0);
-
-      /* Only attempt to read the value if the requested HDU could be
-         opened ('fptr!=NULL'). */
-      if(fptr)
-        {
-          /* Check if the keyword actually exists. */
-          if( gal_fits_key_exists_fptr(fptr, name) )
-            {
-              /* Read the keyword. */
-              if( fits_read_key(fptr, TSTRING, name, &keyvalue, NULL,
-                                &status) )
-                gal_fits_io_error(status, NULL);
-
-              /* If the value corresponds to any of the user's values for this
-                 keyword, add it to the list of output names. */
-              for(v=values; v!=NULL; v=v->next)
-                {
-                  if( strcmp(v->v, keyvalue)==0 )
-                    { gal_list_str_add(&outlist, f->v, 1); break; }
-                }
-            }
-
-          /* Close the file. */
-          if( fits_close_file(fptr, &status) )
-            gal_fits_io_error(status, NULL);
-        }
-    }
+  outlist=gal_fits_with_keyvalue(files, hdu, name, values);
 
   /* Write the output value. */
   out=gal_list_str_cat(outlist);
@@ -152,17 +117,60 @@ gnumake_fits_with_keyvalue(const char *caller, unsigned int argc,
 
 
 
+
+static char *
+makeplugin_fits_unique_keyvalues(const char *caller, unsigned int argc,
+                                 char **argv)
+{
+  gal_list_str_t *files=NULL;
+  gal_list_str_t *outlist=NULL;
+  char *name=gal_txt_trim_space(argv[2]);
+  char *out, *hdu=gal_txt_trim_space(argv[1]);
+
+  /* If any of the inputs are empty, then don't bother continuing. */
+  if( makeplugin_goodinput(argv, 3, fits_unique_keyvalues_name)==0 )
+    return NULL;
+
+  /* Extract the components in the arguments with possibly multiple
+     values and find the output files.*/
+  files=gal_list_str_extract(argv[0]);
+  outlist=gal_fits_unique_keyvalues(files, hdu, name);
+
+  /* Write the output value. */
+  out=gal_list_str_cat(outlist);
+
+  /* Clean up and return. */
+  gal_list_str_free(files, 1);
+  gal_list_str_free(outlist, 1);
+  return out;
+}
+
+
+
+
+
 /* Top-level function (that should have this name). */
 int
 libgnuastro_make_gmk_setup()
 {
   /* Select files, were a certain keyword has a certain value. It takes
-     for arguments:
+     four arguments:
        0. List of files.
        1. HDU (fixed in all files).
        2. Keyword name.
        3. Keyword value(s). */
-  gmk_add_function(with_keyvalue_name, gnumake_fits_with_keyvalue,
+  gmk_add_function(fits_with_keyvalue_name, makeplugin_fits_with_keyvalue,
                    4, 4, GMK_FUNC_DEFAULT);
+
+  /* Return the unique values given to a certain keyword in many FITS
+     files. It takes three arguments.
+       0. List of files.
+       1. HDU (fixed in all files).
+       2. Keyword name. */
+  gmk_add_function(fits_unique_keyvalues_name,
+                   makeplugin_fits_unique_keyvalues,
+                   3, 3, GMK_FUNC_DEFAULT);
+
+  /* Everything is good, return 1 (success). */
   return 1;
 }

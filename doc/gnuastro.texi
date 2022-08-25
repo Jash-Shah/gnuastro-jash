@@ -27950,6 +27950,15 @@ For instructions on how to load Gnuastro's Make functions, see @ref{Loading the 
 
 The Make functions in Gnuastro have been recently added (in August 2022), and will be gradually incrasing, as we find the need for more specialized functions.
 
+@cartouche
+@noindent
+@strong{Difference between `@code{=}' or `@code{:=}' for variable definition} When you define a variable with @code{=}, its value is expanded only when used, not when defined.
+However, when you use @code{:=}, it is immediately expanded.
+If your value doesn't contain functions, there is no difference between the two.
+However, if you have functions in the value of a variable, it is better to expand the value immediately with @code{:=}.
+Otherwise, each time the value is used, the function is expaned (possibly may times) and this will reduce the speed of your pipeline.
+For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavors.html, The two flavors of variables} in the GNU Make manual.
+@end cartouche
 
 @table @code
 @item $(ast-fits-with-keyvalue FITS_FILES, HDU, KEYNAME, KEYVALUES)
@@ -27970,6 +27979,31 @@ all:
 	echo "Full:     $(words $(files)) files";
 	echo "Selected: $(words $(selected)) files"
 @end verbatim
+
+@item $(ast-fits-unique-keyvalues FITS_FILES, HDU, KEYNAME)
+Will return the unique values given to the FITS keyword (@code{KEYNAME}) in the given HDU of all the input FITS files.
+For example, after the commands below, the @code{keyvalues} variable will contain the unique values given to the @code{FOO} keyword in HDU number 1 of all the FITS files in @file{/datasets/images/*.fits}.
+
+@example
+files := $(wildcard /datasets/images/*.fits)
+keyvalues := $(ast-fits-unique-keyvalues $(files), 1, FOO)
+@end example
+
+This is useful when you don't know the full range of values a-priori.
+For example, let's assume that you are looking at a night's observations with a telescope.
+Furthermore, the purpose of the FITS image is written in the @code{OBJECT} keyword of the image (which we can assume is in HDU number 1).
+This keyword can have the name of the various science (for example @code{NGC123} and @code{M31}) and calibration targets (for example @code{BIAS} and @code{FLAT}).
+The list of science targets is different from project to project, such that in one night, you can observe multiple projects.
+But the calibration frames have unique names.
+Knowing the calibration keyword values, you can use @code{ast-fits-unique-keyvalues} to extract the science keyword values of the night, and group them together in the next stages to make separate stacks of deep images for each science target.
+For next stages, you can select files based on their keyword values using the @code{ast-fits-with-keyvalue} function.
+
+@example
+calib = BIAS FLAT
+files := $(wildcard /datasets/images/*.fits)
+science := $(filter-out $(calib), \
+             $(ast-fits-unique-keyvalues $(files), 1, OBJECT))
+@end example
 @end table
 
 
@@ -31958,6 +31992,14 @@ This function is used by many Gnuastro programs and is primarily intended
 for writing configuration settings of a program into the zero-th extension
 of their FITS outputs (which is empty when the FITS file is created by
 Gnuastro's program and this library).
+@end deftypefun
+
+@deftypefun {gal_list_str_t *} gal_fits_with_keyvalue (gal_list_str_t *files, char *hdu, char *name, gal_list_str_t *values)
+Given a list of FITS file names (@code{files}), a certain HDU (@code{hdu}), a certain keyword name (@code{name}), and a list of acceptable values (@code{values}), return the subset of file names where the requested keyword name has one of the acceptable values.
+@end deftypefun
+
+@deftypefun {gal_list_str_t *} gal_fits_unique_keyvalues (gal_list_str_t *files, char *hdu, char *name)
+Given a list of FITS file names (@code{files}), a certain HDU (@code{hdu}), a certain keyword name (@code{name}), retun the list of unique values to that keyword name in all the files.
 @end deftypefun
 
 

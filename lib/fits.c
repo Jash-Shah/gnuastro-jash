@@ -34,6 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gsl/gsl_version.h>
 
 #include <gnuastro/git.h>
+#include <gnuastro/txt.h>
 #include <gnuastro/wcs.h>
 #include <gnuastro/list.h>
 #include <gnuastro/fits.h>
@@ -2264,6 +2265,123 @@ gal_fits_key_write_config(gal_fits_list_key_t **keylist, char *title,
   if( fits_close_file(fptr, &status) )
     gal_fits_io_error(status, NULL);
 }
+
+
+
+
+
+/* From an input list of FITS files and a HDU, select those that have a
+   certain value(s) in a certain keyword.*/
+gal_list_str_t *
+gal_fits_with_keyvalue(gal_list_str_t *files, char *hdu, char *name,
+                       gal_list_str_t *values)
+{
+  int status=0;
+  fitsfile *fptr;
+  char keyvalue[FLEN_VALUE];
+  gal_list_str_t *f, *v, *out=NULL;
+
+  /* Go over the list of files and see if they have the requested
+     keyword(s). */
+  for(f=files; f!=NULL; f=f->next)
+    {
+      /* Open the file. */
+      fptr=gal_fits_hdu_open(f->v, hdu, READONLY, 0);
+
+      /* Only attempt to read the value if the requested HDU could be
+         opened ('fptr!=NULL'). */
+      if(fptr)
+        {
+          /* Check if the keyword actually exists. */
+          if( gal_fits_key_exists_fptr(fptr, name) )
+            {
+              /* Read the keyword. Note that we aren't checking for the
+                 'status' here. If for any reason CFITSIO couldn't read the
+                 value and status if non-zero, the next step won't consider
+                 the file any more. */
+              status=0;
+              fits_read_key(fptr, TSTRING, name, &keyvalue, NULL,
+                            &status);
+
+              /* If the value corresponds to any of the user's values for this
+                 keyword, add it to the list of output names. */
+              if(status==0)
+                for(v=values; v!=NULL; v=v->next)
+                  {
+                    if( strcmp(v->v, keyvalue)==0 )
+                      { gal_list_str_add(&out, f->v, 1); break; }
+                  }
+            }
+
+          /* Close the file. */
+          if( fits_close_file(fptr, &status) )
+            gal_fits_io_error(status, NULL);
+        }
+    }
+
+  /* Reverse the list to be in same order as input and return. */
+  gal_list_str_reverse(&out);
+  return out;
+}
+
+
+
+
+
+/* From an input list of FITS files and a HDU, select those that have a
+   certain value(s) in a certain keyword.*/
+gal_list_str_t *
+gal_fits_unique_keyvalues(gal_list_str_t *files, char *hdu, char *name)
+{
+  fitsfile *fptr;
+  int status=0, newvalue;
+  char *keyv, keyvalue[FLEN_VALUE];
+  gal_list_str_t *f, *v, *out=NULL;
+
+  /* Go over the list of files and see if they have the requested
+     keyword(s). */
+  for(f=files; f!=NULL; f=f->next)
+    {
+      /* Open the file. */
+      fptr=gal_fits_hdu_open(f->v, hdu, READONLY, 0);
+
+      /* Only attempt to read the value if the requested HDU could be
+         opened ('fptr!=NULL'). */
+      if(fptr)
+        {
+          /* Check if the keyword actually exists. */
+          if( gal_fits_key_exists_fptr(fptr, name) )
+            {
+              /* Read the keyword. Note that we aren't checking for the
+                 'status' here. If for any reason CFITSIO couldn't read the
+                 value and status if non-zero, the next step won't consider
+                 the file any more. */
+              status=0;
+              fits_read_key(fptr, TSTRING, name, &keyvalue, NULL,
+                            &status);
+
+              /* If the value is new, add it to the list. */
+              if(status==0)
+                {
+                  newvalue=1;
+                  keyv=gal_txt_trim_space(keyvalue);
+                  for(v=out; v!=NULL; v=v->next)
+                    { if( strcmp(v->v, keyv)==0 ) newvalue=0; }
+                  if(newvalue) gal_list_str_add(&out, keyv, 1);
+                }
+            }
+
+          /* Close the file. */
+          if( fits_close_file(fptr, &status) )
+            gal_fits_io_error(status, NULL);
+        }
+    }
+
+  /* Reverse the list to be in same order as input and return. */
+  gal_list_str_reverse(&out);
+  return out;
+}
+
 
 
 
