@@ -1851,9 +1851,9 @@ This will help simulate future situations when you are processing your own datas
 * Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
-* Reddest clumps cutouts and parallelization::
-* FITS images in a publication::
-* Marking objects for publication::
+* Reddest clumps cutouts and parallelization:: Parallization and selecting a subset of the data.
+* FITS images in a publication:: How to display FITS images in a PDF.
+* Marking objects for publication:: How to mark some objects over the image in a PDF.
 * Writing scripts to automate the steps::  Scripts will greatly help in re-doing things fast.
 * Citing and acknowledging Gnuastro::  How to cite and acknowledge Gnuastro in your papers.
 @end menu
@@ -27945,11 +27945,12 @@ The Make functions in Gnuastro have been recently added (in August 2022), and wi
 
 @cartouche
 @noindent
-@strong{Difference between `@code{=}' or `@code{:=}' for variable definition} When you define a variable with @code{=}, its value is expanded only when used, not when defined.
-However, when you use @code{:=}, it is immediately expanded.
-If your value does not contain functions, there is no difference between the two.
-However, if you have functions in the value of a variable, it is better to expand the value immediately with @code{:=}.
-Otherwise, each time the value is used, the function is expaned (possibly may times) and this will reduce the speed of your pipeline.
+@strong{Difference between `@code{=}' or `@code{:=}' for variable definition} When you define a variable with `@code{=}', its value is expanded only when used, not when defined.
+However, when you use `@code{:=}', it is immediately expanded when defined.
+Therefore the location of a `@code{:=}' variable in the Makefile matters: if used before its definition, it will be empty!
+Those defined by `@code{=}' can be used even before they are defined!
+On the other hand, if your variable invokes functions (like @code{foreach} or @code{wildcard}), it is better to use `@code{:=}'.
+Otherwise, each time the value is used, the function will be expaned (possibly may times) and this will reduce the speed of your pipeline.
 For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavors.html, The two flavors of variables} in the GNU Make manual.
 @end cartouche
 
