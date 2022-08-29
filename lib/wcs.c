@@ -2230,7 +2230,7 @@ wcs_convert_sanity_check_alloc(gal_data_t *coords, struct wcsprm *wcs,
   /* Allocate all the necessary arrays. */
   *phi    = gal_pointer_allocate( GAL_TYPE_FLOAT64, size,      0, __func__,
                                   "phi");
-  *stat   = gal_pointer_allocate( GAL_TYPE_INT32,   size,      1, __func__,
+  *stat   = gal_pointer_allocate( GAL_TYPE_INT,     size,      1, __func__,
                                   "stat");
   *theta  = gal_pointer_allocate( GAL_TYPE_FLOAT64, size,      0, __func__,
                                   "theta");
@@ -2284,14 +2284,15 @@ wcs_convert_prepare_out(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 {
   size_t i;
   gal_data_t *out=NULL;
+
   if(inplace)
     out=coords;
   else
     for(i=0;i<wcs->naxis;++i)
       gal_list_data_add_alloc(&out, NULL, GAL_TYPE_FLOAT64, 1,
                               &coords->size, NULL, 0, coords->minmapsize,
-                              coords->quietmmap, wcs->ctype[i], wcs->cunit[i],
-                              NULL);
+                              coords->quietmmap, wcs->ctype[i],
+                              wcs->cunit[i], NULL);
   return out;
 }
 
@@ -2308,7 +2309,7 @@ gal_data_t *
 gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 {
   gal_data_t *out;
-  int status, *stat=NULL, ncoord=coords->size, nelem;
+  int *stat=NULL, ncoord=coords->size, nelem;
   double *phi=NULL, *theta=NULL, *world=NULL, *pixcrd=NULL, *imgcrd=NULL;
 
   /* It can happen that the input datasets are empty. In this case, simply
@@ -2321,6 +2322,7 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
                  "'inplace' is not called", __func__, PACKAGE_BUGREPORT);
     }
 
+
   /* Some sanity checks. */
   wcs_convert_sanity_check_alloc(coords, wcs, __func__, &stat, &phi,
                                  &theta, &world, &pixcrd, &imgcrd);
@@ -2332,12 +2334,10 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
   wcs_convert_list_to_from_array(coords, world, stat, wcs->naxis, 0);
 
 
-  /* Use WCSLIB's wcss2p for the conversion. */
-  status=wcss2p(wcs, ncoord, nelem, world, phi, theta, imgcrd,
-                pixcrd, stat);
-  if(status)
-    error(EXIT_FAILURE, 0, "%s: wcss2p ERROR %d: %s", __func__, status,
-          wcs_errmsg[status]);
+  /* Use WCSLIB's wcss2p for the conversion. We are ignoring the over-all
+     status here, because later we will use the 'stat' array to set all bad
+     coordinates to NaN. */
+  wcss2p(wcs, ncoord, nelem, world, phi, theta, imgcrd, pixcrd, stat);
 
 
   /* For a sanity check.
@@ -2345,9 +2345,13 @@ gal_wcs_world_to_img(gal_data_t *coords, struct wcsprm *wcs, int inplace)
     size_t i;
     printf("\n\n%s sanity check:\n", __func__);
     for(i=0;i<coords->size;++i)
-      printf("(%g, %g, %g) --> (%g, %g, %g), [stat: %d]\n",
-              world[i*3],  world[i*3+1 ], world[i*3+2],
-             pixcrd[i*3], pixcrd[i*3+1], pixcrd[i*3+2], stat[i]);
+      printf("(%g, %g) --> phi:%g, theta: %g --> (%g, %g) --> (%g, %g) "
+             "[stat: %d]\n",
+             world[i*2],  world[i*2+1],
+             phi[i*2],    theta[i*2],
+             imgcrd[i*2], imgcrd[i*2+1],
+             pixcrd[i*2], pixcrd[i*2+1], stat[i]);
+    printf("stat: %d\n", stat[4]);
   }
   */
 
@@ -2382,7 +2386,7 @@ gal_data_t *
 gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
 {
   gal_data_t *out;
-  int status, *stat=NULL, ncoord=coords->size, nelem;
+  int *stat=NULL, ncoord=coords->size, nelem;
   double *phi=NULL, *theta=NULL, *world=NULL, *pixcrd=NULL, *imgcrd=NULL;
 
   /* Some sanity checks. */
@@ -2396,11 +2400,10 @@ gal_wcs_img_to_world(gal_data_t *coords, struct wcsprm *wcs, int inplace)
   wcs_convert_list_to_from_array(coords, pixcrd, stat, wcs->naxis, 0);
 
 
-  /* Use WCSLIB's wcsp2s for the conversion. */
-  status=wcsp2s(wcs, ncoord, nelem, pixcrd, imgcrd, phi, theta, world, stat);
-  if(status)
-    error(EXIT_FAILURE, 0, "%s: wcsp2s ERROR %d: %s", __func__, status,
-          wcs_errmsg[status]);
+  /* Use WCSLIB's wcsp2s for the conversion. We are ignoring the over-all
+     status here, because later we will use the 'stat' array to set all bad
+     coordinates to NaN.*/
+  wcsp2s(wcs, ncoord, nelem, pixcrd, imgcrd, phi, theta, world, stat);
 
 
   /* For a check.

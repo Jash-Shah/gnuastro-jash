@@ -32957,19 +32957,16 @@ points is calculated with the equation below.
 
 @dispmath {\cos(d)=\sin(d_1)\sin(d_2)+\cos(d_1)\cos(d_2)\cos(r_1-r_2)}
 
-However, since the pixel scales are usually very small numbers, this
-function will not use that direct formula. It will be use the
-@url{https://en.wikipedia.org/wiki/Haversine_formula, Haversine formula}
-which is better considering floating point errors:
+However, since the pixel scales are usually very small numbers, this function will not use that direct formula.
+It will be use the @url{https://en.wikipedia.org/wiki/Haversine_formula, Haversine formula} which is better considering floating point errors:
 
 @dispmath{{\sin^2(d)\over 2}=\sin^2\left( {d_1-d_2\over 2} \right)+\cos(d_1)\cos(d_2)\sin^2\left( {r_1-r_2\over 2} \right)}
 @end deftypefun
 
 @deftypefun {double *} gal_wcs_pixel_scale (struct wcsprm @code{*wcs})
-Return the pixel scale for each dimension of @code{wcs} in degrees. The
-output is an allocated array of double precision floating point type with
-one element for each dimension. If it is not successful, this function will
-return @code{NULL}.
+Return the pixel scale for each dimension of @code{wcs} in degrees.
+The output is an allocated array of double precision floating point type with one element for each dimension.
+If it is not successful, this function will return @code{NULL}.
 @end deftypefun
 
 @deftypefun double gal_wcs_pixel_area_arcsec2 (struct wcsprm @code{*wcs})
@@ -32984,27 +32981,20 @@ The number of dimensions is written into @code{ndim}, and space for the various 
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_wcs_world_to_img (gal_data_t @code{*coords}, struct wcsprm @code{*wcs}, int @code{inplace})
-Convert the linked list of world coordinates in @code{coords} to a linked
-list of image coordinates given the input WCS structure. @code{coords} must
-be a linked list of data structures of float64 (`double') type,
-see@ref{Linked lists} and @ref{List of gal_data_t}. The top (first
-popped/read) node of the linked list must be the first WCS coordinate (RA
-in an image usually) etc. Similarly, the top node of the output will be
-the first image coordinate (in the FITS standard).
+Convert the linked list of world coordinates in @code{coords} to a linked list of image coordinates given the input WCS structure.
+@code{coords} must be a linked list of data structures of float64 (`double') type, see@ref{Linked lists} and @ref{List of gal_data_t}.
+The top (first popped/read) node of the linked list must be the first WCS coordinate (RA in an image usually) etc.
+Similarly, the top node of the output will be the first image coordinate (in the FITS standard).
+In case WCSLIB fails to convert any of the coordinates (for example the RA of one coordinate is given as 400!), the respective element in the output will be written as NaN.
 
-If @code{inplace} is zero, then the output will be a newly allocated list
-and the input list will be untouched. However, if @code{inplace} is
-non-zero, the output values will be written into the input's already
-allocated array and the returned pointer will be the same pointer to
-@code{coords} (in other words, you can ignore the returned value). Note
-that in the latter case, only the values will be changed, things like units
-or name (if present) will be untouched.
+If @code{inplace} is zero, then the output will be a newly allocated list and the input list will be untouched.
+However, if @code{inplace} is non-zero, the output values will be written into the input's already allocated array and the returned pointer will be the same pointer to @code{coords} (in other words, you can ignore the returned value).
+Note that in the latter case, only the values will be changed, things like units or name (if present) will be untouched.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_wcs_img_to_world (gal_data_t @code{*coords}, struct wcsprm @code{*wcs}, int @code{inplace})
-Convert the linked list of image coordinates in @code{coords} to a linked
-list of world coordinates given the input WCS structure. See the
-description of @code{gal_wcs_world_to_img} for more details.
+Convert the linked list of image coordinates in @code{coords} to a linked list of world coordinates given the input WCS structure.
+See the description of @code{gal_wcs_world_to_img} for more details.
 @end deftypefun
 
 
