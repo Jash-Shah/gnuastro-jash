@@ -22,11 +22,21 @@
 
 
 # Conditional compilation
+headersdir=$(top_srcdir)/lib/gnuastro
+
 if COND_HASWCSDIS_H
   MAYBE_WCSDISTORTION = wcsdistortion.c
 endif
 if COND_HASGNUMAKE_H
   MAYBE_GNUMAKE = libgnuastro_make.la
+endif
+
+# Build the python utilities file,
+# only if Python and NumPy are present.
+if COND_NUMPY
+  MAYBE_NUMPY_C = python.c
+  MAYBE_NUMPY_H = $(headersdir)/python.h
+  MAYBE_NUMPY_INCLUDE = -I$(NUMPY_INCLUDE_DIR) -I$(PYTHON_INCLUDE_DIR)
 endif
 
 
@@ -43,9 +53,13 @@ endif
 ##
 ##   SYSCONFIG_DIR: only necessary in 'options.c' to get the system
 ##       installation directory.
+##
+##   MAYBE_NUMPY_INCLUDE: only necessary in 'python.c' to link the
+##                        numpy C-API.
 AM_CPPFLAGS = -I\$(top_builddir)/bootstrapped/lib \
               -I\$(top_srcdir)/bootstrapped/lib \
-              -DSYSCONFIG_DIR=\"$(sysconfdir)\"
+              -DSYSCONFIG_DIR=\"$(sysconfdir)\" \
+              $(MAYBE_NUMPY_INCLUDE)
 
 
 
@@ -73,6 +87,7 @@ libgnuastro_make_la_LDFLAGS = -version-info $(GAL_LT_VERSION)
 # Specify the library .c files
 libgnuastro_make_la_SOURCES = makeplugin.c
 libgnuastro_la_SOURCES = \
+  $(MAYBE_NUMPY_C) \
   $(MAYBE_WCSDISTORTION) \
   arithmetic.c \
   arithmetic-and.c \
@@ -141,8 +156,8 @@ libgnuastro_la_SOURCES = \
 # Installed headers, note that we are not blindly including all '.h' files
 # in the $(headersdir) directory. Some of the header files don't need to be
 # installed.
-headersdir=$(top_srcdir)/lib/gnuastro
 pkginclude_HEADERS = gnuastro/config.h \
+  $(MAYBE_NUMPY_H) \
   $(headersdir)/arithmetic.h \
   $(headersdir)/array.h \
   $(headersdir)/binary.h \

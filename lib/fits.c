@@ -124,7 +124,7 @@ gal_fits_name_is_fits(char *name)
 
 
 
-/* IMPORTANT NOTE: if other compression suffixes are add to this function,
+/* IMPORTANT NOTE: if other compression suffixes are added to this function,
    include them in 'gal_checkset_automatic_output', so the compression
    suffix can be skipped when the user doesn't specify an output
    filename.*/
