@@ -755,22 +755,20 @@ AS_IF([test "x$has_topcat" = "xno"], [anywarnings=yes])
 
 
 
-# Check Python3 and NumPy:
-# checks if Python3 and NumPy are installed, in that order
-# and gets their include path if true. This is done using two
-# python scripts:
-## py_check_cmd: Uses the sysconfig package's get_paths method
-##               to get the include path for Python.h header.
-## np_check_cmd: Uses numpy's get_include method to get the
-##               include path for NumPy's core C-API.
-AC_ARG_WITH([python],
-            [AS_HELP_STRING([--without-python],
-                            [disable support for python])],
-            [], [with_python=yes])
+# Check Python3 and NumPy (in that order): and gets their include path if
+# they do. This is done using two python scripts:
+#     py_check_cmd: Uses the sysconfig package's get_paths method
+#                   to get the include path for Python.h header.
+#     np_check_cmd: Uses numpy's get_include method to get the
+#                   include path for NumPy's core C-API.
 py_check_cmd='from sysconfig import get_paths; \
               print(get_paths().get("include"))'
 np_check_cmd='from numpy import get_include; \
               print(get_include())'
+AC_ARG_WITH([python],
+            [AS_HELP_STRING([--without-python],
+                            [disable support for python])],
+            [], [with_python=yes])
 AS_IF([test "x$with_python" != xno],
       [
         AC_CHECK_PROG(has_python3, python3, [yes], [no])
@@ -790,8 +788,8 @@ AS_IF([test "x$with_python" != xno],
         AC_SUBST(PYTHON_INCLUDE_DIR, [$python_includedir])
       ])
 AS_IF([test "x$numpy_includedir" = x],
-      [AC_MSG_RESULT([no])],
-      [AC_MSG_RESULT([yes])])
+      [has_numpy=no; AC_MSG_RESULT([no])],
+      [has_numpy=yes; AC_MSG_RESULT([yes])])
 AM_CONDITIONAL([COND_NUMPY], [test "x$numpy_includedir" != x])
 
 
@@ -834,6 +832,8 @@ AS_IF([test "x$missing_mandatory" = "xyes"],
                       [ AS_ECHO([" - Missing Libgit2: https://libgit2.org"])                      ])
                 AS_IF([test "x$has_curl" = "x0"],
                       [ AS_ECHO([" - Missing cURL: https://curl.haxx.se"])                        ])
+                AS_IF([test "x$has_numpy" = "x0"],
+                      [ AS_ECHO([" - Missing Numpy (for Python wrappers): https://numpy.org"])    ])
                 AS_IF([test "x$has_ds9" = "xno"],
                       [ AS_ECHO([" - Missing SAO DS9: https://sites.google.com/cfa.harvard.edu/saoimageds9"]) ])
                 AS_IF([test "x$has_topcat" = "xno"],
@@ -1344,6 +1344,14 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    'gnumake.h' couldn't be found by the C compiler. If available, "])
                AS_ECHO(["    Gnuastro can use those headers to add custom GNU Make functions "])
                AS_ECHO(["    to improve your Makefiles for data analysis workflows."])
+               AS_ECHO([]) ])
+
+        AS_IF([test "x$has_numpy" = "xno"],
+              [dependency_notice=yes
+               AS_ECHO(["  - Numpy (https://numpy.org) headers couldn't be found within a "])
+               AS_ECHO(["    Python3 environment. If available, Gnuastro's library will be "])
+               AS_ECHO(["    installed with some functions that can help Python wrappers "])
+               AS_ECHO(["    communicate with Gnuastro's library (for example pyGnuastro)."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_ds9" = "xno"],

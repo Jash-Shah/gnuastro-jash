@@ -1,19 +1,23 @@
 /*********************************************************************
-python -- Functions to assist the python wrappers.
+python -- Functions to assist Python wrappers using Gnuastro's library.
 This is part of GNU Astronomy Utilities (Gnuastro) package.
+
 Original author:
-     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+     Jash Shah <jash28582@gmail.com>
 Contributing author(s):
-     Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
-Copyright (C) 2017-2022 Free Software Foundation, Inc.
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+Copyright (C) 2022 Free Software Foundation, Inc.
+
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
 Free Software Foundation, either version 3 of the License, or (at your
 option) any later version.
+
 Gnuastro is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
+
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
@@ -51,13 +55,11 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 /*************************************************************
  **************           Type codes           ***************
  *************************************************************/
-/* Convert Gnuastro type to NumPy datatype. */
 int
-gal_py_galtype_to_npytype(uint8_t type);
+gal_py_type_to_numpy(uint8_t type);
 
-/* Convert Numpy datatype to Gnuastro type. */
-int
-gal_py_npytype_to_galtype(uint8_t type);
+uint8_t
+gal_py_type_from_numpy(int type);
 
 
 
