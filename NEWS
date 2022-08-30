@@ -61,6 +61,8 @@ See the end of the file for license conditions.
     --showfonts: build a demo PDF with one page per font to show the
                  various available fonts on the system.
     --listfonts: List the names of the available fonts on the terminal.
+  - It is now possible to select the color of the border of images produced
+    in vector graphics outputs (EPS and PDF) with '--bordercolor'.
 
   Fits:
   --pixelareaarcsec2: print the image pixel area in units of arcsec^2 to
@@ -143,7 +145,8 @@ See the end of the file for license conditions.
     remembering.
 
   Library
-  - gal_eps_write: an extra argument has been added to draw marks.
+  - gal_eps_write: two new arguments have been added to draw marks, and to
+        set the border color.
   - gal_pdf_write: similar to 'gal_eps_write'.
   - gal_fits_hdu_open: new argument to optionally exit program if HDU
         couldn't be opened.

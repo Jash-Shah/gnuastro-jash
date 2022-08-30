@@ -62,8 +62,8 @@ gal_pdf_suffix_is_pdf(char *name);
 
 void
 gal_pdf_write(gal_data_t *in, char *filename, float widthincm,
-              uint32_t borderwidth, int dontoptimize,
-              gal_data_t *marks);
+              uint32_t borderwidth, uint8_t bordercolor,
+              int dontoptimize, gal_data_t *marks);
 
 
 

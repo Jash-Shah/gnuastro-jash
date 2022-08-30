@@ -123,9 +123,8 @@ gal_eps_shape_id_to_name(uint8_t id);
 
 void
 gal_eps_write(gal_data_t *in, char *filename, float widthincm,
-              uint32_t borderwidth, int hex, int dontoptimize,
-              int forpdf, gal_data_t *marks);
-
+              uint32_t borderwidth, uint8_t bordercolor, int hex,
+              int dontoptimize, int forps, gal_data_t *marks);
 
 
 __END_C_DECLS    /* From C++ preparations */

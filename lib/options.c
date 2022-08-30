@@ -38,6 +38,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <gnuastro/table.h>
 #include <gnuastro/blank.h>
 #include <gnuastro/units.h>
+#include <gnuastro/color.h>
 #include <gnuastro/threads.h>
 #include <gnuastro/pointer.h>
 #include <gnuastro/arithmetic.h>
@@ -427,6 +428,44 @@ gal_options_read_type(struct argp_option *option, char *arg,
                       "run the following command (press SPACE key to go "
                       "down, and 'q' to return to the command-line):\n\n"
                       "    $ info gnuastro \"Numeric data types\"\n",
+                      arg, option->name);
+
+      /* For no un-used variable warning. This function doesn't need the
+         pointer.*/
+      return junk=NULL;
+    }
+}
+
+
+
+
+
+void *
+gal_options_read_color(struct argp_option *option, char *arg,
+                       char *filename, size_t lineno, void *junk)
+{
+  char *str;
+  if(lineno==-1)
+    {
+      /* Note that 'gal_data_type_as_string' returns a static string. But
+         the output must be an allocated string so we can free it. */
+      gal_checkset_allocate_copy(
+           gal_color_id_to_name( *(uint8_t *)(option->value)), &str);
+      return str;
+    }
+  else
+    {
+      /* If the option is already set, just return. */
+      if(option->set) return NULL;
+
+      /* Read the value. */
+      if ( (*(uint8_t *)(option->value) = gal_color_name_to_id(arg) )
+           == GAL_COLOR_INVALID )
+        error_at_line(EXIT_FAILURE, 0, filename, lineno, "'%s' (value to "
+                      "'%s' option) couldn't be recognized as a known "
+                      "color.\n\nFor the full list of known types, please "
+                      "run the following command:\n\n"
+                      "    $ astconvertt --listcolors\n",
                       arg, option->name);
 
       /* For no un-used variable warning. This function doesn't need the

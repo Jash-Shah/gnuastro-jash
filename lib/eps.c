@@ -1016,11 +1016,12 @@ eps_mark_add(gal_data_t *in, gal_data_t *marks, FILE *fp,
 
 void
 gal_eps_write(gal_data_t *in, char *filename, float widthincm,
-              uint32_t borderwidth, int hex, int dontoptimize,
-              int forps, gal_data_t *marks)
+              uint32_t borderwidth, uint8_t bordercolor, int hex,
+              int dontoptimize, int forps, gal_data_t *marks)
 {
   FILE *fp;
   float hbw;
+  float rgb[3];
   time_t rawtime;
   size_t numch=gal_list_data_number(in);
   size_t w_h_in_pt[2], *dsize=in->dsize;
@@ -1075,8 +1076,9 @@ gal_eps_write(gal_data_t *in, char *filename, float widthincm,
     /* Commands to draw the border: */
   if(borderwidth)
     {
+      gal_color_in_rgb(bordercolor, rgb);
       fprintf(fp, "%% Draw the border:\n");
-      fprintf(fp, "0 setgray\n");
+      fprintf(fp, "%.2f %.2f %.2f setrgbcolor\n", rgb[0], rgb[1], rgb[2]);
       fprintf(fp, "%d setlinewidth\n", borderwidth);
       fprintf(fp, "%.1f %.1f moveto\n", hbw, hbw);
       fprintf(fp, "0 %zu rlineto\n", w_h_in_pt[1]+borderwidth);

@@ -13588,6 +13588,16 @@ To have a final border that is thinner than one PostScript point in your documen
 For example by setting @command{width} in your @command{includegraphics} command in @TeX{} or @LaTeX{} to be larger than the value to @option{--widthincm}.
 Since it is vector graphics, the changes of size have no effect on the quality of your output (pixels do not get different values).
 
+@item --bordercolor=STR
+The name of the color to use for border that will be put around the EPS and PDF outputs.
+The list of available colors, along with their name and an example can be seen with the following command (also see @ref{Vector graphics colors}):
+
+@example
+$ astconvertt --listcolors
+@end example
+
+This option only accepts the name of the color, not the numeric identifier.
+
 @item --marks=STR
 Draw vector graphics (infinite resolution) marks over the image.
 The value to this option should be the file name of a table containing the mark information.
@@ -32486,12 +32496,13 @@ Return the shape ID of a mark from its name (which is not case-sensitive).
 Return the shape name from its ID.
 @end deftypefun
 
-@deftypefun {void} gal_eps_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, int @code{hex}, int @code{dontoptimize}, int @code{forps}, gal_data_t @code{*marks})
+@deftypefun {void} gal_eps_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, uint8_t @code{bordercolor}, int @code{hex}, int @code{dontoptimize}, int @code{forps}, gal_data_t @code{*marks})
 Write the @code{in} dataset into an EPS file called @code{filename}.
 @code{in} has to be an unsigned 8-bit character type @code{GAL_TYPE_UINT8}, see @ref{Numeric data types}).
-The desired width of he image in human/non-pixel units (to help the displayer) can be set with he @code{widthincm} argument.
+The desired width of the image in human/non-pixel units (to help the displayer) can be set with he @code{widthincm} argument.
 If @code{borderwidth} is non-zero, it is nterpreted as the width (in points) of a solid black border around the mage.
 A border can helpful when importing the EPS file into a document.
+The color of the border can be set with @code{bordercolor}, use the macros in @ref{Color functions}.
 If @code{forpdf} is not zero, the output can be imported into a Postscript file directly (not as an ``encapsulated'' postscript, which is the default).
 
 @cindex ASCII85 encoding
@@ -32543,12 +32554,13 @@ Return @code{1} if @code{suffix} is a recognized PDF suffix.
 The recognized suffixes are @code{.pdf} and @code{.PDF}.
 @end deftypefun
 
-@deftypefun {void} gal_pdf_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, int @code{dontoptimize}, gal_data_t @code{*marks})
+@deftypefun {void} gal_pdf_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, uint8_t @code{bordercolor}, int @code{dontoptimize}, gal_data_t @code{*marks})
 Write the @code{in} dataset into an EPS file called @code{filename}.
 @code{in} has to be an unsigned 8-bit character type (@code{GAL_TYPE_UINT8}, see @ref{Numeric data types}).
 The desired width of the image in human/non-pixel units (to help the displayer) can be set with the @code{widthincm} argument.
 If @code{borderwidth} is non-zero, it is interpreted as the width (in points) of a solid black border around the image.
 A border can helpful when importing the PDF file into a document.
+The color of the border can be set with @code{bordercolor}, use the macros in @ref{Color functions}.
 
 This function is just a wrapper for the @code{gal_eps_write} function in @ref{EPS files}.
 After making the EPS file, Ghostscript (with a version of 9.10 or above, see @ref{Optional dependencies}) will be used to compile the EPS file to a PDF file.
@@ -35798,7 +35810,8 @@ For each color we have a separate macro that starts with @code{GAL_COLOR_}, and 
 @deffnx Macro GAL_COLOR_*
 The integer identifiers for each of the named colors in Gnuastro.
 Except for the first one (@code{GAL_COLOR_INVALID}), we currently have 140 colors from the @url{https://en.wikipedia.org/wiki/Web_colors#Extended_colors, extended web colors}.
-The full list of colors and a demo is shown in @ref{Vector graphics colors}.
+The full list of colors and a demo can be visually inspected on the command-line with the @command{astconvertt --listcolors} command and is also shown in @ref{Vector graphics colors}.
+The macros have the same names, just in full-caps.
 @end deffn
 
 @noindent

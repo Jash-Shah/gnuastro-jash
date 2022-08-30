@@ -100,16 +100,16 @@ gal_pdf_suffix_is_pdf(char *name)
  *************************************************************/
 void
 gal_pdf_write(gal_data_t *in, char *filename, float widthincm,
-              uint32_t borderwidth, int dontoptimize,
-              gal_data_t *marks)
+              uint32_t borderwidth, uint8_t bordercolor,
+              int dontoptimize, gal_data_t *marks)
 {
   size_t w_h_in_pt[2];
   char *command, *device;
   char *epsname=gal_checkset_malloc_cat(filename, ".ps");
 
   /* Write the EPS file. */
-  gal_eps_write(in, epsname, widthincm, borderwidth, 0,
-                dontoptimize, 0, marks);
+  gal_eps_write(in, epsname, widthincm, borderwidth,
+                bordercolor, 0, dontoptimize, 0, marks);
 
   /* Get the size of the image in 'pt' units. */
   gal_eps_to_pt(widthincm, in->dsize, w_h_in_pt);

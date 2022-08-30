@@ -34,7 +34,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 enum program_args_groups
 {
   UI_GROUP_FLUX = GAL_OPTIONS_GROUP_AFTER_COMMON,
-  UI_GROUP_MARKS
+  UI_GROUP_VECTOR
 };
 
 
@@ -69,6 +69,7 @@ enum option_keys_enum
      automatically). */
   UI_KEY_COLORMAP            = 1000,
   UI_KEY_RGBTOHSV,
+  UI_KEY_BORDERCOLOR,
   UI_KEY_MARKS,
   UI_KEY_MARKSHDU,
   UI_KEY_MARKSIZE,
