@@ -35870,11 +35870,11 @@ Writing an interfacing between these and Gnuastro can be simplified using the fu
 Since many of these functions depend on the Gnuastro Library itself, it is more convenient to package them with the Library to facilitate the work of Python package.
 These functions will be expanding as Gnuastro's own Python module (pyGnuastro) grows.
 
-@deftypefun int gal_py_type_to_numpy (uint8_t @code{type})
+@deftypefun int gal_python_type_to_numpy (uint8_t @code{type})
 Returns the NumPy datatype corresponding to a certain Gnuastro @code{type}, see @ref{Library data types}.
 @end deftypefun
 
-@deftypefun uint8_t gal_py_type_from_numpy (int @code{type})
+@deftypefun uint8_t gal_python_type_from_numpy (int @code{type})
 Returns Gnuastro's numerical datatype that correspondes to the input NumPy @code{type}.
 For Gnuastro's recognized data types, see @ref{Library data types}.
 @end deftypefun

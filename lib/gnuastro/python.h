@@ -56,10 +56,10 @@ __BEGIN_C_DECLS  /* From C++ preparations */
  **************           Type codes           ***************
  *************************************************************/
 int
-gal_py_type_to_numpy(uint8_t type);
+gal_python_type_to_numpy(uint8_t type);
 
 uint8_t
-gal_py_type_from_numpy(int type);
+gal_python_type_from_numpy(int type);
 
 
 

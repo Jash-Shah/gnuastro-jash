@@ -44,7 +44,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Convert Gnuastro type to NumPy datatype. Currently only converting types
    directly compatible between the two. */
 int
-gal_py_type_to_numpy(uint8_t type)
+gal_python_type_to_numpy(uint8_t type)
 {
   switch (type)
     {
@@ -74,7 +74,7 @@ gal_py_type_to_numpy(uint8_t type)
 /* Convert Numpy datatype to Gnuastro type. Currently only converting types
    directly compatible between the two. */
 uint8_t
-gal_py_type_from_numpy(int type)
+gal_python_type_from_numpy(int type)
 {
   switch (type)
     {

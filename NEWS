@@ -115,8 +115,8 @@ See the end of the file for license conditions.
   - gal_list_data_select_by_name: select a dataset from a list by its name.
   - gal_list_str_cat: Concatenate (append) list to a space-separated string.
   - gal_list_str_extract: Extract space-separated tokens to a list.
-  - gal_py_type_from_numpy: Convert Numpy's type identifier to Gnuastro's.
-  - gal_py_type_to_numpy: Convert Gnuastro's type identifier to Numpy's.
+  - gal_python_type_from_numpy: Convert Numpy's type id. to Gnuastro's.
+  - gal_python_type_to_numpy: Convert Gnuastro's type id. to Numpy's.
   - gal_units_counts_to_sb: SB from counts, zeropoint and area.
   - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
   - gal_units_sb_to_counts: counts from SB, zeropoint and area.
