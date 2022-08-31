@@ -18147,17 +18147,19 @@ If we assume that the kernel has @mymath{2a+1} and @mymath{2b+1} pixels on each 
 
 @cindex Correlation
 @cindex Convolution
-Any pixel coordinate that is outside of the image in the equation above will be considered to be zero.
+Formally, any pixel that is outside of the image in the equation above will be considered to be zero (although, see @ref{Edges in the spatial domain}).
 When the kernel is symmetric about its center the blurred image has the same orientation as the original image.
 However, if the kernel is not symmetric, the image will be affected in the opposite manner, this is a natural consequence of the definition of spatial filtering.
-In order to avoid this we can rotate the kernel about its center by 180 degrees so the convolved output can have the same original orientation.
+In order to avoid this we can rotate the kernel about its center by 180 degrees so the convolved output can have the same original orientation (this is done by default in the Convolve program).
 Technically speaking, only if the kernel is flipped the process is known @emph{Convolution}.
 If it is not it is known as @emph{Correlation}.
 
 To be a weighted average, the sum of the weights (the pixels in the kernel) have to be unity.
 This will have the consequence that the convolved image of an object and unconvolved object will have the same brightness (see @ref{Brightness flux magnitude}), which is natural, because convolution should not eat up the object photons, it only disperses them.
 
-
+The convolution of each pixel is indendent of the others pixels, and in some cases it may be necessary to convolve different parts of an image separately (for example when you have different amplifiers on the CCD).
+Therefore, to speed up spatial convolution, Gnuastro first tesselates the input into many tiles, and does the convolution in parallel on each tile.
+For more on how Gnuastro's program create the tile grid (tessellation), see @ref{Tessellation}.
 
 
 
@@ -18931,6 +18933,12 @@ $ astconvolve --kernel=psf.fits mockimg.fits
 
 ## Convolve in the spatial domain:
 $ astconvolve observedimg.fits --kernel=psf.fits --domain=spatial
+
+## Convolve a 3D cube (only spatial domain is supported in 3D).
+## It is also necessary to define 3D tiles and channels for
+## parallelization (see the Tessellation section for more).
+$ astconvolve cube.fits --kernel=kernel3d.fits --domain=spatial \
+              --tilesize=30,30,30 --numchannels=1,1,1
 
 ## Find the kernel to match sharper and blurry PSF images (they both
 ## have to have the same pixel size).
