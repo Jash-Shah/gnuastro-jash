@@ -82,6 +82,9 @@ gal_txt_line_stat(char *line);
 char *
 gal_txt_trim_space(char *str);
 
+int
+gal_txt_contains_string(char *full, char *match);
+
 gal_data_t *
 gal_txt_table_info(char *filename, gal_list_str_t *lines, size_t *numcols,
                    size_t *numrows);

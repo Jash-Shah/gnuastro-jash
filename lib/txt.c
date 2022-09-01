@@ -122,6 +122,30 @@ gal_txt_trim_space(char *str)
 
 
 
+/* Return 1 if the input string contains the 'match' substring. */
+int
+gal_txt_contains_string(char *full, char *match)
+{
+  char *c=full;
+  size_t ml = match ? strlen(match) : 0;
+
+  /* If the input or output strings are empty, a match can't be defined
+     (strncmp will always succeed to find a match). */
+  if(ml==0 || full==NULL || *full=='\0') return 0;
+
+  /* Parse the string (character by character) to see if there is a
+     match. */
+  do if( strncmp(c, match, ml)==0 ) return 1;
+  while( *(++c)!='\0' );
+
+  /* If control reaches here, there was no match. */
+  return 0;
+}
+
+
+
+
+
 /* Each information comment should have a format like this (replace
    'Column' with 'Image' for 2D arrays):
 

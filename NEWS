@@ -99,12 +99,19 @@ See the end of the file for license conditions.
     analysis becomes even more easier and faster. In the following, you can
     see the first set of such functions (they all begin with 'astgmk' for
     "Astronomical GNU Make"):
-    - astgmk-fits-with-keyvalue: Takes a list of files, a HDU, a keyword
-      name and a list of keyword values. It will return only those FITS
-      files that have the requested value(s) in the requested keyword of
-      the requested HDU.
+    - ast-text-contains: Will only return those space-separated words
+      within a larger list that contain a certain string. The to-contain
+      string can be placed anywhere within the words of the larger list.
+    - ast-fits-with-keyvalue: Takes a keyword name, a list of keyword
+      values, a HDU and a list of FITS files. It will return only those
+      FITS files that have the requested value(s) in the requested keyword
+      of the requested HDU.
+    - ast-fits-unique-keyvalues: Takes a keyword name, a HDU and a list of
+      FITS files. It will return all the unique values given to that
+      keyword within the FITS files.
 
   Library functions:
+
   - gal_box_border_rotate_around_center: width of box after rotation.
   - gal_color_id_to_name: return the name of a color from its ID.
   - gal_color_in_rgb: return the fraction of red-green-blue in a color.
@@ -119,6 +126,7 @@ See the end of the file for license conditions.
   - gal_list_str_extract: Extract space-separated tokens to a list.
   - gal_python_type_from_numpy: Convert Numpy's type id. to Gnuastro's.
   - gal_python_type_to_numpy: Convert Gnuastro's type id. to Numpy's.
+  - gal_txt_contains_string: Check a certain string within in a larger one.
   - gal_units_counts_to_sb: SB from counts, zeropoint and area.
   - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
   - gal_units_sb_to_counts: counts from SB, zeropoint and area.

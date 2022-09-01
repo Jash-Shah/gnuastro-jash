@@ -48,6 +48,7 @@ int plugin_is_GPL_compatible=1;
 
 /* Names of the separate functions */
 #define MAKEPLUGIN_FUNC_PREFIX "ast"
+static char *text_contains_name=MAKEPLUGIN_FUNC_PREFIX"-text-contains";
 static char *fits_with_keyvalue_name=MAKEPLUGIN_FUNC_PREFIX"-fits-with-keyvalue";
 static char *fits_unique_keyvalues_name=MAKEPLUGIN_FUNC_PREFIX"-fits-unique-keyvalues";
 
@@ -55,10 +56,72 @@ static char *fits_unique_keyvalues_name=MAKEPLUGIN_FUNC_PREFIX"-fits-unique-keyv
 
 
 
+
+
+
+
+
+/**********************************************************************/
+/***************             Text utilities             ***************/
+/**********************************************************************/
+
+/* Return any of the input strings that contain the given string. It takes
+   two arguments:
+      0. String to check.
+      1. List of text.*/
+static char *
+makeplugin_text_contains(const char *caller, unsigned int argc,
+                         char **argv)
+{
+  char *out=NULL;
+  gal_list_str_t *tmp, *outlist=NULL;
+  char *match=argv[0]; /* No trimming the white space before/after, as in */
+  gal_list_str_t *strings=gal_list_str_extract(argv[1]); /* Make itself.  */
+
+  printf("%s: HERE\n", __func__);
+  gal_list_str_print(strings);
+
+  /* Parse the input strings and find the ones that match. */
+  for(tmp=strings; tmp!=NULL; tmp=tmp->next)
+    if( gal_txt_contains_string(tmp->v, match) )
+      gal_list_str_add(&outlist, tmp->v, 0);
+
+  /* Write the list into one string. */
+  out=gal_list_str_cat(outlist);
+
+  /* Clean up and return. */
+  gal_list_str_free(strings, 1);
+  gal_list_str_free(outlist, 0); /* We didn't allocate these. */
+  return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**********************************************************************/
+/***************             FITS utilities             ***************/
+/**********************************************************************/
+
 /* Select the input files that have the requested value(s) in the requested
    keywords. */
 static int
-makeplugin_goodinput(char **argv, size_t numargs, char *name)
+makeplugin_fits_check_input(char **argv, size_t numargs, char *name)
 {
   char *c;
   size_t i;
@@ -85,26 +148,32 @@ makeplugin_goodinput(char **argv, size_t numargs, char *name)
 
 
 
+/* Select files, were a certain keyword has a certain value. It takes four
+   arguments:
+       0. Keyword name.
+       1. Keyword value(s).
+       2. HDU (fixed in all files).
+       3. List of files. */
 static char *
 makeplugin_fits_with_keyvalue(const char *caller, unsigned int argc,
                               char **argv)
 {
   gal_list_str_t *outlist=NULL;
-  char *name=gal_txt_trim_space(argv[2]);
+  char *name=gal_txt_trim_space(argv[0]);
   gal_list_str_t *files=NULL, *values=NULL;
-  char *out, *hdu=gal_txt_trim_space(argv[1]);
+  char *out, *hdu=gal_txt_trim_space(argv[2]);
 
   /* If any of the inputs are empty, then don't bother continuing. */
-  if( makeplugin_goodinput(argv, 4, fits_with_keyvalue_name)==0 )
+  if( makeplugin_fits_check_input(argv, 4, fits_with_keyvalue_name)==0 )
     return NULL;
 
   /* Extract the components in the arguments with possibly multiple
      values and find the output files.*/
-  files=gal_list_str_extract(argv[0]);
-  values=gal_list_str_extract(argv[3]);
+  files=gal_list_str_extract(argv[3]);
+  values=gal_list_str_extract(argv[1]);
   outlist=gal_fits_with_keyvalue(files, hdu, name, values);
 
-  /* Write the output value. */
+  /* Write the output string */
   out=gal_list_str_cat(outlist);
 
   /* Clean up and return. */
@@ -117,23 +186,27 @@ makeplugin_fits_with_keyvalue(const char *caller, unsigned int argc,
 
 
 
-
+/* Return the unique values given to a certain keyword in many FITS
+   files. It takes three arguments.
+       0. Keyword name.
+       1. HDU (fixed in all files).
+       2. List of files. */
 static char *
 makeplugin_fits_unique_keyvalues(const char *caller, unsigned int argc,
                                  char **argv)
 {
   gal_list_str_t *files=NULL;
   gal_list_str_t *outlist=NULL;
-  char *name=gal_txt_trim_space(argv[2]);
+  char *name=gal_txt_trim_space(argv[0]);
   char *out, *hdu=gal_txt_trim_space(argv[1]);
 
   /* If any of the inputs are empty, then don't bother continuing. */
-  if( makeplugin_goodinput(argv, 3, fits_unique_keyvalues_name)==0 )
+  if( makeplugin_fits_check_input(argv, 3, fits_unique_keyvalues_name)==0 )
     return NULL;
 
   /* Extract the components in the arguments with possibly multiple
      values and find the output files.*/
-  files=gal_list_str_extract(argv[0]);
+  files=gal_list_str_extract(argv[2]);
   outlist=gal_fits_unique_keyvalues(files, hdu, name);
 
   /* Write the output value. */
@@ -153,20 +226,18 @@ makeplugin_fits_unique_keyvalues(const char *caller, unsigned int argc,
 int
 libgnuastro_make_gmk_setup()
 {
+  /* Return any of the input strings that contain the given string. */
+  gmk_add_function(text_contains_name,
+                   makeplugin_text_contains,
+                   2, 2, GMK_FUNC_DEFAULT);
+
   /* Select files, were a certain keyword has a certain value. It takes
-     four arguments:
-       0. List of files.
-       1. HDU (fixed in all files).
-       2. Keyword name.
-       3. Keyword value(s). */
+     four arguments. */
   gmk_add_function(fits_with_keyvalue_name, makeplugin_fits_with_keyvalue,
                    4, 4, GMK_FUNC_DEFAULT);
 
   /* Return the unique values given to a certain keyword in many FITS
-     files. It takes three arguments.
-       0. List of files.
-       1. HDU (fixed in all files).
-       2. Keyword name. */
+     files.*/
   gmk_add_function(fits_unique_keyvalues_name,
                    makeplugin_fits_unique_keyvalues,
                    3, 3, GMK_FUNC_DEFAULT);

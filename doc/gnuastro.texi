@@ -27974,7 +27974,21 @@ For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavor
 @end cartouche
 
 @table @code
-@item $(ast-fits-with-keyvalue FITS_FILES, HDU, KEYNAME, KEYVALUES)
+@item $(ast-text-contains PATTERN, TEXT)
+Returns all whitespace-separated words in @code{TEXT} that contain of the @code{PATTERN}, removing any words that @emph{do not} match.
+For example, the following minimal Makefile will only print the @code{bAaz} word of the list.
+
+@example
+list = fooo baar bAaz uggh
+all:
+     echo $(ast-text-contains Aa, $(list))
+@end example
+
+This can be thought of as Make's own @code{filter} function, but if it would accept two patterns in a format like this @code{$(filter %Aa%,$(list))} (for the example above).
+In fact, the first sentence describing this function is taken from the Make manual's first sentence that describes the @code{filter} function!
+However, unfortuantely Make's @code{filter} function only accepts a single @code{%}, not two!
+
+@item $(ast-fits-with-keyvalue KEYNAME, KEYVALUES, HDU, FITS_FILES)
 Will select only the FITS files (from a list of many in @code{FITS_FILES}, non-FITS files are ignored), where the @code{KEYNAME} keyword has the value(s) given in @code{KEYVALUES}.
 Only the HDU given in the @code{HDU} argument will be checked.
 According to the FITS standard, the keyword name is not case sensitive, but the keyword value is.
@@ -27986,20 +28000,20 @@ Notice how there is no comma between @code{BAR} and @code{BAZ}: you can specify 
 load /usr/local/lib/libgnuastro_make.so
 
 files := $(wildcard /datasets/images/*.fits)
-selected := $(ast-fits-with-keyvalue $(files), 1, FOO, BAR BAZ)
+selected := $(ast-fits-with-keyvalue FOO, BAR BAZ, 1, $(files))
 
 all:
 	echo "Full:     $(words $(files)) files";
 	echo "Selected: $(words $(selected)) files"
 @end verbatim
 
-@item $(ast-fits-unique-keyvalues FITS_FILES, HDU, KEYNAME)
+@item $(ast-fits-unique-keyvalues KEYNAME, HDU, FITS_FILES)
 Will return the unique values given to the given FITS keyword (@code{KEYNAME}) in the given HDU of all the input FITS files (non-FITS files are ignored).
 For example, after the commands below, the @code{keyvalues} variable will contain the unique values given to the @code{FOO} keyword in HDU number 1 of all the FITS files in @file{/datasets/images/*.fits}.
 
 @example
 files := $(wildcard /datasets/images/*.fits)
-keyvalues := $(ast-fits-unique-keyvalues $(files), 1, FOO)
+keyvalues := $(ast-fits-unique-keyvalues FOO, 1, $(files))
 @end example
 
 This is useful when you do not know the full range of values a-priori.
@@ -28013,7 +28027,7 @@ Knowing the calibration keyword values, you can extract the science keyword valu
 calib = BIAS FLAT
 files := $(wildcard /datasets/images/*.fits)
 science := $(filter-out $(calib), \
-             $(ast-fits-unique-keyvalues $(files), 1, OBJECT))
+             $(ast-fits-unique-keyvalues OBJECT, 1, $(files)))
 @end example
 
 The @code{science} variable will now contain the unique science targets that were observed in your selected FITS images.
@@ -32269,6 +32283,12 @@ Trim the white space characters before and after the given string.
 The operation is done within the allocated space of the string, so if you need the string untouched, please pass an allocated copy of the string to this function.
 The returned pointer is within the input string.
 If the input pointer is @code{NULL}, or the string only has white-space characters, the returned pointer will be @code{NULL}.
+@end deftypefun
+
+@deftypefun int gal_txt_contains_string (char @code{*full}, char @code{*match})
+Return 1 if the string that @code{match} points to, can be exactly found within the string that @code{full} points to (character by character).
+The to-match string can be in any part of the full string.
+If any of the two strings have zero length or are a @code{NULL} pointer, this function will return 0.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_txt_table_info (char @code{*filename}, gal_list_str_t @code{*lines}, size_t @code{*numcols}, size_t @code{*numrows})
