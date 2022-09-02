@@ -78,9 +78,6 @@ makeplugin_text_contains(const char *caller, unsigned int argc,
   char *match=argv[0]; /* No trimming the white space before/after, as in */
   gal_list_str_t *strings=gal_list_str_extract(argv[1]); /* Make itself.  */
 
-  printf("%s: HERE\n", __func__);
-  gal_list_str_print(strings);
-
   /* Parse the input strings and find the ones that match. */
   for(tmp=strings; tmp!=NULL; tmp=tmp->next)
     if( gal_txt_contains_string(tmp->v, match) )
