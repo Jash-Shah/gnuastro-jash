@@ -111,7 +111,6 @@ See the end of the file for license conditions.
       keyword within the FITS files.
 
   Library functions:
-
   - gal_box_border_rotate_around_center: width of box after rotation.
   - gal_color_id_to_name: return the name of a color from its ID.
   - gal_color_in_rgb: return the fraction of red-green-blue in a color.

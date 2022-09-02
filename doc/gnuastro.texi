@@ -7802,6 +7802,31 @@ Just be sure to have it when you run @command{astquery}, otherwise you'll get an
 GPL Ghostscript's executable (@command{gs}) is called by ConvertType to compile a PDF file from a source PostScript file, see @ref{ConvertType}.
 Therefore its headers (and libraries) are not needed.
 
+@item Python3 with Numpy
+@cindex Numpy
+@cindex Python3
+Python is a high-level programming language and Numpy is the most commonly used library within Python to add multi-dimensional arrays and matrices.
+If version 3 of Python is available with a corresponding Numpy Library, Gnuastro's library will be built with some Python-related helper functions.
+Python wrappers for Gnuastro's library (for example `pyGnuastro') can use these functions when being built from source.
+For more on Gnuastro's Python helper functions, see @ref{Python interface}.
+
+@cindex PyPI
+This Python interface is only relevant if you want to build the Python wrappers (like `pyGnuastro') from source.
+If you install the Gnuastro Python wrapper from a pre-built repository like PyPI, this feature of your Gnuastro library won't be used.
+Pre-built libraries contain the full Gnuastro library that they need within them (you don't even need to have Gnuastro at all!).
+
+@cartouche
+@noindent
+@strong{Can't find the Python3 and Numpy of a virtual environment:} make sure to set the @code{$PYTHON} variable to point to the @code{python3} command of the virtual environment before running @code{./configure}.
+Note that you don't need to activate the virtual env, just point @code{PYTHON} to its Python3 executable, like the example below:
+
+@example
+$ python3 -m venv test-env    # Setting up the virtual env.
+$ export PYTHON="$(pwd)/test-env/bin/python3"
+$ ./configure                 # Gnuastro's configure script.
+@end example
+@end cartouche
+
 @item SAO DS9
 SAO DS9 (@command{ds9}) is a visualization tool for FITS images.
 Gnuastro's @command{astscript-fits-view} program calls DS9 to visualize FITS images.
@@ -8692,6 +8717,15 @@ libjpeg is an optional dependency, with this option, Gnuastro will ignore any po
 @cindex TIFF format
 Build Gnuastro without libtiff (for reading/writing to TIFF files), see @ref{Optional dependencies}.
 libtiff is an optional dependency, with this option, Gnuastro will ignore any possibly existing libtiff that may already be on the system.
+
+@item --without-python
+@cindex PyPI
+@cindex Python
+Don't build the Python interface within Gnuastro's dynamic library.
+This interface can be used for easy communication with Python wrappers (for example the pyGnuastro package).
+However upon installing the pyGnuastro package from PyPI, the correct configuration of the Gnuastro Library(with the python interface) is already packaged with it.
+The Python interface is only necessary if you want to build pyGnuastro from source.
+For more on the interface functions, see @ref{Python interface}.
 
 @end vtable
 
@@ -35907,9 +35941,14 @@ To see why Gnuastro was written in C, please see @ref{Why C}.
 The Gnuastro Python Package is built using CPython.
 This entails using Python wrappers around currently existing Gnuastro library functions to build @url{https://docs.python.org/3/extending/extending.html#, Python Extension Modules}.
 It also makes use of the @url{https://numpy.org/doc/stable/reference/c-api/index.html, NumPy C-API} for dealing with data arrays.
-Writing an interfacing between these and Gnuastro can be simplified using the functions below.
+Writing an interface between these and Gnuastro can be simplified using the functions below.
 Since many of these functions depend on the Gnuastro Library itself, it is more convenient to package them with the Library to facilitate the work of Python package.
 These functions will be expanding as Gnuastro's own Python module (pyGnuastro) grows.
+
+The Python interface of Gnuastro's library is built and installed by default if a Python 3.0.0 or greater with NumPy is found in @code{$PATH}.
+Users may disable this interface with the @option{--without-python} option to @code{./configure} when they installed Gnuastro, see @ref{Gnuastro configure options}.
+If you have problems in a Pythin virtual env, see @ref{Optional dependencies}.
+
 
 @deftypefun int gal_python_type_to_numpy (uint8_t @code{type})
 Returns the NumPy datatype corresponding to a certain Gnuastro @code{type}, see @ref{Library data types}.

@@ -761,6 +761,10 @@ AS_IF([test "x$has_topcat" = "xno"], [anywarnings=yes])
 #                   to get the include path for Python.h header.
 #     np_check_cmd: Uses numpy's get_include method to get the
 #                   include path for NumPy's core C-API.
+#
+# NOTE: If using a venv then set the $PYTHON variable to point to the
+#       python3 command of the venv before running ./configure to perform
+#       all the following checks in the venv.
 py_check_cmd='from sysconfig import get_paths; \
               print(get_paths().get("include"))'
 np_check_cmd='from numpy import get_include; \
@@ -771,13 +775,13 @@ AC_ARG_WITH([python],
             [], [with_python=yes])
 AS_IF([test "x$with_python" != xno],
       [
-        AC_CHECK_PROG(has_python3, python3, [yes], [no])
+        # Checks if user has a Python version>=3.0
         AM_PATH_PYTHON(3.0,,[:])
-        AS_IF([test $has_python3 = yes],
+        AS_IF([test "$PYTHON" != :],
         [
           AC_DEFINE(HAVE_PYTHON, [1],
                     [Define to 1 if you have Python3.])
-          AC_MSG_CHECKING(if numpy is available in the python3 installation)
+          AC_MSG_CHECKING(if numpy is available in the $PYTHON installation)
           AS_IF([$PYTHON -c "$py_check_cmd" &> /dev/null],
                 [python_includedir="$($PYTHON -c "$py_check_cmd")"
                  AS_IF([$PYTHON -c "$np_check_cmd" &> /dev/null],
@@ -1349,9 +1353,12 @@ AS_IF([test x$enable_guide_message = xyes],
         AS_IF([test "x$has_numpy" = "xno"],
               [dependency_notice=yes
                AS_ECHO(["  - Numpy (https://numpy.org) headers couldn't be found within a "])
-               AS_ECHO(["    Python3 environment. If available, Gnuastro's library will be "])
+               AS_ECHO(["    Python3 installation. If available, Gnuastro's library will be "])
                AS_ECHO(["    installed with some functions that can help Python wrappers "])
                AS_ECHO(["    communicate with Gnuastro's library (for example pyGnuastro)."])
+               AS_ECHO(["    If you are within a virtual environment, and Python3 is"])
+               AS_ECHO(["    available there, please set the 'PYTHON' environment variable"])
+               AS_ECHO(["    to the Python3 executable's absolute location."])
                AS_ECHO([]) ])
 
         AS_IF([test "x$has_ds9" = "xno"],
