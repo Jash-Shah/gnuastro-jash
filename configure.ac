@@ -13,6 +13,7 @@
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
 #     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+#     Jash Shah <jash28582@gmail.com>
 # Copyright (C) 2015-2022 Free Software Foundation, Inc.
 #
 # Gnuastro is free software: you can redistribute it and/or modify it
@@ -781,19 +782,19 @@ AS_IF([test "x$with_python" != xno],
         [
           AC_DEFINE(HAVE_PYTHON, [1],
                     [Define to 1 if you have Python3.])
-          AC_MSG_CHECKING(if numpy is available in the $PYTHON installation)
+          AC_MSG_CHECKING(if Numpy is available in the $PYTHON installation)
           AS_IF([$PYTHON -c "$py_check_cmd" &> /dev/null],
                 [python_includedir="$($PYTHON -c "$py_check_cmd")"
                  AS_IF([$PYTHON -c "$np_check_cmd" &> /dev/null],
-                       [numpy_includedir="$($PYTHON -c "$np_check_cmd")"])
-                ])
+                       [numpy_includedir="$($PYTHON -c "$np_check_cmd")"])])
+          AS_IF([test "x$numpy_includedir" = x],
+                [AC_MSG_RESULT([no])], [AC_MSG_RESULT([yes])])
         ])
         AC_SUBST(NUMPY_INCLUDE_DIR, [$numpy_includedir])
         AC_SUBST(PYTHON_INCLUDE_DIR, [$python_includedir])
       ])
 AS_IF([test "x$numpy_includedir" = x],
-      [has_numpy=no; AC_MSG_RESULT([no])],
-      [has_numpy=yes; AC_MSG_RESULT([yes])])
+      [has_numpy=no; anywarnings=yes;], [has_numpy=yes;])
 AM_CONDITIONAL([COND_NUMPY], [test "x$numpy_includedir" != x])
 
 
