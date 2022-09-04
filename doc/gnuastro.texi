@@ -28027,7 +28027,7 @@ all:; @@echo "Please use Gnuastro $(gnuastro-version)"
 endif
 
 result.fits: input.fits
-        astnoisechisel $< --output=$@
+        astnoisechisel $< --output=$@@
 
 paper.pdf: result.fits
         pdflatex --halt-on-error paper.tex
