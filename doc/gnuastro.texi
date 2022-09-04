@@ -7992,7 +7992,7 @@ ImageMagick is a wonderful and robust program for image manipulation on the comm
 Since ImageMagick version 7, it is necessary to edit the policy file (@file{/etc/ImageMagick-7/policy.xml}) to have the following line (it maybe present, but commented, in this case un-comment it):
 
 @example
-<policy domain="coder" rights="read|write" pattern="@{PS,PDF,XPS@}" />
+<policy domain="coder" rights="read|write" pattern="@{PS,PDF,XPS@}"/>
 @end example
 
 If the following line is present, it is also necessary to comment/remove it.
@@ -27990,7 +27990,7 @@ $ which astfits | sed -e's|bin/astfits|lib/libgnuastro_make.so|'
 @node Makefile functions of Gnuastro,  , Loading the Gnuastro Make functions, Makefile extensions
 @section Makefile functions of Gnuastro
 
-All Gnuastro Make functions start with the @command{ast-} prefix (similar to the programs on the command-line, but with a dash.
+All Gnuastro Make functions start with the @command{ast-} prefix (similar to the programs on the command-line, but with a dash).
 After you have loaded Gnuastro's shared library for Makefiles within your Makefile, you can call these functions just like any Make function.
 For instructions on how to load Gnuastro's Make functions, see @ref{Loading the Gnuastro Make functions}.
 
@@ -28008,12 +28008,14 @@ For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavor
 @end cartouche
 
 @table @code
-@item $(ast-text-contains PATTERN, TEXT)
-Returns all whitespace-separated words in @code{TEXT} that contain of the @code{PATTERN}, removing any words that @emph{do not} match.
-For example, the following minimal Makefile will only print the @code{bAaz} word of the list.
+@item $(ast-text-contains STRING, TEXT)
+Returns all whitespace-separated words in @code{TEXT} that contain the @code{STRING}, removing any words that @emph{do not} match.
+For example, the following minimal Makefile will only print the @code{bAaz Aah} word of the list.
 
 @example
-list = fooo baar bAaz uggh
+load /usr/local/lib/libgnuastro_make.so
+
+list = fooo baar bAaz uggh Aah
 all:
      echo $(ast-text-contains Aa, $(list))
 @end example
@@ -28021,6 +28023,19 @@ all:
 This can be thought of as Make's own @code{filter} function, but if it would accept two patterns in a format like this @code{$(filter %Aa%,$(list))} (for the example above).
 In fact, the first sentence describing this function is taken from the Make manual's first sentence that describes the @code{filter} function!
 However, unfortuantely Make's @code{filter} function only accepts a single @code{%}, not two!
+
+@item $(ast-text-not-contains STRING, TEXT)
+Returns all whitespace-separated words in @code{TEXT} that @emph{do not} contain the @code{STRING}, removing any words that @emph{do not} match.
+This is the inverse of the @code{ast-text-contains} function.
+For example, the following minimal Makefile will print @code{fooo baar uggh} word of the list.
+
+@example
+load /usr/local/lib/libgnuastro_make.so
+
+list = fooo baar bAaz uggh Aah
+all:
+     echo $(ast-text-not-contains Aa, $(list))
+@end example
 
 @item $(ast-fits-with-keyvalue KEYNAME, KEYVALUES, HDU, FITS_FILES)
 Will select only the FITS files (from a list of many in @code{FITS_FILES}, non-FITS files are ignored), where the @code{KEYNAME} keyword has the value(s) given in @code{KEYVALUES}.
@@ -31877,9 +31892,9 @@ gal_fits_key_read_from_ptr(fptr, keysll, 0, 0);
 
 /* Use the values as you like... */
 
-/* Free all the allocated spaces. Note that `name' was not allocated
-   in this example, so we should explicitly set it to NULL before
-   calling `gal_data_array_free'. */
+/* Free all the allocated spaces. Note that `name' was not
+   allocated in this example, so we should explicitly set
+   it to NULL before calling `gal_data_array_free'. */
 for(i=0;i<N;++i) keysll[i].name=NULL;
 gal_data_array_free(keysll, N, 1);
 @end example
@@ -33347,8 +33362,8 @@ main(void)
   /* Clean up. Due to the in-place flag (in
    * 'GAL_ARITHMETIC_FLAGS_BASIC'), 'out1' and 'out2' point to the
    * same array in memory and due to the freeing flag, any input
-   * dataset(s) that were not returned have been freed internally by
-   * 'gal_arithmetic'. Therefore it is only necessary to free
+   * dataset(s) that were not returned have been freed internally
+   * by 'gal_arithmetic'. Therefore it is only necessary to free
    * 'out2': all other allocated spaces have been freed internally.
    * before reaching this point. */
   gal_data_free(out2);

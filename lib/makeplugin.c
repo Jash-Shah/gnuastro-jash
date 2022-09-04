@@ -49,6 +49,7 @@ int plugin_is_GPL_compatible=1;
 /* Names of the separate functions */
 #define MAKEPLUGIN_FUNC_PREFIX "ast"
 static char *text_contains_name=MAKEPLUGIN_FUNC_PREFIX"-text-contains";
+static char *text_not_contains_name=MAKEPLUGIN_FUNC_PREFIX"-text-not-contains";
 static char *fits_with_keyvalue_name=MAKEPLUGIN_FUNC_PREFIX"-fits-with-keyvalue";
 static char *fits_unique_keyvalues_name=MAKEPLUGIN_FUNC_PREFIX"-fits-unique-keyvalues";
 
@@ -65,13 +66,10 @@ static char *fits_unique_keyvalues_name=MAKEPLUGIN_FUNC_PREFIX"-fits-unique-keyv
 /***************             Text utilities             ***************/
 /**********************************************************************/
 
-/* Return any of the input strings that contain the given string. It takes
-   two arguments:
-      0. String to check.
-      1. List of text.*/
+/* Base function that is used for both the contains and not-contains
+   functions. */
 static char *
-makeplugin_text_contains(const char *caller, unsigned int argc,
-                         char **argv)
+makeplugin_text_contains_base(char **argv, int has1_not0)
 {
   char *out=NULL;
   gal_list_str_t *tmp, *outlist=NULL;
@@ -80,16 +78,48 @@ makeplugin_text_contains(const char *caller, unsigned int argc,
 
   /* Parse the input strings and find the ones that match. */
   for(tmp=strings; tmp!=NULL; tmp=tmp->next)
-    if( gal_txt_contains_string(tmp->v, match) )
+    if( gal_txt_contains_string(tmp->v, match)==has1_not0 )
       gal_list_str_add(&outlist, tmp->v, 0);
 
-  /* Write the list into one string. */
+  /* Write the list into one string, but first reverse it so it has the
+     same order as the input. */
+  gal_list_str_reverse(&outlist);
   out=gal_list_str_cat(outlist);
 
   /* Clean up and return. */
   gal_list_str_free(strings, 1);
   gal_list_str_free(outlist, 0); /* We didn't allocate these. */
   return out;
+}
+
+
+
+
+
+/* Return any of the input strings that contain the given string. It takes
+   two arguments:
+      0. String to check.
+      1. List of text.*/
+static char *
+makeplugin_text_contains(const char *caller, unsigned int argc,
+                         char **argv)
+{
+  return makeplugin_text_contains_base(argv, 1);
+}
+
+
+
+
+
+/* Return any of the input strings that contain the given string. It takes
+   two arguments:
+      0. String to check.
+      1. List of text.*/
+static char *
+makeplugin_text_not_contains(const char *caller, unsigned int argc,
+                             char **argv)
+{
+  return makeplugin_text_contains_base(argv, 0);
 }
 
 
@@ -223,9 +253,12 @@ makeplugin_fits_unique_keyvalues(const char *caller, unsigned int argc,
 int
 libgnuastro_make_gmk_setup()
 {
-  /* Return any of the input strings that contain the given string. */
-  gmk_add_function(text_contains_name,
-                   makeplugin_text_contains,
+  /* Return the input strings that contain the given string. */
+  gmk_add_function(text_contains_name, makeplugin_text_contains,
+                   2, 2, GMK_FUNC_DEFAULT);
+
+  /* Return the input strings that DON'T contain the given string. */
+  gmk_add_function(text_not_contains_name, makeplugin_text_not_contains,
                    2, 2, GMK_FUNC_DEFAULT);
 
   /* Select files, were a certain keyword has a certain value. It takes

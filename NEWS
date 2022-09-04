@@ -91,22 +91,25 @@ See the end of the file for license conditions.
     inner parts of the star, they degrade the stack's outer parts. With
     this option, the fainter stars won't harm the outer parts.
 
-  GNU Make extensions:
-  - It is now possible to use custom Gnuastro functions in GNU Make, using
+  GNU Make extensions (in a Makefile)
+    It is now possible to use custom Gnuastro functions in GNU Make, using
     its extension facilities with Dynamic libraries. GNU Make is a very
     powerful workflow manager that is also used for data analysis (not just
     for compilation). With the Gnaustro Make functions, (astronomical) data
     analysis becomes even more easier and faster. In the following, you can
-    see the first set of such functions (they all begin with 'astgmk' for
-    "Astronomical GNU Make"):
-    - ast-text-contains: Will only return those space-separated words
-      within a larger list that contain a certain string. The to-contain
-      string can be placed anywhere within the words of the larger list.
-    - ast-fits-with-keyvalue: Takes a keyword name, a list of keyword
+    see the first set of such functions (they all begin with 'ast-'). For
+    more, see the newly added chapter in the Gnuastro manual.
+    - ast-text-contains: will return space-separated words within a larger
+      list that contain a certain string. The to-contain string can be
+      anywhere within the words of the larger list.
+    - ast-text-not-contains: will return space-separated words within a
+      larger list that DO NOT contain a certain string. The to-not-contain
+      string can be anywhere within the words of the larger list.
+    - ast-fits-with-keyvalue: takes a keyword name, a list of keyword
       values, a HDU and a list of FITS files. It will return only those
       FITS files that have the requested value(s) in the requested keyword
       of the requested HDU.
-    - ast-fits-unique-keyvalues: Takes a keyword name, a HDU and a list of
+    - ast-fits-unique-keyvalues: takes a keyword name, a HDU and a list of
       FITS files. It will return all the unique values given to that
       keyword within the FITS files.
 
