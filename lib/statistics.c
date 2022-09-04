@@ -227,7 +227,7 @@ gal_data_t *
 gal_statistics_std(gal_data_t *input)
 {
   size_t dsize=1, n=0;
-  double s=0.0f, s2=0.0f, *o;
+  double v, *o, s=0.0f, s2=0.0f;
   gal_data_t *out=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &dsize,
                                  NULL, 1, -1, 1, NULL, NULL, NULL);
 
@@ -246,8 +246,12 @@ gal_statistics_std(gal_data_t *input)
     /* More than one element. */
     default:
 
-      /* Find the 's' and 's2' by parsing the data. */
-      GAL_TILE_PARSE_OPERATE(input, out, 0, 1, {++n; s += *i; s2 += *i * *i;});
+      /* Parse the data to measure 's' and 's2'. Its important to put each
+         value into a 'double' type variable ('v') before multiplying (for
+         's2') because the multiplication of integer types close to their
+         limits will cause overflow and thus an unreasonable output). */
+      GAL_TILE_PARSE_OPERATE(input, out, 0, 1,
+                             {++n; v=*i; s+=v; s2+=v*v;});
 
       /* Write the standard deviation. */
       o[0] = gal_statistics_std_from_sums(s, s2, n);
@@ -269,7 +273,7 @@ gal_data_t *
 gal_statistics_mean_std(gal_data_t *input)
 {
   size_t dsize=2, n=0;
-  double s=0.0f, s2=0.0f, *o;
+  double v, *o, s=0.0f, s2=0.0f;
   gal_data_t *out=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &dsize,
                                  NULL, 1, -1, 1, NULL, NULL, NULL);
 
@@ -291,8 +295,12 @@ gal_statistics_mean_std(gal_data_t *input)
     /* More than one element. */
     default:
 
-      /* Parse the data. */
-      GAL_TILE_PARSE_OPERATE(input, out, 0, 1, {++n; s += *i; s2 += *i * *i;});
+      /* Parse the data. Its important to put each value into a 'double'
+         type variable ('v') before multiplying (for 's2') because the
+         multiplication of integer types close to their limits will cause
+         overflow and thus an unreasonable output). */
+      GAL_TILE_PARSE_OPERATE(input, out, 0, 1,
+                             {++n; v=*i; s+=v; s2+=v*v;});
 
       /* Write the mean */
       o[0]=s/n;
