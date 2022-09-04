@@ -28008,6 +28008,31 @@ For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavor
 @end cartouche
 
 @table @code
+@item $(ast-version-is STRING)
+@cindex Reproducibility
+Returns @code{1} if the version of the used Gnuastro is equal to @code{STRING}, and @code{0} otherwise.
+This is useful/critical for obtaining reproducible results on different systems.
+It can be used in combination with @url{https://www.gnu.org/software/make/manual/html_node/Conditionals.html, Conditionals in Make} to ensure the required version of Gnuastro is going to be used in your workflow.
+
+For example, in the minimal working Makefile below, we are using it to specify if the default (first) target (@code{all}) should have any prerequisites (and let the workflow start), or if it should simply print a message (that the required version of Gnuastro isn't installed) and abort (without any prerequisites).
+
+@example
+load /usr/local/lib/libgnuastro_make.so
+
+gnuastro-version = 0.19
+ifeq ($(ast-version-is $(gnuastro-version)),1)
+all: paper.pdf
+else
+all:; @@echo "Please use Gnuastro $(gnuastro-version)"
+endif
+
+result.fits: input.fits
+        astnoisechisel $< --output=$@
+
+paper.pdf: result.fits
+        pdflatex --halt-on-error paper.tex
+@end example
+
 @item $(ast-text-contains STRING, TEXT)
 Returns all whitespace-separated words in @code{TEXT} that contain the @code{STRING}, removing any words that @emph{do not} match.
 For example, the following minimal Makefile will only print the @code{bAaz Aah} word of the list.

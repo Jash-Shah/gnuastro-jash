@@ -48,6 +48,7 @@ int plugin_is_GPL_compatible=1;
 
 /* Names of the separate functions */
 #define MAKEPLUGIN_FUNC_PREFIX "ast"
+static char *version_is_name=MAKEPLUGIN_FUNC_PREFIX"-version-is";
 static char *text_contains_name=MAKEPLUGIN_FUNC_PREFIX"-text-contains";
 static char *text_not_contains_name=MAKEPLUGIN_FUNC_PREFIX"-text-not-contains";
 static char *fits_with_keyvalue_name=MAKEPLUGIN_FUNC_PREFIX"-fits-with-keyvalue";
@@ -63,7 +64,48 @@ static char *fits_unique_keyvalues_name=MAKEPLUGIN_FUNC_PREFIX"-fits-unique-keyv
 
 
 /**********************************************************************/
-/***************             Text utilities             ***************/
+/***************          Configuration function        ***************/
+/**********************************************************************/
+static char *
+makeplugin_version_is(const char *caller, unsigned int argc, char **argv)
+{
+  int check=0;
+  char *out=NULL;
+  char *version=gal_txt_trim_space(argv[0]);
+
+  /* If the version matches, set the value of 'check'. */
+  if( version && !strcmp(PACKAGE_VERSION, version) ) check=1;
+
+  /* Write the value into the 'out' pointer.*/
+  if( asprintf(&out, "%d", check)<0 )
+    error(EXIT_FAILURE, 0, "%s: couldn't allocate output string",
+          __func__);
+
+  /* Return the output string. */
+  return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**********************************************************************/
+/***************             Text functions             ***************/
 /**********************************************************************/
 
 /* Base function that is used for both the contains and not-contains
@@ -142,7 +184,7 @@ makeplugin_text_not_contains(const char *caller, unsigned int argc,
 
 
 /**********************************************************************/
-/***************             FITS utilities             ***************/
+/***************             FITS functions             ***************/
 /**********************************************************************/
 
 /* Select the input files that have the requested value(s) in the requested
@@ -253,6 +295,10 @@ makeplugin_fits_unique_keyvalues(const char *caller, unsigned int argc,
 int
 libgnuastro_make_gmk_setup()
 {
+  /* Return 1 if Gnuastro has the requested version. */
+  gmk_add_function(version_is_name, makeplugin_version_is,
+                   1, 1, GMK_FUNC_DEFAULT);
+
   /* Return the input strings that contain the given string. */
   gmk_add_function(text_contains_name, makeplugin_text_contains,
                    2, 2, GMK_FUNC_DEFAULT);

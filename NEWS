@@ -99,6 +99,10 @@ See the end of the file for license conditions.
     analysis becomes even more easier and faster. In the following, you can
     see the first set of such functions (they all begin with 'ast-'). For
     more, see the newly added chapter in the Gnuastro manual.
+    - ast-version-is: will return '1' if the running Gnuastro has the given
+      version (argument of this function). This can be used to ensure
+      reproducibility in combination with Make's conditional features, see
+      the minimal working example in the manual.
     - ast-text-contains: will return space-separated words within a larger
       list that contain a certain string. The to-contain string can be
       anywhere within the words of the larger list.
