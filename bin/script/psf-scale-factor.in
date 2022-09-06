@@ -614,8 +614,18 @@ astarithmetic $cropped -h1 set-i \
               $psfcropped -h1 set-p \
               $radcropped -h1 set-r \
               r $normradiusmin lt r $normradiusmax ge or set-m \
-              i p / m nan where -o$multipimg $quiet
-aststatistics $multipimg --sclipparams=$sigmaclip  --sigclip-median
+              i p / m nan where --output $multipimg $quiet
+multifactor=$(aststatistics $multipimg --sigclip-median \
+                            --sclipparams=$sigmaclip --quiet)
+
+
+
+
+
+# Print the multiplication factor in standard output or in a given file
+if [ x"$output" = x ]; then echo $multifactor
+else                        echo $multifactor > $output
+fi
 
 
 

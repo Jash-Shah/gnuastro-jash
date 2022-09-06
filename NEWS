@@ -180,6 +180,8 @@ See the end of the file for license conditions.
               equal sign in long format. Found by Faezeh Bijarchian.
   bug #63013: Sigma clip segmentation fault when input has an integer type
               with values close to saturation-level.
+  bug #63022: psf-scale-factor not saving the result in the output file,
+              found and fixed by Raul Infante-Sainz.
 
 
 
