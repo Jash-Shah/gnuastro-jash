@@ -117,7 +117,9 @@ See the end of the file for license conditions.
       FITS files. It will return all the unique values given to that
       keyword within the FITS files.
 
-  Library functions:
+  Library:
+  - GAL_CONFIG_HAVE_PYTHON: non-zero if Python3+Numpy features included.
+  - GAL_CONFIG_HAVE_GNUMAKE_H: non-zero if GNU Make extensions can be made.
   - gal_box_border_rotate_around_center: width of box after rotation.
   - gal_color_id_to_name: return the name of a color from its ID.
   - gal_color_in_rgb: return the fraction of red-green-blue in a color.

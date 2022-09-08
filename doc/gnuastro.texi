@@ -28882,13 +28882,28 @@ Their values are commonly either 4 or 8 for 32-bit and 64-bit systems.
 You can also get this value with the expression `@code{sizeof size_t}' for example without having to include this header.
 @end deffn
 
-
 @deffn Macro GAL_CONFIG_HAVE_LIBGIT2
 Libgit2 is an optional dependency of Gnuastro (see @ref{Optional dependencies}).
 When it is installed and detected at configure time, this macro will have a value of @code{1} (one).
 Otherwise, it will have a value of @code{0} (zero).
 Gnuastro also comes with some wrappers to make it easier to use libgit2 (see @ref{Git wrappers}).
 @end deffn
+
+@deffn Macro GAL_CONFIG_HAVE_PYTHON
+Gnuastro can optionally provide a set of basic functions to facilitate wrapper libraries in Python (see @ref{Python interface}).
+If a version of Python 3.X was found on the host system that has the necessary Numpy headers, this macro will be given a value of @code{1}.
+Otherwise, it will be given a value of @code{0} and the the Python interface functions won't be available in the host's Gnuastro library.
+@end deffn
+
+@deffn Macro GAL_CONFIG_HAVE_GNUMAKE_H
+Gnuastro provides a set of GNU Make extension functions (see @ref{Makefile extensions}).
+In order to use those, the host should have @file{gnumake.h} in its include paths.
+This check is done at Gnuastro's configuration time.
+If it was found, this macro is given a value of @code{1}, otherwise, it will have a value of @code{0}.
+@end deffn
+
+
+
 
 
 @node Multithreaded programming, Library data types, Configuration information, Gnuastro library
@@ -35988,6 +36003,9 @@ These functions will be expanding as Gnuastro's own Python module (pyGnuastro) g
 The Python interface of Gnuastro's library is built and installed by default if a Python 3.0.0 or greater with NumPy is found in @code{$PATH}.
 Users may disable this interface with the @option{--without-python} option to @code{./configure} when they installed Gnuastro, see @ref{Gnuastro configure options}.
 If you have problems in a Pythin virtual env, see @ref{Optional dependencies}.
+
+Because Python is an optional dependency of Gnuastro, the following functions may not be available on some systems.
+To check if the installed Gnuastro library was compiled with the following functions, you can use the @code{GAL_CONFIG_HAVE_PYTHON} macro which is defined in @file{gnuastro/config.h}, see @ref{Configuration information}.
 
 
 @deftypefun int gal_python_type_to_numpy (uint8_t @code{type})

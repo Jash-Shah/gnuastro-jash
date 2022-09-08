@@ -487,10 +487,10 @@ AS_IF([test "x$LIBGIT2" = x],
        AS_IF([ test "x$enable_shared" = "xno" ],
              [LDADD="$LIBGIT2   $LDADD"],
              [LDADD="$LTLIBGIT2 $LDADD"]) ])
+AC_SUBST(HAVE_LIBGIT2_FOR_CONF, [$has_libgit2])
 AC_DEFINE_UNQUOTED([GAL_CONFIG_HAVE_LIBGIT2], [$has_libgit2],
                    [libgit2 is installed on the system])
 AS_IF([test "x$has_libgit2" = "x1"], [], [anywarnings=yes])
-
 
 
 
@@ -794,7 +794,8 @@ AS_IF([test "x$with_python" != xno],
         AC_SUBST(PYTHON_INCLUDE_DIR, [$python_includedir])
       ])
 AS_IF([test "x$numpy_includedir" = x],
-      [has_numpy=no; anywarnings=yes;], [has_numpy=yes;])
+      [has_numpy=0; anywarnings=yes;], [has_numpy=1;])
+AC_SUBST(HAVE_PYTHON, [$has_numpy])
 AM_CONDITIONAL([COND_NUMPY], [test "x$numpy_includedir" != x])
 
 
@@ -1351,7 +1352,7 @@ AS_IF([test x$enable_guide_message = xyes],
                AS_ECHO(["    to improve your Makefiles for data analysis workflows."])
                AS_ECHO([]) ])
 
-        AS_IF([test "x$has_numpy" = "xno"],
+        AS_IF([test "x$has_numpy" = "x0"],
               [dependency_notice=yes
                AS_ECHO(["  - Numpy (https://numpy.org) headers couldn't be found within a "])
                AS_ECHO(["    Python3 installation. If available, Gnuastro's library will be "])
