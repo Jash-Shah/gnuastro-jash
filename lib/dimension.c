@@ -26,11 +26,14 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <errno.h>
 #include <error.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/pointer.h>
+#include <gnuastro/threads.h>
 #include <gnuastro/dimension.h>
+#include <gnuastro/statistics.h>
 
 
 
@@ -367,7 +370,12 @@ enum dimension_collapse_operation
  DIMENSION_COLLAPSE_MAX,
  DIMENSION_COLLAPSE_MIN,
  DIMENSION_COLLAPSE_MEAN,
+ DIMENSION_COLLAPSE_MEDIAN,
  DIMENSION_COLLAPSE_NUMBER,
+ DIMENSION_COLLAPSE_SIGCLIP_STD,
+ DIMENSION_COLLAPSE_SIGCLIP_MEAN,
+ DIMENSION_COLLAPSE_SIGCLIP_MEDIAN,
+ DIMENSION_COLLAPSE_SIGCLIP_NUMBER,
 };
 
 
@@ -840,8 +848,8 @@ gal_dimension_collapse_minmax(gal_data_t *in, size_t c_dim, int max1_min0)
     }
 
   /* Remove the respective dimension in the WCS structure also (if any
-     exists). Note that 'sum->ndim' has already been changed. So we'll use
-     'in->wcs'. */
+     exists). Note that 'minmax->ndim' has already been changed. So we'll
+     use 'in->wcs'. */
   gal_wcs_remove_dimension(minmax->wcs, in->ndim-c_dim);
 
   /* Clean up and return. */
@@ -850,6 +858,284 @@ gal_dimension_collapse_minmax(gal_data_t *in, size_t c_dim, int max1_min0)
   return minmax;
 }
 
+
+
+
+
+/* This structure can keep all information you want to pass onto the worker
+   function on each thread. */
+struct dimension_sortbased_p
+{
+  gal_data_t      *in;    /* Dataset to print values of.       */
+  gal_data_t     *out;    /* Dataset to print values of.       */
+  size_t        c_dim;    /* Dimension to collapse over.       */
+  int        operator;    /* Operator to use.                  */
+  float   sclipmultip;    /* Sigma clip multiple.              */
+  float    sclipparam;    /* Sigma clip parameter.             */
+  size_t   minmapsize;    /* Minimum size for memorymapping.   */
+  int       quietmmap;    /* If memorymapping should be quiet. */
+};
+
+
+
+
+
+static void *
+dimension_collapse_sortbased_worker(void *in_prm)
+{
+  /* Low-level definitions to be done first. */
+  struct gal_threads_params *tprm=(struct gal_threads_params *)in_prm;
+  struct dimension_sortbased_p *p=(struct dimension_sortbased_p *)tprm->params;
+
+  /* Input dataset (also used in other variable definitions). */
+  gal_data_t *in=p->in;
+
+  /* Subsequent definitions. */
+  gal_data_t *work, *stat;
+  size_t sind, a=in->dsize[0], b=in->dsize[1];
+  size_t i, j, index, c_dim=p->c_dim, wdsize=in->dsize[c_dim];
+
+  /* Allocate the dataset that will be sorted. */
+  work=gal_data_alloc(NULL, in->type, 1, &wdsize, NULL, 0,
+                      p->minmapsize, p->quietmmap, NULL, NULL, NULL);
+
+  /* Go over all the actions (pixels in this case) that were assigned to
+     this thread. */
+  for(i=0; tprm->indexs[i] != GAL_BLANK_SIZE_T; ++i)
+    {
+      /* For easy reading. */
+      index = tprm->indexs[i];
+
+      /* Reset the sizes (which may have been changed during the
+         statistical calculation), and flags (so the possible existance or
+         non-existance of blank values in one run doesn't affect the
+         next). */
+      work->flag=0;
+      work->size=work->dsize[0]=wdsize;
+
+      /* Extract the necessary components into an array. */
+      switch(in->ndim)
+        {
+        case 1:
+        case 3:
+          error(EXIT_FAILURE, 0, "%s: %zu dimensions not yet supported, "
+                "please get in touch with us at '%s' to implement it",
+                __func__, in->ndim, PACKAGE_BUGREPORT);
+          break;
+        case 2:
+          if(c_dim) /* The dim. to collapse is already contiguous. */
+            memcpy(work->array,
+                   gal_pointer_increment(in->array,   index*b, in->type),
+                   b*gal_type_sizeof(in->type));
+          else
+            {
+              for(j=0;j<a;++j)
+                memcpy(gal_pointer_increment(work->array, j,         in->type),
+                       gal_pointer_increment(in->array,   j*b+index, in->type),
+                       gal_type_sizeof(in->type));
+            }
+          break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+                "to find the cause. This function doesn't support %zu "
+                "dimensions", __func__, PACKAGE_BUGREPORT, in->ndim);
+        }
+
+      /* For a check.
+      {
+        float *f=work->array;
+        for(j=0;j<wdsize;++j)
+          printf("%zu: %f\n", j, f[j]);
+      }
+      */
+
+      /* Do the necessary satistical operation. */
+      switch(p->operator)
+        {
+        case DIMENSION_COLLAPSE_MEDIAN:
+          sind=0;
+          stat=gal_statistics_median(work, 1);
+          break;
+        case DIMENSION_COLLAPSE_SIGCLIP_STD:
+        case DIMENSION_COLLAPSE_SIGCLIP_MEAN:
+        case DIMENSION_COLLAPSE_SIGCLIP_MEDIAN:
+        case DIMENSION_COLLAPSE_SIGCLIP_NUMBER:
+          stat=gal_statistics_sigma_clip(work, p->sclipmultip,
+                                         p->sclipparam, 1, 1);
+          switch(p->operator)
+            {
+            case DIMENSION_COLLAPSE_SIGCLIP_STD:     sind=3; break;
+            case DIMENSION_COLLAPSE_SIGCLIP_MEAN:    sind=2; break;
+            case DIMENSION_COLLAPSE_SIGCLIP_MEDIAN:
+              stat=gal_data_copy_to_new_type_free(stat, in->type);
+              sind=1; break;
+            case DIMENSION_COLLAPSE_SIGCLIP_NUMBER:
+              stat=gal_data_copy_to_new_type_free(stat, GAL_TYPE_UINT32);
+              sind=0; break;
+            }
+          break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+                "to fix the problem. The operator code %d isn't "
+                "recognized", __func__, PACKAGE_BUGREPORT, p->operator);
+        }
+
+      /* Copy the result from the statistics output into the output array
+         on the desired index, then free the 'stat' array. */
+      memcpy(gal_pointer_increment(p->out->array, index, p->out->type),
+             gal_pointer_increment(stat->array,   sind,  stat->type),
+             gal_type_sizeof(stat->type));
+      gal_data_free(stat);
+    }
+
+  /* Clean up. */
+  gal_data_free(work);
+
+  /* Wait for all the other threads to finish, then return. */
+  if(tprm->b) pthread_barrier_wait(tprm->b);
+  return NULL;
+}
+
+
+
+
+
+static gal_data_t *
+dimension_collapse_sortbased(gal_data_t *in, size_t c_dim, int operator,
+                             float sclipmultip, float sclipparam,
+                             size_t numthreads, size_t minmapsize,
+                             int quietmmap)
+{
+  size_t cnum=0;
+  gal_data_t *out;
+  double *warr=NULL;
+  int otype=GAL_TYPE_INVALID;
+  size_t outdsize[10], outndim;
+  struct dimension_sortbased_p p;
+
+  /* During the median calculation, blank elements will automatically be
+     removed. */
+  int hasblank=0;
+
+  /* Basic sanity checks. */
+  if( dimension_collapse_sanity_check(in, NULL, c_dim, hasblank,
+                                      &cnum, &warr)!=NULL )
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to fix "
+          "the problem. This functions should always return NULL here",
+          __func__, PACKAGE_BUGREPORT);
+
+  /* Set the size of the collapsed output. */
+  dimension_collapse_sizes(in, c_dim, &outndim, outdsize);
+
+  /* The output array (and its type). */
+  switch(operator)
+    {
+    case DIMENSION_COLLAPSE_MEDIAN:         otype=in->type;         break;
+    case DIMENSION_COLLAPSE_SIGCLIP_STD:    otype=GAL_TYPE_FLOAT32; break;
+    case DIMENSION_COLLAPSE_SIGCLIP_MEAN:   otype=GAL_TYPE_FLOAT32; break;
+    case DIMENSION_COLLAPSE_SIGCLIP_MEDIAN: otype=in->type;         break;
+    case DIMENSION_COLLAPSE_SIGCLIP_NUMBER: otype=GAL_TYPE_UINT32;  break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+            "to fix the problem. The operator code %d is not a "
+            "recognized operator ID", __func__, PACKAGE_BUGREPORT,
+            operator);
+    }
+  out=gal_data_alloc(NULL, otype, outndim, outdsize, in->wcs,
+                     1, in->minmapsize, in->quietmmap, NULL, NULL, NULL);
+
+  /* Spin-off the threads and do the processing on each thread. */
+  p.in=in;
+  p.out=out;
+  p.c_dim=c_dim;
+  p.operator=operator;
+  p.quietmmap=quietmmap;
+  p.minmapsize=minmapsize;
+  p.sclipparam=sclipparam;
+  p.sclipmultip=sclipmultip;
+  gal_threads_spin_off(dimension_collapse_sortbased_worker, &p,
+                       out->size, numthreads,
+                       minmapsize, quietmmap);
+
+  /* Remove the respective dimension in the WCS structure also (if any
+     exists). Note that 'out->ndim' has already been changed. So we'll use
+     'in->wcs'. */
+  gal_wcs_remove_dimension(out->wcs, in->ndim-c_dim);
+
+  /* Return the collapsed dataset. */
+  return out;
+}
+
+
+
+
+
+gal_data_t *
+gal_dimension_collapse_median(gal_data_t *in, size_t c_dim,
+                              size_t numthreads, size_t minmapsize,
+                              int quietmmap)
+{
+  int op=DIMENSION_COLLAPSE_MEDIAN;
+  return dimension_collapse_sortbased(in, c_dim, op, NAN, NAN,
+                                      numthreads, minmapsize,
+                                      quietmmap);
+}
+
+
+
+
+
+gal_data_t *
+gal_dimension_collapse_sclip_std(gal_data_t *in, size_t c_dim,
+                                 float multip, float param,
+                                 size_t numthreads, size_t minmapsize,
+                                 int quietmmap)
+{
+  int op=DIMENSION_COLLAPSE_SIGCLIP_STD;
+  return dimension_collapse_sortbased(in, c_dim, op, multip, param,
+                                      numthreads, minmapsize, quietmmap);
+}
+
+
+
+
+
+gal_data_t *
+gal_dimension_collapse_sclip_mean(gal_data_t *in, size_t c_dim,
+                                  float multip, float param,
+                                  size_t numthreads, size_t minmapsize,
+                                  int quietmmap)
+{
+  int op=DIMENSION_COLLAPSE_SIGCLIP_MEAN;
+  return dimension_collapse_sortbased(in, c_dim, op, multip, param,
+                                      numthreads, minmapsize, quietmmap);
+}
+
+
+
+
+
+gal_data_t *
+gal_dimension_collapse_sclip_median(gal_data_t *in, size_t c_dim,
+                                    float multip, float param,
+                                    size_t numthreads, size_t minmapsize,
+                                    int quietmmap)
+{
+  int op=DIMENSION_COLLAPSE_SIGCLIP_MEDIAN;
+  return dimension_collapse_sortbased(in, c_dim, op, multip, param,
+                                      numthreads, minmapsize, quietmmap);
+}
+
+gal_data_t *
+gal_dimension_collapse_sclip_number(gal_data_t *in, size_t c_dim,
+                                    float multip, float param,
+                                    size_t numthreads, size_t minmapsize,
+                                    int quietmmap)
+{
+  int op=DIMENSION_COLLAPSE_SIGCLIP_NUMBER;
+  return dimension_collapse_sortbased(in, c_dim, op, multip, param,
+                                      numthreads, minmapsize, quietmmap);
+}
 
 
 

@@ -16133,8 +16133,8 @@ Reading NaN as a floating point number in Gnuastro is not case-sensitive.
 @menu
 * Basic mathematical operators::  For example +, -, /, log, pow, and etc.
 * Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, and etc
-* Constants::
-* Unit conversion operators::   magnitudes to counts, or parsecs to AUs, and etc.
+* Constants::                   Physical and Mathematical constants.
+* Unit conversion operators::   Various unit conversions necessary.
 * Statistical operators::       Statistics of a single dataset (for example mean).
 * Stacking operators::          Coadding or combining multiple datasets into one.
 * Filtering operators::         Smoothing a dataset through mixing pixel with neighbors.
@@ -17029,6 +17029,49 @@ Similar to @option{collapse-sum}, but the returned dataset will have the same nu
 
 @item collapse-max
 Similar to @option{collapse-sum}, but the returned dataset will have the same numeric type as the input and will contain the maximum value for each pixel along the collapsed dimension.
+
+@item collapse-median
+Similar to @option{collapse-sum}, but the returned dataset will have the same numeric type as the input and will contain the median value for each pixel along the collapsed dimension.
+
+The median involves sorting, therefore @code{collapse-median} will do each calculation in different CPU threads to speed up the operation.
+By default, Arithmetic will detect and use all available threads, but you can override this with the @option{--numthreads} (or @option{-N}) option.
+
+@item collapse-sigclip-mean
+Collapse the input dataset (fourth popped operand) along the FITS dimension given as the first popped operand by calculating the sigma-clipped mean.
+The sigma-clipping parameters (namely, the multiple of sigma and termination criteria) are read as the third and second popped operands respectively.
+For more on sigma-clipping, see @ref{Sigma clipping}.
+
+For example, with the command below, the pixels of the input 2 dimensional @file{image.fits} will be collapsed to a single dimension output.
+The first popped operand is @code{2}, so it will collapse all the pixels that are vertically on top of each other.
+Such that the output will have the same number of pixels as the horizontal axis of the input.
+During the collapsing, all pixels that are more than @mymath{3\sigma} (third popped operand) are rejected, and the clipping will continue until the standard deviation changes less than @mymath{0.2} between clips.
+
+@example
+$ astarithmetic image.fits 3 0.2 2 collapse-sigclip-mean \
+                --output=collapsed-vertical.fits
+@end example
+
+@cartouche
+@noindent
+@strong{Printing output of collapse in plain-text:} the default datatype of @code{collapse-sigclip-mean} is 32-bit floating point.
+This is sufficient for any observed astronomical data.
+However, if you request a plain-text output, or decide to print/view the output as plain-text on the standard output, the full set of decimals may not be printed in some situations.
+This can lead to apparently descrete values in the output of this operator when viewed in plain-text!
+The FITS format is always superior (since it stores the value in binary, therefore not having the problem above).
+But if you are forced to save the output in plain-text, use the @code{float64} operator after this to change the type to 64-bit floating point (which will print more decimals).
+@end cartouche
+
+@item collapse-sigclip-std
+Collapse the input dataset along the given FITS dimension by calculating the sigma-clipped standard deviation.
+Except for returning the standard deviation after clipping, this function is similar to @code{collapse-sigclip-mean}, see the description of that operator for more.
+
+@item collapse-sigclip-median
+Collapse the input dataset along the given FITS dimension by calculating the sigma-clipped median.
+Except for returning the median after clipping, this function is similar to @code{collapse-sigclip-mean}, see the description of that operator for more.
+
+@item collapse-sigclip-number
+Collapse the input dataset along the given FITS dimension by calculating the number of elements that remain after sigma-clipped.
+Except for returning the number after clipping, this function is similar to @code{collapse-sigclip-mean}, see the description of that operator for more.
 
 @item add-dimension-slow
 Build a higher-dimensional dataset from all the input datasets stacked after one another (along the slowest dimension).
@@ -30332,18 +30375,13 @@ For more see @ref{Defining an ellipse and ellipsoid}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_sum (gal_data_t @code{*in}, size_t @code{c_dim}, gal_data_t @code{*weight})
-Collapse the input dataset (@code{in}) along the given dimension
-(@code{c_dim}, in C definition: starting from zero, from the slowest
-dimension), by summing all elements in that direction. If
-@code{weight!=NULL}, it must be a single-dimensional array, with the same
-size as the dimension to be collapsed. The respective weight will be
-multiplied to each element during the collapse.
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by summing all elements in that direction.
+If @code{weight!=NULL}, it must be a single-dimensional array, with the same size as the dimension to be collapsed.
+The respective weight will be multiplied to each element during the collapse.
 
-For generality, the returned dataset will have a @code{GAL_TYPE_FLOAT64}
-type. See @ref{Copying datasets} for converting the returned dataset to a
-desired type. Also, for more on the application of this function, see the
-Arithmetic program's @option{collapse-sum} operator (which uses this
-function) in @ref{Arithmetic operators}.
+For generality, the returned dataset will have a @code{GAL_TYPE_FLOAT64} type.
+See @ref{Copying datasets} for converting the returned dataset to a desired type.
+Also, for more on the application of this function, see the Arithmetic program's @option{collapse-sum} operator (which uses this function) in @ref{Arithmetic operators}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_mean (gal_data_t @code{*in}, size_t @code{c_dim}, gal_data_t @code{*weight})
@@ -30353,90 +30391,101 @@ over it.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_number (gal_data_t @code{*in}, size_t @code{c_dim})
-Collapse the input dataset (@code{in}) along the given dimension
-(@code{c_dim}, in C definition: starting from zero, from the slowest
-dimension), by counting how many non-blank elements there are along that
-dimension.
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by counting how many non-blank elements there are along that dimension.
 
-For generality, the returned dataset will have a @code{GAL_TYPE_INT32}
-type. See @ref{Copying datasets} for converting the returned dataset to a
-desired type. Also, for more on the application of this function, see the
-Arithmetic program's @option{collapse-number} operator (which uses this
-function) in @ref{Arithmetic operators}.
+For generality, the returned dataset will have a @code{GAL_TYPE_INT32} type.
+See @ref{Copying datasets} for converting the returned dataset to a desired type.
+Also, for more on the application of this function, see the Arithmetic program's @option{collapse-number} operator (which uses this function) in @ref{Arithmetic operators}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_minmax (gal_data_t @code{*in}, size_t @code{c_dim}, int @code{max1_min0})
-Collapse the input dataset (@code{in}) along the given dimension
-(@code{c_dim}, in C definition: starting from zero, from the slowest
-dimension), by using the largest/smallest non-blank value along that
-dimension. If @code{max1_min0} is non-zero, then the collapsed dataset will
-have the maximum value along the given dimension and if it is zero, the
-minimum.
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by using the largest/smallest non-blank value along that dimension.
+If @code{max1_min0} is non-zero, then the collapsed dataset will have the maximum value along the given dimension and if it is zero, the minimum.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_dimension_collapse_median (gal_data_t @code{*in}, size_t @code{c_dim}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the median non-blank value along that dimension.
+Since the median involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_dimension_collapse_sclip_std (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the standard deviation of pixels along that dimension after sigma-clipping.
+Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
+For more on sigma clipping, see @ref{Sigma clipping}.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_dimension_collapse_sclip_mean (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the mean of pixels along that dimension after sigma-clipping.
+Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
+For more on sigma clipping, see @ref{Sigma clipping}.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_dimension_collapse_sclip_median (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the median of pixels along that dimension after sigma-clipping.
+Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
+For more on sigma clipping, see @ref{Sigma clipping}.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_dimension_collapse_sclip_number (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
+Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the number of pixels along that dimension after sigma-clipping.
+Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
+For more on sigma clipping, see @ref{Sigma clipping}.
 @end deftypefun
 
 @deftypefun size_t gal_dimension_remove_extra (size_t @code{ndim}, size_t @code{*dsize}, struct wcsprm @code{*wcs})
-Remove extra dimensions (those that only have a length of 1) from the basic
-size information of a dataset. @code{ndim} is the number of dimensions and
-@code{dsize} is an array with @code{ndim} elements containing the size
-along each dimension in the C dimension order. When @code{wcs!=NULL}, the
-respective dimension will also be removed from the WCS.
+Remove extra dimensions (those that only have a length of 1) from the basic size information of a dataset.
+@code{ndim} is the number of dimensions and @code{dsize} is an array with @code{ndim} elements containing the size along each dimension in the C dimension order.
+When @code{wcs!=NULL}, the respective dimension will also be removed from the WCS.
 
-This function will return the new number of dimensions and the @code{dsize}
-elements will contain the length along each new dimension.
+This function will return the new number of dimensions and the @code{dsize} elements will contain the length along each new dimension.
 @end deftypefun
 
 @deffn {Function-like macro} GAL_DIMENSION_NEIGHBOR_OP (@code{index}, @code{ndim}, @code{dsize}, @code{connectivity}, @code{dinc}, @code{operation})
-Parse the neighbors of the element located at @code{index} and do the
-requested operation on them. This is defined as a macro to allow easy
-definition of any operation on the neighbors of a given element without
-having to use loops within your source code (the loops are implemented by
-this macro). For an example of using this function, please see @ref{Library
-demo - inspecting neighbors}. The input arguments to this function-like
-macro are described below:
+Parse the neighbors of the element located at @code{index} and do the requested operation on them.
+This is defined as a macro to allow easy definition of any operation on the neighbors of a given element without having to use loops within your source code (the loops are implemented by this macro).
+For an example of using this function, please see @ref{Library demo - inspecting neighbors}.
+The input arguments to this function-like macro are described below:
 
 @table @code
 @item index
-Distance of this element from the first element in the array on a
-contiguous patch of memory (starting from 0), see the discussion above.
+Distance of this element from the first element in the array on a contiguous patch of memory (starting from 0), see the discussion above.
 @item ndim
 The number of dimensions associated with the contiguous patch of memory.
 @item dsize
-The full array size along each dimension. This must be an array and is
-assumed to have the same number elements as @code{ndim}. See the discussion
-under the same element in @ref{Generic data container}.
+The full array size along each dimension.
+This must be an array and is assumed to have the same number elements as @code{ndim}.
+See the discussion under the same element in @ref{Generic data container}.
 @item connectivity
-Most distant neighbors to consider. Depending on the number of dimensions,
-different neighbors may be defined for each element. This function-like
-macro distinguish between these different neighbors with this argument. It
-has a value between @code{1} (one) and @code{ndim}. For example in a 2D
-dataset, 4-connected neighbors have a connectivity of @code{1} and
-8-connected neighbors have a connectivity of @code{2}. Note that this is
-inclusive, so in this example, a connectivity of @code{2} will also include
-connectivity @code{1} neighbors.
+Most distant neighbors to consider.
+Depending on the number of dimensions, different neighbors may be defined for each element.
+This function-like macro distinguish between these different neighbors with this argument.
+It has a value between @code{1} (one) and @code{ndim}.
+For example in a 2D dataset, 4-connected neighbors have a connectivity of @code{1} and 8-connected neighbors have a connectivity of @code{2}.
+Note that this is inclusive, so in this example, a connectivity of @code{2} will also include connectivity @code{1} neighbors.
 @item dinc
-An array keeping the length necessary to increment along each
-dimension. You can make this array with the following function. Just do not
-forget to free the array after you are done with it:
+An array keeping the length necessary to increment along each dimension.
+You can make this array with the following function.
+Just do not forget to free the array after you are done with it:
 
 @example
 size_t *dinc=gal_dimension_increment(ndim, dsize);
 @end example
 
-@code{dinc} depends on @code{ndim} and @code{dsize}, but it must be defined
-outside this function-like macro since it involves allocation to help in
-performance.
+@code{dinc} depends on @code{ndim} and @code{dsize}, but it must be defined outside this function-like macro since it involves allocation to help in performance.
 
 @item operation
-Any C operation that you would like to do on the neighbor. This macro will
-provide you a @code{nind} variable that can be used as the index of the
-neighbor that is currently being studied. It is defined as `@code{size_t
-ndim;}'. Note that @code{operation} will be repeated the number of times
-there is a neighbor for this element.
+Any C operation that you would like to do on the neighbor.
+This macro will provide you a @code{nind} variable that can be used as the index of the neighbor that is currently being studied.
+It is defined as `@code{size_t ndim;}'.
+Note that @code{operation} will be repeated the number of times there is a neighbor for this element.
 @end table
 
-This macro works fully within its own @code{@{@}} block and except for the
-@code{nind} variable that shows the neighbor's index, all the variables
-within this macro's block start with @code{gdn_}.
+This macro works fully within its own @code{@{@}} block and except for the @code{nind} variable that shows the neighbor's index, all the variables within this macro's block start with @code{gdn_}.
 @end deffn
 
 @node Linked lists, Array input output, Dimensions, Gnuastro library

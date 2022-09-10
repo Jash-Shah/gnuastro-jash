@@ -117,6 +117,35 @@ gal_dimension_collapse_number(gal_data_t *in, size_t c_dim);
 gal_data_t *
 gal_dimension_collapse_minmax(gal_data_t *in, size_t c_dim, int max1_min0);
 
+gal_data_t *
+gal_dimension_collapse_median(gal_data_t *in, size_t c_dim,
+                              size_t numthreads, size_t minmapsize,
+                              int quietmmap);
+
+gal_data_t *
+gal_dimension_collapse_sclip_std(gal_data_t *in, size_t c_dim,
+                                 float multip, float param,
+                                 size_t numthreads, size_t minmapsize,
+                                 int quietmmap);
+
+gal_data_t *
+gal_dimension_collapse_sclip_mean(gal_data_t *in, size_t c_dim,
+                                  float multip, float param,
+                                  size_t numthreads, size_t minmapsize,
+                                  int quietmmap);
+
+gal_data_t *
+gal_dimension_collapse_sclip_median(gal_data_t *in, size_t c_dim,
+                                    float multip, float param,
+                                    size_t numthreads, size_t minmapsize,
+                                    int quietmmap);
+
+gal_data_t *
+gal_dimension_collapse_sclip_number(gal_data_t *in, size_t c_dim,
+                                    float multip, float param,
+                                    size_t numthreads, size_t minmapsize,
+                                    int quietmmap);
+
 
 
 /************************************************************************/

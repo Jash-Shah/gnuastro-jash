@@ -2260,7 +2260,6 @@ gal_statistics_sigma_clip(gal_data_t *input, float multip, float param,
   gal_data_t *nbs=gal_statistics_no_blank_sorted(input, inplace);
   size_t maxnum = param>=1.0f ? param : GAL_STATISTICS_SIG_CLIP_MAX_CONVERGE;
 
-
   /* Some sanity checks. */
   if( multip<=0 )
     error(EXIT_FAILURE, 0, "%s: 'multip', must be greater than zero. The "
@@ -2326,6 +2325,7 @@ gal_statistics_sigma_clip(gal_data_t *input, float multip, float param,
 
     /* More than one element. */
     default:
+
       /* Print the comments if requested. */
       if(!quiet)
         printf("%-8s %-10s %-15s %-15s %-15s\n",

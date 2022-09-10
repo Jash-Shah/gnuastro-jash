@@ -31,6 +31,13 @@ See the end of the file for license conditions.
     - sb-to-counts: convert surface brightness (mag/arcsec^2) to counts.
     - mag-to-sb: convert magnitudes to surface brightness over a certain area.
     - sb-to-mag: convert surface brightness to magnitudes over a certain area.
+  - New operators that are specific to Arithmetic:
+    - collapse-median: collapse input dataset by calculating the median
+      along the given dimension.
+    - collapse-sigclip-std: Collapse with sigma-clipped standard deviation.
+    - collapse-sigclip-mean: Collapse with sigma-clipped mean.
+    - collapse-sigclip-median: Collapse with sigma-clipped median.
+    - collapse-sigclip-number: Collapse with number remaining after sigma-clip.
 
   ConvertType:
   - It is now possible to draw vector graphics marks from a catalog over
@@ -124,6 +131,11 @@ See the end of the file for license conditions.
   - gal_color_id_to_name: return the name of a color from its ID.
   - gal_color_in_rgb: return the fraction of red-green-blue in a color.
   - gal_color_name_to_id: return the ID of a color from its name.
+  - gal_dimension_collapse_median: collapse input along dim. using median.
+  - gal_dimension_collapse_sigclip_mean: collapse with sig-clipped mean.
+  - gal_dimension_collapse_sigclip_std: collapse with sig-clipped STD.
+  - gal_dimension_collapse_sigclip_median: collapse with sig-clipped median.
+  - gal_dimension_collapse_sigclip_number: collapse with num. after sig-clip.
   - gal_eps_shape_id_to_name: return the name of a shape from its ID.
   - gal_eps_shape_name_to_id: return the ID of a shape from its name.
   - gal_fits_unique_keyvalues: extract all unique values to a certain

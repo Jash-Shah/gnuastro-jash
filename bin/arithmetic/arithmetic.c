@@ -904,31 +904,64 @@ arithmetic_interpolate(struct arithmeticparams *p, int operator, char *token)
 
 
 static void
+arithmetic_collapse_single_value(gal_data_t *input, char *counter,
+                                 char *opstr, char *description,
+                                 int checkint)
+{
+  if( input->ndim!=1 || input->size!=1)
+    error(EXIT_FAILURE, 0, "%s popped operand of 'collapse-%s*' operators "
+          "(%s) must be a single number (single-element, "
+          "one-dimensional dataset). But it has %zu dimension(s) and %zu "
+          "element(s).", counter, opstr, description, input->ndim, input->size);
+  if(checkint)
+    if(input->type==GAL_TYPE_FLOAT32 || input->type==GAL_TYPE_FLOAT64)
+      error(EXIT_FAILURE, 0, "%s popped operand of 'collapse-%s*' operators "
+            "(%s) must have an integer type, but it has a floating point "
+            "type ('%s')", counter, opstr, description,
+            gal_type_name(input->type,1));
+}
+
+
+
+
+
+static void
 arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
 {
   long dim;
-  gal_data_t *collapsed=NULL;
+  float p1, p2;
+  int qmm=p->cp.quietmmap;
+  gal_data_t *dimension=NULL, *input=NULL;
+  size_t nt=p->cp.numthreads, mms=p->cp.minmapsize;
+  gal_data_t *collapsed=NULL, *param1=NULL, *param2=NULL;
+
 
   /* First popped operand is the dimension. */
-  gal_data_t *dimension = operands_pop(p, token);
-
-  /* The second popped operand is the desired input dataset. */
-  gal_data_t *input = operands_pop(p, token);
+  dimension = operands_pop(p, token);
 
 
-  /* Small sanity check. */
-  if( dimension->ndim!=1 || dimension->size!=1)
-    error(EXIT_FAILURE, 0, "first popped operand of 'collapse-*' operators "
-          "(dimension to collapse) must be a single number (single-element, "
-          "one-dimensional dataset). But it has %zu dimension(s) and %zu "
-          "element(s).", dimension->ndim, dimension->size);
-  if(dimension->type==GAL_TYPE_FLOAT32 || dimension->type==GAL_TYPE_FLOAT64)
-    error(EXIT_FAILURE, 0, "first popped operand of 'collapse-*' operators "
-          "(dimension to collapse) must have an integer type, but it has "
-          "a floating point type ('%s')", gal_type_name(dimension->type,1));
+  /* If we are on any of the sigma-clipping operators, we need to pop two
+     more operands. */
+  if(    operator==ARITHMETIC_OP_COLLAPSE_SIGCLIP_STD
+      || operator==ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEAN
+      || operator==ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEDIAN
+      || operator==ARITHMETIC_OP_COLLAPSE_SIGCLIP_NUMBER )
+    {
+      param2=operands_pop(p, token); /* Termination criteria. */
+      param1=operands_pop(p, token); /* Multiple of sigma. */
+    }
+
+
+  /* Final popped operand is the desired input dataset. */
+  input = operands_pop(p, token);
+
+
+  /* Sanity checks. */
+  arithmetic_collapse_single_value(dimension, "first", "",
+                                   "dimension to collapse", 1);
   dimension=gal_data_copy_to_new_type_free(dimension, GAL_TYPE_LONG);
   dim=((long *)(dimension->array))[0];
-  if(dim<0 || dim==0)
+  if(dim<=0)
     error(EXIT_FAILURE, 0, "first popped operand of 'collapse-*' operators "
           "(dimension to collapse) must be positive (larger than zero), it "
           "is %ld", dim);
@@ -936,7 +969,22 @@ arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
     error(EXIT_FAILURE, 0, "input dataset to '%s' has %zu dimension(s), "
           "but you have asked to collapse along dimension %ld", token,
           input->ndim, dim);
-
+  if(param1)
+    {
+      arithmetic_collapse_single_value(param1, "third", "sigclip-",
+                                       "sigma-clip's multiple of sigma", 0);
+      arithmetic_collapse_single_value(param2, "second", "sigclip-",
+                                       "sigma-clip's termination param", 0);
+      param1=gal_data_copy_to_new_type_free(param1, GAL_TYPE_FLOAT32);
+      param2=gal_data_copy_to_new_type_free(param2, GAL_TYPE_FLOAT32);
+      p1=((float *)(param1->array))[0];
+      p2=((float *)(param2->array))[0];
+      if(p1<=0 || p2<=0)
+        error(EXIT_FAILURE, 0, "third and second popped operands of "
+              "'collapse-sigclip-*' operators (sigma multiple and "
+              "termination criteria) must be positive (larger than "
+              "zero), but they are %g and %g", p1, p2);
+    }
 
   /* If a WCS structure has been read, we'll need to pass it to
      'gal_dimension_collapse', so it modifies it respectively. */
@@ -968,6 +1016,31 @@ arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
 
     case ARITHMETIC_OP_COLLAPSE_MAX:
       collapsed=gal_dimension_collapse_minmax(input, input->ndim-dim, 1);
+      break;
+
+    case ARITHMETIC_OP_COLLAPSE_MEDIAN:
+      collapsed=gal_dimension_collapse_median(input, input->ndim-dim,
+                                              nt, mms, qmm);
+      break;
+
+    case ARITHMETIC_OP_COLLAPSE_SIGCLIP_STD:
+      collapsed=gal_dimension_collapse_sclip_std(input, input->ndim-dim,
+                                                 p1, p2, nt, mms, qmm);
+      break;
+
+    case ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEAN:
+      collapsed=gal_dimension_collapse_sclip_mean(input, input->ndim-dim,
+                                                  p1, p2, nt, mms, qmm);
+      break;
+
+    case ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEDIAN:
+      collapsed=gal_dimension_collapse_sclip_median(input, input->ndim-dim,
+                                                    p1, p2, nt, mms, qmm);
+      break;
+
+    case ARITHMETIC_OP_COLLAPSE_SIGCLIP_NUMBER:
+      collapsed=gal_dimension_collapse_sclip_number(input, input->ndim-dim,
+                                                    p1, p2, nt, mms, qmm);
       break;
 
     default:
@@ -1270,7 +1343,17 @@ arithmetic_set_operator(char *string, size_t *num_operands, int *inlib)
       else if (!strcmp(string, "collapse-mean"))
         { op=ARITHMETIC_OP_COLLAPSE_MEAN;         *num_operands=0; }
       else if (!strcmp(string, "collapse-number"))
-        { op=ARITHMETIC_OP_COLLAPSE_NUMBER;       *num_operands=0; }
+        { op=ARITHMETIC_OP_COLLAPSE_MEDIAN;       *num_operands=0; }
+      else if (!strcmp(string, "collapse-median"))
+        { op=ARITHMETIC_OP_COLLAPSE_MEDIAN;       *num_operands=0; }
+      else if (!strcmp(string, "collapse-sigclip-std"))
+        { op=ARITHMETIC_OP_COLLAPSE_SIGCLIP_STD;  *num_operands=0; }
+      else if (!strcmp(string, "collapse-sigclip-mean"))
+        { op=ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEAN; *num_operands=0; }
+      else if (!strcmp(string, "collapse-sigclip-median"))
+        { op=ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEDIAN;*num_operands=0;}
+      else if (!strcmp(string, "collapse-sigclip-number"))
+        { op=ARITHMETIC_OP_COLLAPSE_SIGCLIP_NUMBER;*num_operands=0;}
       else if (!strcmp(string, "add-dimension-slow"))
         { op=ARITHMETIC_OP_ADD_DIMENSION_SLOW;    *num_operands=0; }
       else if (!strcmp(string, "add-dimension-fast"))
@@ -1361,8 +1444,8 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
                                            flags, d1, d2, d3));
     }
 
-  /* No need to call the arithmetic library, call the proper
-     wrappers directly. */
+  /* No need to call the arithmetic library, call the proper wrappers
+     directly. */
   else
     {
       switch(operator)
@@ -1406,7 +1489,12 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
         case ARITHMETIC_OP_COLLAPSE_MIN:
         case ARITHMETIC_OP_COLLAPSE_MAX:
         case ARITHMETIC_OP_COLLAPSE_MEAN:
+        case ARITHMETIC_OP_COLLAPSE_MEDIAN:
         case ARITHMETIC_OP_COLLAPSE_NUMBER:
+        case ARITHMETIC_OP_COLLAPSE_SIGCLIP_STD:
+        case ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEAN:
+        case ARITHMETIC_OP_COLLAPSE_SIGCLIP_MEDIAN:
+        case ARITHMETIC_OP_COLLAPSE_SIGCLIP_NUMBER:
           arithmetic_collapse(p, operator_string, operator);
           break;
 
