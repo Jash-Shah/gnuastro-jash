@@ -880,6 +880,18 @@ struct dimension_sortbased_p
 
 
 
+static void
+dimension_csb_copy(gal_data_t *in, size_t from, gal_data_t *work, size_t to)
+{
+  memcpy(gal_pointer_increment(work->array, to,   in->type),
+         gal_pointer_increment(in->array,   from, in->type),
+         gal_type_sizeof(in->type));
+}
+
+
+
+
+
 static void *
 dimension_collapse_sortbased_worker(void *in_prm)
 {
@@ -891,9 +903,9 @@ dimension_collapse_sortbased_worker(void *in_prm)
   gal_data_t *in=p->in;
 
   /* Subsequent definitions. */
+  size_t a, b, c, bc, sind;
   gal_data_t *work, *stat;
-  size_t sind, a=in->dsize[0], b=in->dsize[1];
-  size_t i, j, index, c_dim=p->c_dim, wdsize=in->dsize[c_dim];
+  size_t i, j, f, index, c_dim=p->c_dim, wdsize=in->dsize[c_dim];
 
   /* Allocate the dataset that will be sorted. */
   work=gal_data_alloc(NULL, in->type, 1, &wdsize, NULL, 0,
@@ -916,25 +928,56 @@ dimension_collapse_sortbased_worker(void *in_prm)
       /* Extract the necessary components into an array. */
       switch(in->ndim)
         {
+        /* One-dimensional data. */
         case 1:
-        case 3:
-          error(EXIT_FAILURE, 0, "%s: %zu dimensions not yet supported, "
-                "please get in touch with us at '%s' to implement it",
-                __func__, in->ndim, PACKAGE_BUGREPORT);
+          memcpy(work->array, in->array, in->size*gal_type_sizeof(in->type));
           break;
+
+        /* Two dimensional data. */
         case 2:
-          if(c_dim) /* The dim. to collapse is already contiguous. */
+          a=in->dsize[0];
+          b=in->dsize[1];
+          if(c_dim) /* c_dim==1 The dim. to collapse is already contiguous. */
             memcpy(work->array,
                    gal_pointer_increment(in->array,   index*b, in->type),
                    b*gal_type_sizeof(in->type));
-          else
+          else      /* c_dim==0 */
+            for(j=0;j<a;++j) dimension_csb_copy(in, j*b+index, work, j);
+          break;
+
+        /* Three dimensional data. */
+        case 3:
+          a=in->dsize[0];
+          b=in->dsize[1];
+          c=in->dsize[2];
+          switch(c_dim)
             {
+            case 0:
               for(j=0;j<a;++j)
-                memcpy(gal_pointer_increment(work->array, j,         in->type),
-                       gal_pointer_increment(in->array,   j*b+index, in->type),
-                       gal_type_sizeof(in->type));
+                dimension_csb_copy(in, j*b*c+index, work, j);
+              break;
+
+            case 1:
+              for(j=0;j<b;++j)
+                dimension_csb_copy(in, (index/c)*b*c+j*c+(index%c), work, j);
+              break;
+
+            case 2: /* Fastest dimension: contiguous in memory. */
+              memcpy(work->array,
+                     gal_pointer_increment(in->array,
+                                           (index/b)*b*c+(index%b)*c,
+                                           in->type),
+                     c*gal_type_sizeof(in->type));
+              break;
+
+            default:
+              error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                    "'%s' to solve the problem. The dimension counter "
+                    "%zu isn't recognized for a 3D dataset", __func__,
+                    PACKAGE_BUGREPORT, c_dim);
             }
           break;
+
         default:
           error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
                 "to find the cause. This function doesn't support %zu "
@@ -942,10 +985,12 @@ dimension_collapse_sortbased_worker(void *in_prm)
         }
 
       /* For a check.
+      if(index==0)
       {
         float *f=work->array;
         for(j=0;j<wdsize;++j)
           printf("%zu: %f\n", j, f[j]);
+        printf("%s: GOOD\n", __func__); exit(0);
       }
       */
 
