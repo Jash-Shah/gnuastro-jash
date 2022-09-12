@@ -549,11 +549,9 @@ ypsfcenter=$(astarithmetic $ypsfaxis float32 2.0 / --quiet)
 #
 # In order to allocate the PSF into the center coordinates provided by the
 # user, it is necessary to compute the appropiate offsets along the X and Y
-# axis. After that, the PSF image is warped using that offsets. Note that
-# in order to account for a 1 pixel offset, it is necessary to subtract the
-# value 1.
-xdiff=$(astarithmetic $xcenter float32 $xpsfcenter float32 - 1.0 - --quiet)
-ydiff=$(astarithmetic $ycenter float32 $ypsfcenter float32 - 1.0 - --quiet)
+# axis. After that, the PSF image is warped using that offsets.
+xdiff=$(astarithmetic $xcenter float32 $xpsfcenter float32 - --quiet)
+ydiff=$(astarithmetic $ycenter float32 $ypsfcenter float32 - --quiet)
 
 psftranslated=$tmpdir/psf-translated-$objectid.fits
 astwarp $psffluxscaled --translate=$xdiff,$ydiff \

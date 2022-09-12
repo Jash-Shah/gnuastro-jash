@@ -47,6 +47,7 @@ tmpdir=""
 segment=""
 normradii=""
 widthinpix=""
+nocentering=0
 sigmaclip="3,0.1"
 version=@VERSION@
 scriptname=@SCRIPT_NAME@
@@ -94,7 +95,7 @@ $scriptname options:
   -P, --psfhdu=STR        HDU/extension of the PSF image.
   -O, --mode=STR          Coordinates mode ('wcs' or 'img').
   -c, --center=FLT,FLT    Center coordinates of the object.
-  -W, --widthinpix=INT    Width of the stamp in pixels.
+  -W, --widthinpix=INT,INT Width of the stamp in pixels.
   -n, --normradii=INT,INT Minimum and maximum radii (in pixels)
                           for computing the scaling factor value.
   -S, --segment=STR       Output of Segment (with OBJECTS and CLUMPS).
@@ -488,7 +489,11 @@ fi
 # maximum radius for computing the flux factor. This is the maximum radius
 # that is needed for computing the flux value.
 if [ x"$widthinpix" = x ]; then
-    widthinpix=$(astarithmetic $normradiusmax float32 2.0 x 1.0 + --quiet)
+    xwidthinpix=$(astarithmetic $normradiusmax float32 2.0 x 1.0 + --quiet)
+    ywidthinpix=$(astarithmetic $normradiusmax float32 2.0 x 1.0 + --quiet)
+else
+    xwidthinpix=$(echo $widthinpix | awk '{print $1}')
+    ywidthinpix=$(echo $widthinpix | awk '{print $2}')
 fi
 
 
@@ -502,7 +507,8 @@ fi
 cropped=$tmpdir/cropped-$objectid.fits
 astcrop $inputs --hdu=$hdu --mode=img \
         --center=$xcenter,$ycenter \
-        --width=$widthinpix --output=$cropped $quiet
+        --width=$xwidthinpix,$ywidthinpix\
+        --output=$cropped $quiet
 
 
 
@@ -557,11 +563,13 @@ EOF
         cropclp=$tmpdir/cropped-clumps-$objectid.fits
         cropobj=$tmpdir/cropped-objects-$objectid.fits
         astcrop $segment --hdu=OBJECTS --mode=img \
+                --width=$xwidthinpix,$ywidthinpix \
                 --center=$xcenter,$ycenter \
-                --width=$widthinpix --output=$cropobj $quiet
+                --output=$cropobj $quiet
         astcrop $segment --hdu=CLUMPS --mode=img \
+                --width=$xwidthinpix,$ywidthinpix \
                 --center=$xcenter,$ycenter \
-                --width=$widthinpix --output=$cropclp $quiet
+                --output=$cropclp $quiet
 
         # Mask all the undesired regions.
         cropped_masked=$tmpdir/cropped-masked-$objectid.fits
@@ -581,6 +589,120 @@ fi
 
 
 
+# Function to simplify checks in each dimension
+# ---------------------------------------------
+#
+# If the bottom-left edge of the crop is outside the image, the minimum
+# coordinate needs to be modified from the value in the 'ICF1PIX' keyword
+# of the output of the Crop program.
+first_pix_in_img () {
+
+    # This function takes a single argument: the dimension to work on.
+    dim=$1
+
+    # Find the minimim and maximum from the cropped image.
+    if [ $dim = x ]; then
+        width=$xwidthinpix
+        min=$(echo "$overlaprange" | awk '{print $1}')
+        max=$(echo "$overlaprange" | awk '{print $2}')
+    elif [ $dim = y ]; then
+        width=$ywidthinpix
+        min=$(echo "$overlaprange" | awk '{print $3}')
+        max=$(echo "$overlaprange" | awk '{print $4}')
+    else
+        cat <<EOF
+$scriptname: ERROR: a bug! Please contact with us at bug-gnuastro@gnu.org. The value of 'dim' is "$dim" and not recognized
+EOF
+        exit 1
+    fi
+
+    # Check if it is necessary to correct the position. If the bottom-left
+    # corner of the image (which defines the zero coordinate along both
+    # dimensions) has fallen outside of the image, then the minimum value
+    # of 'ICF1PIX' in that dimension will be '1'.
+    #
+    # Therefore, if the minimum value is not '1', then everything is fine
+    # and no correction is necessary! We'll just return the minimum
+    # value. Otherwise, we need to return a negative minimum pixel value to
+    # obtain the correct position of the object from 'ICF1PIX' (which only
+    # has the region of the input that overlapped with the output). It is
+    # necessary to add '1' because the first pixel has a coordiante of 1,
+    # not 0.
+    if [ $min = 1 ]; then
+        echo "$max $width" | awk '{if($1==$2) print 1; else print $1-$2+1}'
+    else
+        echo $min
+    fi
+}
+
+
+
+
+
+# In the FITS standard, the integer coordinates are defined on the center
+# of each pixel. On the other hand, the centers of objects can be anywhere
+# (not exactly in the center of the pixel!). In this scenario, we should
+# move the center of the object to the center of the pixel with a sub-pixel
+# warp. In this part of the script we will calculate the necessary
+# sub-pixel translation and use Warp to center the object on the pixel
+# grid. The user can disable this with the '--nocentering' option.
+if [ $nocentering = 0 ]; then
+
+    # Read the overlap range from the 'ICF1PIX' keyword (which is printed
+    # in all outputs of Crop).
+    overlaprange=$(astfits $cropped -h1 --keyvalue=ICF1PIX -q \
+                       | sed -e's|:| |g' -e's|,| |')
+
+    # Calculate the position of the bottom-left pixel of the cropped image
+    # in relation to the input image.
+    minx=$(first_pix_in_img x)
+    miny=$(first_pix_in_img y)
+
+    # Due to cropping, the image coordinate should be shifted by a certain
+    # number (integer) of pixels (leaving the sub-pixel center intact).
+    stmcoord=$(echo "$xcenter $ycenter $minx $miny" \
+                   | awk '{printf "%g %g\n", $1-$3+1, $2-$4+1}')
+
+    # Calculate the displacement (or value to give to '--translate' in
+    # Warp), and the new center of the star after translation (or value of
+    # '--center' in Crop):
+    #  1. At first we extract the sub-pixel displacement ('x' and 'y').
+    #  2. If the displacement is larger than 0.5, then after the warp, the
+    #     center will be shifted by one pixel.  Otherwise, if the
+    #     displacement is smaller than 0.5, we shift the grid backwards by
+    #     mutiplying it by -1 and don't add any shift.
+    #  3. Add 'xshift' and 'yshit' valut to integer of x and y coordinate
+    #     and add final value to one.
+    warpcoord=$(echo "$stmcoord" \
+          | awk '{x=$1-int($1); y=$2-int($2); \
+                  if(x>0.5){x=1-x; xshift=1} else {x*=-1; xshift=0}; \
+                  if(y>0.5){y=1-y; yshift=1} else {y*=-1; yshift=0}; \
+                  printf("%f,%f %d,%d\n", x, y, \
+                  int($1)+xshift+1, int($2)+yshift+1)}')
+
+    # Warp image based on the measured displacement (first component of the
+    # output above).
+    warpped=$tmpdir/cropped-masked-warpforcenter-$objectid.fits
+    DXY=$(echo "$warpcoord" | awk '{print $1}')
+    astwarp $cropped_masked --translate=$DXY --output=$warpped
+
+    # Crop image based on the calculated shift (second component of the
+    # output above).
+    centermsk=$tmpdir/cropped-masked-centered-$objectid.fits
+    CXY=$(echo "$warpcoord" | awk '{print $2}')
+    astcrop $warpped -h1 \
+            --mode=img --output=$centermsk \
+            --center=$CXY --width=$xwidthinpix,$ywidthinpix
+else
+    # If the user did not want to correct the center of image, we'll use
+    # the raw crop as input for the next step.
+    centermsk=$cropped_masked
+fi
+
+
+
+
+
 # Crop the PSF image with the same size.
 psfcropped=$tmpdir/cropped-psf-$objectid.fits
 psfxcenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS1 -q \
@@ -589,7 +711,8 @@ psfycenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS2 -q \
                  | awk '{print $1/2+0.5}')
 astcrop $psf --hdu=$psfhdu --mode=img \
         --center=$psfxcenter,$psfycenter \
-        --width=$widthinpix --output=$psfcropped $quiet
+        --width=$xwidthinpix,$ywidthinpix \
+        --output=$psfcropped $quiet
 
 
 
@@ -597,10 +720,12 @@ astcrop $psf --hdu=$psfhdu --mode=img \
 
 # Build a radial profile image. It will be used to only select pixels
 # within the requested radial range.
-radcenter=$(echo $widthinpix | awk '{print $1/2+0.5}')
-radradius=$(echo $widthinpix | awk '{print $1+2}')
+xradcenter=$(echo $xwidthinpix | awk '{print $1/2+0.5}')
+yradcenter=$(echo $ywidthinpix | awk '{print $1/2+0.5}')
+maxradius=$(printf "$xwidthinpix\n$ywidthinpix" \
+                   | aststatistics --maximum --quiet)
 radcropped=$tmpdir/cropped-radial-$objectid.fits
-echo "1 $radcenter $radcenter 7 $radradius 0 0 1 1 1" \
+echo "1 $xradcenter $yradcenter 7 $maxradius 0 0 1 1 1" \
      | astmkprof --background=$psfcropped --clearcanvas \
                  --oversample=1 --output=$radcropped $quiet
 
@@ -610,7 +735,7 @@ echo "1 $radcenter $radcenter 7 $radradius 0 0 1 1 1" \
 
 # Find the multiplication factor
 multipimg=$tmpdir/for-factor-$objectid.fits
-astarithmetic $cropped -h1 set-i \
+astarithmetic $centermsk -h1 set-i \
               $psfcropped -h1 set-p \
               $radcropped -h1 set-r \
               r $normradiusmin lt r $normradiusmax ge or set-m \
