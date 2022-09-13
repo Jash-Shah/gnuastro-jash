@@ -929,7 +929,7 @@ static void
 arithmetic_collapse(struct arithmeticparams *p, char *token, int operator)
 {
   long dim;
-  float p1, p2;
+  float p1=NAN, p2=NAN;
   int qmm=p->cp.quietmmap;
   gal_data_t *dimension=NULL, *input=NULL;
   size_t nt=p->cp.numthreads, mms=p->cp.minmapsize;

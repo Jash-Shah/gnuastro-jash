@@ -903,9 +903,9 @@ dimension_collapse_sortbased_worker(void *in_prm)
   gal_data_t *in=p->in;
 
   /* Subsequent definitions. */
-  size_t a, b, c, bc, sind;
-  gal_data_t *work, *stat;
-  size_t i, j, f, index, c_dim=p->c_dim, wdsize=in->dsize[c_dim];
+  gal_data_t *work, *stat=NULL;
+  size_t a, b, c, sind=GAL_BLANK_SIZE_T;
+  size_t i, j, index, c_dim=p->c_dim, wdsize=in->dsize[c_dim];
 
   /* Allocate the dataset that will be sorted. */
   work=gal_data_alloc(NULL, in->type, 1, &wdsize, NULL, 0,
