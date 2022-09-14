@@ -811,24 +811,26 @@ static gal_data_t *
 arithmetic_mknoise(int operator, int flags, gal_data_t *in,
                    gal_data_t *arg)
 {
+  size_t i;
   gsl_rng *rng;
   const char *rng_name;
-  double *d, *df, arg_v;
   unsigned long rng_seed;
   gal_data_t *out, *targ;
+  double *d, *aarr, arg_v;
 
   /* The dataset may be empty. In this case, the output should also be
      empty (we can have tables and images with 0 rows or pixels!). */
   if(in->size==0 || in->array==NULL) return in;
 
   /* Sanity checks. */
-  if(arg->size!=1)
+  if(arg->size!=1 && arg->size!=in->size)
     error(EXIT_FAILURE, 0, "the first popped operand to the '%s' "
-          "operator should be a single number (specifying the fixed "
-          "sigma, or background level for Poisson noise), but it "
-          "has %zu elements, in %zu dimension(s)",
-          gal_arithmetic_operator_string(operator), arg->size,
-          arg->ndim);
+          "operator should either be a single number or have the "
+          "same number of elements as the input data. Recall that "
+          "it specifies the fixed sigma, or background level for "
+          "Poisson noise). However, it has %zu elements, in %zu "
+          "dimension(s)", gal_arithmetic_operator_string(operator),
+          arg->size, arg->ndim);
   if(in->type==GAL_TYPE_STRING)
     error(EXIT_FAILURE, 0, "the input dataset to the '%s' operator "
           "should have a numerical data type (integer or float), but "
@@ -845,46 +847,49 @@ arithmetic_mknoise(int operator, int flags, gal_data_t *in,
         { gal_data_free(in); in=NULL; }
     }
   targ=gal_data_copy_to_new_type(arg, GAL_TYPE_FLOAT64);
-  arg_v=((double *)(targ->array))[0];
-  gal_data_free(targ);
-
-  /* Make sure the noise identifier is positive. */
-  if(arg_v<0)
-    error(EXIT_FAILURE, 0, "the noise identifier (sigma for "
-          "'mknoise-sigma', background for 'mknoise-poisson', or "
-          "range for 'mknoise-uniform') must be positive (it is %g)",
-          arg_v);
+  aarr=targ->array;
 
   /* Initialize the GSL random number generator. */
   rng=arithmetic_gsl_initialize(flags, &rng_name, &rng_seed,
                                 gal_arithmetic_operator_string(operator));
 
   /* Add the noise. */
-  df=(d=out->array)+out->size;
-  switch(operator)
+  d=out->array;
+  for(i=0;i<out->size;++i)
     {
-    case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
-      do *d += gsl_ran_gaussian(rng, arg_v); while(++d<df);
-      break;
-    case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
-      do
-        *d += arg_v + gsl_ran_gaussian(rng, sqrt( arg_v + *d ));
-      while(++d<df);
-      break;
-    case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM:
-      do
-        *d += ( (gsl_rng_uniform(rng)*arg_v) - (arg_v/2) );
-      while(++d<df);
-      break;
-    default:
-      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
-            "fix the problem. The operator code %d isn't recognized "
-            "in this function", __func__, PACKAGE_BUGREPORT, operator);
+      /* Set the argument value. */
+      arg_v = arg->size==1 ? aarr[0] : aarr[i];
+
+      /* Make sure the noise identifier is positive. */
+      if(arg_v<0)
+        error(EXIT_FAILURE, 0, "the noise identifier (sigma for "
+              "'mknoise-sigma', background for 'mknoise-poisson', or "
+              "range for 'mknoise-uniform') must be positive (it is %g)",
+              arg_v);
+
+      /* Do the necessary operation. */
+      switch(operator)
+        {
+        case GAL_ARITHMETIC_OP_MKNOISE_SIGMA:
+          d[i] += gsl_ran_gaussian(rng, arg_v);
+          break;
+        case GAL_ARITHMETIC_OP_MKNOISE_POISSON:
+          d[i] += arg_v + gsl_ran_gaussian(rng, sqrt( arg_v + *d ));
+          break;
+        case GAL_ARITHMETIC_OP_MKNOISE_UNIFORM:
+          d[i] += ( (gsl_rng_uniform(rng)*arg_v) - (arg_v/2) );
+          break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
+                "fix the problem. The operator code %d isn't recognized "
+                "in this function", __func__, PACKAGE_BUGREPORT, operator);
+        }
     }
 
   /* Clean up and return */
-  gsl_rng_free(rng);
   if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(arg);
+  gal_data_free(targ);
+  gsl_rng_free(rng);
   return out;
 }
 

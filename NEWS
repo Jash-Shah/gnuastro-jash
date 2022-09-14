@@ -77,6 +77,33 @@ See the end of the file for license conditions.
     surface brightness image using the new 'counts-to-sb' operator of
     Arithmetic.
 
+  Statistics:
+  - Linear and Polynomial least squares fitting are now available and very
+    easy to call on the command-line. They are wrappers over the respective
+    least squares fitting functions of the GNU Scientific Library. The
+    interface is pretty simple, like the example below:
+       aststatistics table.fits -cX,Y,Yerr --fit=linear-weighted
+    It is also possible to estimate values and errors of the fitted model
+    on a new X axis. A complete example has been added to the newly added
+    "Least squares fitting" section of the book (under the Statistics
+    program documentation). Please see that tutorial to easily use this
+    feature. The following new options have been added to the Statistics
+    program for this purpose:
+    --fit: the model to use. Currently the following models are supported:
+           linear
+           linear-weighted
+           linear-no-constant
+           linear-no-constant-weighted
+           polynomial
+           polynomial-weighted
+           polynomial-robust
+    --fitweight: nature of the "weight" column (default: standard dev).
+    --fitmaxpower: maximum power of X in polynomial models.
+    --fitrobust: weight function to use in the "robust" polynomial model.
+    --fitestimate: File name, or number to estimate the fit on.
+    --fitestimatehdu: HDU containing table in file given to '--fitestimate'.
+    --fitestimatecol: Column containing X axis values for '--fitestimate'.
+
   astscript-fits-view:
   --ds9colorbarmulti: show a separate color-bar for each image in DS9. By
     default this script will show a single color-bar for all the images to
@@ -138,6 +165,16 @@ See the end of the file for license conditions.
   - gal_dimension_collapse_sigclip_number: collapse with num. after sig-clip.
   - gal_eps_shape_id_to_name: return the name of a shape from its ID.
   - gal_eps_shape_name_to_id: return the ID of a shape from its name.
+  - gal_fit_name_to_id: Convert string name to ID of fitting model.
+  - gal_fit_name_from_id: Convert ID of fitting model to string name.
+  - gal_fit_name_robust_to_id: Convert name of robust weights to ID.
+  - gal_fit_name_robust_from_id: Convert ID of robust weights to name.
+  - gal_fit_1d_linear: linear fit of input columns.
+  - gal_fit_1d_linear_no_constant: linear fit with no constant.
+  - gal_fit_1d_linear_estimate: estimate a linear fit on a new X column.
+  - gal_fit_1d_polynomial: polynomial fit of input columns.
+  - gal_fit_1d_polynomial_robust: robust polynomial fit of input columns.
+  - gal_fit_1d_polynomial_estimate: estimate a polynomial fit on new X column.
   - gal_fits_unique_keyvalues: extract all unique values to a certain
     keyword in many files.
   - gal_fits_with_keyvalue: select FITS image with a certain key value.
@@ -153,6 +190,13 @@ See the end of the file for license conditions.
   - gal_units_sb_to_mag: magnitude from SB and area.
 
 ** Removed features
+
+  Statistics:
+   --refcol has been removed because it breaks the modularity principle
+     (given that it is the job of Gnuastro's Table program to limit rows
+     from a larger table based on many different criteria). The output of
+     Table can be directly piped to Statistics to achieve the same (and
+     much more feature-rich effect).
 
 ** Changed features
 

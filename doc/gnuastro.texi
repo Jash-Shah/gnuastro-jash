@@ -228,7 +228,7 @@ To go to the sections or subsections, you have to click on the menu entries that
 * Data containers::             Tools to operate on extensions and tables.
 * Data manipulation::           Tools for basic image manipulation.
 * Data analysis::               Analyze images.
-* Modeling and fittings::       Make and fit models.
+* Data modeling::               Modeling observed data.
 * High-level calculations::     Physical calculations.
 * Installed scripts::           Installed scripts that operate like programs.
 * Makefile extensions::         Use Gnuastro's features as GNU Make functions.
@@ -507,8 +507,8 @@ Arithmetic operators
 
 * Basic mathematical operators::  For example +, -, /, log, pow, and etc.
 * Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, and etc
-* Constants::
-* Unit conversion operators::   magnitudes to counts, or parsecs to AUs, and etc.
+* Constants::                   Physical and Mathematical constants.
+* Unit conversion operators::   Various unit conversions necessary.
 * Statistical operators::       Statistics of a single dataset (for example mean).
 * Stacking operators::          Coadding or combining multiple datasets into one.
 * Filtering operators::         Smoothing a dataset through mixing pixel with neighbors.
@@ -570,6 +570,7 @@ Statistics
 * Histogram and Cumulative Frequency Plot::  Basic definitions.
 * 2D Histograms::               Plotting the distribution of two variables.
 * Sigma clipping::              Definition of @mymath{\sigma}-clipping.
+* Least squares fitting::
 * Sky value::                   Definition and derivation of the Sky value.
 * Invoking aststatistics::      Arguments and options to Statistics.
 
@@ -583,6 +584,15 @@ Sky value
 * Sky value definition::        Definition of the Sky/reference value.
 * Sky value misconceptions::    Wrong methods to estimate the Sky value.
 * Quantifying signal in a tile::  Method to estimate the presence of signal.
+
+Invoking Statistics
+
+* Input to Statistics::         How to specify the inputs to Statistics.
+* Single value measurements::   Can be used together (like --mean, or --maximum).
+* Generating histograms and cumulative frequency plots::  Histogram and CFP tables.
+* Fitting options::             Least squares fitting.
+* Contour options::             Table of contours.
+* Statistics on tiles::         Possible to do single-valued measurements on tiles.
 
 NoiseChisel
 
@@ -636,7 +646,7 @@ Match
 * Matching algorithms::         Different ways to find the match
 * Invoking astmatch::           Inputs, outputs and options of Match
 
-Modeling and fitting
+Data modeling
 
 * MakeProfiles::                Making mock galaxies and stars.
 * MakeNoise::                   Make (add) noise to an image.
@@ -771,6 +781,7 @@ Gnuastro library
 * Permutations::                Re-order (or permute) the values in a dataset.
 * Matching::                    Matching catalogs based on position.
 * Statistical operations::      Functions for basic statistics.
+* Fitting functions::           Fit independent and measured variables.
 * Binary datasets::             Datasets that can only have values of 0 or 1.
 * Labeled datasets::            Working with Segmented/labeled datasets.
 * Convolution functions::       Library functions to do convolution.
@@ -16337,7 +16348,7 @@ These operators take a single operand.
 
 @node Constants, Unit conversion operators, Trigonometric and hyperbolic operators, Arithmetic operators
 @subsubsection Constants
-@cindex @mymath{\pi}
+@cindex Pi
 During your analysis it is often necessary to have certain constants like the number @mymath{\pi}.
 The ``operators'' in this section do not actually take any operand, they just replace the desired constant into the stack.
 So in effect, these are actually operands.
@@ -16345,14 +16356,14 @@ But since their value is not inserted by the user, we have placed them in the li
 
 @table @code
 @item e
-@cindex @mymath{e} (base of natural logarithm)
+@cindex e (base of natural logarithm)
 @cindex Euler's number (@mymath{e})
 @cindex Base of natural logarithm (@mymath{e})
 Euler’s number, or the base of the natural logarithm (no units).
 See @url{https://en.wikipedia.org/wiki/E_(mathematical_constant), Wikipedia}.
 
 @item pi
-@cindex @mymath{\pi}
+@cindex Pi
 Ratio of circle’s circumference to its diameter (no units).
 See @url{https://en.wikipedia.org/wiki/Pi, Wikipedia}.
 
@@ -17519,6 +17530,9 @@ In such cases, the value given to @code{GSL_RNG_SEED} is incremented by one on e
 Without this increment, when the column values are the same (happens a lot, for no-noised datasets), the returned values for all columns will be identical.
 But this feature has a side-effect: that if the order of calling the @code{mknoise-*} operators changes, the seeds used for each operator will change@footnote{We have defined @url{https://savannah.gnu.org/task/?15971, Task 15971} in Gnuastro's project management system to address this.
 If you need this feature please send us an email at @code{bug-gnuastro@@gnu.org} (to motivate us in its implementation).}.
+
+In case each data element should have an independent sigma, the first popped operand can be a dataset of the same size as the second.
+In this case, for each element, a different noise measure (for example sigma in @code{mknoise-sigma}) will be used.
 
 @item mknoise-poisson
 @cindex Poisson noise
@@ -19601,7 +19615,7 @@ Alternatively, a value of @code{0} will keep output pixels that are even infinit
 
 
 
-@node Data analysis, Modeling and fittings, Data manipulation, Top
+@node Data analysis, Data modeling, Data manipulation, Top
 @chapter Data analysis
 
 Astronomical datasets (images or tables) contain very valuable information, the tools in this section can help in analyzing, extracting, and quantifying that information.
@@ -19632,6 +19646,7 @@ The Statistics program is designed for such situations.
 * Histogram and Cumulative Frequency Plot::  Basic definitions.
 * 2D Histograms::               Plotting the distribution of two variables.
 * Sigma clipping::              Definition of @mymath{\sigma}-clipping.
+* Least squares fitting::
 * Sky value::                   Definition and derivation of the Sky value.
 * Invoking aststatistics::      Arguments and options to Statistics.
 @end menu
@@ -19931,7 +19946,7 @@ $ pdflatex cmd-report.tex
 The improved quality, blending in with the text, vector-graphics resolution and other features make this plot pleasing to the eye, and let your readers focus on the main point of your scientific argument.
 PGFPlots can also built the PDF of the plot separately from the rest of the paper/report, see @ref{2D histogram as a table for plotting} for the necessary changes in the preamble.
 
-@node  Sigma clipping, Sky value, 2D Histograms, Statistics
+@node  Sigma clipping, Least squares fitting, 2D Histograms, Statistics
 @subsection Sigma clipping
 
 Let's assume that you have pure noise (centered on zero) with a clear @url{https://en.wikipedia.org/wiki/Normal_distribution,Gaussian distribution}, or see @ref{Photon counting noise}.
@@ -20002,9 +20017,243 @@ The ASCII histogram that is printed on the command-line with @option{--asciihist
 @end cartouche
 
 
+@node Least squares fitting, Sky value, Sigma clipping, Statistics
+@subsection Least squares fitting
 
+@cindex Radial profile
+@cindex Least squares fitting
+@cindex Fitting (least squares)
+@cindex Star formation main sequence
+After completing a good observation, doing robust data reduction and finalizing the measurements, it is commonly necessary to parametrize the derived correlations.
+For example, you have derived the radial profile of the PSF of your image (see @ref{Building the extended PSF}).
+You now want to parametrize the radial profile to estimate the slope.
+Alternatively, you may have found the star formation rate and stellar mass of your sample of galaxies.
+Now, you want to derive the star formation main sequence as a parametric relation between the two.
+The fitting functions below can be used for such purposes.
 
-@node Sky value, Invoking aststatistics, Sigma clipping, Statistics
+@cindex GSL
+@cindex GNU Scientific Library
+Gnuastro's least squares fitting features are just wrappers over the least squares fitting methods of the @url{https://www.gnu.org/software/gsl/doc/html/lls.html, linear} and @url{https://www.gnu.org/software/gsl/doc/html/nls.html, nonlinear} least-squares fitting functions of the GNU Scientific Library (GSL).
+For the low-level details and equations of the methods, please see the GSL documentation.
+The names have been preserved here in Gnuastro to simplify the connection with GSL and follow the details in the detailed documentation there.
+
+GSL is a very low-level library, designed for maximal portability to many scenarios, and power.
+Therefore calling GSL's functions directly for a fast operation requires a good knowledge of the C programming language and many lines of code.
+As a low-level library, GSL is designed to be the back-end of higher-level programs (like Gnuastro).
+Through the Statistics program, in Gnuastro we provide a high-level interface to access to GSL's very powerful least squares fitting engine to read/write from/to standard data formats in astronomy.
+A fully working example is shown below.
+
+@cindex Gaussian noise
+@cindex Noise (Gaussian)
+To activate fitting in Statistics, simply give your desired fitting method to the @option{--fit} option (for the full list of acceptable methods, see @ref{Fitting options}).
+For example, with the command below, we'll build a fake measurement table (including noise) from the polynomial @mymath{y=1.23-4.56x+7.89x^2}.
+To understand how this equation translates to the command below (part before @code{set-y}), see @ref{Reverse polish notation} and @ref{Column arithmetic}.
+We will set the X axis to have values from 0.1 to 2, with steps of 0.01 and let's assume a random Gaussian noise to each @mymath{y} measurement: @mymath{\sigma_y=0.1y}.
+To make the random number generation exactly reproducible, we are also setting the seed (see @ref{Generating random numbers}, which also uses GSL as a backend).
+To learn more about the @code{mknoise-sigma} operator, see the Arithmetic program's @ref{Random number generators}.
+
+@example
+$ export GSL_RNG_SEED=1664015492
+$ seq 0.1 0.01 2 \
+      | asttable --output=noisy.fits --envseed -c1 \
+                 -c'arith 1.23 -4.56 $1 x + 7.89 $1 x $1 x + set-y \
+                          0.1 y x                            set-yerr \
+                          y yerr mknoise-sigma yerr' \
+                 --colmetadata=1,X --colmetadata=2,Y \
+                 --colmetadata=3,Yerr
+@end example
+
+@noindent
+Let's have a look at the output plot with TOPCAT using the command below.
+
+@example
+$ astscript-fits-view noisy.fits
+@end example
+
+@noindent
+To see the error-bars, after opening the scatter plot, go into the ``Form'' tab for that plot.
+Click on the button with a green ``+'' sign followed by ``Forms'' and select ``XYError''.
+On the side-menu, in front of ``Y Positive Error'', select the @code{Yerr} column of the input table.
+
+As you see, the error bars do indeed increase for higher X axis values.
+Since we have error bars in this example (as in any measurement), we can use weighted fitting.
+Also, this isn't a linear relation, so we'll use a polynomial to second order (a maximum power of 2 in the form of @mymath{Y=c_0+c_1X+c_2X^2}):
+
+@example
+$ aststatistics noisy.fits -cX,Y,Yerr --fit=polynomial-weighted \
+                --fitmaxpower=2
+Statistics (GNU Astronomy Utilities) @value{VERSION}
+-------
+Fitting results (remove extra info with '--quiet' or '-q)
+  Input file:    noisy.fits (hdu: 1) with 191 non-blank rows.
+  X      column: X
+  Y      column: Y
+  Weight column: Yerr    [Standard deviation of Y in each row]
+
+Fit function: Y = c0 + (c1 * X^1) + (c2 * X^2) + ... (cN * X^N)
+  N:  2
+  c0:  +1.2286211608
+  c1:  -4.5127796636
+  c2:  +7.8435883943
+
+Covariance matrix:
+  +0.0010496001        -0.0039928488        +0.0028367390
+  -0.0039928488        +0.0175244127        -0.0138030778
+  +0.0028367390        -0.0138030778        +0.0128129806
+
+Reduced chi^2 of fit:
+  +0.9740670090
+@end example
+
+As you see from the elaborate message, the weighted polynomial fitting has found return the @mymath{c_0}, @mymath{c_1} and @mymath{c_2} of @mymath{Y=c_0+c_1X+c_2X^2} that best represents the data we inserted.
+Our input values were @mymath{c_0=1.23}, @mymath{c_1=-4.56} and @mymath{c_2=7.89}, and the fitted values are @mymath{c_0\approx1.2286}, @mymath{c_1\approx-4.5128} and @mymath{c_2\approx7.8436} (which is statistically a very good fit! given that we knew the original values a-priori!).
+The covariance matrix is also calculated, it is necessary to calculate error bars on the estimations and contains a lot of information (e.g., possible correlations between parameters).
+Finally, the reduced @mymath{\chi^2} (or @mymath{\chi_{red}^2}) of the fit is also printed (which was the measure to minimize).
+A @mymath{\chi_{red}^2\approx1} shows a good fit.
+This is good for real-world scenarios when you don't know the original values a-priori.
+For more on interpretting @mymath{\chi_{red}^2\approx1}, see @url{https://arxiv.org/abs/1012.3754, Andrae et al (2010)}.
+
+The comparison of fitted and input values look pretty good, but nothing beats visual inspection!
+To see how this looks compared to the data, let's open the table again:
+
+@example
+$ astscript-fits-view noisy.fits
+@end example
+
+Repeat the steps below to show the scatter plot and error-bars.
+Then, go to the ``Layers'' menu and select ``Add Function Control''.
+Use the results above to fill the box infront of ``Function Expression'': @code{1.2286+(-4.5128*x)+(7.8436*x*x)}.
+You will see that the second order polynomial falls very nicely over the points@footnote{After plotting, you will notice that the legend made the plot too thin.
+Fortunately you have a lot of empty space within the plot.
+To bring the legend in, click on the ``Legend'' item on the bottom-left menu, in the ``Location'' tab, click on ``Internal'' and hold and move it to the top-left in the box below.
+To make the functional fit more clear, you can click on the ``Function'' item of the bottom-left menu.
+In the ``Style'' tab, change the color and thickness.}.
+But this fit is not perfect: it also has errors (inherited from the measurement errors).
+We need the covariance matrix to estimate the errors on each point, and that can be complex to do by hand.
+
+Fortunately GSL has the tools to easily estimate the function at any point and also calculate its corresponding error.
+To access this feature within Gnuastro's Statistics program, you should use the @option{--fitestimate} option.
+You can either give an independent table file name (with @option{--fitestimatehdu} and @option{--fitestimatecol} to specify the HDU and column in that file), or just @code{self} so it uses the same X axis column that was used in this fit.
+Let's use the easier case:
+
+@example
+$ aststatistics noisy.fits -cX,Y,Yerr --fit=polynomial-weighted \
+                --fitmaxpower=2 --fitestimate=self --output=est.fits
+@end example
+
+You will see a new line printed in the output, saying that the estimation was writte in @file{est.fits}.
+You can now inspect the two tables with TOPCAT again with the command below.
+After TOPCAT opens, plot both scatter plots:
+
+@example
+$ astscript-fits-view noisy.fits est.fits
+@end example
+
+It is clear that they fall nicely ontop of each other.
+The @file{est.fits} table also has a third column with error bars.
+You can follow the same steps before and draw the error bars to see how they compare with the scatter of the measured data.
+They are much smaller than the error in each point because we had a very good sampling of the function in our noisy data.
+
+Another useful point with the estimated output file is that it contains all the fitting outputs as keywords in the header:
+
+@example
+$ astfits est.fits -h1
+...
+                      / Fit results
+FITTYPE = 'polynomial-weighted' / Functional form of the fitting.
+FITMAXP =                    2 / Maximum power of polynomial.
+FITIN   = 'noisy.fits'         / Name of file with input columns.
+FITINHDU= '1       '           / Name or Number of HDU with input cols.
+FITXCOL = 'X       '           / Name or Number of independent (X) col.
+FITYCOL = 'Y       '           / Name or Number of measured (Y) column.
+FITWCOL = 'Yerr    '           / Name or Number of weight column.
+FITWNAT = 'Standard deviation' / Nature of weight column.
+FRDCHISQ=    0.974067008958516 / Reduced chi^2 of fit.
+FITC0   =     1.22862116084727 / C0: multiple of x^0 in polynomial
+FITC1   =    -4.51277966356177 / C1: multiple of x^1 in polynomial
+FITC2   =     7.84358839431161 / C2: multiple of x^2 in polynomial
+FCOV11  =  0.00104960011629718 / Covariance matrix element (1,1).
+FCOV12  = -0.00399284880859776 / Covariance matrix element (1,2).
+FCOV13  =  0.00283673901863388 / Covariance matrix element (1,3).
+FCOV21  = -0.00399284880859776 / Covariance matrix element (2,1).
+FCOV22  =   0.0175244126670659 / Covariance matrix element (2,2).
+FCOV23  =  -0.0138030778380786 / Covariance matrix element (2,3).
+FCOV31  =  0.00283673901863388 / Covariance matrix element (3,1).
+FCOV32  =  -0.0138030778380786 / Covariance matrix element (3,2).
+FCOV33  =   0.0128129806394559 / Covariance matrix element (3,3).
+...
+@end example
+
+In scenarios were you don't want the estimation, but only the fitted parameters, all that verbose, human-friendly text or FITS keywords can be an annoying extra step.
+For such cases, you should use the @option{--quiet} option like below.
+It will print the parameters, rows of the covariance matrix and @mymath{\chi_{red}^2} on separate lines with nothing extra.
+This allows you to parse the values in any way that you would like.
+
+@example
+$ aststatistics noisy.fits -cX,Y,Yerr --fit=polynomial-weighted \
+                --fitmaxpower=2 --quiet
++1.2286211608 -4.5127796636 +7.8435883943
++0.0010496001        -0.0039928488        +0.0028367390
+-0.0039928488        +0.0175244127        -0.0138030778
++0.0028367390        -0.0138030778        +0.0128129806
++0.9740670090
+@end example
+
+As a final example, because real data usually have outliers, let's look at the ``robust'' polynomial fit which has special features to remove outliers.
+First, we need to add some outliers to the table.
+To do this, we'll make a plain-text table with @command{echo}, and use Table's @option{--catrowfile} to concatenate (or append) those two rows to the original table.
+Finally, we'll run the same fitting step above:
+
+@example
+$ echo "0.6  20  0.01"  > outliers.txt
+$ echo "0.8  20  0.01" >> outliers.txt
+
+$ asttable noisy.fits --catrowfile=outliers.txt \
+           --output=with-outlier.fits
+
+$ aststatistics with-outlier.fits -cX,Y,Yerr --fit=polynomial-weighted \
+                --fitmaxpower=2 --fitestimate=self \
+                --output=est-out.fits --quiet
+-13.6446036899 +66.8463258547 -30.8746303591
++0.0007889160        -0.0027706310        +0.0022208939
+-0.0027706310        +0.0113922468        -0.0100306732
++0.0022208939        -0.0100306732        +0.0094087226
++4501.8356719150
+@end example
+
+We see that the coefficient values have changed significantly and that @mymath{\chi_{red}^2} has increased to @mymath{4501}!
+Recall that a good fit should have @mymath{\chi_{red}^2\approx1}.
+These numbers clearly show that the fit was bad, but again, nothing beats a visual inspection.
+To visually see the effect of those outliers, let's plot them with the command below.
+You see that those two points have clearly caused a turn in the fitted result which is terrible.
+
+@example
+$ astscript-fits-view with-outlier.fits est-out.fits
+@end example
+
+For such cases, GSL has @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression}.
+In Gnuastro's Statistics, you can access it with @option{--fit=polynomial-robust}, like the example below.
+Just note that the robust method doesn't take an error column (because it estimates the errors internally while rejecting outliers, based on the method):
+
+@example
+$ aststatistics with-outlier.fits -cX,Y --fit=polynomial-robust \
+                --fitmaxpower=2 --fitestimate=self \
+                --output=est-out.fits --quiet
++1.2042269119 -4.4779253576 +7.8498615369
++0.0237588085        -0.0468869673        +0.0193819707
+-0.0468869673        +0.1126156328        -0.0507842538
++0.0193819707        -0.0507842538        +0.0241623033
++0.3428106540
+
+$ astscript-fits-view with-outlier.fits est-out.fits
+@end example
+
+It is clear that the coefficients are very similar to the no-outlier scenario above and if you run the second command to view the scatter plots on TOPCAT, you also see that the fit nicely follows the curve and is not affected by those two points.
+GSL provides many methods to reject outliers.
+For their full list, see the description of @option{--fitrobust} in @ref{Fitting options}.
+For a description of the outlier rejection methods, see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#c.gsl_multifit_robust_workspace, GSL manual}.
+
+@node Sky value, Invoking aststatistics, Least squares fitting, Statistics
 @subsection Sky value
 
 @cindex Sky
@@ -20292,6 +20541,13 @@ $ aststatistics image.fits --sky --kernel=kernel.fits
 ## column value between 26 and 27:
 $ aststatistics cat.fits -cMAG_F160W -g26 -l27 --sigmaclip=3,0.2
 
+## Find the polynomial (to third order) that best fits the X and Y
+## columns of 'table.fits'. Robust fitting will be used to reject
+## outliers. Also, estimate the fitted polynomial on the same input
+## column (with errors).
+$ aststatistics table.fits --fit=polynomial-robust --fitmaxpower=3 \
+                -cX,Y --fitestimate=self --output=estimated.fits
+
 ## Print the median value of all records in column MAG_F160W that
 ## have a value larger than 3 in column PHOTO_Z:
 $ aststatistics tab.txt -rPHOTO_Z -g3 -cMAG_F160W --median
@@ -20314,51 +20570,6 @@ The input dataset may have blank values (see @ref{Blank pixels}), in this case, 
 Initially, the full dataset will be read, but it is possible to select a specific range of data elements to use in the analysis of each run.
 You can either directly specify a minimum and maximum value for the range of data elements to use (with @option{--greaterequal} or @option{--lessthan}), or specify the range using quantiles (with @option{--qrange}).
 If a range is specified, all pixels outside of it are ignored before any processing.
-
-The following set of options are for specifying the input/outputs of Statistics.
-There are many other input/output options that are common to all Gnuastro programs including Statistics, see @ref{Input output options} for those.
-
-@table @option
-
-@item -c STR/INT
-@itemx --column=STR/INT
-The column to use when the input file is a table with more than one column.
-See @ref{Selecting table columns} for a full description of how to use this option.
-For more on how tables are read in Gnuastro, please see @ref{Tables}.
-
-@item -r STR/INT
-@itemx --refcol=STR/INT
-The reference column selector when the input file is a table.
-When a reference column is given, the range options below will be applied to this column and only elements in the input column that have a reference value in the correct range will be used.
-In practice this option allows you to select a subset of the input column based on values in another (the reference) column.
-All the statistical calculations will be done on the selected input column, not the reference column.
-
-@item -g FLT
-@itemx --greaterequal=FLT
-Limit the range of inputs into those with values greater and equal to what is given to this option.
-None of the values below this value will be used in any of the processing steps below.
-
-@item -l FLT
-@itemx --lessthan=FLT
-Limit the range of inputs into those with values less-than what is given to this option.
-None of the values greater or equal to this value will be used in any of the processing steps below.
-
-@item -Q FLT[,FLT]
-@itemx --qrange=FLT[,FLT]
-Specify the range of usable inputs using the quantile.
-This option can take one or two quantiles to specify the range.
-When only one number is input (let's call it @mymath{Q}), the range will be those values in the quantile range @mymath{Q} to @mymath{1-Q}.
-So when only one value is given, it must be less than 0.5.
-When two values are given, the first is used as the lower quantile range and the second is used as the larger quantile range.
-
-@cindex Quantile
-The quantile of a given element in a dataset is defined by the fraction of its index to the total number of values in the sorted input array.
-So the smallest and largest values in the dataset have a quantile of 0.0 and 1.0.
-The quantile is a very useful non-parametric (making no assumptions about the input) relative measure to specify a range.
-It can best be understood in terms of the cumulative frequency plot, see @ref{Histogram and Cumulative Frequency Plot}.
-The quantile of each horizontal axis value in the cumulative frequency plot is the vertical axis value associate with it.
-
-@end table
 
 @cindex ASCII plot
 When no operation is requested, Statistics will print some general basic properties of the input dataset on the command-line like the example below (ran on one of the output images of @command{make check}@footnote{You can try it by running the command in the @file{tests} directory, open the image with a FITS viewer and have a look at it to get a sense of how these statistics relate to the input image/dataset.}).
@@ -20410,6 +20621,59 @@ The outputs of all such options will be printed on one line following each other
 This feature makes these options very useful in scripts, or to redirect into programs like GNU AWK for higher-level processing.
 These are some of the most basic measures, Gnuastro is still under heavy development and this list will grow.
 If you want another statistical parameter, please contact us and we will do out best to add it to this list, see @ref{Suggest new feature}.
+
+@menu
+* Input to Statistics::         How to specify the inputs to Statistics.
+* Single value measurements::   Can be used together (like --mean, or --maximum).
+* Generating histograms and cumulative frequency plots::  Histogram and CFP tables.
+* Fitting options::             Least squares fitting.
+* Contour options::             Table of contours.
+* Statistics on tiles::         Possible to do single-valued measurements on tiles.
+@end menu
+
+@node Input to Statistics, Single value measurements, Invoking aststatistics, Invoking aststatistics
+@subsubsection Input to Statistics
+
+The following set of options are for specifying the input/outputs of Statistics.
+There are many other input/output options that are common to all Gnuastro programs including Statistics, see @ref{Input output options} for those.
+
+@table @option
+
+@item -c STR/INT
+@itemx --column=STR/INT
+The column to use when the input file is a table with more than one column.
+See @ref{Selecting table columns} for a full description of how to use this option.
+For more on how tables are read in Gnuastro, please see @ref{Tables}.
+
+@item -g FLT
+@itemx --greaterequal=FLT
+Limit the range of inputs into those with values greater and equal to what is given to this option.
+None of the values below this value will be used in any of the processing steps below.
+
+@item -l FLT
+@itemx --lessthan=FLT
+Limit the range of inputs into those with values less-than what is given to this option.
+None of the values greater or equal to this value will be used in any of the processing steps below.
+
+@item -Q FLT[,FLT]
+@itemx --qrange=FLT[,FLT]
+Specify the range of usable inputs using the quantile.
+This option can take one or two quantiles to specify the range.
+When only one number is input (let's call it @mymath{Q}), the range will be those values in the quantile range @mymath{Q} to @mymath{1-Q}.
+So when only one value is given, it must be less than 0.5.
+When two values are given, the first is used as the lower quantile range and the second is used as the larger quantile range.
+
+@cindex Quantile
+The quantile of a given element in a dataset is defined by the fraction of its index to the total number of values in the sorted input array.
+So the smallest and largest values in the dataset have a quantile of 0.0 and 1.0.
+The quantile is a very useful non-parametric (making no assumptions about the input) relative measure to specify a range.
+It can best be understood in terms of the cumulative frequency plot, see @ref{Histogram and Cumulative Frequency Plot}.
+The quantile of each horizontal axis value in the cumulative frequency plot is the vertical axis value associate with it.
+
+@end table
+
+@node Single value measurements, Generating histograms and cumulative frequency plots, Input to Statistics, Invoking aststatistics
+@subsubsection Single value measurements
 
 @table @option
 
@@ -20564,6 +20828,9 @@ Standard deviation after applying @mymath{\sigma}-clipping (see @ref{Sigma clipp
 @mymath{\sigma}-clipping configuration is done with the @option{--sigclipparams} option.
 
 @end table
+
+@node Generating histograms and cumulative frequency plots, Fitting options, Single value measurements, Invoking aststatistics
+@subsubsection Generating histograms and cumulative freq.
 
 The list of options below are for those statistical operations that output more than one value.
 So while they can be called together in one run, their outputs will be distinct (each one's output will usually be printed in more than one line).
@@ -20730,6 +20997,198 @@ Similar to @option{--onebinstart}, but for the second column when a 2D histogram
 
 @end table
 
+@node Fitting options, Contour options, Generating histograms and cumulative frequency plots, Invoking aststatistics
+@subsubsection Fitting options
+
+With the options below, you can customize the least squares fitting features of Statistics.
+For a tutorial of the usage of least squares fitting in Statistics, please see @ref{Least squares fitting}.
+Here, we will just reivew the details of each option.
+
+To activate least squares fitting in Statistics, it is necessary to use the @option{--fit} option to specify the type of fit you want to do.
+See the description of @option{--fit} for the various available fitting models.
+The fitting models that account for weights require three input columns, while the non-weighted ones only take two input columns.
+Here is a summary of the input columns:
+
+@enumerate
+@item
+The first input column is assumed to be the independent variable (on the horizontal axis of a plot, or @mymath{X} in the equations of each fit).
+@item
+The second input column is assumed to be the measured value (on the vertical axis of a plot, or @mymath{Y} in the equation above).
+@item
+The third input column is only for fittings with a weight.
+It is assumed to be the ``weight'' of the measurement column.
+The nature of the ``weight'' can be set with the @option{--fitweight} option, for example if you have the standard deviation of the error in @mymath{Y}, you can use @option{--fitweight=std} (which is the default, so unless the default value has been changed, you will not need to set this).
+@end enumerate
+
+If three columns are given to a model without weight, or two columns are given to a model that requires weights, Statistics will abort and inform you.
+Below you can see an example of fitting with the same linear model, once weighted and once without weights.
+
+@example
+$ aststatistics table.fits --column=X,Y      --fit=linear
+$ aststatistics table.fits --column=X,Y,Yerr --fit=linear-weighted
+@end example
+
+The output of the fitting can be in three modes listed below.
+For a complete example, see the tutorial in @ref{Least squares fitting}).
+@table @asis
+@item Human friendly format
+By default (for example the commands above) the output is an elaborate description of the model parameters.
+For example @mymath{c_0} and @mymath{c_1} in the linear model (@mymath{Y=c_0+c_1X}).
+Their covariance matrix and the reduced @mymath{\chi^2} of the fit are also printed on the output.
+@item Raw numbers
+If you don't need the human friendly components of the output (which are annoying when you want to parse the outputs in some scenarios), you can use @option{--quiet} option.
+Only the raw output numbers will be printed.
+@item Estimate on a custom X column
+Through the @option{--fitestimate} option, you can specify an independent table column to estimate the fit (it can also take a single value).
+See the description of this option for more.
+@end table
+
+@table @option
+@item -f STR
+@itemx --fit=STR
+The name of the fitting method to use.
+They are based on the @url{https://www.gnu.org/software/gsl/doc/html/lls.html, linear} and @url{https://www.gnu.org/software/gsl/doc/html/nls.html, nonlinear} least-squares fitting functions of the GNU Scientific Library (GSL).
+@table @code
+@item linear
+@mymath{Y=c_0+c_1X}
+@item linear-weighted
+@mymath{Y=c_0+c_1X}; accounting for ``weights'' in @mymath{Y}.
+@item linear-no-constant
+@mymath{Y=c_1X}.
+@item linear-no-constant-weighted
+@mymath{Y=c_1X}; accounting for ``weights'' in @mymath{Y}.
+@item polynomial
+@mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; the maximum required power (@mymath{n}) is specifed by @option{--fitmaxpower}.
+@item polynomial-weighted
+@mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; accounting for ``weights'' in @mymath{Y}.
+The maximum required power (@mymath{n}) is specifed by @option{--fitmaxpower}.
+@item polynomial-robust
+@cindex Robust polynomial fit
+@cindex Polynomial fit (robust)
+@mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; rejects outliers.
+The function to use for outlier removal can be specified with the @option{--fitrobust} option described below.
+This model doesn't take weights since they are calculated internally based on the outlier removal function (requires two input columns).
+The maximum required power (@mymath{n}) is specifed by @option{--fitmaxpower}.
+
+For a comprehensive reivew of ``robust'' fitting and the available functions, please see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression} section of the GNU Scientific Library.
+@end table
+
+@item --fitweight=STR
+The nature of the ``weight'' column (when a weight is necessary for the model).
+It can take one of the following values:
+@table @code
+@item std
+Standard deviation of each @mymath{Y} axis measurement: this is the usual ``error'' associated with a measurement (for example in @ref{MakeCatalog}) and is the default value to this option.
+@item var
+Variance of each @mymath{Y} axis measurement.
+Assuming a Gaussian distribution with standard deviation @mymath{\sigma}, the variance is @mymath{\sigma^2}.
+@item inv-var
+Inverse variance of each @mymath{Y} axis measurement.
+Assuming a Gaussian distribution with standard deviation @mymath{\sigma}, the variance is @mymath{1/\sigma^2}.
+@end table
+
+@item --fitmaxpower=INT
+The maximum power (an integer) in a polynomial (@mymath{n} in @mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}).
+This is only relevant when one of the polynomial models is given to @option{--fit}.
+The fit will return @mymath{n+1} coefficients.
+
+@item --fitrobust=STR
+The function for rejecting outliers in the @code{polynomial-robust} fitting model.
+For a comprehensive reivew of ``robust'' fitting and the available functions, please see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression} section of the GNU Scientific Library.
+This function can take the following values:
+@table @code
+@item bisquare
+@cindex Tukey’s biweight (bisquare) function
+@cindex Biweight function of Tukey
+@cindex Bisquare function of Tukey
+Tukey’s biweight (bisquare) function, this is the default function.
+According to the GSL manual, this is a good general purpose weight function.
+@item cauchy
+@cindex Cauchy's function (robust weight)
+@cindex Lorentzian function (robust weight)
+Cauchy’s function (also known as the Lorentzian function).
+It doesn't guarantee a unique solution, so it should be used with care.
+@item fair
+@cindex Fair function (robust weight)
+The fair function.
+It guarantees a unique solution and has continuous derivatives to three orders.
+@item huber
+@cindex Huber function (robust weight)
+Huber's @mymath{\rho} function.
+This is also a good general purpose weight function for rejecting outliers, but can cause difficulty in some special scenarios.
+@item ols
+Ordinary Least Squares (OLS) solution with a constant weight of unity.
+@item welsch
+@cindex Welsch function (robust weight)
+Welsch function which is useful when the residuals follow an exponential distribution.
+@end table
+
+@item --fitestimate=STR/FLT
+Estimate the fitted function at a single point or a complete column of points.
+The input @mymath{X} axis positions to estimate the function can be specified in the following ways:
+@itemize
+@item
+A real number: the fitted function will be estimated at that @mymath{X} position and the corresponding @mymath{Y} and its error will be printed to standard output.
+@item
+@code{self}: in this mode, the same X axis column that was used in the fit will be used for estimating the fitted function.
+This can be useful to visually/easily check the fit, see @ref{Least squares fitting}.
+@item
+A file name: If the value is none of the above, Statistics expects it to be a file name containing a table.
+If the file is a FITS file, the HDU containing the table should be specified with the @option{--fitestimatehdu} option.
+The column of the table to use for the @mymath{X} axis points should be specified with the @option{--fitestimatecol} option.
+@end itemize
+The output in this mode can be customized in the following ways:
+@itemize
+@item
+If a single floating point value is given @option{--fitestimate}, the fitted function will be estimated on that point and printed to standard output.
+@item
+When nothing is given to @option{--output}, the independent column and the estimated values and errors are printed on the standard output.
+@item
+If a file name is given to @option{--output}, the estimated table above is saved in that file.
+It can have any of the formats in @ref{Recognized table formats}.
+As a FITS file, all the fitted numbers (coefficients, covariance matrix and reduced @mymath{\chi^2} are kept as FITS keywords in the same HDU of the estimated table.
+For a complete example, see @ref{Least squares fitting}.
+@item
+When @option{--quiet} is given with @option{--fitestimate}, the fitted parameters are no longer printed on the standard output (they will be available as FITS keywords in the file given to @option{--output}).
+@end itemize
+
+@item --fitestimatehdu=STR/INT
+HDU name or counter (counting from zero) that contains the table to be used for the estimating the fitted function over many points through @option{--fitestimate}.
+For more on selecting a HDU, see the description of @option{--hdu} in @ref{Input output options}.
+
+@item --fitestimatecol=STR/INT
+Column name or counter (counting from one) that contains the table to be used for the estimating the fitted function over many points through @option{--fitestimate}.
+See @ref{Selecting table columns}.
+@end table
+
+
+
+
+
+@node Contour options, Statistics on tiles, Fitting options, Invoking aststatistics
+@subsubsection Contour options
+
+Contours are useful to highlight the 2D shape of a certain flux level over an image.
+To derive contours in Statistics, you can use the option below:
+
+@table @option
+
+@item -R FLT[,FLT[,FLT...]]
+@itemx --contour=FLT[,FLT[,FLT...]]
+@cindex Contour
+@cindex Plot: contour
+Write the contours for the requested levels in a file ending with @file{_contour.txt}.
+It will have three columns: the first two are the coordinates of each point and the third is the level it belongs to (one of the input values).
+Each disconnected contour region will be separated by a blank line.
+This is the requested format for adding contours with PGFPlots in @LaTeX{}.
+If any other format can be useful for your work please let us know so we can add it.
+If the image has World Coordinate System information, the written coordinates will be in RA and Dec, otherwise, they will be in pixel coordinates.
+
+Note that currently, this is a very crude/simple implementation, please let us know if you find problematic situations so we can fix it.
+@end table
+
+@node Statistics on tiles,  , Contour options, Invoking aststatistics
+@subsubsection Statistics on tiles
 
 All the options described until now were from the first class of operations discussed above: those that treat the whole dataset as one.
 However, it often happens that the relative position of the dataset elements over the dataset is significant.
@@ -20747,19 +21206,6 @@ The output will be a file in the same format as the input.
 If the @option{--oneelempertile} option is called, then one element/pixel will be used for each tile (see @ref{Processing options}).
 Otherwise, the output will have the same size as the input, but each element will have the value corresponding to that tile's value.
 If multiple single valued operations are called, then for each operation there will be one extension in the output FITS file.
-
-@item -R FLT[,FLT[,FLT...]]
-@itemx --contour=FLT[,FLT[,FLT...]]
-@cindex Contour
-@cindex Plot: contour
-Write the contours for the requested levels in a file ending with @file{_contour.txt}.
-It will have three columns: the first two are the coordinates of each point and the third is the level it belongs to (one of the input values).
-Each disconnected contour region will be separated by a blank line.
-This is the requested format for adding contours with PGFPlots in @LaTeX{}.
-If any other format can be useful for your work please let us know so we can add it.
-If the image has World Coordinate System information, the written coordinates will be in RA and Dec, otherwise, they will be in pixel coordinates.
-
-Note that currently, this is a very crude/simple implementation, please let us know if you find problematic situations so we can fix it.
 
 @item -y
 @itemx --sky
@@ -24256,8 +24702,8 @@ The last three are the three Euler angles in units of degrees in the ZXZ order a
 
 
 
-@node Modeling and fittings, High-level calculations, Data analysis, Top
-@chapter Modeling and fitting
+@node Data modeling, High-level calculations, Data analysis, Top
+@chapter Data modeling
 
 @cindex Fitting
 @cindex Modeling
@@ -24272,7 +24718,7 @@ The tools in this chapter create model galaxies and will provide 2D fittings to 
 
 
 
-@node MakeProfiles, MakeNoise, Modeling and fittings, Modeling and fittings
+@node MakeProfiles, MakeNoise, Data modeling, Data modeling
 @section MakeProfiles
 
 @cindex Checking detection algorithms
@@ -25333,7 +25779,7 @@ If an individual image was created, this column will have a value of @code{1}, o
 
 
 
-@node MakeNoise,  , MakeProfiles, Modeling and fittings
+@node MakeNoise,  , MakeProfiles, Data modeling
 @section MakeNoise
 
 @cindex Noise
@@ -25668,7 +26114,7 @@ This option will be most useful if the input images were of integer types.
 
 
 
-@node High-level calculations, Installed scripts, Modeling and fittings, Top
+@node High-level calculations, Installed scripts, Data modeling, Top
 @chapter High-level calculations
 
 After the reduction of raw data (for example with the programs in @ref{Data manipulation}) you will have reduced images/data ready for processing/analyzing (for example with the programs in @ref{Data analysis}).
@@ -28833,6 +29279,7 @@ If you use the Info version of this manual (see @ref{Info}), you do not have to 
 * Permutations::                Re-order (or permute) the values in a dataset.
 * Matching::                    Matching catalogs based on position.
 * Statistical operations::      Functions for basic statistics.
+* Fitting functions::           Fit independent and measured variables.
 * Binary datasets::             Datasets that can only have values of 0 or 1.
 * Labeled datasets::            Working with Segmented/labeled datasets.
 * Convolution functions::       Library functions to do convolution.
@@ -30204,71 +30651,52 @@ Free all the individual datasets within the elements of @code{dataptr}, then fre
 @node Copying datasets,  , Arrays of datasets, Library data container
 @subsubsection Copying datasets
 
-The functions in this section describes Gnuastro's facilities to copy a
-given dataset into another. The new dataset can have a different type
-(including a string), it can be already allocated (in which case only the
-values will be written into it). In all these cases, if the input dataset
-is a tile or a list, only the data within the given tile, or the given node
-in a list, are copied. If the input is a list, the @code{next} pointer will
-also be copied to the output, see @ref{List of gal_data_t}.
+The functions in this section describes Gnuastro's facilities to copy a given dataset into another.
+The new dataset can have a different type (including a string), it can be already allocated (in which case only the values will be written into it).
+In all these cases, if the input dataset is a tile or a list, only the data within the given tile, or the given node in a list, are copied.
+If the input is a list, the @code{next} pointer will also be copied to the output, see @ref{List of gal_data_t}.
 
-In many of the functions here, it is possible to copy the dataset to a new
-numeric data type (see @ref{Numeric data types}. In such cases, Gnuastro's
-library is going to use the native conversion by C. So if you are
-converting to a smaller type, it is up to you to make sure that the values
-fit into the output type.
+In many of the functions here, it is possible to copy the dataset to a new numeric data type (see @ref{Numeric data types}.
+In such cases, Gnuastro's library is going to use the native conversion by C.
+So if you are converting to a smaller type, it is up to you to make sure that the values fit into the output type.
 
 @deftypefun {gal_data_t *} gal_data_copy (gal_data_t @code{*in})
-Return a new dataset that is a copy of @code{in}, all of @code{in}'s
-meta-data will also copied into the output, except for @code{block}. If the
-dataset is a tile/list, only the given tile/node will be copied, the
-@code{next} pointer will also be copied however.
+Return a new dataset that is a copy of @code{in}, all of @code{in}'s meta-data will also copied into the output, except for @code{block}.
+If the dataset is a tile/list, only the given tile/node will be copied, the @code{next} pointer will also be copied however.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_data_copy_to_new_type (gal_data_t @code{*in}, uint8_t @code{newtype})
-Return a copy of the dataset @code{in}, converted to @code{newtype}, see
-@ref{Library data types} for Gnuastro library's type identifiers. The
-returned dataset will have all meta-data except their type and @code{block}
-equal to the input's metadata. If the dataset is a tile/list, only the
-given tile/node will be copied, the @code{next} pointer will also be copied
-however.
+Return a copy of the dataset @code{in}, converted to @code{newtype}, see @ref{Library data types} for Gnuastro library's type identifiers.
+The returned dataset will have all meta-data except their type and @code{block} equal to the input's metadata.
+If the dataset is a tile/list, only the given tile/node will be copied, the @code{next} pointer will also be copied however.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_data_copy_to_new_type_free (gal_data_t @code{*in}, uint8_t @code{newtype})
-Return a copy of the dataset @code{in} that is converted to @code{newtype}
-and free the input dataset. See @ref{Library data types} for Gnuastro
-library's type identifiers. The returned dataset will have all meta-data,
-except their type, equal to the input's metadata (including
-@code{next}). Note that if the input is a tile within a larger block, it
-will not be freed. This function is similar to
-@code{gal_data_copy_to_new_type}, except that it will free the input
-dataset.
+Return a copy of the dataset @code{in} that is converted to @code{newtype} and free the input dataset.
+See @ref{Library data types} for Gnuastro library's type identifiers.
+The returned dataset will have all meta-data, except their type, equal to the input's metadata (including @code{next}).
+Note that if the input is a tile within a larger block, it will not be freed.
+This function is similar to @code{gal_data_copy_to_new_type}, except that it will free the input dataset.
 @end deftypefun
 
 @deftypefun {void} gal_data_copy_to_allocated (gal_data_t @code{*in}, gal_data_t @code{*out})
-Copy the contents of the array in @code{in} into the already allocated
-array in @code{out}. The types of the input and output may be different,
-type conversion will be done internally. When @code{in->size != out->size}
-this function will behave as follows:
+Copy the contents of the array in @code{in} into the already allocated array in @code{out}.
+The types of the input and output may be different, type conversion will be done internally.
+When @code{in->size != out->size} this function will behave as follows:
 
 @table @code
 @item out->size < in->size
-This function will not re-allocate the necessary space, it will abort with an
-error, so please check before calling this function.
+This function will not re-allocate the necessary space, it will abort with an error, so please check before calling this function.
 
 @item out->size > in->size
-This function will write the values in @code{out->size} and
-@code{out->dsize} from the same values of @code{in}. So if you want to use
-a pre-allocated space/dataset multiple times with varying input sizes, be
-sure to reset @code{out->size} before every call to this function.
+This function will write the values in @code{out->size} and @code{out->dsize} from the same values of @code{in}.
+So if you want to use a pre-allocated space/dataset multiple times with varying input sizes, be sure to reset @code{out->size} before every call to this function.
 @end table
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_data_copy_string_to_number (char @code{*string})
-Read @code{string} into the smallest type that can store the value (see
-@ref{Numeric data types}). This function is just a wrapper for the
-@code{gal_type_string_to_number}, but will put the value into a
-single-element dataset.
+Read @code{string} into the smallest type that can store the value (see @ref{Numeric data types}).
+This function is just a wrapper for the @code{gal_type_string_to_number}, but will put the value into a single-element dataset.
 @end deftypefun
 
 
@@ -34755,7 +35183,7 @@ If internal allocation is necessary and the space is larger than @code{minmapsiz
 
 @end deftypefun
 
-@node Statistical operations, Binary datasets, Matching, Gnuastro library
+@node Statistical operations, Fitting functions, Matching, Gnuastro library
 @subsection Statistical operations (@file{statistics.h})
 
 After reading a dataset into memory from a file or fully simulating it with
@@ -35187,7 +35615,185 @@ input dataset, so the input may be altered after this function.
 @end deftypefun
 
 
-@node Binary datasets, Labeled datasets, Statistical operations, Gnuastro library
+
+
+
+
+
+
+
+
+@node Fitting functions, Binary datasets, Statistical operations, Gnuastro library
+@subsection Fitting functions (@file{fit.h})
+
+@cindex Fitting
+@cindex Least squares fitting
+
+After doing a measurement, it is usually necessary to parametrize the relation that has been found.
+The functions in this section are wrappers over the GNU Scientific Library (GSL) @url{https://www.gnu.org/software/gsl/doc/html/lls.html, Linear Least-Squares Fitting}, to make them easily accessible using Gnuastro's @ref{Generic data container}.
+The respective GSL function is mentioned under each function.
+
+@deffn  {Global integer} GAL_FIT_INVALID
+@deffnx {Global integer} GAL_FIT_LINEAR
+@deffnx {Global integer} GAL_FIT_LINEAR_WEIGHTED
+@deffnx {Global integer} GAL_FIT_LINEAR_NO_CONSTANT
+@deffnx {Global integer} GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED
+@deffnx {Global integer} GAL_FIT_POLYNOMIAL
+@deffnx {Global integer} GAL_FIT_POLYNOMIAL_WEIGHTED
+@deffnx {Global integer} GAL_FIT_POLYNOMIAL_NUMBER
+Identifiers for the various types of fitting functions.
+These can be used by the callers of these functions to select between various fitting types.
+They can easily be converted to, and from, fixed human-readable strings using the @code{gal_fit_name_*} functions below.
+The last one @code{GAL_FIT_ROBUST_NUMBER} is the total number of available fitting methods (can be used to add more macros in the calling program and to avoid overlaps with existing codes).
+@end deffn
+
+@deffn  {Global integer} GAL_FIT_ROBUST_INVALID
+@deffnx {Global integer} GAL_FIT_ROBUST_DEFAULT
+@deffnx {Global integer} GAL_FIT_ROBUST_BISQUARE
+@deffnx {Global integer} GAL_FIT_ROBUST_CAUCHY
+@deffnx {Global integer} GAL_FIT_ROBUST_FAIR
+@deffnx {Global integer} GAL_FIT_ROBUST_HUBER
+@deffnx {Global integer} GAL_FIT_ROBUST_OLS
+@deffnx {Global integer} GAL_FIT_ROBUST_WELSCH
+@deffnx {Global integer} GAL_FIT_ROBUST_NUMBER
+Identifiers for the various types of robust polynomial fitting functions.
+For a description of each, see @url{https://www.gnu.org/s/gsl/doc/html/lls.html#c.gsl_multifit_robust_alloc}.
+The last one @code{GAL_FIT_ROBUST_NUMBER} is the total number of available functions (can be used to add more macros in the calling program and to avoid overlaps with existing codes).
+@end deffn
+
+@deftypefun uint8_t gal_fit_name_to_id (char @code{*name})
+Return the internal code of a standard human-readable name for the various fitting functions.
+If the name is not recognized, the returned value will be @code{GAL_FIT_INVALID}.
+@end deftypefun
+
+@deftypefun {char *} gal_fit_name_from_id (uint8_t @code{fitid})
+Return a standard human-readable name for the fitting function identified with the @code{fitid} (read as ``fitting ID'').
+If the fitting ID couldn't be recognized, a NULL pointer is returned.
+@end deftypefun
+
+@deftypefun uint8_t gal_fit_name_robust_to_id (char @code{*name})
+Return the internal code of a standard human-readable name for the various robust fitting types.
+If the name is not recognized, the returned value will be @code{GAL_FIT_INVALID}.
+@end deftypefun
+
+@deftypefun {char *} gal_fit_name_robust_from_id (uint8_t @code{robustid})
+Return a standard human-readable name for the input robust fitting type.
+If the fitting ID couldn't be recognized, a NULL pointer is returned.
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_fit_1d_linear (gal_data_t @code{*xin}, gal_data_t @code{*yin}, gal_data_t @code{*ywht})
+@cindex Weight (in fitting)
+Preform a 1D linear regression fit with a constant term@footnote{@url{https://www.gnu.org/s/gsl/doc/html/lls.html#linear-regression-with-a-constant-term}} in the form of @mymath{Y=c_0+c_1X}.
+The input @code{xin} contains the independent variable values and @code{yin} contains the measured variable values for each independent variable.
+When @code{ywht!=NULL}, it is assumed to contain the ``weight'' of each Y measurement (if you don't have weights on your measured values, simply set this to @code{NULL}).
+The weight of each measurement is the inverse of its variance.
+For a Gaussian error distribution with standard deviation @mymath{\sigma}, the weight is therefore @mymath{1/\sigma^2}.
+
+If any of the values in any of the inputs is blank (NaN in floating point), the final fitted parameters will all be NaN.
+To remove rows with a NaN/blank, you can use @code{gal_blank_remove_rows} (which will remove all rows with a blank values in any of the columns with a single call).
+
+@cindex Chi-squared
+@cindex Covariance matrix
+@cindex Matrix (covariance)
+@cindex Variance-covariance matrix
+The output is a single dataset with a @code{GAL_TYPE_FLOAT64} type with 6 elements:
+@enumerate
+@item
+@mymath{c_0}: the constant in @mymath{Y=c_0+c_1X}.
+@item
+@mymath{c_1}: the multiple in @mymath{Y=c_0+c_1X}.
+@item
+First element of variance-covariance matrix.
+@item
+Second and third (which are equal) elements of the variance-covariance matrix.
+@item
+Fourth element of the variance-covariance matrix.
+@item
+The reduced @mymath{\chi^2} of the fit.
+@end enumerate
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_fit_1d_linear_no_constant (gal_data_t @code{*xin}, gal_data_t @code{*yin}, gal_data_t @code{*ywht})
+@cindex Weight (in fitting)
+Preform a 1D linear regression fit @emph{without} a constant term@footnote{@url{https://www.gnu.org/s/gsl/doc/html/lls.html#linear-regression-without-a-constant-term}}, formally: @mymath{Y=c_1X}.
+The input @code{xin} contains the independent variable values and @code{yin} contains the measured variable values for each independent variable.
+When @code{ywht!=NULL}, it is assumed to contain the ``weight'' of each Y measurement (if you don't have weights on your measured values, simply set this to @code{NULL}).
+The weight of each measurement is the inverse of its variance.
+For a Gaussian error distribution with standard deviation @mymath{\sigma}, the weight is therefore @mymath{1/\sigma^2}.
+
+If any of the values in any of the inputs is blank (NaN in floating point), the final fitted parameters will all be NaN.
+To remove rows with a NaN/blank, you can use @code{gal_blank_remove_rows} (which will remove all rows with a blank values in any of the columns with a single call).
+
+The output is a single dataset with a @code{GAL_TYPE_FLOAT64} type with 3 elements:
+@enumerate
+@item
+@mymath{c_1}: the multiple in @mymath{Y=c_0+c_1X}.
+@item
+Variance of @mymath{c_1}.
+@item
+The reduced @mymath{\chi^2} of the fit.
+@end enumerate
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_fit_1d_linear_estimate (gal_data_t @code{*fit}, gal_data_t @code{*xin})
+Given a linear least squares fit output (@code{fit}), estimate the fit on an arbitrary number of independent variable (horizontal axis, or X, in an X-Y plot) within @code{xin}.
+@code{fit} is assumed to be the output of either @code{gal_fit_1d_linear} or @code{gal_fit_1d_linear_no_constant}.
+In case you haven't used those functions to obtain the constants and covariance matrix elements, see the description of those functions for the expected format of @code{fit}.
+
+This function returns two columns (as a @ref{List of gal_data_t}): The top node of the list is the estimated values at the input X-axis positions, and the next node is the erros in the estimation.
+Naturally, both have the same number of elements as @code{xin}.
+Being a list, helps in easily printing the output columns to a table (see @ref{Table input output}).
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_fit_1d_polynomial (gal_data_t @code{*xin}, gal_data_t @code{*yin}, gal_data_t @code{*ywht}, size_t @code{maxpower}, double @code{*redchisq})
+@cindex Polynomial fit
+@cindex Fitting (polynomial)
+Preform a 1D polynomial fit, formally: @mymath{Y=c+0+c_1X+c_2X^2+\cdots+c_nX^n} (using GSL's multi-parameter regression@footnote{@url{https://www.gnu.org/s/gsl/doc/html/lls.html#multi-parameter-regression}}).
+The largest power of @mymath{X} is determined with the @code{maxpower} argument (which is @mymath{n} in the equation above).
+The reduced @mymath{\chi^2} of the fit is written in the space that @code{*redchisq} points to.
+
+The input @code{xin} contains the independent variable values and the input @code{yin} contains the measured variable values for each independent variable.
+When @code{ywht!=NULL}, it is assumed to contain the ``weight'' of each Y measurement (if you don't have weights on your measured values, simply set this to @code{NULL}).
+The weight of each measurement is the inverse of its variance.
+For a Gaussian error distribution with standard deviation @mymath{\sigma}, the weight is therefore @mymath{1/\sigma^2}.
+
+If any of the values in any of the inputs is blank (NaN in floating point), the final fitted parameters will all be NaN.
+To remove rows with a NaN/blank, you can use @code{gal_blank_remove_rows} (which will remove all rows with a blank values in any of the columns with a single call).
+
+The output of this function is a list of two datasets, linked as a list (as a @ref{List of gal_data_t}).
+Both have a @code{GAL_TYPE_FLOAT64} type, and are described below (in order).
+@enumerate
+@item
+A one dimensional and contains @mymath{n+1} elements (for the @mymath{n+1} constants that have been found @mymath{(c_0, c_1, c_2, \cdots, c_n)}.
+@item
+A two dimensional variance-covariance matrix with @mymath{(n+1)\times(n+1)} elements.
+@end enumerate
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_fit_1d_polynomial_robust (gal_data_t @code{*xin}, gal_data_t @code{*yin}, size_t @code{maxpower}, uint8_t @code{robustid}, double @code{*redchisq})
+@cindex Robust Polynomial fit
+Preform a 1D robust polynomial fit, formally: @mymath{Y=c+0+c_1X+c_2X^2+\cdots+c_nX^n} (using GSL's robust linear regression@footnote{@url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression}}).
+See the description there for the details.
+
+The inputs and outputs of this function are almost identical to @code{gal_fit_1d_polynomial}, with the difference that you need to specify the function to reject outliers through the @code{robustid} input argument.
+You can pass any of the @code{GAL_FIT_ROBUST_*} codes defined at the top of this section to this (the names are identical to the names in GSL).
+@end deftypefun
+
+@deftypefun {gal_data_t *} gal_fit_1d_polynomial_estimate (gal_data_t @code{*fit}, gal_data_t @code{*xin})
+Given a 1D polynomial fit output (@code{fit}), estimate the fit on an arbitrary number of independent variable (horizontal axis, or X, in an X-Y plot) within @code{xin}.
+@code{fit} is assumed to be the output of @code{gal_fit_1d_polynomial}.
+In case you haven't used this function to obtain the constants and covariance matrix, see the description of that function for the expected format of @code{fit}.
+
+This function returns two columns (as a @ref{List of gal_data_t}): The top node of the list is the estimated values at the input X-axis positions, and the next node is the erros in the estimation.
+Naturally, both have the same number of elements as @code{xin}.
+Being a list, helps in easily printing the output columns to a table (see @ref{Table input output}).
+@end deftypefun
+
+
+
+
+
+@node Binary datasets, Labeled datasets, Fitting functions, Gnuastro library
 @subsection Binary datasets (@file{binary.h})
 
 @cindex Thresholding

@@ -37,6 +37,7 @@ enum program_args_groups
   UI_GROUP_PARTICULAR_STAT,
   UI_GROUP_SKY,
   UI_GROUP_HIST_CFP,
+  UI_GROUP_FIT,
 };
 
 
@@ -45,14 +46,13 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b e f j p v w x z
+   a b e j r v w x z
    B G J L W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
   UI_KEY_COLUMN       = 'c',
-  UI_KEY_REFCOL       = 'r',
   UI_KEY_GREATEREQUAL = 'g',
   UI_KEY_LESSTHAN     = 'l',
   UI_KEY_QRANGE       = 'Q',
@@ -71,6 +71,8 @@ enum option_keys_enum
   UI_KEY_SKY          = 'y',
   UI_KEY_KERNEL       = 'k',
   UI_KEY_CONTOUR      = 'R',
+  UI_KEY_FIT          = 'f',
+  UI_KEY_FITMAXPOWER  = 'p',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
@@ -111,6 +113,11 @@ enum option_keys_enum
   UI_KEY_GREATEREQUAL2,
   UI_KEY_LESSTHAN2,
   UI_KEY_ONEBINSTART2,
+  UI_KEY_FITWEIGHT,
+  UI_KEY_FITESTIMATE,
+  UI_KEY_FITESTIMATEHDU,
+  UI_KEY_FITESTIMATECOL,
+  UI_KEY_FITROBUST,
 };
 
 

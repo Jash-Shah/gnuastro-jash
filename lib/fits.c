@@ -2086,7 +2086,8 @@ gal_fits_key_write_in_ptr(gal_fits_list_key_t **keylist, fitsfile *fptr)
               gal_fits_key_write_in_ptr_nan_check(tmp);
 
               /* Write/Update the keyword value. */
-              if( fits_update_key(fptr, gal_fits_type_to_datatype(tmp->type),
+              if( fits_update_key(fptr,
+                                  gal_fits_type_to_datatype(tmp->type),
                                   tmp->keyname, tmp->value, tmp->comment,
                                   &status) )
                 gal_fits_io_error(status, NULL);
@@ -2100,14 +2101,15 @@ gal_fits_key_write_in_ptr(gal_fits_list_key_t **keylist, fitsfile *fptr)
 
           /* Write the units if it was given. */
           if( tmp->unit
-              && fits_write_key_unit(fptr, tmp->keyname, tmp->unit, &status) )
+              && fits_write_key_unit(fptr, tmp->keyname, tmp->unit,
+                                     &status) )
             gal_fits_io_error(status, NULL);
 
           /* Free the value pointer if desired: */
-          if(tmp->kfree) free(tmp->keyname);
-          if(tmp->vfree) free(tmp->value);
-          if(tmp->cfree) free(tmp->comment);
           if(tmp->ufree) free(tmp->unit);
+          if(tmp->vfree) free(tmp->value);
+          if(tmp->kfree) free(tmp->keyname);
+          if(tmp->cfree) free(tmp->comment);
         }
 
       /* Keep the pointer to the next keyword and free the allocated

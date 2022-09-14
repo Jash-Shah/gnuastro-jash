@@ -1692,9 +1692,9 @@ gal_txt_write(gal_data_t *input, struct gal_fits_list_key_t **keylist,
       /* Check if the dimensionality and size is the same for all the
          elements. */
       if( input!=data && gal_dimension_is_different(input, data) )
-        error(EXIT_FAILURE, 0, "%s: the input list of datasets must have the "
-              "same sizes (dimensions and length along each dimension)",
-              __func__);
+        error(EXIT_FAILURE, 0, "%s: the input list of datasets must "
+              "have the same sizes (dimensions and length along each "
+              "dimension)", __func__);
     }
 
 
@@ -1709,9 +1709,10 @@ gal_txt_write(gal_data_t *input, struct gal_fits_list_key_t **keylist,
     {
       /* Make sure the file doesn't already exist. */
       if( gal_checkset_check_file_return(filename) )
-        error(EXIT_FAILURE, 0, "%s: %s already exists. For safety, this "
-              "function will not over-write an existing file. Please delete "
-              "it before calling this function", __func__, filename);
+        error(EXIT_FAILURE, 0, "%s: %s already exists. For safety, "
+              "this function will not over-write an existing file. "
+              "Please delete it before calling this function",
+              __func__, filename);
 
       /* Open the output file. */
       errno=0;
@@ -1755,7 +1756,7 @@ gal_txt_write(gal_data_t *input, struct gal_fits_list_key_t **keylist,
             j=0;
             for(data=input;data!=NULL;data=data->next)    /* Column. */
               txt_print_value(fp, data->array, data->type, i,
-                            fmts[j++ * FMTS_COLS]);
+                              fmts[j++ * FMTS_COLS]);
             fprintf(fp, "\n");
           }
       break;

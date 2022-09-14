@@ -72,4 +72,4 @@ gal_jpeg_write(gal_data_t *in, char *filename, uint8_t quality,
 
 __END_C_DECLS    /* From C++ preparations */
 
-#endif           /* __GAL_TIFF_H__ */
+#endif           /* __GAL_JPEG_H__ */

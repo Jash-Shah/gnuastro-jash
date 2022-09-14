@@ -30,6 +30,9 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <stdlib.h>
 
+#include <gsl/gsl_fit.h>
+
+#include <gnuastro/fit.h>
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/tile.h>
@@ -980,11 +983,7 @@ print_input_info(struct statisticsparams *p)
     }
   if(str)
     {
-      printf("Range: ");
-      if(p->refcol)
-        printf("[on column %s] ",
-               p->reference->name ? p->reference->name : p->refcol);
-      printf("%s.\n", str);
+      printf("Range: %s.\n", str);
       free(str);
     }
 
@@ -1076,8 +1075,8 @@ print_basics(struct statisticsparams *p)
   p->numasciibins = p->numasciibins ? p->numasciibins : 70;
   bins=gal_statistics_regular_bins(p->input, range, p->numasciibins, NAN);
   hist=gal_statistics_histogram(p->input, bins, 0, 0);
-  if(p->refcol==NULL) printf("\nHistogram:\n");
-  print_ascii_plot(p, hist, bins, 1, p->refcol ? 1 : 0);
+  printf("\nHistogram:\n");
+  print_ascii_plot(p, hist, bins, 1, 0);
   gal_data_free(bins);
   gal_data_free(hist);
   gal_data_free(range);
@@ -1175,6 +1174,605 @@ print_sigma_clip(struct statisticsparams *p)
 
 
 
+
+
+/*******************************************************************/
+/**************                Fitting               ***************/
+/*******************************************************************/
+static struct gal_fits_list_key_t *
+statistics_fit_params_to_keys(struct statisticsparams *p, gal_data_t *fit,
+                              char *whtnat, double *redchisq)
+{
+  size_t i, j;
+  char *kname, *kcomm;
+  struct gal_fits_list_key_t *out=NULL;
+  double *c=fit->array, *cov=fit->next?fit->next->array:NULL;
+
+  /* Set the title and basic info (independent of the type of fit). */
+  gal_fits_key_list_title_add(&out, "Fit results", 0);
+  gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITTYPE", 0,
+                        gal_fit_name_from_id(p->fitid), 0,
+                        "Functional form of the fitting.", 0, NULL, 0);
+  if( p->fitid==GAL_FIT_POLYNOMIAL
+      || p->fitid==GAL_FIT_POLYNOMIAL_ROBUST
+      || p->fitid==GAL_FIT_POLYNOMIAL_WEIGHTED )
+    gal_fits_key_list_add(&out, GAL_TYPE_SIZE_T, "FITMAXP", 0,
+                          &p->fitmaxpower, 0,
+                          "Maximum power of polynomial.", 0, NULL, 0);
+  if( p->fitid==GAL_FIT_POLYNOMIAL_ROBUST )
+    gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITRTYP", 0,
+                          p->fitrobustname, 0,
+                          "Function for removing outliers", 0, NULL, 0);
+  gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITIN", 0,
+                        p->inputname, 0,"Name of file with input columns.",
+                        0, NULL, 0);
+  if(p->isfits)
+    gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITINHDU", 0,
+                          p->cp.hdu, 0,"Name or Number of HDU with input "
+                          "columns.", 0, NULL, 0);
+  gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITXCOL", 0,
+                        p->columns->v, 0,"Name or Number of independent "
+                        "(X) column.", 0, NULL, 0);
+  gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITYCOL", 0,
+                        p->columns->next->v, 0,"Name or Number of "
+                        "measured (Y) column.", 0, NULL, 0);
+  if(p->columns->next->next)
+    {
+      gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITWCOL", 0,
+                            p->columns->next->next->v, 0,
+                            "Name or Number of weight column.", 0, NULL, 0);
+      gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITWNAT", 0,
+                            whtnat, 0, "Nature of weight column.",
+                            0, NULL, 0);
+    }
+  if(p->fitid==GAL_FIT_POLYNOMIAL_ROBUST)
+    gal_fits_key_list_add(&out, GAL_TYPE_STRING, "FITROBST", 0,
+                          p->fitrobustname, 0,
+                          "Robust fitting (rejecting outliers) function.",
+                          0, NULL, 0);
+  gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FRDCHISQ", 0,
+                        redchisq, 0, "Reduced chi^2 of fit.", 0, NULL, 0);
+
+  /* Add the Fitting results. */
+  switch(p->fitid)
+    {
+    /* Linear with no constant */
+    case GAL_FIT_LINEAR_NO_CONSTANT:
+    case GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED:
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FITC1", 0,
+                            c, 0, "C1: Multiple of X in linear fit "
+                            "(y=C1*x).", 0, NULL, 0);
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FCOV11", 0,
+                            c+1, 0, "Variance of C1 (only element of "
+                            "cov. matrix).", 0, NULL, 0);
+      break;
+
+    /* Basic linear. */
+    case GAL_FIT_LINEAR:
+    case GAL_FIT_LINEAR_WEIGHTED:
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FITC0", 0,
+                            c, 0, "C0: Constant in linear fit "
+                            "(y=C0+C1*x).", 0, NULL, 0);
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FITC1", 0,
+                            c+1, 0, "C1: Multiple of X in linear fit "
+                            "(y=C0+C1*x).", 0, NULL, 0);
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FCOV11", 0,
+                            c+2, 0, "Covariance matrix element (1,1).",
+                            0, NULL, 0);
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FCOV12", 0,
+                            c+3, 0, "Covariance matrix element "
+                            "(1,2)=(2,1).", 0, NULL, 0);
+      gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, "FCOV22", 0,
+                            c+4, 0, "Covariance matrix element (2,2).",
+                            0, NULL, 0);
+      break;
+
+    /* Polynomial fit. */
+    case GAL_FIT_POLYNOMIAL:
+    case GAL_FIT_POLYNOMIAL_ROBUST:
+    case GAL_FIT_POLYNOMIAL_WEIGHTED:
+      for(i=0;i<fit->size;++i)
+        {
+          if( asprintf(&kname, "FITC%zu", i)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf in FITCxx name",
+                  __func__);
+          if( asprintf(&kcomm, "C%zu: multiple of x^%zu in polynomial",
+                       i, i)<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf in FITCxx comment",
+                  __func__);
+          gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, kname, 1,
+                                c+i, 0, kcomm, 1, NULL, 0);
+        }
+      for(i=0;i<fit->size;++i)
+        for(j=0;j<fit->size;++j)
+          {
+            if( asprintf(&kname, "FCOV%zu%zu", i+1, j+1)<0 )
+              error(EXIT_FAILURE, 0, "%s: asprintf in FCOVxx name",
+                    __func__);
+            if( asprintf(&kcomm, "Covariance matrix element (%zu,%zu).",
+                         i+1, j+1)<0 )
+              error(EXIT_FAILURE, 0, "%s: asprintf in FCOVxx comment",
+                    __func__);
+            gal_fits_key_list_add(&out, GAL_TYPE_FLOAT64, kname, 1,
+                                  cov+(i*fit->size+j), 0, kcomm, 1,
+                                  NULL, 0);
+          }
+      break;
+
+    /* Unrecognized FIT ID. */
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "fix the problem. The code '%d' isn't recognized for 'fitid'",
+            __func__, PACKAGE_BUGREPORT, p->fitid);
+    }
+
+  /* Reverse the last-in-first-out list to be in the same logical order we
+     inserted the items here. */
+  gal_fits_key_list_reverse(&out);
+
+  /* Return the key list. */
+  return out;
+}
+
+
+
+
+
+static void
+statistics_fit_estimate(struct statisticsparams *p, gal_data_t *fit,
+                        char *whtnat, double *redchisq)
+{
+  gal_data_t *est=NULL;
+  double *x, *y, *yerr;
+  struct gal_fits_list_key_t *keys=NULL;
+
+  /* If the input had no metadata, add them. */
+  if(p->fitestval->name==NULL)
+    gal_checkset_allocate_copy("X-INPUT", &p->fitestval->name);
+  if(p->fitestval->comment==NULL)
+    gal_checkset_allocate_copy("Requested values to estimate fit.",
+                               &p->fitestval->comment);
+
+  /* Estimations are done on a per-row level. */
+  switch(p->fitid)
+    {
+    case GAL_FIT_LINEAR:
+    case GAL_FIT_LINEAR_WEIGHTED:
+    case GAL_FIT_LINEAR_NO_CONSTANT:
+    case GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED:
+      est=gal_fit_1d_linear_estimate(fit, p->fitestval);
+      break;
+
+    case GAL_FIT_POLYNOMIAL:
+    case GAL_FIT_POLYNOMIAL_ROBUST:
+    case GAL_FIT_POLYNOMIAL_WEIGHTED:
+      est=gal_fit_1d_polynomial_estimate(fit, p->fitestval);
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "fix the problem. The code '%d' isn't recognized for 'fitid'",
+            __func__, PACKAGE_BUGREPORT, p->fitid);
+    }
+
+  /* Set the estimated columns to be after the input's columns. */
+  p->fitestval->next=est;
+
+  /* Non-quiet title. */
+  if(p->cp.quiet==0)
+    printf("\nRequested estimation:\n");
+
+  /* If only one value was estimated and no column was given, then the
+     user wanted the value on the command-line. */
+  if(p->fitestimatecol)
+    {
+      if(p->cp.output)
+        {
+          if(p->cp.quiet==0)
+            printf("  Written to: %s\n", p->cp.output);
+        }
+      keys=statistics_fit_params_to_keys(p, fit, whtnat, redchisq);
+      gal_table_write(p->fitestval, &keys, NULL, p->cp.tableformat,
+                      p->cp.output, "FIT_ESTIMATE", 0);
+    }
+
+  /* Print estimated value on the commandline. */
+  else
+    {
+      x=p->fitestval->array;
+      y=p->fitestval->next->array;
+      yerr=p->fitestval->next->next->array;
+      if(p->cp.quiet)
+        printf("%f %f %f\n", x[0], y[0], yerr[0]);
+      else
+        printf("  X:         %f       (given on command-line)\n"
+               "  Y:         %f\n"
+               "  Y_error:   %f\n", x[0], y[0], yerr[0]);
+    }
+
+  /* Clean up. */
+  gal_list_data_free(p->fitestval);
+  p->fitestval=NULL; /* Was freed with 'out', avoid generic freeing later. */
+}
+
+
+
+
+
+static char *
+statistics_fit_whtnat(struct statisticsparams *p)
+{
+  switch(p->fitwhtid)
+    {
+    case STATISTICS_FIT_WHT_STD:    return "Standard deviation";
+    case STATISTICS_FIT_WHT_VAR:    return "Variance";
+    case STATISTICS_FIT_WHT_INVVAR: return "Inverse variance";
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+            "to find and fix the problem. The value '%d' isn't a "
+            "recognized weight type identifier", __func__,
+            PACKAGE_BUGREPORT, p->fitwhtid);
+    }
+
+  /* Control should not reach here. */
+  error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+        "to find and fix the problem. Control should not reach the "
+        "end of this function", __func__, PACKAGE_BUGREPORT);
+  return NULL;
+}
+
+
+
+
+
+static char *
+statistics_fit_print_intro(struct statisticsparams *p, char **whtnat)
+{
+  char *colspace;
+  char *filename, *intro, *wcolstr=NULL;
+  gal_list_str_t *xn=p->columns, *yn=xn->next?xn->next:NULL,
+                 *wn=yn->next?yn->next:NULL;
+
+  /* Set the full file name (for easy reading later!).*/
+  filename=gal_fits_name_save_as_string(p->inputname, p->cp.hdu);
+
+  /* Prepare string for nature of weight (if any weight was given!). */
+  *whtnat = p->input->next->next ? statistics_fit_whtnat(p) : NULL;
+
+  /* Set the Weight column string(s). */
+  if(   p->fitid==GAL_FIT_LINEAR_WEIGHTED
+     || p->fitid==GAL_FIT_POLYNOMIAL_WEIGHTED
+     || p->fitid==GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED )
+    {
+      colspace="      ";
+      if( asprintf(&wcolstr, "  Weight column: %s    "
+                   "[%s of Y in each row]\n", wn->v, *whtnat)<0 )
+        error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+    }
+  else colspace=" ";
+
+  /* Put everything into one string. */
+  if( asprintf(&intro,
+               "%s\n"
+               "-------\n"
+               "Fitting results (remove extra info with '--quiet' "
+               "or '-q)\n"
+               "  Input file:    %s with %zu non-blank rows.\n"
+               "  X%scolumn: %s\n"
+               "  Y%scolumn: %s\n"
+               "%s",
+               PROGRAM_STRING, filename, p->input->size,
+               colspace, xn->v, colspace, yn->v,
+               wcolstr ? wcolstr : "")<0 )
+    error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+
+  /* Clean up and return. */
+  free(filename);
+  free(wcolstr);
+  return intro;
+}
+
+
+
+
+
+static int
+statistics_fit_linear(struct statisticsparams *p)
+{
+  double *f, redchisq;
+  gal_data_t *fit=NULL;
+  char *intro, *funcvals, *whtnat=NULL;
+
+  /* These have to be defined after each other. */
+  gal_data_t *x=p->input;
+  gal_data_t *y=x->next?x->next:NULL, *w=y->next?y->next:NULL;
+
+  /* If the required number of columns aren't given,  */
+  switch(p->fitid)
+    {
+
+    /* Linear fit. */
+    case GAL_FIT_LINEAR:
+      if(gal_list_data_number(p->input)!=2) return 2;
+      fit=gal_fit_1d_linear(x, y, NULL);
+      break;
+
+    /* Linear (weighted). */
+    case GAL_FIT_LINEAR_WEIGHTED:
+      if(gal_list_data_number(p->input)!=3) return 3;
+      fit=gal_fit_1d_linear(x, y, w);
+      break;
+
+    /* Linear (no constant) */
+    case GAL_FIT_LINEAR_NO_CONSTANT:
+      if(gal_list_data_number(p->input)!=2) return 2;
+      fit=gal_fit_1d_linear_no_constant(x, y, NULL);
+      break;
+
+    /* Linear (no constant, weighted) */
+    case GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED:
+      if(gal_list_data_number(p->input)!=3) return 3;
+      fit=gal_fit_1d_linear_no_constant(x, y, w);
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "fix the problem. '%d' isn't recognized as a fitting ID",
+            __func__, PACKAGE_BUGREPORT, p->fitid);
+    }
+
+  /* Print the output. */
+  f=fit->array;
+  if(p->cp.quiet)
+    {
+      if(p->fitestval) whtnat=statistics_fit_whtnat(p);
+      else
+        {
+          /* The covariance matrix will only be present if a constant was
+             present. After it, just print the residual (chi-squared or sum
+             of squares of residuals). */
+          if(   p->fitid==GAL_FIT_LINEAR
+                || p->fitid==GAL_FIT_LINEAR_WEIGHTED )
+            printf("%+-.10f %+-.10f\n"    /* The Two coefficients. */
+                   "%+-20.10f %+-20.10f\n"/* First row of cov. matrix. */
+                   "%+-20.10f %+-20.10f\n"/* Second row of cov. matrix. */
+                   "%+-.10f\n",           /* Residual. */
+                   f[0], f[1], f[2], f[3], f[3], f[4], f[5]);
+          else
+            printf("%+-.10f\n%+-.10f\n%+-.10f\n", f[0], f[1], f[2]);
+        }
+    }
+  else
+    {
+      /* With or without constant. */
+      if(    p->fitid==GAL_FIT_LINEAR
+          || p->fitid==GAL_FIT_LINEAR_WEIGHTED )
+        {
+          redchisq=f[5];
+          if( asprintf(&funcvals,
+                       "Fit function: Y = c0 + (c1 * X)\n"
+                       "  c0:  %+-.10f\n"
+                       "  c1:  %+-.10f\n\n"
+                       "Covariance matrix (off-diagonal are identical "
+                       "same):\n"
+                       "  %+-20.10f %+-20.10f\n"
+                       "  %+-20.10f %+-20.10f\n", f[0], f[1], f[2], f[3],
+                       f[3], f[4])<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+        }
+      else
+        {
+          redchisq=f[2];
+          if( asprintf(&funcvals,
+                       "Fit function: Y = c1 * X\n"
+                       "  c1: %+-.10f\n\n"
+                       "Variance of 'c1':\n"
+                       "  %+-.10f\n", f[0], f[1])<0 )
+            error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
+        }
+
+      /* Statistics version, and input filenames. */
+      intro=statistics_fit_print_intro(p, &whtnat);
+
+      /* Final printed report.*/
+      printf("%s\n%s\nReduced chi^2 of fit:\n  %+f\n", intro,
+             funcvals, redchisq);
+
+      /* Clean up. */
+      free(intro);
+      free(funcvals);
+    }
+
+  /* Estimate values (if requested), note that it involves writing the
+     fitted parameters in the header. */
+  if(p->fitestval)
+    statistics_fit_estimate(p, fit, whtnat, fit->size==6?f+5:f+2);
+
+  /* Clean up. */
+  gal_data_free(fit);
+  return 0; /* Means everything is good! */
+}
+
+
+
+
+
+static void
+statistics_fit_polynomial_print(struct statisticsparams *p, gal_data_t *fit,
+                                double redchisq, char **whtnat)
+{
+  size_t i, j;
+  char *intro;
+  size_t nconst=p->fitmaxpower+1;
+  double *farr=fit->array, *carr=fit->next->array;
+
+  /* Print fitted constants */
+  if(p->cp.quiet)
+    {
+      if(p->fitestval==NULL)
+        {
+          for(i=0;i<nconst;++i) printf("%+-.10f ", farr[i]);
+          printf("\b\n");
+        }
+    }
+  else
+    {
+      /* Statistics version, and input filenames. */
+      intro=statistics_fit_print_intro(p, whtnat);
+
+      /* Final printed report.*/
+      printf("%s\n"
+             "Fit function: Y = c0 + (c1 * X^1) + (c2 * X^2) "
+             "+ ... (cN * X^N)\n", intro);
+
+      /* Notice for the (possible) robust function and maximum power of
+         polynomial. */
+      if(p->fitid==GAL_FIT_POLYNOMIAL_ROBUST)
+        printf("  Robust function: %s\n", p->fitrobustname);
+      printf("  N:  %zu\n", p->fitmaxpower);
+
+      /* Print the fitted values. */
+      for(i=0;i<nconst;++i)
+        printf("  c%zu: %s%+-.10f\n", i, i<10?" ":"", farr[i]);
+
+      /* Print the information on the covariance matrix. */
+      printf("\nCovariance matrix:\n");
+
+      /* Clean up. */
+      free(intro);
+    }
+
+  /* Print the covariance matrix (when no estimation is requested, this is
+     the same for quiet or non-quiet mode). But when estimation is
+     requested, they will be written in the FITS keywords of the output so
+     there is no more need to have them on the command-line.*/
+  if(p->cp.quiet==0 || p->fitestval==NULL)
+    {
+      for(i=0;i<nconst;++i)
+        {
+          if(p->cp.quiet==0) printf("  ");
+          for(j=0;j<nconst;++j)
+            printf("%+-20.10f ", carr[i*nconst+j]);
+          printf("\b\n");
+        }
+
+      /* Print the chi^2. */
+      if(p->cp.quiet==0)
+        printf("\nReduced chi^2 of fit:\n");
+      printf("%s%+-.10f\n", p->cp.quiet?"":"  ", redchisq);
+    }
+}
+
+
+
+
+
+static int
+statistics_fit_polynomial(struct statisticsparams *p)
+{
+  char *whtnat;
+  gal_data_t *fit=NULL;
+  double redchisq=NAN; /* Important to initialize. */
+  gal_data_t *x=p->input, *y=x->next?x->next:NULL, *w=y->next?y->next:NULL;
+
+  /* Sanity check and call the fitting functions. */
+  switch(p->fitid)
+    {
+    case GAL_FIT_POLYNOMIAL:
+      if(gal_list_data_number(p->input)!=2) return 2; /* Sanity check. */
+      fit=gal_fit_1d_polynomial(x, y, NULL, p->fitmaxpower, &redchisq);
+      break;
+
+    case GAL_FIT_POLYNOMIAL_ROBUST:
+      if(gal_list_data_number(p->input)!=2) return 2; /* Sanity check. */
+      fit=gal_fit_1d_polynomial_robust(x, y, p->fitmaxpower,
+                                       p->fitrobustid, &redchisq);
+      break;
+
+    case GAL_FIT_POLYNOMIAL_WEIGHTED:
+      if(gal_list_data_number(p->input)!=3) return 3; /* Sanity check. */
+      fit=gal_fit_1d_polynomial(x, y, w, p->fitmaxpower, &redchisq);
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "fix the problem. '%d' isn't recognized as a fitting ID",
+            __func__, PACKAGE_BUGREPORT, p->fitid);
+    }
+
+  /* Print the output. */
+  statistics_fit_polynomial_print(p, fit, redchisq, &whtnat);
+
+  /* Estimate values (if requested), note that it involves writing the
+     fitted parameters in the header. */
+  if(p->fitestval)
+    statistics_fit_estimate(p, fit, whtnat, &redchisq);
+
+  /* Clean up. */
+  gal_data_free(fit);
+  gal_list_data_free(p->fitestval); p->fitestval=NULL;
+  return 0; /* Means everything is good! */
+}
+
+
+
+
+
+static void
+statistics_fit(struct statisticsparams *p)
+{
+  size_t neededcols=0;
+
+  /* Make sure that at least two columns are provided. */
+  if(p->input->next==NULL)
+    error(EXIT_FAILURE, 0, "at least two columns are necessary for "
+          "the fitting operations");
+
+  /* Do the fitting. */
+  switch(p->fitid)
+    {
+    case GAL_FIT_LINEAR:
+    case GAL_FIT_LINEAR_WEIGHTED:
+    case GAL_FIT_LINEAR_NO_CONSTANT:
+    case GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED:
+      neededcols=statistics_fit_linear(p);
+      break;
+
+    case GAL_FIT_POLYNOMIAL:
+    case GAL_FIT_POLYNOMIAL_ROBUST:
+    case GAL_FIT_POLYNOMIAL_WEIGHTED:
+      neededcols=statistics_fit_polynomial(p);
+      break;
+
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "fix the problem. '%s' is not a recognized as a fit type",
+            __func__, PACKAGE_BUGREPORT, p->fitname);
+    }
+
+  /* If the number of columns is not sufficient, then 'neededcols' will be
+     non-zero. In this case, we should abort and inform the user. */
+  if(neededcols)
+    error(EXIT_FAILURE, 0, "'%s' fitting requires %zu columns as input, "
+          "but %zu columns have been given", p->fitname, neededcols,
+          gal_list_data_number(p->input));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*******************************************************************/
 /**************             Main function            ***************/
 /*******************************************************************/
@@ -1237,6 +1835,13 @@ statistics(struct statisticsparams *p)
     {
       print_basic_info=0;
       print_mirror_hist_cfp(p);
+    }
+
+  /* Fitting. */
+  if( p->fitname )
+    {
+      print_basic_info=0;
+      statistics_fit(p);
     }
 
   /* If nothing was requested print the simple statistics. */

@@ -790,8 +790,8 @@ gal_blank_remove(gal_data_t *input)
 
   /* This function currently assumes a contiguous patch of memory. */
   if(input->block && input->ndim!=1 )
-    error(EXIT_FAILURE, 0, "%s: tiles in datasets with more dimensions than "
-          "1 are not yet supported. Your input has %zu dimensions",
+    error(EXIT_FAILURE, 0, "%s: tiles in datasets with more dimensions "
+          "than 1 are not yet supported. Your input has %zu dimensions",
           __func__, input->ndim);
 
   /* If the dataset doesn't have blank values, then just get the size. */
@@ -829,7 +829,7 @@ gal_blank_remove(gal_data_t *input)
   input->dsize[0]=input->size=num;
 
   /* Set the flags to mark that there is no blanks. */
-  input->flag |= GAL_DATA_FLAG_BLANK_CH;
+  input->flag |=  GAL_DATA_FLAG_BLANK_CH;
   input->flag &= ~GAL_DATA_FLAG_HASBLANK;
 }
 
@@ -913,8 +913,8 @@ gal_blank_remove_rows(gal_data_t *columns, gal_list_sizet_t *column_indexs)
         /* If the given index is larger than the number of elements in the
            input list, then print an error. */
         if(tmp==NULL)
-          error(EXIT_FAILURE, 0, "%s: input list has %zu elements, but the "
-                "column %zu (counting from zero) has been requested",
+          error(EXIT_FAILURE, 0, "%s: input list has %zu elements, but "
+                "the column %zu (counting from zero) has been requested",
                 __func__, gal_list_data_number(columns), tcol->v);
 
         /* Build the flag of blank elements for this column. */

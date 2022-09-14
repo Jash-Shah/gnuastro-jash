@@ -181,12 +181,15 @@ if COND_SEGMENT
   segment/segment-3d.sh: noisechisel/noisechisel-3d.sh.log
 endif
 if COND_STATISTICS
-  MAYBE_STATISTICS_TESTS = statistics/basicstats.sh statistics/estimate_sky.sh \
-                           statistics/from-stdin.sh
+  MAYBE_STATISTICS_TESTS = statistics/basicstats.sh \
+                           statistics/from-stdin.sh \
+                           statistics/estimate_sky.sh \
+                           statistics/fitting-polynomial-robust.sh
 
+  statistics/from-stdin.sh: prepconf.sh.log
   statistics/basicstats.sh: mknoise/addnoise.sh.log
   statistics/estimate_sky.sh: mknoise/addnoise.sh.log
-  statistics/from-stdin.sh: prepconf.sh.log
+  statistics/fitting-polynomial-robust.sh: prepconf.sh.log
 endif
 if COND_TABLE
   MAYBE_TABLE_TESTS = table/txt-to-fits-binary.sh		\

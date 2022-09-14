@@ -28,6 +28,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <string.h>
 
+#include <gnuastro/fit.h>
 #include <gnuastro/txt.h>
 #include <gnuastro/wcs.h>
 #include <gnuastro/fits.h>
@@ -73,11 +74,12 @@ const char
 doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" will do statistical "
   "analysis on the input dataset (table column or image). All blank "
   "pixels or pixels outside of the given range are ignored. You can "
-  "either directly ask for certain statistics in one line/row as shown "
-  "below with the same order as requested, or get tables of different "
-  "statistical measures like the histogram, cumulative frequency style "
-  "and etc. If no particular statistic is requested, some basic "
-  "information about the dataset is printed on the command-line.\n"
+  "either directly ask for certain statistics in one line/row as "
+  "shown below with the same order as requested, or get tables of "
+  "different statistical measures like the histogram, cumulative "
+  "frequency style and etc. If no particular statistic is "
+  "requested, some basic information about the dataset is printed "
+  "on the command-line.\n"
   GAL_STRINGS_MORE_HELP_INFO
   /* After the list of options: */
   "\v"
@@ -140,6 +142,7 @@ ui_initialize_options(struct statisticsparams *p,
   p->meanmedqdiff        = NAN;
   p->sclipparams[0]      = NAN;
   p->sclipparams[1]      = NAN;
+  p->fitmaxpower         = GAL_BLANK_SIZE_T;
 
   /* Set the mandatory common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -178,10 +181,10 @@ parse_opt(int key, char *arg, struct argp_state *state)
      check if the first character of arg is the equal sign, then the
      user is warned and the program is stopped: */
   if(arg && arg[0]=='=')
-    argp_error(state, "incorrect use of the equal sign ('='). For short "
-               "options, '=' should not be used and for long options, "
-               "there should be no space between the option, equal sign "
-               "and value");
+    argp_error(state, "incorrect use of the equal sign ('='). For "
+               "short options, '=' should not be used and for long "
+               "options, there should be no space between the "
+               "option, equal sign and value");
 
   /* Set the key to this option. */
   switch(key)
@@ -192,7 +195,8 @@ parse_opt(int key, char *arg, struct argp_state *state)
          'arg' will be an empty string! We don't want to account for such
          cases (and give a clear error that no input has been given). */
       if(p->inputname)
-        argp_error(state, "only one argument (input file) should be given");
+        argp_error(state, "only one argument (input file) should be "
+                   "given");
       else
         if(arg[0]!='\0') p->inputname=arg;
       break;
@@ -220,19 +224,19 @@ ui_add_to_single_value(struct argp_option *option, char *arg,
 
   /* In case of printing the option values. */
   if(lineno==-1)
-    error(EXIT_FAILURE, 0, "currently the options to be printed in one row "
-          "(like '--number', '--mean', and etc) do not support printing "
-          "with the '--printparams' ('-P'), or writing into configuration "
-          "files due to lack of time when implementing these features. "
-          "You can put them into configuration files manually. Please get "
-          "in touch with us at '%s', so we can implement it",
-          PACKAGE_BUGREPORT);
+    error(EXIT_FAILURE, 0, "currently the options to be printed in one "
+          "row (like '--number', '--mean', and etc) do not support "
+          "printing with the '--printparams' ('-P'), or writing into "
+          "configuration files due to lack of time when implementing "
+          "these features. You can put them into configuration files "
+          "manually. Please get in touch with us at '%s', so we can "
+          "implement it", PACKAGE_BUGREPORT);
 
   /* Some of these options take values and some don't. */
   if(option->type==GAL_OPTIONS_NO_ARG_TYPE)
     {
-      /* If this option is given in a configuration file, then 'arg' will not
-         be NULL and we don't want to do anything if it is '0'. */
+      /* If this option is given in a configuration file, then 'arg' will
+         not be NULL and we don't want to do anything if it is '0'. */
       if(arg)
         {
           /* Make sure the value is only '0' or '1'. */
@@ -271,8 +275,8 @@ ui_add_to_single_value(struct argp_option *option, char *arg,
               if(option->key==UI_KEY_QUANTILE && (d[i]<0 || d[i]>1) )
                 error_at_line(EXIT_FAILURE, 0, filename, lineno, "values "
                               "to '--quantile' ('-u') must be between 0 "
-                              "and 1, you had asked for %g (read from '%s')",
-                              d[i], arg);
+                              "and 1, you had asked for %g (read from "
+                              "'%s')", d[i], arg);
               gal_list_f64_add(&p->tp_args, d[i]);
               gal_list_i32_add(&p->singlevalue, option->key);
             }
@@ -282,8 +286,8 @@ ui_add_to_single_value(struct argp_option *option, char *arg,
           error_at_line(EXIT_FAILURE, 0, filename, lineno, "a bug! please "
                         "contact us at %s so we can address the problem. "
                         "the option given to 'ui_add_to_print_in_row' is "
-                        "marked as requiring a value, but is not recognized",
-                        PACKAGE_BUGREPORT);
+                        "marked as requiring a value, but is not "
+                        "recognized", PACKAGE_BUGREPORT);
         }
     }
 
@@ -403,12 +407,13 @@ ui_read_check_only_options(struct statisticsparams *p)
     {
       /* The tile or sky mode cannot be called with any other modes. */
       if( p->asciihist || p->asciicfp || p->histogram || p->histogram2d
-          || p->cumulative || p->sigmaclip || !isnan(p->mirror) )
-        error(EXIT_FAILURE, 0, "'--ontile' or '--sky' cannot be called with "
-              "any of the 'particular' calculation options, for example "
-              "'--histogram'. This is because the latter work over the whole "
-              "dataset and element positions are changed, but in the former "
-              "positions are significant");
+          || p->cumulative || p->sigmaclip || p->fitname
+          || !isnan(p->mirror) )
+        error(EXIT_FAILURE, 0, "'--ontile' or '--sky' cannot be called "
+              "with any of the 'particular' calculation options, for "
+              "example '--histogram'. This is because the latter work "
+              "over the whole dataset and element positions are changed, "
+              "but in the former positions are significant");
 
       /* Make sure the tessellation defining options are given. */
       if( tl->tilesize==NULL || tl->numchannels==NULL
@@ -432,14 +437,15 @@ ui_read_check_only_options(struct statisticsparams *p)
 
       /* Make sure a reasonable value is given to '--meanmedqdiff'. */
       if(p->meanmedqdiff>0.5)
-        error(EXIT_FAILURE, 0, "%g is not acceptable for '--meanmedqdiff'! "
-              "This option is the quantile-difference between the quantile "
-              "of the mean and 0.5 (the quantile of the median). Since the "
-              "range of quantile is from 0.0 to 1.0, the maximum difference "
-              "can therefore be 0.5. For more on this option, please see "
-              "the \"Quantifying signal in a tile\" section of the Gnuastro "
-              "book (with this command: 'info gnuastro \"Quantifying "
-              "signal in a tile\"'", p->meanmedqdiff);
+        error(EXIT_FAILURE, 0, "%g is not acceptable for "
+              "'--meanmedqdiff'! This option is the quantile-difference "
+              "between the quantile of the mean and 0.5 (the quantile of "
+              "the median). Since the range of quantile is from 0.0 to "
+              "1.0, the maximum difference can therefore be 0.5. For "
+              "more on this option, please see the \"Quantifying signal "
+              "in a tile\" section of the Gnuastro book (with this "
+              "command: 'info gnuastro \"Quantifying signal in a "
+              "tile\"'", p->meanmedqdiff);
       if(p->meanmedqdiff>0.3 && p->cp.quiet==0)
         error(EXIT_SUCCESS, 0, "WARNING: %g is very high for "
               "'--meanmedqdiff'! This option is the quantile-difference "
@@ -453,19 +459,20 @@ ui_read_check_only_options(struct statisticsparams *p)
       /* If a kernel name has been given, we need the HDU. */
       if(p->kernelname && gal_fits_file_recognized(p->kernelname)
          && p->khdu==NULL )
-        error(EXIT_FAILURE, 0, "no HDU specified for the kernel image. When "
-              "A HDU is necessary for FITS files. You can use the '--khdu' "
-              "('-u') option and give it the HDU number (starting from "
-              "zero), extension name, or anything acceptable by CFITSIO");
+        error(EXIT_FAILURE, 0, "no HDU specified for the kernel image. "
+              "When A HDU is necessary for FITS files. You can use the "
+              "'--khdu' ('-u') option and give it the HDU number "
+              "(starting from zero), extension name, or anything "
+              "acceptable by CFITSIO");
     }
 
 
   /* Sigma-clipping needs 'sclipparams'. */
   if(p->sigmaclip && isnan(p->sclipparams[0]))
-    error(EXIT_FAILURE, 0, "'--sclipparams' is necessary with '--sigmaclip'. "
-          "'--sclipparams' takes two values (separated by a comma) for "
-          "defining the sigma-clip: the multiple of sigma, and tolerance "
-          "(<1) or number of clips (>1).");
+    error(EXIT_FAILURE, 0, "'--sclipparams' is necessary with "
+          "'--sigmaclip'. '--sclipparams' takes two values (separated "
+          "by a comma) for defining the sigma-clip: the multiple of "
+          "sigma, and tolerance (<1) or number of clips (>1).");
 
 
   /* If any of the mode measurements are requested, then 'mirrordist' is
@@ -479,8 +486,8 @@ ui_read_check_only_options(struct statisticsparams *p)
       case UI_KEY_MODESYMVALUE:
         if( isnan(p->mirrordist) )
           error(EXIT_FAILURE, 0, "'--mirrordist' is required for the "
-                "mode-related single measurements ('--mode', '--modequant', "
-                "'--modesym', and '--modesymvalue')");
+                "mode-related single measurements ('--mode', "
+                "'--modequant', '--modesym', and '--modesymvalue')");
         break;
       case UI_KEY_SIGCLIPSTD:
       case UI_KEY_SIGCLIPMEAN:
@@ -489,9 +496,9 @@ ui_read_check_only_options(struct statisticsparams *p)
         if( isnan(p->sclipparams[0]) )
           error(EXIT_FAILURE, 0, "'--sclipparams' is necessary with "
                 "sigma-clipping measurements.\n\n"
-                "'--sclipparams' takes two values (separated by a comma) for "
-                "defining the sigma-clip: the multiple of sigma, and tolerance "
-                "(<1) or number of clips (>1).");
+                "'--sclipparams' takes two values (separated by a comma) "
+                "for defining the sigma-clip: the multiple of sigma, "
+                "and tolerance (<1) or number of clips (>1).");
         break;
       }
 
@@ -514,7 +521,10 @@ ui_read_check_only_options(struct statisticsparams *p)
 
 
   /* When binned outputs are requested, make sure that 'numbins' is set. */
-  if( (p->histogram || p->histogram2d || p->cumulative || !isnan(p->mirror))
+  if( (p->histogram
+       || p->histogram2d
+       || p->cumulative
+       || !isnan(p->mirror))
       && p->numbins==0)
     error(EXIT_FAILURE, 0, "'--numbins' isn't set. When the histogram or "
           "cumulative frequency plots are requested, the number of bins "
@@ -522,12 +532,13 @@ ui_read_check_only_options(struct statisticsparams *p)
   if( p->histogram2d )
     {
       if( p->numbins2==0 )
-        error(EXIT_FAILURE, 0, "'--numbins2' isn't set. When a 2D histogram "
-              "is requested, the number of bins in the second dimension "
-              "('--numbins2') is also necessary");
-      if( strcmp(p->histogram2d,"table") && strcmp(p->histogram2d,"image") )
-        error(EXIT_FAILURE, 0, "the value to '--histogram2d' can either be "
-              "'table' or 'image'");
+        error(EXIT_FAILURE, 0, "'--numbins2' isn't set. When a 2D "
+              "histogram is requested, the number of bins in the "
+              "second dimension ('--numbins2') is also necessary");
+      if( strcmp(p->histogram2d,"table")
+          && strcmp(p->histogram2d,"image") )
+        error(EXIT_FAILURE, 0, "the value to '--histogram2d' can "
+              "either be 'table' or 'image'");
     }
 
   /* If an ascii plot is requested, check if the ascii number of bins and
@@ -535,9 +546,52 @@ ui_read_check_only_options(struct statisticsparams *p)
   if( (p->asciihist || p->asciicfp)
       && (p->numasciibins==0 || p->asciiheight==0) )
     error(EXIT_FAILURE, 0, "when an ascii plot is requested, "
-          "'--numasciibins' and '--asciiheight' are mandatory, but atleast "
-          "one of these has not been given");
+          "'--numasciibins' and '--asciiheight' are mandatory, but "
+          "at least one of these has not been given");
 
+  /* Find the fitting type code from the input string. */
+  if(p->fitname)
+    {
+      /* Interpret the name. */
+      p->fitid=gal_fit_name_to_id(p->fitname);
+
+      /* Wrong name? */
+      if(p->fitid==GAL_FIT_INVALID)
+        error(EXIT_FAILURE, 0, "'%s' is not a recognized name for "
+              "the type of fitting, please see the description of "
+              "'--fit' in the manual (you can run `info %s`",
+              p->fitname, PROGRAM_EXEC);
+
+      /* Options for polynomial fits. */
+      if(    p->fitid==GAL_FIT_POLYNOMIAL
+          || p->fitid==GAL_FIT_POLYNOMIAL_ROBUST
+          || p->fitid==GAL_FIT_POLYNOMIAL_WEIGHTED )
+        {
+
+          /* '--fitmaxpower' is mandatory. */
+          if(p->fitmaxpower==GAL_BLANK_SIZE_T)
+            error(EXIT_FAILURE, 0, "'--fitmaxpower' is necessary for "
+                  "polynomial fitting. This is the maximum power of X "
+                  "in the fitted polynomial");
+
+          /* For the robust types, '--fitrobustname' is mandatory. */
+          if( p->fitid==GAL_FIT_POLYNOMIAL_ROBUST )
+            {
+              /* Make sure '--fitrobust' is given at all. */
+              if(p->fitrobustname==NULL)
+                error(EXIT_FAILURE, 0, "'--fitrobust' is mandatory for "
+                      "robust fittings");
+
+              /* Find the ID of the fit. */
+              p->fitrobustid=gal_fit_name_robust_to_id(p->fitrobustname);
+              if(p->fitrobustid==GAL_FIT_ROBUST_INVALID)
+                error(EXIT_FAILURE, 0, "'%s' is not a recognized robust "
+                      "function in the polynomial fittings, please see "
+                      "the manual for the acceptable names",
+                      p->fitrobustname);
+            }
+        }
+    }
 
   /* Reverse the list of statistics to print in one row and also the
      arguments, so it has the same order the user wanted. */
@@ -609,7 +663,7 @@ ui_out_of_range_to_blank(struct statisticsparams *p)
 
 
   /* Set the dataset that should be used for the condition. */
-  ref = p->reference ? p->reference : p->input;
+  ref = p->input;
 
 
   /* If the user has given a quantile range, then set the 'greaterequal'
@@ -647,8 +701,10 @@ ui_out_of_range_to_blank(struct statisticsparams *p)
       tmp=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0, -1, 1,
                          NULL, NULL, NULL);
       *((float *)(tmp->array)) = p->greaterequal2;
-      tmp2=gal_arithmetic(GAL_ARITHMETIC_OP_LT, 1, flags, p->input->next, tmp);
-      cond_g=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, cond_g, tmp2);
+      tmp2=gal_arithmetic(GAL_ARITHMETIC_OP_LT, 1, flags, p->input->next,
+                          tmp);
+      cond_g=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, cond_g,
+                            tmp2);
       gal_data_free(tmp);
       gal_data_free(tmp2);
     }
@@ -668,8 +724,10 @@ ui_out_of_range_to_blank(struct statisticsparams *p)
       tmp=gal_data_alloc(NULL, GAL_TYPE_FLOAT32, 1, &one, NULL, 0, -1, 1,
                          NULL, NULL, NULL);
       *((float *)(tmp->array)) = p->lessthan2;
-      tmp2=gal_arithmetic(GAL_ARITHMETIC_OP_GE, 1, flags, p->input->next, tmp);
-      cond_l=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, cond_l, tmp2);
+      tmp2=gal_arithmetic(GAL_ARITHMETIC_OP_GE, 1, flags, p->input->next,
+                          tmp);
+      cond_l=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, cond_l,
+                            tmp2);
       gal_data_free(tmp);
       gal_data_free(tmp2);
     }
@@ -684,7 +742,8 @@ ui_out_of_range_to_blank(struct statisticsparams *p)
       cond = isnan(p->greaterequal) ? cond_l : cond_g;
       break;
     case 2:
-      cond = gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, cond_l, cond_g);
+      cond = gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, cond_l,
+                            cond_g);
       gal_data_free(cond_g);
       break;
     }
@@ -701,7 +760,8 @@ ui_out_of_range_to_blank(struct statisticsparams *p)
      blank value will be used in the proper type of the input in the
      'where' operator. Also reset the blank flags so they are checked again
      if necessary.*/
-  gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, flagsor, p->input, cond, blank);
+  gal_arithmetic(GAL_ARITHMETIC_OP_WHERE, 1, flagsor, p->input,
+                 cond, blank);
   p->input->flag &= ~GAL_DATA_FLAG_BLANK_CH;
   p->input->flag &= ~GAL_DATA_FLAG_HASBLANK;
   if(p->input->next)
@@ -773,8 +833,8 @@ ui_make_sorted_if_necessary(struct statisticsparams *p)
 /* Merge all given columns into one list. This is because people may call
    for different columns in one call to '--column' ('-c', separated by a
    comma), or multiple calls to '-c'. */
-gal_list_str_t *
-ui_read_columns_in_one(gal_list_str_t *incolumns)
+void
+ui_read_columns_in_one(struct statisticsparams *p)
 {
   size_t i;
   gal_data_t *strs;
@@ -783,7 +843,7 @@ ui_read_columns_in_one(gal_list_str_t *incolumns)
 
   /* Go over the separate calls to the '-c' option, see the explaination in
      Table's 'ui_columns_prepare' function for more on every step. */
-  for(tmp=incolumns;tmp!=NULL;tmp=tmp->next)
+  for(tmp=p->columns;tmp!=NULL;tmp=tmp->next)
     {
       /* Remove any new-line character. */
       for(c=tmp->v;*c!='\0';++c)
@@ -810,8 +870,9 @@ ui_read_columns_in_one(gal_list_str_t *incolumns)
     printf("%s\n", tmp->v);
   */
 
-  /* Return the final unified list. */
-  return final;
+  /* Free the input list and replace it with 'final'. */
+  gal_list_str_free(p->columns, 1);
+  p->columns=final;
 }
 
 
@@ -821,35 +882,29 @@ ui_read_columns_in_one(gal_list_str_t *incolumns)
 void
 ui_read_columns(struct statisticsparams *p)
 {
-  int toomanycols=0, tformat;
+  int tformat;
   gal_data_t *cols, *tmp, *cinfo;
-  size_t size, ncols, nrows, counter=0;
-  gal_list_str_t *incols, *columnlist=NULL;
+  size_t ncols, nrows, counter=0;
   gal_list_str_t *lines=gal_options_check_stdin(p->inputname,
                                                 p->cp.stdintimeout,
                                                 "input");
 
   /* Merge possibly multiple calls to '-c' (each possibly separated by a
      coma) into one list. */
-  incols=ui_read_columns_in_one(p->columns);
+  ui_read_columns_in_one(p);
 
-  /* If any columns are specified, make sure there is a maximum of two
-     columns.  */
-  if(gal_list_str_number(incols)>2)
+  /* If any columns are specified, and fitting hasn't been requested, make
+     sure there is a maximum of two columns.  */
+  if(p->fitname==NULL && gal_list_str_number(p->columns)>2)
     error(EXIT_FAILURE, 0, "%zu input columns were given but currently a "
           "maximum of two columns are supported (two columns only for "
           "special operations, the majority of operations are on a single "
-          "column)", gal_list_str_number(incols));
-
-  /* If a reference column is also given, add it to the list of columns to
-     read. */
-  if(p->refcol)
-    gal_list_str_add(&columnlist, p->refcol, 0);
+          "column)", gal_list_str_number(p->columns));
 
   /* If no column is specified, Statistics will abort and an error will be
      printed when the table has more than one column. If there is only one
      column, there is no need to specify any, so Statistics will use it. */
-  if(incols==NULL)
+  if(p->columns==NULL)
     {
       /* Get the basic table information. */
       cinfo=gal_table_info(p->inputname, p->cp.hdu, lines, &ncols, &nrows,
@@ -865,7 +920,7 @@ ui_read_columns(struct statisticsparams *p)
                   ? gal_checkset_dataset_name(p->inputname, p->cp.hdu)
                   : "Standard input" ));
         case 1:
-          gal_list_str_add(&incols, "1", 1);
+          gal_list_str_add(&p->columns, "1", 1);
           break;
         default:
           error(EXIT_FAILURE, 0, "%s is a table containing more than one "
@@ -873,11 +928,11 @@ ui_read_columns(struct statisticsparams *p)
                 "specified.\n\n"
                 "Please use the '--column' ('-c') option to specify a "
                 "column. You can either give it the column number "
-                "(couting from 1), or a match/search in its meta-data (e.g., "
-                "column names).\n\n"
+                "(couting from 1), or a match/search in its meta-data "
+                "(e.g., column names).\n\n"
                 "For more information, please run the following command "
-                "(press the 'SPACE' key to go down and 'q' to return to the "
-                "command-line):\n\n"
+                "(press the 'SPACE' key to go down and 'q' to return to "
+                "the command-line):\n\n"
                 "    $ info gnuastro \"Selecting table columns\"\n",
                 ( p->inputname
                   ? gal_checkset_dataset_name(p->inputname, p->cp.hdu)
@@ -885,33 +940,31 @@ ui_read_columns(struct statisticsparams *p)
         }
 
     }
-  if(columnlist) columnlist->next=incols;
-  else           columnlist=incols;
 
   /* Read the desired column(s). */
-  cols=gal_table_read(p->inputname, p->cp.hdu, lines, columnlist,
+  cols=gal_table_read(p->inputname, p->cp.hdu, lines, p->columns,
                       p->cp.searchin, p->cp.ignorecase, p->cp.numthreads,
                       p->cp.minmapsize, p->cp.quietmmap, NULL);
   gal_list_str_free(lines, 1);
+  p->input=cols;
 
   /* If the input was from standard input, we'll set the input name to be
      'stdin' (for future reporting). */
   if(p->inputname==NULL)
     gal_checkset_allocate_copy("stdin", &p->inputname);
 
-  /* Put the columns into the proper gal_data_t. */
-  size=cols->size;
-  while(cols!=NULL)
+  /* Print an error if there are too many columns: */
+  if(gal_list_str_number(p->columns)!=gal_list_data_number(cols))
+    gal_tableintern_error_col_selection(p->inputname, p->cp.hdu, "too "
+                 "many columns were selected by the given values to the "
+                 "'--column' (or '-c'). In other words, the number of "
+                 "columns that were read, are more than the number of "
+                 "columns given to '--column' (this can happen due to "
+                 "columns with same name for example)");
+
+  /* Make sure all columns have a usable datatype. */
+  for(tmp=cols; tmp!=NULL; tmp=tmp->next)
     {
-      /* Pop out the top column. */
-      tmp=gal_list_data_pop(&cols);
-
-      /* Make sure it has the proper size. */
-      if(tmp->size!=size)
-        error(EXIT_FAILURE, 0, " read column number %zu has a %zu elements, "
-              "while previous column(s) had %zu", counter, tmp->size, size);
-
-      /* Make sure it is a usable datatype. */
       switch(tmp->type)
         {
         case GAL_TYPE_BIT:
@@ -923,38 +976,6 @@ ui_read_columns(struct statisticsparams *p)
                 "which is not currently supported by %s", counter,
                 gal_type_name(tmp->type, 1), PROGRAM_NAME);
         }
-
-      /* Put the column into the proper pointer. */
-      switch(++counter)
-        {
-        case 1: p->input=tmp; break;
-        case 2:
-          if(gal_list_str_number(incols)==2)
-            p->input->next=tmp;
-          else
-            if(p->refcol) p->reference=tmp; else toomanycols=1;
-          break;
-        case 3:
-          if(p->refcol) p->reference=tmp; else toomanycols=1;   break;
-        default: toomanycols=1;
-        }
-
-      /* Print an error if there are too many columns: */
-      if(toomanycols)
-        gal_tableintern_error_col_selection(p->inputname, p->cp.hdu, "too "
-                                            "many columns were selected by "
-                                            "the given values to the "
-                                            "'--column' and/or '--refcol' "
-                                            "options. Only one is "
-                                            "acceptable for each.");
-    }
-
-  /* Clean up. */
-  gal_list_str_free(incols, 1);
-  if(columnlist!=incols)
-    {
-      columnlist->next=NULL;
-      gal_list_str_free(columnlist, 0);
     }
 
   /* For a check:
@@ -968,13 +989,141 @@ ui_read_columns(struct statisticsparams *p)
 
 
 void
+ui_preparations_fitestimate(struct statisticsparams *p)
+{
+  size_t one=1;
+  double dbl, *dptr=&dbl;
+  gal_list_str_t *fecols=NULL;
+
+  if( gal_type_from_string((void **)(&dptr), p->fitestimate,
+                           GAL_TYPE_FLOAT64) )
+    {
+      /* If the value was "self", then we should put the input file name,
+         its HDU and the first column in required values so they are fully
+         read. We aren't using the read 'p->input' because rows with a
+         blank value have been removed there. */
+      if( !strcmp(p->fitestimate, "self") )
+        {
+          free(p->fitestimate);
+          free(p->fitestimatehdu);
+          free(p->fitestimatecol);
+          gal_checkset_allocate_copy(p->inputname, &p->fitestimate);
+          gal_checkset_allocate_copy(p->cp.hdu, &p->fitestimatehdu);
+          gal_checkset_allocate_copy(p->columns->v, &p->fitestimatecol);
+        }
+
+      /* Make sure a HDU is specified. We need to do this here (not
+         in 'ui_read_check_only_options') because only here we know
+         that the user specified a file not a value. */
+      if( gal_fits_name_is_fits(p->fitestimate) && p->fitestimatehdu==NULL )
+        error(EXIT_FAILURE, 0, "no HDU specified for '%s' (given to "
+              "'--fitestimate'). Please use the '--fitestimatehdu' "
+              "option to specify the HDU", p->fitestimate);
+
+      /* Make sure a column is specified. We need to do this here (not
+         in 'ui_read_check_only_options') because only here we know
+         that the user specified a file not a value. */
+      if( p->fitestimatecol==NULL )
+        error(EXIT_FAILURE, 0, "no column specified for '%s' (given to "
+              "'--fitestimate'). Please use the '--fitestimatecol' "
+              "option to specify the column", p->fitestimate);
+
+      /* Given string couldn't be read as a number, so try reading it
+         as a table. */
+      gal_list_str_add(&fecols, p->fitestimatecol, 1);
+      p->fitestval=gal_table_read(p->fitestimate, p->fitestimatehdu,
+                                  NULL, fecols,
+                                  p->cp.searchin, p->cp.ignorecase, 1,
+                                  p->cp.minmapsize, p->cp.quietmmap,
+                                  NULL);
+
+      /* If more than one column matched, inform the user. */
+      if(p->fitestval->next)
+        gal_tableintern_error_col_selection(p->fitestimate,
+            p->fitestimatehdu, "More than one column matched "
+            "the value given to '--fitestimatecol'.");
+    }
+  else
+    {
+      /* Given string could be read as a double (in variable 'd'). */
+      p->fitestval=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &one,
+                                  NULL, 0, -1, 1, NULL, NULL, NULL);
+      ((double *)(p->fitestval->array))[0]=dbl;
+    }
+
+  /* Make sure 'fitestval' has a double type. */
+  p->fitestval=gal_data_copy_to_new_type_free(p->fitestval,
+                                              GAL_TYPE_FLOAT64);
+}
+
+
+
+
+
+void
+ui_preparations_fit_weight(struct statisticsparams *p)
+{
+  double *d, *df;
+  gal_data_t *wht;
+
+  /* This is only necessary for fitting models that require a weight. */
+  switch(p->fitid)
+    {
+    case GAL_FIT_LINEAR_WEIGHTED:
+    case GAL_FIT_POLYNOMIAL_WEIGHTED:
+    case GAL_FIT_LINEAR_NO_CONSTANT_WEIGHTED:
+
+      /* Basic sanity check first. */
+      if( gal_list_data_number(p->input)<3)
+        error(EXIT_FAILURE, 0, "no weight column specified! A "
+              "weight-based fit needs a third input column");
+      if(p->fitweight==0)
+        error(EXIT_FAILURE, 0, "the nature of the input weights for "
+              "fitting haven't been specified. Please use the "
+              "'--fitweight' option to specify this. It can take "
+              "values of 'std' (if the weight column is the standard "
+              "deviation), 'var' (for variance) and 'inv-var' "
+              "(inverse-variance) which is direct");
+
+      /* Convert the third dataset to double-precision. */
+      wht=gal_data_copy_to_new_type_free(p->input->next->next,
+                                         GAL_TYPE_FLOAT64);
+      p->input->next->next=wht;
+
+      /* Based on the input nature, convert it to the inverse of the
+         variance. */
+      d=wht->array;
+      if( !strcmp(p->fitweight, "std") )         /* Standard deviation. */
+        {
+          p->fitwhtid=STATISTICS_FIT_WHT_STD;
+          df=d+wht->size; do *d=1/(*d * *d); while(++d<df);
+        }
+      else if ( !strcmp(p->fitweight, "var") )             /* Variance. */
+        {
+          p->fitwhtid=STATISTICS_FIT_WHT_VAR;
+          df=d+wht->size; do *d = 1 / *d; while(++d<df);
+        }
+      else if ( !strcmp(p->fitweight, "inv-var") ) /* Inverse variance. */
+        p->fitwhtid=STATISTICS_FIT_WHT_INVVAR;
+      else                                    /* Not recognized: error! */
+        error(EXIT_FAILURE, 0, "'%s' is not a recognized weight-type! "
+              "Please use either 'std' (standard deviation), 'var' "
+              "(variance) or 'inv-var' (inverse variance)", p->fitweight);
+      break;
+    }
+}
+
+
+
+
+
+void
 ui_preparations(struct statisticsparams *p)
 {
+  gal_data_t *check;
   int keepinputdir=p->cp.keepinputdir;
-  gal_data_t *check, *flag1, *flag2, *flag;
   struct gal_options_common_params *cp=&p->cp;
   struct gal_tile_two_layer_params *tl=&cp->tl;
-  unsigned char flagsor = GAL_ARITHMETIC_FLAGS_BASIC;
   char *checkbasename = p->cp.output ? p->cp.output : p->inputname;
 
   /* Change 'keepinputdir' based on if an output name was given. */
@@ -1000,9 +1149,9 @@ ui_preparations(struct statisticsparams *p)
       p->inputformat=INPUT_FORMAT_TABLE;
 
       /* Two columns can only be given with 2D histogram mode. */
-      if(p->histogram2d==0 && p->input->next!=NULL)
-        error(EXIT_FAILURE, 0, "two column input is currently only "
-              "supported for 2D histogram mode");
+      if(p->histogram2d==0 && p->fitname==NULL && p->input->next!=NULL)
+        error(EXIT_FAILURE, 0, "multi-column input is currently only "
+              "supported for 2D histogram or fitting modes");
     }
 
   /* Read the convolution kernel if necessary. */
@@ -1025,11 +1174,13 @@ ui_preparations(struct statisticsparams *p)
       /* Make the tile check image if requested. */
       if(tl->checktiles)
         {
-          tl->tilecheckname=gal_checkset_automatic_output(cp, checkbasename,
+          tl->tilecheckname=gal_checkset_automatic_output(cp,
+                                                          checkbasename,
                                                           "_tiled.fits");
           check=gal_tile_block_check_tiles(tl->tiles);
           if(p->inputformat==INPUT_FORMAT_IMAGE)
-            gal_fits_img_write(check, tl->tilecheckname, NULL, PROGRAM_NAME);
+            gal_fits_img_write(check, tl->tilecheckname, NULL,
+                               PROGRAM_NAME);
           else
             {
               gal_checkset_writable_remove(tl->tilecheckname, 0,
@@ -1055,26 +1206,8 @@ ui_preparations(struct statisticsparams *p)
       /* Only keep the elements we want. Note that if we have more than one
          column, we need to move the same rows in both (otherwise their
          widths won't be equal). */
-      if(p->input->next)
-        {
-          flag1=gal_blank_flag(p->input);
-          flag2=gal_blank_flag(p->input->next);
-          flag=gal_arithmetic(GAL_ARITHMETIC_OP_OR, 1, flagsor, flag1, flag2);
-
-          gal_blank_flag_apply(p->input, flag);
-          gal_blank_flag_apply(p->input->next, flag);
-
-          gal_blank_remove(p->input);
-          gal_blank_remove(p->input->next);
-
-          gal_data_free(flag);
-          p->input->next->flag &= ~GAL_DATA_FLAG_HASBLANK ;
-          p->input->next->flag |= GAL_DATA_FLAG_BLANK_CH ;
-        }
-      else
-        gal_blank_remove(p->input);
-      p->input->flag &= ~GAL_DATA_FLAG_HASBLANK ;
-      p->input->flag |= GAL_DATA_FLAG_BLANK_CH ;
+      if(p->input->next) gal_blank_remove_rows(p->input, NULL);
+      else               gal_blank_remove(p->input);
 
       /* Make sure there actually are any (non-blank) elements left. */
       if(p->input->size==0)
@@ -1083,8 +1216,8 @@ ui_preparations(struct statisticsparams *p)
 
       /* Make sure there is data remaining: */
       if(p->input->size==0)
-        error(EXIT_FAILURE, 0, "%s: no data, maybe the '--greaterequal' or "
-              "'--lessthan' options need to be adjusted",
+        error(EXIT_FAILURE, 0, "%s: no data, maybe the '--greaterequal' "
+              "or '--lessthan' options need to be adjusted",
               gal_fits_name_save_as_string(p->inputname, cp->hdu) );
 
       /* Make the sorted array if necessary. */
@@ -1097,6 +1230,15 @@ ui_preparations(struct statisticsparams *p)
 
   /* Reset 'keepinputdir' to what it originally was. */
   p->cp.keepinputdir=keepinputdir;
+
+  /* Make sure the output doesn't already exist. */
+  gal_checkset_writable_remove(p->cp.output, p->cp.keep,
+                               p->cp.dontdelete);
+
+  /* Set the fit-estimate column, and prepare the weight based on the
+     user's specification.*/
+  ui_preparations_fit_weight(p);
+  if(p->fitestimate) ui_preparations_fitestimate(p);
 }
 
 
@@ -1122,7 +1264,8 @@ ui_preparations(struct statisticsparams *p)
 /**************************************************************/
 
 void
-ui_read_check_inputs_setup(int argc, char *argv[], struct statisticsparams *p)
+ui_read_check_inputs_setup(int argc, char *argv[],
+                           struct statisticsparams *p)
 {
   struct gal_options_common_params *cp=&p->cp;
 
@@ -1209,7 +1352,6 @@ ui_free_report(struct statisticsparams *p)
   /* Free the allocated arrays: */
   free(p->cp.hdu);
   free(p->cp.output);
-  gal_data_free(p->reference);
   gal_list_data_free(p->input);
   gal_list_f64_free(p->tp_args);
   gal_list_i32_free(p->singlevalue);

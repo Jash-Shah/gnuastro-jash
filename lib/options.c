@@ -1034,7 +1034,8 @@ gal_options_parse_list_of_strings(char *string, char *filename, size_t lineno)
    'gal_data_t' contains the array of given strings. You can read the
    number of inputs from its 'size' element. */
 gal_data_t *
-gal_options_parse_csv_strings_raw(char *string, char *filename, size_t lineno)
+gal_options_parse_csv_strings_raw(char *string, char *filename,
+                                  size_t lineno)
 {
   size_t i, num;
   gal_data_t *out;
@@ -1156,10 +1157,10 @@ gal_options_parse_csv_strings(struct argp_option *option, char *arg,
       for(i=0;i<values->size;++i)
         {
           if( nc > GAL_OPTIONS_STATIC_MEM_FOR_VALUES-100 )
-            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s so we "
-                  "can address the problem. The number of necessary "
-                  "characters in the statically allocated string has become "
-                  "too close to %d", __func__, PACKAGE_BUGREPORT,
+            error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s "
+                  "so we can address the problem. The number of necessary "
+                  "characters in the statically allocated string has "
+                  "become too close to %d", __func__, PACKAGE_BUGREPORT,
                   GAL_OPTIONS_STATIC_MEM_FOR_VALUES);
           nc += sprintf(sstr+nc, "%s,", strarr[i]);
         }
@@ -2005,8 +2006,9 @@ options_sanity_check(struct argp_option *option, char *arg,
 
 
 static void
-gal_options_read_check(struct argp_option *option, char *arg, char *filename,
-                       size_t lineno, struct gal_options_common_params *cp)
+gal_options_read_check(struct argp_option *option, char *arg,
+                       char *filename, size_t lineno,
+                       struct gal_options_common_params *cp)
 {
   void *topass;
 
@@ -2059,8 +2061,9 @@ gal_options_read_check(struct argp_option *option, char *arg, char *filename,
 
           /* Read the string argument into the value. */
           if( gal_type_from_string(&option->value, arg, option->type) )
-            /* Fortunately 'error_at_line' will behave like 'error' when the
-               filename is NULL (the option was read from a command-line). */
+            /* Fortunately 'error_at_line' will behave like 'error' when
+               the filename is NULL (the option was read from a
+               command-line). */
             error_at_line(EXIT_FAILURE, 0, filename, lineno,
                           "'%s' (value to option '--%s') couldn't be read "
                           "into the proper numerical type. Common causes "

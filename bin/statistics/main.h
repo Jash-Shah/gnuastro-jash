@@ -46,6 +46,15 @@ enum statistics_input_format
     INPUT_FORMAT_IMAGE,
   };
 
+enum statistics_fit_weight_types
+  {
+    STATISTICS_FIT_WHT_INVALID,
+
+    STATISTICS_FIT_WHT_STD,
+    STATISTICS_FIT_WHT_VAR,
+    STATISTICS_FIT_WHT_INVVAR,
+  };
+
 
 
 
@@ -59,7 +68,6 @@ struct statisticsparams
   gal_list_f64_t  *tp_args;  /* Arguments for printing.                  */
   char          *inputname;  /* Input filename.                          */
   gal_list_str_t  *columns;  /* Column name or number if input is table. */
-  char             *refcol;  /* Reference column name or number.         */
   float       greaterequal;  /* Only use values >= this value.           */
   float      greaterequal2;  /* Only use values >= this value (2D hist). */
   float           lessthan;  /* Only use values <  this value.           */
@@ -68,6 +76,13 @@ struct statisticsparams
   float           quantmax;  /* Quantile maximum.                        */
   uint8_t           ontile;  /* Do single value calculations on tiles.   */
   uint8_t      interpolate;  /* Use interpolation to fill blank tiles.   */
+  char            *fitname;  /* Name of fitting function to use.         */
+  char          *fitweight;  /* Input weight is 'std' or 'invvar'.       */
+  char        *fitestimate;  /* Values to estimate the fit.              */
+  char     *fitestimatecol;  /* Column for values to estimate the fit.   */
+  char     *fitestimatehdu;  /* HDU for values to estimate the fit.      */
+  size_t       fitmaxpower;  /* Maximum power of polynomial fit.         */
+  char      *fitrobustname;  /* Name of robust function.                 */
 
   uint8_t        asciihist;  /* Print an ASCII histogram.                */
   uint8_t         asciicfp;  /* Print an ASCII cumulative frequency plot.*/
@@ -107,7 +122,6 @@ struct statisticsparams
   uint8_t        needssort;  /* If sorting is needed.                    */
   gal_data_t        *input;  /* Input data structure.                    */
   gal_data_t       *sorted;  /* Sorted input data structure.             */
-  gal_data_t    *reference;  /* Reference data structure.                */
   int               isfits;  /* Input is a FITS file.                    */
   int             hdu_type;  /* Type of HDU (image or table).            */
   gal_data_t       *kernel;  /* Kernel for convolution of input for Sky. */
@@ -116,6 +130,10 @@ struct statisticsparams
   gal_data_t        *std_t;  /* Sky standard deviation on each tile.     */
   char       *checkskyname;  /* Name of file for Sky calculation steps.  */
   time_t           rawtime;  /* Starting time of the program.            */
+  uint8_t            fitid;  /* ID of desired fit.                       */
+  uint8_t      fitrobustid;  /* ID of robust fit type.                   */
+  gal_data_t    *fitestval;  /* Values to estimate over fit.             */
+  int             fitwhtid;  /* Code for the nature of the weight column.*/
 };
 
 #endif

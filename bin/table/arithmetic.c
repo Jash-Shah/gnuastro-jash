@@ -289,17 +289,15 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
   size_t one=1;
   uint8_t ntype;
   gal_data_t *col;
-  char *delimiter=" \t";
   struct arithmetic_token *atmp, *node=NULL;
-  char *token=NULL, *lasttoken=NULL, *saveptr;
   struct gal_options_common_params *cp=&p->cp;
+  char *token=NULL, *saveptr, *delimiter=" \t";
 
   /* Parse all the given tokens. */
   token=strtok_r(expression, delimiter, &saveptr);
   while(token!=NULL)
     {
       /* Allocate and initialize this arithmetic token. */
-      lasttoken=token;
       node=arithmetic_add_new_to_end(arith);
 
       /* See if the token is an operator, if not check other cases.  */
@@ -351,13 +349,6 @@ arithmetic_init(struct tableparams *p, struct arithmetic_token **arith,
       /* Go to the next token. */
       token=strtok_r(NULL, delimiter, &saveptr);
     }
-
-  /* A small sanity check: the last added token must be an operator (unless
-     its a 'loadcol'). */
-  if(node==NULL
-     || (node->loadcol==NULL && node->operator==GAL_ARITHMETIC_OP_INVALID))
-    error(EXIT_FAILURE, 0, "last token in arithmetic column ('%s') "
-          "is not a recognized operator", lasttoken);
 }
 
 
@@ -418,7 +409,6 @@ arithmetic_indexs_final(struct tableparams *p)
           tmp->start=startind;
           tmp->numsimple=numcols;
         }
-
     }
 }
 
@@ -957,7 +947,9 @@ gal_data_t *
 arithmetic_read_at_usage(struct tableparams *p,
                          struct arithmetic_token *token)
 {
+  char *c;
   size_t i;
+  int hasnewline=0;
 
   /* If the number is blank, then we have a name and should return the
      first column in the table that has the given name. */
@@ -965,14 +957,26 @@ arithmetic_read_at_usage(struct tableparams *p,
     {
       /* Search all the existing columns in the table. */
       for(i=0; i<p->numcolarray; ++i)
-        if( strcasecmp(p->colarray[i]->name, token->id_at_usage)==0 )
+        if( p->colarray[i]->name
+            && strcasecmp(p->colarray[i]->name, token->id_at_usage)==0 )
           return p->colarray[i];
 
       /* If control reaches here, then the requested name didn't exist in
-         the table. */
+         the table. This may happen because the user broke an arithmetic
+         command into muliple lines and forgot to put a back-slash. If so,
+         the string will have a new-line within it.*/
+      for(c=token->id_at_usage;*c!='\0';++c)
+        if(*c=='\n') hasnewline=1;
+
+      /* print the error message. */
       error(EXIT_FAILURE, 0, "'%s' doesn't correspond to the name of "
-            "any column in the table until this column arithmetic",
-            token->id_at_usage);
+            "any column in the table until this column arithmetic%s",
+            token->id_at_usage, hasnewline?". Because there is a "
+            "new-line in the name, it is highly probable that it "
+            "wasn't actually a name. This can happen when you break "
+            "an arithmetic command into multiple lines, but have "
+            "forgot to put a back-slash ('\\') at the end of a "
+            "broken line":"");
     }
 
   /* We already have the desired column number. */
