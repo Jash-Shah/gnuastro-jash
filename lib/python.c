@@ -26,9 +26,19 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <errno.h>
 #include <error.h>
 
-/* This macro needs to be defined before including any NumPy headers
-   to avoid the compiler from raising a warning message. */
+/* This macro needs to be defined before including any NumPy headers to
+   avoid the compiler from raising a warning message. */
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
+/* This macro needs to be defined before including any NumPy headers so
+   that the NumPY C-API can be used without having to call the
+   'import_arra' function as mentioned here:
+   https://numpy.org/doc/1.17/reference/c-api.array.html#c.NO_IMPORT_ARRAY
+   This also helps to avoid any "defined but not used" while compiling this
+   file. */
+#define NO_IMPORT_ARRAY
+
+/* Import Numpy's necessary header(s). */
 #include <numpy/arrayobject.h>
 
 /* Gnuastro's Python headers. */

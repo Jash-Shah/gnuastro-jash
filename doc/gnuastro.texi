@@ -32250,7 +32250,7 @@ after this function or make other modifications.
 
 @deftypefun void gal_fits_img_write (gal_data_t @code{*data}, char @code{*filename}, gal_fits_list_key_t @code{*headers}, char @code{*program_string})
 Write the @code{input} dataset into the FITS file named @file{filename}.
-Also add the @code{headers} keywords to the newly created HDU/extension it
+Also add the @code{headers} keywords to the newly created HDU/extension
 along with your program's name (@code{program_string}).
 @end deftypefun
 
