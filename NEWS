@@ -104,6 +104,20 @@ See the end of the file for license conditions.
     --fitestimatehdu: HDU containing table in file given to '--fitestimate'.
     --fitestimatecol: Column containing X axis values for '--fitestimate'.
 
+  Warp:
+  - Can correct distortions (with any standard recognized by WCSLIB) and
+    simultaneously align the image to the coordinate system. When no named
+    linear operation (like '--rotate', '--scale' or etc) is requested, Warp
+    will go into this mode. It is highly customizable through the following
+    options. See the "Invoking Warp" section of the book for more.
+    --center: RA, DEC of the center of the central pixel of output.
+    --widthinpix: Width of output in pixels.
+    --cdelt: Pixel scale of output ('CDELTi' keywords in FITS).
+    --ctype: Coordinates and projection algorithm. Default: RA/Dec and
+      Gnomonic or 'TAN').
+    --edgesampling: extra sampling of pixel polygon to account for strong
+      non-linear projection or distortion effects, when necessary.
+
   astscript-fits-view:
   --ds9colorbarmulti: show a separate color-bar for each image in DS9. By
     default this script will show a single color-bar for all the images to
@@ -188,15 +202,26 @@ See the end of the file for license conditions.
   - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
   - gal_units_sb_to_counts: counts from SB, zeropoint and area.
   - gal_units_sb_to_mag: magnitude from SB and area.
+  - gal_warp_wcsalign_init: initialize the WCS aligning structure.
+  - gal_warp_wcsalign_onpix: Per-pixel filling of output.
+  - gal_warp_wcsalign_onthread: function to give to pthreads.
+  - gal_warp_wcsalign: high-level function to align input by its WCS.
+  - gal_warp_wcsalign_free: free the contents of the WCS aligning structure.
+  - gal_wcs_free: free a WCS structure that is created or read by Gnuastro.
 
 ** Removed features
 
   Statistics:
-   --refcol has been removed because it breaks the modularity principle
-     (given that it is the job of Gnuastro's Table program to limit rows
-     from a larger table based on many different criteria). The output of
-     Table can be directly piped to Statistics to achieve the same (and
-     much more feature-rich effect).
+  --refcol has been removed because it breaks the modularity principle
+    (given that it is the job of Gnuastro's Table program to limit rows
+    from a larger table based on many different criteria). The output of
+    Table can be directly piped to Statistics to achieve the same (and much
+    more feature-rich effect).
+
+  Warp:
+  --align: has been removed. This is because aligning an image (while
+    correcting for any possible distortion) is now the default behavior of
+    Warp (when no linear operations have been requested).
 
 ** Changed features
 
@@ -205,6 +230,10 @@ See the end of the file for license conditions.
     of the Tutorial chapter, since it introduces the tools at a more basic
     level. The "Sufi simulates a detection" (which was previously first)
     has been moved to the fourth section.
+
+  Warp:
+  - The short format of the '--centeroncorner' option has been removed. The
+    '-c' is now the short format for the new '--center' option to Warp.
 
   astscript-psf-scale-factor:
   --widthinpix: new name for the old '--stampwidth' option. This was done

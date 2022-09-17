@@ -483,6 +483,28 @@ gal_wcs_create(double *crpix, double *crval, double *cdelt,
 
 
 
+void
+gal_wcs_free(struct wcsprm *wcs)
+{
+  int status;
+
+  /* If it is already NULL, then don't continue. */
+  if(wcs==NULL) return;
+
+  /* Free the internal structure. */
+  status=wcsfree(wcs);
+  if(status)
+    error(EXIT_FAILURE, 0, "%s: WCSLIB wcsfree ERROR %d: %s",
+          __func__, status, wcs_errmsg[status]);
+
+  /* Free the actual structure. */
+  free(wcs);
+}
+
+
+
+
+
 /* Extract the dimension name from CTYPE. */
 char *
 gal_wcs_dimension_name(struct wcsprm *wcs, size_t dimension)
@@ -1144,23 +1166,25 @@ gal_wcs_distortion_identify(struct wcsprm *wcs)
 
   if( dispre != NULL )
     {
-      if(      !strcmp(*dispre->dtype, "SIP") ) return GAL_WCS_DISTORTION_SIP;
-      else if( !strcmp(*dispre->dtype, "TPD") ) return GAL_WCS_DISTORTION_TPD;
+      if(      !strcmp(*dispre->dtype, "SIP") )
+        return GAL_WCS_DISTORTION_SIP;
+      else if( !strcmp(*dispre->dtype, "TPD") )
+        return GAL_WCS_DISTORTION_TPD;
       else
-        error(EXIT_FAILURE, 0, "%s: distortion '%s' isn't recognized in "
-              "the 'dispre' structure of the given 'wcsprm'", __func__,
-              *dispre->dtype);
+        return GAL_WCS_DISTORTION_INVALID;
     }
   else if( disseq != NULL )
     {
-      if(      !strcmp(*disseq->dtype, "TPV") ) return GAL_WCS_DISTORTION_TPV;
-      else if( !strcmp(*disseq->dtype, "TPD") ) return GAL_WCS_DISTORTION_TPD;
-      else if( !strcmp(*disseq->dtype, "DSS") ) return GAL_WCS_DISTORTION_DSS;
-      else if( !strcmp(*disseq->dtype, "WAT") ) return GAL_WCS_DISTORTION_WAT;
+      if(      !strcmp(*disseq->dtype, "TPV") )
+        return GAL_WCS_DISTORTION_TPV;
+      else if( !strcmp(*disseq->dtype, "TPD") )
+        return GAL_WCS_DISTORTION_TPD;
+      else if( !strcmp(*disseq->dtype, "DSS") )
+        return GAL_WCS_DISTORTION_DSS;
+      else if( !strcmp(*disseq->dtype, "WAT") )
+        return GAL_WCS_DISTORTION_WAT;
       else
-        error(EXIT_FAILURE, 0, "%s: distortion '%s' isn't recognized in "
-              "the 'disseq' structure of the given 'wcsprm'", __func__,
-              *dispre->dtype);
+        return GAL_WCS_DISTORTION_INVALID;
     }
 
   /* Control should not reach here. */

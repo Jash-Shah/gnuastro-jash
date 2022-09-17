@@ -5,6 +5,7 @@ Warp is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -62,6 +63,8 @@ struct argp_option program_options[] =
 
 
 
+
+
     /* Output. */
     {
       "keepwcs",
@@ -86,29 +89,97 @@ struct argp_option program_options[] =
       &p->coveredfrac,
       GAL_TYPE_FLOAT64,
       GAL_OPTIONS_RANGE_GE_0_LE_1,
-      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
 
 
+
+
+
     {
       0, 0, 0, 0,
-      "Warps:",
-      UI_GROUP_WARPS
+      "Align with WCS coordinates (correcting distortion, default mode)",
+      UI_GROUP_ALIGN
     },
     {
-      "align",
-      UI_KEY_ALIGN,
+      "center",
+      UI_KEY_CENTER,
+      "FLT,FLT",
       0,
-      0,
-      "Align the image and celestial axes.",
-      UI_GROUP_WARPS,
-      0,
-      GAL_TYPE_INVALID,
+      "Center coordinate of the output image in RA,DEC.",
+      UI_GROUP_ALIGN,
+      &p->wa.center,
+      GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET,
-      ui_add_to_modular_warps_ll
+      gal_options_parse_csv_float64
+    },
+    {
+      "widthinpix",
+      UI_KEY_WIDTHINPIX,
+      "INT,INT",
+      0,
+      "Output image width and height in pixels.",
+      UI_GROUP_ALIGN,
+      &p->wa.widthinpix,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_GT_0_ODD,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_float64
+    },
+    {
+      "ctype",
+      UI_KEY_CTYPE,
+      "STR[,STR]",
+      0,
+      "FITS standard CTYPE value (e.g., 'RA---TAN').",
+      UI_GROUP_ALIGN,
+      &p->wa.ctype,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_strings
+    },
+    {
+      "cdelt",
+      UI_KEY_CDELT,
+      "FLT[,FLT]",
+      0,
+      "Pixel scale of output (usually degrees/pixel).",
+      UI_GROUP_ALIGN,
+      &p->cdelt,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_GT_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+      gal_options_parse_csv_float64
+    },
+    {
+      "edgesampling",
+      UI_KEY_EDGESAMPLING,
+      "INT",
+      0,
+      "Number of extra samplings in pixel sides.",
+      UI_GROUP_ALIGN,
+      &p->wa.edgesampling,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET,
+    },
+
+
+
+
+
+    {
+      0, 0, 0, 0,
+      "Linear warps (must be called explicitly on command-line)",
+      UI_GROUP_WARPS
     },
     {
       "rotate",

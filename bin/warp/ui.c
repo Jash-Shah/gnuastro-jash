@@ -5,6 +5,7 @@ Warp is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -29,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 
 #include <gnuastro/wcs.h>
+#include <gnuastro/warp.h>
 #include <gnuastro/fits.h>
 #include <gnuastro/array.h>
 #include <gnuastro/table.h>
@@ -65,10 +67,12 @@ static char
 args_doc[] = "ASTRdata";
 
 const char
-doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" will warp/transform the "
-  "input image using an input coordinate matrix. Currently it accepts any "
-  "general projective mapping (which includes affine mappings as a "
-  "subset). \n"
+doc[] = GAL_STRINGS_TOP_HELP_INFO PROGRAM_NAME" will resample the pixel "
+  "grid of an input image. By default (if no special linear warping is "
+  "requested), it will align the image to the WCS coordinates in any"
+  "and remove any possible distortion. Linear warping (like '--rotate' "
+  "or '--scale') should be explicitly requested with the options under "
+  "the \"Linear warps\" group below. \n"
   GAL_STRINGS_MORE_HELP_INFO
   /* After the list of options: */
   "\v"
@@ -115,6 +119,8 @@ ui_initialize_options(struct warpparams *p,
   cp->numthreads         = gal_threads_number();
   cp->coptions           = gal_commonopts_options;
 
+  /* Program specific initializations. */
+  p->wa.edgesampling     = GAL_BLANK_SIZE_T;
 
   /* Set the mandatory common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -127,6 +133,7 @@ ui_initialize_options(struct warpparams *p,
           break;
 
         case GAL_OPTIONS_KEY_SEARCHIN:
+        case GAL_OPTIONS_KEY_IGNORECASE:
         case GAL_OPTIONS_KEY_TABLEFORMAT:
         case GAL_OPTIONS_KEY_STDINTIMEOUT:
           cp->coptions[i].flags=OPTION_HIDDEN;
@@ -225,34 +232,15 @@ ui_add_to_modular_warps_ll(struct argp_option *option, char *arg,
   gal_data_t *new;
   struct warpparams *p=(struct warpparams *)params;
 
-  /* When an argument is necessary (note that '--align' doesn't take an
-     argument), make sure we actually have a string to parse. Also note
-     that if an argument is necessary, but none is given Argp will
-     automatically abort the program with an informative error. */
+  /* When an argument is necessary, make sure we actually have a string to
+     parse. Also note that if an argument is necessary, but none is given
+     Argp will automatically abort the program with an informative
+     error. */
   if(arg && *arg=='\0')
     error(EXIT_FAILURE, 0, "empty string given to '--%s'", option->name);
 
   /* Parse the (possible) arguments. */
-  if(option->key==UI_KEY_ALIGN)
-    {
-      /* For functions the standard checking isn't done, so first, we'll
-         make sure that if we are in a configuration file (where
-         'arg!=NULL'), the value is either 0 or 1. */
-      if( arg && strcmp(arg, "0") && strcmp(arg, "1") )
-        error_at_line(EXIT_FAILURE, 0, filename, lineno, "the '--align' "
-                      "option takes no arguments. In a configuration file "
-                      "it can only have the values '1' or '0', indicating "
-                      "if it should be used or not");
-
-      /* Align doesn't take any values, but if called in a configuration
-         file with a value of '0', we should ignore it. */
-      if(arg && *arg=='0') return NULL;
-
-      /* Allocate the data structure. */
-      new=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 0, NULL, NULL, 0, -1, 1,
-                         NULL, NULL, NULL);
-    }
-  else new=gal_options_parse_list_of_numbers(arg, filename, lineno);
+  new=gal_options_parse_list_of_numbers(arg, filename, lineno);
 
 
   /* If this was a matrix, then put it in the matrix element of the main
@@ -334,53 +322,231 @@ ui_add_to_modular_warps_ll(struct argp_option *option, char *arg,
 /***************       Sanity Check         *******************/
 /**************************************************************/
 static void
+ui_check_options_and_arguments_nonlinear(struct warpparams *p)
+{
+  gal_warp_wcsalign_t *wa=&p->wa;
+  size_t two=2, *sarray=NULL, stemp, indim=0;
+  double *icenter=NULL, *iwidth=NULL, *imin=NULL, *imax=NULL, *tmp=NULL;
+
+  /* Put the number of threads into the non-linear structure. */
+  wa->numthreads=p->cp.numthreads;
+
+  /* Sanity check user's possibly given '--center'. */
+  if(wa->center)
+    {
+      if(wa->center->size !=2)
+        error(EXIT_FAILURE, 0, "%zu value(s) given to '--center', "
+              "however this option takes exactly 2 values to specify "
+              "the output image center", wa->center->size);
+
+      tmp=wa->center->array;
+      if(tmp[0] < 0 || tmp[0] > 360 || tmp[1] < -90 || tmp[1] > 90 )
+        error(EXIT_FAILURE, 0, "the first value '--center' should be "
+              "between 0 and 360 (inclusive, because it is the RA) "
+              "and the second value should be between -90 and 90 "
+              "(inclusive, because it is the Dec), however the given "
+              "values are: %g and %g", tmp[0], tmp[1]);
+    }
+  else   /* --center not given, use the input image to define it. */
+    {
+      /* Get sky coverage information about the input image. Note that
+         this allocates the pointers that have to be freed later. */
+      if( gal_wcs_coverage(p->inputname, p->cp.hdu, &indim, &icenter,
+                           &iwidth, &imin, &imax)==0 )
+        error(EXIT_FAILURE, 0, "%s (hdu %s): is not usable for finding "
+              "sky coverage", p->inputname, p->cp.hdu);
+
+
+      /* Store the center array and clean up the rest. */
+      wa->center=gal_data_alloc(icenter, GAL_TYPE_FLOAT64, 1,
+                                &two, NULL, 0, p->cp.minmapsize,
+                                p->cp.quietmmap, NULL, NULL,
+                                NULL);
+
+      free(imin);
+      free(imax);
+      free(iwidth);
+    }
+
+  /* If the output width is given, make sure it has exactly two
+     values for width and height. */
+  if(wa->widthinpix)
+    {
+      if( wa->widthinpix->size != 2 )
+        error(EXIT_FAILURE, 0, "%zu value(s) given to '--widthinpix', "
+              "however this option takes exactly 2 values as the "
+              "output image width and height in pixels",
+              wa->widthinpix->size);
+
+      /* Image size must be of type size_t, but first we should make sure
+         the user didn't give a floating-point value. */
+      tmp=wa->widthinpix->array;
+      if( tmp[0]!=ceil(tmp[0]) || tmp[1]!=ceil(tmp[1]) )
+        error(EXIT_FAILURE, 0, "value to '--widthinpix' must be "
+              "integers, but they are: %g, %g", tmp[0], tmp[1]);
+      wa->widthinpix=gal_data_copy_to_new_type(wa->widthinpix,
+                                               GAL_TYPE_SIZE_T);
+
+      /* Image size must be ODD */
+      sarray=wa->widthinpix->array;
+      if( sarray[0]%2==0 || sarray[1]%2==0 )
+        {
+          /* Let the user know that we are updating the output size. */
+          error(EXIT_SUCCESS, 0, "WARNING: '--width' must be odd: "
+                "updating %zux%zu to %zux%zu", sarray[0], sarray[1],
+                sarray[0]%2 ? sarray[0] : sarray[0]+1,
+                sarray[1]%2 ? sarray[1] : sarray[1]+1);
+
+          /* Keep the final values. */
+          if(sarray[0]%2==0) sarray[0]+=1;
+          if(sarray[1]%2==0) sarray[1]+=1;
+        }
+
+      /* To keep the later steps consistent with the C ordering of
+         dimensions, we'll swap the fast and slow axis from FITS (which has
+         the same convention as FORTRAN), because the user sees a FITS
+         file. In an aligned image, sarray[0] is the horizontal axis and
+         sarray[1] the vertical one.
+
+         NAXIS1 -> dsize[1] -> horizontal axis
+         NAXIS2 -> dsize[0] -> vertical axis        */
+      stemp=sarray[0]; sarray[0]=sarray[1]; sarray[1]=stemp;
+    }
+
+  /* Check CTYPE */
+  if(!wa->ctype)
+    error(EXIT_FAILURE, 0, "no output projection CTYPE specified, "
+          "you can use the '--ctype' option and give it a comma "
+          "separated CTYPE value recognized by the WCSLIB (e.g. "
+          "--ctype=RA---TAN,DEC--TAN)");
+  if(wa->ctype->size != p->input->ndim)
+    error(EXIT_FAILURE, 0, "%zu value(s) given to '--ctype', but it "
+          "takes exactly 2 values", wa->ctype->size);
+
+
+  /* Copy necessary parameters for the nonlinear warp to work */
+  wa->input=p->input;
+  wa->cdelt=p->cdelt;
+  wa->coveredfrac=p->coveredfrac;
+}
+
+
+
+
+static void
+ui_check_cdelt(struct warpparams *p)
+{
+  size_t two=2, i;
+  gal_data_t *olddata=NULL;
+  double *tmp=NULL, *cdelt=NULL;
+
+  if(!p->cdelt)
+    {
+      /* CDELT is not given, try to deduce from WCS */
+      cdelt=gal_wcs_pixel_scale(p->input->wcs);
+      if(!cdelt)
+        error(EXIT_FAILURE, 0, "%s (hdu %s): the pixel scale couldn't "
+              "be deduced from the WCS.", p->inputname, p->cp.hdu);
+
+      /* Set CDELT to the maximum value */
+      cdelt[0] = ( cdelt[0] > cdelt[1] ? cdelt[0] : cdelt[1] );
+      cdelt[1] = cdelt[0];
+      p->cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
+                              p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
+                              NULL);
+    }
+  else
+    {
+      /* CDELT is given, make sure there are no more than two values */
+      if(p->cdelt->size > 2)
+        error(EXIT_FAILURE, 0, "%zu values given to '--cdelt', "
+              "however this option takes no more than 2 values",
+              p->cdelt->size);
+
+      /* If only one value given to CDELT */
+      if(p->cdelt->size == 1)
+        {
+          olddata=p->cdelt; tmp=olddata->array;
+          p->cdelt=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1,
+                                  &two, NULL, 0,
+                                  p->cp.minmapsize,
+                                  p->cp.quietmmap, NULL, NULL,
+                                  NULL);
+          cdelt=p->cdelt->array;
+          cdelt[0]=cdelt[1]=tmp[0];
+          gal_data_free(olddata);
+        }
+
+      /* Check if the CDELT is in a reasonable range of degrees */
+      cdelt=p->cdelt->array;
+      for(i=p->cdelt->size; i--;)
+        if(cdelt[i]>0.01)
+          error(EXIT_SUCCESS, 0, "WARNING: CDELT on dimension %zu has "
+                "the unusual value of %f degrees. If you meant to "
+                "define CDELT in arcseconds please use: "
+                "'--cdelt=%g/3600'", i, cdelt[i], cdelt[i]);
+    }
+}
+
+
+
+
+
+static void
 ui_check_options_and_arguments(struct warpparams *p)
 {
   /* Read the input.*/
-  if(p->inputname)
-    {
-      /* Make sure a HDU is given. */
-      if( gal_fits_file_recognized(p->inputname) && p->cp.hdu==NULL )
-        error(EXIT_FAILURE, 0, "no HDU specified, you can use the '--hdu' "
-              "('-h') option and give it the HDU number (starting from "
-              "zero), or extension name (generally, anything acceptable "
-              "by CFITSIO)");
-
-      /* Read the input image as double type and its WCS structure. */
-      p->input=gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
-                                             NULL, GAL_TYPE_FLOAT64,
-                                             p->cp.minmapsize,
-                                             p->cp.quietmmap);
-
-      /* Read the WCS and remove one-element wide dimension(s). */
-      p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu,
-                                 p->cp.wcslinearmatrix, p->hstartwcs,
-                                 p->hendwcs, &p->input->nwcs);
-      p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
-                                                p->input->dsize,
-                                                p->input->wcs);
-
-      /* Currently Warp only works on 2D images. */
-      if(p->input->ndim!=2)
-        error(EXIT_FAILURE, 0, "input has %zu dimensions but Warp currently "
-              "only works on 2D datasets (images).\n\n"
-              "We do plan to add 3D functionality (see "
-              "https://savannah.gnu.org/task/?15729), so please get in "
-              "touch if you need it (any further interest, support or help "
-              "would be useful)", p->input->ndim);
-
-      /* Get basic WCS information. */
-      if(p->input->wcs)
-        {
-          p->pixelscale=gal_wcs_pixel_scale(p->input->wcs);
-          if(p->pixelscale==NULL)
-            error(EXIT_FAILURE, 0, "%s (hdu %s): the pixel scale couldn't "
-                  "be deduced from the WCS.", p->inputname, p->cp.hdu);
-          p->inwcsmatrix=gal_wcs_warp_matrix(p->input->wcs);
-        }
-    }
-  else
+  if(p->inputname==NULL)
     error(EXIT_FAILURE, 0, "no input file is specified");
+
+  /* Make sure a HDU is given. */
+  if( gal_fits_file_recognized(p->inputname) && p->cp.hdu==NULL )
+    error(EXIT_FAILURE, 0, "no HDU specified, you can use the '--hdu' "
+          "('-h') option and give it the HDU number (starting from "
+          "zero), or extension name (generally, anything acceptable "
+          "by CFITSIO)");
+
+  /* Make sure mandatory options are provided. */
+  if(p->modularll==NULL && p->matrix==NULL)
+    {
+      p->nonlinearmode=1;
+      if(p->wa.edgesampling==GAL_BLANK_SIZE_T)
+        error(EXIT_FAILURE, 0, "no '--edgesampling' provided");
+    }
+
+  /* Read the input image as double type and its WCS structure. */
+  p->input=gal_array_read_one_ch_to_type(p->inputname, p->cp.hdu,
+                                         NULL, GAL_TYPE_FLOAT64,
+                                         p->cp.minmapsize,
+                                         p->cp.quietmmap);
+
+  /* Read the WCS and remove one-element wide dimension(s). */
+  p->input->wcs=gal_wcs_read(p->inputname, p->cp.hdu,
+                             p->cp.wcslinearmatrix, p->hstartwcs,
+                             p->hendwcs, &p->input->nwcs);
+  p->input->ndim=gal_dimension_remove_extra(p->input->ndim,
+                                            p->input->dsize,
+                                            p->input->wcs);
+
+  /* Currently Warp only works on 2D images. */
+  if(p->input->ndim!=2)
+    error(EXIT_FAILURE, 0, "input has %zu dimensions but Warp currently "
+          "only works on 2D datasets (images).\n\n"
+          "We do plan to add 3D functionality (see "
+          "https://savannah.gnu.org/task/?15729), so please get in "
+          "touch if you need it (any further interest, support or help "
+          "would be useful)", p->input->ndim);
+
+  /* Get basic WCS information. */
+  if(p->input->wcs)
+    {
+      ui_check_cdelt(p);
+      p->inwcsmatrix=gal_wcs_warp_matrix(p->input->wcs);
+    }
+
+  /* Do all the distortion correction sanity-checks.*/
+  if(p->nonlinearmode)
+    ui_check_options_and_arguments_nonlinear(p);
 }
 
 
@@ -469,133 +635,6 @@ ui_matrix_prepare_raw(struct warpparams *p)
 
 
 
-/* Set the matrix so the image is aligned with the axises. Note that
-   WCSLIB automatically fills the CRPI */
-static void
-ui_matrix_make_align(struct warpparams *p, double *tmatrix)
-{
-  double A, *w, *P, x[4];
-
-  /* Make sure the input image had a WCS structure. */
-  if(p->input->wcs==NULL)
-    error(EXIT_FAILURE, 0, "%s (hdu: %s): no WCS information present, "
-          "hence the '--align' option cannot be used", p->inputname,
-          p->cp.hdu);
-
-  /* Check if there is only two WCS axises: */
-  if(p->input->wcs->naxis!=2)
-    error(EXIT_FAILURE, 0, "the WCS structure of %s (hdu: %s) has %d "
-          "axises. For the '--align' option to operate it must be 2",
-          p->inputname, p->cp.hdu, p->input->wcs->naxis);
-
-
-  /* For help in reading, use aliases for the WCS matrix and pixel scale.*/
-  P=p->pixelscale;
-  w=p->inwcsmatrix;
-
-
-  /* Lets call the given WCS orientation 'W', the rotation matrix we want
-     to find as 'X' and the final (aligned matrix) 'P' (which is the pixel
-     scale):
-
-          X            W             P
-        ------       ------      -------
-        x0  x1       w0  w1      -P0   0
-        x2  x3   *   w2  w3   =   0    P1
-
-     Let's open up the matrix multiplication, so we can find the 'X'
-     elements as function of the 'W' elements and 'a'.
-
-        x0*w0 + x1*w2 = -P0                                        (1)
-        x0*w1 + x1*w3 =  0                                         (2)
-        x2*w0 + x3*w2 =  0                                         (3)
-        x2*w1 + x3*w3 =  P1                                        (4)
-
-     Let's bring the X with the smaller index in each equation to the left
-     side:
-
-        x0 = (-w2/w0)*x1 - P0/w0                                   (5)
-        x0 = (-w3/w1)*x1                                           (6)
-        x2 = (-w2/w0)*x3                                           (7)
-        x2 = (-w3/w1)*x3 + P1/w1                                   (8)
-
-    Using (5) and (6) we can find x0 and x1, by first eliminating x0:
-
-       (-w2/w0)*x1 - P0/w0 = (-w3/w1)*x1  ->  (w3/w1 - w2/w0) * x1 = P0/w0
-
-    For easy reading/writing, let's define: A = (w3/w1 - w2/w0)
-
-       --> x1 = P0 / w0 / A
-       --> x0 = -1 * x1 * w3 / w1
-
-    Similar to the above, we can find x2 and x3 from (7) and (8):
-
-       (-w2/w0)*x3 = (-w3/w1)*x3 + P1/w1  ->  (w3/w1 - w2/w0) * x3 = P1/w1
-
-       --> x3 = P1 / w1 / A
-       --> x2 = -1 * x3 * w2 / w0
-
-    Note that when the image is already aligned (off-diagonals are zero),
-    only the signs of the diagonal elements matter. */
-  if( w[1]==0.0f && w[2]==0.0f )
-    {
-      x[0] = w[0]<0 ? 1.0f : -1.0f;  /* Has to be negative. */
-      x[1] = 0.0f;
-      x[2] = 0.0f;
-      x[3] = w[3]>0 ? 1.0f : -1.0f;  /* Has to be positive. */
-    }
-  else if (w[0]==0.0f && w[3]==0.0f )
-    {
-      x[0] = 0.0f;
-      x[1] = w[1]<0 ? 1.0f : -1.0f;  /* Has to be negative. */
-      x[2] = w[2]>0 ? 1.0f : -1.0f;  /* Has to be positive. */
-      x[3] = 0.0f;
-    }
-  else
-    {
-      A = (w[3]/w[1]) - (w[2]/w[0]);
-      x[1] = P[0] / w[0] / A;
-      x[3] = P[1] / w[1] / A;
-      x[0] = -1 * x[1] * w[3] / w[1];
-      x[2] = -1 * x[3] * w[2] / w[0];
-
-      /* When the input matrix is flipped, the diagonal elements of the
-         necessary rotation will have a different sign. */
-      if(x[0]*x[3]<0)
-        if(!p->cp.quiet)
-          error(0, 0, "%s (hdu %s): WARNING (bug #55217)! The alignment may "
-                "not be correct! This is a recognized bug, we just haven't "
-                "had enough time to fix it yet, any help or support is "
-                "most welcome.\n\n"
-                "This may be due to the East and North not being left-hand "
-                "oriented. If this is the case, you can fix it by flipping "
-                "the image along the problematic axis (with '--flip=1,0' or "
-                "'--flip=0,1') and re-running Warp with '--align'. Note "
-                "that you can't yet call '--flip' in the same command as "
-                "'--align'",  p->inputname, p->cp.hdu);
-    }
-
-  /* For a check:
-  printf("ps: (%e, %e)\n", P[0], P[1]);
-  printf("w:\n");
-  printf("  %.8e    %.8e\n", w[0], w[1]);
-  printf("  %.8e    %.8e\n", w[2], w[3]);
-  printf("x:\n");
-  printf("  %.8e    %.8e\n", x[0], x[1]);
-  printf("  %.8e    %.8e\n", x[2], x[3]);
-  exit(0);
-  */
-
-  /* Put the matrix elements into the output array: */
-  tmatrix[0]=x[0];  tmatrix[1]=x[1]; tmatrix[2]=0.0f;
-  tmatrix[3]=x[2];  tmatrix[4]=x[3]; tmatrix[5]=0.0f;
-  tmatrix[6]=0.0f;  tmatrix[7]=0.0f; tmatrix[8]=1.0f;
-}
-
-
-
-
-
 static void
 ui_matrix_inplacw_multiply(double *in, double *with)
 {
@@ -662,10 +701,6 @@ ui_matrix_from_modular(struct warpparams *p)
          structure.*/
       switch(pop->status)
         {
-        case UI_KEY_ALIGN:
-          ui_matrix_make_align(p, module);
-          break;
-
         case UI_KEY_ROTATE:
           s = sin( v1 * M_PI / 180 );
           c = cos( v1 * M_PI / 180 );
@@ -872,6 +907,10 @@ ui_matrix_finalize(struct warpparams *p)
 char *
 ui_set_suffix(struct warpparams *p)
 {
+  /* Return the suffix as soon as nonlinear mode is detected. Just
+     ignore the rest. */
+  if(p->nonlinearmode) return "_aligned.fits";
+
   /* A small independent sanity check: we either need a matrix or at least
      one modular warping. */
   if(p->matrix==NULL && p->modularll==NULL) ui_error_no_warps();
@@ -881,9 +920,6 @@ ui_set_suffix(struct warpparams *p)
   if(p->matrix==NULL && p->modularll->next==NULL)
     switch(p->modularll->status)
       {
-      case UI_KEY_ALIGN:
-        return "_aligned.fits";
-
       case UI_KEY_ROTATE:
         return "_rotated.fits";
 
@@ -929,8 +965,8 @@ ui_preparations(struct warpparams *p)
     p->cp.output=gal_checkset_automatic_output(&p->cp, p->inputname,
                                                ui_set_suffix(p));
 
-  /* Prepare the final warping matrix. */
-  ui_matrix_finalize(p);
+  /* Prepare the final warping matrix if in linear mode. */
+  if(p->nonlinearmode == 0) ui_matrix_finalize(p);
 }
 
 
@@ -959,6 +995,7 @@ void
 ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
 {
   double *matrix;
+  uint8_t disttype;
   struct gal_options_common_params *cp=&p->cp;
 
 
@@ -1010,19 +1047,30 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
   /* Everything is ready, notify the user of the program starting. */
   if(!p->cp.quiet)
     {
-      matrix=p->matrix->array;
       printf(PROGRAM_NAME" "PACKAGE_VERSION" started on %s",
              ctime(&p->rawtime));
       printf(" Using %zu CPU thread%s\n", p->cp.numthreads,
              p->cp.numthreads==1 ? "." : "s.");
       printf(" Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
-      printf(" matrix:"
-             "\n\t%.4f   %.4f   %.4f"
-             "\n\t%.4f   %.4f   %.4f"
-             "\n\t%.4f   %.4f   %.4f\n",
-             matrix[0], matrix[1], matrix[2],
-             matrix[3], matrix[4], matrix[5],
-             matrix[6], matrix[7], matrix[8]);
+
+      if(p->nonlinearmode)
+        {
+          disttype=gal_wcs_distortion_identify(p->input->wcs);
+          if(disttype!=GAL_WCS_DISTORTION_INVALID)
+            printf(" matrix: '%s' distortion from WCS of input.\n",
+                   gal_wcs_distortion_to_string(disttype));
+        }
+      else
+        {
+          matrix=p->matrix->array;
+          printf(" matrix:"
+                 "\n\t% .4f   % .4f   % .4f"
+                 "\n\t% .4f   % .4f   % .4f"
+                 "\n\t% .4f   % .4f   % .4f\n",
+                 matrix[0], matrix[1], matrix[2],
+                 matrix[3], matrix[4], matrix[5],
+                 matrix[6], matrix[7], matrix[8]);
+        }
     }
 }
 
@@ -1052,12 +1100,23 @@ void
 ui_free_report(struct warpparams *p, struct timeval *t1)
 {
   /* Free the allocated arrays: */
+  if(p->inverse) free(p->inverse);
+  if(p->wa.cdelt) p->wa.cdelt=NULL;
+  if(p->cdelt) gal_data_free(p->cdelt);
+  if(p->matrix) gal_data_free(p->matrix);
+  if(p->inwcsmatrix) free(p->inwcsmatrix);
+  if(p->modularll) gal_data_free(p->modularll);
+
+  if(p->wa.input) p->wa.input=NULL;
+  if(p->wa.ctype) gal_data_free(p->wa.ctype);
+  if(p->wa.center) gal_data_free(p->wa.center);
+  if(p->wa.widthinpix) gal_data_free(p->wa.widthinpix);
+
   free(p->cp.hdu);
   free(p->cp.output);
   gal_data_free(p->input);
-  gal_data_free(p->matrix);
-  if(p->pixelscale) free(p->pixelscale);
-  if(p->inwcsmatrix) free(p->inwcsmatrix);
+  gal_data_free(p->output);
+
 
   /* Report how long the operation took. */
   if(!p->cp.quiet)

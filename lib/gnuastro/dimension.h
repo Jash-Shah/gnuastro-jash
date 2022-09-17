@@ -27,6 +27,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
    must be included before the C++ preparations below */
 #include <gnuastro/data.h>
 #include <gnuastro/blank.h>
+#include <gnuastro/polygon.h>
 
 /* C++ Preparations */
 #undef __BEGIN_C_DECLS
@@ -71,6 +72,28 @@ gal_dimension_num_neighbors(size_t ndim);
 /************************************************************************/
 #define GAL_DIMENSION_FLT_TO_INT(FLT) ( (FLT)-(long)(FLT) > 0.5f  \
                                         ? (long)(FLT)+1 : (long)(FLT) )
+
+/* A pixel's center is an integer value. This function will give the
+   integer value that is nearest to a floating point number. Works for both
+   positive and negative values and includes floating point errors.
+
+   WARP_NEARESTINT_HALFHIGHER(0.5f) --> 1.0f
+*/
+#define GAL_DIMENSION_NEARESTINT_HALFHIGHER(D)         \
+  ( ceil( (D) ) - (D) > 0.5f + GAL_POLYGON_ROUND_ERR ? \
+                            ceil((D))-1.0f : ceil((D)) )
+
+/* Similar to 'GAL_DIMENSION_NEARESTINT_HALFHIGHER' but:
+
+   GAL_DIMENSION_NEARESTINT_HALFLOWER(0.5f) --> 0.0f; */
+#define GAL_DIMENSION_NEARESTINT_HALFLOWER(D)            \
+  ( ceil( (D) ) - (D) > 0.5f - GAL_POLYGON_ROUND_ERR ?   \
+                            ceil((D))-1.0f : ceil((D)) )
+
+#define GAL_DIMENSION_CEILWITHERR(D)                       \
+  ( fabs( nearbyint((D)) - (D) ) < GAL_POLYGON_ROUND_ERR ? \
+                                   nearbyint((D)) : nearbyint((D))+1    )
+
 
 void
 gal_dimension_add_coords(size_t *c1, size_t *c2, size_t *out, size_t ndim);

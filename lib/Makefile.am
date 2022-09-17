@@ -144,7 +144,9 @@ libgnuastro_la_SOURCES = \
   txt.c \
   type.c \
   units.c \
+  warp.c \
   wcs.c
+
 
 
 
@@ -190,6 +192,7 @@ pkginclude_HEADERS = gnuastro/config.h \
   $(headersdir)/txt.h \
   $(headersdir)/type.h \
   $(headersdir)/units.h \
+  $(headersdir)/warp.h \
   $(headersdir)/wcs.h
 
 

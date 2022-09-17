@@ -5,6 +5,7 @@ Warp is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -33,7 +34,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Option groups particular to this program. */
 enum program_args_groups
 {
-  UI_GROUP_WARPS = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_ALIGN = GAL_OPTIONS_GROUP_AFTER_COMMON,
+  UI_GROUP_WARPS
 };
 
 
@@ -42,7 +44,7 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   b d g i j l n u v w x y z
+   a b d g i j l n u v z
    A B E G H J L O Q R W X Y
 */
 enum option_keys_enum
@@ -50,7 +52,6 @@ enum option_keys_enum
   /* With short-option version. */
   UI_KEY_KEEPWCS         = 'k',
   UI_KEY_COVEREDFRAC     = 'C',
-  UI_KEY_ALIGN           = 'a',
   UI_KEY_ROTATE          = 'r',
   UI_KEY_SCALE           = 's',
   UI_KEY_FLIP            = 'f',
@@ -58,12 +59,18 @@ enum option_keys_enum
   UI_KEY_TRANSLATE       = 't',
   UI_KEY_PROJECT         = 'p',
   UI_KEY_MATRIX          = 'm',
-  UI_KEY_CENTERONCORNER  = 'c',
+  UI_KEY_CDELT           = 'x',
+  UI_KEY_INTERPSAMPLING  = 'y',
+  UI_KEY_CENTER          = 'c',
+  UI_KEY_WIDTHINPIX      = 'w',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
-  UI_KEY_HSTARTWCS       = 1000,
+  UI_KEY_CENTERONCORNER = 1000,
+  UI_KEY_EDGESAMPLING,
+  UI_KEY_HSTARTWCS,
   UI_KEY_HENDWCS,
+  UI_KEY_CTYPE,
 };
 
 

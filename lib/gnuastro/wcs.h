@@ -112,6 +112,9 @@ gal_wcs_create(double *crpix, double *crval, double *cdelt,
                double *pc, char **cunit, char **ctype, size_t ndim,
                int linearmatrix);
 
+void
+gal_wcs_free(struct wcsprm *wcs);
+
 char *
 gal_wcs_dimension_name(struct wcsprm *wcs, size_t dimension);
 
