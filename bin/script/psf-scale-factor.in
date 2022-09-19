@@ -650,8 +650,8 @@ if [ $nocentering = 0 ]; then
 
     # Read the overlap range from the 'ICF1PIX' keyword (which is printed
     # in all outputs of Crop).
-    overlaprange=$(astfits $cropped -h1 --keyvalue=ICF1PIX -q \
-                       | sed -e's|:| |g' -e's|,| |')
+    overlaprange=$(astfits $cropped -h1 --keyvalue=ICF1PIX --quiet \
+                           | sed -e's|:| |g' -e's|,| |')
 
     # Calculate the position of the bottom-left pixel of the cropped image
     # in relation to the input image.
@@ -684,14 +684,14 @@ if [ $nocentering = 0 ]; then
     # output above).
     warpped=$tmpdir/cropped-masked-warpforcenter-$objectid.fits
     DXY=$(echo "$warpcoord" | awk '{print $1}')
-    astwarp $cropped_masked --translate=$DXY --output=$warpped
+    astwarp $cropped_masked --translate=$DXY --output=$warpped $quiet
 
     # Crop image based on the calculated shift (second component of the
     # output above).
     centermsk=$tmpdir/cropped-masked-centered-$objectid.fits
     CXY=$(echo "$warpcoord" | awk '{print $2}')
     astcrop $warpped -h1 \
-            --mode=img --output=$centermsk \
+            --mode=img --output=$centermsk $quiet \
             --center=$CXY --width=$xwidthinpix,$ywidthinpix
 else
     # If the user did not want to correct the center of image, we'll use
@@ -705,10 +705,10 @@ fi
 
 # Crop the PSF image with the same size.
 psfcropped=$tmpdir/cropped-psf-$objectid.fits
-psfxcenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS1 -q \
-                 | awk '{print $1/2+0.5}')
-psfycenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS2 -q \
-                 | awk '{print $1/2+0.5}')
+psfxcenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS1 --quiet \
+                     | awk '{print $1/2+0.5}')
+psfycenter=$(astfits $psf -h$psfhdu --keyvalue=NAXIS2 --quiet \
+                     | awk '{print $1/2+0.5}')
 astcrop $psf --hdu=$psfhdu --mode=img \
         --center=$psfxcenter,$psfycenter \
         --width=$xwidthinpix,$ywidthinpix \
