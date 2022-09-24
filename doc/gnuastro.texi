@@ -33279,6 +33279,28 @@ All the arrays must have @code{ndim} elements with them except for @code{pc} whi
 Also, @code{cunit} and @code{ctype} are arrays of strings.
 If @code{GAL_WCS_LINEAR_MATRIX_CD} is passed to @code{linearmatrix} then the output WCS structure will have a CD matrix (even though you have given a PC and CDELT matrix as input to this function).
 Otherwise, the output will have a PC and CDELT matrix (which is the recommended format by WCSLIB).
+
+To prevent memory-leak, free the WCS structure first by WCSLIB's @code{wcsfree} function, and then the pointer with @code{stdlib.h}'s @code{free} when the process is finished:
+
+@example
+@verbatim
+int status;
+size_t ndim=2;
+double crpix[]={50, 50};
+double pc[]={-1, 0, 0, 1};
+double cdelt[]={0.4, 0.4};
+double crval[]={178.23, 36.98};
+char   *cunit[]={"deg", "deg"};
+char   *ctype[]={"RA---TAN", "DEC--TAN"};
+int linearmatrix = GAL_WCS_LINEAR_MATRIX_PC;
+struct wcsprm *wcsp =
+   gal_wcs_create(crpix, crval, cdelt, pc, cunit,
+                  ctype, ndim, linearmatrix);
+status = wcsfree(wcsp);
+free(wcsp);
+@end verbatim
+@end example
+
 @end deftypefun
 
 @deftypefun {char *} gal_wcs_dimension_name (struct wcsprm @code{*wcs}, size_t @code{dimension})
