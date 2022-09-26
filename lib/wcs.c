@@ -2155,7 +2155,8 @@ gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
 
   /* Clean up and return success. */
   free(dsize);
-  wcsfree(wcs);
+  wcsfree(wcs); free(wcs);
+  gal_list_data_free(coords);
   return 1;
 }
 
