@@ -13679,7 +13679,7 @@ In @option{--mode=wcs}, the columns will be assocated to the WCS coordinates (ty
 @itemx --mode=STR
 The coordinate mode for interpretting the values in the columns given to the @option{--markcoord1} and @option{--markcoord2} options.
 The acceptable values are either @code{img} (for image or pixel coordinates), and @code{wcs} for World Coordinate System (typically RA and Dec).
-For the WCS-mode, the input image should have the necessary WCS keywords, otherwize ConvertType will crash.
+For the WCS-mode, the input image should have the necessary WCS keywords, otherwise ConvertType will crash.
 
 @item --markshape=STR/INT
 @cindex Shapes for marks (vector graphics)
@@ -13715,7 +13715,7 @@ Its major axis radius is defined by the first size element (first column given t
 
 @item point (5)
 A point (or a filled circle).
-It's @emph{radius} is defined by a single size element (the first column given to @option{--marksize}).
+Its @emph{radius} is defined by a single size element (the first column given to @option{--marksize}).
 Any value in the second size column (if given for other shapes in the same call) are ignored by this shape.
 
 This filled circle mark is defined as a ``point'' because it is usually relevant as a small size (or point in the whole image).
@@ -13817,7 +13817,11 @@ iTerm2 is described as a successor for iTerm and works on macOS 10.14 (released 
 Column name or number that contains the text that should be printed under the mark.
 If the column is numeric, the number will be printed under the mark (for example if you want to write teh magnitude or redshift of the object under the mark showing it).
 For the precision of writing floating point columns, see @option{--marktextprecision}.
-But if the column has a string format (for example the name of the object like an NGC), you need to define the column as a string column (see @ref{Gnuastro text table format}).
+But if the column has a string format (for example the name of the object like an NGC1234), you need to define the column as a string column (see @ref{Gnuastro text table format}).
+
+For text with different lengths, set the length in the definition of the column to the maximum length of the strings to be printed.
+If there are some rows or marks that don't require text, set the string in this column to @option{n/a} (not applicable; the blank value for strings in Gnuastro).
+When having strings with different lengths, make sure to have enough white spaces (for the shorter strings) so the adjacent columns are not taken as part of the string (see @ref{Gnuastro text table format}).
 
 @item --marktextprecision=INT
 The number of decimal digits to print after the floating point.
