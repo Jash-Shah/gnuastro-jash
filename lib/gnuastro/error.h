@@ -1,5 +1,5 @@
 /*********************************************************************
-python -- Functions to assist Python wrappers using Gnuastro's library.
+error - error handling throughout the Gnuastro library
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
@@ -21,12 +21,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef __GAL_PYTHON_H__
-#define __GAL_PYTHON_H__
+#ifndef __GAL_ERROR_H__
+#define __GAL_ERROR_H__
 
 /* Include other headers if necessary here. Note that other header files
    must be included before the C++ preparations below */
-#include <gnuastro/data.h>
+#include <stdint.h>
+
 
 
 /* C++ Preparations */
@@ -52,14 +53,41 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 
-/*************************************************************
- **************           Type codes           ***************
- *************************************************************/
-int
-gal_python_type_to_numpy(uint8_t type);
+/************************************************************
+ **************        Error Structure        ***************
+ ************************************************************/
+/* Data type for storing errors */
+typedef struct gal_error_t
+{
+  uint8_t code;              /* Generic code of the problem.  */
+  uint8_t is_warning;        /* Defines if the error is only a warning. */
+  char *back_msg;            /* Detailed message of backend (library) */
+  char *front_msg;           /* Detailed message of front end (caller). */
+  struct gal_error_t *next;  /* Next error message.           */
+} gal_error_t;
 
-uint8_t
-gal_python_type_from_numpy(int type);
+
+
+
+
+/****************************************************************
+ ************************   Allocation   ************************
+ ****************************************************************/
+gal_error_t *
+gal_error_allocate(uint8_t code, char *back_msg);
+
+void
+gal_error_add_back_msg(gal_error_t **err, uint8_t code, char *back_msg);
+
+void
+gal_error_add_front_msg(gal_error_t **err, char *front_msg, uint8_t replace);
+
+
+
+/* Printing. */
+void
+gal_error_print(gal_error_t **err);
+
 
 
 
@@ -67,4 +95,4 @@ gal_python_type_from_numpy(int type);
 
 __END_C_DECLS    /* From C++ preparations */
 
-#endif           /* __GAL_PYTHON_H__ */
+#endif           /* __GAL_ERROR_H__ */

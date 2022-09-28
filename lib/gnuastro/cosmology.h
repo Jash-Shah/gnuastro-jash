@@ -27,7 +27,6 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
    must be included before the C++ preparations below */
 
 
-
 /* C++ Preparations */
 #undef __BEGIN_C_DECLS
 #undef __END_C_DECLS
@@ -44,6 +43,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 /* Actual header contants (the above were for the Pre-processor). */
 __BEGIN_C_DECLS  /* From C++ preparations */
+
 
 
 

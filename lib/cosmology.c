@@ -28,6 +28,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <gnuastro/error.h>
+
 #include <gsl/gsl_const_mksa.h>
 #include <gsl/gsl_integration.h>
 
@@ -85,38 +87,55 @@ struct cosmology_integrand_t
     sum should not exceed 1. */
 static void
 cosmology_density_check(double o_lambda_0, double o_matter_0,
-                        double o_radiation_0)
+                        double o_radiation_0, gal_error_t **err)
 {
+  /* Error String */
+  char *errstr;
   double sum = o_lambda_0 + o_matter_0 + o_radiation_0;
 
   /* Check if the density fractions are between 0 and 1. */
   if(o_lambda_0 > 1 || o_lambda_0 < 0)
-    error(EXIT_FAILURE, 0, "value to option 'olambda' must be between "
-          "zero and one (inclusive), but the given value is '%.8f'. Recall "
-          "that 'olambda' is 'Current cosmological cst. dens. per crit. '"
-          "dens.", o_lambda_0);
+    {
+      if(asprintf(&errstr, "%s: value to option 'olambda' must be between "
+            "zero and one (inclusive), but the given value is '%.8f'. Recall "
+            "that 'olambda' is 'Current cosmological cst. dens. per crit. '"
+            "dens.", __func__, o_lambda_0) < 0)
+            gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
+      gal_error_add_back_msg(err, 0, errstr, 1);
+    }
 
   if(o_matter_0 > 1 || o_matter_0 < 0)
-    error(EXIT_FAILURE, 0, "value to option 'omatter' must be between "
-          "zero and one (inclusive), but the given value is '%.8f'. Recall "
-          "that 'omatter' is 'Current matter density per critical density.'",
-          o_matter_0);
-
+    { 
+      if(asprintf(&errstr, "%s: value to option 'omatter' must be between "
+            "zero and one (inclusive), but the given value is '%.8f'. Recall "
+            "that 'omatter' is 'Current matter density per critical density.'"
+            "dens.", __func__, o_matter_0) < 0)
+            gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
+      gal_error_add_back_msg(err, 0, errstr, 1);
+    }
+    
   if(o_radiation_0 > 1 || o_radiation_0 < 0)
-    error(EXIT_FAILURE, 0, "value to option 'oradiation' must be between "
+    { 
+      if(asprintf(&errstr, "%s: value to option 'oradiation' must be between "
           "zero and one (inclusive), but the given value is '%.8f'. Recall "
           "that 'oradiation' is 'Current radiation density per critical "
-          "density.", o_radiation_0);
+          "density.", __func__, o_radiation_0) < 0)
+            gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
+      gal_error_add_back_msg(err, 0, errstr, 1);
+    }
 
   /* Check if the density fractions add up to 1 (within floating point
       error). */
   if( sum > (1+1e-8) || sum < (1-1e-8) )
-    error(EXIT_FAILURE, 0, "sum of fractional densities is not 1, "
-          "but %.8f. The cosmological constant ('olambda'), matter "
-          "('omatter') and radiation ('oradiation') densities are given "
-          "as %.8f, %.8f, %.8f", sum, o_lambda_0, o_matter_0,
-          o_radiation_0);
-
+    { 
+      if(asprintf(&errstr, "%s: sum of fractional densities is not 1, "
+            "but %.8f. The cosmological constant ('olambda'), matter "
+            "('omatter') and radiation ('oradiation') densities are given "
+            "as %.8f, %.8f, %.8f.", __func__, sum, o_lambda_0, o_matter_0,
+                                              o_radiation_0) < 0)
+            gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
+      gal_error_add_back_msg(err, 0, errstr, 1);
+    }
 }
 
 
@@ -219,9 +238,9 @@ cosmology_integrand_comoving_volume(double z, void *params)
    fractional densities must add up to 1. */
 double
 gal_cosmology_age(double z, double H0, double o_lambda_0, double o_matter_0,
-                  double o_radiation_0)
+                  double o_radiation_0, gal_error_t **err)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   gsl_function F;
   double result, error;
   double o_curv_0 = 1.0 - ( o_lambda_0 + o_matter_0 + o_radiation_0 );
@@ -248,7 +267,8 @@ double
 gal_cosmology_proper_distance(double z, double H0, double o_lambda_0,
                               double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   size_t neval;
   gsl_function F;
   double result, error, c=GSL_CONST_MKSA_SPEED_OF_LIGHT;
@@ -278,7 +298,8 @@ double
 gal_cosmology_comoving_volume(double z, double H0, double o_lambda_0,
                               double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   size_t neval;
   gsl_function F;
   double result, error;
@@ -310,7 +331,8 @@ double
 gal_cosmology_critical_density(double z, double H0, double o_lambda_0,
                                double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   double H;
   double H0s=H0/1000/GSL_CONST_MKSA_PARSEC;     /* H0 in units of seconds. */
   double o_curv_0 = 1.0 - ( o_lambda_0 + o_matter_0 + o_radiation_0 );
@@ -331,7 +353,8 @@ double
 gal_cosmology_angular_distance(double z, double H0, double o_lambda_0,
                                double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   return gal_cosmology_proper_distance(z, H0, o_lambda_0, o_matter_0,
                                        o_radiation_0) / (1+z);
 }
@@ -345,7 +368,8 @@ double
 gal_cosmology_luminosity_distance(double z, double H0, double o_lambda_0,
                                   double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   return gal_cosmology_proper_distance(z, H0, o_lambda_0, o_matter_0,
                                        o_radiation_0) * (1+z);
 }
@@ -359,7 +383,8 @@ double
 gal_cosmology_distance_modulus(double z, double H0, double o_lambda_0,
                                double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   double ld=gal_cosmology_luminosity_distance(z, H0, o_lambda_0, o_matter_0,
                                               o_radiation_0);
   return 5*(log10(ld*1000000)-1);
@@ -374,7 +399,8 @@ double
 gal_cosmology_to_absolute_mag(double z, double H0, double o_lambda_0,
                               double o_matter_0, double o_radiation_0)
 {
-  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0);
+  gal_error_t *err = NULL;
+  cosmology_density_check(o_lambda_0, o_matter_0, o_radiation_0, err);
   double dm=gal_cosmology_distance_modulus(z, H0, o_lambda_0, o_matter_0,
                                            o_radiation_0);
   return dm-2.5*log10(1.0+z);
