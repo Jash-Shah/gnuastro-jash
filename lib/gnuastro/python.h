@@ -67,4 +67,4 @@ gal_python_type_from_numpy(int type);
 
 __END_C_DECLS    /* From C++ preparations */
 
-#endif           /* __GAL_TABLE_H__ */
+#endif           /* __GAL_PYTHON_H__ */
