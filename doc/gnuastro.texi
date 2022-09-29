@@ -33187,6 +33187,78 @@ The FITS standard defines the world coordinate system (WCS) as a mechanism to as
 For example, it can be used to convert pixel coordinates in an image to celestial coordinates like the right ascension and declination.
 The functions in this section are mainly just wrappers over CFITSIO, WCSLIB and GSL library functions to help in common applications.
 
+In the two sub-sub-sections below, we will first explain the best approach to avoid memory leaks when freeing a WCS structure.
+Afterwards, we'll describe all the WCS-related functions of Gnuastro.
+
+@node Freeing a WCS structure
+@subsubsection Freeing a WCS structure
+Through the functions in @ref{WCS Function and global constants} you can read a WCS structure from a file (@code{gal_wcs_read}), an already-open CFITSIO FITS pointer (@code{gal_wcs_read_fitsptr}) or create one yourself (@code{gal_wcs_create}).
+In any of these cases, after you have completed your work with the WCS structure, you should free it.
+
+To free a WCS pointer that comes from Gnuastro's functions, first free the WCS structure's contents using WCSLIB's @code{wcsfree} function.
+Afterwards, free the actual structure with the @code{free} function of the standard C library (@file{stdlib.h}).
+Remember that @code{wcsfree} only frees the contents, not the structure that was allocated inside Gnuastro's library.
+
+Below you can see a fully working example program that will create a WCS structure from scratch and will later free it properly (without any memory leak).
+If you save the code below in a file called @file{wcs-create-free.c}, you can compile and run it using @ref{BuildProgram} with this command: @command{astbuildprog wcs-create-free.c}.
+
+@example
+@verbatim
+#include <stdio.h>
+#include <stdlib.h>
+#include <gnuastro/wcs.h>
+
+int
+main(void)
+{
+  int status;
+  size_t ndim=2;
+  struct wcsprm *wcs;
+  double crpix[]={50, 50};
+  double pc[]={-1, 0, 0, 1};
+  double cdelt[]={0.4, 0.4};
+  double crval[]={178.23, 36.98};
+  char   *cunit[]={"deg", "deg"};
+  char   *ctype[]={"RA---TAN", "DEC--TAN"};
+  int linearmatrix = GAL_WCS_LINEAR_MATRIX_PC;
+
+  /* Allocate and fill the 'wcsprm' structure. */
+  wcs=gal_wcs_create(crpix, crval, cdelt, pc, cunit,
+		     ctype, ndim, linearmatrix);
+  printf("WCS structure created.\n");
+
+  /* Free the contents (and check if there was a problem). */
+  status=wcsfree(wcs);
+  if(status)
+    {
+      /* Inform the user of the problem. */
+      fprintf(stderr, "%s: WCSLIB wcsfree ERROR %d: %s",
+	      __func__, status, wcs_errmsg[status]);
+
+      /* Return with a failure (don't continue with the
+         rest of the function). */
+      return EXIT_FAILURE;
+    }
+
+  /* Let the user know */
+  printf("WCS structure's contents freed.\n");
+
+  /* Free the actual 'wcsprm' structure. */
+  free(wcs);
+  printf("WCS structure freed.\n");
+
+  /* Return successfully. */
+  return EXIT_SUCCESS;
+}
+@end verbatim
+@end example
+
+@node WCS Function and global constants
+@subsubsection WCS Function and macros
+
+The full set of functions and global constants that are defined by Gnuastro's @file{gnuastro/wcs.h} are described below.
+For freeing a WCS structure after reading or creating one, see @ref{Freeing a WCS structure}.
+
 @deffn  Macro GAL_WCS_DISTORTION_TPD
 @deffnx Macro GAL_WCS_DISTORTION_SIP
 @deffnx Macro GAL_WCS_DISTORTION_TPV
@@ -33244,11 +33316,7 @@ Limit of rounding for floating point errors.
 [@strong{Not thread-safe}] Return the WCSLIB @code{wcsprm} structure that is read from the CFITSIO @code{fptr} pointer to an opened FITS file.
 Also put the number of coordinate representations found into the space that @code{nwcs} points to.
 To read the WCS structure directly from a filename, see @code{gal_wcs_read} below.
-After processing has finished, you can free the returned structure with WCSLIB's @code{wcsvfree} keyword:
-
-@example
-status = wcsvfree(&nwcs,&wcs);
-@end example
+After processing has finished, you should free the WCS structure, for doing that properly, see @ref{Freeing a WCS structure}.
 
 The @code{linearmatrix} argument takes one of three values: @code{0}, @code{GAL_WCS_LINEAR_MATRIX_PC} and @code{GAL_WCS_LINEAR_MATRIX_CD}.
 It will determine the format of the WCS when it is later written to file with @code{gal_wcs_write} or @code{gal_wcs_write_in_fitsptr} (which is called by @code{gal_fits_img_write})
@@ -33270,6 +33338,8 @@ Therefore, be sure to not call this function simultaneously (over multiple threa
 [@strong{Not thread-safe}] Return the WCSLIB structure that is read from the HDU/extension @code{hdu} of the file @code{filename}.
 Also put the number of coordinate representations found into the space that @code{nwcs} points to.
 Please see @code{gal_wcs_read_fitsptr} for more.
+
+After processing has finished, you should free the WCS structure, for doing that properly, see @ref{Freeing a WCS structure}.
 @end deftypefun
 
 @deftypefun {struct wcsprm *} gal_wcs_create (double @code{*crpix}, double @code{*crval}, double @code{*cdelt}, double @code{*pc}, char @code{**cunit}, char @code{**ctype}, size_t @code{ndim}, int @code{linearmatrix})
@@ -33280,27 +33350,7 @@ Also, @code{cunit} and @code{ctype} are arrays of strings.
 If @code{GAL_WCS_LINEAR_MATRIX_CD} is passed to @code{linearmatrix} then the output WCS structure will have a CD matrix (even though you have given a PC and CDELT matrix as input to this function).
 Otherwise, the output will have a PC and CDELT matrix (which is the recommended format by WCSLIB).
 
-To prevent memory-leak, free the WCS structure first by WCSLIB's @code{wcsfree} function, and then the pointer with @code{stdlib.h}'s @code{free} when the process is finished:
-
-@example
-@verbatim
-int status;
-size_t ndim=2;
-double crpix[]={50, 50};
-double pc[]={-1, 0, 0, 1};
-double cdelt[]={0.4, 0.4};
-double crval[]={178.23, 36.98};
-char   *cunit[]={"deg", "deg"};
-char   *ctype[]={"RA---TAN", "DEC--TAN"};
-int linearmatrix = GAL_WCS_LINEAR_MATRIX_PC;
-struct wcsprm *wcsp =
-   gal_wcs_create(crpix, crval, cdelt, pc, cunit,
-                  ctype, ndim, linearmatrix);
-status = wcsfree(wcsp);
-free(wcsp);
-@end verbatim
-@end example
-
+For a fully working example of creating a WCS structure with this function and how to later free it, see @ref{Freeing a WCS structure}.
 @end deftypefun
 
 @deftypefun {char *} gal_wcs_dimension_name (struct wcsprm @code{*wcs}, size_t @code{dimension})
