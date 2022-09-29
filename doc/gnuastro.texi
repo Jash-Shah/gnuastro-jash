@@ -835,6 +835,11 @@ File input output
 * EPS files::                   Writing to EPS files.
 * PDF files::                   Writing to PDF files.
 
+World Coordinate System (@file{wcs.h})
+
+* Freeing a WCS structure::     Demo on creating and properly freeing.
+* WCS Function and global constants::  All functions in gnuastro/wcs.h.
+
 Tessellation library (@file{tile.h})
 
 * Independent tiles::           Work on or check independent tiles.
@@ -33190,7 +33195,12 @@ The functions in this section are mainly just wrappers over CFITSIO, WCSLIB and 
 In the two sub-sub-sections below, we will first explain the best approach to avoid memory leaks when freeing a WCS structure.
 Afterwards, we'll describe all the WCS-related functions of Gnuastro.
 
-@node Freeing a WCS structure
+@menu
+* Freeing a WCS structure::     Demo on creating and properly freeing.
+* WCS Function and global constants::  All functions in gnuastro/wcs.h.
+@end menu
+
+@node Freeing a WCS structure, WCS Function and global constants, World Coordinate System, World Coordinate System
 @subsubsection Freeing a WCS structure
 Through the functions in @ref{WCS Function and global constants} you can read a WCS structure from a file (@code{gal_wcs_read}), an already-open CFITSIO FITS pointer (@code{gal_wcs_read_fitsptr}) or create one yourself (@code{gal_wcs_create}).
 In any of these cases, after you have completed your work with the WCS structure, you should free it.
@@ -33253,7 +33263,7 @@ main(void)
 @end verbatim
 @end example
 
-@node WCS Function and global constants
+@node WCS Function and global constants,  , Freeing a WCS structure, World Coordinate System
 @subsubsection WCS Function and macros
 
 The full set of functions and global constants that are defined by Gnuastro's @file{gnuastro/wcs.h} are described below.
