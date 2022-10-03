@@ -828,5 +828,8 @@ convolve(struct convolveparams *p)
       gal_fits_key_write_config(&cp->okeys, "Convolve configuration",
                                 "CONVOLVE-CONFIG", cp->output, "0");
     }
-  printf("  - Output: %s\n", p->cp.output);
+
+  /* Inform the user that the job is done. */
+  if(!p->cp.quiet)
+    printf("  - Output: %s\n", p->cp.output);
 }
