@@ -3065,9 +3065,9 @@ $ ls -lh nc-for-storage.fits
 See how @file{nc-for-storage.fits} has four HDUs, while @file{nc/xdf-f160w.fits} had five HDUs?
 As explained above, the missing extension is @code{INPUT-NO-SKY}.
 Also, look at the sizes of the @code{SKY} and @code{SKY_STD} HDUs, unlike before, they are not the same size as @code{DETECTIONS}, they only have one pixel for each tile (group of pixels in raw input).
-Finally, you see that @file{nc-for-storage.fits} is just under 8 mega byes (while @file{nc/xdf-f160w.fits} was 100 mega bytes)!
+Finally, you see that @file{nc-for-storage.fits} is just under 8 mega bytes (while @file{nc/xdf-f160w.fits} was 100 mega bytes)!
 
-But we are are not yet finished!
+But we are not yet finished!
 You can even be more efficient in storage, archival or transferring NoiseChisel's output by compressing this file.
 Try the command below to see how NoiseChisel's output has now shrunk to about 250 kilo-byes while keeping all the necessary information as the original 100 mega-byte output.
 
