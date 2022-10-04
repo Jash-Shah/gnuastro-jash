@@ -117,6 +117,12 @@ See the end of the file for license conditions.
       Gnomonic or 'TAN').
     --edgesampling: extra sampling of pixel polygon to account for strong
       non-linear projection or distortion effects, when necessary.
+    --gridfile: warp the input to the exact WCS and pixel grid of the file
+      given to this option. This is very useful when matching images from
+      differetn surveys. Using this option, you can also insert distortions
+      in an image (for example on a mock image, to make it match an
+      observed exposure with dithering+distortion).
+    --gridhdu: HDU containing image to be matched in '--gridfile'.
 
   astscript-fits-view:
   --ds9colorbarmulti: show a separate color-bar for each image in DS9. By

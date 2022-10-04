@@ -45,7 +45,7 @@ enum program_args_groups
 /* Available letters for short options:
 
    a b d g i j l n u v z
-   A B E G H J L O Q R W X Y
+   A B E J L O Q R W X Y
 */
 enum option_keys_enum
 {
@@ -63,6 +63,8 @@ enum option_keys_enum
   UI_KEY_INTERPSAMPLING  = 'y',
   UI_KEY_CENTER          = 'c',
   UI_KEY_WIDTHINPIX      = 'w',
+  UI_KEY_GRIDFILE        = 'G',
+  UI_KEY_GRIDHDU         = 'H',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */

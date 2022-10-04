@@ -171,6 +171,32 @@ struct argp_option program_options[] =
       GAL_OPTIONS_MANDATORY,
       GAL_OPTIONS_NOT_SET,
     },
+    {
+      "gridfile",
+      UI_KEY_GRIDFILE,
+      "FITS",
+      0,
+      "File to use for output grid.",
+      UI_GROUP_ALIGN,
+      &p->gridfile,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "gridhdu",
+      UI_KEY_GRIDHDU,
+      "STR",
+      0,
+      "HDU/extension to use for output grid.",
+      UI_GROUP_ALIGN,
+      &p->gridhdu,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

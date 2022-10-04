@@ -52,6 +52,8 @@ struct warpparams
   uint8_t  centeroncorner;  /* Shift center by 0.5 before and after.     */
   double      coveredfrac;  /* Acceptable fraction of output covered.    */
   gal_data_t       *cdelt;  /* Pixel scale of the output image.          */
+  char           *gridhdu;  /* Extension to use for output's WCS.        */
+  char          *gridfile;  /* File to use for output's WCS.             */
 
   /* Internal parameters: */
   gal_data_t       *input;  /* Input data structure.                     */

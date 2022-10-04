@@ -119,7 +119,7 @@ warp_alloc_perimeter(gal_data_t *input)
 /* Create a base image with WCS consisting of the basic geometry
    keywords */
 static void
-warp_wcsalign_init_output(gal_warp_wcsalign_t *wa)
+warp_wcsalign_init_output_from_params(gal_warp_wcsalign_t *wa)
 {
   /* Low level variables */
   size_t i, nkcoords, *osize;
@@ -553,7 +553,25 @@ warp_wcsalign_check_2d(gal_data_t *in, uint8_t type, const char *func,
 
 
 
+/* Create the output image using the WCS struct from the given 'gridfile'
+   and 'gridhdu'. */
 static void
+warp_wcsalign_init_output_from_wcs(gal_warp_wcsalign_t *wa,
+                                   const char *func)
+{
+  size_t *dsize=wa->widthinpix->array;
+
+  /* Create the output image dataset with the target WCS given. */
+  wa->output=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 2, dsize, wa->twcs,
+                            0, wa->input->minmapsize, wa->input->quietmmap,
+                            "Aligned", NULL, NULL);
+}
+
+
+
+
+
+static void *
 warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
 {
   size_t *tmp=NULL;
@@ -569,28 +587,6 @@ warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
           "'gal_data_copy_to_new_type' or "
           "'gal_data_copy_to_new_type_free' for the conversion", func,
           gal_type_name(wa->input->type, 1));
-
-  /* Check the 2D inputs. */
-  warp_wcsalign_check_2d(wa->ctype, GAL_TYPE_STRING, func, "ctype",
-                         "Any pair of valid WCSLIB ctype is "
-                         "allowed, e.g. 'RA---TAN, DEC--TAN'");
-  warp_wcsalign_check_2d(wa->cdelt, GAL_TYPE_FLOAT64, func, "cdelt",
-                         "This is the pixel scale in degrees");
-  warp_wcsalign_check_2d(wa->center, GAL_TYPE_FLOAT64, func, "center",
-                         "This is the output image center in degrees");
-
-  /* check 'widthinpix', it can be null for automatic detection */
-  if(wa->widthinpix)
-    {
-      warp_wcsalign_check_2d(wa->widthinpix, GAL_TYPE_SIZE_T, func,
-                              "widthinpix", "This is the output "
-                              "image size");
-      tmp=wa->widthinpix->array;
-      if(tmp[0]%2==0 || tmp[1]%2==0)
-        error(EXIT_FAILURE, 0, "%s: 'widthinpix' takes exactly 2 ODD "
-              "values, detected EVEN value in %zux%zu", func, tmp[0],
-              tmp[1]);
-    }
 
   /* Check 'coveredfrac'. */
   if(isnan( wa->coveredfrac ))
@@ -623,6 +619,52 @@ warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
   wa->nhor=GAL_BLANK_SIZE_T;
   wa->ncrn=GAL_BLANK_SIZE_T;
   wa->gcrn=GAL_BLANK_SIZE_T;
+
+  /* If a target WCS is given ignore other variables and initialize the
+     output image. */
+  if(wa->twcs)
+    {
+      /* Check the widthinpix element. */
+      warp_wcsalign_check_2d(wa->widthinpix, GAL_TYPE_SIZE_T, func,
+                             "widthinpix", "This is the output image "
+                             "size in pixels");
+      warp_wcsalign_init_output_from_wcs(wa, func);
+
+      /* Warp will ignore the following parameters, warn the user if
+         detected any. */
+      if(wa->cdelt || wa->center || wa->ctype)
+        error(EXIT_SUCCESS, 0, "%s: WARNING: target WCS is already "
+              "defined with 'gridfile' and 'gridhdu', ignoring extra "
+              "non-linear parameter(s) given", func);
+      return NULL;
+    }
+
+  /* No 'gridfile' given, Warp must create the output WCS using given
+     parameters. Proceed with checking the 2D input parameters. */
+  warp_wcsalign_check_2d(wa->ctype, GAL_TYPE_STRING, func, "ctype",
+                         "Any pair of valid WCSLIB ctype is "
+                         "allowed, e.g. 'RA---TAN, DEC--TAN'");
+  warp_wcsalign_check_2d(wa->cdelt, GAL_TYPE_FLOAT64, func, "cdelt",
+                         "This is the pixel scale in degrees");
+  warp_wcsalign_check_2d(wa->center, GAL_TYPE_FLOAT64, func, "center",
+                         "This is the output image center in degrees");
+
+  /* Check 'widthinpix', it can be null for automatic detection */
+  if(wa->widthinpix)
+    {
+      warp_wcsalign_check_2d(wa->widthinpix, GAL_TYPE_SIZE_T, func,
+                             "widthinpix", "This is the output "
+                             "image size");
+      tmp=wa->widthinpix->array;
+      if(tmp[0]%2==0 || tmp[1]%2==0)
+        error(EXIT_FAILURE, 0, "%s: 'widthinpix' takes exactly 2 ODD "
+              "values, detected EVEN value in %zux%zu", func, tmp[0],
+              tmp[1]);
+    }
+
+  /* Initialize the output image for further processing. */
+  warp_wcsalign_init_output_from_params(wa);
+  return NULL;
 }
 
 
@@ -767,11 +809,9 @@ gal_warp_wcsalign_init(gal_warp_wcsalign_t *wa)
   gal_data_t *input=wa ? wa->input  : NULL;
   size_t es = wa ? wa->edgesampling : GAL_BLANK_SIZE_T;
 
-  /* Run a sanity check on the input parameters */
+  /* Run a sanity check on the input parameters and initialize the output
+     image. */
   warp_wcsalign_init_params(wa, __func__);
-
-  /* Create the output image */
-  warp_wcsalign_init_output(wa);
   os0=wa->output->dsize[0];
   os1=wa->output->dsize[1];
   gcrn=1+os1*(es+1);
@@ -941,6 +981,39 @@ gal_warp_wcsalign_onthread(void *inparam)
 
 
 
+/* Helper function that returns an empty set of the wcsalign data structure
+   to prevent using uninitialized variables without warnings. Please note
+   if you are not using this template to set 'gal_warp_wcsalign_t' values,
+   you MUST pass NULL to unused pointers at least. */
+gal_warp_wcsalign_t
+gal_warp_wcsalign_template()
+{
+  gal_warp_wcsalign_t wa;
+
+  wa.twcs=NULL;
+  wa.cdelt=NULL;
+  wa.ctype=NULL;
+  wa.input=NULL;
+  wa.center=NULL;
+  wa.output=NULL;
+  wa.vertices=NULL;
+  wa.widthinpix=NULL;
+  wa.isccw=GAL_BLANK_INT;
+  wa.v0=GAL_BLANK_SIZE_T;
+  wa.gcrn=GAL_BLANK_SIZE_T;
+  wa.ncrn=GAL_BLANK_SIZE_T;
+  wa.nhor=GAL_BLANK_SIZE_T;
+  wa.numthreads=GAL_BLANK_SIZE_T;
+  wa.coveredfrac=GAL_BLANK_FLOAT64;
+  wa.edgesampling=GAL_BLANK_SIZE_T;
+
+  return wa;
+}
+
+
+
+
+
 /* Clean up the internally allocated variables from the 'wa' struct. */
 void
 gal_warp_wcsalign_free(gal_warp_wcsalign_t *wa)
@@ -953,18 +1026,18 @@ gal_warp_wcsalign_free(gal_warp_wcsalign_t *wa)
 
 
 
-/* Finalize the output 'gal_data_t' image in 'nl->output' */
+/* Finalize the output 'gal_data_t' image in 'wa->output' */
 void
-gal_warp_wcsalign(gal_warp_wcsalign_t *nl)
+gal_warp_wcsalign(gal_warp_wcsalign_t *wa)
 {
   /* Calculate and allocate the output image size and WCS */
-  gal_warp_wcsalign_init(nl);
+  gal_warp_wcsalign_init(wa);
 
   /* Fill the output image */
-  gal_threads_spin_off(gal_warp_wcsalign_onthread, nl, nl->output->size,
-                       nl->numthreads, nl->input->minmapsize,
-                       nl->input->quietmmap);
+  gal_threads_spin_off(gal_warp_wcsalign_onthread, wa, wa->output->size,
+                       wa->numthreads, wa->input->minmapsize,
+                       wa->input->quietmmap);
 
   /* Clean up the internally allocated variables */
-  gal_warp_wcsalign_free(nl);
+  gal_warp_wcsalign_free(wa);
 }

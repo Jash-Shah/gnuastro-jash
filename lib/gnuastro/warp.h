@@ -52,15 +52,17 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 typedef struct
 {
-  /* Arguments given (and later freed) by the caller. */
-  gal_data_t       *ctype;  /* Type of the coordinates.                  */
-  gal_data_t       *cdelt;  /* Pixel scale of the output image.          */
-  gal_data_t       *input;  /* Pointer to input data structure.          */
-  gal_data_t      *center;  /* Center of the image in RA and Dec.        */
-  gal_data_t  *widthinpix;  /* Output image width and height in pixels.  */
+  /* Arguments given (and later freed) by the caller. Note that if 'twcs'
+     is  given, then the "WCS-Build" elements will be ignored. */
+  gal_data_t       *input;  /* Pointer to input image.                   */
   size_t       numthreads;  /* Number of threads to use.                 */
   double      coveredfrac;  /* Acceptable fraction of output covered.    */
   size_t     edgesampling;  /* Order of samplings along each pixel edge. */
+  gal_data_t  *widthinpix;  /* Output image width and height in pixels.  */
+  struct wcsprm     *twcs;  /* WCS-Predefined: the wcsprm.               */
+  gal_data_t       *ctype;  /* WCS-Build: Type of the coordinates.       */
+  gal_data_t       *cdelt;  /* WCS-Build: Pixel scale of the output.     */
+  gal_data_t      *center;  /* WCS-Build: Center of output in RA and Dec.*/
 
   /* Output (must be freed by caller) */
   gal_data_t      *output;  /* Pointer to output data structure.         */
@@ -78,12 +80,17 @@ typedef struct
 
 
 
-/* Create the empty output WCS-ready image */
+/* Return an empty set of the wcsalign data structure. */
+gal_warp_wcsalign_t
+gal_warp_wcsalign_template();
+
+
+/* Create the empty output WCS-ready image. */
 void
 gal_warp_wcsalign_init(gal_warp_wcsalign_t *wa);
 
 
-/* Fill nonlinear output by pixel */
+/* Fill nonlinear output by pixel. */
 void
 gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind);
 
@@ -93,12 +100,13 @@ gal_warp_wcsalign_onthread(void *inparam);
 
 
 /* Spin-off the threads and finalize the output 'gal_data_t' image in
-   'nl->output' */
+   'wa->output'. */
 void
 gal_warp_wcsalign(gal_warp_wcsalign_t *wa);
 
 
-/* Clean up the entire struct */
+/* Clean up ONLY the internal variables. Caller must 'free' their own
+   inputs as well as the output (e.g. the input image). */
 void
 gal_warp_wcsalign_free(gal_warp_wcsalign_t *wa);
 

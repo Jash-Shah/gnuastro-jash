@@ -322,14 +322,101 @@ ui_add_to_modular_warps_ll(struct argp_option *option, char *arg,
 /***************       Sanity Check         *******************/
 /**************************************************************/
 static void
-ui_check_options_and_arguments_nonlinear(struct warpparams *p)
+ui_check_gridfile(struct warpparams *p)
+{
+  int nwcs;
+  size_t ndim, *dsize=NULL;
+  gal_warp_wcsalign_t *wa=&p->wa;
+
+  /* Make sure that the file given to '--gridfile' is a recognized FITS
+     file. */
+  if(gal_fits_file_recognized(p->gridfile)==0)
+    error(EXIT_FAILURE, 0, "'%s' (given to '--gridfile') must be "
+          "in FITS format with a recognizable FITS format suffix",
+          p->gridfile);
+  if(p->gridhdu==NULL)
+    error(EXIT_FAILURE, 0, "%s no HDU/extension specified (file given "
+          "to '--gridfile')! Please use '--gridhdu' to specify a "
+          "HDU/extension to read from", p->gridfile);
+
+  /* Read the WCS and save to a standard PC convention WCS struct. */
+  wa->twcs=gal_wcs_read(p->gridfile, p->gridhdu,
+                        GAL_WCS_LINEAR_MATRIX_PC, 0, 0, &nwcs);
+  if(wa->twcs==NULL)
+    error(EXIT_FAILURE, 0, "%s (hdu %s): no readable WCS structure",
+          p->gridfile, p->gridhdu);
+
+  /* Correct the WCS dimensions if necessary. */
+  dsize=gal_fits_img_info_dim(p->gridfile, p->gridhdu, &ndim);
+  ndim=gal_dimension_remove_extra(ndim, dsize, wa->twcs);
+  if(ndim!=2)
+    error(EXIT_FAILURE, 0, "%s (hdu %s): the target WCS must "
+          "contain 2 dimensions, but warp detected %zu dimensions",
+          p->gridfile, p->gridhdu, ndim);
+
+  /* If '--widthinpix' has already been given, inform the user that it will
+     be ignored (because '--gridfile' has been given). */
+  if(wa->widthinpix)
+    {
+      error(EXIT_SUCCESS, 0, "WARNING: '--widthinpix' will be ignored "
+            "because '--gridfile' takes precedence");
+      gal_data_free(wa->widthinpix);
+    }
+
+  /* We don't need to free the input 'dsize' array since it will be freed
+     by gal_data_free at the clean up stage. */
+  wa->widthinpix=gal_data_alloc(dsize, GAL_TYPE_SIZE_T, 1, &ndim, NULL, 1,
+                                p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
+                                NULL);
+
+  /* If any of the non-default WCS-defining options are given, free them
+     and print a warning. We don't want to print any warning for the
+     default one ('--ctype') because most users may not set it. */
+  if(wa->ctype) { gal_data_free(wa->ctype); wa->ctype=NULL; }
+  if(wa->cdelt)
+    {
+      error(EXIT_SUCCESS, 0, "WARNING: '--cdelt' will be ignored "
+            "because '--gridfile' takes precedence");
+      gal_data_free(wa->cdelt);
+      wa->cdelt=NULL;
+    }
+  if(wa->center)
+    {
+      error(EXIT_SUCCESS, 0, "WARNING: '--center' will be ignored "
+            "because '--gridfile' takes precedence");
+      gal_data_free(wa->center);
+      wa->center=NULL;
+    }
+}
+
+
+
+
+
+static void *
+ui_check_options_and_arguments_wcsalign(struct warpparams *p)
 {
   gal_warp_wcsalign_t *wa=&p->wa;
   size_t two=2, *sarray=NULL, stemp, indim=0;
   double *icenter=NULL, *iwidth=NULL, *imin=NULL, *imax=NULL, *tmp=NULL;
 
-  /* Put the number of threads into the non-linear structure. */
+  /* Copy necessary parameters for the nonlinear warp (independent of
+     having a WCS or not). */
+  wa->input=p->input;
+  wa->coveredfrac=p->coveredfrac;
   wa->numthreads=p->cp.numthreads;
+
+  /* If using a WCS file for the target grid (with '--gridfile' and
+     '--gridhdu' options) check the file and ignore the other given
+     parameters. */
+  if(p->gridfile)
+    {
+      ui_check_gridfile(p);
+      return NULL;
+    }
+
+  /* Not using a WCS file, so put cdelt into the non-linear structure. */
+  p->wa.cdelt=p->cdelt;
 
   /* Sanity check user's possibly given '--center'. */
   if(wa->center)
@@ -392,7 +479,7 @@ ui_check_options_and_arguments_nonlinear(struct warpparams *p)
       if( sarray[0]%2==0 || sarray[1]%2==0 )
         {
           /* Let the user know that we are updating the output size. */
-          error(EXIT_SUCCESS, 0, "WARNING: '--width' must be odd: "
+          error(EXIT_SUCCESS, 0, "WARNING: '--widthinpix' must be odd: "
                 "updating %zux%zu to %zux%zu", sarray[0], sarray[1],
                 sarray[0]%2 ? sarray[0] : sarray[0]+1,
                 sarray[1]%2 ? sarray[1] : sarray[1]+1);
@@ -422,13 +509,9 @@ ui_check_options_and_arguments_nonlinear(struct warpparams *p)
   if(wa->ctype->size != p->input->ndim)
     error(EXIT_FAILURE, 0, "%zu value(s) given to '--ctype', but it "
           "takes exactly 2 values", wa->ctype->size);
-
-
-  /* Copy necessary parameters for the nonlinear warp to work */
-  wa->input=p->input;
-  wa->cdelt=p->cdelt;
-  wa->coveredfrac=p->coveredfrac;
+  return NULL;
 }
+
 
 
 
@@ -546,7 +629,7 @@ ui_check_options_and_arguments(struct warpparams *p)
 
   /* Do all the distortion correction sanity-checks.*/
   if(p->nonlinearmode)
-    ui_check_options_and_arguments_nonlinear(p);
+    ui_check_options_and_arguments_wcsalign(p);
 }
 
 
@@ -990,7 +1073,6 @@ ui_preparations(struct warpparams *p)
 /**************************************************************/
 /************         Set the parameters          *************/
 /**************************************************************/
-
 void
 ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
 {
@@ -1052,7 +1134,8 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
       printf(" Using %zu CPU thread%s\n", p->cp.numthreads,
              p->cp.numthreads==1 ? "." : "s.");
       printf(" Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
-
+      if(p->gridfile)
+        printf(" Pixel grid: %s (hdu %s)\n", p->gridfile, p->gridhdu);
       if(p->nonlinearmode)
         {
           disttype=gal_wcs_distortion_identify(p->input->wcs);
@@ -1100,14 +1183,18 @@ void
 ui_free_report(struct warpparams *p, struct timeval *t1)
 {
   /* Free the allocated arrays: */
-  if(p->inverse) free(p->inverse);
   if(p->wa.cdelt) p->wa.cdelt=NULL;
   if(p->cdelt) gal_data_free(p->cdelt);
+
+  if(p->inverse) free(p->inverse);
+  if(p->gridhdu) free(p->gridhdu);
+  if(p->gridfile) free(p->gridfile);
   if(p->matrix) gal_data_free(p->matrix);
   if(p->inwcsmatrix) free(p->inwcsmatrix);
   if(p->modularll) gal_data_free(p->modularll);
 
   if(p->wa.input) p->wa.input=NULL;
+  if(p->wa.twcs) gal_wcs_free(p->wa.twcs);
   if(p->wa.ctype) gal_data_free(p->wa.ctype);
   if(p->wa.center) gal_data_free(p->wa.center);
   if(p->wa.widthinpix) gal_data_free(p->wa.widthinpix);
@@ -1116,7 +1203,6 @@ ui_free_report(struct warpparams *p, struct timeval *t1)
   free(p->cp.output);
   gal_data_free(p->input);
   gal_data_free(p->output);
-
 
   /* Report how long the operation took. */
   if(!p->cp.quiet)

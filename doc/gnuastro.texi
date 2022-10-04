@@ -505,8 +505,8 @@ Arithmetic
 
 Arithmetic operators
 
-* Basic mathematical operators::  for example, +, -, /, log, pow, and etc.
-* Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, and etc
+* Basic mathematical operators::  For example, +, -, /, log, and pow.
+* Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, etc.
 * Constants::                   Physical and Mathematical constants.
 * Unit conversion operators::   Various unit conversions necessary.
 * Statistical operators::       Statistics of a single dataset (for example, mean).
@@ -559,8 +559,8 @@ Warp
 
 Invoking Warp
 
-* Align pixels with WCS and remove distortions::  Default operation.
-* Linear warps to be called explicitly::  Other waprs.
+* Align pixels with WCS account for distortions::  Default operation.
+* Linear warps to be called explicitly::  Other warps.
 
 Data analysis
 
@@ -623,7 +623,7 @@ Invoking Segment
 MakeCatalog
 
 * Detection and catalog production::  Discussing why/how to treat these separately
-* Brightness flux magnitude::   More on Magnitudes, surface brightness and etc.
+* Brightness flux magnitude::   More on Magnitudes, surface brightness, etc.
 * Quantifying measurement limits::  For comparing different catalogs.
 * Measuring elliptical parameters::  Estimating elliptical parameters.
 * Adding new columns to MakeCatalog::  How to add new columns.
@@ -704,7 +704,7 @@ CosmicCalculator
 Invoking CosmicCalculator
 
 * CosmicCalculator input options::  Options to specify input conditions.
-* CosmicCalculator basic cosmology calculations::  Like distance modulus, distances and etc.
+* CosmicCalculator basic cosmology calculations::  Such as distance modulus and distances.
 * CosmicCalculator spectral line calculations::  How they get affected by redshift.
 
 Installed scripts
@@ -852,7 +852,8 @@ Library demo programs
 * Library demo - inspecting neighbors::  Inspect the neighbors of a pixel.
 * Library demo - multi-threaded operation::  Doing an operation on threads.
 * Library demo - reading and writing table columns::  Simple Column I/O.
-* Library demo - resampling an image to a new grid::
+* Library demo - Warp to another image::  Output pixel grid and WCS from another image.
+* Library demo - Warp to new grid::  Define a new pixel grid and WCS to resample the input.
 
 Developing
 
@@ -1323,7 +1324,7 @@ It is GNU Bash that then talks to kernel.
 To better clarify, let's use this analogy inspired from one of the links above@footnote{https://www.gnu.org/gnu/gnu-users-never-heard-of-gnu.html}: saying that you are ``running Linux'' is like saying you are ``driving your engine''.
 The car's engine is the main source of power in the car, no one doubts that.
 But you do not ``drive'' the engine, you drive the ``car''.
-Without the radiator, battery, transmission, wheels, chassis, seats, wind-shield and etc, the engine alone is useless for transportation!
+The engine alone is useless for transportaion without the radiator, battery, transmission, wheels, chassis, seats, wind-shield, etc.
 
 @cindex Window Subsystem for Linux
 To have an operating system, you need lower-level tools (to build the kernel), and higher-level (to use it) software packages.
@@ -2031,7 +2032,7 @@ $ astscript-fits-view \
 
 After running this command, you will see that the DS9 window fully covers the height of your monitor, it is showing the whole image, using a more clear color-map, and many more useful things.
 Infact, you see the DS9 command that is used in your terminal@footnote{When comparing DS9's command-line options to Gnuastro's, you will notice how SAO DS9 does not follow the GNU style of options where ``long'' and ``short'' options are preceded by @option{--} and @option{-} respectively (for example, @option{--width} and @option{-w}, see @ref{Options}).}.
-On GNU/Linux operating systems (like Ubuntu, Fedora and etc), you can also set your graphics user interface to use this script for opening FITS files when you click on them.
+On GNU/Linux operating systems (like Ubuntu, and Fedora), you can also set your graphics user interface to use this script for opening FITS files when you click on them.
 For more, see the instructions in the checklist at the start of @ref{Invoking astscript-fits-view}.
 
 As you hover your mouse over the image, notice how the ``Value'' and positional fields on the top of the ds9 window get updated.
@@ -2178,7 +2179,7 @@ Press the ``up'' key on your keyboard (possibly multiple times) to see your prev
 
 @cartouche
 @noindent
-@strong{Your locale does not use `.' as decimal separator:} on systems that do not use an English language environment, dates, numbers and etc can be printed in different formats (for example, `0.5' can be written as `0,5': with a comma).
+@strong{Your locale does not use `.' as decimal separator:} on systems that do not use an English language environment, the dates, numbers, etc., can be printed in different formats (for example, `0.5' can be written as `0,5': with a comma).
 With the @code{LC_NUMERIC} line at the start of the script below, we are ensuring a unified format in the output of @command{seq}.
 For more, please see @ref{Numeric locale}.
 @end cartouche
@@ -2463,7 +2464,7 @@ $ rm myprogram* z-vs-tandist*
 @subsection Option management and configuration files
 In the previous section (@ref{Cosmological coverage and visualizing tables}), when you ran CosmicCalculator, you only specified the redshfit with @option{-z2} option.
 You did not specify the cosmological parameters that are necessary for the calculations!
-Parameters like the Hubble constant (@mymath{H_0}), the matter density, etc.
+Parameters like the Hubble constant (@mymath{H_0}) and the matter density.
 In spite of this, CosmicCalculator done its processing and printed results.
 
 None of Gnuastro's programs keep a default value internally within their code (they are all set by the user)!
@@ -3180,7 +3181,7 @@ This can bias the result, if you match catalogs.
 
 An accurate color calculation can only be done when magnitudes are measured from the same pixels on all images and this can be done easily with MakeCatalog.
 In fact this is one of the reasons that NoiseChisel or Segment do not generate a catalog like most other detection/segmentation software.
-This gives you the freedom of selecting the pixels for measurement in any way you like (from other filters, other software, manually, and etc).
+This gives you the freedom of selecting the pixels for measurement in any way you like (from other filters, other software, manually, etc.).
 Fortunately in these images, the Point spread function (PSF) is very similar, allowing us to use a single labeled image output for all filters@footnote{When the PSFs between two images differ largely, you would have to PSF-match the images before using the same pixels for measurements.}.
 
 The F160W image is deeper, thus providing better detection/segmentation, and redder, thus observing smaller/older stars and representing more of the mass in the galaxies.
@@ -3501,7 +3502,7 @@ Column meta-data (including a name) are not just limited to FITS tables and can 
 Table also has tools to limit the displayed rows.
 for example, with the first command below only rows with a magnitude in the range of 29 to 30 will be shown.
 With the second command, you can further limit the displayed rows to rows with an S/N larger than 10 (a range between 10 to infinity).
-You can further sort the output rows, only show the top (or bottom) N rows and etc, for more see @ref{Table}.
+You can further sort the output rows, only show the top (or bottom) N rows, etc., see @ref{Table} for more.
 
 @example
 $ asttable cat/xdf-f160w.fits -hCLUMPS --range=MAGNITUDE,28:29
@@ -3772,7 +3773,7 @@ $ astscript-fits-view cmd.fits --ds9scale=minmax \
            --ds9extra="-grid yes -grid type publication"
 @end example
 
-If you are happy with the grid and coloring and etc, you can also use ds9 to save this as a JPEG image to directly use in your documents/slides with these extra DS9 options (DS9 will write the image to @file{cmd-2d.jpeg} and quit immediately afterwards):
+If you are happy with the grid and coloring and the rest, you can also use ds9 to save this as a JPEG image to directly use in your documents/slides with these extra DS9 options (DS9 will write the image to @file{cmd-2d.jpeg} and quit immediately afterwards):
 
 @example
 $ astscript-fits-view cmd.fits --ds9scale=minmax \
@@ -3783,7 +3784,7 @@ $ astscript-fits-view cmd.fits --ds9scale=minmax \
 @cindex PGFPlots (@LaTeX{} package)
 This is good for a fast progress update.
 But for your paper or more official report, you want to show something with higher quality.
-For that, you can use the PGFPlots package in @LaTeX{} to add axes in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points, lines and etc).
+For that, you can use the PGFPlots package in @LaTeX{} to add axes in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points and lines).
 But to load the 2D histogram into PGFPlots first you need to convert the FITS image into a more standard format, for example, PDF.
 We will use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixels with a value of zero to white):
 
@@ -3928,7 +3929,7 @@ $ astfits matched.fits
 
 From the second command, you see that the output has two extensions and that both have the same number of rows.
 The rows in each extension are the matched rows of the respective input table: those in the first HDU come from the first input and those in the second HDU come from the second.
-However, their order may be different from the input tables because the rows match: the first row in the first HDU matches with the first row in the second HDU, and etc.
+However, their order may be different from the input tables because the rows match: the first row in the first HDU matches with the first row in the second HDU, etc.
 You can also see which objects did not match with the @option{--notmatched}, like below.
 Note how each extension of  now has a different number of rows.
 
@@ -4070,7 +4071,7 @@ You can build very complex workflows with Make, for example, see @url{https://ar
 @subsection FITS images in a publication
 
 In the previous section (@ref{Reddest clumps cutouts and parallelization}), we visually inspected the positions of the reddest objects using DS9.
-That is very good for an interactive inspection of the objects: you can zoom-in and out, you can do measurements and etc.
+That is very good for an interactive inspection of the objects: you can zoom-in and out, you can do measurements, etc.
 Once the experimentation phase of your project is complete, you want to show these objects over the whole image in a report, paper or slides.
 
 One solution is to use DS9 itself!
@@ -6382,7 +6383,7 @@ $ asttable outer/67510-6-10.fits \
 
 First let's have a look at all the masked postage stamps of the cropped stars.
 Once they all open, feel free to zoom-in, they are all matched and locked.
-It is always good to check the different stamps to ensure the quality and possible two dimensional features that are difficult to detect from the radial profiles (i.e., ghosts, internal reflections, etc.).
+It is always good to check the different stamps to ensure the quality and possible two dimensional features that are difficult to detect from the radial profiles (such as ghosts and internal reflections).
 
 @example
 $ astscript-fits-view finding-normradii/cropped-masked*.fits
@@ -7046,7 +7047,7 @@ $ astmkprof -P
 [[[ ... Truncated lines ... ]]]
 
 # Output:
- type         float32     # Type of output: e.g., int16, float32, etc...
+ type         float32     # Type of output: e.g., int16, float32, etc.
  mergedsize   1000,1000   # Number of pixels along first FITS axis.
  oversample   5           # Scale of oversampling (>0 and odd).
 
@@ -7866,12 +7867,12 @@ Since it is a run-time dependency, it can be installed at any later time (after 
 @subsection Bootstrapping dependencies
 
 Bootstrapping is only necessary if you have decided to obtain the full version controlled history of Gnuastro, see @ref{Version controlled source} and @ref{Bootstrapping}.
-Using the version controlled source enables you to always be up to date with the most recent development work of Gnuastro (bug fixes, new functionalities, improved algorithms, etc).
+Using the version controlled source enables you to always be up to date with the most recent development work of Gnuastro (bug fixes, new functionalities, improved algorithms, etc.).
 If you have downloaded a tarball (see @ref{Downloading the source}), then you can ignore this subsection.
 
 To successfully run the bootstrapping process, there are some additional dependencies to those discussed in the previous subsections.
 These are low level tools that are used by a large collection of Unix-like operating systems programs, therefore they are most probably already available in your system.
-If they are not already installed, you should be able to easily find them in any GNU/Linux distribution package management system (@command{apt-get}, @command{yum}, @command{pacman}, etc).
+If they are not already installed, you should be able to easily find them in any GNU/Linux distribution package management system (@command{apt-get}, @command{yum}, @command{pacman}, etc.).
 The short names in parenthesis in @command{typewriter} font after the package name can be used to search for them in your package manager.
 For the GNU Portability Library, GNU Autoconf Archive and @TeX{} Live, it is recommended to use the instructions here, not your operating system's package manager.
 
@@ -8076,7 +8077,7 @@ For better archivability and compression ratios, Gnuastro's recommended tarball 
 Therefore, the package manager commands below also contain Lzip.
 
 @table @asis
-@item @command{apt-get} (Debian-based OSs: Debian, Ubuntu, Linux Mint, etc)
+@item @command{apt-get} (Debian-based OSs: Debian, Ubuntu, Linux Mint, etc.)
 @cindex Debian
 @cindex Ubuntu
 @cindex Linux Mint
@@ -8120,7 +8121,7 @@ Gnuastro is @url{https://tracker.debian.org/pkg/gnuastro,packaged} in Debian (an
 Just make sure it is the most recent version.
 
 @item @command{dnf}
-@itemx @command{yum} (Red Hat-based OSs: Red Hat, Fedora, CentOS, Scientific Linux, etc)
+@itemx @command{yum} (Red Hat-based OSs: Red Hat, Fedora, CentOS, Scientific Linux, etc.)
 @cindex RHEL
 @cindex Fedora
 @cindex CentOS
@@ -11618,7 +11619,7 @@ $ seq 0.5 1
 @end example
 
 @noindent
-With the simple command below, you can check your current locale environment variables for specifying the formats of various things like date, time, monetary, telephone, numbers and etc.
+With the simple command below, you can check your current locale environment variables for specifying the formats of various things like date, time, monetary, telephone, numbers, etc.
 You can change any of these, by simply giving different values to the respective variable like above.
 For a more complete explanation on each variable, see @url{https://www.baeldung.com/linux/locale-environment-variables}.
 
@@ -12423,7 +12424,7 @@ This option can also interpret the older FITS date format (@code{DD/MM/YYThh:mm:
 In this case (following the GNU C Library), this option will make the following assumption: values 68 to 99 correspond to the years 1969 to 1999, and values 0 to 68 as the years 2000 to 2068.
 
 This is a very useful option for operations on the FITS date values, for example, sorting FITS files by their dates, or finding the time difference between two FITS files.
-The advantage of working with the Unix epoch time is that you do not have to worry about calendar details (for example, the number of days in different months, or leap years, etc).
+The advantage of working with the Unix epoch time is that you do not have to worry about calendar details (for example, the number of days in different months, or leap years).
 
 @item --wcscoordsys=STR
 @cindex Galactic coordinate system
@@ -12922,7 +12923,7 @@ Thick line that has a fixed tangential size (for example, in kilo parsecs) at th
 @item
 Contours over the image to show radio/X-ray emission, over an optical image for example.
 @item
-Text or arrows or etc, over certain parts of the image.
+Text, arrows, etc., over certain parts of the image.
 @end itemize
 
 @cindex PGFPlots
@@ -12942,7 +12943,7 @@ Therefore the full script (except for the data download step) is available in @r
 @cindex TiKZ
 @cindex Matplotlib
 PGFPlots uses the same @LaTeX{} graphic engine that typesets your paper/slide.
-Therefore when you build your plots and figures using PGFPlots (and its underlying package PGF/TiKZ@footnote{@url{http://mirrors.ctan.org/graphics/pgf/base/doc/pgfmanual.pdf}}) your plots will blend beautifully within your text: same fonts, same colors, same line properties and etc.
+Therefore when you build your plots and figures using PGFPlots (and its underlying package PGF/TiKZ@footnote{@url{http://mirrors.ctan.org/graphics/pgf/base/doc/pgfmanual.pdf}}) your plots will blend beautifully within your text: same fonts, same colors, same line properties, etc.
 Since most papers (and presentation slides@footnote{To build slides, @LaTeX{} has packages like Beamer, see @url{http://mirrors.ctan.org/macros/latex/contrib/beamer/doc/beameruserguide.pdf}}) are made with @LaTeX{}, PGFPlots is therefore the best tool for those who use @LaTeX{} to create documents.
 PGFPlots also does not need any extra dependencies beyond a basic/minimal @TeX{}-live installation, so it is much more reliable than tools like Matplotlib in Python that have hundreds of fast-evolving dependencies@footnote{See Figure 1 of Alliez et al. 2020 at @url{https://arxiv.org/pdf/1905.11123.pdf}}.
 
@@ -13607,7 +13608,7 @@ Note that this behavior is ideal for gray-scale images, if you want a color imag
 @subsubsection Drawing with vector graphics
 
 With the options described in this section, you can draw marks over your to-be-published images (for example, in PDF).
-Each mark can be highly customized so they can have different shapes, colors, linewidths, text, text size and etc.
+Each mark can be highly customized so they can have different shapes, colors, linewidths, text, text size, etc.
 The properties of the marks should be stored in a table that is given to the @option{--marks} option described below.
 A fully working demo on adding marks is provided in @ref{Marking objects for publication}.
 
@@ -13668,7 +13669,7 @@ $ astconvertt image.fits --output=image.pdf \
               --markcoords=RA,DEC
 @end example
 
-You can highly customize each mark with different columns in @file{marks.fits} using the @option{--mark*} options below (for example, using different colors, different shapes, different sizes, text and etc on each mark).
+You can highly customize each mark with different columns in @file{marks.fits} using the @option{--mark*} options below (for example, using different colors, different shapes, different sizes, text, and the rest on each mark).
 
 @item --markshdu=STR/INT
 The HDU (or extension) name or number of the table containing mark properties (file given to @option{--marks}).
@@ -13695,7 +13696,7 @@ The column name(s), or number(s), containing the shapes of each mark (in table g
 The shapes can either be identified by their name, or their numerical identifier.
 If identifying them by name in a plain-text table, you need to define a string column (see @ref{Gnuastro text table format}).
 The full list of names is shown below, with their numerical identifier in parenthesis afterwards.
-For each shape, you can also specify properties like the size, line width, rotation, color and etc.
+For each shape, you can also specify properties such as the size, line width, rotation, and color.
 See the description of the relevant @option{--mark*} option below.
 
 @table @code
@@ -13884,7 +13885,7 @@ If you are not already familiar with the shape of each font, please use @option{
 @section Table
 
 Tables are the high-level products of processing on low-leveler data like images or spectra.
-for example, in Gnuastro, MakeCatalog will process the pixels over an object and produce a catalog (or table) with the properties of each object like magnitudes, positions and etc (see @ref{MakeCatalog}).
+for example, in Gnuastro, MakeCatalog will process the pixels over an object and produce a catalog (or table) with the properties of each object such as magnitudes and positions (see @ref{MakeCatalog}).
 Each one of these properties is a column in its output catalog (or table) and for each input object, we have a row.
 
 When there are only a small number of objects (rows) and not too many properties (columns), then a simple plain text file is mainly enough to store, transfer, or even use the produced data.
@@ -13902,7 +13903,7 @@ So while the FITS table standards are very beneficial for the tools that recogni
 This creates limitations for their generic use.
 
 Table is Gnuastro's solution to this problem.
-Table has a large set of operations that you can directly do on any recognized table (like selecting certain rows, doing arithmetic on the columns and etc).
+Table has a large set of operations that you can directly do on any recognized table (such as selecting certain rows and doing arithmetic on the columns).
 For operations that Table does not do internally, FITS tables (ASCII or binary) are directly accessible to the users of Unix-like operating systems (in particular those working the command-line or shell, see @ref{Command-line interface}).
 With Table, a FITS table (in binary or ASCII formats) is only one command away from AWK (or any other tool you want to use).
 Just like a plain text file that you read with the @command{cat} command.
@@ -14431,7 +14432,7 @@ By default all the columns of the given file will be appended, if you only want 
 Note that the columns given to @option{--catcolumns} must be present in all the given files (if this option is called more than once with more than one file).
 
 If the file given to this option is a FITS file, it is necessary to also define the corresponding HDU/extension with @option{--catcolumnhdu}.
-Also note that no operation (for example, row selection, arithmetic or etc) is applied to the table given to this option.
+Also note that no operation (such as row selection and arithmetic) is applied to the table given to this option.
 
 If the appended columns have a name, and their name is already present in the table before adding those columns, the column names of each file will be appended with a @code{-N}, where @code{N} is a counter starting from 1 for each appended table.
 Just note that in the FITS standard (and thus in Gnuastro), column names are not case-sensitive.
@@ -14667,7 +14668,7 @@ Therefore this option cannot be called with @option{--head}, @option{--tail}, or
 @cindex Random row selection
 @cindex Row selection, by random
 Select @code{INT} rows from the input table by random (assuming a uniform distribution).
-This option is applied @emph{after} the value-based selection options (like @option{--sort}, @option{--range}, @option{--polygon} and etc).
+This option is applied @emph{after} the value-based selection options (such as @option{--sort}, @option{--range}, and @option{--polygon}).
 On the other hand, only the row counters are randomly selected, this option does not change the order.
 Therefore, if @option{--rowrandom} is called together with @option{--sort}, the returned rows are still sorted.
 This option cannot be called with @option{--head}, @option{--tail}, or @option{--rowrange}.
@@ -14805,7 +14806,7 @@ $ astfits query-output.fits -h0
 
 With the full command used to download the dataset, you only need a minimal knowledge of ADQL to do lower-level customizations on your downloaded dataset.
 You can simply copy that command and change the parts of the query string you want: ADQL is very powerful!
-for example, you can ask the server to do mathematical operations on the columns and apply selections after those operations, or combine/match multiple datasets and etc.
+For example, you can ask the server to do mathematical operations on the columns and apply selections after those operations, or combine/match multiple datasets.
 We will try to add high-level interfaces for such capabilities, but generally, do not limit yourself to the high-level operations (that cannot cover everything!).
 
 @menu
@@ -15412,7 +15413,7 @@ Please see the description of this option in @ref{Invoking astcrop} for its synt
 @noindent
 @strong{CAUTION:} In WCS mode, the image has to be aligned with the celestial coordinates, such that the first FITS axis is parallel (opposite direction) to the Right Ascension (RA) and the second FITS axis is parallel to the declination.
 If these conditions are not met for an image, Crop will warn you and abort.
-You can use Warp's @option{--align} option to align the input image with these coordinates, see @ref{Warp}.
+You can use Warp to align the input image to standard celestial corrdinates, see @ref{Warp}.
 @end cartouche
 
 @end table
@@ -16116,7 +16117,7 @@ $ astarithmetic 125.0 10 +
 @end example
 
 For this particular command, the fix above will be as fast as the @code{uint16} solution.
-This is because there are only two numbers, and the overhead of Arithmetic (reading configuration files, and etc) dominates the running time.
+This is because there are only two numbers, and the overhead of Arithmetic (reading configuration files, etc.) dominates the running time.
 However, for large datasets, the @code{uint16} solution will be faster (as you saw above), Arithmetic will consume less RAM while running, and the output will consume less storage in your system (all major benefits)!
 
 It is possible to do internal checks in Gnuastro and catch integer overflows and correct them internally.
@@ -16154,8 +16155,8 @@ Reading NaN as a floating point number in Gnuastro is not case-sensitive.
 @end cartouche
 
 @menu
-* Basic mathematical operators::  for example, +, -, /, log, pow, and etc.
-* Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, and etc
+* Basic mathematical operators::  For example, +, -, /, log, and pow.
+* Trigonometric and hyperbolic operators::  sin, cos, atan, asinh, etc.
 * Constants::                   Physical and Mathematical constants.
 * Unit conversion operators::   Various unit conversions necessary.
 * Statistical operators::       Statistics of a single dataset (for example, mean).
@@ -17374,7 +17375,7 @@ Astronomical images are usually stored as an array multi-byte pixels with differ
 for example, images from CCDs are usually in the unsigned 16-bit integer type (each pixel takes 16 bits, or 2 bytes, of memory) and fully reduced deep images have a 32-bit floating point type (each pixel takes 32 bits or 4 bytes).
 
 On the other hand, during the data reduction, we need to preserve a lot of meta-data about some pixels.
-For example, if a cosmic ray had hit the pixel during the exposure, or if the pixel was saturated, or is known to have a problem, or if the optical vignetting is too strong on it, and etc.
+For example, if a cosmic ray had hit the pixel during the exposure, or if the pixel was saturated, or is known to have a problem, or if the optical vignetting is too strong on it.
 A crude solution is to make a new image when checking for each one of these things and make a binary image where we flag (set to 1) pixels that satisfy any of these conditions above, and set the rest to zero.
 However, processing pipelines sometimes need more than 20 flags to store important per-pixel meta-data, and recall that the smallest numeric data type is one byte (or 8 bits, that can store up to 256 different values), while we only need two values for each flag!
 This is a major waste of storage space!
@@ -19460,7 +19461,7 @@ To find the overlap area of the output pixel over the input pixels, we need to d
 Usually, it is sufficient to define a pixel with a four-vertice polygon.
 However, when a non-linear distortion (for example, @code{SIP} or @code{TPV}) is present and the distortion is significant over an output pixel's size (usually far from the reference point), the shadow of the output pixel on the input grid can be curved.
 To account for such cases (which can only happen when correcting for non-linear distortions), Warp has the @option{--edgesampling} option to sample the output pixel over more vertices.
-For more, see the description of this option in @ref{Align pixels with WCS and remove distortions}.
+For more, see the description of this option in @ref{Align pixels with WCS account for distortions}.
 
 @node Invoking astwarp,  , Resampling, Warp
 @subsection Invoking Warp
@@ -19492,6 +19493,10 @@ $ astwarp d.fits $grid --output=D.fits
 $ astarithmetic A.fits B.fits C.fits D.fits 4 5 0.2 sigclip-mean \
                 -g1 --output=stack.fits
 
+## Warp a previously created mock image to the same pixel grid as the
+## real image (including any distortions).
+$ astwarp mock.fits --gridfile=real.fits
+
 ## Rotate and then scale input image:
 $ astwarp --rotate=37.92 --scale=0.8 image.fits
 
@@ -19518,7 +19523,10 @@ Just note that the file size will also be double!
 For more on the precision of various types, see @ref{Numeric data types}.
 
 By default (if no linear operation is requested), Warp will align the pixel grid of the input image to the WCS coordinates it contains.
-This operation and the the options that govern it are described in @ref{Align pixels with WCS and remove distortions}.
+This operation and the the options that govern it are described in @ref{Align pixels with WCS account for distortions}.
+You can Warp an input image to the same pixel grid as a reference FITS file using the @option{--wcsfile} option.
+In this case, the output image will take all the information needed from the reference WCS file and HDU/extension specified with @option{--wcshdu}, thus it will discard any other resampling options given.
+
 If you need any custom linear warping (independent of the WCS, see @ref{Linear warping basics}), you need to call the respective operation manually.
 These are described in @ref{Linear warps to be called explicitly}.
 Please note that you may not use both linear and non-linear modes simultaneously.
@@ -19543,12 +19551,12 @@ As a result, with @option{--coveredfrac=0}, the sum of the pixels in the input a
 @end table
 
 @menu
-* Align pixels with WCS and remove distortions::  Default operation.
-* Linear warps to be called explicitly::  Other waprs.
+* Align pixels with WCS account for distortions::  Default operation.
+* Linear warps to be called explicitly::  Other warps.
 @end menu
 
-@node Align pixels with WCS and remove distortions, Linear warps to be called explicitly, Invoking astwarp, Invoking astwarp
-@subsubsection Align pixels with WCS and remove distortions
+@node Align pixels with WCS account for distortions, Linear warps to be called explicitly, Invoking astwarp, Invoking astwarp
+@subsubsection Align pixels with WCS account for distortions
 
 @cindex Resampling
 @cindex WCS distortion
@@ -19560,6 +19568,16 @@ When none of the linear warps@footnote{For linear warps, see @ref{Linear warps t
 In the process, any possibly existing distortion is also removed (such as @code{TPV} and @code{SIP}).
 Usually, the WCS axes are the Right Ascension and Declination in equatorial coordinates.
 The output image's pixel grid is highly customizable through the options in this section.
+To learn about Warp's strategy to build the new pixel grid, see @ref{Resampling}.
+For strong distortions (that produce strong curvatures), you can fine-tune the area-based resampling with @option{--edgesampling}, as described below.
+
+On the other hand, sometimes you need to Warp an input image to the exact same grid of an already available reference FITS image with an existing WCS.
+If that image is already aligned, finding its center, number of pixels and pixel scale can be annoying (and just increase the complexity of your script).
+On the other hand, if that image is not aligned (for example, has a certain rotation in the sky, and has a different distortion), there are too many WCS parameters to set (some are not yet available explicitly in the options here)!
+For such scenarios, Warp has the @option{--gridfile} option.
+When @option{--gridfile} is called, the options below that are used to define the output's WCS will be ignored (these options: @option{--center}, @option{--widthinpix}, @option{--cdelt}, @option{--ctype}).
+In this case, the output's WCS and pixel grid will exactly match the image given to @option{--gridfile} (including any rotation, pixel scale, or distortion or projection).
+See the description of @option{--gridfile} below for more.
 
 @table @option
 @item -c FLT,FLT
@@ -19567,7 +19585,7 @@ The output image's pixel grid is highly customizable through the options in this
 @cindex CRVALi
 @cindex Aligning an image
 WCS coordinates of the center of the central pixel of the output image.
-If @option{--center} isn't given, the output will have have the same central WCS coordinate as the input.
+When @option{--center} or @option{--gridfile} aren't given, the output will have have the same central WCS coordinate as the input.
 
 Usually, the WCS coordinates are Right Ascension and Declination (when the first three characters of @code{CTYPE1} and @code{CTYPE2} are respectively @code{RA-} and @code{DEC}).
 For more on the @code{CTYPEi} keyword values, see @code{--ctype}.
@@ -19575,7 +19593,7 @@ For more on the @code{CTYPEi} keyword values, see @code{--ctype}.
 @item -w INT,INT
 @itemx --widthinpix=INT,INT
 Pixel width and height of the output image.
-When @option{--widthinpix} isn't given, Warp will calculate the necessary size of the output pixel grid to fully contain the input image.
+When @option{--widthinpix} or @option{--gridfile} aren't given, Warp will calculate the necessary size of the output pixel grid to fully contain the input image.
 
 This option should be given two @emph{odd} integers that are greater than 1, so that the output image can have a @emph{central} pixel.
 Recall that through the @option{--center} option, you specify the WCS coordinate of the center of the central pixel.
@@ -19589,7 +19607,7 @@ If any of the given values are even, Warp will automatically add a single pixel 
 Coordinate deltas or increments (@code{CDELTi} in the FITS standard), or the pixel scale in both dimensions.
 If a single value is given, it will be used for both axes.
 In this way, the output's pixels will be squares on the sky at the reference point (as is usually expected!).
-When this option isn't given, Warp will read the input's pixel scale and choose the larger of @code{CDELT1} or @code{CDELT2} so the output pixels are square.
+When @option{--cdelt} or @option{--gridfile} aren't given, Warp will read the input's pixel scale and choose the larger of @code{CDELT1} or @code{CDELT2} so the output pixels are square.
 
 Usually (when dealing with RA and Dec, and the @code{CUNITi}s have a value of @code{deg}), the units of the given values are degrees/pixel.
 Warp allows you to easily convert from @emph{arcsec} to @emph{degrees} by simply appending a @code{/3600} to the value.
@@ -19602,7 +19620,9 @@ For example, for an output image of pixel scale @code{0.27} arcsec/pixel, you ca
 @cindex Resampling
 The coordinate types of the output (@code{CTYPE1} and @code{CTYPE2} keywords in the FITS standard), separated by a comma.
 By default the value to this option is `@code{RA---TAN,DEC--TAN}'.
-Therefore if you don't call this option, the output WCS coordinates will be Right Ascension and Declination, while the output's pojection will be @url{https://en.wikipedia.org/wiki/Gnomonic_projection,Gnomonic}, also known as Tantential (TAN).
+However, if @option{--gridfile} is given, this option is ignored.
+
+If you don't call @option{--ctype} or @option{--gridfile}, the output WCS coordinates will be Right Ascension and Declination, while the output's pojection will be @url{https://en.wikipedia.org/wiki/Gnomonic_projection,Gnomonic}, also known as Tantential (TAN).
 This combination is the most common in extragalactic imaging surveys.
 For other coordinates and projections in your output use other values, as described below.
 
@@ -19709,7 +19729,49 @@ HEALPix
 HEALPix polar, aka "butterfly"
 @end table
 
+@item -G
+@itemx --gridfile
+FITS filename containing the final pixel grid and WCS for the output image.
+The HDU/extension containing should be specified with @option{--gridhdu} or its short option @option{-H}.
+The HDU should contain a WCS, otherwise, Warp will abort with a crash.
+When this option is used, Warp will read the respective WCS and the size of the image to resample the input.
+Since this WCS of this HDU contains everything needed to construct the WCS the options above will be ignored when @option{--gridfile} is called: @option{--cdelt}, @option{--center}, and @option{--widthinpix}.
 
+In the example below, let's use this option to put the image of M51 in one survey (J-PLUS) into the pixel grid of another survey (SDSS) containing M51.
+The J-PLUS field of view is very large (almost @mymath{1.5\times1.5} deg@mymath{^2}, in @mymath{9500\times9500} pixels), while the field of view of SDSS in each filter is small (almost @mymath{0.3\times0.25} deg@mymath{^2} in @mymath{2048\times1489} pixels).
+With the first two commands, we'll first download the two images, then we'll extract the portion of the J-PLUS image that overlaps with the SDSS image and align it exactly to SDSS's pixel grid.
+Note that these are the two images that were used in two of Gnuastro's tutorials: @ref{Building the extended PSF} and @ref{Detecting large extended targets}.
+
+@example
+## Download the J-PLUS DR2 image of M51 in the r filter.
+$ jplusbase="http://archive.cefca.es/catalogues/vo/siap"
+$ wget $jplusbase/jplus-dr2/get_fits?id=67510 \
+       -O jplus.fits.fz
+
+## Download the SDSS image in r filter and decompress it
+## (Bzip2 is not a standard FITS compression algorithm).
+$ sdssbase=https://dr12.sdss.org/sas/dr12/boss/photoObj/frames
+$ wget $sdssbase/301/3716/6/frame-r-003716-6-0117.fits.bz2 \
+       -O sdss.fits.bz2
+$ bunzip2 sdss.fits.bz2
+
+## Warp and crop the J-PLUS image so the output exactly
+## matches the SDSS pixel gid.
+$ astwarp jplus.fits.fz --gridfile=sdss.fits --gridhdu=0 \
+          --output=jplus-on-sdss.fits
+
+## View the two images side-by-side:
+$ astscript-fits-view sdss.fits jplus-on-sdss.fits
+@end example
+
+As the example above shows, this option can therefore be very useful when comparing images from multiple surveys.
+But there are other very interesting use cases also.
+For example, when you are making a mock dataset and need to add distortion to the image so it matches the distortion of your camera.
+Through @option{--gridhdu}, you can easily insert that distortion over the mock image and put the mock image in the pixel grid of an exposure.
+
+@item -H
+@itemx --gridhdu
+The HDU/extension of the reference WCS file specified with option @option{--wcsfile} or its short version @option{-H} (see the description of @option{--wcsfile} for more).
 
 @item --edgesampling=INT
 Number of extra samplings along the edge of a pixel.
@@ -19726,14 +19788,13 @@ Since the polygon clipping will happen for every output pixel, a higher value to
 
 
 
-
-@node Linear warps to be called explicitly,  , Align pixels with WCS and remove distortions, Invoking astwarp
+@node Linear warps to be called explicitly,  , Align pixels with WCS account for distortions, Invoking astwarp
 @subsubsection Linear warps to be called explicitly
 
-Linear warps include operations like rotation, scaling, sheer and etc.
+Linear warps include operations like rotation, scaling, sheer, etc.
 For an introduction, see @ref{Linear warping basics}.
 These are warps that don't depend on the WCS of the image and should be expliclitly requested.
-To align the input pixel coordinates with the WCS coordinates, see @ref{Align pixels with WCS and remove distortions}.
+To align the input pixel coordinates with the WCS coordinates, see @ref{Align pixels with WCS account for distortions}.
 
 While they will correct any existing WCS based on the warp, they can also operate on images without any WCS.
 For example, you have a mock image that doesn't (yet!) have its mock WCS, and it has been created on an over-sampled grid and convolved with an over-sampled PSF.
@@ -20130,7 +20191,7 @@ $ ds9 cmd-2d-hist.fits -cmap sls -zoom to fit -grid yes \
       -grid type publication
 @end example
 
-If you are happy with the grid and coloring and etc, you can also use ds9 to save this as a JPEG image to directly use in your documents/slides with these extra DS9 options (DS9 will write the image to @file{cmd-2d.jpeg} and quit immediately afterwards):
+If you are happy with the grid, coloring and the rest, you can also use ds9 to save this as a JPEG image to directly use in your documents/slides with these extra DS9 options (DS9 will write the image to @file{cmd-2d.jpeg} and quit immediately afterwards):
 
 @example
 $ ds9 cmd-2d-hist.fits -cmap sls -zoom 4 -grid yes \
@@ -20140,7 +20201,7 @@ $ ds9 cmd-2d-hist.fits -cmap sls -zoom 4 -grid yes \
 @cindex PGFPlots (@LaTeX{} package)
 This is good for a fast progress update.
 But for your paper or more official report, you want to show something with higher quality.
-For that, you can use the PGFPlots package in @LaTeX{} to add axes in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points, lines and etc).
+For that, you can use the PGFPlots package in @LaTeX{} to add axes in the same font as your text, sharp grids and many other elegant/powerful features (like over-plotting interesting points and lines).
 But to load the 2D histogram into PGFPlots first you need to convert the FITS image into a more standard format, for example, PDF.
 We will use Gnuastro's @ref{ConvertType} for this, and use the @code{sls-inverse} color map (which will map the pixels with a value of zero to white):
 
@@ -21528,7 +21589,7 @@ The file will have two extensions for each step (one for the Sky and one for the
 @cindex Segmentation
 Once instrumental signatures are removed from the raw data (image) in the initial reduction process (see @ref{Data manipulation}).
 You are naturally eager to start answering the scientific questions that motivated the data collection in the first place.
-However, the raw dataset/image is just an array of values/pixels, that is all! These raw values cannot directly be used to answer your scientific questions: for example, ``how many galaxies are there in the image?'', ``What is their brightness?'' and etc.
+However, the raw dataset/image is just an array of values/pixels, that is all! These raw values cannot directly be used to answer your scientific questions: for example, ``how many galaxies are there in the image?'' and ``What is their brightness?''.
 
 The first high-level step your analysis will therefore be to classify, or label, the dataset elements (pixels) into two classes:
 1) Noise, where random effects are the major contributor to the value, and
@@ -21801,7 +21862,7 @@ option.
 @item --convolved=FITS
 Use this file as the convolved image and do not do convolution (ignore @option{--kernel}).
 NoiseChisel will just check the size of the given dataset is the same as the input's size.
-If a wrong image (with the same size) is given to this option, the results (errors, bugs, etc) are unpredictable.
+If a wrong image (with the same size) is given to this option, the results (errors, bugs, etc.) are unpredictable.
 So please use this option with care and in a highly controlled environment, for example, in the scenario discussed below.
 
 In almost all situations, as the input gets larger, the single most CPU (and time) consuming step in NoiseChisel (and other programs that need a convolved image) is convolution.
@@ -22859,7 +22920,7 @@ For those who feel MakeCatalog's existing measurements/columns are not enough an
 
 @menu
 * Detection and catalog production::  Discussing why/how to treat these separately
-* Brightness flux magnitude::   More on Magnitudes, surface brightness and etc.
+* Brightness flux magnitude::   More on Magnitudes, surface brightness, etc.
 * Quantifying measurement limits::  For comparing different catalogs.
 * Measuring elliptical parameters::  Estimating elliptical parameters.
 * Adding new columns to MakeCatalog::  How to add new columns.
@@ -26621,7 +26682,7 @@ $ astcosmiccal -l0.7 -m0.3 -z2.1
 $ astcosmiccal --obsline=lyalpha,4000 --listlinesatz
 @end example
 
-The input parameters (for example, current matter density, etc) can be given as command-line options or in the configuration files, see @ref{Configuration files}.
+The input parameters (current matter density, etc.) can be given as command-line options or in the configuration files, see @ref{Configuration files}.
 For a definition of the different parameters, please see the sections prior to this.
 If no redshift is given, CosmicCalculator will just print its input parameters and abort.
 For a full list of the input options, please see @ref{CosmicCalculator input options}.
@@ -26637,7 +26698,7 @@ CosmicCalculator also has features to help in such situations, please see @ref{C
 
 @menu
 * CosmicCalculator input options::  Options to specify input conditions.
-* CosmicCalculator basic cosmology calculations::  Like distance modulus, distances and etc.
+* CosmicCalculator basic cosmology calculations::  Such as distance modulus and distances.
 * CosmicCalculator spectral line calculations::  How they get affected by redshift.
 @end menu
 
@@ -27478,7 +27539,7 @@ The latter case can be useful when you want to ignore part of the 2D shape (for 
 
 You can visually see the shape of the region used by running this script with @option{--keeptmp} and viewing the @file{values.fits} and @file{apertures.fits} files of the temporary directory with a FITS image viewer like @ref{SAO DS9}.
 You can use @ref{Viewing FITS file contents with DS9 or TOPCAT} to open them together in one instance of DS9, with both frames matched and locked (for easy comparison in case you want to zoom-in or out).
-for example, see the commands below (based on your target object, just change the image name, center, position angle and etc):
+For example, see the commands below (based on your target object, just change the image name, center, position angle, etc.):
 
 @example
 ## Generate the radial profile
@@ -27497,7 +27558,7 @@ $ astscript-fits-view radial-tmp/values.fits \
 @itemx --measure=STR
 The operator for measuring the values over each radial distance.
 The values given to this option will be directly passed to @ref{MakeCatalog}.
-As a consequence, all MakeCatalog measurements like the magnitude, magnitude error, median, mean, signal-to-noise ratio (S/N), std, surface brightness, sigclip-mean, sigclip-number, etc. can be used here.
+As a consequence, all MakeCatalog measurements like the magnitude, magnitude error, median, mean, signal-to-noise ratio (S/N), std, surface brightness, sigclip-mean, and sigclip-number can be used here.
 For a full list of MakeCatalog's measurements, please run @command{astmkcatalog --help}.
 Multiple values can be given to this option, each separated by a comma.
 This option can also be called multiple times.
@@ -27893,7 +27954,7 @@ The point spread function (PSF) describes how the light of a point-like source i
 Since the light of all astrophysical sources undergoes all these effects, characterizing the PSF is key in astronomical analysis (for small and large objects).
 Consequently, having a good characterization of the PSF is fundamental to any analysis.
 
-In some situations@footnote{An example scenario where a parametric PSF may be enough: you are only interested in very small, high redshift objects that only extended a handful of pixels.} a parametric (analytical) model is sufficient for the PSF (Gaussian, Moffat, etc., see @ref{PSF}).
+In some situations@footnote{An example scenario where a parametric PSF may be enough: you are only interested in very small, high redshift objects that only extended a handful of pixels.} a parametric (analytical) model is sufficient for the PSF (such as Gaussian or Moffat, see @ref{PSF}).
 However, once you are interested in objects that are larger than a handful of pixels, it is almost impossible to find an analytic function to adequately characterize the PSF.
 Therefore, it is necessary to obtain an empirical (non-parametric) and extended PSF.
 In this section we describe a set of installed scrips in Gnuastro that will let you construct the non-parametric PSF using point-like sources.
@@ -28895,7 +28956,7 @@ If you are already familiar with these concepts, please skip this section and go
 @cindex Modularity
 In theory, a full operating system (or any software) can be written as one function.
 Such a software would not need any headers or linking (that are discussed in the subsections below).
-However, writing that single function and maintaining it (adding new features, fixing bugs, documentation, etc) would be a programmer or scientist's worst nightmare! Furthermore, all the hard work that went into creating it cannot be reused in other software: every other programmer or scientist would have to re-invent the wheel.
+However, writing that single function and maintaining it (adding new features, fixing bugs, documentation, etc.) would be a programmer or scientist's worst nightmare! Furthermore, all the hard work that went into creating it cannot be reused in other software: every other programmer or scientist would have to re-invent the wheel.
 The ultimate purpose behind libraries (which come with headers and have to be linked) is to address this problem and increase modularity: ``the degree to which a system's components may be separated and recombined'' (from Wikipedia).
 The more modular the source code of a program or library, the easier maintaining it will be, and all the hard work that went into creating it can be reused for a wider range of problems.
 
@@ -30851,7 +30912,7 @@ simplify the allocation (and later cleaning) of several @code{gal_data_t}s
 that are related.
 
 For example, each column in a table is usually represented by one
-@code{gal_data_t} (so it has its own name, data type, units, etc). A
+@code{gal_data_t} (so it has its own name, data type, units, etc.). A
 table (with many columns) can be seen as an array of @code{gal_data_t}s
 (when the number of columns is known a-priori). The functions below are
 defined to create a cleared array of data structures and to free them when
@@ -31410,7 +31471,7 @@ in the same order that they are stored. Each integer is printed on one
 line. This function is mainly good for checking/debugging your program. For
 program outputs, it is best to make your own implementation with a better,
 more user-friendly format. for example, the following code snippet. You can
-also modify it to print all values in one line, etc, depending on the
+also modify it to print all values in one line, etc., depending on the
 context of your program.
 
 @example
@@ -31515,7 +31576,7 @@ the same order that they are stored. Each integer is printed on one
 line. This function is mainly good for checking/debugging your program. For
 program outputs, it is best to make your own implementation with a better,
 more user-friendly format. For example, the following code snippet. You can
-also modify it to print all values in one line, etc, depending on the
+also modify it to print all values in one line, etc., depending on the
 context of your program.
 
 @example
@@ -31604,7 +31665,7 @@ the same order that they are stored. Each floating point number is printed
 on one line. This function is mainly good for checking/debugging your
 program. For program outputs, it is best to make your own implementation with
 a better, more user-friendly format. For example, in the following code
-snippet. You can also modify it to print all values in one line, etc,
+snippet. You can also modify it to print all values in one line, etc.,
 depending on the context of your program.
 
 @example
@@ -31694,9 +31755,9 @@ Return a pointer to the last node in @code{list}.
 Print the values within each node of @code{*list} on the standard output in
 the same order that they are stored. Each floating point number is printed
 on one line. This function is mainly good for checking/debugging your
-program. For program outputs, it s best to make your own implementation with
+program. For program outputs, it is best to make your own implementation with
 a better, more user-friendly format. For example, in the following code
-snippet. You can also modify it to print all values in one line, etc,
+snippet. You can also modify it to print all values in one line, etc.,
 depending on the context of your program.
 
 @example
@@ -32620,7 +32681,7 @@ So to avoid leaking memory, if a sub-second string is requested, it must be free
 When a sub-second string does not exist (and it is requested), then a value of @code{NULL} and NaN will be written in @code{*subsecstr} and @code{*subsec} respectively.
 
 This is a very useful function for operations on the FITS date values, for example, sorting FITS files by their dates, or finding the time difference between two FITS files.
-The advantage of working with the Unix epoch time is that you do not have to worry about calendar details (for example, the number of days in different months, or leap years, etc).
+The advantage of working with the Unix epoch time is that you do not have to worry about calendar details (such as the number of days in different months or leap years).
 @end deftypefun
 
 @deftypefun void gal_fits_key_read_from_ptr (fitsfile @code{*fptr}, gal_data_t @code{*keysll}, int @code{readcomment}, int @code{readunit})
@@ -33438,7 +33499,7 @@ However you still need to be cautious in the following scenarios below.
 Many users or operating systems may still use an older version.
 @item
 The @code{wcsprm} structure of WCSLIB is not thread-safe: you can't use the same pointer on multiple threads.
-for example, if you use @code{gal_wcs_img_to_world} simultaneously on multiple threads, you shouldn't pass the same @code{wcsprm} structure pointer.
+For example, if you use @code{gal_wcs_img_to_world} simultaneously on multiple threads, you shouldn't pass the same @code{wcsprm} structure pointer.
 You can use @code{gal_wcs_copy} to keep and use separate copies the main structure within each thread, and later free the copies with @code{gal_wcs_free}.
 @end itemize
 
@@ -35419,7 +35480,7 @@ have any type), see above for the definition of permutation.
 @cindex Coordinate matching
 Matching is often necessary when two measurements of the same points have been done using different instruments (or hardware), different software or different configurations of the same software.
 In other words, you have two catalogs or tables, and each has N columns containing the N-dimensional ``coordinate'' values of each point.
-Each table can have other columns too, for example, one can have brightness measurements in one filter, and another can have morphology measurements or etc.
+Each table can have other columns too, for example, one can have brightness measurements in one filter, and another can have morphology measurements.
 
 The matching functions here will use the coordinate columns of the two tables to find a permutation for each, and the total number of matched rows (@mymath{N_{match}}).
 This will enable you to match by the positions if you like.
@@ -35459,7 +35520,7 @@ When the aperture is an ellipse, distances between the points are also calculate
 
 @strong{Output permutations ignore internal sorting}: the output permutations will correspond to the initial inputs.
 Therefore, even when @code{inplace!=0} (and this function re-arranges the inputs in place), the output permutation will correspond to original (possibly non-sorted) inputs. The reason for this is that you rarely want to permute the actual positional columns after the match.
-Usually, you also have other columns (for example, the brightness, morphology and etc) and you want to find how they differ between the objects that match.
+Usually, you also have other columns (such as the brightness and morphology) and you want to find how they differ between the objects that match.
 Once you have the permutations, they can be applied to those other columns (see @ref{Permutations}) and the higher-level processing can continue.
 So if you do not need the coordinate columns for the rest of your analysis, it is better to set @code{inplace=1}.
 
@@ -36505,7 +36566,7 @@ tile/value will be associated to each clump based on its flux-weighted
 (only positive values) center.
 
 The main output is an internally allocated, 1-dimensional array with one
-value per label. The array information (length, type, etc) will be
+value per label. The array information (length, type, etc.) will be
 written into the @code{sig} generic data container. Therefore
 @code{sig->array} must be @code{NULL} when this function is called. After
 this function, the details of the array (number of elements, type and size,
@@ -36875,7 +36936,7 @@ Gnuastro's Warp program uses the following functions for its default mode (when 
 Through the following functions, you can directly access those features in your own custom programs.
 The linear warping operations of the Warp program aren't yet brought into the library.
 If you need them please get in touch with us at @code{bug-gnuastro@@gnu.org}.
-For a demo please refer to @ref{Library demo - resampling an image to a new grid}.
+For usage examples of this library, please see @ref{Library demo - Warp to another image} or @ref{Library demo - Warp to new grid}.
 
 You are free to provide any valid WCS keywords to the functions defined in this library using the @code{gal_warp_wcsalign_t} data type.
 This might be used to align the input image to the standard WCS grid, potentially changing the pixel scale, removing any valid WCS non-linear distortion available, and projecting to any valid WCS projection type.
@@ -36886,22 +36947,25 @@ The main data container for inputs, output and internal variables to simplify th
 Due to the large number of input variables, this structure makes it easy to call the main functions.
 Similar to @code{gal_data_t}, the @code{gal_warp_wcsalign_t} is a structure @code{typedef}'d as a new type, see @ref{Library data container}.
 Please note that this structure has elements that are @emph{allocated} dynamically and must be freed after usage.
-@code{gal_warp_wcsalign_free} only frees the internal variables, so you are responsible for freeing your own inputs (like @code{cdelt}, @code{input} and etc) and the output.
+@code{gal_warp_wcsalign_free} only frees the internal variables, so you are responsible for freeing your own inputs (@code{cdelt}, @code{input}, etc.) and the output.
 The internal variables are cached here to cut cpu-intensive computations.
+To prevent from using uninitialized variables, we recommend using the helper function @code{gal_warp_wcsalign_template} to get a clean structure before setting your own variables.
 The structure and each of its elements are defined below:
 
 @example
 typedef struct
 @{
-  /* Arguments given (and later freed) by the caller. */
-  gal_data_t       *ctype;
-  gal_data_t       *cdelt;
+  /* Arguments given (and later freed) by the caller. If 'twcs' is
+     given, then the "WCS To build" elements will be ignored. */
   gal_data_t       *input;
-  gal_data_t  *widthinpix;
-  gal_data_t      *center;
   size_t       numthreads;
   double      coveredfrac;
   size_t     edgesampling;
+  gal_data_t  *widthinpix;
+  struct wcsprm     *twcs;       /* WCS Predefined. */
+  gal_data_t       *ctype;       /* WCS To build.   */
+  gal_data_t       *cdelt;       /* WCS To build.   */
+  gal_data_t      *center;       /* WCS To build.   */
 
   /* Output (must be freed by caller) */
   gal_data_t      *output;
@@ -36917,31 +36981,9 @@ typedef struct
 @end example
 
 @table @code
-@item gal_data_t *ctype
-The output's projection type.
-The dataset has to have the type @code{GAL_TYPE_STRING}, containing exactly two strings.
-Both strings will be directly passed to WCSLIB and should conform to the FITS standard's @code{CTYPEi} keywords, see the description of @option{--ctype} in @ref{Align pixels with WCS and remove distortions}.
-For example, @code{"RA---TAN"} and @code{"DEC--TAN"}, or @code{"RA---HPX"} and @code{"DEC--HPX"}.
-
-@item gal_data_t *cdelt
-Output pixel scale (size of pixel in the WCS units: value to @code{CUNITi} keywords in FITS, usually degrees).
-The dataset should have a type of @code{GAL_TYPE_FLOAT64} and contain exactly two values.
-Hint: to convert arcsec to degrees, just divide by 3600.
-
 @item gal_data_t *input
 The input dataset.
-This dataset must contain both the image array of type @code{GAL_TYPE_FLOAT64}, and @code{input->wcs} should not be @code{NULL} for the WCS-aligning operations to work, see @ref{Library demo - resampling an image to a new grid}.
-
-@item gal_data_t *widthinpix
-Output image size (width and height) in number of pixels.
-If a @code{NULL} pointer is passed, the WCS-aligning operations will estimate the output image size internally such that it contains the full input.
-This dataset should have a type of @code{GAL_TYPE_SIZE_T} and contain exactly two @emph{odd} values.
-This ensures that the center of the central pixel lies at the requested central coordinate (note that an image with an even number of pixels doesn't have a ``central'' pixel!
-
-@item gal_data_t *center
-WCS coordinate of the center of the central pixel of the output.
-The units depend on the WCS, for example, if the @code{CUNITi} keywords are @code{deg}, it is in degrees.
-This dataset should have a type of @code{GAL_TYPE_FLOAT64} and contain exactly two values.
+This dataset must contain both the image array of type @code{GAL_TYPE_FLOAT64}, and @code{input->wcs} should not be @code{NULL} for the WCS-aligning operations to work, see @ref{Library demo - Warp to new grid}.
 
 @item size_t numthreads
 Number of threads to use during the WCS aligning operations.
@@ -36958,10 +37000,53 @@ For more, see the description of @option{--coveredfrac} in @ref{Invoking astwarp
 Set the number of extra vertices along each edge of the output pixel's polygon to account for potential curvature due to projection or distortion.
 A value of @code{0} is usually enough for this (so the pixel is only defined by a four vertice polygon.
 Greater values increase memory usage and program execution time.
-For more, plese see the description of @option{--edgesampling} in @ref{Align pixels with WCS and remove distortions}.
+For more, plese see the description of @option{--edgesampling} in @ref{Align pixels with WCS account for distortions}.
+
+@item gal_data_t *widthinpix
+Output image size (width and height) in number of pixels.
+If a @code{NULL} pointer is passed, the WCS-aligning operations will estimate the output image size internally such that it contains the full input.
+This dataset should have a type of @code{GAL_TYPE_SIZE_T} and contain exactly two @emph{odd} values.
+This ensures that the center of the central pixel lies at the requested central coordinate (note that an image with an even number of pixels doesn't have a ``central'' pixel!
+
+@item struct wcsprm *twcs
+The target grid WCS which must follow the standard WCSLIB structure.
+You can read it from a file using @code{gal_wcs_read} or create an entirely new one with @code{gal_wcs_create} and later free it with @code{gal_wcs_free}, see @ref{World Coordinate System}.
+If this element is given, the @code{ctype}, @code{cdelt} and @code{center} elements (which are used to construct a WCS internally) are ignored.
+
+Please note that the @code{wcsprm} structure doesn't contain the image size.
+To set the final image size, you should use @option{widthinpix}.
+
+@item gal_data_t *ctype
+The output's projection type.
+The dataset has to have the type @code{GAL_TYPE_STRING}, containing exactly two strings.
+Both strings will be directly passed to WCSLIB and should conform to the FITS standard's @code{CTYPEi} keywords, see the description of @option{--ctype} in @ref{Align pixels with WCS account for distortions}.
+For example, @code{"RA---TAN"} and @code{"DEC--TAN"}, or @code{"RA---HPX"} and @code{"DEC--HPX"}.
+
+@item gal_data_t *cdelt
+Output pixel scale (size of pixel in the WCS units: value to @code{CUNITi} keywords in FITS, usually degrees).
+The dataset should have a type of @code{GAL_TYPE_FLOAT64} and contain exactly two values.
+Hint: to convert arcsec to degrees, just divide by 3600.
+
+@item gal_data_t *center
+WCS coordinate of the center of the central pixel of the output.
+The units depend on the WCS, for example, if the @code{CUNITi} keywords are @code{deg}, it is in degrees.
+This dataset should have a type of @code{GAL_TYPE_FLOAT64} and contain exactly two values.
+
 @end table
 @end deftp
 
+@deftypefun gal_warp_wcsalign_t gal_warp_wcsalign_template (void)
+A high-level helper function that returns a clean @code{gal_warp_wcsalign_t} struct with all values initialized
+This function returns a copy of a statically allocated structure. So you don't need to free the returned structure.
+
+The Warp library decides on the program flow based on this struct.
+Uninitialized pointers can point to random space in RAM which can create segmentation faults, or even worse, produce unnoticed side-effects.
+It is therefore good practice to manually set unused pointers to @code{NULL} and give blank values to numbers
+Since there are many variables and pointers in @code{gal_warp_wcsalign_t}, it is easy to forget @emph{initializing} them.
+With that said, we recommend using this function to minimize human error.
+
+
+@end deftypefun
 
 @deftypefun void gal_warp_wcsalign (gal_warp_wcsalign_t *wa)
 A high-level function to align the input dataset's pixels to its WCS coordinates and write the result in @code{wa->output}.
@@ -37474,7 +37559,7 @@ The last one (@code{INVALID}) is for sanity checks (for example, to know if the 
 @cindex SAO DS9 region file
 @cindex Region file (SAO DS9)
 Returns an allocated generic data container (@code{gal_data_t}, with an array of @code{GAL_TYPE_FLOAT64}) containing the vertices of a polygon within the SAO DS9 region file given by @code{*filename}.
-Since SAO DS9 region files are 2 dimensional, if there are @mymath{N} vertices in the SAO DS9 region file, the returned dataset will have @mymath{2\times N} elements (first two elements belonging to first vertice, and etc).
+Since SAO DS9 region files are 2 dimensional, if there are @mymath{N} vertices in the SAO DS9 region file, the returned dataset will have @mymath{2\times N} elements (first two elements belonging to first vertice, etc.).
 
 The mode to interpret the vertice coordinates is also read from the SAO DS9 region file and written into the @code{status} attribute of the output @code{gal_data_t}.
 The coordinate mode can be one of the @code{GAL_DS9_COORD_MODE_*} macros, mentioned above.
@@ -37518,7 +37603,8 @@ use those that are generated by Gnuastro after @command{make check} in the
 * Library demo - inspecting neighbors::  Inspect the neighbors of a pixel.
 * Library demo - multi-threaded operation::  Doing an operation on threads.
 * Library demo - reading and writing table columns::  Simple Column I/O.
-* Library demo - resampling an image to a new grid::
+* Library demo - Warp to another image::  Output pixel grid and WCS from another image.
+* Library demo - Warp to new grid::  Define a new pixel grid and WCS to resample the input.
 @end menu
 
 @node Library demo - reading a image, Library demo - inspecting neighbors, Library demo programs, Library demo programs
@@ -37766,7 +37852,7 @@ main(void)
 
 
 
-@node Library demo - reading and writing table columns, Library demo - resampling an image to a new grid, Library demo - multi-threaded operation, Library demo programs
+@node Library demo - reading and writing table columns, Library demo - Warp to another image, Library demo - multi-threaded operation, Library demo programs
 @subsection Library demo - reading and writing table columns
 
 Tables are some of the most common inputs to, and outputs of programs. This
@@ -37905,14 +37991,119 @@ main(void)
 
 
 
-@node Library demo - resampling an image to a new grid,  , Library demo - reading and writing table columns, Library demo programs
-@subsection Library demo - resampling an image to a new grid
 
-Gnuastro's warp library allows you to resample an image from a grid to another entirely using the WCSLIB.
-You may use it to remove non-linear distortions from an image, change pixel scale, projection type, or just align the image to get it ready for @emph{stacking} several images.
-Here you can find an example program that demonstrates the usage of the respective functions in @ref{Warp library}.
+@node Library demo - Warp to another image, Library demo - Warp to new grid, Library demo - reading and writing table columns, Library demo programs
+@subsection Library demo - Warp to another image
+Gnuastro's warp library (that you can access by including @file{gnuastro/warp.h}) allows you to resample an image from a grid to another entirely using the WCSLIB (while acconting for distortions if necessary; see @ref{Warp library}).
+The Warp library uses a pixel-mixing or area-based resampling approach which is fully described in @ref{Resampling}.
+The most generic uses cases for this library are already available in the @ref{Invoking astwarp} program.
+For a related demo (where the output grid and WCS are constructed from scratch), see @ref{Library demo - Warp to new grid}.
 
-To compile the program, put the code below in a plain-text file (let's assume its called @file{align.c}) and use @ref{BuildProgram} with this command: `@command{astbuildprog align.c}'.
+In the example below, we are warping the @code{input.fits} file to the same pixel grid and WCS as @code{reference.fits} image (assuming it is in hdu @code{0}).
+Feel free to change these names to your own test file names.
+This can be useful when you have a complex grid and WCS containing various keywords such as non-linear distortion coefficients, etc.
+For example datasets, see the description of the @option{--gridfile} option in @ref{Align pixels with WCS account for distortions}.
+
+To compile the demonstration program below, copy and paste the contents in a plain-text file (let's assume you named it @file{align-to-img.c}) and use @ref{BuildProgram} with this command: `@command{astbuildprog align-to-img.c}'.
+Please note that the demo program does not perform many sanity checks to avoid making it too complex and to highlight this particular feature in the library.
+For a robust method write programs with all the necessary sanity checks, see Gnuastro's Warp source code, see @ref{Program source}.
+
+@example
+@verbatim
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <gnuastro/wcs.h>       /* contains gnuastro's fits.h */
+#include <gnuastro/warp.h>      /* contains gnuastro's data.h */
+#include <gnuastro/array.h>     /* contains gnuastro's type.h */
+
+int
+main(void)
+{
+  /* Input file's name and HDU. */
+  char *filename="input.fits", *hdu="1";
+
+  /* Reference file's name and HDU. */
+  char *gridfile="reference.fits", *gridhdu="0";
+
+  /* Output file name. */
+  char *outname="align-to-img.fits";
+
+  /* Low-level variables needed to read the reference file's size. */
+  int nwcs;
+  size_t ndim, *dsize;
+
+  /* Initialize the 'wa' struct with empty values and NULL pointers. */
+  gal_warp_wcsalign_t wa=gal_warp_wcsalign_template();
+
+  /* Read the input image and its WCS. */
+  wa.input=gal_array_read_one_ch_to_type(filename, hdu, NULL,
+                                         GAL_TYPE_FLOAT64, -1,  0);
+  wa.input->wcs=gal_wcs_read(filename, hdu, 0, 0, 0, &wa.input->nwcs);
+
+  /* Prepare the warp input structure, use all threads available. */
+  wa.coveredfrac=1; wa.edgesampling=0; wa.numthreads=0;
+
+  /* Set the target grid to be the same as wcsref.fits file on hdu 0. */
+  wa.twcs=gal_wcs_read(gridfile, gridhdu, 0, 0, 0, &nwcs);
+  if(wa.twcs==NULL)
+    {
+      fprintf(stderr, "%s (hdu %s): no WCS! Can't continue\n",
+	      gridfile, gridhdu);
+      exit(EXIT_FAILURE);
+    }
+
+  /* Read the output image size (from the reference image). Note that
+     'dsize' will be freed while freeing 'widthinpix'). */
+  dsize=gal_fits_img_info_dim(gridfile, gridhdu, &ndim);
+
+  /* Convert the 'dsize' to a 'gal_data_t' so the library can use it. */
+  wa.widthinpix=gal_data_alloc(dsize, GAL_TYPE_SIZE_T, 1, &ndim,
+			       NULL, 1, -1, 0, NULL, NULL, NULL);
+
+  /* Do the warp, then convert the output to a 32-bit float (the default
+     float64 is too much for observational data and just wastes
+     storage!). But if you are warping mock data before adding noise
+     (where you do have float64 level precision), remove the type
+     conversion line. */
+  gal_warp_wcsalign(&wa);
+  wa.output=gal_data_copy_to_new_type_free(wa.output, GAL_TYPE_FLOAT32);
+
+  /* WARNING: make sure there is no file with same name as 'out.fits'
+     or the result will be appended to its final HDU. */
+  gal_fits_img_write(wa.output, outname, NULL, "warp-demo");
+
+  /* Clean up. */
+  gal_data_free(wa.input);
+  gal_data_free(wa.output);
+  gal_data_free(wa.widthinpix);
+
+  /* Give control back to the operating system. */
+  return EXIT_SUCCESS;
+}
+@end verbatim
+@end example
+
+
+
+
+@node Library demo - Warp to new grid,  , Library demo - Warp to another image, Library demo programs
+@subsection Library demo - Warp to new grid
+Gnuastro's warp library (that you can access by including @file{gnuastro/warp.h}) allows you to resample an image from a grid to another entirely using the WCSLIB (while acconting for distortions if necessary; see @ref{Warp library}).
+The Warp library uses a pixel-mixing or area-based resampling approach which is fully described in @ref{Resampling}.
+The most generic uses cases for this library are already available in the @ref{Invoking astwarp} program.
+For a related demo (where the output grid and WCS are imported from another file), see @ref{Library demo - Warp to another image}.
+
+In the example below, we'll assume you have the SDSS image downloaded in @ref{Downloading and validating input data}.
+After downloading the image as described there, you will have @file{r.fits} in your current directory.
+We will therefore use @file{r.fits} as the input to the rest program here.
+The image is not aligned to the celestial coordinates, so we will align the pixel and WCS coordinates, but set the center of the pixel grid to be at (RA,Dec) of (202.4173735,47.3374525).
+We also give it a @code{TAN} projection with a pixel scale of 0.27 arcsecs, a defined center pixel.
+However, we'll let the Warp library measure the proper output image size that will contain the aligned image.
+
+To compile the demonstration program below, copy and paste the contents in a plain-text file (let's assume you named it @file{align-to-new.c}) and use @ref{BuildProgram} with this command: `@command{astbuildprog align-to-new.c}'.
+Please note that the demo program does not perform many sanity checks to avoid making it too complex and to highlight this particular feature in the library.
+For a robust method write programs with all the necessary sanity checks, see Gnuastro's Warp source code, see @ref{Program source}.
 
 @example
 @verbatim
@@ -37927,14 +38118,14 @@ int
 main(void)
 {
   /* Input file's name and HDU. */
-  char *filename="input.fits", *hdu="1";
+  char *filename="r.fits", *hdu="0";
 
   /* Output file name. */
-  char *outname="output.fits";
+  char *outname="align-to-new.fits";
 
   /* RA/Dec of the center of the central pixel of output. Please
      change the center based on your input. */
-  double center[]={52.55401335, -28.74252337};
+  double center[]={202.4173735, 47.3374525};
 
   /* Coordinate and Projection algorithms of output. */
   char *ctype[2]={"RA---TAN", "DEC--TAN"};
@@ -37944,55 +38135,57 @@ main(void)
 
   /* For intermediate steps. */
   size_t two=2;
-  gal_warp_wcsalign_t nl;
+
+  /* Initialize the 'wa' struct with empty values and NULL pointers. */
+  gal_warp_wcsalign_t wa=gal_warp_wcsalign_template();
 
   /* Set the width (and height!) of the output in pixels (as a 1D and
      2 element 'gal_data_t'). When it is NULL, the library will
      calculate the appropriate width to fully fit the input image
      after alignment. */
-  nl.widthinpix=NULL;
+  wa.widthinpix=NULL;
 
   /* Set the number of threads to use. If the value is '0', the
      library will estimate the maximum available threads at
      run-time on the host operating system. */
-  nl.numthreads=0;
+  wa.numthreads=0;
 
 
   /* Read the input image and its WCS. */
-  nl.input=gal_array_read_one_ch_to_type(filename, hdu, NULL,
+  wa.input=gal_array_read_one_ch_to_type(filename, hdu, NULL,
 					 GAL_TYPE_FLOAT64, -1, 0);
-  nl.input->wcs=gal_wcs_read(filename, hdu, 0, 0, 0, &nl.input->nwcs);
+  wa.input->wcs=gal_wcs_read(filename, hdu, 0, 0, 0, &wa.input->nwcs);
 
 
   /* Prepare the warp input structure. */
-  nl.coveredfrac=1; nl.edgesampling=0;
-  nl.ctype=gal_data_alloc(ctype, GAL_TYPE_STRING, 1, &two, NULL, 1,
+  wa.coveredfrac=1; wa.edgesampling=0;
+  wa.ctype=gal_data_alloc(ctype, GAL_TYPE_STRING, 1, &two, NULL, 1,
                           -1, 0, NULL, NULL, NULL);
-  nl.cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 1,
+  wa.cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 1,
                           -1, 0, NULL, NULL, NULL);
-  nl.center=gal_data_alloc(center, GAL_TYPE_FLOAT64, 1, &two, NULL, 1,
+  wa.center=gal_data_alloc(center, GAL_TYPE_FLOAT64, 1, &two, NULL, 1,
                            -1, 0, NULL, NULL, NULL);
 
 
   /* Do the warp, then convert it to a 32-bit float. */
-  gal_warp_wcsalign(&nl);
-  nl.output=gal_data_copy_to_new_type_free(nl.output, GAL_TYPE_FLOAT32);
+  gal_warp_wcsalign(&wa);
+  wa.output=gal_data_copy_to_new_type_free(wa.output, GAL_TYPE_FLOAT32);
 
 
   /* WARNING: make sure there is no file with same name as 'out.fits'
      or the result will be appended to its final HDU. */
-  gal_fits_img_write(nl.output, outname, NULL, "warp-demo");
+  gal_fits_img_write(wa.output, outname, NULL, "warp-demo");
 
 
   /* Remove the pointers to arrays that we didn't allocate (and thus,
      should not be freed by 'gal_data_free' below). */
-  nl.cdelt->array=nl.center->array=nl.ctype->array=NULL;
+  wa.cdelt->array=wa.center->array=wa.ctype->array=NULL;
 
 
-  /* Clean up and return. */
-  gal_data_free(nl.cdelt);   gal_data_free(nl.ctype);
-  gal_data_free(nl.input);   gal_data_free(nl.output);
-  gal_data_free(nl.center);  gal_data_free(nl.widthinpix);
+  /* Clean up. */
+  gal_data_free(wa.cdelt);   gal_data_free(wa.ctype);
+  gal_data_free(wa.input);   gal_data_free(wa.output);
+  gal_data_free(wa.center);  gal_data_free(wa.widthinpix);
 
   /* Give control back to the operating system. */
   return EXIT_SUCCESS;
@@ -38382,7 +38575,7 @@ As much as order does not matter when you include the header of each group,
 sort them by length, as described above.
 
 @item
-All function names, variables, etc should be in lower case.  Macros and
+All function names, variables, etc., should be in lower case.  Macros and
 constant global @code{enum}s should be in upper case.
 
 @item
@@ -39111,7 +39304,7 @@ bar  bAr  foo
 
 Nicely done!
 Just note that the strings are sorted alphabetically, not in the original order.
-Also, an arbitrary number of space characters are printed between them (based on the number of suggestions and terminal size and etc).
+Also, an arbitrary number of space characters are printed between them (based on the number of suggestions and terminal size, etc.).
 Now, if you type @samp{f} and press @key{[TAB]}, bash will automatically figure out that you wanted @code{foo} and it be completed right away:
 
 @example
@@ -39694,7 +39887,7 @@ the development of Gnuastro, so please adhere to the following guidelines.
 The body should be very descriptive. Start the commit message body by
 explaining what changes your commit makes from a user's perspective (added,
 changed, or removed options, or arguments to programs or libraries, or
-modified algorithms, or new installation step, etc).
+modified algorithms, or new installation step, etc.).
 
 @item
 @cindex Mailing list: gnuastro-commits
@@ -39779,7 +39972,7 @@ As described in `Pro Git', there are two methods for you to contribute to Gnuast
 @item
 You can send commit patches by email as fully explained in `Pro Git'.
 This is good for your first few contributions.
-Just note that raw patches (containing only the diff) do not have any meta-data (author name, date, etc).
+Just note that raw patches (containing only the diff) do not have any meta-data (author name, date, etc.).
 Therefore they will not allow us to fully acknowledge your contributions as an author in Gnuastro: in the @file{AUTHORS} file and at the start of the PDF book.
 These author lists are created automatically from the version controlled source.
 
@@ -39788,7 +39981,7 @@ See Pro Git's @url{https://git-scm.com/book/en/v2/Distributed-Git-Contributing-t
 If you would like to get more heavily involved in Gnuastro's development, then you can try the next solution.
 
 @item
-You can have your own forked copy of Gnuastro on any hosting site you like (Codeberg, Gitlab, GitHub, BitBucket, etc) and inform us when your changes are ready so we merge them in Gnuastro.
+You can have your own forked copy of Gnuastro on any hosting site you like (Codeberg, Gitlab, GitHub, BitBucket, etc.) and inform us when your changes are ready so we merge them in Gnuastro.
 This is more suited for people who commonly contribute to the code (see @ref{Forking tutorial}).
 
 @end enumerate
@@ -39954,7 +40147,7 @@ It uses a technique to detect very faint and diffuse, irregularly shaped signal 
 
 @item Statistics
 (@file{aststatistics}, see @ref{Statistics}) Statistical calculations on the input dataset (column in a table, image or datacube).
-This includes man operations like generating histogram, sigma clipping, least squares fitting and etc.
+This includes man operations such as generating histogram, sigma clipping, and least squares fitting.
 
 @item Table
 (@file{asttable}, @ref{Table}) Convert FITS binary and ASCII tables into other such tables, print them on the command-line, save them in a plain text file, do arithmetic on the columns or get the FITS table information.
@@ -39980,7 +40173,7 @@ They can be run just like a program and behave very similarly (with minor differ
 
 @item astscript-radial-profile
 (See @ref{Generate radial profile}) Calculate the radial profile of an object within an image.
-The object can be at any location in the image, using various measures (median, sigma-clipped mean and etc), and the radial distance can also be measured on any general ellipse.
+The object can be at any location in the image, using various measures (median, sigma-clipped mean, etc.), and the radial distance can also be measured on any general ellipse.
 
 @item astscript-sort-by-night
 (See @ref{Sort FITS files by night}) Given a list of FITS files, and a HDU and keyword name (for a date), this script separates the files in the same night (possibly over two calendar days).
