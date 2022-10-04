@@ -23884,19 +23884,19 @@ The geometric center of all objects and clumps along the third FITS axis axis, s
 Position of pixel with minimum value in objects and clumps, along the first FITS axis.
 
 @item --maxvx
-Position of pixel with minimum value in objects and clumps, along the first FITS axis.
+Position of pixel with maximum value in objects and clumps, along the first FITS axis.
 
 @item --minvy
 Position of pixel with minimum value in objects and clumps, along the first FITS axis.
 
 @item --maxvy
-Position of pixel with minimum value in objects and clumps, along the first FITS axis.
+Position of pixel with maximum value in objects and clumps, along the first FITS axis.
 
 @item --minvz
 Position of pixel with minimum value in objects and clumps, along the first FITS axis.
 
 @item --maxvz
-Position of pixel with minimum value in objects and clumps, along the first FITS axis.
+Position of pixel with maximum value in objects and clumps, along the first FITS axis.
 
 @item --minx
 The minimum position of all objects and clumps along the first FITS axis.
