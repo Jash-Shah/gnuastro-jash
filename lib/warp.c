@@ -129,7 +129,7 @@ warp_wcsalign_init_output_from_params(gal_warp_wcsalign_t *wa)
   struct wcsprm *bwcs=NULL, *rwcs=NULL;
   gal_data_t *kcoords=NULL, *pcrn=NULL, *converted=NULL;
   double ocrpix[2], *xkcoords, *ykcoords, *x=NULL, *y=NULL;
-  double pmin[2]={DBL_MAX, DBL_MAX}, pmax[2]={-DBL_MAX, -DBL_MAX};
+  double pmin[2]={DBL_MAX, DBL_MAX}, pmax[2]={-DBL_MAX, -DBL_MAX}, tmp;
 
   /* Base WCS default parameters */
   double pc[4]={-1, 0, 0, 1};
@@ -199,11 +199,19 @@ warp_wcsalign_init_output_from_params(gal_warp_wcsalign_t *wa)
 
       /* Size must be odd so the image would have a center value. Also, the
          indices are swapped since number of columns defines the horizontal
-         part of the center and vice versa.  */
+         part of the center and vice versa. To calculate the output image
+         size, measure the difference between center and outermost edges of
+         the input image (in pixels). Since this is the distance from
+         center to the furthest edge of the image, the value must be
+         multiplied by two. */
       osize=gal_pointer_allocate(GAL_TYPE_SIZE_T, 2, 0,
                                  __func__, "osize");
-      osize[0] = WARP_NEXT_ODD(pmax[1]-pmin[1]);
-      osize[1] = WARP_NEXT_ODD(pmax[0]-pmin[0]);
+      tmp=2*fmax( fabs(ykcoords[4]-pmin[1]),
+                  fabs(ykcoords[4]-pmax[1]) );
+      osize[0] = WARP_NEXT_ODD(tmp);
+      tmp=2*fmax( fabs(xkcoords[4]-pmin[0]),
+                  fabs(xkcoords[4]-pmax[0]) );
+      osize[1] = WARP_NEXT_ODD(tmp);
     }
 
   /* Set the CRPIX value
