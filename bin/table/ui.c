@@ -339,7 +339,7 @@ ui_read_check_only_options(struct tableparams *p)
   if(p->cp.quiet==0 && p->catcolumns && p->catcolumnfile==NULL)
     error(EXIT_SUCCESS, 0, "WARNING: '--catcolumns' (or '-C') is ignored "
           "because '--catcolumnfile' (or '-L') was not given to specify "
-          "which file the new columns should come from. To supress this "
+          "which file the new columns should come from. To suppress this "
           "warning, please run with '--quiet'");
 }
 

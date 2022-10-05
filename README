@@ -63,10 +63,8 @@ categories/chapters.
   - Crop (astcrop): Crop region(s) from an image and stitch several images
     if necessary.  Inputs can be in pixel coordinates or world coordinates.
 
-  - Header (astheader): Print and manipulate the header data of a FITS file.
-
-  - Match (astmatch): Given two input catalogs, find the rows that match
-    with each other within a given aperture (may be an ellipse).
+  - Fits (astfits): View and manipulate FITS file HDUs/extensions and
+    header keywords.
 
   - MakeCatalog (astmkcatalog): Make catalog of labeled image (output of
     NoiseChisel). The catalogs are highly customizable and adding new
@@ -79,6 +77,9 @@ categories/chapters.
     central regions of radial profiles are made with a configurable 2D
     Monte Carlo integration. It can also build the profiles on an
     over-sampled image.
+
+  - Match (astmatch): Given two input catalogs, find the rows that match
+    with each other within a given aperture (may be an ellipse).
 
   - NoiseChisel (astnoisechisel): Detect and signal in noise. It uses a
     technique to detect very faint and diffuse, irregularly shaped signal
@@ -100,8 +101,11 @@ categories/chapters.
     file.  Output columns can also be determined by number or regular
     expression matching of column names.
 
-  - Warp (astwarp): Warp image to new pixel grid. Any projective
-    transformation or Homography can be applied to the input images.
+  - Warp (astwarp): Warp image to new pixel grid. By default it will align
+    the pixel and WCS coordinates, removing any non-linear WCS distortions.
+    Any linear warp (projective transformation or Homography) can also be
+    applied to the input images by explicitly calling the respective
+    operation.
 
 The programs listed above are designed to be highly modular and
 generic. For higher-level operations (combining multiple programs, or

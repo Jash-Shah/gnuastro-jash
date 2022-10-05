@@ -109,7 +109,8 @@ See the end of the file for license conditions.
     simultaneously align the image to the coordinate system. When no named
     linear operation (like '--rotate', '--scale' or etc) is requested, Warp
     will go into this mode. It is highly customizable through the following
-    options. See the "Invoking Warp" section of the book for more.
+    options. See the "Invoking Warp" section of the book for more. This
+    feature has been written by Pedram Ashofteh Ardakani.
     --center: RA, DEC of the center of the central pixel of output.
     --widthinpix: Width of output in pixels.
     --cdelt: Pixel scale of output ('CDELTi' keywords in FITS).

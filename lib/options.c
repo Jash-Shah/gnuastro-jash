@@ -2172,7 +2172,7 @@ gal_options_set_from_key(int key, char *arg, struct argp_option *options,
                   "the '=' sign of long options (for example '--hdu= 1', "
                   "note the space between the '=' and the '1'; the "
                   "correct format in such cases is either '--hdu=1' "
-                  "or '--hdu 1'). To supress this warning, please use "
+                  "or '--hdu 1'). To suppress this warning, please use "
                   "the '--quiet' (or '-q') option before this option",
                   options[i].name);
 
