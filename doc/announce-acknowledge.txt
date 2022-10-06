@@ -3,6 +3,8 @@ Alphabetically ordered list to acknowledge in the next release.
 Marjan Akbari
 Faezeh Bijarchian
 Sepideh Eskandarlou
+Giulia Golini
+Raul Infante-Sainz
 Teet Kuutma
 Richard Stallman
 

@@ -12269,54 +12269,35 @@ Similar to @option{checksum}, but only write the @code{DATASUM} keyword (that do
 @item -a STR
 @itemx --asis=STR
 Write the given @code{STR} @emph{exactly} as it is, into the given FITS file header with no modifications.
-If the contents of @code{STR} does not conform to the FITS standard for keywords, then it may (most probably: it will) corrupt your file and you may not be able to open it any more.
-So please be @strong{very careful} with this option.
+If the contents of @code{STR} does not conform to the FITS standard for keywords, then it may (most probably: it will!) corrupt your file and you may not be able to open it any more.
+So please be @strong{very careful} with this option (its your responsability to make sure that the string conforms with the FITS standard for keywords).
+
 If you want to define the keyword from scratch, it is best to use the @option{--write} option (see below) and let CFITSIO worry about complying with the FITS standard.
+Also, you want to copy keywords from one FITS file to another, you can use @option{--copykeys} that is described below.
+Through these high-level instances, you don't have to worry about low-level issues.
 
-The best way to use this option is when you want to add a keyword from one FITS file to another, unchanged and untouched.
-Below is an example of such a case that can be very useful sometimes (on the command-line or in scripts):
-
-@example
-$ key=$(astfits firstimage.fits | grep KEYWORD)
-$ astfits --asis="$key" secondimage.fits
-@end example
-
-@cindex GNU Bash
-In particular note the double quotation signs (@key{"}) around the shell variable (@command{$key}).
-This is because FITS keyword strings usually have lots of space characters, if this variable is not quoted, the shell will only give the first word in the full keyword to this option, which will definitely be a non-standard FITS keyword and will make it hard to work on the file afterwords.
-See the ``Quoting'' section of the GNU Bash manual for more information if your keyword has the special characters @key{$}, @key{`}, or @key{\}.
-
-You can also use @option{--asis} to copy multiple keywords from one file to another.
-But the process will be a little more complicated. So we will show the process as the simple shell script below.
-You can customize it in the first block of variable definitions:
-1) set the names of the keywords you want to copy: it can be as many keys as you want, just put a `@code{\|}' between them.
-2) The input FITS file (where keywords should be read from) and its HDU.
-3) The output FITS file (where keywords should be written to) and its HDU.
-4) Set a ``title'' for the newly added keywords in the output (so they are visually separate from the existing keywords in the output).
+One common usage of @option{--asis} occurs when you are given the contents of a FITS header (many keywords) as a plain-text file (so the format of each keyword line conforms with the FITS standard, just the file is plain-text, and you have one keyword per line when you open it in a plain-text editor).
+In that case, Gnuastro's Fits program won't be able to parse it (it doesn't conform to the FITS standard, which doesn't have a new-line character!).
+With the command below, you can insert those headers in @file{headers.txt} into @file{img.fits} (its HDU number 1, the default; you can change the HDU to modify with @option{--hdu}).
 
 @example
-#!/bin/bash
-
-# Customizations (input, output and key names).
-# NOTE: put a '\|' between each keyword name.
-keys="KEYa\|KEYb\|KEYc\|KEYd"
-ifits=original.fits;     ihdu=1
-ofits=to_write.fits;     ohdu=1
-title="Keys from $ifits (hdu $ihdu)"
-
-# Read keywords from input and write in output.
-oIFS=$IFS
-IFS=''
-c="astfits $ofits -h$ohdu --write=/,\"$title\""
-astfits $ifits -h$ihdu \
-        | grep $keys \
-        | (while read line; \
-             do c="$c --asis=\"$line\""; \
-           done; eval $c); \
-IFS=$oIFS
+$ cat headers.txt \
+      | while read line; do \
+              astfits img.fits --asis="$line"; \
+        done
 @end example
 
-Since it is not too long, you can also simply put the variable values of the first block into the second, and write it directly on the command line (if it is just for one time).
+@cartouche
+@noindent
+@strong{Don't forget a title:} Since the newly added headers in the example above weren't originally in the file, they are probably some form of high-level metadata.
+The raw example above will just append the new keywords after the last one.
+Making it hard for human readability (its not clear what this new group of keywords signify, where they start, and where this group of keywords end).
+To help the human readability of the header, add a title for this group of keywords before writing them.
+To do that, run the following command before the @command{cat ...} command above (replace @code{Imported keys} with any title that best describes this group of new keywords based on their context):
+@example
+$ astfits img.fits --write=/,"Imported keys"
+@end example
+@end cartouche
 
 @item -H STR
 @itemx --history STR
