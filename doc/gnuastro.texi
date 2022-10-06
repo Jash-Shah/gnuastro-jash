@@ -7439,10 +7439,12 @@ The command-line shell has the capability to read all the separate input command
 This is useful when you want to do the same thing multiple times, with only the names of the files or minor parameters changing between the different instances.
 Using the shell's history (by pressing the up keyboard key) Sufi reviewed all the commands and then he retrieved the last 5 commands with the @command{$ history 5} command.
 He selected all those lines he had input and put them in a text file named @file{mymock.sh}.
-Then he defined the @code{edge} and @code{base} shell variables for easier customization later.
-Finally, before every command, he added some comments (lines starting with @key{#}) for future readability.
+Then he defined the @code{edge} and @code{base} shell variables for easier customization later, and before every command, he added some comments (lines starting with @key{#}) for future readability.
+Finally, Sufi pointed the student to Gnuastro's @ref{General program usage tutorial}, which has a full section on @ref{Writing scripts to automate the steps}.
 
 @example
+#!/bin/bash
+
 edge=12
 base=cat
 
