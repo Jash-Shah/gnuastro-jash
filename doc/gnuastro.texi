@@ -445,7 +445,7 @@ ConvertType
 * Raster and Vector graphics::  Images coming from nature, and the abstract.
 * Recognized file formats::     Recognized file formats
 * Color::                       Some explanations on color.
-* Aligning images with small WCS offsets::  When the WCS slightly differs.
+* Color channels in same pixel grid::  When the WCS slightly differs.
 * Annotations for figure in paper::  Adding coordinates or physical scale.
 * Invoking astconvertt::        Options and arguments to ConvertType.
 
@@ -12518,7 +12518,7 @@ A tutorial on how to add markers over an image is then given in @ref{Marking obj
 * Raster and Vector graphics::  Images coming from nature, and the abstract.
 * Recognized file formats::     Recognized file formats
 * Color::                       Some explanations on color.
-* Aligning images with small WCS offsets::  When the WCS slightly differs.
+* Color channels in same pixel grid::  When the WCS slightly differs.
 * Annotations for figure in paper::  Adding coordinates or physical scale.
 * Invoking astconvertt::        Options and arguments to ConvertType.
 @end menu
@@ -12691,7 +12691,7 @@ To print to the standard output, set the output name to `@file{stdout}'.
 
 @end table
 
-@node Color, Aligning images with small WCS offsets, Recognized file formats, ConvertType
+@node Color, Color channels in same pixel grid, Recognized file formats, ConvertType
 @subsection Color
 
 @cindex RGB
@@ -12828,67 +12828,74 @@ $ astconvertt --listcolors
 @end float
 
 
-@node Aligning images with small WCS offsets, Annotations for figure in paper, Color, ConvertType
-@subsection Aligning images with small WCS offsets
+@node Color channels in same pixel grid, Annotations for figure in paper, Color, ConvertType
+@subsection Color channels in same pixel grid
 
-In order to have nice color images, it is important that the images be properly aligned.
-This is usually the case in many scenarios, but it some times happens that the images have a small WCS offset, even though they have the same size.
-In such cases you can use the script below to align the images into approximately the same pixel grid (to within about 0.5 pixels which is sufficient in many color-image usage scenarios).
+In order to use different images as color channels, it is important that the images be properly aligned and on the same pixel grid.
+When your inputs are high-level products of the same survey, this is usually the case.
+However, in many other situations the images you placen to use as different color channels lie on different sky positions, even if they may have the same number of pixels.
+In this section we will show how to solve this problem.
 
-The script below does the job using Gnuastro's @ref{Warp} and @ref{Crop} programs.
-Simply copy the lines below into a plain-text file with your favorite text editor and save it as @file{my-align.sh}.
-Do Not forget to set the variables of the first three lines to specify the file names (without the @file{.fits} suffix) and the HDUs of your inputs.
-These four lines are all you need to edit, leave the rest unchanged.
-Also, if you are copy/pasting the script from a PDF, be careful that the single-quotes used in AWK may need to be corrected.
+For an example dataset, let's use the same SDSS field that we used in @ref{Detecting large extended targets}: the field covering the outer parts of the M51 group.
+With the commands below, we'll make an @file{inputs} directory and download and prepare the three g, r and i band images of SDSS over the same field there:
 
 @example
-#!/bin/sh
-
-# Set the input names (without the '.fits' suffix),
-# and their HDUs.
-r=RED_IMAGE_NO_SUFFIX;   rhdu=1
-g=GREEN_IMAGE_NO_SUFFIX; ghdu=1
-b=BLUE_IMAGE_NO_SUFFIX;  bhdu=1
-
-# To stop the script if there is a crash
-set -e
-
-# Align all the images to the celestial poles.
-astwarp $r.fits --align -h$rhdu -o $r-aligned.fits
-astwarp $g.fits --align -h$ghdu -o $g-aligned.fits
-astwarp $b.fits --align -h$bhdu -o $b-aligned.fits
-
-# Calculate the final WCS-based center and image-based width based on
-# the G-band (in RGB) image.
-centerwcs=$(astfits $g-aligned.fits --skycoverage --quiet \
-                    | awk 'NR==1@{printf "%g %g", $1,$2@}')
-widthpix=$(astfits $g-aligned.fits -h1 --quiet \
-                   --keyvalue=NAXIS1,NAXIS2 \
-               | awk '@{printf "%d,%d", $1, $2@}')
-
-# Crop all the images around the desired center and width.
-for f in $r $g $b; do
-  centerpix=$(echo $centerwcs \
-                   | asttable -c'arith $1 $2 wcs-to-img' \
-                              --wcsfile=$f-aligned.fits \
-                   | awk '@{printf "%g,%g", $1, $2@}')
-  astcrop $f-aligned.fits --mode=img --width=$widthpix \
-          --center=$centerpix -o$f-use.fits
-  rm $f-aligned.fits
-done
+$ mkdir inputs
+$ sdssurl=https://dr12.sdss.org/sas/dr12/boss/photoObj/frames
+$ for f in g r i; do \
+      wget $sdssurl/301/3716/6/frame-$f-003716-6-0117.fits.bz2 \
+           -O$f.fits.bz2; \
+      bunzip2 $f.fits.bz2; \
+      astfits $f.fits --copy=0 -oinputs/$f.fits; \
+      rm $f.fits; \
+  done
 @end example
 
-Once you have saved the file and come back to your command-line you can run the script like this:
+With the commands below, first we'll check the size of all three images to confirm that they have exactly the same number of pixels.
+Then we'll use them as three color channels to construct a PDF image:
 
 @example
-$ chmod +x my-align.sh
-$ ./my-align.sh
+## Check the number of pixels along each axis of all images.
+$ astfits inputs/*.fits --keyvalue=NAXIS1,NAXIS2
+
+## Create a color image from the non-yet-aligned inputs.
+$ astconvertt inputs/i.fits inputs/r.fits inputs/g.fits -g1 \
+              --fluxhigh=1 -om51-not-aligned.pdf
 @end example
 
-@noindent
-Of course, feel free to hack it and modify it to fit your datasets, like the rest of Gnuastro, this script is released under GNU GPLv.3 and above, see @ref{Your rights}.
+Open @file{m51-not-aligned.pdf} with your PDF viewer, and zoom-in to some part of the image with fewer sources.
+You will clearly see that for each object, there are three copies, one in red (from the reddest filter; i), one in green (from the middle filter; r), and one in blue (the bluest filter; g).
+Did you see the Warning message that was printed after your latest command?
+We have implemented a check in Warp to inform you when the images are not aligned and can produce bad (in most cases!) outputs like this.
 
-@node Annotations for figure in paper, Invoking astconvertt, Aligning images with small WCS offsets, ConvertType
+To solve this problem, you need to align the three color channels into the same pixel grid.
+To do that, we will use the @ref{Warp} program and in particular, its @ref{Align pixels with WCS account for distortions}.
+
+Let's take the middle (r band) filter as the reference to define our grid.
+With the first command below, let's align the r band filter to the celestial coordiantes (so the M51 group's position angle doesn't depend on the orientation of the telescope when it took this image).
+With the next two commands, let's use the @option{--gridfile} to ensure that the pixel grid and WCS comes from the r band image, but the pixel values come from the other two filters.
+Finally, in the last command, we'll produce the color PDF from the three aligned images (that aren't in the @file{inputs/} directory any more):
+
+@example
+## Put all three channels in the same pixel grid.
+$ astwarp inputs/r.fits                   --output=r.fits
+$ astwarp inputs/g.fits --gridfile=r.fits --output=g.fits
+$ astwarp inputs/i.fits --gridfile=r.fits --output=i.fits
+
+## Create a color image from the aligned inputs.
+$ astconvertt i.fits r.fits g.fits -g1 --fluxhigh=1 -om51.pdf
+@end example
+
+Open the new @file{m51.pdf} and compare it with the old @file{m51-not-aligned.pdf}.
+The difference is obvious!
+When you zoom-in, the stars are very clear and the different color channels of the same object in the sky don't fall on different pixels.
+If you look closely on the two longer edges of the image, you will see that one edge has a thin green shadow and the other has a thin red shadow.
+This shows how green and red channels have been slightly shifted to put your astronomical sources on the same grid.
+
+If you don't want to have those, or if you want the outer parts of the final image (where there was no data) to be white, some more complex commands are necessary.
+We'll leave those as an exercise for you to try your self using @ref{Warp} and/or @ref{Crop} to pre-process the inputs before converting it to a color image.
+
+@node Annotations for figure in paper, Invoking astconvertt, Color channels in same pixel grid, ConvertType
 @subsection Annotations for figure in paper
 
 @cindex Image annotation

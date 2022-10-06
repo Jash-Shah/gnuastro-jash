@@ -923,7 +923,7 @@ ui_prepare_input_channels_check_wcs(struct converttparams *p)
             "\"Aligning images with small WCS offsets\" section of "
             "Gnuastro's manual. Please run the command below to see "
             "it (you can return to the command-line by pressing 'q'):\n\n"
-            "   info gnuastro \"Aligning images\"\n",
+            "   info gnuastro \"Color channels in same pixel grid\"\n",
             wcsmatch);
     }
 
