@@ -439,9 +439,9 @@ warp_write_to_file(struct warpparams *p, int hasmatrix)
 void
 warp_write_wcs_linear(struct warpparams *p)
 {
+  double tcrpix[3], *ps;
   double *m=p->matrix->array, diff;
   struct wcsprm *wcs=p->output->wcs;
-  double tcrpix[3], *ps=p->cdelt->array;
   double *crpix=wcs?wcs->crpix:NULL, *w=p->inwcsmatrix;
 
   /* 'tinv' is the 2 by 2 inverse matrix. Recall that 'p->inverse' is 3 by
@@ -482,6 +482,7 @@ warp_write_wcs_linear(struct warpparams *p)
          is because the signs are usually different.*/
       if( fabs(wcs->pc[1])<ABSOLUTEFLTERROR ) wcs->pc[1]=0.0f;
       if( fabs(wcs->pc[2])<ABSOLUTEFLTERROR ) wcs->pc[2]=0.0f;
+      ps=gal_wcs_pixel_scale(wcs);
       diff=fabs(wcs->pc[0])-fabs(wcs->pc[3]);
       if( fabs(diff/ps[0])<RELATIVEFLTERROR )
         wcs->pc[3]=( (wcs->pc[3] < 0.0f ? -1.0f : 1.0f)
@@ -526,7 +527,7 @@ warp(struct warpparams *p)
   gal_warp_wcsalign_t *wa=&p->wa;
 
   /* Do the preparations and set the pointers to the functions to use. */
-  if( p->nonlinearmode )
+  if( p->wcsalign )
     {
       /* Calculate and allocate the output image size and WCS */
       if(!p->cp.quiet)

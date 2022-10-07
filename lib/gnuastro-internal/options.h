@@ -52,7 +52,8 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Statically allocated space for printing option values. */
 #define GAL_OPTIONS_STATIC_MEM_FOR_VALUES 2000
 
-
+/* Pixel width of output image. */
+#define GAL_OPTIONS_WIDTH_TOO_LARGE_SIZE 50000
 
 
 
@@ -252,6 +253,9 @@ gal_options_add_to_not_given(struct gal_options_common_params *cp,
 void
 gal_options_abort_if_mandatory_missing(struct gal_options_common_params *cp);
 
+void
+gal_options_width_too_large(double width, size_t dim_num,
+                            double pixwidth, double pixscale);
 
 
 /**********************************************************************/

@@ -62,7 +62,7 @@ enum option_keys_enum
   UI_KEY_CDELT           = 'x',
   UI_KEY_INTERPSAMPLING  = 'y',
   UI_KEY_CENTER          = 'c',
-  UI_KEY_WIDTHINPIX      = 'w',
+  UI_KEY_WIDTH           = 'w',
   UI_KEY_GRIDFILE        = 'G',
   UI_KEY_GRIDHDU         = 'H',
 
@@ -70,6 +70,7 @@ enum option_keys_enum
      automatically). */
   UI_KEY_CENTERONCORNER = 1000,
   UI_KEY_EDGESAMPLING,
+  UI_KEY_WIDTHINPIX,
   UI_KEY_HSTARTWCS,
   UI_KEY_HENDWCS,
   UI_KEY_CTYPE,

@@ -528,23 +528,6 @@ ui_check_options_and_arguments(struct cropparams *p)
 /**************************************************************/
 /***************       Preparations         *******************/
 /**************************************************************/
-#define UI_WIDTH_TOO_LARGE_SIZE 50000
-static void
-ui_warning_width_is_too_large(double width, size_t dim_num,
-                              double pixwidth, double pixscale)
-{
-  error(EXIT_SUCCESS, 0, "WARNING: value %g (requested WCS-based "
-        "width along dimension %zu) translates to %.0f pixels on "
-        "this dataset! This is most probably not what you wanted! "
-        "Note that the dataset's pixel size in this dimension is "
-        "%g. If you intended this number to show the width in "
-        "pixels, please add the '--widthinpix' option", width,
-        dim_num, pixwidth, pixscale);
-}
-
-
-
-
 
 /* When the crop is defined by its center, the final width that we need
    must be in actual number of pixels (an integer). But the user's values
@@ -598,8 +581,8 @@ ui_set_img_sizes(struct cropparams *p)
           {
             /* Calculate the pixel width. */
             pwidth = warray[i]/p->pixscale[i];
-            if(pwidth<1 || pwidth>UI_WIDTH_TOO_LARGE_SIZE)
-              ui_warning_width_is_too_large(warray[i], i+1, pwidth,
+            if(pwidth<1 || pwidth>GAL_OPTIONS_WIDTH_TOO_LARGE_SIZE)
+              gal_options_width_too_large(warray[i], i+1, pwidth,
                                           p->pixscale[i]);
 
             /* Write the single valued width in WCS and the image width for
@@ -936,9 +919,9 @@ ui_preparations_to_img_mode(struct cropparams *p)
           for(i=0;i<p->width->size;++i)
             {
               pixwidth = darr[i] / pixscale[i];
-              if(pixwidth>UI_WIDTH_TOO_LARGE_SIZE)
-                ui_warning_width_is_too_large(darr[i], i+1, pixwidth,
-                                              pixscale[i]);
+              if(pixwidth>GAL_OPTIONS_WIDTH_TOO_LARGE_SIZE)
+                gal_options_width_too_large(darr[i], i+1, pixwidth,
+                                            pixscale[i]);
               darr[i]=pixwidth;
             }
           free(pixscale);

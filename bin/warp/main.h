@@ -51,7 +51,8 @@ struct warpparams
   uint8_t         keepwcs;  /* Wrap the warped/transfomed pixels.        */
   uint8_t  centeroncorner;  /* Shift center by 0.5 before and after.     */
   double      coveredfrac;  /* Acceptable fraction of output covered.    */
-  gal_data_t       *cdelt;  /* Pixel scale of the output image.          */
+  gal_data_t       *width;  /* Width of final image.                     */
+  uint8_t      widthinpix;  /* If the given width is in units of pixels. */
   char           *gridhdu;  /* Extension to use for output's WCS.        */
   char          *gridfile;  /* File to use for output's WCS.             */
 
@@ -67,7 +68,7 @@ struct warpparams
   size_t       extinds[4];  /* Indexs of the minimum and maximum values. */
   double    outfpixval[2];  /* Pixel value of first output pixel.        */
   double         opixarea;  /* Area of output pix in units of input pix. */
-  uint8_t   nonlinearmode;  /* If warp must work in nonlinear mode.      */
+  uint8_t        wcsalign;  /* If warp must work in WCS-align mode.      */
   uint8_t  distortiontype;  /* Store distortion type in nonlinear mode.  */
 };
 

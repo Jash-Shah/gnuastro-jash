@@ -354,13 +354,13 @@ ui_check_gridfile(struct warpparams *p)
           "contain 2 dimensions, but warp detected %zu dimensions",
           p->gridfile, p->gridhdu, ndim);
 
-  /* If '--widthinpix' has already been given, inform the user that it will
-     be ignored (because '--gridfile' has been given). */
-  if(wa->widthinpix)
+  /* If '--width' has already been given, inform the user that it will be
+     ignored (because '--gridfile' has been given). */
+  if(p->width)
     {
-      error(EXIT_SUCCESS, 0, "WARNING: '--widthinpix' will be ignored "
+      error(EXIT_SUCCESS, 0, "WARNING: '--width' will be ignored "
             "because '--gridfile' takes precedence");
-      gal_data_free(wa->widthinpix);
+      gal_data_free(p->width);
     }
 
   /* We don't need to free the input 'dsize' array since it will be freed
@@ -393,11 +393,185 @@ ui_check_gridfile(struct warpparams *p)
 
 
 
+static void
+ui_check_wcsalign_cdelt(struct warpparams *p)
+{
+  size_t two=2, i;
+  gal_data_t *olddata=NULL;
+  double *tmp=NULL, *cdelt=NULL;
+  gal_warp_wcsalign_t *wa=&p->wa;
+
+  /* '--cdelt' isn't given. */
+  if(!wa->cdelt)
+    {
+      /* CDELT is not given, try to deduce from WCS */
+      cdelt=gal_wcs_pixel_scale(p->input->wcs);
+      if(!cdelt)
+        error(EXIT_FAILURE, 0, "%s (hdu %s): the pixel scale couldn't "
+              "be deduced from the WCS.", p->inputname, p->cp.hdu);
+
+      /* Set CDELT to the maximum value of the dimensions. */
+      cdelt[0] = ( cdelt[0] > cdelt[1] ? cdelt[0] : cdelt[1] );
+      cdelt[1] = cdelt[0];
+      wa->cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
+                               p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
+                               NULL);
+    }
+
+  /* --cdelt is given. */
+  else
+    {
+      /* CDELT is given, make sure there are no more than two values */
+      if(wa->cdelt->size > 2)
+        error(EXIT_FAILURE, 0, "%zu values given to '--cdelt', "
+              "however this option takes no more than 2 values",
+              wa->cdelt->size);
+
+      /* If only one value given to CDELT, use it for both dimensions. */
+      if(wa->cdelt->size == 1)
+        {
+          olddata=wa->cdelt; tmp=olddata->array;
+          wa->cdelt=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1,
+                                   &two, NULL, 0,
+                                   p->cp.minmapsize,
+                                   p->cp.quietmmap, NULL, NULL,
+                                   NULL);
+          cdelt=p->wa.cdelt->array;
+          cdelt[0]=cdelt[1]=tmp[0];
+          gal_data_free(olddata);
+        }
+
+      /* Check if the CDELT is in a reasonable range of degrees (in case
+         '--widthinpix' wasn't given). */
+      if(p->widthinpix==0)
+        {
+          cdelt=wa->cdelt->array;
+          for(i=wa->cdelt->size; i--;)
+            if(cdelt[i]>0.01)
+              error(EXIT_SUCCESS, 0, "WARNING: CDELT on dimension %zu has "
+                    "the unusual value of %f degrees. If you meant to define "
+                    "CDELT in arcseconds please use: '--cdelt=%g/3600'", i,
+                    cdelt[i], cdelt[i]);
+        }
+    }
+}
+
+
+
+
+
+static void
+ui_check_wcsalign_width(struct warpparams *p)
+{
+  /* Low-level variable (used in other variable definitions). */
+  gal_warp_wcsalign_t *wa=&p->wa;
+
+  /* High-level variables. */
+  gal_data_t *tmpw;
+  size_t i, two=2, stemp, *sarray=NULL;
+  double *cdelt=wa->cdelt->array, *darray, *tdarray;
+
+  /* Make sure only two values are given. */
+  if( p->width->size > 2 )
+    error(EXIT_FAILURE, 0, "%zu value(s) given to '--width', however "
+          "this option takes 1 or two values on a 2D image: the output "
+          "image width and height in WCS units (if you want to enter "
+          "the width in pixels, please also call '--widthinpix'). If a "
+          "single value is given the size will be a square", p->width->size);
+
+  /* If a single value is given, use it for both dimensions. */
+  if(p->width->size==1)
+    {
+      /* Allocate a new one and add the values. */
+      tmpw=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
+                          p->cp.minmapsize, p->cp.quietmmap,
+                          NULL, NULL, NULL);
+
+      /* Put the values in. */
+      tdarray=tmpw->array;
+      darray=p->width->array;
+      tdarray[0]=tdarray[1]=darray[0];
+
+      /* Clean up and set the new pointer. */
+      gal_data_free(p->width);
+      p->width=tmpw;
+    }
+
+
+  /* When '--widthinpix' is called we can directly use the values. */
+  darray=p->width->array;
+  if(p->widthinpix)
+    {
+      /* Make sure they are integers. */
+      if( darray[0]!=ceil(darray[0]) || darray[1]!=ceil(darray[1]) )
+        error(EXIT_FAILURE, 0, "value to '--width' must be integers, "
+              "but they are: %g, %g", darray[0], darray[1]);
+      p->width=gal_data_copy_to_new_type(p->width, GAL_TYPE_SIZE_T);
+    }
+  else
+    {
+      /* Allocate the size_t array to keep the final values. */
+      tmpw=gal_data_alloc(NULL, GAL_TYPE_SIZE_T, 1, &two, NULL, 0,
+                          p->cp.minmapsize, p->cp.quietmmap,
+                          NULL, NULL, NULL);
+
+      /* Convert the given values to pixels using the pixel scale
+         information, and make sure they are reasonable. */
+      sarray=tmpw->array;
+      for(i=0;i<p->width->size;++i)
+        {
+          sarray[i] = darray[i]/cdelt[i];
+          if(sarray[i]>GAL_OPTIONS_WIDTH_TOO_LARGE_SIZE)
+            gal_options_width_too_large(darray[i], i+1, sarray[i],
+                                        cdelt[i]);
+        }
+
+      /* Free the old dataset and use the new one. */
+      gal_data_free(p->width);
+      p->width=tmpw;
+    }
+
+  /* Image size must be ODD */
+  sarray=p->width->array;
+  if( sarray[0]%2==0 || sarray[1]%2==0 )
+    {
+      /* Let the user know that we are updating the output size (only
+         relevant if the user directly requested pixel coordinates). */
+      if(p->widthinpix)
+        error(EXIT_SUCCESS, 0, "WARNING: '--widthinpix' must be odd: "
+              "updating %zux%zu to %zux%zu", sarray[0], sarray[1],
+              sarray[0]%2 ? sarray[0] : sarray[0]+1,
+              sarray[1]%2 ? sarray[1] : sarray[1]+1);
+
+      /* Keep the final values. */
+      if(sarray[0]%2==0) sarray[0]+=1;
+      if(sarray[1]%2==0) sarray[1]+=1;
+    }
+
+  /* To keep the later steps consistent with the C ordering of
+     dimensions, we'll swap the fast and slow axis from FITS (which has
+     the same convention as FORTRAN), because the user sees a FITS
+     file. In an aligned image, sarray[0] is the horizontal axis and
+     sarray[1] the vertical one.
+
+     NAXIS1 -> dsize[1] -> horizontal axis
+     NAXIS2 -> dsize[0] -> vertical axis        */
+  stemp=sarray[0]; sarray[0]=sarray[1]; sarray[1]=stemp;
+
+  /* Put the final widthinpix dataset into the warpalign structure. */
+  p->wa.widthinpix=p->width;
+  p->width=NULL;
+}
+
+
+
+
+
 static void *
 ui_check_options_and_arguments_wcsalign(struct warpparams *p)
 {
+  size_t two=2, indim=0;
   gal_warp_wcsalign_t *wa=&p->wa;
-  size_t two=2, *sarray=NULL, stemp, indim=0;
   double *icenter=NULL, *iwidth=NULL, *imin=NULL, *imax=NULL, *tmp=NULL;
 
   /* Copy necessary parameters for the nonlinear warp (independent of
@@ -414,9 +588,6 @@ ui_check_options_and_arguments_wcsalign(struct warpparams *p)
       ui_check_gridfile(p);
       return NULL;
     }
-
-  /* Not using a WCS file, so put cdelt into the non-linear structure. */
-  p->wa.cdelt=p->cdelt;
 
   /* Sanity check user's possibly given '--center'. */
   if(wa->center)
@@ -455,50 +626,11 @@ ui_check_options_and_arguments_wcsalign(struct warpparams *p)
       free(iwidth);
     }
 
-  /* If the output width is given, make sure it has exactly two
-     values for width and height. */
-  if(wa->widthinpix)
-    {
-      if( wa->widthinpix->size != 2 )
-        error(EXIT_FAILURE, 0, "%zu value(s) given to '--widthinpix', "
-              "however this option takes exactly 2 values as the "
-              "output image width and height in pixels",
-              wa->widthinpix->size);
-
-      /* Image size must be of type size_t, but first we should make sure
-         the user didn't give a floating-point value. */
-      tmp=wa->widthinpix->array;
-      if( tmp[0]!=ceil(tmp[0]) || tmp[1]!=ceil(tmp[1]) )
-        error(EXIT_FAILURE, 0, "value to '--widthinpix' must be "
-              "integers, but they are: %g, %g", tmp[0], tmp[1]);
-      wa->widthinpix=gal_data_copy_to_new_type(wa->widthinpix,
-                                               GAL_TYPE_SIZE_T);
-
-      /* Image size must be ODD */
-      sarray=wa->widthinpix->array;
-      if( sarray[0]%2==0 || sarray[1]%2==0 )
-        {
-          /* Let the user know that we are updating the output size. */
-          error(EXIT_SUCCESS, 0, "WARNING: '--widthinpix' must be odd: "
-                "updating %zux%zu to %zux%zu", sarray[0], sarray[1],
-                sarray[0]%2 ? sarray[0] : sarray[0]+1,
-                sarray[1]%2 ? sarray[1] : sarray[1]+1);
-
-          /* Keep the final values. */
-          if(sarray[0]%2==0) sarray[0]+=1;
-          if(sarray[1]%2==0) sarray[1]+=1;
-        }
-
-      /* To keep the later steps consistent with the C ordering of
-         dimensions, we'll swap the fast and slow axis from FITS (which has
-         the same convention as FORTRAN), because the user sees a FITS
-         file. In an aligned image, sarray[0] is the horizontal axis and
-         sarray[1] the vertical one.
-
-         NAXIS1 -> dsize[1] -> horizontal axis
-         NAXIS2 -> dsize[0] -> vertical axis        */
-      stemp=sarray[0]; sarray[0]=sarray[1]; sarray[1]=stemp;
-    }
+  /* Prepare the output pixel scale and width. Note that the pixel scale
+     should be checked before the width because the width may need the
+     pixel scale. */
+  ui_check_wcsalign_cdelt(p);
+  if(p->width) ui_check_wcsalign_width(p);
 
   /* Check CTYPE */
   if(!wa->ctype)
@@ -510,65 +642,6 @@ ui_check_options_and_arguments_wcsalign(struct warpparams *p)
     error(EXIT_FAILURE, 0, "%zu value(s) given to '--ctype', but it "
           "takes exactly 2 values", wa->ctype->size);
   return NULL;
-}
-
-
-
-
-
-static void
-ui_check_cdelt(struct warpparams *p)
-{
-  size_t two=2, i;
-  gal_data_t *olddata=NULL;
-  double *tmp=NULL, *cdelt=NULL;
-
-  if(!p->cdelt)
-    {
-      /* CDELT is not given, try to deduce from WCS */
-      cdelt=gal_wcs_pixel_scale(p->input->wcs);
-      if(!cdelt)
-        error(EXIT_FAILURE, 0, "%s (hdu %s): the pixel scale couldn't "
-              "be deduced from the WCS.", p->inputname, p->cp.hdu);
-
-      /* Set CDELT to the maximum value */
-      cdelt[0] = ( cdelt[0] > cdelt[1] ? cdelt[0] : cdelt[1] );
-      cdelt[1] = cdelt[0];
-      p->cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
-                              p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
-                              NULL);
-    }
-  else
-    {
-      /* CDELT is given, make sure there are no more than two values */
-      if(p->cdelt->size > 2)
-        error(EXIT_FAILURE, 0, "%zu values given to '--cdelt', "
-              "however this option takes no more than 2 values",
-              p->cdelt->size);
-
-      /* If only one value given to CDELT */
-      if(p->cdelt->size == 1)
-        {
-          olddata=p->cdelt; tmp=olddata->array;
-          p->cdelt=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 1,
-                                  &two, NULL, 0,
-                                  p->cp.minmapsize,
-                                  p->cp.quietmmap, NULL, NULL,
-                                  NULL);
-          cdelt=p->cdelt->array;
-          cdelt[0]=cdelt[1]=tmp[0];
-          gal_data_free(olddata);
-        }
-
-      /* Check if the CDELT is in a reasonable range of degrees */
-      cdelt=p->cdelt->array;
-      for(i=p->cdelt->size; i--;)
-        if(cdelt[i]>0.01)
-          error(EXIT_SUCCESS, 0, "WARNING: CDELT on dimension %zu has "
-                "the unusual value of %f degrees. If you meant to "
-                "define CDELT in arcseconds please use: "
-                "'--cdelt=%g/3600'", i, cdelt[i], cdelt[i]);
-    }
 }
 
 
@@ -592,7 +665,7 @@ ui_check_options_and_arguments(struct warpparams *p)
   /* Make sure mandatory options are provided. */
   if(p->modularll==NULL && p->matrix==NULL)
     {
-      p->nonlinearmode=1;
+      p->wcsalign=1;
       if(p->wa.edgesampling==GAL_BLANK_SIZE_T)
         error(EXIT_FAILURE, 0, "no '--edgesampling' provided");
     }
@@ -622,13 +695,10 @@ ui_check_options_and_arguments(struct warpparams *p)
 
   /* Get basic WCS information. */
   if(p->input->wcs)
-    {
-      ui_check_cdelt(p);
-      p->inwcsmatrix=gal_wcs_warp_matrix(p->input->wcs);
-    }
+    p->inwcsmatrix=gal_wcs_warp_matrix(p->input->wcs);
 
   /* Do all the distortion correction sanity-checks.*/
-  if(p->nonlinearmode)
+  if(p->wcsalign)
     ui_check_options_and_arguments_wcsalign(p);
 }
 
@@ -992,7 +1062,7 @@ ui_set_suffix(struct warpparams *p)
 {
   /* Return the suffix as soon as nonlinear mode is detected. Just
      ignore the rest. */
-  if(p->nonlinearmode) return "_aligned.fits";
+  if(p->wcsalign) return "_aligned.fits";
 
   /* A small independent sanity check: we either need a matrix or at least
      one modular warping. */
@@ -1049,7 +1119,7 @@ ui_preparations(struct warpparams *p)
                                                ui_set_suffix(p));
 
   /* Prepare the final warping matrix if in linear mode. */
-  if(p->nonlinearmode == 0) ui_matrix_finalize(p);
+  if(p->wcsalign == 0) ui_matrix_finalize(p);
 }
 
 
@@ -1136,7 +1206,7 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
       printf(" Input: %s (hdu: %s)\n", p->inputname, p->cp.hdu);
       if(p->gridfile)
         printf(" Pixel grid: %s (hdu %s)\n", p->gridfile, p->gridhdu);
-      if(p->nonlinearmode)
+      if(p->wcsalign)
         {
           disttype=gal_wcs_distortion_identify(p->input->wcs);
           if(disttype!=GAL_WCS_DISTORTION_INVALID)
@@ -1183,11 +1253,9 @@ void
 ui_free_report(struct warpparams *p, struct timeval *t1)
 {
   /* Free the allocated arrays: */
-  if(p->wa.cdelt) p->wa.cdelt=NULL;
-  if(p->cdelt) gal_data_free(p->cdelt);
-
   if(p->inverse) free(p->inverse);
   if(p->gridhdu) free(p->gridhdu);
+  if(p->wa.cdelt) p->wa.cdelt=NULL;
   if(p->gridfile) free(p->gridfile);
   if(p->matrix) gal_data_free(p->matrix);
   if(p->inwcsmatrix) free(p->inwcsmatrix);

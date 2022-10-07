@@ -112,7 +112,8 @@ See the end of the file for license conditions.
     options. See the "Invoking Warp" section of the book for more. This
     feature has been written by Pedram Ashofteh Ardakani.
     --center: RA, DEC of the center of the central pixel of output.
-    --widthinpix: Width of output in pixels.
+    --width: Width of output in degrees or pixels (see '--widthinpix').
+    --widthinpix: interpret values of '--width' as pixels.
     --cdelt: Pixel scale of output ('CDELTi' keywords in FITS).
     --ctype: Coordinates and projection algorithm. Default: RA/Dec and
       Gnomonic or 'TAN').

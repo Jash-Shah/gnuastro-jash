@@ -150,6 +150,23 @@ gal_options_abort_if_mandatory_missing(struct gal_options_common_params *cp)
 
 
 
+void
+gal_options_width_too_large(double width, size_t dim_num,
+                            double pixwidth, double pixscale)
+{
+  /* Just a warning, will not exit program. */
+  error(EXIT_SUCCESS, 0, "WARNING: value %g (requested WCS-based width "
+        "along dimension %zu) translates to %.0f pixels on this dataset! "
+        "This is most probably not what you wanted! Note that the "
+        "dataset's pixel size in this dimension is %g. If you intended "
+        "this number to show the width in pixels, please add the "
+        "'--widthinpix' option", width, dim_num, pixwidth, pixscale);
+}
+
+
+
+
+
 static char *
 options_get_home()
 {
