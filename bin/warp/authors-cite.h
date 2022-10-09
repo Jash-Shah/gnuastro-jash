@@ -31,8 +31,26 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
    This macro will be used in 'gal_options_print_citation' function of
    'lib/options.c' (from the top Gnuastro source code directory). */
 
-#define PROGRAM_BIBTEX ""
+#define PROGRAM_BIBTEX ""                                               \
+  "Paper describing Warp's resampling\n"                                \
+  "----------------------------------\n"                                \
+  "@ARTICLE{gnuastro_warp,\n"                                           \
+  "        author = {{Ashofteh-Ardakani}, Pedram and {Akhlaghi}, Mohammad},\n" \
+  "         title = \"{Area-based resampling and effects on deep image}\",\n" \
+  "       journal = {In preparation},\n"                                \
+  "      keywords = {Astrophysics - Instrumentation and Methods for Astrophysics,\n" \
+  "                  Astrophysics - Astrophysics of Galaxies,\n"        \
+  "                  Computer Science - Computer Vision and Pattern Recognition},\n" \
+  "          year = \"2023\",\n"                                        \
+  "         month = \"Month\",\n"                                         \
+  "           eid = {arXiv:XXXX.XXXXX},\n"                              \
+  "         pages = {arXiv:XXXX.XXXXX},\n"                              \
+  " archivePrefix = {arXiv},\n"                                         \
+  "        eprint = {XXXX.XXXXX},\n"                                    \
+  "  primaryClass = {astro-ph.IM},\n"                                   \
+  "        adsurl = {https://ui.adsabs.harvard.edu},\n" \
+  "}\n"
 
-#define PROGRAM_AUTHORS "Mohammad Akhlaghi"
+#define PROGRAM_AUTHORS "Mohammad Akhlaghi and Pedram Ashofteh-Ardakani"
 
 #endif

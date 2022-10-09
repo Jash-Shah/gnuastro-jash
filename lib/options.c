@@ -275,7 +275,7 @@ gal_options_print_citation(struct argp_option *option, char *arg,
     "First paper introducing Gnuastro\n"
     "--------------------------------\n"
     "  @ARTICLE{gnuastro,\n"
-    "     author = {{Akhlaghi}, M. and {Ichikawa}, T.},\n"
+    "     author = {{Akhlaghi}, Mohammad and {Ichikawa}, Takashi},\n"
     "      title = \"{Noise-based Detection and Segmentation of Nebulous "
     "Objects}\",\n"
     "    journal = {ApJS},\n"
