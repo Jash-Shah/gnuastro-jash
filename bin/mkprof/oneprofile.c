@@ -848,7 +848,7 @@ oneprofile_make(struct mkonthread *mkp)
     {
       /* First get the sum of all the pixels in the profile. */
       ff=(f=mkp->ibq->image->array) + mkp->ibq->image->size;
-      sum=0.0f; do sum+=*f++; while(f<ff);
+      sum=0.0f; do sum+= isnan(*f) ? 0.0f : *f; while(++f<ff);
 
       /* Correct the fraction of brightness that was calculated
          accurately (not using the pixel center). */

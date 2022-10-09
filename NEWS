@@ -277,6 +277,8 @@ See the end of the file for license conditions.
               with values close to saturation-level.
   bug #63022: psf-scale-factor not saving the result in the output file,
               found and fixed by Raul Infante-Sainz.
+  bug #63189: MakeProfiles custom profiles become NaN with a single row
+              being NaN, reported by Nafise Sedighi.
 
 
 
