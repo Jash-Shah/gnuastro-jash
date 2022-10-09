@@ -302,6 +302,7 @@ EXTRA_DIST = $(TESTS) during-dev.sh \
   mkprof/mkprofcat3.txt \
   mkprof/mkprofcat4.txt \
   mkprof/radeccat.txt \
+  statistics/fitting-data.txt \
   statistics/stdin-input.txt \
   table/table.txt
 
