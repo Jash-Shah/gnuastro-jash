@@ -7634,7 +7634,7 @@ To install GSL from source, you can run the following commands after you have do
 @example
 $ tar xf gsl-latest.tar.gz
 $ cd gsl-X.X                     # Replace X.X with version number.
-$ ./configure
+$ ./configure CFLAGS="$CFLAGS -g0 -O3"
 $ make -j8                       # Replace 8 with no. CPU threads.
 $ make check
 $ sudo make install
@@ -7676,7 +7676,8 @@ Let's assume you have downloaded @url{http://heasarc.gsfc.nasa.gov/FTP/software/
 @example
 $ tar xf cfitsio_latest.tar.gz
 $ cd cfitsio-X.XX                   # Replace X.XX with version
-$ ./configure --prefix=/usr/local --enable-sse2 --enable-reentrant
+$ ./configure --prefix=/usr/local --enable-sse2 --enable-reentrant \
+              CFLAGS="$CFLAGS -g0 -O3"
 $ make
 $ make utils
 $ ./testprog > testprog.lis         # See below if this has an error
@@ -7736,7 +7737,7 @@ $ cd wcslib-X.X
 
 ## If `./configure' fails, remove `-lcurl' and run again.
 $ ./configure LIBS="-pthread -lcurl -lm" --without-pgplot     \
-              --disable-fortran
+              --disable-fortran CFLAGS="$CFLAGS -g0 -O3"
 $ make
 $ make check
 $ sudo make install

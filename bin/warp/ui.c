@@ -401,25 +401,8 @@ ui_check_wcsalign_cdelt(struct warpparams *p)
   double *tmp=NULL, *cdelt=NULL;
   gal_warp_wcsalign_t *wa=&p->wa;
 
-  /* '--cdelt' isn't given. */
-  if(!wa->cdelt)
-    {
-      /* CDELT is not given, try to deduce from WCS */
-      cdelt=gal_wcs_pixel_scale(p->input->wcs);
-      if(!cdelt)
-        error(EXIT_FAILURE, 0, "%s (hdu %s): the pixel scale couldn't "
-              "be deduced from the WCS.", p->inputname, p->cp.hdu);
-
-      /* Set CDELT to the maximum value of the dimensions. */
-      cdelt[0] = ( cdelt[0] > cdelt[1] ? cdelt[0] : cdelt[1] );
-      cdelt[1] = cdelt[0];
-      wa->cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
-                               p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
-                               NULL);
-    }
-
-  /* --cdelt is given. */
-  else
+  /* '--cdelt' is given. */
+  if(wa->cdelt)
     {
       /* CDELT is given, make sure there are no more than two values */
       if(wa->cdelt->size > 2)
@@ -454,6 +437,24 @@ ui_check_wcsalign_cdelt(struct warpparams *p)
                     cdelt[i], cdelt[i]);
         }
     }
+
+  /* '--cdelt' not given. */
+  else
+    {
+      /* CDELT is not given, try to deduce from WCS */
+      cdelt=gal_wcs_pixel_scale(p->input->wcs);
+      if(!cdelt)
+        error(EXIT_FAILURE, 0, "%s (hdu %s): the pixel scale couldn't "
+              "be deduced from the WCS.", p->inputname, p->cp.hdu);
+
+      /* Set CDELT to the maximum value of the dimensions. */
+      cdelt[0] = ( cdelt[0] > cdelt[1] ? cdelt[0] : cdelt[1] );
+      cdelt[1] = cdelt[0];
+      wa->cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
+                               p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
+                               NULL);
+    }
+
 }
 
 

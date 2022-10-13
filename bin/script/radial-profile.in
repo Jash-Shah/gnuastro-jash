@@ -117,7 +117,7 @@ $scriptname options:
   -t, --tmpdir            Directory to keep temporary files.
   -k, --keeptmp           Keep temporal/auxiliar files.
   -m, --measure=STR       Measurement operator (mean, sigclip-mean, etc.).
-  -v, --oversample        Oversample for higher resolution radial profile.
+  -v, --oversample=INT    Oversample for higher resolution radial profile.
   -u, --undersample=INT   Undersample for lower resolution radial profile.
   -i, --instd=FLT/STR     Sky standard deviation per pixel, as a single number
                           or as the filename.
