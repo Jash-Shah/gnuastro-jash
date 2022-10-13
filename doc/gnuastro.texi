@@ -30559,12 +30559,15 @@ Similar to @code{gal_blank_remove}, but also shrinks/re-allocates the dataset's 
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_blank_remove_rows (gal_data_t @code{*columns}, gal_list_sizet_t @code{*column_indexs})
-Remove any row that has at least one blank value in any of the input columns.
+Remove (in place) any row that has at least one blank value in any of the input columns and return a ``flag'' dataset (that should be freed later).
 The input @code{columns} is a list of @code{gal_data_t}s (see @ref{List of gal_data_t}).
 After this function, all the elements in @code{columns} will still have the same size as each other, but if any of the searched columns has blank elements, all their sizes will decrease together.
 
-If @code{column_indexs==NULL}, then all the columns (nodes in the list) will be checked for blank elements, and any row that has at least one blank element will be removed.
+The returned flag dataset has the same size as the original input dataset, with a type of @code{uint8_t}.
+Every row that has been removed from the original dataset has a value of 1, and the rest have a value of 0.
+
 When @code{column_indexs!=NULL}, only the columns whose index (counting from zero) is in @code{column_indexs} will be used to check for blank values (see @ref{List of size_t}.
+Therefore, if you want to check all columns, just set this to @code{NULL}.
 In any case (no matter which columns are checked for blanks), the selected rows from all columns will be removed.
 @end deftypefun
 

@@ -1691,8 +1691,8 @@ ui_finalize_coordinates(struct mkprofparams *p)
 {
   void *arr=NULL;
   size_t i=0, ndim=p->ndim;
-  uint8_t os=p->oversample;
-  gal_data_t *tmp, *coords=NULL;
+  uint8_t *fl, os=p->oversample;
+  gal_data_t *tmp, *flag, *coords=NULL;
   double *cdelt=p->wcs->cdelt, *crpix=p->wcs->crpix;
 
   /* When the user specified RA and Dec columns, the respective values
@@ -1729,14 +1729,25 @@ ui_finalize_coordinates(struct mkprofparams *p)
       /* Convert the world coordinates to image coordinates (inplace). */
       gal_wcs_world_to_img(coords, p->wcs, 1);
 
+      /* Remove all blank elements (where WCSLIB couldn't do the
+         conversion) and print a warning for those rows. IMPORTANT: we
+         don't want to update 'p->num' just yet since 'flag' has the size
+         of the pre-blank-removal rows. */
+      flag=gal_blank_remove_rows(coords, NULL);
+      if(p->cp.quiet==0)
+        {
+          fl=flag->array;
+          for(i=0;i<p->num;++i)
+            if(fl[i])
+              error(EXIT_SUCCESS, 0, "catalog row %zu ignored because "
+                    "WCSLIB could not convert coordinates into image "
+                    "coordinates, you can remove this message with "
+                    "'--quiet'", i);
+        }
 
-      /* If any conversions created a WCSLIB error, both the outputs will
-         be set to NaN. */
-      for(i=0;i<p->num;++i)
-        if( isnan(p->x[i]) )
-          error(EXIT_FAILURE, 0, "catalog row %zu: WCSLIB could not "
-                "convert (%f, %f) coordinates into image coordinates",
-                i, p->x[i], p->y[i]);
+      /* Update the number of profiles and free the flags. */
+      p->num=coords->size;
+      gal_data_free(flag);
 
       /* We want the actual arrays of each 'coords' column. So, first we'll
          set all the array elements to NULL, then free it. */
