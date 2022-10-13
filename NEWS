@@ -279,6 +279,8 @@ See the end of the file for license conditions.
               found and fixed by Raul Infante-Sainz.
   bug #63189: MakeProfiles custom profiles become NaN with a single row
               being NaN, reported by Nafise Sedighi.
+  bug #63207: Match crashes when one input has no rows. Found by Sepideh
+              Eskandarlou.
 
 
 

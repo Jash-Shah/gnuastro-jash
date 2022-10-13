@@ -447,6 +447,9 @@ gal_kdtree_create(gal_data_t *coords_raw, size_t *root)
 {
   struct kdtree_params p={0};
 
+  /* If there are no coordinates, just return NULL. */
+  if(coords_raw->size==0) return NULL;
+
   /* Initialise the params structure. */
   kdtree_prepare(&p, coords_raw);
 

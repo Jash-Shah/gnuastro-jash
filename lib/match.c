@@ -387,9 +387,8 @@ match_rearrange(gal_data_t *A, gal_data_t *B, struct match_sfll **bina)
 
 /* The matching has been done, write the output. */
 static gal_data_t *
-gal_match_output(gal_data_t *A, gal_data_t *B, size_t *A_perm,
-                 size_t *B_perm, struct match_sfll **bina,
-                 size_t minmapsize, int quietmmap)
+match_output(gal_data_t *A, gal_data_t *B, size_t *A_perm, size_t *B_perm,
+             struct match_sfll **bina, size_t minmapsize, int quietmmap)
 {
   float r;
   double *rval;
@@ -398,7 +397,7 @@ gal_match_output(gal_data_t *A, gal_data_t *B, size_t *A_perm,
   size_t ai, bi, nummatched=0;
   size_t *aind, *bind, match_i, nomatch_i;
 
-  /* Find how many matches there were in total */
+  /* Find how many matches there were in total. */
   for(ai=0;ai<A->size;++ai) if(bina[ai]) ++nummatched;
 
 
@@ -925,8 +924,7 @@ gal_match_sort_based(gal_data_t *coord1, gal_data_t *coord2,
 
 
   /* The match is done, write the output. */
-  out=gal_match_output(A, B, A_perm, B_perm, bina, minmapsize,
-                       quietmmap);
+  out=match_output(A, B, A_perm, B_perm, bina, minmapsize, quietmmap);
 
 
   /* Clean up. */
@@ -1347,6 +1345,10 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
   gal_data_t *out=NULL;
   struct match_kdtree_params p;
 
+  /* In case the 'k-d' tree is empty, just return a NULL pointer and the
+     number of matches to zero. */
+  if(coord1_kdtree==NULL) { *nummatched=0; return NULL; }
+
   /* Write the parameters into the structure. */
   p.A=coord1;
   p.B=coord2;
@@ -1365,8 +1367,7 @@ gal_match_kdtree(gal_data_t *coord1, gal_data_t *coord2,
   match_rearrange(p.A, p.B, p.bina);
 
   /* The match is done, write the output. */
-  out=gal_match_output(p.A, p.B, NULL, NULL, p.bina, minmapsize,
-                       quietmmap);
+  out=match_output(p.A, p.B, NULL, NULL, p.bina, minmapsize, quietmmap);
 
   /* Set 'nummatched' and return output. */
   *nummatched = out ?  out->next->next->size : 0;

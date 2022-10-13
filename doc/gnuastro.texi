@@ -35272,6 +35272,7 @@ This function returns two @code{gal_data_t}s connected as a list, see descriptio
 The first dataset contains the indexes of left and right nodes of the subtrees for each input node.
 The index of the root node is written into the memory that @code{root} points to.
 @code{coords_raw} is the list of the input points (one @code{gal_data_t} per dimension, see above).
+If the input dataset has no data (@code{coords_raw->size==0}), this function will return a @code{NULL} pointer.
 
 For example, assume you have the simple set of points below (from the visualized example at the start of this section) in a plain-text file called @file{coordinates.txt}:
 
@@ -35549,6 +35550,7 @@ If internal allocation is necessary and the space is larger than @code{minmapsiz
 Use the k-d tree concept for finding matches between two catalogs, optionally in parallel (on @code{numthreads} threads).
 The k-d tree of the first input (@code{coord1_kdtree}), and its root index (@code{kdtree_root}), should be constructed and found before calling this function, to do this, you can use the @code{gal_kdtree_create} of @ref{K-d tree}.
 The desired @code{aperture} array is the same as @code{gal_match_sort_based} and described at the top of this section.
+If @code{coord1_kdtree==NULL},  this function will return a @code{NULL} pointer and write a value of @code{0} in the space that @code{nummatched} points to.
 
 The final number of matches is returned in @code{nummatched} and the format of the returned dataset (three columns) is described above.
 If internal allocation is necessary and the space is larger than @code{minmapsize}, the space will be not allocated in the RAM, but in a file, see description of @option{--minmapsize} and @code{--quietmmap} in @ref{Processing options}.
