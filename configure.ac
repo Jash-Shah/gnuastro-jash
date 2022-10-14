@@ -12,7 +12,7 @@
 # Original author:
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Contributing author(s):
-#     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+#     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 #     Jash Shah <jash28582@gmail.com>
 # Copyright (C) 2015-2022 Free Software Foundation, Inc.
 #

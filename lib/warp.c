@@ -3,7 +3,7 @@ Warp -- Warp pixels of one dataset to another pixel grid.
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Corresponding author:
-     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Contributing author(s):
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Copyright (C) 2022 Free Software Foundation, Inc.
@@ -256,7 +256,7 @@ warp_wcsalign_init_output_from_params(gal_warp_wcsalign_t *wa)
 
 
 
-static gal_data_t *
+static void
 warp_wcsalign_init_vertices(gal_warp_wcsalign_t *wa)
 {
   size_t es=wa->edgesampling;
@@ -338,7 +338,7 @@ warp_wcsalign_init_vertices(gal_warp_wcsalign_t *wa)
         }
     }
 
-  return vertices;
+  wa->vertices=vertices;
 }
 
 
@@ -579,11 +579,11 @@ warp_wcsalign_init_output_from_wcs(gal_warp_wcsalign_t *wa,
 
 
 
-static void *
-warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
+/* Check parameters shared between the wcsalign procedure and the other
+   library functions such as pixelarea_onwcs. */
+static void
+warp_check_basic_params(gal_warp_wcsalign_t *wa, const char *func)
 {
-  size_t *tmp=NULL;
-
   /* Check if input and 'wa' are not NULL! */
   if(wa==NULL) error(EXIT_FAILURE, 0, "%s: 'wa' structure is NULL", func);
   if(wa->input==NULL) error(EXIT_FAILURE, 0, "%s: input is NULL", func);
@@ -595,15 +595,6 @@ warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
           "'gal_data_copy_to_new_type' or "
           "'gal_data_copy_to_new_type_free' for the conversion", func,
           gal_type_name(wa->input->type, 1));
-
-  /* Check 'coveredfrac'. */
-  if(isnan( wa->coveredfrac ))
-    error(EXIT_FAILURE, 0, "%s: no 'coveredfrac' specified. This is the "
-          "acceptable fraction of output covered", func);
-  if(wa->coveredfrac<0.0f || wa->coveredfrac>1.0f)
-    error(EXIT_FAILURE, 0, "%s: coveredfrac takes exactly on positive "
-          "value less than or equal to 1.0, but it is given a value "
-          "of %f", func, wa->coveredfrac);
 
   /* Check 'edgesampling', can't compare to '0' since it has meaning, can't
      check if negative since it is an unsigned type */
@@ -627,6 +618,51 @@ warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
   wa->nhor=GAL_BLANK_SIZE_T;
   wa->ncrn=GAL_BLANK_SIZE_T;
   wa->gcrn=GAL_BLANK_SIZE_T;
+}
+
+
+
+
+
+static void
+warp_wcsalign_init_internals(gal_warp_wcsalign_t *wa)
+{
+  size_t es, os0, os1;
+
+  es=wa->edgesampling;
+  os0=wa->output->dsize[0];
+  os1=wa->output->dsize[1];
+
+  /* Pickle variables so other functions can access them. */
+  wa->ncrn=4*es+4;
+  wa->gcrn=1+os1*(es+1);
+  wa->v0=WARP_WCSALIGN_V0(es, os0, os1);
+
+  /* Determine the output image rotation direction so we can sort the
+     indices in counter clockwise order. This is necessary for the
+     'gal_polygon_clip' function to work. */
+  warp_check_output_orientation(wa);
+}
+
+
+
+
+
+static void *
+warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
+{
+  size_t *tmp=NULL;
+
+  warp_check_basic_params(wa, func);
+
+  /* Check 'coveredfrac'. */
+  if(isnan( wa->coveredfrac ))
+    error(EXIT_FAILURE, 0, "%s: no 'coveredfrac' specified. This is the "
+          "acceptable fraction of output covered", func);
+  if(wa->coveredfrac<0.0f || wa->coveredfrac>1.0f)
+    error(EXIT_FAILURE, 0, "%s: coveredfrac takes exactly on positive "
+          "value less than or equal to 1.0, but it is given a value "
+          "of %f", func, wa->coveredfrac);
 
   /* If a target WCS is given ignore other variables and initialize the
      output image. */
@@ -813,37 +849,23 @@ warp_wcsalign_init_convert(void *in_prm)
 void
 gal_warp_wcsalign_init(gal_warp_wcsalign_t *wa)
 {
-  size_t os0, os1, gcrn;
-  gal_data_t *input=wa ? wa->input  : NULL;
-  size_t es = wa ? wa->edgesampling : GAL_BLANK_SIZE_T;
-
   /* Run a sanity check on the input parameters and initialize the output
      image. */
   warp_wcsalign_init_params(wa, __func__);
-  os0=wa->output->dsize[0];
-  os1=wa->output->dsize[1];
-  gcrn=1+os1*(es+1);
 
   /* Set up the output image corners in pixel coords */
-  wa->vertices=warp_wcsalign_init_vertices(wa);
+  warp_wcsalign_init_vertices(wa);
 
   /* Project the output image corners to the input image pixel coords. We
      only want one job per thread, so the number of jobs and the number of
      threads are the same. */
-  gal_threads_spin_off(warp_wcsalign_init_convert, wa, wa->numthreads,
-                       wa->numthreads, input->minmapsize,
-                       input->quietmmap);
+  gal_threads_spin_off(warp_wcsalign_init_convert, wa, wa->output->size,
+                       wa->numthreads, wa->input->minmapsize,
+                       wa->input->quietmmap);
 
-  /* Pickle variables so other functions can access them */
-  wa->gcrn=gcrn;
-  wa->input=input;
-  wa->ncrn=4*es+4;
-  wa->v0=WARP_WCSALIGN_V0(es, os0, os1);
-
-  /* Determine the output image rotation direction so we can sort the
-     indices in counter clockwise order. This is necessary for the
-     'gal_polygon_clip' function to work */
-  warp_check_output_orientation(wa);
+  /* Now that the output image is ready, initialize the helper internal
+     variables for future processing. */
+  warp_wcsalign_init_internals(wa);
 }
 
 
@@ -923,28 +945,26 @@ gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind)
           v=inputarr[(y-1)*is1+x-1];
 
           /* Find the overlapping (clipped) polygon: */
-          {
-            numcrn=0; /* initialize it. */
-            gal_polygon_clip(ocrn, ncrn, pcrn, 4, ccrn, &numcrn);
-            area=gal_polygon_area(ccrn, numcrn);
+          numcrn=0; /* initialize it. */
+          gal_polygon_clip(ocrn, ncrn, pcrn, 4, ccrn, &numcrn);
+          area=gal_polygon_area(ccrn, numcrn);
 
-            /* Add1 the fractional value of this pixel. If this output
-               pixel covers a NaN pixel in the input grid, then
-               calculate the area of this NaN pixel to account for it
-               later. */
-            if( !isnan(v) )
-              {
-                numinput+=1;
-                filledarea+=area;
-                outputarr[ind]+=v*area;
+          /* Add the fractional value of this pixel. If this output
+             pixel covers a NaN pixel in the input grid, then
+             calculate the area of this NaN pixel to account for it
+             later. */
+          if( !isnan(v) )
+            {
+              numinput+=1;
+              filledarea+=area;
+              outputarr[ind]+=v*area;
 
-                /* Check
-                   printf("Check: numinput %zu filledarea %f "
-                          "outputarr[%zu]=%f\n",
-                   filledarea, ind, outputarr[ind]);
-                */
-              }
-          }
+              /* Check
+                 printf("Check: numinput %zu filledarea %f "
+                 "outputarr[%zu]=%f\n",
+                 filledarea, ind, outputarr[ind]);
+              */
+            }
         }
     }
 
@@ -1047,5 +1067,88 @@ gal_warp_wcsalign(gal_warp_wcsalign_t *wa)
                        wa->input->quietmmap);
 
   /* Clean up the internally allocated variables */
+  gal_warp_wcsalign_free(wa);
+}
+
+
+
+
+
+static void *
+warp_pixelarea_onthread(void *inparam)
+{
+  /* Thread variables. */
+  struct gal_threads_params *tprm=(struct gal_threads_params *)inparam;
+  gal_warp_wcsalign_t *wa=(gal_warp_wcsalign_t *)tprm->params;
+
+  /* Low-level variables. */
+  size_t i, ind;
+  double area, *ocrn, *outputarr=wa->output->array;
+  double *(*warp_pixel_perimeter)(gal_warp_wcsalign_t *, size_t);
+
+  /* Call the correct function based on the output image orientation. */
+  if( wa->isccw==1 )
+    warp_pixel_perimeter=warp_pixel_perimeter_cw;
+  else if( wa->isccw==0 )
+    warp_pixel_perimeter=warp_pixel_perimeter_ccw;
+  else
+    error(EXIT_FAILURE, 0, "a bug! the code %d is not recognized as "
+          "a valid rotation orientation in "
+          "'gal_polygon_is_counterclockwise', this is not your fault, "
+          "something in the programming has gone wrong. Please contact "
+          "us at %s so we can correct it", wa->isccw, PACKAGE_BUGREPORT);
+
+  /* Loop over pixels given from the 'warp' function */
+  for(i=0; tprm->indexs[i] != GAL_BLANK_SIZE_T; ++i)
+    {
+      ind=tprm->indexs[i];
+
+      /* Fix the vertice ordering, crucial for calculating the area. */
+      ocrn=warp_pixel_perimeter(wa, ind);
+
+      /* Now that the vertices are in CCW order, calculate the area. */
+      area=gal_polygon_area(ocrn, wa->ncrn);
+      outputarr[ind]=area;
+
+      /* Clean up the allocated array. */
+      free(ocrn);
+    }
+
+  /* Wait for all the other threads to finish, then return. */
+  if(tprm->b) { pthread_barrier_wait(tprm->b); }
+  return NULL;
+}
+
+
+
+
+
+/* Calculate input pixel area covering the sky and write it to output. This
+   function has a debugging nature and is not used through the aligning
+   process. */
+void
+gal_warp_pixelarea(gal_warp_wcsalign_t *wa)
+{
+  gal_data_t *input=wa->input;
+
+  warp_check_basic_params(wa, __func__);
+
+  /* Create the output dataset. */
+  wa->output=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, input->ndim,
+                            input->dsize, input->wcs, 0,
+                            input->minmapsize, input->quietmmap,
+                            "PIX-AREA", NULL, NULL);
+
+  /* Create the vertices based on the edgesampling value. */
+  warp_wcsalign_init_vertices(wa);
+  warp_wcsalign_init_internals(wa);
+  gal_wcs_img_to_world(wa->vertices, input->wcs, 1);
+
+  /* Calculate pixel area on WCS and write to output. */
+  gal_threads_spin_off(warp_pixelarea_onthread, wa, wa->output->size,
+                       wa->numthreads, input->minmapsize,
+                       input->quietmmap);
+
+  /* Clean up. */
   gal_warp_wcsalign_free(wa);
 }

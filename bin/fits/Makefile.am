@@ -3,6 +3,7 @@
 ## Original author:
 ##     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 ## Contributing author(s):
+##     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 ## Copyright (C) 2015-2022 Free Software Foundation, Inc.
 ##
 ## Gnuastro is free software: you can redistribute it and/or modify it
@@ -34,10 +35,10 @@ bin_PROGRAMS = astfits
 astfits_LDADD = $(top_builddir)/bootstrapped/lib/libgnu.la \
                 -lgnuastro $(CONFIG_LDADD)
 
-astfits_SOURCES = main.c ui.c extension.c fits.c keywords.c
+astfits_SOURCES = main.c ui.c extension.c fits.c keywords.c meta.c
 
 EXTRA_DIST = main.h authors-cite.h args.h ui.h extension.c fits.h \
-             keywords.h astfits-complete.bash
+             keywords.h meta.h astfits-complete.bash
 
 
 

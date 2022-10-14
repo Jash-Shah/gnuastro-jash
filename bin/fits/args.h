@@ -5,6 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -399,7 +400,7 @@ struct argp_option program_options[] =
       UI_KEY_COPYKEYS,
       "INT:INT/STR,STR",
       0,
-      "Range/Names of keywords to copy to output HDU.",
+      "Range/Names of keywords to copy in output.",
       UI_GROUP_KEYWORD,
       &p->copykeys,
       GAL_TYPE_STRING,
@@ -443,6 +444,41 @@ struct argp_option program_options[] =
       &p->wcscoordsys,
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+
+
+
+
+    {
+      0, 0, 0, 0,
+      "Meta-image creation:",
+      UI_GROUP_META
+    },
+    {
+      "pixelareaonwcs",
+      UI_KEY_PIXELAREAONWCS,
+      0,
+      0,
+      "Image where pixels show their area in sky (WCS).",
+      UI_GROUP_META,
+      &p->pixelareaonwcs,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "edgesampling",
+      UI_KEY_EDGESAMPLING,
+      "INT",
+      0,
+      "Number of extra samplings in pixel sides.",
+      UI_GROUP_META,
+      &p->edgesampling,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },

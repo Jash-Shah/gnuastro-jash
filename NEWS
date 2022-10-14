@@ -76,6 +76,13 @@ See the end of the file for license conditions.
     standard output. Among other things, this is useful in creating a
     surface brightness image using the new 'counts-to-sb' operator of
     Arithmetic.
+  --pixelareaonwcs: Ouput an image with the same number of pixels as the
+    input. But each pixel's value shows its area on the sky (in
+    degrees-squared). This area is calculated after accounting for
+    distortion, projection or rotation. Implemented by Pedram
+    Ashofteh-Ardakani.
+  --edgesampling: extra sampling along each pixel's edge used to configure
+    the output of '--pixelareaonwcs', similar to Warp.
 
   Statistics:
   - Linear and Polynomial least squares fitting are now available and very
@@ -210,6 +217,7 @@ See the end of the file for license conditions.
   - gal_units_mag_to_sb: surface brightness (SB) from magnitude and area.
   - gal_units_sb_to_counts: counts from SB, zeropoint and area.
   - gal_units_sb_to_mag: magnitude from SB and area.
+  - gal_warp_pixelarea: return image of same size, but with area on sky.
   - gal_warp_wcsalign_init: initialize the WCS aligning structure.
   - gal_warp_wcsalign_onpix: Per-pixel filling of output.
   - gal_warp_wcsalign_onthread: function to give to pthreads.
@@ -475,7 +483,7 @@ See the end of the file for license conditions.
               profile. Found and fixed by Sepideh Eskandarlou.
   bug #62253: Arithmetic: segmentation fault when invalid input given for
               'ra-to-degree' or 'deg-to-degree' operators. Found by Pedram
-              Ashofte-Ardakani.
+              Ashofteh-Ardakani.
   bug #62305: Not reading the 'MemFree' keyword in '/proc/meminfo' to find
               the available RAM (and thus printing an annoying
               warning). Reported by Juan Miro.
@@ -594,7 +602,7 @@ See the end of the file for license conditions.
      as a measure of skewness and why its a very important factor when
      understanding how NoiseChisel works. It was originally written by
      Sepideh Eskandarlou, with edits by Elham Saremi and Pedram
-     Ashofte-Ardakani.
+     Ashofteh-Ardakani.
    - New section called "Integer benefits and pitfalls" added under the
      Arithmetic program's documentation. It describes the running time,
      storage and RAM consumption benefits if you use integers (where

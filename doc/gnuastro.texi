@@ -438,7 +438,8 @@ Fits
 Invoking Fits
 
 * HDU information and manipulation::  Learn about the HDUs and move them.
-* Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU
+* Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU.
+* Pixel information images::    Pixel values contain information on the pixels.
 
 ConvertType
 
@@ -11789,6 +11790,11 @@ $ astfits --delete=COMMENT --comment="Anything you like ;-)."
 
 ## Write two new keywords with different values and comments:
 $ astfits --write=MYKEY1,20.00,"An example keyword" --write=MYKEY2,fd
+
+## Inspect individual pixel area taken based on its WCS (in degree^2).
+## Then convert the area to arcsec^2 with the Arithmetic program.
+$ astfits input.fits --pixareaonwcs -o pixarea.fits
+$ astarithmetic pixarea.fits 3600 3600 x x -o pixarea_arcsec2.fits
 @end example
 
 @cindex HDU
@@ -11826,14 +11832,16 @@ The @option{--hdu} value given in a configuration file will only be used when a 
 Therefore as described in the paragraphs above, when no explicit call to the @option{--hdu} option is made on the command-line and no operation is requested (on the command-line or configuration files), the basic information of each HDU/extension is printed.
 
 The operating mode and input/output options to Fits are similar to the other programs and fully described in @ref{Common options}.
-The options particular to Fits can be divided into two groups:
+The options particular to Fits can be divided into three groups:
 1) those related to modifying HDUs or extensions (see @ref{HDU information and manipulation}), and
 2) those related to viewing/modifying meta-data keywords (see @ref{Keyword inspection and manipulation}).
-These two classes of options cannot be called together in one run: you can either work on the extensions or meta-data keywords in any instance of Fits.
+3) those related to creating meta-images where each pixel shows values for a specific property of the image (see @ref{Pixel information images}).
+These three classes of options cannot be called together in one run: you can either work on the extensions, meta-data keywords in any instance of Fits, or create meta-images where each pixel shows a particular information about the image itself.
 
 @menu
 * HDU information and manipulation::  Learn about the HDUs and move them.
-* Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU
+* Keyword inspection and manipulation::  Manipulate metadata keywords in a HDU.
+* Pixel information images::    Pixel values contain information on the pixels.
 @end menu
 
 
@@ -12000,7 +12008,7 @@ If we had not used @option{--primaryimghdu}, then the zero-th extension of @file
 @end table
 
 
-@node Keyword inspection and manipulation,  , HDU information and manipulation, Invoking astfits
+@node Keyword inspection and manipulation, Pixel information images, HDU information and manipulation, Invoking astfits
 @subsubsection Keyword inspection and manipulation
 The meta-data in each header data unit, or HDU (also known as extension, see @ref{Fits}) is stored as ``keyword''s.
 Each keyword consists of a name, value, unit, and comments.
@@ -12426,7 +12434,8 @@ However, the WCS coordinate system of @file{img-eq.fits} will be the equatorial 
 Fits will automatically extract the current coordinate system of @file{image.fits} and as long as it is one of the recognized coordinate systems listed below, it will do the conversion.
 
 @example
-$ astfits image.fits --wcscoordsys=eq-j2000 --output=img-eq.fits
+$ astfits image.fits --wcscoordsys=eq-j2000 \
+          --output=img-eq.fits
 @end example
 
 The currently recognized coordinate systems are listed below (the most common one today is @code{eq-j2000}):
@@ -12472,6 +12481,61 @@ for example, with the command below, you can be sure that if @file{in.fits} has 
 $ astfits in.fits --wcsdistortion=SIP --output=out.fits
 @end example
 @end table
+
+
+@node Pixel information images,  , Keyword inspection and manipulation, Invoking astfits
+@subsubsection Pixel information images
+In @ref{Keyword inspection and manipulation} options like @option{--pixelscale} were introduced for information on the pixels from the keywords.
+But that only provides a single value for all the pixels!
+This will not be sufficient in some scenarios; for example due to distortion, different regions of the image will have different pixel areas when projected onto the sky.
+
+@cindex Meta image
+The options in this section provide such ``meta'' images: images where the pixel values are information about the pixel itself.
+Such images can be useful in understanding the underlying pixel grid with the same tools that you study the astronomical objects within the image (like @ref{SAO DS9}).
+After all, nothing beats visual inspection with tools you are familiar with.
+
+@table @code
+@item --pixareaonwcs
+Create a meta-image where each pixel's value shows its area in the WCS units (usually degrees squared).
+The output is therefore the same size as the input.
+
+@cindex Pixel mixing
+@cindex Area resampling
+@cindex Resampling by area
+This option uses the same ``pixel mixing'' or ``area resampling'' concept that is described in @ref{Resampling} (as part of the Warp program).
+Similar to Warp, its sampling can be tuned with the @option{--edgesampling} that is described below.
+
+@cindex Distortion
+@cindex Area of pixel on sky
+One scenario where this option becomes handy is when you are debugging aligned images using the Warp program (see @ref{Warp}).
+You may observe gradients after warping and can check if they caused by the distortion of the instrument or not.
+Such gradients can happen due to distortions because the detectors pixels are measuring photons from different areas on the sky (or the type of projection you're seeing).
+This effect is more pronounced in images covering larger portions of the sky, for instance, the TESS images@footnote{@url{https://www.nasa.gov/tess-transiting-exoplanet-survey-satellite}}.
+
+Here is an example usage of the @option{--pixareaonwcs} option:
+
+@example
+# Check the area each 'input.fits' pixel takes in sky
+$ astfits input.fits -h1 --pixareaonwcs -o pixarea.fits
+
+# Convert each pixel's area to arcsec^2
+$ astarithmetic pixarea.fits 3600 3600 x x \
+                --output=pixarea_arcsec2.fits
+
+# Compare area relative to the actual reported pixel scale
+$ pixarea=$(astfits input.fits --pixelscale -q \
+                    | awk '@{print $3@}')
+$ astarithmetic pixarea.fits $pixarea / -o pixarea_rel.fits
+@end example
+
+@item --edgesampling=INT
+Extra sampling along the pixel edges for @option{--pixareaonwcs}.
+The default value is 0, meaning that only the pixel vertices are used.
+Values greater than zero improve the accuracy in the expense of greater time and memory consumption.
+With that said, the default value of zero usually has a good precision unless the given image has extreme distortions that produce irregular pixel shapes.
+For more, see @ref{Align pixels with WCS account for distortions}).
+@end table
+
 
 
 
@@ -12547,7 +12611,7 @@ for example, in @ref{Circles and the complex plane} or @ref{Distance on a 2D cur
 The most common vector graphics format is PDF for document sharing or SVG for web-based applications.
 
 The pixels of a raster image can be shown as vector-based squares with different shades, so vector graphics can generally also support raster graphics.
-This is very useful when you want to add some graphics over an image to help your discussion (for examle a @mymath{+} over your object of interest).
+This is very useful when you want to add some graphics over an image to help your discussion (for example a @mymath{+} over your object of interest).
 However, vector graphics is not optimized for rasterized data (which are usually also noisy!), and can ither not display nicely, or result in much larger file volumns (in bytes).
 Therefore, if it is not necessary to add any marks over a FITS image, for example, it may be better to store it in a rasterized format.
 
@@ -19788,6 +19852,8 @@ To account for this possible curvature due to distortion, you can use this optio
 For example, @option{--edgesampling=1} will add one extra vertice in the middle of each edge of the output pixel, producing an 8-vertice polygon.
 Similarly, @option{--edgesampling=5} will put 5 extra vertices along each edge, thus sampling the shape (and possible curvature) of the output pixel over an input pixel with @mymath{4+5\times4=24} vertice polygon.
 Since the polygon clipping will happen for every output pixel, a higher value to this option can significantly reduce the running speed and increase the RAM usage of Warp; so use it with caution: in most cases the default @option{--edgesampling=0} is sufficient.
+
+To visually inspect the curvature effect on pixel area of the input image, see option @option{--pixareaonwcs} in @ref{Pixel information images}.
 @end table
 
 
@@ -31376,7 +31442,7 @@ If @code{*list==NULL}, then this function will also return a @code{NULL} pointer
 Return the number of nodes in @code{list}.
 @end deftypefun
 
-@deftypefun size_t gal_list_str_last (gal_list_str_t @code{*list})
+@deftypefun {gal_list_str_t *} gal_list_str_last (gal_list_str_t @code{*list})
 Return a pointer to the last node in @code{list}.
 @end deftypefun
 
@@ -37085,6 +37151,11 @@ Low-level worker function that can be passed to the high-level @code{gal_threads
 @deftypefun void gal_warp_wcsalign_free (gal_warp_wcsalign_t *wa)
 Low-level function to free the internal variables inside @code{wa} only.
 The caller must free the input pointers themselves, this function will not free them (they may be necessary in other parts of the caller's higher-level architecture).
+@end deftypefun
+
+@deftypefun void gal_warp_pixelarea (gal_warp_wcsalign_t *wa)
+Calculate each input pixel's area based on its WCS and save it to a copy of the input image with only one difference: the pixel values now show pixel area.
+For examples on itse usage, see @ref{Pixel information images}.
 @end deftypefun
 
 

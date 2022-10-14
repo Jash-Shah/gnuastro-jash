@@ -5,6 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -40,6 +41,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 #include "main.h"
 
 #include "fits.h"
+#include "meta.h"
 #include "keywords.h"
 
 
@@ -863,10 +865,12 @@ fits(struct fitsparams *p)
 
   switch(p->mode)
     {
+    /* Functions creating meta-images, in other words, images conveying
+       information about the given image. */
+    case FITS_MODE_META: meta_pixelareaonwcs(p); break;
+
     /* Keywords, we have a separate set of functions in 'keywords.c'. */
-    case FITS_MODE_KEY:
-      r=keywords(p);
-      break;
+    case FITS_MODE_KEY: r=keywords(p); break;
 
     /* HDU, functions defined here. */
     case FITS_MODE_HDU:

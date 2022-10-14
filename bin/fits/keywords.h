@@ -5,6 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -20,8 +21,8 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#ifndef HEADER_H
-#define HEADER_H
+#ifndef KEYWORDS_H
+#define KEYWORDS_H
 
 int
 keywords(struct fitsparams *p);

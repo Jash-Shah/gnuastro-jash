@@ -5,6 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -36,6 +37,7 @@ enum program_args_groups
   UI_GROUP_EXTENSION_INFORMATION = GAL_OPTIONS_GROUP_AFTER_COMMON,
   UI_GROUP_EXTENSION_MANIPULATION,
   UI_GROUP_KEYWORD,
+  UI_GROUP_META,
 };
 
 
@@ -74,6 +76,7 @@ enum option_keys_enum
   UI_KEY_TITLE        = 1000,
   UI_KEY_DATASUM,
   UI_KEY_PIXELSCALE,
+  UI_KEY_PIXELAREAONWCS,
   UI_KEY_PIXELAREAARCSEC2,
   UI_KEY_SKYCOVERAGE,
   UI_KEY_HASTABLEHDU,
@@ -87,6 +90,7 @@ enum option_keys_enum
   UI_KEY_WCSCOORDSYS,
   UI_KEY_PRIMARYIMGHDU,
   UI_KEY_WCSDISTORTION,
+  UI_KEY_EDGESAMPLING,
 };
 
 

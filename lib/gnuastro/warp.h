@@ -3,7 +3,7 @@ Warp -- Warp pixels of one dataset to another pixel grid.
 This is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Corresponding author:
-     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Contributing author(s):
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Copyright (C) 2022 Free Software Foundation, Inc.
@@ -95,6 +95,7 @@ void
 gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind);
 
 
+/* Worker function to align per pixel. */
 void *
 gal_warp_wcsalign_onthread(void *inparam);
 
@@ -110,6 +111,10 @@ gal_warp_wcsalign(gal_warp_wcsalign_t *wa);
 void
 gal_warp_wcsalign_free(gal_warp_wcsalign_t *wa);
 
+
+/* Return an image where each pixel shows its own area on the sky. */
+void
+gal_warp_pixelarea(gal_warp_wcsalign_t *wa);
 
 
 __END_C_DECLS    /* From C++ preparations */

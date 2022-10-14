@@ -5,6 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -110,6 +111,7 @@ ui_initialize_options(struct fitsparams *p,
 
   /* For clarity and non-zero initializations. */
   p->mode                = FITS_MODE_INVALID;
+  p->edgesampling        = GAL_BLANK_SIZE_T;
 
   /* Modify common options. */
   for(i=0; !gal_options_is_last(&cp->coptions[i]); ++i)
@@ -119,7 +121,6 @@ ui_initialize_options(struct fitsparams *p,
         {
         case GAL_OPTIONS_KEY_SEARCHIN:
         case GAL_OPTIONS_KEY_IGNORECASE:
-        case GAL_OPTIONS_KEY_TYPE:
         case GAL_OPTIONS_KEY_WCSLINEARMATRIX:
         case GAL_OPTIONS_KEY_DONTDELETE:
         case GAL_OPTIONS_KEY_LOG:
@@ -129,7 +130,7 @@ ui_initialize_options(struct fitsparams *p,
           break;
 
         case GAL_OPTIONS_KEY_OUTPUT:
-          cp->coptions[i].doc="Output file name (only for writing HDUs).";
+          cp->coptions[i].doc="Output file name (not for keywords).";
           break;
         }
 
@@ -359,17 +360,55 @@ ui_check_copykeys(struct fitsparams *p)
 
 
 
-
-/* Read and check ONLY the options. When arguments are involved, do the
-   check in 'ui_check_options_and_arguments'. */
+/* If any of the META related keywords are given, set mode accordingly. */
 static void
-ui_read_check_only_options(struct fitsparams *p)
+ui_read_check_mode_meta(struct fitsparams *p)
+{
+  /* Make sure no other type of operation is requested. */
+  if(p->mode!=FITS_MODE_INVALID)
+    error(EXIT_FAILURE, 0, "meta image options (like '--pixelareaonwcs' "
+          "cannot be called with HDU or keyword manipulation options");
+
+  /* If '--type' is not given, inform the user. */
+  if(p->cp.type==0)
+    error(EXIT_FAILURE, 0, "no '--type' specified! This is necessary "
+          "to determine the numerical data type of the output image. "
+          "In most cases, '--type=float32' is sufficient");
+
+  /* If '--edgesampling' isn't given, inform the user. */
+  if(p->edgesampling==GAL_BLANK_SIZE_T)
+    error(EXIT_FAILURE, 0, "no '--edgesampling'! Please specify a "
+          "value to the '--edgesampling' option (usually '0' is "
+          "fine). This specifies the extra samplings along a pixel's "
+          "edge in options like '--pixelareaonwcs' in case "
+          "distortions are significant. Just note that non-zero "
+          "values will significantly slow down the program");
+
+  /* Check if a HDU is given. */
+  if(p->cp.hdu==NULL)
+    error(EXIT_FAILURE, 0, "a HDU (extension) is necessary for meta "
+          "image outputs (e.g., with '--pixelareaonwcs') but none "
+          "was defined. Please use the '--hdu' (or '-h') option to "
+          "select one of your input's HDUs. You can use the "
+          "'astfits input.fits' command to see the list of "
+          "available HDUs in 'input.fits'");
+
+  /* Set the mode. */
+  p->mode=FITS_MODE_META;
+
+}
+
+
+
+
+
+/* If any of the keyword manipulation options are requested, then set the
+   mode flag to keyword-mode. */
+static void
+ui_read_check_mode_keyword(struct fitsparams *p)
 {
   int checkkeys;
-  uint8_t stdoutcheck=0;
 
-  /* If any of the keyword manipulation options are requested, then set the
-     mode flag to keyword-mode. */
   if( p->date || p->comment || p->history || p->asis || p->keyvalue
       || p->delete || p->rename || p->update || p->write || p->verify
       || p->printallkeys || p->printkeynames || p->copykeys || p->datetosec
@@ -418,8 +457,17 @@ ui_read_check_only_options(struct fitsparams *p)
       /* Set the operating mode. */
       p->mode=FITS_MODE_KEY;
     }
+}
 
-  /* Same for the extension-related options */
+
+
+
+/* Same for the extension-related options */
+static void
+ui_read_check_mode_extension(struct fitsparams *p)
+{
+  uint8_t stdoutcheck=0;
+
   if( p->remove || p->copy || p->cut || p->numhdus || p->datasum
       || p->pixelscale || p->pixelareaarcsec2 || p->skycoverage
       || p->hastablehdu || p->hasimagehdu || p->listtablehdus
@@ -475,6 +523,21 @@ ui_read_check_only_options(struct fitsparams *p)
       /* Set the operating mode. */
       p->mode=FITS_MODE_HDU;
     }
+}
+
+
+
+
+
+/* Read and check ONLY the options. When arguments are involved, do the
+   check in 'ui_check_options_and_arguments'. */
+static void
+ui_read_check_only_options(struct fitsparams *p)
+{
+  /* Check the given optinos and set the operating mode accordingly. */
+  ui_read_check_mode_keyword(p);
+  ui_read_check_mode_extension(p);
+  if( p->pixelareaonwcs) ui_read_check_mode_meta(p);
 
   /* If no options are given, go into HDU mode, which will print the HDU
      information when nothing is asked. */

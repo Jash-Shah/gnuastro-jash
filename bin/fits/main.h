@@ -5,6 +5,7 @@ Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
@@ -43,6 +44,7 @@ enum fits_mode
 
     FITS_MODE_HDU,
     FITS_MODE_KEY,
+    FITS_MODE_META,
   };
 
 
@@ -89,6 +91,8 @@ struct fitsparams
   char       *wcsdistortion;   /* WCS distortion to write in output.    */
   uint8_t       quitonerror;   /* Quit if an error occurs.              */
   uint8_t   colinfoinstdout;   /* Print column info in output.          */
+  uint8_t    pixelareaonwcs;   /* Get pixel area by warp edgesampling.  */
+  size_t       edgesampling;   /* Sampling of edges in '--pixelareaonwcs'*/
 
   /* Internal: */
   int                         mode;  /* Operating on HDUs or keywords.  */

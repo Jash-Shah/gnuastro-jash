@@ -3,10 +3,10 @@ Fits - View and manipulate FITS extensions and/or headers.
 Fits is part of GNU Astronomy Utilities (Gnuastro) package.
 
 Original author:
-     Mohammad Akhlaghi <mohammad@akhlaghi.org>
-Contributing author(s):
      Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
-Copyright (C) 2015-2022 Free Software Foundation, Inc.
+Contributing author(s):
+     Mohammad Akhlaghi <mohammad@akhlaghi.org>
+Copyright (C) 2022      Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -21,36 +21,10 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 **********************************************************************/
-#include <config.h>
+#ifndef META_H
+#define META_H
 
-#include <stdio.h>
-#include <stdlib.h>
+void
+meta_pixelareaonwcs(struct fitsparams *p);
 
-#include <gnuastro-internal/timing.h>
-
-#include "main.h"
-
-#include "ui.h"
-#include "fits.h"
-
-int
-main (int argc, char *argv[])
-{
-  int r;
-  struct fitsparams p={{{0},0},0};
-
-  /* Get the starting time. */
-  time(&p.rawtime);
-
-  /* Read the input parameters. */
-  ui_read_check_inputs_setup(argc, argv, &p);
-
-  /* Run Fits. */
-  r=fits(&p);
-
-  /* Free all non-freed allocations. */
-  ui_free_and_report(&p);
-
-  /* Return successfully.*/
-  return r;
-}
+#endif

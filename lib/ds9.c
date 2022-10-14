@@ -5,7 +5,7 @@ This is part of GNU Astronomy Utilities (Gnuastro) package.
 Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
-     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it

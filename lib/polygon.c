@@ -6,7 +6,7 @@ Original author:
      Mohammad Akhlaghi <mohammad@akhlaghi.org>
 Contributing author(s):
      Sachin Kumar Singh <sachinkumarsingh092@gmail.com>
-     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
 Gnuastro is free software: you can redistribute it and/or modify it

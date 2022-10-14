@@ -2,7 +2,7 @@
 # 'bin/completion.bash.in' for more.
 #
 # Original author:
-#     Pedram Ashofteh Ardakani <pedramardakani@pm.me>
+#     Pedram Ashofteh-Ardakani <pedramardakani@pm.me>
 # Contributing author(s):
 #     Mohammad Akhlaghi <mohammad@akhlaghi.org>
 # Copyright (C) 2021-2022 Free Software Foundation, Inc.
