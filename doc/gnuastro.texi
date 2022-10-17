@@ -4725,14 +4725,40 @@ if ! [ -d DIRNAME ]; then mkdir DIRNAME; fi
 @end example
 @end table
 
+@cartouche
 @noindent
-Taking these tips into consideration, we can write a better version of the script above that includes checks on every step to avoid repeating steps/commands.
+@strong{Copyright notice:} A very important thing to put @emph{at the top} of your script is a one-line description of what it does adn its copyright information (see the example below).
+Here, we specify who is the author(s) of this script, in which years, and under what license others are allowed to use this file.
+Without it, your script does not credibility or identity, and others cannot trust, use or acknowledge your work on it.
+Since Gnuastro is itself licensed under a @url{https://en.wikipedia.org/wiki/Copyleft,copyleft} license (see @ref{Your rights} and @ref{GNU General Public License} or GNU GPL, the license finishes with a template on how to add it), any script that uses Gnuastro should also have a copyleft license: we recommend the same GNU GPL v3+ like below.
+@end cartouche
+
+Taking the above points into consideration, we can write a better version of the script above.
 Please compare this script with the previous one carefully to spot the differences.
 These are very important points that you will definitely encouter during your own research, and knowing them can greatly help your productiveity, so pay close attention (even in the comments).
 
 @example
-$ cat gnuastro-tutorial-2.sh
 #!/bin/bash
+# Script to download and keep the deep region of the XDF survey.
+#
+# Copyright (C) 2021-2022 Original Author <original@@email.server>
+# Copyright (C) 2022      Your Name <yourname@@email.server>
+#
+# This script is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This script is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
+
+
+# Abort the script in case of an error.
 set -e
 
 
