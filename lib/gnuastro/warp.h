@@ -50,6 +50,15 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 __BEGIN_C_DECLS  /* From C++ preparations */
 
 
+
+/* Macros. */
+#define GAL_WARP_OUTPUT_NAME_WARPED  "ALIGNED"
+#define GAL_WARP_OUTPUT_NAME_MAXFRAC "MAX-FRAC"
+
+
+
+
+/* Main input/output structure. */
 typedef struct
 {
   /* Arguments given (and later freed) by the caller. Note that if 'twcs'
@@ -63,6 +72,7 @@ typedef struct
   gal_data_t       *ctype;  /* WCS-Build: Type of the coordinates.       */
   gal_data_t       *cdelt;  /* WCS-Build: Pixel scale of the output.     */
   gal_data_t      *center;  /* WCS-Build: Center of output in RA and Dec.*/
+  uint8_t    checkmaxfrac;  /* Check: Write max fraction per pixel.      */
 
   /* Output (must be freed by caller) */
   gal_data_t      *output;  /* Pointer to output data structure.         */

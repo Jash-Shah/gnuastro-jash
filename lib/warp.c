@@ -237,7 +237,8 @@ warp_wcsalign_init_output_from_params(gal_warp_wcsalign_t *wa)
 
   /* Create the output image dataset with the base WCS */
   wa->output=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 2, osize, bwcs, 0,
-                            minmapsize, quietmmap, "Aligned", NULL, NULL);
+                            minmapsize, quietmmap,
+                            GAL_WARP_OUTPUT_NAME_WARPED, NULL, NULL);
 
   /* Free */
   wcsfree(bwcs);
@@ -567,12 +568,16 @@ static void
 warp_wcsalign_init_output_from_wcs(gal_warp_wcsalign_t *wa,
                                    const char *func)
 {
-  size_t *dsize=wa->widthinpix->array;
+  gal_data_t *output=NULL;
+  int quietmmap=wa->input->quietmmap;
+  size_t *dsize=wa->widthinpix->array, minmapsize=wa->input->minmapsize;
 
   /* Create the output image dataset with the target WCS given. */
-  wa->output=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 2, dsize, wa->twcs,
-                            0, wa->input->minmapsize, wa->input->quietmmap,
-                            "Aligned", NULL, NULL);
+  output=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 2, dsize, wa->twcs, 0,
+                        minmapsize, quietmmap, "Aligned", NULL, NULL);
+
+  /* Write to wcsalign data type for later use. */
+  wa->output=output;
 }
 
 
@@ -708,6 +713,7 @@ warp_wcsalign_init_params(gal_warp_wcsalign_t *wa, const char *func)
 
   /* Initialize the output image for further processing. */
   warp_wcsalign_init_output_from_params(wa);
+
   return NULL;
 }
 
@@ -849,9 +855,21 @@ warp_wcsalign_init_convert(void *in_prm)
 void
 gal_warp_wcsalign_init(gal_warp_wcsalign_t *wa)
 {
+  gal_data_t *output=NULL;
+  int quietmmap=wa->input->quietmmap;
+  size_t minmapsize=wa->input->minmapsize, *dsize=NULL;
+
   /* Run a sanity check on the input parameters and initialize the output
      image. */
   warp_wcsalign_init_params(wa, __func__);
+
+  /* Create the check maximum fraction covered dataset if asked to. */
+  output=wa->output;
+  dsize=output->dsize;
+  if(wa->checkmaxfrac)
+    output->next=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 2, dsize, wa->twcs,
+                                0, minmapsize, quietmmap,
+                                GAL_WARP_OUTPUT_NAME_MAXFRAC, NULL, NULL);
 
   /* Set up the output image corners in pixel coords */
   warp_wcsalign_init_vertices(wa);
@@ -877,18 +895,22 @@ gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind)
 {
   size_t ic, temp, numinput=0;
   gal_data_t *input=wa->input;
+  gal_data_t *output=wa->output;
   double xmin, xmax, ymin, ymax;
   long xstart, ystart, xend, yend, x, y; /* Might be negative */
   double filledarea, v, *ocrn=NULL, pcrn[8], opixarea;
 
+  size_t numcrn=0;
   size_t ncrn=wa->ncrn;
   size_t is0=input->dsize[0];
   size_t is1=input->dsize[1];
   double *inputarr=input->array;
-  double *outputarr=wa->output->array;
-
-  size_t numcrn=0;
+  double *outputarr=output->array;
   double ccrn[GAL_POLYGON_MAX_CORNERS], area;
+  double *maxfrac=output->next ? output->next->array : NULL;
+
+  /* Initialize if asked for each pixel's maximum coverage fraction. */
+  if(maxfrac) maxfrac[ind]=-DBL_MAX;
 
   /* Initialize the output pixel value: */
   outputarr[ind] = filledarea = 0.0f;
@@ -949,6 +971,9 @@ gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind)
           gal_polygon_clip(ocrn, ncrn, pcrn, 4, ccrn, &numcrn);
           area=gal_polygon_area(ccrn, numcrn);
 
+          /* Write each pixel's maximum coverage fraction if asked. */
+          if( maxfrac ) maxfrac[ind] = fmax(area, maxfrac[ind]);
+
           /* Add the fractional value of this pixel. If this output
              pixel covers a NaN pixel in the input grid, then
              calculate the area of this NaN pixel to account for it
@@ -968,6 +993,9 @@ gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind)
         }
     }
 
+  /* Replace untouched pixels with NAN in the 'maxfrac' array. */
+  if( maxfrac && maxfrac[ind]==-DBL_MAX ) maxfrac[ind]=NAN;
+
   /* See if the pixel value should be set to NaN or not (because of not
      enough coverage). Note that 'ocrn' is sorted in anti-clockwise
      order already. */
@@ -976,7 +1004,7 @@ gal_warp_wcsalign_onpix(gal_warp_wcsalign_t *wa, size_t ind)
     numinput=0;
 
   /* Write the final value and return. */
-  if( numinput ==0) outputarr[ind]=NAN;
+  if( numinput==0 ) outputarr[ind]=NAN;
 
   /* Clean up. */
   free(ocrn);
@@ -1018,6 +1046,7 @@ gal_warp_wcsalign_template()
 {
   gal_warp_wcsalign_t wa;
 
+  /* Initialize pointers with NULL. */
   wa.twcs=NULL;
   wa.cdelt=NULL;
   wa.ctype=NULL;
@@ -1026,6 +1055,9 @@ gal_warp_wcsalign_template()
   wa.output=NULL;
   wa.vertices=NULL;
   wa.widthinpix=NULL;
+
+  /* Initialize values. */
+  wa.checkmaxfrac=0;
   wa.isccw=GAL_BLANK_INT;
   wa.v0=GAL_BLANK_SIZE_T;
   wa.gcrn=GAL_BLANK_SIZE_T;

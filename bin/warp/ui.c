@@ -448,8 +448,7 @@ ui_check_wcsalign_cdelt(struct warpparams *p)
               "be deduced from the WCS.", p->inputname, p->cp.hdu);
 
       /* Set CDELT to the maximum value of the dimensions. */
-      cdelt[0] = ( cdelt[0] > cdelt[1] ? cdelt[0] : cdelt[1] );
-      cdelt[1] = cdelt[0];
+      cdelt[0] = cdelt[1] = fmax(cdelt[0], cdelt[1]);
       wa->cdelt=gal_data_alloc(cdelt, GAL_TYPE_FLOAT64, 1, &two, NULL, 0,
                                p->cp.minmapsize, p->cp.quietmmap, NULL, NULL,
                                NULL);
@@ -1253,25 +1252,29 @@ ui_read_check_inputs_setup(int argc, char *argv[], struct warpparams *p)
 void
 ui_free_report(struct warpparams *p, struct timeval *t1)
 {
-  /* Free the allocated arrays: */
+  gal_warp_wcsalign_t *wa=&p->wa;
+
+  /* Free allocated datasets and arrays. */
   if(p->inverse) free(p->inverse);
   if(p->gridhdu) free(p->gridhdu);
-  if(p->wa.cdelt) p->wa.cdelt=NULL;
   if(p->gridfile) free(p->gridfile);
   if(p->matrix) gal_data_free(p->matrix);
   if(p->inwcsmatrix) free(p->inwcsmatrix);
   if(p->modularll) gal_data_free(p->modularll);
 
-  if(p->wa.input) p->wa.input=NULL;
-  if(p->wa.twcs) gal_wcs_free(p->wa.twcs);
-  if(p->wa.ctype) gal_data_free(p->wa.ctype);
-  if(p->wa.center) gal_data_free(p->wa.center);
-  if(p->wa.widthinpix) gal_data_free(p->wa.widthinpix);
+  if(wa->input) wa->input=NULL; /* Prevent double freeing (done below). */
+  if(wa->twcs) gal_wcs_free(wa->twcs);
+  if(wa->cdelt) gal_data_free(wa->cdelt);
+  if(wa->ctype) gal_data_free(wa->ctype);
+  if(wa->center) gal_data_free(wa->center);
+  if(wa->widthinpix) gal_data_free(wa->widthinpix);
 
   free(p->cp.hdu);
   free(p->cp.output);
   gal_data_free(p->input);
-  gal_data_free(p->output);
+
+  /* The output might contain a 'MAX-FRAC' HDU, don't miss it. */
+  gal_list_data_free(p->output);
 
   /* Report how long the operation took. */
   if(!p->cp.quiet)

@@ -950,7 +950,7 @@ print_input_info(struct statisticsparams *p)
   char *str, *name, *col=NULL;
 
   /* Print the program name and version. */
-  printf("%s\n", PROGRAM_NAME);
+  printf("%s\n", PROGRAM_STRING);
 
   /* Print the input information, if the input was a table, we also need to
      give the column information. When the column has a name, it will be

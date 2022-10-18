@@ -556,11 +556,12 @@ Warp
 * Linear warping basics::       Basics of coordinate transformation.
 * Merging multiple warpings::   How to merge multiple matrices.
 * Resampling::                  Warping an image is re-sampling it.
+* Moire pattern::               Spatial resonance of the grid pattern on output.
 * Invoking astwarp::            Arguments and options for Warp.
 
 Invoking Warp
 
-* Align pixels with WCS account for distortions::  Default operation.
+* Align pixels with WCS considering distortions::
 * Linear warps to be called explicitly::  Other warps.
 
 Data analysis
@@ -2639,12 +2640,6 @@ $ astwarp flat-ir/xdf-f160w.fits --rotate=20
 
 @noindent
 Open the output (@file{xdf-f160w_rotated.fits}) and see how it is rotated.
-If your final image is already aligned with RA and Dec, you can simply use the @option{--align} option and let Warp calculate the necessary rotation and apply it.
-For example, try aligning the rotated image back to the standard orientation (just note that because of the two rotations, the NaN parts of the image are larger now):
-
-@example
-$ astwarp xdf-f160w_rotated.fits --align
-@end example
 
 Warp can generally be used for many kinds of pixel grid manipulation (warping), not just rotations.
 for example, the outputs of the commands below will have larger pixels respectively (new resolution being one quarter the original resolution), get shifted by 2.8 (by sub-pixel), get a shear of 2, and be tilted (projected).
@@ -4734,7 +4729,7 @@ See the same @code{wget} commands below for an example
 
 @cartouche
 @noindent
-@strong{Copyright notice:} A very important thing to put @emph{at the top} of your script is a one-line description of what it does adn its copyright information (see the example below).
+@strong{Copyright notice:} A very important thing to put @emph{at the top} of your script is a one-line description of what it does and its copyright information (see the example below).
 Here, we specify who is the author(s) of this script, in which years, and under what license others are allowed to use this file.
 Without it, your script does not credibility or identity, and others cannot trust, use or acknowledge your work on it.
 Since Gnuastro is itself licensed under a @url{https://en.wikipedia.org/wiki/Copyleft,copyleft} license (see @ref{Your rights} and @ref{GNU General Public License} or GNU GPL, the license finishes with a template on how to add it), any script that uses Gnuastro should also have a copyleft license: we recommend the same GNU GPL v3+ like below.
@@ -11978,7 +11973,7 @@ $ astfits castor.fits --skycoverage --quiet
 @end example
 
 Note that this is a simple rectangle (cube in 3D) definition, so if the image is rotated in relation to the celestial coordinates a general polygon is necessary to exactly describe the coverage.
-Hence when there is rotation, the reported area will be larger than the actual area containing data, you can visually see the area with the @option{--align} option of @ref{Warp}.
+Hence when there is rotation, the reported area will be larger than the actual area containing data, you can visually see the area with the @option{--pixelareaonwcs} option of @ref{Fits}.
 
 @item --datasum
 @cindex @code{DATASUM}: FITS keyword
@@ -12563,7 +12558,15 @@ Extra sampling along the pixel edges for @option{--pixareaonwcs}.
 The default value is 0, meaning that only the pixel vertices are used.
 Values greater than zero improve the accuracy in the expense of greater time and memory consumption.
 With that said, the default value of zero usually has a good precision unless the given image has extreme distortions that produce irregular pixel shapes.
-For more, see @ref{Align pixels with WCS account for distortions}).
+For more, see @ref{Align pixels with WCS considering distortions}).
+
+@cartouche
+@noindent
+@strong{Caution:} This option does not ``oversample'' the output image!
+Rather, it makes Warp use more points to calculate the @emph{input} pixel area.
+To oversample the output image, set a reasonable @option{--cdelt} value.
+@end cartouche
+
 @end table
 
 
@@ -12966,7 +12969,7 @@ Did you see the Warning message that was printed after your latest command?
 We have implemented a check in Warp to inform you when the images are not aligned and can produce bad (in most cases!) outputs like this.
 
 To solve this problem, you need to align the three color channels into the same pixel grid.
-To do that, we will use the @ref{Warp} program and in particular, its @ref{Align pixels with WCS account for distortions}.
+To do that, we will use the @ref{Warp} program and in particular, its @ref{Align pixels with WCS considering distortions}.
 
 Let's take the middle (r band) filter as the reference to define our grid.
 With the first command below, let's align the r band filter to the celestial coordiantes (so the M51 group's position angle doesn't depend on the orientation of the telescope when it took this image).
@@ -15503,7 +15506,7 @@ In WCS mode, Crop accepts multiple datasets as input.
 When the cropped region (defined by its center or vertices) overlaps with multiple of the input images/tiles, the overlapping regions will be taken from the respective input (they will be stitched when necessary for each output crop).
 
 In this mode, the input images do not necessarily have to be the same size, they just need to have the same orientation and pixel resolution.
-Currently only orientation along the celestial coordinates is accepted, if your input has a different orientation you can use Warp's @option{--align} option to align the image before cropping it (see @ref{Warp}).
+Currently only orientation along the celestial coordinates is accepted, if your input has a different orientation or resolution you can use Warp's @option{--gridfile} option to align the image before cropping it (see @ref{Warp}).
 
 Each individual input image/tile can even be smaller than the final crop.
 In any case, any part of any of the input images which overlaps with the desired region will be used in the crop.
@@ -19361,6 +19364,7 @@ It is therefore necessary to warp the image and correct for those distortions pr
 * Linear warping basics::       Basics of coordinate transformation.
 * Merging multiple warpings::   How to merge multiple matrices.
 * Resampling::                  Warping an image is re-sampling it.
+* Moire pattern::               Spatial resonance of the grid pattern on output.
 * Invoking astwarp::            Arguments and options for Warp.
 @end menu
 
@@ -19504,7 +19508,7 @@ These three operations can be merged in one operation by calculating the matrix 
 
 
 
-@node Resampling, Invoking astwarp, Merging multiple warpings, Warp
+@node Resampling, Moire pattern, Merging multiple warpings, Warp
 @subsection Resampling
 
 @cindex Pixel
@@ -19558,7 +19562,7 @@ Because of these reasons Warp will not use parametric interpolation techniques.
 @cindex Pixel mixing
 @cindex Exact area resampling
 Warp will do interpolation based on ``pixel mixing''@footnote{For a graphic demonstration see @url{http://entropymine.com/imageworsener/pixelmixing/}.} or ``area resampling''.
-This is also what the Hubble Space Telescope pipeline calls ``Drizzling''@footnote{@url{http://en.wikipedia.org/wiki/Drizzle_(image_processing)}}.
+This is also similar to what the Hubble Space Telescope pipeline calls ``Drizzling''@footnote{@url{http://en.wikipedia.org/wiki/Drizzle_(image_processing)}}.
 This technique requires no functions, it is thus non-parametric.
 It is also the closest we can get (make least assumptions) to what actually happens on the detector pixels.
 
@@ -19569,7 +19573,7 @@ The output's pixel value is derived by summing all these multiplications for the
 Through this process, pixels are treated as an area not as a point (which is how detectors create the image), also the brightness (see @ref{Brightness flux magnitude}) of an object will be fully preserved.
 Since it involves the mixing of the input's pixel values, this pixel mixing method is a form of @ref{Spatial domain convolution}.
 Therefore, after comparing the input and output, you will notice that the output is slightly smoothed, thus boosting the more diffuse signal, but creating correlated noise.
-In astronomical imaging the correlated noise will be decreased later when you stack many exposures.
+In astronomical imaging the correlated noise will be decreased later when you stack many exposures@footnote{If you are working on a single exposure image and see pronounced Moir@'e patterns after Warping, check @ref{Moire pattern} for a possible way to reduce them}.
 
 If there are very high spatial-frequency signals in the image (for example, fringes) which vary on a scale @emph{smaller than} your output image pixel size (this is rarely the case in astronomical imaging), pixel mixing can cause ailiasing@footnote{@url{http://en.wikipedia.org/wiki/Aliasing}}.
 Therefore, in case such fringes are present, they have to be calculated and removed separately (which would naturally be done in any astronomical reduction pipeline).
@@ -19580,9 +19584,229 @@ To find the overlap area of the output pixel over the input pixels, we need to d
 Usually, it is sufficient to define a pixel with a four-vertice polygon.
 However, when a non-linear distortion (for example, @code{SIP} or @code{TPV}) is present and the distortion is significant over an output pixel's size (usually far from the reference point), the shadow of the output pixel on the input grid can be curved.
 To account for such cases (which can only happen when correcting for non-linear distortions), Warp has the @option{--edgesampling} option to sample the output pixel over more vertices.
-For more, see the description of this option in @ref{Align pixels with WCS account for distortions}.
+For more, see the description of this option in @ref{Align pixels with WCS considering distortions}.
 
-@node Invoking astwarp,  , Resampling, Warp
+@node Moire pattern, Invoking astwarp, Resampling, Warp
+@subsection Moire pattern
+
+@cindex Moir@'e pattern or fringes
+After warping some images with the default mode of Warp (see @ref{Align pixels with WCS considering distortions}) you may notice that the background noise is no longer flat.
+Some regions will be smoother and some will be sharper; depending on the orientation and distortion of the input/output pixel grids.
+This is due to the @url{https://en.wikipedia.org/wiki/Moir%C3%A9_pattern, Moir@'e pattern}, which is especially noticeable/significant when two slightly different grids are super-imposed.
+
+With the commands below, we'll download a single exposure image from the @url{https://www.j-plus.es,J-PLUS survey} and run Warp (on a @mymath{5\times5} arcmin@mymath{^2} region to speed it up the demos here).
+Finally, we'll open the image to visualize the Moir@'e pattern:
+
+@example
+## Download the image (73.7 MB containing an 9216x9232 pixel image)
+$ jplusdr2=http://archive.cefca.es/catalogues/vo/siap/jplus-dr2/reduced
+$ wget $jplusdr2/get_fits?id=771463 -Ojplus-exp1.fits.fz
+
+## Align a small part of it with the sky coordinates.
+$ astwarp jplus-exp1.fits.fz --center=107.62920,39.72472 \
+          --width=8/60 -ojplus-e1.fits
+
+## Open the aligned region with DS9
+$ astscript-fits-view jplus-e1.fits
+@end example
+
+In the opened DS9 window, you can see the Moir@'e pattern as wave-like patterns in the noise: some parts of the noise are more smooth and some parts are more sharp.
+Right in the center of the image is a blob of sharp noise.
+Warp has the @option{--checkmaxfrac} option for direct inspection of the Moir@'e pattern (described with the other options in @ref{Align pixels with WCS considering distortions}).
+When run with this option, an extra HDU (called @code{MAX-FRAC}) will be added to the output.
+The image in this HDU has the same size as the output.
+However, each output pixel will contain the largest (maximum) fraction of area that it covered over the input pixel grid.
+So if an output pixel has a value of 0.9, this shows that it covered @mymath{90\%} of an input pixel.
+Let's run Warp with @option{--checkmaxfrac} and see the output (after DS9 opens, in the ``Cube'' window, flip between the first and second HDUs):
+
+@example
+$ astwarp jplus-exp1.fits.fz --center=107.62920,39.72472 \
+          --width=8/60 -ojplus-e1.fits --checkmaxfrac
+
+$ astscript-fits-view jplus-e1.fits
+@end example
+
+By comparing the first and second HDUs/extensions, you will clearly see that the regions with a sharp noise pattern fall exactly on parts of the @code{MAX-FRAC} extension with values larger than 0.5.
+In other words, output pixels where one input pixel contributed more than half of the its value.
+As this fraction increases, the sharpness also increases because a single input pixel's value dominates the value of the output pixel.
+On the other hand, when this value is small, we see that many input pixels contribute to that output pixel.
+Since many input pixels contribute to an output pixel, it acts like a convolution, hence that output pixel becomes smoother (see @ref{Spatial domain convolution}).
+Let's have a look at the distribution of the @code{MAX-FRAC} pixel values:
+
+@example
+$ aststatistics jplus-e1.fits -hMAX-FRAC
+Statistics (GNU Astronomy Utilities) @value{VERSION}
+-------
+Input: jplus-e1.fits (hdu: MAX-FRAC)
+-------
+  Number of elements:                      744769
+  Minimum:                                 0.250213461
+  Maximum:                                 0.9987495374
+  Mode:                                    0.5034223567
+  Mode quantile:                           0.3773819498
+  Median:                                  0.5520805544
+  Mean:                                    0.5693956458
+  Standard deviation:                      0.1554693738
+-------
+Histogram:
+ |                      ***
+ |                   **********
+ |                 *****************
+ |              ************************
+ |           *******************************
+ |         **************************************
+ |       *********************************************
+ |     ****************************************************
+ |   ***********************************************************
+ | ******************************************************************
+ |**********************************************************************
+ |----------------------------------------------------------------------
+@end example
+
+The smallest value is 0.25 (=1/4), showing that 4 input pixels contributed to the output pixels value.
+While the maximum is almost 1.0, showing that a single input pixel defined the output pixel value.
+You can also see that the most probable value (the mode) is 0.5, and that the distribution is positively skewed.
+
+@cindex Pixel scale
+@cindex @code{CDELT}
+This is a well-known problem in astronomical imaging and professional photography.
+If you only have a single image (that is already taken!), you can undersample the input: set the angular size of the output pixels to be larger than the input.
+This will decrease the resolution of your image, but will ensure that pixel-mixing will always happen.
+In the example below we are setting the output pixel scale (which is known as @code{CDELT} in the FITS standard) to @mymath{1/0.5=2} of the input's.
+In other words each output pixel edge will cover double the input pixel's edge on the sky, and the output's number of pixels in each dimension will be half of the previous output.
+
+@example
+$ cdelt=$(astfits jplus-exp1.fits.fz --pixelscale -q \
+                  | awk '@{print $1@}')
+$ astwarp jplus-exp1.fits.fz --center=107.62920,39.72472 \
+          --width=8/60 -ojplus-e1.fits --cdelt=$cdelt/0.5 \
+          --checkmaxfrac
+@end example
+
+In the first extension, you can hardly see any Moir@'e pattern in the noise.
+When you go to the next (@code{MAX-FRAC}) extension, you will see that almost all the pixels have a value of 1.
+Of course, decreasing the resolution by half is a little too drastic.
+Depending on your image, you may be able to reach a sufficiently good result without such a drastic degrading of the input image.
+For example, if you want an output pixel scale that is just 1.5 times larger than the input, you can divide the original coordinate-delta (or ``cdelt'') by @mymath{1/1.5=0.6666} and try again.
+In the @code{MAX-FRAC} extension, you will see that the range of pixel values is now between 0.56 to 1.0 (recall that originally, this was between 0.25 and 1.0).
+This shows that the pixels are more similarly mixed and in fact, when you look at the actual warped image, you can hardly distinguish any Moir@'e pattern in the noise.
+
+@cindex Coadd
+@cindex Stacking
+@cindex Dithering
+However, deep astronomical data are usually built by several exposures (images), not a single one.
+Each image is also taken by (slightly) shifting the telescope compared to the previous exposure.
+This shift is known as ``dithering''.
+We do this for many reasons (for example tracking errors in the telescope, high background values, removing the effect of bad pixels or those affected by cosmic rays, robust flat pattern measurement, etc.@footnote{E.g., @url{https://www.stsci.edu/hst/instrumentation/wfc3/proposing/dithering-strategies}}).
+One of those ``etc.'' reasons is to correct for the Moir@'e pattern in the final coadded deep image.
+
+The Moir@'e pattern is fixed to the grid of the image, slightly shifting the telescope will result in the pattern appearing in different parts of the sky.
+Therefore when we later stack, or coadd, the separate exposures into a deep image, the Moir@'e pattern will be decreased there.
+However, dithering has possible drawbacks based on the scientific goal.
+For example when observing time-variable phenomena where cutting the exposures to several shorter ones is not feasable.
+If this is not the case for you (for example in galaxy evolution), continue with the rest of this section.
+
+Because we have multiple exposures that are slighly (sub-pixel) shifted, we can also increase the spatial resolution of the output.
+For example, let's set the output coordinate-delta (or pixel scale) to be 1/2 of the input.
+In other words, the number of pixels in each dimension of the output is double the first Warp command of this section:
+
+@example
+$ astwarp jplus-exp1.fits.fz --center=107.62920,39.72472 \
+          --width=8/60 -ojplus-e1.fits --cdelt=$cdelt/2 \
+          --checkmaxfrac
+
+$ aststatistics jplus-e1.fits -hMAX-FRAC --minimum --maximum
+0.06263604388 0.2506802701
+
+$ astscript-fits-view jplus-e1.fits
+@end example
+
+From the last command, you see that like the previous change in @option{--cdelt}, the range of @code{MAX-FRAC} has decreased.
+However, when you look at the warped image and the @code{MAX-FRAC} image with the last command, you still visually see the Moir@'e pattern in the noise (although it has significantly decreased compared to the original resolution).
+It is still present because 2 is an exact multiple of 1.
+Let's try increasing the resolution by a factor of 1.25 (which isn't an exact multiple of 1):
+
+@example
+$ astwarp jplus-exp1.fits.fz --center=107.62920,39.72472 \
+          --width=8/60 -ojplus-e1.fits --cdelt=$cdelt/1.25 \
+          --checkmaxfrac
+$ astscript-fits-view jplus-e1.fits
+@end example
+
+You don't see any Moir@'e pattern in the noise any more, but when you look at the @code{MAX-FRAC} extension, you see it is very different from the ones you had seen before.
+In the previous @code{MAX-FRAC} image, you could see large blobs of similar values.
+But here, you see that the variation is almost on a pixel scale, and the difference between one pixel to the next is not significant.
+This is why you don't see any Moir@'e pattern in the warped image.
+
+In J-PLUS, each part of the sky was observed with a three-point dithering pattern.
+Let's download the other two exposures and warp the same region of the sky to the same pixel grid (using the @option{--gridfile} feature).
+Then, let's open all three cropped images in one DS9 instance:
+
+@example
+$ wget $jplusdr2/get_fits?id=771465 -Ojplus-exp2.fits.fz
+$ wget $jplusdr2/get_fits?id=771467 -Ojplus-exp3.fits.fz
+
+$ astwarp jplus-exp2.fits.fz --gridfile jplus-e1.fits \
+          -o jplus-e2.fits --checkmaxfrac
+$ astwarp jplus-exp2.fits.fz --gridfile jplus-e1.fits \
+          -o jplus-e3.fits --checkmaxfrac
+
+$ astscript-fits-view jplus-e*.fits
+@end example
+
+In the three warped images, you don't see any Moir@'e pattern, so far so good...
+Do the following steps:
+@enumerate
+@item
+Click on the ``Frame'' button (in the top row of buttons just on top of the image), and select the ``Single'' button in the bottom row.
+@item
+Open the ``Zoom'' menu, and select ``Zoom 16''.
+@item
+In the bottom row of buttons right on top of the image, press the ``next'' button to flip through each exposure's @code{MAX-FRAC} extension.
+@item
+Focus your eyes on the pixels with the largest value (white), while pressing the ``next'' button to flip between the exposures.
+You will see that in each exposure they cover different pixels.
+@end enumerate
+
+The exercise above shows that the effect varying smoothing level (that had already shrank to a per-pixel level) will be further decreased after we stack the images.
+So let's stack these three images with the commands below.
+First, we need to remove the sky-level from each image using @ref{NoiseChisel}, then we'll stack the @code{INPUT-NO-SKY} extensions using sigma-clipping (to reject outliers by @ref{Sigma clipping}).
+
+@example
+$ astnoisechisel jplus-e1.fits -ojplus-nc1.fits
+$ astnoisechisel jplus-e2.fits -ojplus-nc2.fits
+$ astnoisechisel jplus-e3.fits -ojplus-nc3.fits
+
+$ astarithmetic jplus-nc*.fits 3 5 0.2 sigclip-mean \
+                -gINPUT-NO-SKY -ojplus-stack.fits
+
+$ astscript-fits-view jplus-nc*.fits jplus-stack.fits
+@end example
+
+@noindent
+After opening the individual exposures and the final stack with the last command, take the following steps to see the comparisons properly:
+@enumerate
+@item
+Click on the stack image so it is selected.
+@item
+Go to the ``Frame'' menu, then the ``Lock'' item, then activate ``Scale and Limits''.
+@item
+Scroll your mouse or touchpad to zoom into the image.
+@end enumerate
+
+@noindent
+You clearly see that the stacked image is deeper and that there is no Moir@'e pattern, while you have slighly improved the spatial resolution of the output compared to the input.
+In case you want the stack to have the original pixel resolution, you just need one more Warping command:
+
+@example
+$ astwarp jplus-stack.fits --cdelt=$cdelt -ojplus-stack-origres.fits
+@end example
+
+For optimal results, the improved resolution in the process below should be determined by the dithering pattern of the observation:
+For example if you only have two dither points, you want the pixels with maximum value in the @code{MAX-FRAC} image to fall on those with a minimum value in the other dither position.
+Ideally, many more dither points should be chosen (for all the other reasons also), and you want to select the increased resolution such that the maximum @code{FRAC-MAX} values fall on every different pixel in each exposure.
+
+@node Invoking astwarp,  , Moire pattern, Warp
 @subsection Invoking Warp
 
 Warp an input image into a new pixel grid by pixel mixing (see @ref{Resampling}).
@@ -19642,7 +19866,7 @@ Just note that the file size will also be double!
 For more on the precision of various types, see @ref{Numeric data types}.
 
 By default (if no linear operation is requested), Warp will align the pixel grid of the input image to the WCS coordinates it contains.
-This operation and the the options that govern it are described in @ref{Align pixels with WCS account for distortions}.
+This operation and the the options that govern it are described in @ref{Align pixels with WCS considering distortions}.
 You can Warp an input image to the same pixel grid as a reference FITS file using the @option{--wcsfile} option.
 In this case, the output image will take all the information needed from the reference WCS file and HDU/extension specified with @option{--wcshdu}, thus it will discard any other resampling options given.
 
@@ -19670,12 +19894,12 @@ As a result, with @option{--coveredfrac=0}, the sum of the pixels in the input a
 @end table
 
 @menu
-* Align pixels with WCS account for distortions::  Default operation.
+* Align pixels with WCS considering distortions:: Default operation.
 * Linear warps to be called explicitly::  Other warps.
 @end menu
 
-@node Align pixels with WCS account for distortions, Linear warps to be called explicitly, Invoking astwarp, Invoking astwarp
-@subsubsection Align pixels with WCS account for distortions
+@node Align pixels with WCS considering distortions, Linear warps to be called explicitly, Invoking astwarp, Invoking astwarp
+@subsubsection Align pixels with WCS considering distortions
 
 @cindex Resampling
 @cindex WCS distortion
@@ -19696,7 +19920,16 @@ On the other hand, if that image is not aligned (for example, has a certain rota
 For such scenarios, Warp has the @option{--gridfile} option.
 When @option{--gridfile} is called, the options below that are used to define the output's WCS will be ignored (these options: @option{--center}, @option{--widthinpix}, @option{--cdelt}, @option{--ctype}).
 In this case, the output's WCS and pixel grid will exactly match the image given to @option{--gridfile} (including any rotation, pixel scale, or distortion or projection).
+
+Another problem that may arise when aligning images to new pixel grids is the aliasing or visible Moir@'e patterns on the output image.
+This artifact should be removed if you are stacking several exposures, especially with a dithering pattern.
+If not see @ref{Moire pattern} for ways to mitigate the visible patterns.
 See the description of @option{--gridfile} below for more.
+
+@cartouche
+@noindent
+@strong{Known issue:} Warp's WCS-based aligning works best with @code{WCSLIB 7.12} (released in September 2022) and above, you might get a @code{wcss2p} error otherwise.
+@end cartouche
 
 @table @option
 @item -c FLT,FLT
@@ -19918,18 +20151,28 @@ Similarly, @option{--edgesampling=5} will put 5 extra vertices along each edge, 
 Since the polygon clipping will happen for every output pixel, a higher value to this option can significantly reduce the running speed and increase the RAM usage of Warp; so use it with caution: in most cases the default @option{--edgesampling=0} is sufficient.
 
 To visually inspect the curvature effect on pixel area of the input image, see option @option{--pixareaonwcs} in @ref{Pixel information images}.
+
+@item --checkmaxfrac
+Check each output pixel's maximum coverage on the input data and append as the `@code{MAX-FRAC}' HDU/extension to the output aligned image.
+This option provides an easy visual inspection for possible recurring patterns or fringes caused by aligning to a new pixel grid.
+For more detail about the origin of these patterns and how to mitigate them see @ref{Moire pattern}.
+
+Note that the `@code{MAX-FRAC}' HDU/extension is not showing the patterns themselves;
+It represents the largest area coverage on the input data for that particular pixel.
+The values can be in the range between 0 to 1, where 1 means the pixel is covering at least one complete pixel of the input data .
+On the other hand, 0 means that the pixel is not covering any pixels of the input at all.
 @end table
 
 
 
 
-@node Linear warps to be called explicitly,  , Align pixels with WCS account for distortions, Invoking astwarp
+@node Linear warps to be called explicitly,  , Align pixels with WCS considering distortions, Invoking astwarp
 @subsubsection Linear warps to be called explicitly
 
 Linear warps include operations like rotation, scaling, sheer, etc.
 For an introduction, see @ref{Linear warping basics}.
 These are warps that don't depend on the WCS of the image and should be expliclitly requested.
-To align the input pixel coordinates with the WCS coordinates, see @ref{Align pixels with WCS account for distortions}.
+To align the input pixel coordinates with the WCS coordinates, see @ref{Align pixels with WCS considering distortions}.
 
 While they will correct any existing WCS based on the warp, they can also operate on images without any WCS.
 For example, you have a mock image that doesn't (yet!) have its mock WCS, and it has been created on an over-sampled grid and convolved with an over-sampled PSF.
@@ -32958,7 +33201,7 @@ If @code{top1end0!=0}, then the keywords containing the filename will be added t
 
 The FITS standard sets a maximum length of 69 characters for the string values of a keyword@footnote{The limit is actually 71 characters (which is the full 80 character length, subtracted by 8 for the keyword name and one character for the @key{=}).
 However, for strings, FITS also requires two single quotes.}.
-This creates problems with file names (which include directories) because file names/addresses can become longer than .
+This creates problems with file names (which include directories) because file names/addresses can become longer than the maximum number of characters in a FITS keyword (around 70 characters).
 Therefore, when @code{filename} is longer than the maximum length of a FITS keyword value, this function will break it into several keywords (breaking up the string on directory separators).
 So the full file/directory address (including directories) can be longer than 69 characters.
 However, if a single file or directory name (within a larger address) is longer than 69 characters, this function will truncate the name and print a warning.
@@ -37090,6 +37333,12 @@ You are free to provide any valid WCS keywords to the functions defined in this 
 This might be used to align the input image to the standard WCS grid, potentially changing the pixel scale, removing any valid WCS non-linear distortion available, and projecting to any valid WCS projection type.
 Further details of the warp library functions and parameters are shown below:
 
+@deffn  Macro GAL_WARP_OUTPUT_NAME_WARPED
+@deffnx Macro GAL_WARP_OUTPUT_NAME_MAXFRAC
+Names of the output datasets (in the @code{name} component of the output @code{gal_data_t}s).
+By default the output is only a single dataset, but when the @code{checkmaxfrac}  component of the input is non-zero, it will contain two datasets.
+@end deffn
+
 @deftp {Type (C @code{struct})} gal_warp_wcsalign_t
 The main data container for inputs, output and internal variables to simplify the WCS-aligning functions.
 Due to the large number of input variables, this structure makes it easy to call the main functions.
@@ -37110,6 +37359,7 @@ typedef struct
   double      coveredfrac;
   size_t     edgesampling;
   gal_data_t  *widthinpix;
+  uint8_t    checkmaxfrac;
   struct wcsprm     *twcs;       /* WCS Predefined. */
   gal_data_t       *ctype;       /* WCS To build.   */
   gal_data_t       *cdelt;       /* WCS To build.   */
@@ -37148,7 +37398,7 @@ For more, see the description of @option{--coveredfrac} in @ref{Invoking astwarp
 Set the number of extra vertices along each edge of the output pixel's polygon to account for potential curvature due to projection or distortion.
 A value of @code{0} is usually enough for this (so the pixel is only defined by a four vertice polygon.
 Greater values increase memory usage and program execution time.
-For more, plese see the description of @option{--edgesampling} in @ref{Align pixels with WCS account for distortions}.
+For more, plese see the description of @option{--edgesampling} in @ref{Align pixels with WCS considering distortions}.
 
 @item gal_data_t *widthinpix
 Output image size (width and height) in number of pixels.
@@ -37167,7 +37417,7 @@ To set the final image size, you should use @option{widthinpix}.
 @item gal_data_t *ctype
 The output's projection type.
 The dataset has to have the type @code{GAL_TYPE_STRING}, containing exactly two strings.
-Both strings will be directly passed to WCSLIB and should conform to the FITS standard's @code{CTYPEi} keywords, see the description of @option{--ctype} in @ref{Align pixels with WCS account for distortions}.
+Both strings will be directly passed to WCSLIB and should conform to the FITS standard's @code{CTYPEi} keywords, see the description of @option{--ctype} in @ref{Align pixels with WCS considering distortions}.
 For example, @code{"RA---TAN"} and @code{"DEC--TAN"}, or @code{"RA---HPX"} and @code{"DEC--HPX"}.
 
 @item gal_data_t *cdelt
@@ -37179,6 +37429,11 @@ Hint: to convert arcsec to degrees, just divide by 3600.
 WCS coordinate of the center of the central pixel of the output.
 The units depend on the WCS, for example, if the @code{CUNITi} keywords are @code{deg}, it is in degrees.
 This dataset should have a type of @code{GAL_TYPE_FLOAT64} and contain exactly two values.
+
+@item uint8_t checkmaxfrac
+When this is non-zero, the output will be a two-element @ref{List of gal_data_t}.
+The second element shows the @url{https://en.wikipedia.org/wiki/Moir%C3%A9_pattern, Moir@'e pattern} of the warp.
+For more, see @ref{Moire pattern}.
 
 @end table
 @end deftp
@@ -38155,7 +38410,7 @@ For a related demo (where the output grid and WCS are constructed from scratch),
 In the example below, we are warping the @code{input.fits} file to the same pixel grid and WCS as @code{reference.fits} image (assuming it is in hdu @code{0}).
 Feel free to change these names to your own test file names.
 This can be useful when you have a complex grid and WCS containing various keywords such as non-linear distortion coefficients, etc.
-For example datasets, see the description of the @option{--gridfile} option in @ref{Align pixels with WCS account for distortions}.
+For example datasets, see the description of the @option{--gridfile} option in @ref{Align pixels with WCS considering distortions}.
 
 To compile the demonstration program below, copy and paste the contents in a plain-text file (let's assume you named it @file{align-to-img.c}) and use @ref{BuildProgram} with this command: `@command{astbuildprog align-to-img.c}'.
 Please note that the demo program does not perform many sanity checks to avoid making it too complex and to highlight this particular feature in the library.
@@ -39065,7 +39320,7 @@ operations.
 
 To make it easier to learn/apply the internal program infra-structure
 discussed in @ref{Mandatory source code files}, in the @ref{Version
-controlled source}, Gnuastro ships with a template program . This template
+controlled source}, Gnuastro ships with a template program. This template
 program is not available in the Gnuastro tarball so it does not confuse
 people using the tarball. The @file{bin/TEMPLATE} directory in Gnuastro's
 Git repository contains the bare-minimum files necessary to define a new

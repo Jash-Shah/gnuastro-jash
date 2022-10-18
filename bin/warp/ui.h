@@ -69,6 +69,7 @@ enum option_keys_enum
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
   UI_KEY_CENTERONCORNER = 1000,
+  UI_KEY_CHECKMAXFRAC,
   UI_KEY_EDGESAMPLING,
   UI_KEY_WIDTHINPIX,
   UI_KEY_HSTARTWCS,

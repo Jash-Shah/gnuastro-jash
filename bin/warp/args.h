@@ -210,6 +210,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "checkmaxfrac",
+      UI_KEY_CHECKMAXFRAC,
+      0,
+      0,
+      "Moire pattern: Max.frac. input pixels on output.",
+      UI_GROUP_ALIGN,
+      &p->wa.checkmaxfrac,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

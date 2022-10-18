@@ -148,6 +148,13 @@ See the end of the file for license conditions.
       in an image (for example on a mock image, to make it match an
       observed exposure with dithering+distortion).
     --gridhdu: HDU containing image to be matched in '--gridfile'.
+    --checkmaxfrac: visualize the Moiré pattern of the warp in the second
+      extension of the output. This is the maximum fraction of a single
+      input pixel's area in the output pixel. When the output pixel scale
+      is similar to the input, the Moiré pattern can cause varying
+      artificial smoothing of the noise level. See the newly added "Moiré
+      pattern" section of the book for more on its basics and how to reduce
+      it in your outputs.
 
   astscript-fits-view:
   --ds9colorbarmulti: show a separate color-bar for each image in DS9. By

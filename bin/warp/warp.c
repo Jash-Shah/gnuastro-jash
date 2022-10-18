@@ -401,13 +401,14 @@ static void
 warp_write_to_file(struct warpparams *p, int hasmatrix)
 {
   size_t i;
+  gal_data_t *tmp=NULL;
   char keyword[9*FLEN_KEYWORD];
   gal_fits_list_key_t *headers=NULL;
   double *m= hasmatrix ? p->matrix->array : NULL;
 
   /* Add the appropriate headers: */
-  gal_fits_key_write_filename("INF", p->inputname, &headers,
-                              0, p->cp.quiet);
+  gal_fits_key_write_filename("INF", p->inputname, &headers, 0,
+                              p->cp.quiet);
   if(hasmatrix)
     for(i=0;i<9;++i)
       {
@@ -417,16 +418,22 @@ warp_write_to_file(struct warpparams *p, int hasmatrix)
                                   "Warp matrix element value", 0, NULL, 0);
       }
 
-  /* Save the output into the proper type and write it. */
+  /* Convert the output image if needed. */
   if(p->cp.type && p->cp.type!=p->output->type)
     p->output=gal_data_copy_to_new_type_free(p->output, p->cp.type);
-  gal_fits_img_write(p->output, p->cp.output, headers, PROGRAM_NAME);
 
-  /* Write the configuration keywords. */
+  /* Save the output and 'MAX-FRAC' if available. */
+  for(tmp=p->output;tmp!=NULL;tmp=tmp->next)
+    gal_fits_img_write(tmp, p->cp.output, NULL, PROGRAM_NAME);
+
+  /* Write the configuration keywords on HDU/extension '0'. */
   gal_fits_key_write_filename("input", p->inputname, &p->cp.okeys,
                               1, p->cp.quiet);
   gal_fits_key_write_config(&p->cp.okeys, "Warp configuration",
                             "WARP-CONFIG", p->cp.output, "0");
+
+  /* Write headers on HDU/extension '1'. */
+  gal_fits_key_write(&headers, NULL, p->cp.output, "1");
 }
 
 
@@ -569,5 +576,14 @@ warp(struct warpparams *p)
     }
 
 
-  if(!p->cp.quiet) { printf(" Output: %s\n", p->cp.output); }
+  /* Print the created files. */
+  if(!p->cp.quiet)
+    {
+      printf(" Output: %s%s\n", p->cp.output,
+             p->wa.checkmaxfrac?" (containing two HDUs):":"");
+      if(p->wa.checkmaxfrac)
+        printf("  - "GAL_WARP_OUTPUT_NAME_WARPED":  Warped output.\n"
+               "  - "GAL_WARP_OUTPUT_NAME_MAXFRAC": Moire pattern "
+               "(actived by '--checkmaxfrac').\n");
+    }
 }
