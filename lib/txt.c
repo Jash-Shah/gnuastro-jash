@@ -1395,7 +1395,6 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
   size_t i=0, num=0;
   char fmt[2], lng[3];
 
-
   /* Allocate space for the output. */
   for(data=datall;data!=NULL;data=data->next) ++num;
   errno=0;
@@ -1404,10 +1403,8 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
     error(EXIT_FAILURE, errno, "%s: %zu bytes for fmts",
           __func__, FMTS_COLS*num*sizeof *fmts);
 
-
   /* Initialize the length to 0. */
   *len=0;
-
 
   /* Go over all the columns and make their formats. */
   for(data=datall;data!=NULL;data=data->next)
@@ -1428,7 +1425,6 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
                                 ? gal_blank_as_string(data->type, 0)
                                 : NULL );
 
-
       /* Fill in the printing paramters. */
       gal_tableintern_col_print_info(data, GAL_TABLE_FORMAT_TXT, fmt, lng);
 
@@ -1444,15 +1440,25 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
          the final length of the overall format statement. The space in the
          end of 'fmts[i*2]' is to ensure that the columns don't merge, even
          if the printed string is larger than the expected width. */
-      if(data->disp_precision > 0)
-        *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d.%d%s%s ",
-                            leftadjust ? "-" : "", data->disp_width,
-                            data->disp_precision, lng, fmt);
-      else
-        *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d%s%s ",
-                            leftadjust ? "-" : "", data->disp_width,
-                            lng, fmt);
-
+      if(data->next)
+        {
+          if(data->disp_precision > 0)
+            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d.%d%s%s ",
+                                leftadjust ? "-" : "", data->disp_width,
+                                data->disp_precision, lng, fmt);
+          else
+            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d%s%s ",
+                                leftadjust ? "-" : "", data->disp_width,
+                                lng, fmt);
+        }
+      else /* Last column: no empty characters (no width or adjustment). */
+        {
+          if(data->disp_precision > 0)
+            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%.%d%s%s",
+                                data->disp_precision, lng, fmt);
+          else
+            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%s", lng, fmt);
+        }
 
       /* Set the string for the Gnuastro type. For strings, we also need to
          write the maximum number of characters.*/
@@ -1461,7 +1467,6 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
                 data->disp_width);
       else
         strcpy(fmts[i*FMTS_COLS+1], gal_type_name(data->type, 0));
-
 
       /* Increment the column counter. */
       ++i;
@@ -1739,26 +1744,14 @@ gal_txt_write(gal_data_t *input, struct gal_fits_list_key_t **keylist,
   switch(input->ndim)
     {
     case 1:
-      /* When the dataset is bring printed on standard output and its a
-         single number, don't print the column structure, because it will
-         add white-space characters which can be annoying when used in an
-         automatic script. */
-      if(fp==stdout && input->size==1 && input->next==NULL)
-        fprintf(fp, "%s\n",
-                gal_type_to_string(input->array, input->type, 0));
-
-      /* Dataset has more than one row AND more than one column, so follow
-         the basic text formatting (like extra white space to keep the
-         columns under each other). */
-      else
-        for(i=0;i<input->size;++i)                        /* Row.    */
-          {
-            j=0;
-            for(data=input;data!=NULL;data=data->next)    /* Column. */
-              txt_print_value(fp, data->array, data->type, i,
-                              fmts[j++ * FMTS_COLS]);
-            fprintf(fp, "\n");
-          }
+      for(i=0;i<input->size;++i)                        /* Row.    */
+        {
+          j=0;
+          for(data=input;data!=NULL;data=data->next)    /* Column. */
+            txt_print_value(fp, data->array, data->type, i,
+                            fmts[j++ * FMTS_COLS]);
+          fprintf(fp, "\n");
+        }
       break;
 
 

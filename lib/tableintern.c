@@ -352,18 +352,22 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
     /* We need a default value (because in most cases, it won't be set. */
     case GAL_TYPE_FLOAT32:
     case GAL_TYPE_FLOAT64:
-      /* Set the format. */
-      switch(col->disp_fmt)
-        {
-        case GAL_TABLE_DISPLAY_FMT_FLOAT:
-          fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'f' : 'F'; break;
-        case GAL_TABLE_DISPLAY_FMT_EXP:
-          fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'e' : 'E'; break;
-        case GAL_TABLE_DISPLAY_FMT_GENERAL:
-          fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'g' : 'E'; break;
-        default:
-          fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'g' : 'E'; break;
-        }
+
+      /* Set the format. For FITS-ASCII, dealing with 'F' (fixed-point
+         notation) can create bad CFITSIO crashes if the total number of
+         digits becomes larger than the width. We won't have this problem
+         with 'E' (exponential) notation, so we'll just write all the
+         floating points in exponential notation. */
+      if(tableformat==GAL_TABLE_FORMAT_AFITS) fmt[0]='E';
+      else
+        switch(col->disp_fmt)
+          {
+          case GAL_TABLE_DISPLAY_FMT_FIXED:   fmt[0]='f'; break;
+          case GAL_TABLE_DISPLAY_FMT_EXP:     fmt[0]='e'; break;
+          case GAL_TABLE_DISPLAY_FMT_GENERAL: fmt[0]='g'; break;
+          default: /* '%f' is the most conservative in plain-text tables. */
+            fmt[0] = 'f'; break;
+          }
 
       /* Set the width and precision */
       switch(col->type)
@@ -377,16 +381,22 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
         case GAL_TYPE_FLOAT64:
           width     = ( col->disp_width<=0
                         ? GAL_TABLE_DEF_WIDTH_DBL : col->disp_width );
-
-          /* CFITSIO doesn't recognize the double precision defined here
-             for ASCII FITS tables. */
           precision = ( col->disp_precision<=0
-                        ? ( tableformat==GAL_TABLE_FORMAT_TXT
-                            ? GAL_TABLE_DEF_PRECISION_DBL
-                            : GAL_TABLE_DEF_PRECISION_FLT )
-                        : col->disp_precision );
+                        ? GAL_TABLE_DEF_PRECISION_DBL : col->disp_precision );
           break;
         }
+
+      /* In ASCII-FITS tables, the full number (including the sign, the
+         point, the 'E+123' should fit within the width. For example in
+         '-7.32384000000E+04' (with a width of 18 characters), besides the
+         digits after the decimal point, we need the following 8 characters
+         '-7.E+NNN'. Therefore the precision should not be more than 10. If
+         the precision is more than this, CFITSIO is going to crash. We
+         should therefore correct it here. To be safe, we'll also add
+         another integer and leave 9 characters of the width for
+         non-precision characters. */
+      if(tableformat==GAL_TABLE_FORMAT_AFITS && width-precision<9)
+        precision=width-9;
       break;
 
 

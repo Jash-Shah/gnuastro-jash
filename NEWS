@@ -29,8 +29,8 @@ See the end of the file for license conditions.
     - fine-structure: Fine structure constant (no units).
     - counts-to-sb: convert counts to surface brightness (mag/arcsec^2).
     - sb-to-counts: convert surface brightness (mag/arcsec^2) to counts.
-    - mag-to-sb: convert magnitudes to surface brightness over a certain area.
-    - sb-to-mag: convert surface brightness to magnitudes over a certain area.
+    - mag-to-sb: convert magnitudes to surface brightness over an area.
+    - sb-to-mag: convert surface brightness to magnitudes over an area.
   - New operators that are specific to Arithmetic:
     - collapse-median: collapse input dataset by calculating the median
       along the given dimension.
@@ -110,6 +110,22 @@ See the end of the file for license conditions.
     --fitestimate: File name, or number to estimate the fit on.
     --fitestimatehdu: HDU containing table in file given to '--fitestimate'.
     --fitestimatecol: Column containing X axis values for '--fitestimate'.
+
+  Table:
+  - It is now possible to customize the format of floating point numbers in
+    the plain-text outputs: when output is printed on the standard output
+    (command-line) or in plain-text files. The following new options have
+    been added for this new feature:
+    --txtf32format (or '-f'): Format of 32-bit floating point columns. This
+      can be either 'fixed' (for fixed-point notation) or 'exp' (for
+      exponential/scientific notation).
+    --txtf32precision (or '-d'): number of digits following the
+      decimal-point of 32-bit floating point columns.
+    --txtf64format (or '-p'): Format of 64-bit floating point columns. This
+      can be either 'fixed' (for fixed-point notation) or 'exp' (for
+      exponential/scientific notation).
+    --txtf32precision (or '-B'): number of digits following the
+      decimal-point of 32-bit floating point columns.
 
   Warp:
   - Can correct distortions (with any standard recognized by WCSLIB) and
@@ -267,6 +283,9 @@ See the end of the file for license conditions.
   - gal_pdf_write: similar to 'gal_eps_write'.
   - gal_fits_hdu_open: new argument to optionally exit program if HDU
         couldn't be opened.
+  - GAL_TABLE_DISPLAY_FMT_FIXED: new name for GAL_TABLE_DISPLAY_FMT_FLOAT
+    since it corresponds to the fixed-point notation of printing floating
+    points in plain-text (the '_FLOAT' suffix was too generic and unclear).
 
 ** Bugs fixed
   bug #62861: '--printkeynames' of Fits program gets caught in an infinite

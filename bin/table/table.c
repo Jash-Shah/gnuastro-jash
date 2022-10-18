@@ -1190,6 +1190,30 @@ table_noblankend(struct tableparams *p)
 
 
 
+static void
+table_txt_formats(struct tableparams *p)
+{
+  gal_data_t *tmp;
+
+  for(tmp=p->table; tmp!=NULL; tmp=tmp->next)
+    {
+      switch(tmp->type)
+        {
+        case GAL_TYPE_FLOAT32:
+          if(p->txtf32format)    tmp->disp_fmt=p->txtf32format;
+          if(p->txtf32precision) tmp->disp_precision=p->txtf32precision;
+          break;
+        case GAL_TYPE_FLOAT64:
+          if(p->txtf64format)    tmp->disp_fmt=p->txtf64format;
+          if(p->txtf64precision) tmp->disp_precision=p->txtf64precision;
+          break;
+        }
+    }
+}
+
+
+
+
 
 
 
@@ -1239,6 +1263,7 @@ table(struct tableparams *p)
   if(p->noblankend) table_noblankend(p);
 
   /* Write the output. */
+  table_txt_formats(p);
   gal_table_write(p->table, NULL, NULL, p->cp.tableformat, p->cp.output,
                   "TABLE", p->colinfoinstdout);
 }

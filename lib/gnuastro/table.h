@@ -55,7 +55,8 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 /* 'printf' default formattings. Note that the string type shouldn't have
-   any precision and for the width,  */
+   any precision and for the width. The precisions are a little higher
+   because these are the default values. */
 #define GAL_TABLE_DEF_WIDTH_STR       6
 #define GAL_TABLE_DEF_WIDTH_INT       6
 #define GAL_TABLE_DEF_WIDTH_LINT      10
@@ -83,7 +84,7 @@ enum gal_table_diplay_formats
   GAL_TABLE_DISPLAY_FMT_UDECIMAL,       /* Integers: unsigned decimal. */
   GAL_TABLE_DISPLAY_FMT_OCTAL,          /* Integers: octal.            */
   GAL_TABLE_DISPLAY_FMT_HEX,            /* Integers: hexadecimal.      */
-  GAL_TABLE_DISPLAY_FMT_FLOAT,          /* Floats: with decimal point. */
+  GAL_TABLE_DISPLAY_FMT_FIXED,          /* Floats: fixed-point notation. */
   GAL_TABLE_DISPLAY_FMT_EXP,            /* Floats: as exponential.     */
   GAL_TABLE_DISPLAY_FMT_GENERAL,        /* Floats: general (%g in C).  */
 };
@@ -118,6 +119,18 @@ enum gal_table_where_to_search
   GAL_TABLE_SEARCH_UNIT,          /* Match/search in units.          */
   GAL_TABLE_SEARCH_COMMENT,       /* Match/search in comments.       */
 };
+
+
+
+
+/************************************************************************/
+/***************            Internal conversions          ***************/
+/************************************************************************/
+uint8_t
+gal_table_displayflt_from_str(char *string);
+
+char *
+gal_table_displayflt_to_str(uint8_t fmt);
 
 
 

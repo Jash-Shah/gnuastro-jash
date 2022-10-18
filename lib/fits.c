@@ -3055,7 +3055,7 @@ set_display_format(char *tdisp, gal_data_t *data, char *filename, char *hdu,
       break;
 
     case 'F':
-      data->disp_fmt=GAL_TABLE_DISPLAY_FMT_FLOAT;
+      data->disp_fmt=GAL_TABLE_DISPLAY_FMT_FIXED;
       break;
 
     case 'E':

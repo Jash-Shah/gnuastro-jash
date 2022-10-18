@@ -122,6 +122,10 @@ struct tableparams
   gal_list_str_t  *catrowfile;  /* Filename to concat column wise.      */
   gal_list_str_t   *catrowhdu;  /* HDU/extension for the catcolumn.     */
   gal_data_t     *colmetadata;  /* Set column metadata.                 */
+  char          *txtf32fmtstr;  /* Floating point formats (exp, flt).   */
+  char          *txtf64fmtstr;  /* Floating point formats (exp, flt).   */
+  size_t      txtf32precision;  /* Precision of float32 in text.        */
+  size_t      txtf64precision;  /* Precision of float32 in text.        */
 
   /* Internal. */
   struct column_pack *outcols;  /* Output column packages.              */
@@ -144,6 +148,8 @@ struct tableparams
   const char        *rng_name;  /* Name of random number generator.     */
   unsigned long int  rng_seed;  /* Random number generator seed.        */
   size_t            *colmatch;  /* Number of matches found for columns. */
+  uint8_t        txtf32format;  /* Floating point formats (exp, flt).   */
+  uint8_t        txtf64format;  /* Floating point formats (exp, flt).   */
 
   /* For arithmetic operators. */
   gal_list_str_t  *wcstoimg_p;  /* Pointer to the node.                 */

@@ -341,6 +341,24 @@ ui_read_check_only_options(struct tableparams *p)
           "because '--catcolumnfile' (or '-L') was not given to specify "
           "which file the new columns should come from. To suppress this "
           "warning, please run with '--quiet'");
+
+  /* Check the floating point format string. */
+  if(p->txtf32fmtstr)
+    {
+      p->txtf32format=gal_table_displayflt_from_str(p->txtf32fmtstr);
+      if(p->txtf32format==GAL_TABLE_DISPLAY_FMT_INVALID)
+        error(EXIT_FAILURE, 0, "'%s' is not a recognized value for "
+              "'--txtf64format'. Recognized values are 'fixed' and "
+              "'exp'", p->txtf32fmtstr);
+    }
+  if(p->txtf64fmtstr)
+    {
+      p->txtf64format=gal_table_displayflt_from_str(p->txtf64fmtstr);
+      if(p->txtf64format==GAL_TABLE_DISPLAY_FMT_INVALID)
+        error(EXIT_FAILURE, 0, "'%s' is not a recognized value for "
+              "'--txtf64format'. Recognized values are 'fixed' and "
+              "'exp'", p->txtf64fmtstr);
+    }
 }
 
 

@@ -194,6 +194,58 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET,
       gal_options_parse_name_and_strings
     },
+    {
+      "txtf32format",
+      UI_KEY_TXTF32FORMAT,
+      "STR",
+      0,
+      "Text output float32 format: 'fixed' or 'exp'.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->txtf32fmtstr,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "txtf64format",
+      UI_KEY_TXTF64FORMAT,
+      "STR",
+      0,
+      "Text output float64 format: 'fixed' or 'exp'.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->txtf64fmtstr,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "txtf32precision",
+      UI_KEY_TXTF32PRECISION,
+      "INT",
+      0,
+      "Text output float32 precision.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->txtf32precision,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "txtf64precision",
+      UI_KEY_TXTF64PRECISION,
+      "INT",
+      0,
+      "Text output float32 precision.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->txtf64precision,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

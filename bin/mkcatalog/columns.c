@@ -578,7 +578,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_VX     ] = ciflag[ CCOL_VX     ] = 1;
@@ -594,7 +594,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_VY     ] = ciflag[ CCOL_VY     ] = 1;
@@ -610,7 +610,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_VZ ] = 1;
@@ -624,7 +624,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_GX     ] = ciflag[ CCOL_GX     ] = 1;
@@ -638,7 +638,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_GY     ] = ciflag[ CCOL_GY     ] = 1;
@@ -652,7 +652,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_GZ ] = 1;
@@ -666,7 +666,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_C_VX     ] = 1;
@@ -682,7 +682,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_C_VY     ] = 1;
@@ -698,7 +698,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_C_VZ ] = 1;
@@ -711,7 +711,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_C_GX     ] = 1;
@@ -725,7 +725,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_C_GY     ] = 1;
@@ -739,7 +739,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_C_GZ ] = 1;
@@ -945,7 +945,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_radec(p);
@@ -969,7 +969,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_radec(p);
@@ -993,7 +993,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_radec(p);
@@ -1014,7 +1014,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_georadec(p);
@@ -1032,7 +1032,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_georadec(p);
@@ -1050,7 +1050,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_FLOAT64;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_georadec(p);
@@ -1067,7 +1067,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_clumpsradec(p);
@@ -1091,7 +1091,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 15;
           disp_precision = 7;
           columns_alloc_clumpsradec(p);
@@ -1115,7 +1115,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 15;
           disp_precision = 7;
           columns_alloc_clumpsradec(p);
@@ -1139,7 +1139,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_clumpsgeoradec(p);
@@ -1157,7 +1157,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_clumpsgeoradec(p);
@@ -1175,7 +1175,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT64;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 13;
           disp_precision = 7;
           columns_alloc_clumpsgeoradec(p);
@@ -1378,7 +1378,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 8;
           disp_precision = 3;
           p->hasmag      = 1;
@@ -1397,7 +1397,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 8;
           disp_precision = 3;
           oiflag[ OCOL_NUM         ] = ciflag[ CCOL_NUM         ] = 1;
@@ -1414,7 +1414,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = NULL;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_INVALID;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 8;
           disp_precision = 3;
           p->hasmag      = 1;
@@ -1443,7 +1443,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 8;
           disp_precision = 3;
           p->hasmag      = 1;
@@ -1458,7 +1458,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 8;
           disp_precision = 3;
           p->hasmag      = 1;
@@ -1521,7 +1521,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 8;
           disp_precision = 3;
           p->upperlimit  = 1;
@@ -1561,7 +1561,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_NUM         ] = ciflag[ CCOL_NUM         ] = 1;
@@ -1609,7 +1609,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
@@ -1633,7 +1633,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
@@ -1657,7 +1657,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 7;
           disp_precision = 3;
           oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
@@ -1681,7 +1681,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_SUMWHT ] = ciflag[ CCOL_SUMWHT ] = 1;
@@ -1705,7 +1705,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
@@ -1723,7 +1723,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
@@ -1741,7 +1741,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 7;
           disp_precision = 3;
           oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;
@@ -1759,7 +1759,7 @@ columns_define_alloc(struct mkcatalogparams *p)
           ccomment       = ocomment;
           otype          = GAL_TYPE_FLOAT32;
           ctype          = GAL_TYPE_FLOAT32;
-          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FLOAT;
+          disp_fmt       = GAL_TABLE_DISPLAY_FMT_FIXED;
           disp_width     = 10;
           disp_precision = 3;
           oiflag[ OCOL_NUMALL ] = ciflag[ CCOL_NUMALL ] = 1;

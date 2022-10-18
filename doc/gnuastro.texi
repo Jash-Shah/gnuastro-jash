@@ -14407,6 +14407,7 @@ If any output file is explicitly requested (with @option{--output}) the output t
 When no output file is explicitly requested the output table will be written to the standard output.
 If the specified output is a FITS file, the type of FITS table (binary or ASCII) will be determined from the @option{--tabletype} option.
 If the output is not a FITS file, it will be printed as a plain text table (with space characters between the columns).
+When the output is not binary (for example standard output or a plain-text), the @option{--txtf32*} or @option{--txtf64*} options can be used for the formatting of floating point columns.
 When the columns are accompanied by meta-data (like column name, units, or comments), this information will also printed in the plain text file before the table, as described in @ref{Gnuastro text table format}.
 
 For the full list of options common to all Gnuastro programs please see @ref{Common options}.
@@ -14811,6 +14812,39 @@ Recall that when a name is given, this option will update the metadata of the fi
 
 Finally, if you already have a FITS table by other means (for example, by downloading) and you merely want to update the column metadata and leave the data intact, it is much more efficient to directly modify the respective FITS header keywords with @code{astfits}, using the keyword manipulation features described in @ref{Keyword inspection and manipulation}.
 @option{--colmetadata} is mainly intended for scenarios where you want to edit the data so it will always load the full/partial dataset into memory, then write out the resulting datasets with updated/corrected metadata.
+
+
+@item  -f STR
+@itemx --txtf32format=STR
+The plain-text format of 32-bit floating point columns when output is not binary (this option is ignored for binary outputs like FITS tables).
+The acceptable values are listed below.
+This is just the format of the plain-text outputs; see @option{--txtf32precision} for customizing their precision.
+@table @code
+@item fixed
+Fixed-point notation (for example @code{1234567.89012})
+@item exp
+Exponential notation (for example @code{1.2345689012e+06})
+@end table
+
+@item  -p STR
+@itemx --txtf32precision=INT
+Number of digits after the decimal point (precision) for columns with a 32-bit floating point datatype.
+
+@item  -d STR
+@itemx --txtf64format=STR
+The plain-text format of 64-bit floating point columns when output is not binary (this option is ignored for binary outputs like FITS tables).
+The acceptable values are listed below.
+This is just the format of the plain-text outputs; see @option{--txtf64precision} for customizing their precision.
+@table @code
+@item fixed
+Fixed-point notation (for example @code{1234567.89012})
+@item exp
+Exponential notation (for example @code{1.2345689012e+06})
+@end table
+
+@item  -B STR
+@itemx --txtf64precision=INT
+Number of digits after the decimal point (precision) for columns with a 64-bit floating point datatype.
 @end table
 
 
@@ -32258,7 +32292,7 @@ directly used in C's @code{printf} command to write the number as a string.
 @deffnx Macro GAL_TABLE_DISPLAY_FMT_UDECIMAL
 @deffnx Macro GAL_TABLE_DISPLAY_FMT_OCTAL
 @deffnx Macro GAL_TABLE_DISPLAY_FMT_HEX
-@deffnx Macro GAL_TABLE_DISPLAY_FMT_FLOAT
+@deffnx Macro GAL_TABLE_DISPLAY_FMT_FIXED
 @deffnx Macro GAL_TABLE_DISPLAY_FMT_EXP
 @deffnx Macro GAL_TABLE_DISPLAY_FMT_GENERAL
 The display format used in C's @code{printf} to display data of different
@@ -32301,6 +32335,14 @@ string to match, or regular expression to search, be in the @emph{name},
 @emph{units} or @emph{comments} of the column meta data. These values
 should be used for the @code{searchin} variables of the functions.
 @end deffn
+
+@deftypefun uint8_t gal_table_displayflt_from_str (char @code{*string})
+Convert the input @code{string} into one of the @code{GAL_TABLE_DISPLAY_FMT_FIXED} (for fixed-point notation) or @code{GAL_TABLE_DISPLAY_FMT_EXP} (for exponential notation).
+@end deftypefun
+
+@deftypefun {char *} gal_table_displayflt_to_str (uint8_t @code{id})
+Convert the input identifier (one of the @code{GAL_TABLE_DISPLAY_FMT_FIXED}; for fixed-point notation, or @code{GAL_TABLE_DISPLAY_FMT_EXP}; for exponential notation) into a standard string that is used to identify them.
+@end deftypefun
 
 @deftypefun {gal_data_t *} gal_table_info (char @code{*filename}, char @code{*hdu}, gal_list_str_t @code{*lines}, size_t @code{*numcols}, size_t @code{*numrows}, int @code{*tableformat})
 Store the information of each column of a table into an array of data

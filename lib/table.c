@@ -43,6 +43,49 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+/************************************************************************/
+/***************            Internal conversions          ***************/
+/************************************************************************/
+uint8_t
+gal_table_displayflt_from_str(char *string)
+{
+  if(      !strcmp(string, "exp"))
+    return GAL_TABLE_DISPLAY_FMT_EXP;
+  else if (!strcmp(string, "fixed"))
+    return GAL_TABLE_DISPLAY_FMT_FIXED;
+  else return GAL_TABLE_DISPLAY_FMT_INVALID;
+}
+
+
+
+
+
+char *
+gal_table_displayflt_to_str(uint8_t fmt)
+{
+  switch(fmt)
+    {
+    case GAL_TABLE_DISPLAY_FMT_FIXED: return "fixed";
+    case GAL_TABLE_DISPLAY_FMT_EXP:   return "exp";
+    default:                          return NULL;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
