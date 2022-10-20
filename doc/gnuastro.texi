@@ -4646,7 +4646,7 @@ $ cat gnuastro-tutorial-1.sh
 #   hlsp_xdf_hst_wfc3ir-60mas_hudf_FILTER_v1_sci.fits
 # To make the script easier to read, a prefix and suffix variable are
 # used to sandwich the filter name into one short line.
-downloaddir=download
+dldir=download
 xdfsuffix=_v1_sci.fits
 xdfprefix=hlsp_xdf_hst_wfc3ir-60mas_hudf_
 xdfurl=http://archive.stsci.edu/pub/hlsp/xdf
@@ -4654,15 +4654,15 @@ xdfurl=http://archive.stsci.edu/pub/hlsp/xdf
 # The file name and full URLs of the input data.
 f105w_in=$xdfprefix"f105w"$xdfsuffix
 f160w_in=$xdfprefix"f160w"$xdfsuffix
-f105w_full=$xdfurl/$f105w_in
-f160w_full=$xdfurl/$f160w_in
+f105w_url=$xdfurl/$f105w_in
+f160w_url=$xdfurl/$f160w_in
 
 # Go into the download directory and download the images there,
 # then come back up to the top running directory.
-mkdir $downloaddir
-cd $downloaddir
-wget $f105w_full
-wget $f160w_full
+mkdir $dldir
+cd $dldir
+wget $f105w_url
+wget $f160w_url
 cd ..
 
 
@@ -4683,9 +4683,9 @@ deep_polygon="$vertice1:$vertice2:$vertice3:$vertice4"
 
 mkdir $flatdir
 astcrop --mode=wcs -h0 --output=$f105w_flat \
-        --polygon=$deep_polygon $downloaddir/$f105w_in
+        --polygon=$deep_polygon $dldir/$f105w_in
 astcrop --mode=wcs -h0 --output=$f160w_flat \
-        --polygon=$deep_polygon $downloaddir/$f160w_in
+        --polygon=$deep_polygon $dldirdir/$f160w_in
 @end example
 
 The first thing you may notice is that even if you already have the downloaded input images, this script will always try to re-download them.
@@ -4723,6 +4723,13 @@ On some systems (including GNU/Linux distributions), @code{mkdir} has options to
 @example
 if ! [ -d DIRNAME ]; then mkdir DIRNAME; fi
 @end example
+
+@item Avoid changing directories (with `@code{cd}') within the script
+You can directly read and write files within other directories.
+Therefore using @code{cd} to enter a directory (like what we did above, around the @code{wget} commands), running command there and coming out is extra, and not good practice.
+This is because the running directory is part of the environment of a command.
+You can simply give the directory name before the input and output file names to use them from anywhere on the file system.
+See the same @code{wget} commands below for an example
 @end table
 
 @cartouche
@@ -4770,7 +4777,7 @@ set -e
 #   hlsp_xdf_hst_wfc3ir-60mas_hudf_FILTER_v1_sci.fits
 # To make the script easier to read, a prefix and suffix variable are
 # used to sandwich the filter name into one short line.
-downloaddir=download
+dldir=download
 xdfsuffix=_v1_sci.fits
 xdfprefix=hlsp_xdf_hst_wfc3ir-60mas_hudf_
 xdfurl=http://archive.stsci.edu/pub/hlsp/xdf
@@ -4778,20 +4785,17 @@ xdfurl=http://archive.stsci.edu/pub/hlsp/xdf
 # The file name and full URLs of the input data.
 f105w_in=$xdfprefix"f105w"$xdfsuffix
 f160w_in=$xdfprefix"f160w"$xdfsuffix
-f105w_full=$xdfurl/$f105w_in
-f160w_full=$xdfurl/$f160w_in
+f105w_url=$xdfurl/$f105w_in
+f160w_url=$xdfurl/$f160w_in
 
-# Go into the download directory and download the images there,
-# then come back up to the top running directory.
-if ! [ -d $downloaddir ]; then mkdir $downloaddir; fi
-cd $downloaddir
-if ! [ -f $f105w_in ]; then wget $f105w_full; fi
-if ! [ -f $f160w_in ]; then wget $f160w_full; fi
-cd ..
+# Make sure the download directory exists, and download the images.
+if ! [ -d $dldir    ]; then mkdir $dldir; fi
+if ! [ -f $f105w_in ]; then wget $f105w_url -O $dldir/$f105w_in; fi
+if ! [ -f $f160w_in ]; then wget $f160w_url -O $dldir/$f160w_in; fi
 
 
-# Only work on the deep region
-# ----------------------------
+# Crop out the deep region
+# ------------------------
 #
 # To help in readability, each vertice of the deep/flat field is stored
 # as a separate variable. They are then merged into one variable to
@@ -4808,11 +4812,11 @@ deep_polygon="$vertice1:$vertice2:$vertice3:$vertice4"
 if ! [ -d $flatdir ]; then mkdir $flatdir; fi
 if ! [ -f $f105w_flat ]; then
     astcrop --mode=wcs -h0 --output=$f105w_flat \
-            --polygon=$deep_polygon $downloaddir/$f105w_in
+            --polygon=$deep_polygon $dldir/$f105w_in
 fi
 if ! [ -f $f160w_flat ]; then
     astcrop --mode=wcs -h0 --output=$f160w_flat \
-            --polygon=$deep_polygon $downloaddir/$f160w_in
+            --polygon=$deep_polygon $dldir/$f160w_in
 fi
 @end example
 
