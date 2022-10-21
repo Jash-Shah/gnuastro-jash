@@ -4724,7 +4724,7 @@ You can directly read and write files within other directories.
 Therefore using @code{cd} to enter a directory (like what we did above, around the @code{wget} commands), running command there and coming out is extra, and not good practice.
 This is because the running directory is part of the environment of a command.
 You can simply give the directory name before the input and output file names to use them from anywhere on the file system.
-See the same @code{wget} commands below for an example
+See the same @code{wget} commands below for an example.
 @end table
 
 @cartouche
@@ -16259,12 +16259,36 @@ As mentioned before, to be able to easily do complex operations on the command-l
 The operands to all operators can be a data array (for example, a FITS image or data cube) or a number, the output will be an array or number according to the inputs.
 for example, a number multiplied by an array will produce an array.
 The numerical data type of the output of each operator is described within it.
+Here are some generic tips and tricks (relevant to all operators):
 
-@cartouche
-@noindent
-@strong{Blank pixels in Arithmetic:} Blank pixels in the image (see @ref{Blank pixels}) will be stored based on the data type.
+@table @asis
+@item Multiple operators in one command
+When you need to use arithmetic commands in several consecutive operations, you can use one command instead of multiple commands and perform all calculations in the same command.
+For example, assume you want to apply a threshold of 10 on your image, and label the connected groups of pixel above this threshold.
+You need two operators for this: @code{gt} (for ``greater than'', see @ref{Conditional operators}) and @code{connected-components} (see @ref{Mathematical morphology operators}).
+The bad (non-optimized and slow) way of doing this is to call Arithmetic two times:
+@example
+$ astarithmetic image.fits 10 gt --output=thresh.fits
+$ astarithmetic thresh.fits 2 connected-components \
+                --output=labeled.fits
+$ rm thresh.fits
+@end example
+
+The good (optimal) way is to call them after each other (remember @ref{Reverse polish notation}):
+@example
+$ astarithmetic image.fits 10 gt 2 connected-components \
+                --output=labeled.fits
+@end example
+
+You can similarly add any number of operations that must be done sequentially in a single command and benefit from the speed and lack of intermediate files.
+When your commands become long, you can use the @code{set-AAA} operator to make it more readable, see @ref{Operand storage in memory or a file}.
+
+
+@item Blank pixels in Arithmetic
+Blank pixels in the image (see @ref{Blank pixels}) will be stored based on the data type.
 When the input is floating point type, blank values are NaN.
 One aspect of NaN values is that by definition they will fail on @emph{any} comparison.
+Also, any operator that includes a NaN as a an operand will produce a NaN (irrespective of its other operands).
 Hence both equal and not-equal operators will fail when both their operands are NaN!
 Therefore, the only way to guarantee selection of blank pixels is through the @command{isblank} operator explained above.
 
@@ -16278,7 +16302,7 @@ $ astarithmetic input.fits nan eq --output=all-zeros.fits
 @noindent
 Note that on the command-line you can write NaN in any case (for example, @command{NaN}, or @command{NAN} are also acceptable).
 Reading NaN as a floating point number in Gnuastro is not case-sensitive.
-@end cartouche
+@end table
 
 @menu
 * Basic mathematical operators::  For example, +, -, /, log, and pow.
@@ -16315,7 +16339,7 @@ for example, in the command below, the value 20000 is added to each pixel's valu
 @example
 $ astarithmetic 20000 image.fits +
 @end example
-You can also use this operator is to sum the values of one pixel in two images (which have to be the same size).
+You can also use this operator to sum the values of one pixel in two images (which have to be the same size).
 for example, in the commands below (which are identical, see paragraph after the commands), each pixel of @file{sum.fits} is the sum of the same pixel's values in @file{a.fits} and @file{b.fits}.
 @example
 $ astarithmetic a.fits b.fits + -h1 -h1 --output=sum.fits
@@ -19598,7 +19622,7 @@ After warping some images with the default mode of Warp (see @ref{Align pixels w
 Some regions will be smoother and some will be sharper; depending on the orientation and distortion of the input/output pixel grids.
 This is due to the @url{https://en.wikipedia.org/wiki/Moir%C3%A9_pattern, Moir@'e pattern}, which is especially noticeable/significant when two slightly different grids are super-imposed.
 
-With the commands below, we'll download a single exposure image from the @url{https://www.j-plus.es,J-PLUS survey} and run Warp (on a @mymath{5\times5} arcmin@mymath{^2} region to speed it up the demos here).
+With the commands below, we'll download a single exposure image from the @url{https://www.j-plus.es,J-PLUS survey} and run Warp (on a @mymath{8\times8} arcmin@mymath{^2} region to speed it up the demos here).
 Finally, we'll open the image to visualize the Moir@'e pattern:
 
 @example
