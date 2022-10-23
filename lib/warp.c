@@ -574,7 +574,8 @@ warp_wcsalign_init_output_from_wcs(gal_warp_wcsalign_t *wa,
 
   /* Create the output image dataset with the target WCS given. */
   output=gal_data_alloc(NULL, GAL_TYPE_FLOAT64, 2, dsize, wa->twcs, 0,
-                        minmapsize, quietmmap, "Aligned", NULL, NULL);
+                        minmapsize, quietmmap, GAL_WARP_OUTPUT_NAME_WARPED,
+                        NULL, NULL);
 
   /* Write to wcsalign data type for later use. */
   wa->output=output;

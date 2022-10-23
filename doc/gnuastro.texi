@@ -556,12 +556,12 @@ Warp
 * Linear warping basics::       Basics of coordinate transformation.
 * Merging multiple warpings::   How to merge multiple matrices.
 * Resampling::                  Warping an image is re-sampling it.
-* Moire pattern::               Spatial resonance of the grid pattern on output.
+* Moire pattern and its correction::  Spatial resonance of the grid pattern on output.
 * Invoking astwarp::            Arguments and options for Warp.
 
 Invoking Warp
 
-* Align pixels with WCS considering distortions::
+* Align pixels with WCS considering distortions::  Default operation.
 * Linear warps to be called explicitly::  Other warps.
 
 Data analysis
@@ -19392,7 +19392,7 @@ It is therefore necessary to warp the image and correct for those distortions pr
 * Linear warping basics::       Basics of coordinate transformation.
 * Merging multiple warpings::   How to merge multiple matrices.
 * Resampling::                  Warping an image is re-sampling it.
-* Moire pattern::               Spatial resonance of the grid pattern on output.
+* Moire pattern and its correction::  Spatial resonance of the grid pattern on output.
 * Invoking astwarp::            Arguments and options for Warp.
 @end menu
 
@@ -19536,7 +19536,7 @@ These three operations can be merged in one operation by calculating the matrix 
 
 
 
-@node Resampling, Moire pattern, Merging multiple warpings, Warp
+@node Resampling, Moire pattern and its correction, Merging multiple warpings, Warp
 @subsection Resampling
 
 @cindex Pixel
@@ -19601,7 +19601,7 @@ The output's pixel value is derived by summing all these multiplications for the
 Through this process, pixels are treated as an area not as a point (which is how detectors create the image), also the brightness (see @ref{Brightness flux magnitude}) of an object will be fully preserved.
 Since it involves the mixing of the input's pixel values, this pixel mixing method is a form of @ref{Spatial domain convolution}.
 Therefore, after comparing the input and output, you will notice that the output is slightly smoothed, thus boosting the more diffuse signal, but creating correlated noise.
-In astronomical imaging the correlated noise will be decreased later when you stack many exposures@footnote{If you are working on a single exposure image and see pronounced Moir@'e patterns after Warping, check @ref{Moire pattern} for a possible way to reduce them}.
+In astronomical imaging the correlated noise will be decreased later when you stack many exposures@footnote{If you are working on a single exposure image and see pronounced Moir@'e patterns after Warping, check @ref{Moire pattern and its correction} for a possible way to reduce them}.
 
 If there are very high spatial-frequency signals in the image (for example, fringes) which vary on a scale @emph{smaller than} your output image pixel size (this is rarely the case in astronomical imaging), pixel mixing can cause ailiasing@footnote{@url{http://en.wikipedia.org/wiki/Aliasing}}.
 Therefore, in case such fringes are present, they have to be calculated and removed separately (which would naturally be done in any astronomical reduction pipeline).
@@ -19614,8 +19614,8 @@ However, when a non-linear distortion (for example, @code{SIP} or @code{TPV}) is
 To account for such cases (which can only happen when correcting for non-linear distortions), Warp has the @option{--edgesampling} option to sample the output pixel over more vertices.
 For more, see the description of this option in @ref{Align pixels with WCS considering distortions}.
 
-@node Moire pattern, Invoking astwarp, Resampling, Warp
-@subsection Moire pattern
+@node Moire pattern and its correction, Invoking astwarp, Resampling, Warp
+@subsection Moir@'e pattern and its correction
 
 @cindex Moir@'e pattern or fringes
 After warping some images with the default mode of Warp (see @ref{Align pixels with WCS considering distortions}) you may notice that the background noise is no longer flat.
@@ -19623,7 +19623,7 @@ Some regions will be smoother and some will be sharper; depending on the orienta
 This is due to the @url{https://en.wikipedia.org/wiki/Moir%C3%A9_pattern, Moir@'e pattern}, which is especially noticeable/significant when two slightly different grids are super-imposed.
 
 With the commands below, we'll download a single exposure image from the @url{https://www.j-plus.es,J-PLUS survey} and run Warp (on a @mymath{8\times8} arcmin@mymath{^2} region to speed it up the demos here).
-Finally, we'll open the image to visualize the Moir@'e pattern:
+Finally, we'll open the image to visually see the artificial Moir@'e pattern on the warped image.
 
 @example
 ## Download the image (73.7 MB containing an 9216x9232 pixel image)
@@ -19752,7 +19752,7 @@ $ astscript-fits-view jplus-e1.fits
 From the last command, you see that like the previous change in @option{--cdelt}, the range of @code{MAX-FRAC} has decreased.
 However, when you look at the warped image and the @code{MAX-FRAC} image with the last command, you still visually see the Moir@'e pattern in the noise (although it has significantly decreased compared to the original resolution).
 It is still present because 2 is an exact multiple of 1.
-Let's try increasing the resolution by a factor of 1.25 (which isn't an exact multiple of 1):
+Let's try increasing the resolution (oversampling) by a factor of 1.25 (which isn't an exact multiple of 1):
 
 @example
 $ astwarp jplus-exp1.fits.fz --center=107.62920,39.72472 \
@@ -19776,14 +19776,15 @@ $ wget $jplusdr2/get_fits?id=771467 -Ojplus-exp3.fits.fz
 
 $ astwarp jplus-exp2.fits.fz --gridfile jplus-e1.fits \
           -o jplus-e2.fits --checkmaxfrac
-$ astwarp jplus-exp2.fits.fz --gridfile jplus-e1.fits \
+$ astwarp jplus-exp3.fits.fz --gridfile jplus-e1.fits \
           -o jplus-e3.fits --checkmaxfrac
 
 $ astscript-fits-view jplus-e*.fits
 @end example
 
+@noindent
 In the three warped images, you don't see any Moir@'e pattern, so far so good...
-Do the following steps:
+now, take the following steps:
 @enumerate
 @item
 Click on the ``Frame'' button (in the top row of buttons just on top of the image), and select the ``Single'' button in the bottom row.
@@ -19792,13 +19793,13 @@ Open the ``Zoom'' menu, and select ``Zoom 16''.
 @item
 In the bottom row of buttons right on top of the image, press the ``next'' button to flip through each exposure's @code{MAX-FRAC} extension.
 @item
-Focus your eyes on the pixels with the largest value (white), while pressing the ``next'' button to flip between the exposures.
+Focus your eyes on the pixels with the largest value (white colored pixels), while pressing the ``next'' button to flip between the exposures.
 You will see that in each exposure they cover different pixels.
 @end enumerate
 
 The exercise above shows that the effect varying smoothing level (that had already shrank to a per-pixel level) will be further decreased after we stack the images.
 So let's stack these three images with the commands below.
-First, we need to remove the sky-level from each image using @ref{NoiseChisel}, then we'll stack the @code{INPUT-NO-SKY} extensions using sigma-clipping (to reject outliers by @ref{Sigma clipping}).
+First, we need to remove the sky-level from each image using @ref{NoiseChisel}, then we'll stack the @code{INPUT-NO-SKY} extensions using sigma-clipping (to reject outliers by @ref{Sigma clipping}, using the @ref{Stacking operators}).
 
 @example
 $ astnoisechisel jplus-e1.fits -ojplus-nc1.fits
@@ -19823,18 +19824,19 @@ Scroll your mouse or touchpad to zoom into the image.
 @end enumerate
 
 @noindent
-You clearly see that the stacked image is deeper and that there is no Moir@'e pattern, while you have slighly improved the spatial resolution of the output compared to the input.
-In case you want the stack to have the original pixel resolution, you just need one more Warping command:
+You clearly see that the stacked image is deeper and that there is no Moir@'e pattern, while you have slighly @emph{improved} the spatial resolution of the output compared to the input.
+In case you want the stack to have the original pixel resolution, you just need one more warp:
 
 @example
 $ astwarp jplus-stack.fits --cdelt=$cdelt -ojplus-stack-origres.fits
 @end example
 
-For optimal results, the improved resolution in the process below should be determined by the dithering pattern of the observation:
-For example if you only have two dither points, you want the pixels with maximum value in the @code{MAX-FRAC} image to fall on those with a minimum value in the other dither position.
-Ideally, many more dither points should be chosen (for all the other reasons also), and you want to select the increased resolution such that the maximum @code{FRAC-MAX} values fall on every different pixel in each exposure.
+For optimal results, the oversampling should be determined by the dithering pattern of the observation:
+For example if you only have two dither points, you want the pixels with maximum value in the @code{MAX-FRAC} image of one exposure to fall on those with a minimum value in the other exposure.
+Ideally, many more dither points should be chosen when you are planning your observation (not just for the Moir@'e pattern, but also for all the other reasons mentioned above).
+Based on the dithering pattern, you want to select the increased resolution such that the maximum @code{MAX-FRAC} values fall on every different pixel of the output grid for each exposure.
 
-@node Invoking astwarp,  , Moire pattern, Warp
+@node Invoking astwarp,  , Moire pattern and its correction, Warp
 @subsection Invoking Warp
 
 Warp an input image into a new pixel grid by pixel mixing (see @ref{Resampling}).
@@ -19922,7 +19924,7 @@ As a result, with @option{--coveredfrac=0}, the sum of the pixels in the input a
 @end table
 
 @menu
-* Align pixels with WCS considering distortions:: Default operation.
+* Align pixels with WCS considering distortions::  Default operation.
 * Linear warps to be called explicitly::  Other warps.
 @end menu
 
@@ -19951,7 +19953,7 @@ In this case, the output's WCS and pixel grid will exactly match the image given
 
 Another problem that may arise when aligning images to new pixel grids is the aliasing or visible Moir@'e patterns on the output image.
 This artifact should be removed if you are stacking several exposures, especially with a dithering pattern.
-If not see @ref{Moire pattern} for ways to mitigate the visible patterns.
+If not see @ref{Moire pattern and its correction} for ways to mitigate the visible patterns.
 See the description of @option{--gridfile} below for more.
 
 @cartouche
@@ -20183,11 +20185,11 @@ To visually inspect the curvature effect on pixel area of the input image, see o
 @item --checkmaxfrac
 Check each output pixel's maximum coverage on the input data and append as the `@code{MAX-FRAC}' HDU/extension to the output aligned image.
 This option provides an easy visual inspection for possible recurring patterns or fringes caused by aligning to a new pixel grid.
-For more detail about the origin of these patterns and how to mitigate them see @ref{Moire pattern}.
+For more detail about the origin of these patterns and how to mitigate them see @ref{Moire pattern and its correction}.
 
 Note that the `@code{MAX-FRAC}' HDU/extension is not showing the patterns themselves;
 It represents the largest area coverage on the input data for that particular pixel.
-The values can be in the range between 0 to 1, where 1 means the pixel is covering at least one complete pixel of the input data .
+The values can be in the range between 0 to 1, where 1 means the pixel is covering at least one complete pixel of the input data.
 On the other hand, 0 means that the pixel is not covering any pixels of the input at all.
 @end table
 
@@ -37467,7 +37469,7 @@ This dataset should have a type of @code{GAL_TYPE_FLOAT64} and contain exactly t
 @item uint8_t checkmaxfrac
 When this is non-zero, the output will be a two-element @ref{List of gal_data_t}.
 The second element shows the @url{https://en.wikipedia.org/wiki/Moir%C3%A9_pattern, Moir@'e pattern} of the warp.
-For more, see @ref{Moire pattern}.
+For more, see @ref{Moire pattern and its correction}.
 
 @end table
 @end deftp
