@@ -152,17 +152,17 @@ A copy of the license is included in the section entitled ``GNU Free Documentati
 @subtitle
 @subtitle
 @end iftex
-@subtitle @strong{Important note:}
-@subtitle This is an @strong{under-development} Gnuastro release (bleeding-edge!).
-@subtitle It is not yet officially released.
-@subtitle The source tarball corresponding to this version is (temporarily) available at this URL:
-@subtitle @url{http://akhlaghi.org/src/gnuastro-@value{VERSION}.tar.lz}
-@subtitle (the tarball link above will not be available after the next official release)
-@subtitle The most recent under-development source and its corresponding book are available at:
-@subtitle @url{http://akhlaghi.org/gnuastro.pdf}
-@subtitle @url{http://akhlaghi.org/gnuastro-latest.tar.lz}
-@subtitle To stay up to date with Gnuastro's official releases, please subscribe to this mailing list:
-@subtitle @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}
+@c @subtitle @strong{Important note:}
+@c @subtitle This is an @strong{under-development} Gnuastro release (bleeding-edge!).
+@c @subtitle It is not yet officially released.
+@c @subtitle The source tarball corresponding to this version is (temporarily) available at this URL:
+@c @subtitle @url{http://akhlaghi.org/src/gnuastro-@value{VERSION}.tar.lz}
+@c @subtitle (the tarball link above will not be available after the next official release)
+@c @subtitle The most recent under-development source and its corresponding book are available at:
+@c @subtitle @url{http://akhlaghi.org/gnuastro.pdf}
+@c @subtitle @url{http://akhlaghi.org/gnuastro-latest.tar.lz}
+@c @subtitle To stay up to date with Gnuastro's official releases, please subscribe to this mailing list:
+@c @subtitle @url{https://lists.gnu.org/mailman/listinfo/info-gnuastro}
 @author Mohammad Akhlaghi
 
 @page
@@ -293,7 +293,7 @@ General program usage tutorial
 * Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
-* Reddest clumps cutouts and parallelization::  Parallization and selecting a subset of the data.
+* Reddest clumps cutouts and parallelization::  Parallelization and selecting a subset of the data.
 * FITS images in a publication::  How to display FITS images in a PDF.
 * Marking objects for publication::  How to mark some objects over the image in a PDF.
 * Writing scripts to automate the steps::  Scripts will greatly help in re-doing things fast.
@@ -1326,7 +1326,7 @@ It is GNU Bash that then talks to kernel.
 To better clarify, let's use this analogy inspired from one of the links above@footnote{https://www.gnu.org/gnu/gnu-users-never-heard-of-gnu.html}: saying that you are ``running Linux'' is like saying you are ``driving your engine''.
 The car's engine is the main source of power in the car, no one doubts that.
 But you do not ``drive'' the engine, you drive the ``car''.
-The engine alone is useless for transportaion without the radiator, battery, transmission, wheels, chassis, seats, wind-shield, etc.
+The engine alone is useless for transportation without the radiator, battery, transmission, wheels, chassis, seats, wind-shield, etc.
 
 @cindex Window Subsystem for Linux
 To have an operating system, you need lower-level tools (to build the kernel), and higher-level (to use it) software packages.
@@ -1360,7 +1360,7 @@ Here we hope to convince you of the unique benefits of this interface which can 
 Through GNOME 3@footnote{@url{http://www.gnome.org/}}, most GNU/Linux based operating systems now have an advanced and useful GUI.
 Since the GUI was created long after the command-line, some wrongly consider the command line to be obsolete.
 Both interfaces are useful for different tasks.
-for example, you cannot view an image, video, pdf document or web page on the command-line.
+for example, you cannot view an image, video, PDF document or web page on the command-line.
 On the other hand you cannot reproduce your results easily in the GUI.
 Therefore they should not be regarded as rivals but as complementary user interfaces, here we will outline how the CLI can be useful in scientific programs.
 
@@ -1632,7 +1632,7 @@ Roland Bacon,
 Roberto Baena Gall@'e,
 Zahra Bagheri,
 Karl Berry,
-Faezeh Bijarchian,
+Faezeh Bidjarchian,
 Leindert Boogaard,
 Nicolas Bouch@'e,
 Stefan Br@"uns,
@@ -1710,6 +1710,7 @@ Ignacio Ruiz Cejudo,
 Teymoor Saifollahi,
 Joanna Sakowska,
 Elham Saremi,
+Nafise Sedighi,
 Markus Schaney,
 Yahya Sefidbakht,
 Alejandro Serrano Borlaff,
@@ -1873,7 +1874,7 @@ This will help simulate future situations when you are processing your own datas
 * Column statistics color-magnitude diagram::  Visualizing column correlations.
 * Aperture photometry::         Doing photometry on a fixed aperture.
 * Matching catalogs::           Easily find corresponding rows from two catalogs.
-* Reddest clumps cutouts and parallelization::  Parallization and selecting a subset of the data.
+* Reddest clumps cutouts and parallelization::  Parallelization and selecting a subset of the data.
 * FITS images in a publication::  How to display FITS images in a PDF.
 * Marking objects for publication::  How to mark some objects over the image in a PDF.
 * Writing scripts to automate the steps::  Scripts will greatly help in re-doing things fast.
@@ -2033,7 +2034,7 @@ $ astscript-fits-view \
 @end example
 
 After running this command, you will see that the DS9 window fully covers the height of your monitor, it is showing the whole image, using a more clear color-map, and many more useful things.
-Infact, you see the DS9 command that is used in your terminal@footnote{When comparing DS9's command-line options to Gnuastro's, you will notice how SAO DS9 does not follow the GNU style of options where ``long'' and ``short'' options are preceded by @option{--} and @option{-} respectively (for example, @option{--width} and @option{-w}, see @ref{Options}).}.
+In fact, you see the DS9 command that is used in your terminal@footnote{When comparing DS9's command-line options to Gnuastro's, you will notice how SAO DS9 does not follow the GNU style of options where ``long'' and ``short'' options are preceded by @option{--} and @option{-} respectively (for example, @option{--width} and @option{-w}, see @ref{Options}).}.
 On GNU/Linux operating systems (like Ubuntu, and Fedora), you can also set your graphics user interface to use this script for opening FITS files when you click on them.
 For more, see the instructions in the checklist at the start of @ref{Invoking astscript-fits-view}.
 
@@ -2679,7 +2680,7 @@ $ rm *.fits
 
 @node NoiseChisel and Multi-Extension FITS files, NoiseChisel optimization for detection, Warping to a new pixel grid, General program usage tutorial
 @subsection NoiseChisel and Multi-Extension FITS files
-In the previous sections, we commpleted a review of the basics of Gnuastro's programs.
+In the previous sections, we completed a review of the basics of Gnuastro's programs.
 We are now ready to do some more serious analysis on the downloaded images: extract the pixels containing signal from the image, find sub-structure of the extracted signal, do measurements over the extracted objects and analyze them (finding certain objects of interest in the image).
 
 The first step  is to separate the signal (galaxies or stars) from the background noise in the image.
@@ -3136,7 +3137,7 @@ First of all, we need to know which measurement belongs to which object or clump
 We also want to measure (in this order) the Right Ascension (with @option{--ra}), Declination (@option{--dec}), magnitude (@option{--magnitude}), and signal-to-noise ratio (@option{--sn}) of the objects and clumps.
 Furthermore, as mentioned above, we also want measurements on clumps, so we also need to call @option{--clumpscat}.
 The following command will make these measurements on Segment's F160W output and write them in a catalog for each object and clump in a FITS table.
-For more on the Zeropoint, see @ref{Brightness flux magnitude}.
+For more on the zero point, see @ref{Brightness flux magnitude}.
 
 @example
 $ mkdir cat
@@ -4071,14 +4072,14 @@ That is very good for an interactive inspection of the objects: you can zoom-in 
 Once the experimentation phase of your project is complete, you want to show these objects over the whole image in a report, paper or slides.
 
 One solution is to use DS9 itself!
-For example, run the @command{astscript-fits-view} command of the previous section to open DS9 with the regions overplotted.
+For example, run the @command{astscript-fits-view} command of the previous section to open DS9 with the regions over-plotted.
 Click on the ``File'' menu and select ``Save Image''.
 In the side-menu that opens, you have multiple formats to select from.
 Usually for publications, we want to show the regions and text (in the colorbar) in vector graphics, so it is best to export to EPS.
 Once you have made the EPS, you can then convert it to PDF with the @command{epspdf} command.
 
-Another solution is to use Gnuastro's ConvertType progarm.
-The main difference is that DS9 is a Graphic User Interfac (GUI) program, so it takes relatively long (about a second) to load, and it requires many dependencies.
+Another solution is to use Gnuastro's ConvertType program.
+The main difference is that DS9 is a Graphic User Interface (GUI) program, so it takes relatively long (about a second) to load, and it requires many dependencies.
 This will slow-down automatic conversion of many files, and will make your code hard to move to another operating system.
 DS9 does have a command-line interface that you can use to automate the creation of each file, however, it has a very peculiar command-line interface and formats (like the ``region'' files).
 However, in ConvertType, there is no graphic interface, so it has very few dependencies, it is fast, and finally, it takes normal tables (in plain-text or FITS) as input.
@@ -4128,7 +4129,7 @@ This happens because by default we are assuming a linear mapping from floating p
 @cindex Surface Brightness
 To fix this, we should move to a different mapping.
 A good, physically motivated, mapping is Surface Brightness (which is in log-scale, see @ref{Brightness flux magnitude}).
-Fortunately this is very easy to do with Gnuastro's Arithmetic program, as shown in the commands below (using the known zeropoint@footnote{@url{https://archive.stsci.edu/prepds/xdf/#science-images}}, and after calculating the pixel area in units of arcsec@mymath{^2}):
+Fortunately this is very easy to do with Gnuastro's Arithmetic program, as shown in the commands below (using the known zero point@footnote{@url{https://archive.stsci.edu/prepds/xdf/#science-images}}, and after calculating the pixel area in units of arcsec@mymath{^2}):
 
 @example
 $ zeropoint=25.94
@@ -4213,14 +4214,14 @@ $ astconvertt xdf-f160w-sb.fits --output=xdf-f160w-sb.pdf --fluxlow=20
 
 Above, we needed to re-calculate the pixel area of the warpped image, but we did not need to re-calculate the surface brightness limit!
 The reason is that the surface brightness limit is independent of the pixel area (in its derivation, the pixel area has been accounted for).
-As a side-effect of the warping, the number of pixels in the image also dramatically decreased, therefore the volumn of the output PDF (in bytes) is also smaller, making your paper/report easier to upload/download or send by email.
+As a side-effect of the warping, the number of pixels in the image also dramatically decreased, therefore the volume of the output PDF (in bytes) is also smaller, making your paper/report easier to upload/download or send by email.
 This visual resolution is still more than enough for including on top of a column in your paper!
 
 @cartouche
 @noindent
-@strong{I do not have the zeropoint of my image:} The absolute value of the zeropoint is irrelevant for the finally produced PDF.
+@strong{I do not have the zero point of my image:} The absolute value of the zero point is irrelevant for the finally produced PDF.
 We used it here because it was available and makes the numbers physically understandable.
-If you do not have the zeropoint, just set it to zero (which is also the default zeropoint used by MakeCatalog when it estimates the surface brightness limit).
+If you do not have the zero point, just set it to zero (which is also the default zero point used by MakeCatalog when it estimates the surface brightness limit).
 For the value to @option{--fluxlow} above, you can simply subtract @mymath{\sim10} from the surface brightness limit.
 @end cartouche
 
@@ -4256,7 +4257,7 @@ In @ref{FITS images in a publication} we created a ready-to-print visualization 
 However, you rarely want to show a naked image like that!
 You usually want to highlight some objects (that are the target of your science) over the image and show different marks for the various types of objects you are studying.
 In this tutorial, we will do just that: select a sub-set of the full catalog of clumps, and show them with different marks shapes and colors, while also adding some text under each mark.
-To add coordiantes on the edges of the figure in your paper, see @ref{Annotations for figure in paper}.
+To add coordinates on the edges of the figure in your paper, see @ref{Annotations for figure in paper}.
 
 To start with, let's put a red plus sign over the sub-sample of reddest clumps similar to @ref{Reddest clumps cutouts and parallelization}.
 First, we will need to make the table of marks.
@@ -4533,7 +4534,7 @@ When confronted with these characters, the script will be interpreted with the p
 In this case, we want to write a shell script and the most common shell program is GNU Bash which is installed in @file{/bin/bash}.
 So the first line of your script should be `@code{#!/bin/bash}'@footnote{
 When the script is to be run by the same shell that is calling it (like this script), the shebang is optional.
-But it is still recommended, because it ensures that even if the user is not using GNU Bash, the script will be run in GNU Bash: given the differences between various shells, writing truely portable shell scripts, that can be run by many shell programs/implementations, is not easy (sometimes not possible!).}.
+But it is still recommended, because it ensures that even if the user is not using GNU Bash, the script will be run in GNU Bash: given the differences between various shells, writing truly portable shell scripts, that can be run by many shell programs/implementations, is not easy (sometimes not possible!).}.
 
 It may happen (rarely) that GNU Bash is in another location on your system.
 In other cases, you may prefer to use a non-standard version of Bash installed in another location (that has higher priority in your @code{PATH}, see @ref{Installation directory}).
@@ -7278,7 +7279,7 @@ To make sure if the catalog's content is correct (and there was no typo for exam
 
 @cindex Zero point
 Now that the catalog is created, Sufi is ready to call MakeProfiles to build the image containing these objects.
-He looks into his records and finds that the zero point magnitude for that night, and that particular detector, was 18 mangnitudes.
+He looks into his records and finds that the zero point magnitude for that night, and that particular detector, was 18 magnitudes.
 The student was a little confused on the concept of zero point, so Sufi pointed him to @ref{Brightness flux magnitude}, which the student can study in detail later.
 Sufi therefore runs MakeProfiles with the command below:
 
@@ -7783,7 +7784,7 @@ If the @command{./configure} script cannot find any of these optional dependenci
 If you continue the build and request an operation that uses a missing library, Gnuastro's programs will warn that the optional library was missing at build-time and abort.
 Since Gnuastro was built without that library, installing the library afterwards will not help.
 The only way is to re-build Gnuastro from scratch (after the library has been installed).
-However, for program dependencies (like cURL or GhostScript) things are easier: you can install them after building Gnuastro also.
+However, for program dependencies (like cURL or Ghostscript) things are easier: you can install them after building Gnuastro also.
 This is because libraries are used to build the internal structure of Gnuastro's executables.
 However, a program dependency is called by Gnuastro's programs at run-time and has no effect on their internal structure.
 So if a dependency program becomes available later, it will be used next time it is requested.
@@ -7814,7 +7815,7 @@ See @ref{Review of library fundamentals} to learn more about libraries.
 GNU Make is a workflow management system that can be used to run a series of commands in a specific order, and in parallel if you want.
 GNU Make offers special features to extend it with custom functions within a dynamic library.
 They are defined in the @file{gnumake.h} header.
-If @file{gnumake.h} can be found on your system at configuartion time, Gnuastro will build a custom library that GNU Make can use for extended functionality in (astronomical) data analysis scenarios.
+If @file{gnumake.h} can be found on your system at configuration time, Gnuastro will build a custom library that GNU Make can use for extended functionality in (astronomical) data analysis scenarios.
 
 @item libgit2
 @cindex Git
@@ -8129,7 +8130,7 @@ $ sudo apt-get install libgsl-dev libcfitsio-dev \
                        wcslib-dev
 @end example
 
-@item Optional dependendencies
+@item Optional dependencies
 If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
 @example
 $ sudo apt-get install ghostscript libtool-bin \
@@ -8172,7 +8173,7 @@ $ sudo dnf install gsl-devel cfitsio-devel \
                    wcslib-devel
 @end example
 
-@item Optional dependendencies
+@item Optional dependencies
 If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
 @example
 $ sudo dnf install ghostscript libtool \
@@ -8210,7 +8211,7 @@ $ brew tap brewsci/science
 $ brew install wcslib gsl cfitsio
 @end example
 
-@item Optional dependendencies
+@item Optional dependencies
 If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
 @example
 $ brew install ghostscript libtool libjpeg \
@@ -8239,7 +8240,7 @@ Without these, Gnuastro cannot be built, they are necessary for input/output and
 $ sudo pacman -S gsl cfitsio wcslib
 @end example
 
-@item Optional dependendencies
+@item Optional dependencies
 If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
 @example
 $ sudo pacman -S ghostscript libtool libjpeg \
@@ -8277,7 +8278,7 @@ $ sudo zypper install gsl-devel cfitsio-devel \
                       wcslib-devel
 @end example
 
-@item Optional dependendencies
+@item Optional dependencies
 If present, these libraries can be used in Gnuastro's build for extra features, see @ref{Optional dependencies}.
 @example
 $ sudo zypper install ghostscript_any libtool \
@@ -8498,7 +8499,7 @@ $ ./bootstrap --copy --gnulib-srcdir=$DEVDIR/gnulib
 @cindex GNU Automake
 @cindex GNU C library
 @cindex GNU build system
-Since Gnulib and Autoconf archives are now available in your local directories, you do not need an internet connection every time you decide to remove all untracked files and redo the bootstrap (see box below).
+Since Gnulib and Autoconf archives are now available in your local directories, you do not need an internet connection every time you decide to remove all un-tracked files and redo the bootstrap (see box below).
 You can also use the same command on any other project that uses Gnulib.
 All the necessary GNU C library functions, Autoconf macros and Automake inputs are now available along with the book figures.
 The standard GNU build system (@ref{Quick start}) will do the rest of the job.
@@ -9471,7 +9472,7 @@ This error is a known issue@footnote{@url{https://wiki.archlinux.org/title/Image
 In short, @code{imagemagick} uses Ghostscript for PDF, EPS, PS and XPS parsing.
 However, because some security vulnerabilities have been found in Ghostscript@footnote{@url{https://security.archlinux.org/package/ghostscript}}, by default, ImageMagick may be compiled without Ghostscript library.
 In such cases, if allowed, ImageMagick will fall back to the external @command{gs} command instead of the library.
-But this may be disabled with the following (or a similar) lines in @code{/etc/ImageMagick-7/policy.xml} (anything related to PDF, PS, or GhostScript).
+But this may be disabled with the following (or a similar) lines in @code{/etc/ImageMagick-7/policy.xml} (anything related to PDF, PS, or Ghostscript).
 
 @example
 <policy domain="delegate" rights="none" pattern="gs" />
@@ -11935,7 +11936,7 @@ If the dataset has more than 3 dimensions, only the pixel-scale values are print
 
 @item --pixelareaarcsec2
 Print the HDU's pixel area in units of arcsec@mymath{^2}.
-This option only works on 2D images, that have WCS coordiantes in units of degrees.
+This option only works on 2D images, that have WCS coordinates in units of degrees.
 For lower-level information about the pixel scale in each dimension, see @option{--pixelscale} (described above).
 
 @item --skycoverage
@@ -12310,7 +12311,7 @@ Similar to @option{checksum}, but only write the @code{DATASUM} keyword (that do
 @itemx --asis=STR
 Write the given @code{STR} @emph{exactly} as it is, into the given FITS file header with no modifications.
 If the contents of @code{STR} does not conform to the FITS standard for keywords, then it may (most probably: it will!) corrupt your file and you may not be able to open it any more.
-So please be @strong{very careful} with this option (its your responsability to make sure that the string conforms with the FITS standard for keywords).
+So please be @strong{very careful} with this option (its your responsibility to make sure that the string conforms with the FITS standard for keywords).
 
 If you want to define the keyword from scratch, it is best to use the @option{--write} option (see below) and let CFITSIO worry about complying with the FITS standard.
 Also, you want to copy keywords from one FITS file to another, you can use @option{--copykeys} that is described below.
@@ -12633,7 +12634,7 @@ A tutorial on how to add markers over an image is then given in @ref{Marking obj
 @cindex Raster graphics
 @cindex Graphics (raster)
 Images that are produced by a hardware (for example, the camera in your phone, or the camera connected to a telescope) provide pixelated data.
-Such data are therefore stored in a @url{https://en.wikipedia.org/wiki/Raster_graphics, Raster graphics} format which has descrete, independent, equally spaced data elements.
+Such data are therefore stored in a @url{https://en.wikipedia.org/wiki/Raster_graphics, Raster graphics} format which has discrete, independent, equally spaced data elements.
 for example, this is the format used FITS (see @ref{Fits}), JPEG, TIFF, PNG and other image formats.
 
 @cindex Vector graphics
@@ -12649,7 +12650,7 @@ The most common vector graphics format is PDF for document sharing or SVG for we
 
 The pixels of a raster image can be shown as vector-based squares with different shades, so vector graphics can generally also support raster graphics.
 This is very useful when you want to add some graphics over an image to help your discussion (for example a @mymath{+} over your object of interest).
-However, vector graphics is not optimized for rasterized data (which are usually also noisy!), and can ither not display nicely, or result in much larger file volumns (in bytes).
+However, vector graphics is not optimized for rasterized data (which are usually also noisy!), and can either not display nicely, or result in much larger file volume (in bytes).
 Therefore, if it is not necessary to add any marks over a FITS image, for example, it may be better to store it in a rasterized format.
 
 The distinction between the vector and raster graphics is also the primary theme behind Gnuastro's logo, see @ref{Logo of Gnuastro}.
@@ -12804,7 +12805,7 @@ To print to the standard output, set the output name to `@file{stdout}'.
 @cindex Channel (color)
 Color is generally defined after mixing various data ``channels''.
 The values for each channel usually come a filter that is placed in the optical path.
-Filters, only allow a certrain window of the spectrum to pass (for example, the SDSS @emph{r} filter only alows light from about 5500 to 7000 Angstroms).
+Filters, only allow a certain window of the spectrum to pass (for example, the SDSS @emph{r} filter only allows light from about 5500 to 7000 Angstroms).
 In digital monitors or common digital cameras, a different set of filters are used: Red, Green and Blue (commonly known as RGB) that are more optimized to the eye's perception.
 On the other hand, when printing on paper, standard printers use the cyan, magenta, yellow and key (CMYK, key=black) color space.
 
@@ -12937,7 +12938,7 @@ $ astconvertt --listcolors
 
 In order to use different images as color channels, it is important that the images be properly aligned and on the same pixel grid.
 When your inputs are high-level products of the same survey, this is usually the case.
-However, in many other situations the images you placen to use as different color channels lie on different sky positions, even if they may have the same number of pixels.
+However, in many other situations the images you plan to use as different color channels lie on different sky positions, even if they may have the same number of pixels.
 In this section we will show how to solve this problem.
 
 For an example dataset, let's use the same SDSS field that we used in @ref{Detecting large extended targets}: the field covering the outer parts of the M51 group.
@@ -12976,7 +12977,7 @@ To solve this problem, you need to align the three color channels into the same 
 To do that, we will use the @ref{Warp} program and in particular, its @ref{Align pixels with WCS considering distortions}.
 
 Let's take the middle (r band) filter as the reference to define our grid.
-With the first command below, let's align the r band filter to the celestial coordiantes (so the M51 group's position angle doesn't depend on the orientation of the telescope when it took this image).
+With the first command below, let's align the r band filter to the celestial coordinates (so the M51 group's position angle doesn't depend on the orientation of the telescope when it took this image).
 With the next two commands, let's use the @option{--gridfile} to ensure that the pixel grid and WCS comes from the r band image, but the pixel values come from the other two filters.
 Finally, in the last command, we'll produce the color PDF from the three aligned images (that aren't in the @file{inputs/} directory any more):
 
@@ -13330,7 +13331,7 @@ sbhigh=30                # Maximum surface brightness.
 bdir=build               # Build directory location on filesystem.
 numticks=7               # Number of major ticks in each axis.
 redshift=0.619           # Redshift of object of interest.
-zeropoint=25.94          # Zeropoint of input image.
+zeropoint=25.94          # Zero point of input image.
 scalelineinkpc=20        # Length of scale-line (in kilo parsecs).
 input=ah_f160w.fits      # Name of input (to crop).
 
@@ -13700,7 +13701,7 @@ Note that this behavior is ideal for gray-scale images, if you want a color imag
 @subsubsection Drawing with vector graphics
 
 With the options described in this section, you can draw marks over your to-be-published images (for example, in PDF).
-Each mark can be highly customized so they can have different shapes, colors, linewidths, text, text size, etc.
+Each mark can be highly customized so they can have different shapes, colors, line widths, text, text size, etc.
 The properties of the marks should be stored in a table that is given to the @option{--marks} option described below.
 A fully working demo on adding marks is provided in @ref{Marking objects for publication}.
 
@@ -13718,7 +13719,7 @@ The value to @option{--widthincm} is the to-be width of the image in centimeters
 It therefore defines the thickness of lines or font sizes for your vector graphics features (like the image border or marks).
 Just recall that we are not talking about resolution!
 Vector graphics have infinite resolution!
-We are talking about the relative thickness of the lines (or font sizes) in releation to the pixels in your background image.
+We are talking about the relative thickness of the lines (or font sizes) in relation to the pixels in your background image.
 
 @table @option
 @item -b INT
@@ -13773,12 +13774,12 @@ The column names (or numbers) containing the coordinates of each mark (in table 
 Only two values should be given to this option (one for each coordinate).
 They can either be given to one call (@option{--markcoords=RA,DEC}) or in separate calls (@option{--markcoords=RA --markcoords=DEC}).
 
-When @option{--mode=image} the columns will be associated to the horizonal/vertical coordinates of the image, and interpretted in units of pixels.
-In @option{--mode=wcs}, the columns will be assocated to the WCS coordinates (typically Right Ascension and Declination, in units of degrees).
+When @option{--mode=image} the columns will be associated to the horizontal/vertical coordinates of the image, and interpreted in units of pixels.
+In @option{--mode=wcs}, the columns will be associated to the WCS coordinates (typically Right Ascension and Declination, in units of degrees).
 
 @item -O STR
 @itemx --mode=STR
-The coordinate mode for interpretting the values in the columns given to the @option{--markcoord1} and @option{--markcoord2} options.
+The coordinate mode for interpreting the values in the columns given to the @option{--markcoord1} and @option{--markcoord2} options.
 The acceptable values are either @code{img} (for image or pixel coordinates), and @code{wcs} for World Coordinate System (typically RA and Dec).
 For the WCS-mode, the input image should have the necessary WCS keywords, otherwise ConvertType will crash.
 
@@ -13877,15 +13878,15 @@ In WCS-mode, assume that the sizes are in units of arc-seconds.
 By default, when in WCS-mode, the sizes are assumed to be in the units of the WCS coordinates (usually degrees).
 
 @item --marklinewidth=STR/INT
-Column containg the width (thickness) of the line to draw each mark.
-The linewidth is measured in units of ``points'' (where 72 points is one inch), and it can be any positive floating point number.
+Column containing the width (thickness) of the line to draw each mark.
+The line width is measured in units of ``points'' (where 72 points is one inch), and it can be any positive floating point number.
 Therefore, the thickness (in relation to the pixels of your image) depends on @option{--widthincm} option.
 For more, see the description at the start of this section.
 
 @item --markcolor=STR/INT
 Column containing the color of the mark.
 This column can be either a string or an integer.
-As a string, the color name can be written directly in your table (this grealy helps in human readability).
+As a string, the color name can be written directly in your table (this greatly helps in human readability).
 For more on string columns see @ref{Gnuastro text table format}.
 As an integer, you can simply use the numerical identifier of the column.
 You can see the list of colors with their names and numerical identifiers in Gnuastro by running ConvertType with @option{--listcolors}, or see @ref{Vector graphics colors}.
@@ -13916,7 +13917,7 @@ iTerm2 is described as a successor for iTerm and works on macOS 10.14 (released 
 
 @item --marktext=STR/INT
 Column name or number that contains the text that should be printed under the mark.
-If the column is numeric, the number will be printed under the mark (for example, if you want to write teh magnitude or redshift of the object under the mark showing it).
+If the column is numeric, the number will be printed under the mark (for example, if you want to write the magnitude or redshift of the object under the mark showing it).
 For the precision of writing floating point columns, see @option{--marktextprecision}.
 But if the column has a string format (for example, the name of the object like an NGC1234), you need to define the column as a string column (see @ref{Gnuastro text table format}).
 
@@ -13940,7 +13941,7 @@ If you are already familiar with the font you want, but just want to make sure a
 Both are described below.
 
 @cindex Adding Ghostscript fonts
-It is possible to add custom fonts to Ghostscript as described in the @url{https://ghostscript.com/doc/current/Fonts.htm, Fonts section} of the Ghostscrit manual.
+It is possible to add custom fonts to Ghostscript as described in the @url{https://ghostscript.com/doc/current/Fonts.htm, Fonts section} of the Ghostscript manual.
 
 @item --markfontsize=STR/INT
 Column name or number that contains the font size to use.
@@ -15539,7 +15540,7 @@ Please see the description of this option in @ref{Invoking astcrop} for its synt
 @noindent
 @strong{CAUTION:} In WCS mode, the image has to be aligned with the celestial coordinates, such that the first FITS axis is parallel (opposite direction) to the Right Ascension (RA) and the second FITS axis is parallel to the declination.
 If these conditions are not met for an image, Crop will warn you and abort.
-You can use Warp to align the input image to standard celestial corrdinates, see @ref{Warp}.
+You can use Warp to align the input image to standard celestial coordinates, see @ref{Warp}.
 @end cartouche
 
 @end table
@@ -16439,7 +16440,7 @@ for example, the command below will take the natural logarithm of every pixel in
 $ astarithmetic image.fits log --output=log.fits
 @end example
 
-Basic mathematical operatorsTrigonometric and hyperbolic operators@item log10
+@item log10
 Base-10 logarithm of first popped operand, so ``@command{4 log}'' is equivalent to @mymath{log_{10}(4)}.
 Negative pixels will become NaN, and the output type is determined from the input, see the explanation under @command{sqrt} for more on these features.
 for example, the command below will take the base-10 logarithm of every pixel in the input.
@@ -16532,7 +16533,7 @@ See @url{https://en.wikipedia.org/wiki/Pi, Wikipedia}.
 
 @item c
 @cindex Speed of light
-The speed of light in vaccum, in units of @mymath{m/s}.
+The speed of light in vacuum, in units of @mymath{m/s}.
 see @url{https://en.wikipedia.org/wiki/Speed_of_light, Wikipedia}.
 
 @item G
@@ -16603,25 +16604,25 @@ $ astarithmetic 20 24.8 mag-to-counts --quiet
 @end example
 
 @item counts-to-sb
-Convert counts to surface brightness using the zeropoint and area (in units of arcsec@mymath{^2}).
-The first popped operand is the area (in arcsec@mymath{^2}), the second popped operand is the zeropoint and the third are the count values.
+Convert counts to surface brightness using the zero point and area (in units of arcsec@mymath{^2}).
+The first popped operand is the area (in arcsec@mymath{^2}), the second popped operand is the zero point and the third are the count values.
 Estimating the surface brightness involves taking the logarithm.
 Therefore this operator will produce NaN for counts with a negative value.
 
-for example, with the commands below, we read the zeropoint from the image headers (assuming it is in the @code{ZPOINT} keyword), we calculate the pixel area from the image itself, and we call this operator to convert the image pixels (in counts) to surface brightness (mag/arcsec@mymath{^2}).
+for example, with the commands below, we read the zero point from the image headers (assuming it is in the @code{ZPOINT} keyword), we calculate the pixel area from the image itself, and we call this operator to convert the image pixels (in counts) to surface brightness (mag/arcsec@mymath{^2}).
 
 @example
-$ zeropoint=$(astfits image.fits --keyvalue=ZPOINT -q)
+$ zero point=$(astfits image.fits --keyvalue=ZPOINT -q)
 $ pixarea=$(astfits image.fits --pixelareaarcsec2)
-$ astarithmetic image.fits $zeropoint $pixarea counts-to-sb \
+$ astarithmetic image.fits $zero point $pixarea counts-to-sb \
                 --output=image-sb.fits
 
 @end example
 For more on the definition of surface brightness see @ref{Brightness flux magnitude}, and for a fully tutorial on optimal usage of this, see @ref{FITS images in a publication}.
 
 @item sb-to-counts
-Convert surface brightness using the zeropoint and area (in units of arcsec@mymath{^2}) to counts.
-The first popped operand is the area (in arcsec@mymath{^2}), the second popped operand is the zeropoint and the third are the surface brightness values.
+Convert surface brightness using the zero point and area (in units of arcsec@mymath{^2}) to counts.
+The first popped operand is the area (in arcsec@mymath{^2}), the second popped operand is the zero point and the third are the surface brightness values.
 See the description of @command{counts-to-sb} for more.
 
 @item mag-to-sb
@@ -17230,7 +17231,7 @@ $ astarithmetic image.fits 3 0.2 2 collapse-sigclip-mean \
 @strong{Printing output of collapse in plain-text:} the default datatype of @code{collapse-sigclip-mean} is 32-bit floating point.
 This is sufficient for any observed astronomical data.
 However, if you request a plain-text output, or decide to print/view the output as plain-text on the standard output, the full set of decimals may not be printed in some situations.
-This can lead to apparently descrete values in the output of this operator when viewed in plain-text!
+This can lead to apparently discrete values in the output of this operator when viewed in plain-text!
 The FITS format is always superior (since it stores the value in binary, therefore not having the problem above).
 But if you are forced to save the output in plain-text, use the @code{float64} operator after this to change the type to 64-bit floating point (which will print more decimals).
 @end cartouche
@@ -18411,8 +18412,9 @@ If it is not it is known as @emph{Correlation}.
 To be a weighted average, the sum of the weights (the pixels in the kernel) have to be unity.
 This will have the consequence that the convolved image of an object and unconvolved object will have the same brightness (see @ref{Brightness flux magnitude}), which is natural, because convolution should not eat up the object photons, it only disperses them.
 
-The convolution of each pixel is indendent of the others pixels, and in some cases it may be necessary to convolve different parts of an image separately (for example, when you have different amplifiers on the CCD).
-Therefore, to speed up spatial convolution, Gnuastro first tesselates the input into many tiles, and does the convolution in parallel on each tile.
+The convolution of each pixel is independent of the others pixels, and in some cases it may be necessary to convolve different parts of an image separately (for example, when you have different amplifiers on the CCD).
+Therefore, to speed up spatial convolution, Gnuastro first defines a tessellation over the input; assigning each group of pixels to ``tiles''.
+It then does the convolution in parallel on each tile.
 For more on how Gnuastro's program create the tile grid (tessellation), see @ref{Tessellation}.
 
 
@@ -18431,7 +18433,7 @@ If you ran @command{$ make check} on the source files of Gnuastro, you can see t
 In the spatial domain, by default, no assumption will be made about pixels outside of the image or any blank pixels in the image.
 The problem explained above will also occur on the sides of blank regions (see @ref{Blank pixels}).
 The solution to this edge effect problem is only possible in the spatial domain.
-For pixels near the edge, we have to abandon the assumption that the sum of the kernel pixels is unity during the convolution process@footnote{ofcourse the sum of the kernel pixels still have to be unity in general.}.
+For pixels near the edge, we have to abandon the assumption that the sum of the kernel pixels is unity during the convolution process@footnote{Of course the sum of the kernel pixels still have to be unity in general.}.
 So taking @mymath{W} as the sum of the kernel pixels that overlapped with non-blank and in-image pixels, the equation in @ref{Convolution process} will become:
 
 @dispmath{C_{x,y}= { \sum_{s=-a}^{a}\sum_{t=-b}^{b}K_{s,t}\times{}I_{x+s,y+t} \over W}.}
@@ -19731,10 +19733,10 @@ One of those ``etc.'' reasons is to correct for the Moir@'e pattern in the final
 The Moir@'e pattern is fixed to the grid of the image, slightly shifting the telescope will result in the pattern appearing in different parts of the sky.
 Therefore when we later stack, or coadd, the separate exposures into a deep image, the Moir@'e pattern will be decreased there.
 However, dithering has possible drawbacks based on the scientific goal.
-For example when observing time-variable phenomena where cutting the exposures to several shorter ones is not feasable.
+For example when observing time-variable phenomena where cutting the exposures to several shorter ones is not feasible.
 If this is not the case for you (for example in galaxy evolution), continue with the rest of this section.
 
-Because we have multiple exposures that are slighly (sub-pixel) shifted, we can also increase the spatial resolution of the output.
+Because we have multiple exposures that are slightly (sub-pixel) shifted, we can also increase the spatial resolution of the output.
 For example, let's set the output coordinate-delta (or pixel scale) to be 1/2 of the input.
 In other words, the number of pixels in each dimension of the output is double the first Warp command of this section:
 
@@ -19824,7 +19826,7 @@ Scroll your mouse or touchpad to zoom into the image.
 @end enumerate
 
 @noindent
-You clearly see that the stacked image is deeper and that there is no Moir@'e pattern, while you have slighly @emph{improved} the spatial resolution of the output compared to the input.
+You clearly see that the stacked image is deeper and that there is no Moir@'e pattern, while you have slightly @emph{improved} the spatial resolution of the output compared to the input.
 In case you want the stack to have the original pixel resolution, you just need one more warp:
 
 @example
@@ -19980,12 +19982,12 @@ If you want the values to be read as pixels, also call the @option{--widthinpix}
 If a single value is given, Warp will use the same value for the second dimension (creating a square output).
 When @option{--width} or @option{--gridfile} aren't given, Warp will calculate the necessary size of the output pixel grid to fully contain the input image.
 
-Usually the WCS coordinates are in untis of degrees (defined by the @code{CUNITi} keywords of the FITS standard).
+Usually the WCS coordinates are in units of degrees (defined by the @code{CUNITi} keywords of the FITS standard).
 But entering a certain number of arcseconds or arcminutes for the width can be annoying (you will usually need to go to the calculator!).
 To simplify such situations, this option also accepts division.
 For example @option{--width=1/60,2/60} will make an aligned warp that is 1 arcmin along Right Ascension and 2 arcminutes along the Declination.
 
-With the @option{--widthinpix} option the values will be interpretted as numbers of pixels.
+With the @option{--widthinpix} option the values will be interpreted as numbers of pixels.
 In this scenario, this option should be given @emph{odd} integer(s) that are greater than 1.
 This ensures that the output image can have a @emph{central} pixel.
 Recall that through the @option{--center} option, you specify the WCS coordinate of the center of the central pixel.
@@ -20018,8 +20020,8 @@ The coordinate types of the output (@code{CTYPE1} and @code{CTYPE2} keywords in 
 By default the value to this option is `@code{RA---TAN,DEC--TAN}'.
 However, if @option{--gridfile} is given, this option is ignored.
 
-If you don't call @option{--ctype} or @option{--gridfile}, the output WCS coordinates will be Right Ascension and Declination, while the output's pojection will be @url{https://en.wikipedia.org/wiki/Gnomonic_projection,Gnomonic}, also known as Tantential (TAN).
-This combination is the most common in extragalactic imaging surveys.
+If you don't call @option{--ctype} or @option{--gridfile}, the output WCS coordinates will be Right Ascension and Declination, while the output's projection will be @url{https://en.wikipedia.org/wiki/Gnomonic_projection,Gnomonic}, also known as Tangential (TAN).
+This combination is the most common in extra-galactic imaging surveys.
 For other coordinates and projections in your output use other values, as described below.
 
 According to the FITS standard version 4.0@footnote{FITS standard version 4.0: @url{https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf}}: @code{CTYPEi} is the
@@ -20201,7 +20203,7 @@ On the other hand, 0 means that the pixel is not covering any pixels of the inpu
 
 Linear warps include operations like rotation, scaling, sheer, etc.
 For an introduction, see @ref{Linear warping basics}.
-These are warps that don't depend on the WCS of the image and should be expliclitly requested.
+These are warps that don't depend on the WCS of the image and should be explicitly requested.
 To align the input pixel coordinates with the WCS coordinates, see @ref{Align pixels with WCS considering distortions}.
 
 While they will correct any existing WCS based on the warp, they can also operate on images without any WCS.
@@ -20736,9 +20738,9 @@ The ASCII histogram that is printed on the command-line with @option{--asciihist
 @cindex Least squares fitting
 @cindex Fitting (least squares)
 @cindex Star formation main sequence
-After completing a good observation, doing robust data reduction and finalizing the measurements, it is commonly necessary to parametrize the derived correlations.
+After completing a good observation, doing robust data reduction and finalizing the measurements, it is commonly necessary to parameterize the derived correlations.
 For example, you have derived the radial profile of the PSF of your image (see @ref{Building the extended PSF}).
-You now want to parametrize the radial profile to estimate the slope.
+You now want to parameterize the radial profile to estimate the slope.
 Alternatively, you may have found the star formation rate and stellar mass of your sample of galaxies.
 Now, you want to derive the star formation main sequence as a parametric relation between the two.
 The fitting functions below can be used for such purposes.
@@ -20823,7 +20825,7 @@ The covariance matrix is also calculated, it is necessary to calculate error bar
 Finally, the reduced @mymath{\chi^2} (or @mymath{\chi_{red}^2}) of the fit is also printed (which was the measure to minimize).
 A @mymath{\chi_{red}^2\approx1} shows a good fit.
 This is good for real-world scenarios when you don't know the original values a-priori.
-For more on interpretting @mymath{\chi_{red}^2\approx1}, see @url{https://arxiv.org/abs/1012.3754, Andrae et al (2010)}.
+For more on interpreting @mymath{\chi_{red}^2\approx1}, see @url{https://arxiv.org/abs/1012.3754, Andrae et al (2010)}.
 
 The comparison of fitted and input values look pretty good, but nothing beats visual inspection!
 To see how this looks compared to the data, let's open the table again:
@@ -20834,7 +20836,7 @@ $ astscript-fits-view noisy.fits
 
 Repeat the steps below to show the scatter plot and error-bars.
 Then, go to the ``Layers'' menu and select ``Add Function Control''.
-Use the results above to fill the box infront of ``Function Expression'': @code{1.2286+(-4.5128*x)+(7.8436*x*x)}.
+Use the results above to fill the box in front of ``Function Expression'': @code{1.2286+(-4.5128*x)+(7.8436*x*x)}.
 You will see that the second order polynomial falls very nicely over the points@footnote{After plotting, you will notice that the legend made the plot too thin.
 Fortunately you have a lot of empty space within the plot.
 To bring the legend in, click on the ``Legend'' item on the bottom-left menu, in the ``Location'' tab, click on ``Internal'' and hold and move it to the top-left in the box below.
@@ -20853,7 +20855,7 @@ $ aststatistics noisy.fits -cX,Y,Yerr --fit=polynomial-weighted \
                 --fitmaxpower=2 --fitestimate=self --output=est.fits
 @end example
 
-You will see a new line printed in the output, saying that the estimation was writte in @file{est.fits}.
+You will see a new line printed in the output, saying that the estimation was written in @file{est.fits}.
 You can now inspect the two tables with TOPCAT again with the command below.
 After TOPCAT opens, plot both scatter plots:
 
@@ -20861,7 +20863,7 @@ After TOPCAT opens, plot both scatter plots:
 $ astscript-fits-view noisy.fits est.fits
 @end example
 
-It is clear that they fall nicely ontop of each other.
+It is clear that they fall nicely on top of each other.
 The @file{est.fits} table also has a third column with error bars.
 You can follow the same steps before and draw the error bars to see how they compare with the scatter of the measured data.
 They are much smaller than the error in each point because we had a very good sampling of the function in our noisy data.
@@ -21714,7 +21716,7 @@ Similar to @option{--onebinstart}, but for the second column when a 2D histogram
 
 With the options below, you can customize the least squares fitting features of Statistics.
 For a tutorial of the usage of least squares fitting in Statistics, please see @ref{Least squares fitting}.
-Here, we will just reivew the details of each option.
+Here, we will just review the details of each option.
 
 To activate least squares fitting in Statistics, it is necessary to use the @option{--fit} option to specify the type of fit you want to do.
 See the description of @option{--fit} for the various available fitting models.
@@ -21770,19 +21772,19 @@ They are based on the @url{https://www.gnu.org/software/gsl/doc/html/lls.html, l
 @item linear-no-constant-weighted
 @mymath{Y=c_1X}; accounting for ``weights'' in @mymath{Y}.
 @item polynomial
-@mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; the maximum required power (@mymath{n}) is specifed by @option{--fitmaxpower}.
+@mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; the maximum required power (@mymath{n}) is specified by @option{--fitmaxpower}.
 @item polynomial-weighted
 @mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; accounting for ``weights'' in @mymath{Y}.
-The maximum required power (@mymath{n}) is specifed by @option{--fitmaxpower}.
+The maximum required power (@mymath{n}) is specified by @option{--fitmaxpower}.
 @item polynomial-robust
 @cindex Robust polynomial fit
 @cindex Polynomial fit (robust)
 @mymath{Y=c_0+c_1X+c_2X^2+\cdots+c_nX^n}; rejects outliers.
 The function to use for outlier removal can be specified with the @option{--fitrobust} option described below.
 This model doesn't take weights since they are calculated internally based on the outlier removal function (requires two input columns).
-The maximum required power (@mymath{n}) is specifed by @option{--fitmaxpower}.
+The maximum required power (@mymath{n}) is specified by @option{--fitmaxpower}.
 
-For a comprehensive reivew of ``robust'' fitting and the available functions, please see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression} section of the GNU Scientific Library.
+For a comprehensive review of ``robust'' fitting and the available functions, please see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression} section of the GNU Scientific Library.
 @end table
 
 @item --fitweight=STR
@@ -21806,7 +21808,7 @@ The fit will return @mymath{n+1} coefficients.
 
 @item --fitrobust=STR
 The function for rejecting outliers in the @code{polynomial-robust} fitting model.
-For a comprehensive reivew of ``robust'' fitting and the available functions, please see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression} section of the GNU Scientific Library.
+For a comprehensive review of ``robust'' fitting and the available functions, please see the @url{https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression, Robust linear regression} section of the GNU Scientific Library.
 This function can take the following values:
 @table @code
 @item bisquare
@@ -23536,7 +23538,7 @@ But this is wrong because magnitude is a logarithmic scale while area is linear.
 It is the brightness that should be divided by the solid angle because both have linear scales.
 The magnitude of that ratio is then defined to be the surface brightness.
 
-One usual application of this is to convert an image's pixel values to surface brightness, when you know its zeropoint.
+One usual application of this is to convert an image's pixel values to surface brightness, when you know its zero point.
 This can be done with the two simple commands below.
 First, we derive the pixel area (in arcsec@mymath{^2}) then we use Arithmetic to convert the pixels into surface brightness, see below for the details.
 
@@ -25553,7 +25555,7 @@ Recall that an ellipsoid can be characterized with
 @cindex Making profiles pixel by pixel
 @cindex Pixel by pixel making of profiles
 MakeProfiles builds the profile starting from the nearest element (pixel in an image) in the dataset to the profile center.
-The profile value is calculated for that central pixel using monte carlo integration, see @ref{Sampling from a function}.
+The profile value is calculated for that central pixel using Monte Carlo integration, see @ref{Sampling from a function}.
 The next pixel is the next nearest neighbor to the central pixel as defined by @mymath{r_{el}}.
 This process goes on until the profile is fully built upto the truncation radius.
 This is done fairly efficiently using a breadth first parsing strategy@footnote{@url{http://en.wikipedia.org/wiki/Breadth-first_search}} which is implemented through an ordered linked list.
@@ -26335,7 +26337,7 @@ This option may also be used to create a 3D kernel.
 To do that, two small modifications are necessary: add a @code{-3d} (or @code{-3D}) to the profile name (for example, @code{moffat-3d}) and add a number (axis-ratio along the third dimension) to the end of the parameters for all profiles except @code{point}.
 The main reason behind providing an axis ratio in the third dimension is that in 3D astronomical datasets, commonly the third dimension does not have the same nature (units/sampling) as the first and second.
 
-for example, in IFU (optical) or Radio datacubes, the first and second dimensions are commonly spatial/angular positions (like RA and Dec) but the third dimension is wavelength or frequency (in units of Angstroms for Herz).
+For example, in IFU (optical) or Radio data cubes, the first and second dimensions are commonly spatial/angular positions (like RA and Dec) but the third dimension is wavelength or frequency (in units of Angstroms for Herz).
 Because of this different nature (which also affects the processing), it may be necessary for the kernel to have a different extent in that direction.
 
 If the 3rd dimension axis ratio is equal to @mymath{1.0}, then the kernel will be a spheroid.
@@ -26354,7 +26356,7 @@ A spherical Gaussian kernel with FWHM of 2 pixels and truncated at 3 times
 the FWHM.
 @end table
 
-Ofcourse, if a specific kernel is needed that does not fit the constraints imposed by this option, you can always use a catalog to define any arbitrary kernel.
+Of course, if a specific kernel is needed that does not fit the constraints imposed by this option, you can always use a catalog to define any arbitrary kernel.
 Just call the @option{--individual} and @option{--nomerged} options to make sure that it is built as a separate file (individually) and no ``merged'' image of the input profiles is created.
 
 @item -x INT,INT
@@ -27974,7 +27976,7 @@ This option can also be called multiple times.
 
 Some measurements by MakeCatalog require a per-pixel sky standard deviation (for example, magnitude error or S/N).
 Therefore when asking for such measurements, use the @option{--instd} option (described below) to specify the per-pixel sky standard deviation over each pixel.
-For other measurements like the magnitude or surface brightness, MakeCatalog will need a Zeropoint, which you can set with the @option{--zeropoint} option.
+For other measurements like the magnitude or surface brightness, MakeCatalog will need a Zero point, which you can set with the @option{--zeropoint} option.
 
 For example, by setting @option{--measure=mean,sigclip-mean --measure=median}, the mean, sigma-clipped mean and median values will be computed.
 The output radial profile will have 4 columns in this order: radial distance, mean, sigma-clipped and median.
@@ -27994,7 +27996,7 @@ $ astmkcatalog -P | grep " sigmaclip "
 
 @item -z FLT
 @itemx --zeropoint=FLT
-The Zeropoint of the input dataset.
+The Zero point of the input dataset.
 This is necessary when you request measurements like Magnitude, or Surface brightness.
 
 @item -Z
@@ -29196,7 +29198,7 @@ All Gnuastro Make functions start with the @command{ast-} prefix (similar to the
 After you have loaded Gnuastro's shared library for Makefiles within your Makefile, you can call these functions just like any Make function.
 For instructions on how to load Gnuastro's Make functions, see @ref{Loading the Gnuastro Make functions}.
 
-The Make functions in Gnuastro have been recently added (in August 2022), and will be gradually incrasing, as we find the need for more specialized functions.
+The Make functions in Gnuastro have been recently added (in August 2022), and will be gradually increasing, as we find the need for more specialized functions.
 
 @cartouche
 @noindent
@@ -29205,7 +29207,7 @@ However, when you use `@code{:=}', it is immediately expanded when defined.
 Therefore the location of a `@code{:=}' variable in the Makefile matters: if used before its definition, it will be empty!
 Those defined by `@code{=}' can be used even before they are defined!
 On the other hand, if your variable invokes functions (like @code{foreach} or @code{wildcard}), it is better to use `@code{:=}'.
-Otherwise, each time the value is used, the function will be expaned (possibly may times) and this will reduce the speed of your pipeline.
+Otherwise, each time the value is used, the function will be expanded (possibly may times) and this will reduce the speed of your pipeline.
 For more, see the @url{https://www.gnu.org/software/make/manual/html_node/Flavors.html, The two flavors of variables} in the GNU Make manual.
 @end cartouche
 
@@ -29236,7 +29238,7 @@ paper.pdf: result.fits
 @end example
 
 @item $(ast-text-contains STRING, TEXT)
-Returns all whitespace-separated words in @code{TEXT} that contain the @code{STRING}, removing any words that @emph{do not} match.
+Returns all white-space-separated words in @code{TEXT} that contain the @code{STRING}, removing any words that @emph{do not} match.
 For example, the following minimal Makefile will only print the @code{bAaz Aah} word of the list.
 
 @example
@@ -29249,10 +29251,10 @@ all:
 
 This can be thought of as Make's own @code{filter} function, but if it would accept two patterns in a format like this @code{$(filter %Aa%,$(list))} (for the example above).
 In fact, the first sentence describing this function is taken from the Make manual's first sentence that describes the @code{filter} function!
-However, unfortuantely Make's @code{filter} function only accepts a single @code{%}, not two!
+However, unfortunately Make's @code{filter} function only accepts a single @code{%}, not two!
 
 @item $(ast-text-not-contains STRING, TEXT)
-Returns all whitespace-separated words in @code{TEXT} that @emph{do not} contain the @code{STRING}, removing any words that @emph{do not} match.
+Returns all white-space-separated words in @code{TEXT} that @emph{do not} contain the @code{STRING}, removing any words that @emph{do not} match.
 This is the inverse of the @code{ast-text-contains} function.
 For example, the following minimal Makefile will print @code{fooo baar uggh} word of the list.
 
@@ -29297,7 +29299,7 @@ For example, let's assume that you are looking at a night's observations with a 
 This keyword can have the name of the various science targets (for example, @code{NGC123} and @code{M31}) and calibration targets (for example, @code{BIAS} and @code{FLAT}).
 The list of science targets is different from project to project, such that in one night, you can observe multiple projects.
 But the calibration frames have unique names.
-Knowing the calibration keyword values, you can extract the science keyword values of the night with the command below (feeding the outupt of this function to Make's @code{filter-out} function).
+Knowing the calibration keyword values, you can extract the science keyword values of the night with the command below (feeding the output of this function to Make's @code{filter-out} function).
 
 @example
 calib = BIAS FLAT
@@ -29825,7 +29827,7 @@ Once your program grows and you break it up into multiple files (which are much 
 @cindex GCC: GNU Compiler Collection
 @cindex GNU Compiler Collection (GCC)
 C compiler to use for the compilation, if not given environment variables will be used as described in the next paragraph.
-If the compiler is in your systems's search path, you can simply give its name, for example, @option{--cc=gcc}.
+If the compiler is in your system's search path, you can simply give its name, for example, @option{--cc=gcc}.
 If it is not in your system's search path, you can give its full path, for example, @option{--cc=/path/to/your/custom/cc}.
 
 If this option has no value after parsing the command-line and all configuration files (see @ref{Configuration file precedence}), then BuildProgram will look into the following environment variables in the given order @code{CC} and @code{GCC}.
@@ -31550,34 +31552,34 @@ If @code{max1_min0} is non-zero, then the collapsed dataset will have the maximu
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_median (gal_data_t @code{*in}, size_t @code{c_dim}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
 Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the median non-blank value along that dimension.
-Since the median involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+Since the median involves sorting, this operator benefits from many threads (which needs to be set with @code{numthreads}).
 For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_sclip_std (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
 Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the standard deviation of pixels along that dimension after sigma-clipping.
-Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+Since sigma-clipping involves sorting, this operator benefits from many threads (which needs to be set with @code{numthreads}).
 For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
 For more on sigma clipping, see @ref{Sigma clipping}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_sclip_mean (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
 Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the mean of pixels along that dimension after sigma-clipping.
-Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+Since sigma-clipping involves sorting, this operator benefits from many threads (which needs to be set with @code{numthreads}).
 For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
 For more on sigma clipping, see @ref{Sigma clipping}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_sclip_median (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
 Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the median of pixels along that dimension after sigma-clipping.
-Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+Since sigma-clipping involves sorting, this operator benefits from many threads (which needs to be set with @code{numthreads}).
 For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
 For more on sigma clipping, see @ref{Sigma clipping}.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_dimension_collapse_sclip_number (gal_data_t @code{*in}, size_t @code{c_dim}, float @code{multip}, float @code{param}, size_t @code{numthreads}, size_t @code{minmapsize}, int @code{quietmmap})
 Collapse the input dataset (@code{in}) along the given dimension (@code{c_dim}, in C definition: starting from zero, from the slowest dimension), by finding the number of pixels along that dimension after sigma-clipping.
-Since sigma-clipping involves sorting, this operator benenfits from many threads (which needs to be set with @code{numthreads}).
+Since sigma-clipping involves sorting, this operator benefits from many threads (which needs to be set with @code{numthreads}).
 For more on @code{minmapsize} and @code{quietmmap} see @ref{Memory management}.
 For more on sigma clipping, see @ref{Sigma clipping}.
 @end deftypefun
@@ -31785,7 +31787,7 @@ Return a pointer to the last node in @code{list}.
 @end deftypefun
 
 @deftypefun void gal_list_str_print (gal_list_str_t @code{*list})
-Print the strings within each node of @code{*list} on the standard outputin the same order that they are stored.
+Print the strings within each node of @code{*list} on the standard output in the same order that they are stored.
 Each string is printed on one line.
 This function is mainly good for checking/debugging your program.
 For program outputs, it is best to make your own implementation with a better, more user-friendly, format.
@@ -31810,7 +31812,7 @@ If @code{freevalue} is not zero, also free the string within the nodes.
 
 @deftypefun {gal_list_str_t *} gal_list_str_extract (char @code{*string})
 Extract space-separated components of the input string.
-If any space element should be kept (and not considered as a delimiter betwen two tokens), precede it with a back-slash (@code{\}).
+If any space element should be kept (and not considered as a delimiter between two tokens), precede it with a back-slash (@code{\}).
 @end deftypefun
 
 @deftypefun {char *} gal_list_str_cat (gal_list_str_t @code{*list})
@@ -33319,7 +33321,7 @@ Given a list of FITS file names (@code{files}), a certain HDU (@code{hdu}), a ce
 @end deftypefun
 
 @deftypefun {gal_list_str_t *} gal_fits_unique_keyvalues (gal_list_str_t *files, char *hdu, char *name)
-Given a list of FITS file names (@code{files}), a certain HDU (@code{hdu}), a certain keyword name (@code{name}), retun the list of unique values to that keyword name in all the files.
+Given a list of FITS file names (@code{files}), a certain HDU (@code{hdu}), a certain keyword name (@code{name}), return the list of unique values to that keyword name in all the files.
 @end deftypefun
 
 
@@ -33818,8 +33820,8 @@ Return the shape name from its ID.
 @deftypefun {void} gal_eps_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, uint8_t @code{bordercolor}, int @code{hex}, int @code{dontoptimize}, int @code{forps}, gal_data_t @code{*marks})
 Write the @code{in} dataset into an EPS file called @code{filename}.
 @code{in} has to be an unsigned 8-bit character type @code{GAL_TYPE_UINT8}, see @ref{Numeric data types}).
-The desired width of the image in human/non-pixel units (to help the displayer) can be set with he @code{widthincm} argument.
-If @code{borderwidth} is non-zero, it is nterpreted as the width (in points) of a solid black border around the mage.
+The desired width of the image in human/non-pixel units can be set with he @code{widthincm} argument.
+If @code{borderwidth} is non-zero, it is interpreted as the width (in points) of a solid black border around the mage.
 A border can helpful when importing the EPS file into a document.
 The color of the border can be set with @code{bordercolor}, use the macros in @ref{Color functions}.
 If @code{forpdf} is not zero, the output can be imported into a Postscript file directly (not as an ``encapsulated'' postscript, which is the default).
@@ -33876,14 +33878,14 @@ The recognized suffixes are @code{.pdf} and @code{.PDF}.
 @deftypefun {void} gal_pdf_write (gal_data_t @code{*in}, char @code{*filename}, float @code{widthincm}, uint32_t @code{borderwidth}, uint8_t @code{bordercolor}, int @code{dontoptimize}, gal_data_t @code{*marks})
 Write the @code{in} dataset into an EPS file called @code{filename}.
 @code{in} has to be an unsigned 8-bit character type (@code{GAL_TYPE_UINT8}, see @ref{Numeric data types}).
-The desired width of the image in human/non-pixel units (to help the displayer) can be set with the @code{widthincm} argument.
+The desired width of the image in human/non-pixel units can be set with the @code{widthincm} argument.
 If @code{borderwidth} is non-zero, it is interpreted as the width (in points) of a solid black border around the image.
 A border can helpful when importing the PDF file into a document.
 The color of the border can be set with @code{bordercolor}, use the macros in @ref{Color functions}.
 
 This function is just a wrapper for the @code{gal_eps_write} function in @ref{EPS files}.
 After making the EPS file, Ghostscript (with a version of 9.10 or above, see @ref{Optional dependencies}) will be used to compile the EPS file to a PDF file.
-Therefore if GhostScript does not exist, does not have the proper version, or fails for any other reason, the EPS file will remain.
+Therefore if Ghostscript does not exist, does not have the proper version, or fails for any other reason, the EPS file will remain.
 It can be used to find the cause, or use another converter or PostScript compiler.
 
 @cindex PDF
@@ -34425,14 +34427,14 @@ The latter two are the opposite.
 @cindex Surface Brightness
 Binary operators for converting brightness and surface brightness units to and from each other.
 The first operand to all of them are the values in the respective input unit.
-The second poppped operand is the zeropoint, except for the operators that involve surface brightness (those with @code{SB}).
+The second popped operand is the zero point, except for the operators that involve surface brightness (those with @code{SB}).
 For the surface brightness related operators, the second popped operand is the area in units of arcsec@mymath{^2}.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_COUNTS_TO_SB
 @deffnx Macro GAL_ARITHMETIC_OP_SB_TO_COUNTS
 Operators for converting counts to surface brightness and vice-versa.
-These operators take three operands: 1) the input dataset in units of counts or surface brightness (depending on the operator), 2) the zeropoint, 3) the area in units of arcsec@mymath{^2}.
+These operators take three operands: 1) the input dataset in units of counts or surface brightness (depending on the operator), 2) the zero point, 3) the area in units of arcsec@mymath{^2}.
 @end deffn
 
 @deffn  Macro GAL_ARITHMETIC_OP_AU_TO_PC
@@ -36423,7 +36425,7 @@ input dataset, so the input may be altered after this function.
 @cindex Fitting
 @cindex Least squares fitting
 
-After doing a measurement, it is usually necessary to parametrize the relation that has been found.
+After doing a measurement, it is usually necessary to parameterize the relation that has been found.
 The functions in this section are wrappers over the GNU Scientific Library (GSL) @url{https://www.gnu.org/software/gsl/doc/html/lls.html, Linear Least-Squares Fitting}, to make them easily accessible using Gnuastro's @ref{Generic data container}.
 The respective GSL function is mentioned under each function.
 
@@ -36534,7 +36536,7 @@ Given a linear least squares fit output (@code{fit}), estimate the fit on an arb
 @code{fit} is assumed to be the output of either @code{gal_fit_1d_linear} or @code{gal_fit_1d_linear_no_constant}.
 In case you haven't used those functions to obtain the constants and covariance matrix elements, see the description of those functions for the expected format of @code{fit}.
 
-This function returns two columns (as a @ref{List of gal_data_t}): The top node of the list is the estimated values at the input X-axis positions, and the next node is the erros in the estimation.
+This function returns two columns (as a @ref{List of gal_data_t}): The top node of the list is the estimated values at the input X-axis positions, and the next node is the errors in the estimation.
 Naturally, both have the same number of elements as @code{xin}.
 Being a list, helps in easily printing the output columns to a table (see @ref{Table input output}).
 @end deftypefun
@@ -36578,7 +36580,7 @@ Given a 1D polynomial fit output (@code{fit}), estimate the fit on an arbitrary 
 @code{fit} is assumed to be the output of @code{gal_fit_1d_polynomial}.
 In case you haven't used this function to obtain the constants and covariance matrix, see the description of that function for the expected format of @code{fit}.
 
-This function returns two columns (as a @ref{List of gal_data_t}): The top node of the list is the estimated values at the input X-axis positions, and the next node is the erros in the estimation.
+This function returns two columns (as a @ref{List of gal_data_t}): The top node of the list is the estimated values at the input X-axis positions, and the next node is the errors in the estimation.
 Naturally, both have the same number of elements as @code{xin}.
 Being a list, helps in easily printing the output columns to a table (see @ref{Table input output}).
 @end deftypefun
@@ -37023,7 +37025,7 @@ The pixels (position in @code{indexs}, values in @code{labels}) that must be ``g
 For a demonstration see Columns 2 and 3 of Figure 10 in @url{http://arxiv.org/abs/1505.01664, Akhlaghi and Ichikawa [2015]}.
 
 In many aspects, this function is very similar to over-segmentation (watershed algorithm, @code{gal_label_watershed}).
-The big difference is that in over-segmentation local maximums (that are not touching any alreadylabeled pixel) get a separate label.
+The big difference is that in over-segmentation local maximums (that are not touching any already labeled pixel) get a separate label.
 However, here the final number of labels will not change.
 All pixels that are not directly touching a labeled pixel just get pushed back to the start of the loop, and the loop iterates until its size does not change any more.
 This is because in a generic scenario some of the indexed pixels might not be reachable through other indexed pixels.
@@ -37357,7 +37359,7 @@ blank. To see if any blank (non-interpolated) elements remain, you can use
 @node Warp library, Color functions, Interpolation, Gnuastro library
 @subsection Warp library (@file{warp.h})
 
-Warping an image to a new pixel grid is commonly necessary as part of astronomical data redution, for an introduction, see @ref{Warp}.
+Warping an image to a new pixel grid is commonly necessary as part of astronomical data reduction, for an introduction, see @ref{Warp}.
 For details of how we resample the old pixel grid to the new pixel grid, see @ref{Resampling}.
 Gnuastro's Warp program uses the following functions for its default mode (when no linear warps are requested).
 Through the following functions, you can directly access those features in your own custom programs.
@@ -37434,7 +37436,7 @@ For more, see the description of @option{--coveredfrac} in @ref{Invoking astwarp
 Set the number of extra vertices along each edge of the output pixel's polygon to account for potential curvature due to projection or distortion.
 A value of @code{0} is usually enough for this (so the pixel is only defined by a four vertice polygon.
 Greater values increase memory usage and program execution time.
-For more, plese see the description of @option{--edgesampling} in @ref{Align pixels with WCS considering distortions}.
+For more, please see the description of @option{--edgesampling} in @ref{Align pixels with WCS considering distortions}.
 
 @item gal_data_t *widthinpix
 Output image size (width and height) in number of pixels.
@@ -37518,7 +37520,7 @@ The caller must free the input pointers themselves, this function will not free 
 
 @deftypefun void gal_warp_pixelarea (gal_warp_wcsalign_t *wa)
 Calculate each input pixel's area based on its WCS and save it to a copy of the input image with only one difference: the pixel values now show pixel area.
-For examples on itse usage, see @ref{Pixel information images}.
+For examples on its usage, see @ref{Pixel information images}.
 @end deftypefun
 
 
@@ -37531,7 +37533,7 @@ For examples on itse usage, see @ref{Pixel information images}.
 @cindex Colors
 The available pre-defined colors in Gnuastro are shown and discussed in @ref{Vector graphics colors}.
 This part of Gnuastro is currently in charge of mapping the color names to the color IDs and to return the red-green-blue fractions of each color.
-On a terminal that supports 24-bit (true color), you can see the full list of color names and a demo of each color with this commadn:
+On a terminal that supports 24-bit (true color), you can see the full list of color names and a demo of each color with this command:
 
 @example
 $ astconvertt --listcolors
@@ -37564,7 +37566,7 @@ Given the ID of a color, return its name.
 
 @deftypefun void gal_color_in_rgb (uint8_t @code{color}, float @code{*f})
 Given the identifier of a color, write the color's red-green-blue fractions in the space that @code{f} points to.
-It is upto the caller to have the space for three 32-bit floating point numbers to be already allocated before calling this function.
+It is up to the caller to have the space for three 32-bit floating point numbers to be already allocated before calling this function.
 @end deftypefun
 
 @node Git wrappers, Python interface, Color functions, Gnuastro library
@@ -37606,7 +37608,7 @@ controlled directory, then the output will be the @code{NULL} pointer.
 @node Python interface, Unit conversion library, Git wrappers, Gnuastro library
 @subsection Python interface (@file{python.h})
 
-@url{https://en.wikipedia.org/wiki/Python_(programming_language), Python} is a high-level interpretted programming language that is used by some for data analysis.
+@url{https://en.wikipedia.org/wiki/Python_(programming_language), Python} is a high-level interpreted programming language that is used by some for data analysis.
 Python itself is written in C, which is the same language that Gnuastro is written in.
 Hence Gnuastro's library can be directly used in Python wrappers.
 The functions in this section provide some low-level features to simplify the creation of Python modules that may want to use Gnuastro's advanced and powerful features directly.
@@ -37621,7 +37623,7 @@ These functions will be expanding as Gnuastro's own Python module (pyGnuastro) g
 
 The Python interface of Gnuastro's library is built and installed by default if a Python 3.0.0 or greater with NumPy is found in @code{$PATH}.
 Users may disable this interface with the @option{--without-python} option to @code{./configure} when they installed Gnuastro, see @ref{Gnuastro configure options}.
-If you have problems in a Pythin virtual env, see @ref{Optional dependencies}.
+If you have problems in a Python virtual env, see @ref{Optional dependencies}.
 
 Because Python is an optional dependency of Gnuastro, the following functions may not be available on some systems.
 To check if the installed Gnuastro library was compiled with the following functions, you can use the @code{GAL_CONFIG_HAVE_PYTHON} macro which is defined in @file{gnuastro/config.h}, see @ref{Configuration information}.
@@ -37632,7 +37634,7 @@ Returns the NumPy datatype corresponding to a certain Gnuastro @code{type}, see 
 @end deftypefun
 
 @deftypefun uint8_t gal_python_type_from_numpy (int @code{type})
-Returns Gnuastro's numerical datatype that correspondes to the input NumPy @code{type}.
+Returns Gnuastro's numerical datatype that corresponds to the input NumPy @code{type}.
 For Gnuastro's recognized data types, see @ref{Library data types}.
 @end deftypefun
 
@@ -37699,7 +37701,7 @@ For more on the equation, see @ref{Brightness flux magnitude}.
 @end deftypefun
 
 @deftypefun double gal_units_counts_to_sb (double @code{counts}, double @code{zeropoint_ab}, double @code{area_arcsec2})
-Calculate the surface brightness of a given count level, over a certain area in units of arcsec@mymath{^2}, assuming a certain AB zeropoint.
+Calculate the surface brightness of a given count level, over a certain area in units of arcsec@mymath{^2}, assuming a certain AB zero point.
 For more on the equation, see @ref{Brightness flux magnitude}.
 @end deftypefun
 
@@ -38438,7 +38440,7 @@ main(void)
 
 @node Library demo - Warp to another image, Library demo - Warp to new grid, Library demo - reading and writing table columns, Library demo programs
 @subsection Library demo - Warp to another image
-Gnuastro's warp library (that you can access by including @file{gnuastro/warp.h}) allows you to resample an image from a grid to another entirely using the WCSLIB (while acconting for distortions if necessary; see @ref{Warp library}).
+Gnuastro's warp library (that you can access by including @file{gnuastro/warp.h}) allows you to resample an image from a grid to another entirely using the WCSLIB (while accounting for distortions if necessary; see @ref{Warp library}).
 The Warp library uses a pixel-mixing or area-based resampling approach which is fully described in @ref{Resampling}.
 The most generic uses cases for this library are already available in the @ref{Invoking astwarp} program.
 For a related demo (where the output grid and WCS are constructed from scratch), see @ref{Library demo - Warp to new grid}.
@@ -38533,7 +38535,7 @@ main(void)
 
 @node Library demo - Warp to new grid,  , Library demo - Warp to another image, Library demo programs
 @subsection Library demo - Warp to new grid
-Gnuastro's warp library (that you can access by including @file{gnuastro/warp.h}) allows you to resample an image from a grid to another entirely using the WCSLIB (while acconting for distortions if necessary; see @ref{Warp library}).
+Gnuastro's warp library (that you can access by including @file{gnuastro/warp.h}) allows you to resample an image from a grid to another entirely using the WCSLIB (while accounting for distortions if necessary; see @ref{Warp library}).
 The Warp library uses a pixel-mixing or area-based resampling approach which is fully described in @ref{Resampling}.
 The most generic uses cases for this library are already available in the @ref{Invoking astwarp} program.
 For a related demo (where the output grid and WCS are imported from another file), see @ref{Library demo - Warp to another image}.
@@ -40467,7 +40469,7 @@ The cloning process above is only necessary for your first time setup, you do no
 However, please repeat the steps below for each independent issue you intend to work on.
 
 Let's assume you have found a bug in @file{lib/statistics.c}'s median  calculating function.
-Before actually doing anything, please announce it (see @ref{Report a bug}) so everyone knows you are working on it or to find out others are noty already working on it.
+Before actually doing anything, please announce it (see @ref{Report a bug}) so everyone knows you are working on it, or to confirm if others are not already working on it.
 With the commands below, you make a branch, checkout to it, correct the bug, check if it is indeed fixed, add it to the staging area, commit it to the new branch and push it to your hosting service.
 But before all of them, make sure that you are on the @file{master} branch and that your @file{master} branch is up to date with the main Gnuastro repository with the first two commands.
 

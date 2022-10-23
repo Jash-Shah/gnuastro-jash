@@ -83,8 +83,8 @@ all the commits needed for this release have been completed.
 
  - [STABLE] Remove the development notice on the first page of the PDF: in
    'doc/gnuastro.texi', put a '@c' at the start of all lines under (not
-   including) '@subtitle for version', until (not including) '@author
-   Mohammad Akhlaghi'.
+   including) '@end iftex', until (not including) '@author Mohammad
+   Akhlaghi'.
 
 
  - Commit all these changes:

@@ -171,6 +171,10 @@ Software Foundation to guarantee its freedom in the future, and not any
 particular astronomer or astronomical project, or astronomical institution,
 so please join us and feel free to use it in your research.
 
+Gnuastro's library can also be directly accessed within Makefiles (when run
+with GNU Make) to offer workflow organization features that are useful in
+data analysis with FITS files. See the "Makefile extensions" section of the
+Gnuastro manual for more.
 
 
 Installing Gnuastro
