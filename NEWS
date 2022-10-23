@@ -318,6 +318,8 @@ See the end of the file for license conditions.
   bug #63257: Fits program's '--skycoverage' gives unreasonable outputs
               when image crosses the RA=0 hour circle. Found by Irene
               Pintos Castro.
+  bug #63261: Radial profile script ignores central pixel in azimuthal
+              profiles. Found and fixed by Sepideh Eskandarlou.
 
 
 

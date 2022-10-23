@@ -27938,6 +27938,7 @@ By default, it is @option{--positionangle=0}, which means that the semi-major ax
 @cindex Azimuthal range (radial profile)
 Limit the profile to the given azimuthal angle range (two numbers given to this option, in degrees, from 0 to 360) from the major axis (defined by @option{--positionangle}).
 The radial profile will therefore be created on a wedge-like shape, not the full circle/ellipse.
+The pixel containing the center of the profile will always be included in the profile (because it contains all azimuthal angles!).
 
 If the first angle is @emph{smaller} than the second (for example, @option{--azimuth=10,80}), the region between, or @emph{inside}, the two angles will be used.
 Otherwise (for example, @option{--azimuth=80,10}), the region @emph{outside} the two angles will be used.

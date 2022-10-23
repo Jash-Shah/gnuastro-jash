@@ -630,6 +630,16 @@ if [ x"$azimuth" != x ]; then
     #     azimuthal range outside the two angles. In the example above, its
     #     the 10 degrees around the azimuthal angle 0. For this case, we
     #     should use 'or' between the two regions.
+    #
+    #   - The central pixel contains all azimuth angles, it should
+    #     therefore be included in azimthal ranges. By default MakeProfiles
+    #     is forced to give it a single azimuth angle value, so without
+    #     explicitly adding the central pixel to all azimuthal profiles, it
+    #     the radius of 1 will be ignored in some azimuthal ranges and kept
+    #     in others. But this is only because it is smaller than our
+    #     sampling rate, in practice, the central pixel contains all
+    #     azimuth angles. So when defining the 'arc', we are also adding
+    #     'radial 1 eq or' to add that central pixel.
     condition=$(echo $azimuth_ini $azimuth_fin \
                      | awk ' {if ($1<$2) print "and"; \
                               else       print "or"}')
@@ -637,7 +647,8 @@ if [ x"$azimuth" != x ]; then
                   $radialapertures  -h1 set-radial \
                   $azimuthapertures -h1 set-azimuth \
                   azimuth $azimuth_ini ge \
-                  azimuth $azimuth_fin le $condition set-arc \
+                  azimuth $azimuth_fin le $condition \
+                  radial 1 eq or set-arc \
                   radial arc 1 uint8 ne 0 uint8 where
 else
     cd $tmpdir; ln -fs $radialaperturesbase $aperturesrawbase; cd $curdir
