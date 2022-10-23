@@ -315,6 +315,9 @@ See the end of the file for license conditions.
               being NaN, reported by Nafise Sedighi.
   bug #63207: Match crashes when one input has no rows. Found by Sepideh
               Eskandarlou.
+  bug #63257: Fits program's '--skycoverage' gives unreasonable outputs
+              when image crosses the RA=0 hour circle. Found by Irene
+              Pintos Castro.
 
 
 

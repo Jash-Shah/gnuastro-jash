@@ -11975,6 +11975,10 @@ $ astfits castor.fits --skycoverage --quiet
 Note that this is a simple rectangle (cube in 3D) definition, so if the image is rotated in relation to the celestial coordinates a general polygon is necessary to exactly describe the coverage.
 Hence when there is rotation, the reported area will be larger than the actual area containing data, you can visually see the area with the @option{--pixelareaonwcs} option of @ref{Fits}.
 
+Currently this option only supports images that are less than 180 degrees in width (which is usually the case!).
+This requirement has been necessary to account for images that cross the RA=0 hour circle on the sky.
+Please get in touch with us at @url{mailto:bug-gnuastro@@gnu.org} if you have an image that is larger than 180 degrees so we try to find a solution based on need.
+
 @item --datasum
 @cindex @code{DATASUM}: FITS keyword
 Calculate and print the given HDU's "datasum" to stdout.
@@ -34211,6 +34215,11 @@ In other cases, this function will return a NaN.
 @deftypefun int gal_wcs_coverage (char @code{*filename}, char @code{*hdu}, size_t @code{*ondim}, double @code{**ocenter}, double @code{**owidth}, double @code{**omin}, double @code{**omax})
 Find the sky coverage of the image HDU (@code{hdu}) within @file{filename}.
 The number of dimensions is written into @code{ndim}, and space for the various output arrays is internally allocated and filled with the respective values.
+Therefore you need to free them afterwards.
+
+Currently this function only supports images that are less than 180 degrees in width (which is usually the case!).
+This requirement has been necessary to account for images that cross the RA=0 hour circle on the sky.
+Please get in touch with us at @url{mailto:bug-gnuastro@@gnu.org} if you have an image that is larger than 180 degrees so we try to find a solution based on need.
 @end deftypefun
 
 @deftypefun {gal_data_t *} gal_wcs_world_to_img (gal_data_t @code{*coords}, struct wcsprm @code{*wcs}, int @code{inplace})

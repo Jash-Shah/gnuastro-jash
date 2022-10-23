@@ -1115,8 +1115,8 @@ warp_pixelarea_onthread(void *inparam)
 
   /* Low-level variables. */
   size_t i, ind;
-  double area, *ocrn, *outputarr=wa->output->array;
-  double *(*warp_pixel_perimeter)(gal_warp_wcsalign_t *, size_t);
+  double area, *ocrn=NULL, *outputarr=wa->output->array;
+  double *(*warp_pixel_perimeter)(gal_warp_wcsalign_t *, size_t)=NULL;
 
   /* Call the correct function based on the output image orientation. */
   if( wa->isccw==1 )

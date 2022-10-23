@@ -2040,9 +2040,10 @@ gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
   struct wcsprm *wcs;
   int nwcs=0, type, status=0;
   char *name=NULL, *unit=NULL;
-  gal_data_t *tmp, *coords=NULL;
+  gal_data_t *fc, *tmp, *coords=NULL;
   size_t i, ndim, *dsize=NULL, numrows;
-  double *x=NULL, *y=NULL, *z=NULL, *min, *max, *center, *width;
+  size_t fullcircledim=GAL_BLANK_SIZE_T;
+  double *x=NULL, *y=NULL, *z=NULL, *min, *max, *fcarr, *center, *width;
 
   /* Read the desired WCS (note that the linear matrix is irrelevant here,
      we'll just select PC because its the default WCS mode. */
@@ -2161,20 +2162,73 @@ gal_wcs_coverage(char *filename, char *hdu, size_t *ondim,
     }
 
   /* Write the center and width. */
+  width[0]=max[0]-min[0];
+  width[1]=max[1]-min[1];
   switch(ndim)
     {
     case 2:
-      center[0]=x[4];         center[1]=y[4];
-      width[0]=max[0]-min[0]; width[1]=max[1]-min[1];
+      center[0]=x[4];  center[1]=y[4];
       break;
     case 3:
-      center[0]=x[8];         center[1]=y[8];         center[2]=z[8];
-      width[0]=max[0]-min[0]; width[1]=max[1]-min[1]; width[2]=max[2]-min[2];
+      width[2]=max[2]-min[2];
+      center[0]=x[8]; center[1]=y[8]; center[2]=z[8];
       break;
     default:
-      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to solve the "
-            "problem. The value %zu is not a recognized dimension", __func__,
-            PACKAGE_BUGREPORT, ndim);
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to solve "
+            "the problem. The value %zu is not a recognized dimension",
+            __func__, PACKAGE_BUGREPORT, ndim);
+    }
+
+  /* It may happen that the image passes the RA=0 hour circle. In that
+     case, the width along the first WCS dimension (RA) will be larger than
+     180. Therefore, we need to re-calculate the minimum and maximums. An
+     example dataset is available in https://savannah.gnu.org/bugs/?63257
+     (Gnuastro bug #63257):
+
+        $ jplusdr2url=http://archive.cefca.es/catalogues/vo/siap/jplus-dr2
+        $ wget $jplusdr2url/get_fits?id=71811 -Ojplus-dr2-71811.fits.fz
+
+     But first, we need to find the dimension that has a full-circle
+     dimension: this is usually the first WCS dimension, but it may happen
+     that it isn't. Also, note that the WCS may not be celestial/spherical
+     at all (hence why we are only doing this for pre-defined celestial
+     'CTYPE's).*/
+  for(i=0;i<ndim;++i)
+    if(   strncmp(wcs->ctype[i], "RA-",   3)==0 /* Equatorial */
+       || strncmp(wcs->ctype[i], "GLON-", 5)==0 /* Galactic */
+       || strncmp(wcs->ctype[i], "SLON-", 5)==0 /* Super Galactic */
+       || strncmp(wcs->ctype[i], "ELON-", 5)==0 /* Ecliptic */ )
+      { fullcircledim=i; break; }
+  if( fullcircledim!=GAL_BLANK_SIZE_T && width[fullcircledim]>180.0f )
+    {
+      /* Set the proper pointer to the coordinate that should be
+         checked. */
+      switch(fullcircledim)
+        {
+        case 0: fc=coords;             break;
+        case 1: fc=coords->next;       break;
+        case 2: fc=coords->next->next; break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at "
+                "'%s' to fix the problem. The value '%zu' isn't "
+                "recognized for 'fullcircledim'", __func__,
+                PACKAGE_BUGREPORT, fullcircledim);
+        }
+
+      /* Shift all the coordinates after 0, by 360, while keeping those
+         that are close to 360 untouched, then find the minimum and
+         maximums. */
+      fcarr=fc->array;
+      for(i=0;i<coords->size;++i) if(fcarr[i]<180) fcarr[i]+=360.0f;
+      tmp=gal_statistics_minimum(fc);
+      min[fullcircledim] = ((double *)(tmp->array))[0]; gal_data_free(tmp);
+      tmp=gal_statistics_maximum(fc);
+      max[fullcircledim] = ((double *)(tmp->array))[0]; gal_data_free(tmp);
+
+      /* Calculate the correct width, maximum is guarateed to be larger
+         than 360, so subtract 360 from it. */
+      width[fullcircledim]=max[fullcircledim]-min[fullcircledim];
+      max[fullcircledim]-=360.0f;
     }
 
   /* Clean up and return success. */
