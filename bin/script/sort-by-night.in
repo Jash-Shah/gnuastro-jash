@@ -275,7 +275,7 @@ list=$(astfits --keyvalue=$key --hdu=$hdu $inputs --colinfoinstdout \
                                      sec int32 86400 % '$hour' 3600  x lt \
                                      day 1 - \
                                    where' \
-                          --colmetadata=ARITH_8,NIGHT,counter,"Observing night." \
+                          --colmetadata=3,NIGHT,counter,"Observing night." \
                           --colinfoinstdout --stdintimeout=$stdintime \
                | asttable --sort=UNIXSEC --colinfoinstdout \
                           --stdintimeout=$stdintime)

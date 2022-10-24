@@ -14867,6 +14867,8 @@ Exponential notation (for example @code{1.2345689012e+06})
 @item  -p STR
 @itemx --txtf32precision=INT
 Number of digits after the decimal point (precision) for columns with a 32-bit floating point datatype.
+This can take any positive integer (including 0).
+When given a value of zero, the floating point number will be rounded to the nearest integer.
 
 @item  -d STR
 @itemx --txtf64format=STR
@@ -14883,6 +14885,8 @@ Exponential notation (for example @code{1.2345689012e+06})
 @item  -B STR
 @itemx --txtf64precision=INT
 Number of digits after the decimal point (precision) for columns with a 64-bit floating point datatype.
+This can take any positive integer (including 0).
+When given a value of zero, the floating point number will be rounded to the nearest integer.
 @end table
 
 

@@ -1201,11 +1201,13 @@ table_txt_formats(struct tableparams *p)
         {
         case GAL_TYPE_FLOAT32:
           if(p->txtf32format)    tmp->disp_fmt=p->txtf32format;
-          if(p->txtf32precision) tmp->disp_precision=p->txtf32precision;
+          if(p->txtf32precision!=GAL_BLANK_INT)
+            tmp->disp_precision=p->txtf32precision;
           break;
         case GAL_TYPE_FLOAT64:
           if(p->txtf64format)    tmp->disp_fmt=p->txtf64format;
-          if(p->txtf64precision) tmp->disp_precision=p->txtf64precision;
+          if(p->txtf64precision!=GAL_BLANK_INT)
+            tmp->disp_precision=p->txtf64precision;
           break;
         }
     }

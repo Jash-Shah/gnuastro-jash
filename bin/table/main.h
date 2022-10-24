@@ -124,8 +124,8 @@ struct tableparams
   gal_data_t     *colmetadata;  /* Set column metadata.                 */
   char          *txtf32fmtstr;  /* Floating point formats (exp, flt).   */
   char          *txtf64fmtstr;  /* Floating point formats (exp, flt).   */
-  size_t      txtf32precision;  /* Precision of float32 in text.        */
-  size_t      txtf64precision;  /* Precision of float32 in text.        */
+  int         txtf32precision;  /* Precision of float32 in text.        */
+  int         txtf64precision;  /* Precision of float32 in text.        */
 
   /* Internal. */
   struct column_pack *outcols;  /* Output column packages.              */

@@ -1425,6 +1425,7 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
                                 ? gal_blank_as_string(data->type, 0)
                                 : NULL );
 
+
       /* Fill in the printing paramters. */
       gal_tableintern_col_print_info(data, GAL_TABLE_FORMAT_TXT, fmt, lng);
 
@@ -1442,23 +1443,24 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
          if the printed string is larger than the expected width. */
       if(data->next)
         {
-          if(data->disp_precision > 0)
-            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d.%d%s%s ",
-                                leftadjust ? "-" : "", data->disp_width,
-                                data->disp_precision, lng, fmt);
-          else
+          if(data->disp_precision == GAL_BLANK_INT)
             *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d%s%s ",
                                 leftadjust ? "-" : "", data->disp_width,
                                 lng, fmt);
+          else
+            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%d.%d%s%s ",
+                                leftadjust ? "-" : "", data->disp_width,
+                                data->disp_precision, lng, fmt);
         }
       else /* Last column: no empty characters (no width or adjustment). */
         {
-          if(data->disp_precision > 0)
+          if(data->disp_precision == GAL_BLANK_INT)
+            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%s", lng, fmt);
+          else
             *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%.%d%s%s",
                                 data->disp_precision, lng, fmt);
-          else
-            *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%%s%s", lng, fmt);
         }
+
 
       /* Set the string for the Gnuastro type. For strings, we also need to
          write the maximum number of characters.*/
@@ -1467,6 +1469,7 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
                 data->disp_width);
       else
         strcpy(fmts[i*FMTS_COLS+1], gal_type_name(data->type, 0));
+
 
       /* Increment the column counter. */
       ++i;

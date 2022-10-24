@@ -123,6 +123,7 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
      the default values are used if/when printing.*/
   data->flag       = 0;
   data->status     = 0;
+  data->disp_width = -1;
   data->next       = NULL;
   data->ndim       = ndim;
   data->type       = type;
@@ -130,10 +131,11 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
   data->mmapname   = NULL;
   data->quietmmap  = quietmmap;
   data->minmapsize = minmapsize;
+  data->disp_precision=GAL_BLANK_INT;
+  data->disp_fmt=GAL_TABLE_DISPLAY_FMT_INVALID;
   gal_checkset_allocate_copy(name, &data->name);
   gal_checkset_allocate_copy(unit, &data->unit);
   gal_checkset_allocate_copy(comment, &data->comment);
-  data->disp_fmt=data->disp_width=data->disp_precision=-1;
 
 
   /* Copy the WCS structure. */

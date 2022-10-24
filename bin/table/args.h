@@ -228,7 +228,7 @@ struct argp_option program_options[] =
       "Text output float32 precision.",
       GAL_OPTIONS_GROUP_OUTPUT,
       &p->txtf32precision,
-      GAL_TYPE_SIZE_T,
+      GAL_TYPE_INT,
       GAL_OPTIONS_RANGE_GE_0,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
@@ -241,7 +241,7 @@ struct argp_option program_options[] =
       "Text output float32 precision.",
       GAL_OPTIONS_GROUP_OUTPUT,
       &p->txtf64precision,
-      GAL_TYPE_SIZE_T,
+      GAL_TYPE_INT,
       GAL_OPTIONS_RANGE_GE_0,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET

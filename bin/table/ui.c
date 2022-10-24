@@ -120,6 +120,8 @@ ui_initialize_options(struct tableparams *p,
   cp->coptions           = gal_commonopts_options;
 
   /* Program-specific initialization. */
+  p->txtf32precision     = GAL_BLANK_INT;
+  p->txtf64precision     = GAL_BLANK_INT;
   p->head                = GAL_BLANK_SIZE_T;
   p->tail                = GAL_BLANK_SIZE_T;
 

@@ -239,7 +239,7 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
 {
   size_t j;
   char **strarr;
-  int maxstrlen, width=0, precision=0;
+  int maxstrlen, width=0, precision=GAL_BLANK_INT;
 
 
   /* First do a sanity check, so we can safly stop checking in the steps
@@ -318,7 +318,8 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
         }
       else width=( col->disp_width<=0 ? GAL_TABLE_DEF_WIDTH_INT
                     : col->disp_width );
-      precision=( col->disp_precision<=0 ? GAL_TABLE_DEF_PRECISION_INT
+      precision=( col->disp_precision==GAL_BLANK_INT
+                  ? GAL_TABLE_DEF_PRECISION_INT
                   : col->disp_precision );
       break;
 
@@ -331,8 +332,9 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
       fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'd' : 'I';
       width = ( col->disp_width<=0 ? GAL_TABLE_DEF_WIDTH_INT
                 : col->disp_width );
-      precision = ( col->disp_precision<=0 ? GAL_TABLE_DEF_PRECISION_INT
-                    : col->disp_precision );
+      precision=( col->disp_precision==GAL_BLANK_INT
+                  ? GAL_TABLE_DEF_PRECISION_INT
+                  : col->disp_precision );
       break;
 
 
@@ -343,7 +345,8 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
       fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'd' : 'I';
       width=( col->disp_width<=0 ? GAL_TABLE_DEF_WIDTH_LINT
               : col->disp_width );
-      precision=( col->disp_precision<=0 ? GAL_TABLE_DEF_PRECISION_INT
+      precision=( col->disp_precision==GAL_BLANK_INT
+                  ? GAL_TABLE_DEF_PRECISION_INT
                   : col->disp_precision );
       break;
 
@@ -375,14 +378,16 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
         case GAL_TYPE_FLOAT32:
           width     = ( col->disp_width<=0
                         ? GAL_TABLE_DEF_WIDTH_FLT : col->disp_width );
-          precision = ( col->disp_precision<=0
-                        ? GAL_TABLE_DEF_PRECISION_FLT : col->disp_precision );
+          precision = ( col->disp_precision==GAL_BLANK_INT
+                        ? GAL_TABLE_DEF_PRECISION_FLT
+                        : col->disp_precision );
           break;
         case GAL_TYPE_FLOAT64:
           width     = ( col->disp_width<=0
                         ? GAL_TABLE_DEF_WIDTH_DBL : col->disp_width );
-          precision = ( col->disp_precision<=0
-                        ? GAL_TABLE_DEF_PRECISION_DBL : col->disp_precision );
+          precision = ( col->disp_precision==GAL_BLANK_INT
+                        ? GAL_TABLE_DEF_PRECISION_DBL
+                        : col->disp_precision );
           break;
         }
 
