@@ -202,11 +202,27 @@ all the commits needed for this release have been completed.
    (only for STABLE) and Savannah news (only for STABLE).
 
 
- - [STABLE] Open 'configure.ac' and increment 'GAL_CURRENT' for the next
-   release. See the 'Updating library version information' section of the
-   GNU Libtool manual as a guide. Note that we are assuming that until the
-   next release some change will be made in the library.
+ - [STABLE] After the announcement, don't forget to do the following:
 
+   - Package the announced Gnuastro for Debian (described below) and submit
+     it there.
+
+   - Update/edit the following URLs with the latest version (where
+     necessary, may be updated already):
+     - https://savannah.gnu.org/news/submit.php?group=gnuastro
+       - After submitting, approve in this link:
+         https://savannah.gnu.org/news/approve.php?group=gnuastro
+     - https://directory.fsf.org/wiki/Gnuastro
+     - https://doi.org/10.5281/zenodo.3483064
+
+   - Open 'configure.ac' and increment 'GAL_CURRENT' for the next
+     release. See the 'Updating library version information' section of the
+     GNU Libtool manual as a guide. Note that we are assuming that until
+     the next release some change will be made in the library.
+
+   - Uncomment the sub-titles of the title page in 'doc/gnuastro.texi'.
+
+   - Commit all the changes above.
 
 
 
@@ -355,7 +371,7 @@ Steps necessary to Package Gnuastro for Debian.
      $ mv .git ../gnuastro-tmp-git         # We want to keep '.git'.
      $ rm -rf ./* ./.*                     # Delete everything.
      $ mv ../gnuastro-tmp-git .git         # Bring back the '.git' directory.
-     $ tar xf ../gnuastro_$ver.orig.tar.gz --strip-components=1
+     $ tar -xf ../gnuastro_$ver.orig.tar.gz --strip-components=1
 
 
  - We now need to commit these into the 'upstream' branch of the Git
