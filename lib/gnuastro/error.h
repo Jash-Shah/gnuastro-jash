@@ -59,11 +59,11 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 /* Data type for storing errors */
 typedef struct gal_error_t
 {
-  uint8_t code;              /* Generic code of the problem.  */
+  char *code;                /* Generic code of the problem.            */
   uint8_t is_warning;        /* Defines if the error is only a warning. */
-  char *back_msg;            /* Detailed message of backend (library) */
+  char *back_msg;            /* Detailed message of backend (library)   */
   char *front_msg;           /* Detailed message of front end (caller). */
-  struct gal_error_t *next;  /* Next error message.           */
+  struct gal_error_t *next;  /* Next error message.                     */
 } gal_error_t;
 
 
@@ -74,21 +74,26 @@ typedef struct gal_error_t
  ************************   Allocation   ************************
  ****************************************************************/
 gal_error_t *
-gal_error_allocate(uint8_t code, char *back_msg);
+gal_error_allocate(char *code, char *back_msg, uint8_t is_warning);
 
 void
-gal_error_add_back_msg(gal_error_t **err, uint8_t code, char *back_msg);
+gal_error_add_back_msg(gal_error_t **err, char *code,
+                       char *back_msg, uint8_t is_warning);
 
 void
-gal_error_add_front_msg(gal_error_t **err, char *front_msg, uint8_t replace);
+gal_error_add_front_msg(gal_error_t **err, char *front_msg,
+                        uint8_t replace);
 
 
 
-/* Printing. */
+int
+gal_error_print(gal_error_t *err);
+
 void
-gal_error_print(gal_error_t **err);
+gal_error_exit(gal_error_t **err);
 
-
+void
+gal_error_reverse(gal_error_t **err);
 
 
 

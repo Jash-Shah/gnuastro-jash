@@ -39,17 +39,54 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
  *************************************************************/
 /* Prints all the error messages in the given structure.
    Prints both frontend and backend error messages if present else only
-   prints the backend messages. */
-void
-gal_error_print(gal_error_t **err)
+   prints the backend messages. Returns an int denoting if no. of errors
+   thus giving the user the option to EXIT_FAILURE themselves. */
+int
+gal_error_print(gal_error_t *err)
 {
-  char *newline = "\n";
-  gal_error_t *tmperr;
-  for(tmperr = *err; tmperr != NULL; tmperr = tmperr->next)
+  /* If error structure is empty return -1. */
+  if (!err) return -1;
+
+  gal_error_t *tmperr = NULL;
+  /* Number of errors in the structure. */
+  uint8_t is_error = 0;
+  for(tmperr = err; tmperr!=NULL; tmperr = tmperr->next)
     {
       if(tmperr->front_msg)
-        printf("%s: %s%s", tmperr->front_msg, tmperr->back_msg, newline);
-      else printf("%s%s", tmperr->back_msg, newline);
+        {
+          fprintf(stderr, "%s\n",tmperr->front_msg);
+        }
+      fprintf(stderr, "%s: %s\n", tmperr->code, tmperr->back_msg);
+
+      /* If atleast one error is found which is NOT a warning. */
+      if(!tmperr->is_warning) is_error++;  
+    }
+  return is_error;
+}
+
+
+
+
+
+/* In the given error structure, finds the first error which is not a 
+   warning, prints it and exits the program with an EXIT_FAILURE. */
+void
+gal_error_exit(gal_error_t **err)
+{
+  gal_error_t *tmperr = NULL;
+
+  for(tmperr = *err; tmperr != NULL; tmperr = tmperr->next)
+    {
+      if(!tmperr->is_warning)
+        {
+          if(tmperr->front_msg)
+            error(EXIT_FAILURE, 0,
+                  "%s\n%s: %s\n", tmperr->front_msg,
+                  tmperr->code, tmperr->back_msg);
+          else
+            error(EXIT_FAILURE, 0,
+                  "\n%s: %s\n", tmperr->code, tmperr->back_msg);
+        }
     }
 }
 
@@ -61,24 +98,23 @@ gal_error_print(gal_error_t **err)
    While allocating no frontend error message should be given. The
    frontend error should only be added using gal_error_add_front_msg. */
 gal_error_t *
-gal_error_allocate(uint8_t code, char *back_msg)
+gal_error_allocate(char *code, char *back_msg, uint8_t is_warning)
 {
   gal_error_t *outerr;
 
   /* Allocate the space for the structure. 
      We use calloc here so that the error code and is_warning flags
      are set to 0 indicating generic error type and a breaking error
-     by default.  */
-  outerr = calloc(outerr ,sizeof *outerr);
+     by default. */
+  outerr = calloc(1, sizeof *outerr);
   if(outerr == NULL)
     error(EXIT_FAILURE, 0, "%s: %zu bytes for gal_error_t,",
           __func__, sizeof *outerr);
   
   /* Initialize the allocated error data */
   outerr->code = code;
+  outerr->is_warning = is_warning;
   gal_checkset_allocate_copy(back_msg, &outerr->back_msg);
-
-  printf("Out error allocated!\n");
 
   /* Return the final structure. */
   return outerr;
@@ -89,18 +125,17 @@ gal_error_allocate(uint8_t code, char *back_msg)
 
 
 /* Adds a new error to the top of the given `err` structure with the given
-   error code and backend msg. */
+   error code, backend msg and is_warning flag. */
 void
-gal_error_add_back_msg(gal_error_t **err, uint8_t code, char *back_msg)
+gal_error_add_back_msg(gal_error_t **err, char *code,
+                       char *back_msg, uint8_t is_warning)
 {
   /* If no back_msg has been provided then return NULL. */
   if (back_msg == NULL) return;
   
   /* Allocate a new error to be added at the top of the error stack. */
   gal_error_t *newerr;
-  newerr = gal_error_allocate(code, back_msg);
-
-  printf("Allocated new error!\n");
+  newerr = gal_error_allocate(code, back_msg, is_warning);
   
   /* Push the new error to the top of the stack. */
   newerr->next = *err;
@@ -112,21 +147,47 @@ gal_error_add_back_msg(gal_error_t **err, uint8_t code, char *back_msg)
 
 
 /* Adds a frontend error message to the top error in the given `err`
-   structure. If the `replace` flag is 1 then the front_msg of the top error
-   in the given `err` structure is replaced. */
+   structure. If the `replace` flag is 1 then the front_msg of the top
+   error in the given `err` structure is replaced. */
 void
-gal_error_add_front_msg(gal_error_t **err, char *front_msg, uint8_t replace)
+gal_error_add_front_msg(gal_error_t **err, char *front_msg,
+                        uint8_t replace)
 {
   /* If no front_msg has been provided then return NULL. */
   if (front_msg == NULL) return;
   
-  if (*err->front_msg && !replace)
-    error(EXIT_FAILURE, 0, "%s: A frontend error message already exists
-          for the given error %u. If you wish to replace it then pass '1'
-          to the replace flag while calling the function.", __func__,
-          *err->code);
+  if ((*err)->front_msg && !replace)
+    error(EXIT_FAILURE, 0, "%s: A frontend error message already exists "
+          "for the given error %s. If you wish to replace it then pass "
+          "'1' to the replace flag while calling the function.", __func__,
+          (*err)->code);
   else
-    gal_checkset_allocate_copy(front_msg,err->front_msg);
+    gal_checkset_allocate_copy(front_msg,&(*err)->front_msg);
+}
 
-  printf("Front error message added!\n");
+
+
+
+
+/* Reverse the errors in the list. This is needed since we are treating
+   the gal_error_t structure like a stack. */
+void
+gal_error_reverse(gal_error_t **err)
+{
+  /* Structure which will store the correct/reversed order. */
+  gal_error_t *correctorder = NULL;
+
+  /* Only do the reversal if there is more than one element. */
+  if( *err && (*err)->next )
+    {
+      while(*err!=NULL)
+        {
+          /* Pop top element and add to new list */
+          gal_error_add_back_msg(&correctorder, (*err)->code,
+                                 (*err)->back_msg, (*err)->is_warning);
+          gal_error_add_front_msg(&correctorder, (*err)->front_msg, 0);
+          (*err) = (*err)->next;
+        }
+      *err = correctorder;
+    }
 }
