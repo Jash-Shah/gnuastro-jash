@@ -698,6 +698,9 @@ fits_certain_hdu(struct fitsparams *p, int list1has0,
   status=0;
   fits_close_file(fptr, &status);
 
+  /* Reverse the list so they are in the same order as they were found. */
+  gal_list_str_reverse(&names);
+
   /* Print the result. */
   if( list1has0 )
     {
