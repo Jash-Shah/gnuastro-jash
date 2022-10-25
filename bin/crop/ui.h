@@ -45,7 +45,7 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a d e f g i j k m r u v y
+   d e f g i j k m r u v y
    A B E G H J L Q R W Y
 */
 enum option_keys_enum
@@ -64,6 +64,7 @@ enum option_keys_enum
   UI_KEY_CENTER         = 'c',
   UI_KEY_COORDCOL       = 'x',
   UI_KEY_ONEELEMSTDOUT  = 't',
+  UI_KEY_METANAME       = 'a',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */

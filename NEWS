@@ -8,6 +8,10 @@ See the end of the file for license conditions.
 
 ** New features
 
+   Crop:
+   --metaname: Specify the name of the cropped output HDU (value to the
+     'EXTNAME' keyword in FITS).
+
 ** Removed features
 
 ** Changed features

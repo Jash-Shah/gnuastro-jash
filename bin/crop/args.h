@@ -141,6 +141,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "metaname",
+      UI_KEY_METANAME,
+      "STR",
+      0,
+      "Name of output HDU (EXTNAME keyword in FITS).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->metaname,
+      GAL_TYPE_STRING,
+      GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

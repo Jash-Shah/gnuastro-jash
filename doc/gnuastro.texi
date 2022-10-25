@@ -15639,8 +15639,10 @@ $ astcrop --catalog=cat.txt image.fits
 ## ending in `_drz.fits' in `/mnt/data/COSMOS/':
 $ astcrop --mode=wcs --catalog=cat.txt /mnt/data/COSMOS/*_drz.fits
 
-## Crop the outer 10 border pixels of the input image:
-$ astcrop --section=10:*-10,10:*-10 --hdu=2 image.fits
+## Crop the outer 10 border pixels of the input image and give
+## the output HDU a name ('EXTNAME' keyword in FITS) of 'mysection'.
+$ astcrop --section=10:*-10,10:*-10 --hdu=2 image.fits \
+          --metaname=mysection
 
 ## Crop region around RA and Dec of (189.16704, 62.218203):
 $ astcrop --mode=wcs --center=189.16704,62.218203 goodsnorth.fits
@@ -15891,6 +15893,12 @@ When this column is not given, the row number will be used instead.
 @noindent
 Output options:
 @table @option
+
+@item -a STR
+@itemx --metaname=STR
+Name of cropped HDU (value to the @code{EXTNAME} keyword of FITS).
+If not given, a default @code{CROP} will be placed there (so the @code{EXTNAME} keyword will always be present in the output).
+If crop produces many outputs from a catalog, they will be given the same string as @code{EXTNAME} (the file names containing the cropped HDU will be different).
 
 @item -c FLT/INT
 @itemx --checkcenter=FLT/INT

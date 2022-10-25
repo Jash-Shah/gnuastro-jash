@@ -1282,6 +1282,7 @@ ui_free_report(struct cropparams *p, struct timeval *t1)
   size_t i;
 
   /* Free the simple arrays (if they were set). */
+  free(p->metaname);
   free(p->blankptrread);
   free(p->blankptrwrite);
   gal_data_free(p->center);

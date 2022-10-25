@@ -573,6 +573,12 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
   status=0;
 
 
+  /* Name of extension. */
+  fits_update_key(ofp, TSTRING, "EXTNAME", crp->p->metaname,
+                  "Name of HDU (extension).", &status);
+  gal_fits_io_error(status, "writing EXTNAME");
+
+
   /* Read the units of the input dataset and store them in the output. */
   rkey->next=NULL;
   rkey->name="BUNIT";
