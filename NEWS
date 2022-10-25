@@ -12,11 +12,18 @@ See the end of the file for license conditions.
 
 ** Changed features
 
+  Table:
+  -A: new short format for --txtf64format. The '-d' short format was
+   conflicting with the short option name for '--descending'.
+
 ** Bugs fixed
   bug #63266: Table ignores a value of 0 given to '--txtf32precision' or
               '--txtf32precision=0' (happens when floating point columns
               need to be rounded to integers). Reported by Sepideh
               Eskandarlou.
+  bug #63270: Table aborts when called with '--descending' with complaint
+              on '--txtf64format' (that was added in Gnuastro
+              0.19). Reported by Giulia Golini.
 
 
 

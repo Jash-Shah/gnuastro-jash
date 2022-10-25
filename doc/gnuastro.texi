@@ -14870,7 +14870,7 @@ Number of digits after the decimal point (precision) for columns with a 32-bit f
 This can take any positive integer (including 0).
 When given a value of zero, the floating point number will be rounded to the nearest integer.
 
-@item  -d STR
+@item  -A STR
 @itemx --txtf64format=STR
 The plain-text format of 64-bit floating point columns when output is not binary (this option is ignored for binary outputs like FITS tables).
 The acceptable values are listed below.

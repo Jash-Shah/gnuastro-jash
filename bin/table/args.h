@@ -238,7 +238,7 @@ struct argp_option program_options[] =
       UI_KEY_TXTF64PRECISION,
       "INT",
       0,
-      "Text output float32 precision.",
+      "Text output float64 precision.",
       GAL_OPTIONS_GROUP_OUTPUT,
       &p->txtf64precision,
       GAL_TYPE_INT,
