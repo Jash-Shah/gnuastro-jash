@@ -109,6 +109,7 @@ operands_add_list(struct arithmeticparams *p, gal_data_t *data)
       newnode->data=tmp;
       newnode->hdu=NULL;
       newnode->filename=NULL;
+      newnode->data->next=NULL;
 
       /* Add this dataset to the top of the stack. */
       newnode->next=p->operands;

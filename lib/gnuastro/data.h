@@ -244,6 +244,9 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
                     int clear, size_t minmapsize, int quietmmap,
                     char *name, char *unit, char *comment);
 
+gal_data_t *
+gal_data_alloc_empty(size_t ndim, size_t minmapsize, int quietmmap);
+
 void
 gal_data_free_contents(gal_data_t *data);
 

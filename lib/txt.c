@@ -1436,7 +1436,6 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
                              ? strlen(fmts[i*FMTS_COLS+2])
                              : data->disp_width );
 
-
       /* Print the result into the allocated string and add its length to
          the final length of the overall format statement. The space in the
          end of 'fmts[i*2]' is to ensure that the columns don't merge, even
@@ -1460,7 +1459,6 @@ make_fmts_for_printf(gal_data_t *datall, int leftadjust, size_t *len)
             *len += 1 + sprintf(fmts[i*FMTS_COLS], "%%.%d%s%s",
                                 data->disp_precision, lng, fmt);
         }
-
 
       /* Set the string for the Gnuastro type. For strings, we also need to
          write the maximum number of characters.*/

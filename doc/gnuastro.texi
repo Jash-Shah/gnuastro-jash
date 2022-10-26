@@ -522,7 +522,8 @@ Arithmetic operators
 * Random number generators::    Random numbers can be used to add noise for example.
 * Elliptical shape operators::  Operations that are focused on an ellipse.
 * Loading external columns::    Read a column from a table into the stack.
-* Building new dataset::        How to construct an empty dataset from scratch.
+* Size and position operators::  Extracting image size and pixel positions.
+* Building new dataset and stack management::        How to construct an empty dataset from scratch.
 * Operand storage in memory or a file::  Tools for complex operations in one command.
 
 Convolve
@@ -4744,8 +4745,8 @@ These are very important points that you will definitely encouter during your ow
 #!/bin/bash
 # Script to download and keep the deep region of the XDF survey.
 #
-# Copyright (C) 2021-2022 Original Author <original@@email.server>
-# Copyright (C) 2022      Your Name <yourname@@email.server>
+# Copyright (C) 2022      Your Name <yourname@@email.company>
+# Copyright (C) 2021-2022 Initial Author <incase@@there-is.any>
 #
 # This script is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16334,7 +16335,8 @@ Reading NaN as a floating point number in Gnuastro is not case-sensitive.
 * Random number generators::    Random numbers can be used to add noise for example.
 * Elliptical shape operators::  Operations that are focused on an ellipse.
 * Loading external columns::    Read a column from a table into the stack.
-* Building new dataset::        How to construct an empty dataset from scratch.
+* Size and position operators::  Extracting image size and pixel positions.
+* Building new dataset and stack management::        How to construct an empty dataset from scratch.
 * Operand storage in memory or a file::  Tools for complex operations in one command.
 @end menu
 
@@ -16825,15 +16827,6 @@ for example, with the command below, the non-blank pixel values of @file{cropped
 $ astarithmetic cropped.fits nonblank --onedonstdout --quiet
 @end example
 
-@item size
-Size of the dataset along a given FITS (or FORTRAN) dimension (counting from 1).
-The desired dimension should be the first popped operand and the dataset must be the second popped operand.
-The output will be a single unsigned integer (dimensions cannot be negative).
-For example, the following command will produce the size of the first extension/HDU (the default HDU) of @file{a.fits} along the second FITS axis.
-
-@example
-$ astarithmetic a.fits 2 size
-@end example
 @end table
 
 @node Stacking operators, Filtering operators, Statistical operators, Arithmetic operators
@@ -17988,7 +17981,7 @@ $ asttable catalog.fits \
 @end example
 @end table
 
-@node Loading external columns, Building new dataset, Elliptical shape operators, Arithmetic operators
+@node Loading external columns, Size and position operators, Elliptical shape operators, Arithmetic operators
 @subsubsection Loading external columns
 
 In the Arithmetic program, you can always load new dataset by simply giving their name.
@@ -18026,8 +18019,194 @@ $ asttable tab-1.txt -c'arith $1 load-col-1-from-tab-2.txt +'
 @end example
 @end table
 
-@node Building new dataset, Operand storage in memory or a file, Loading external columns, Arithmetic operators
-@subsubsection Building new dataset
+@node Size and position operators, Building new dataset and stack management, Loading external columns, Arithmetic operators
+@subsubsection Size and position operators
+
+With the operators below you can get metadata about the top dataset on the stack.
+
+@table @code
+@item index
+Add a new operand to the stack with an integer type and the same size (in all dimensions) as top operand on the stack (before it was called; it is not popped!).
+The first pixel in the returned operand is zero, and every later pixel's value is incremented by one.
+It is important to remember that the top operand is not popped by this operand, so it remains on the stack.
+After this operand is finished, it adds a new operand to the stack.
+To pop the previous operand, you can use the @code{indexonly} operator.
+
+The data type of the output is always an unsigned integer, and its width is determined from the number of pixels/rows in the top operand.
+For example if there are only 108 rows in a table, the returned column will have an unsigned 8-bit integer type (that can keep 256 separate values).
+But if the top operand is a @mymath{1000\times1000=10^6} pixel image, the output will be a 32-bit unsigned integer.
+For the various types of integers, see @ref{Numeric data types}.
+
+To see the index image along with the actual image, you can use the @option{--writeall} operator to have a multi-HDU output (without @option{--writeall}, Arithmetic will complain if more than one operand is left at the end).
+After DS9 opens with the second command, flip between the two extensions.
+
+@example
+$ astarithmetic image.fits index --writeall
+$ astscript-fits-view image_arith.fits
+@end example
+
+Below is a review some usage examples of this operator:
+
+@table @asis
+@item Image: masking margins
+With the command below, we will be masking all pixels that are 20 pixels away from the edges of the image (on the margin).
+Here is a description of the command below (for the basics of Arithmetic's notation, see @ref{Reverse polish notation}):
+@itemize
+@item
+The @code{index} operator just adds a new dataset on the stack: unlike almost all other operators in Arithmetic, @code{index} doesn't remove the dataset within @file{image.fits} from the stack (use @code{indexonly} for the ``normal'' behavior).
+This is because @code{index} is returns the pixel metadata not data.
+As a result, after @code{index}, we have two operands on the stack: the input image and the index image.
+@item
+With the @code{set-i} operator, the top operand (the image containing the index of each pixel) is popped from the stack and associated to the name @code{i}.
+Therefore after this, the stack only has the input image.
+For more on the @code{set-} operator, see @ref{Operand storage in memory or a file}.
+@item
+We need three values from the commands before Arithmetic (for the width and height of the image and the size of the margin).
+To make the rest of the command easier to read/use, we'll define them in Arithmetic as three named operators (respectively called @code{w}, @code{h} and @code{m}).
+All three are integers will have a positive value lower than @mymath{2^{16}=65536} (for a ``normal'' image!).
+Therefore, we will store tham as 16-bit unsigned integers with the @code{uint16} operator (this will help optimal processing in later steps).
+For more the type changing operators, see @ref{Numerical type conversion operators}.
+@item
+Using the modulo @code{%} and division (@code{/}) operators on the index image and the width, we extract the horizontal (X) and vertical (Y) positions of each pixel in separately named operands called @code{X} and @code{Y}.
+The maximum value in these two will also fit within an unsigned 16-bit integer, so we'll also store these in that type.
+@item
+For the horizonal (X) dimension, we select pixels that are less than the margin (@code{X m lt}) and those that are more than the width subtracted by the margin (@code{X w m - gt}).
+@item
+The output of the @code{lt} and @code{gt} conditional operators above is a binary (0 or 1 valued) image.
+We therefore merge them into one binary image using the @code{or} operator.
+For more, see @ref{Conditional operators}.
+@item
+We repate the two steps above for the vertical (Y) dimension.
+@item
+Once the images containing the to-be-masked pixels in each dimension are made, we combine them into one binary image with a final @code{or} operator.
+At this point, the stack only has two operands: 1) the input image and 2) the binary image that has a value of 1 for all pixels whose value should be chaned.
+@item
+A single-element operand (@code{nan}) is added on the stack.
+@item
+Using the @code{where} operator, we replace all the pixels that are non-zero in the second operand (on the margins) to the top operand's value (NaN) in the third popped operand (image that was read from @code{image.fits}).
+For more on the @code{where} operator, see @ref{Conditional operators}.
+@end itemize
+
+@example
+$ margin=20
+$ width=$(astfits  image.fits --keyvalue=NAXIS1 -q)
+$ height=$(astfits image.fits --keyvalue=NAXIS2 -q)
+$ astarithmetic image.fits index       set-i \
+                $width     uint16      set-w \
+                $height    uint16      set-h \
+                $margin    uint16      set-m \
+                i w %      uint16      set-X \
+                i w /      uint16      set-Y \
+                X m lt     X w m - gt     or \
+                Y m lt     Y h m - gt     or \
+                or nan where
+@end example
+
+@item Image: Masking regions outside a circle
+As another example for usage on an image, in the command below we are using @code{index} to define an image where each pixel contains the distance to the pixel with X,Y coordinates of 345,250.
+We are then using that distance image to only keep the pixels that are within a 50 pixel radius of that point.
+
+The basic concept behind this process is very similar to the previous example, with a different mathematical definition for pixels to mask.
+The major difference is that we want the distance to a pixel within the image, we need to have negative values and the center coordinates can be in a sub-pixel positions.
+The best numeric datatype for intermediate steps is therefore floating point.
+64-bit floating point can have a precision of upto 15 digits after the decimal point.
+This is far too much for what we need here: in astronomical imaging, the PSF is usually on the scale of 1 or more pixels (see @ref{Sampling theorem}).
+So even reaching a precision of one millionth of a pixel (offered by 32-bit floating points) is beyond our wildest dreams (see @ref{Numeric data types}).
+We will also define the horizontal (X) and vertical (Y) operands after shifting to the desired central point.
+
+@example
+$ radius=50
+$ centerx=345.2
+$ centery=250.3
+$ width=$(astfits image.fits --keyvalue=NAXIS1 -q)
+$ astarithmetic image.fits index set-i \
+                $width       uint16    set-w \
+                $radius      float32   set-r \
+                $centerx     float32   set-cx \
+                $centery     float32   set-cy \
+                i w % cx -             set-X \
+                i w / cy -             set-Y \
+                X X x Y Y x + sqrt r gt \
+                nan where --output=arith-masked.fits
+@end example
+
+@cartouche
+@noindent
+@strong{Optimal data types have significant benefits:} choosing the minimum required datatype for your operation is very important to avoid wasting your CPU and RAM.
+Don't simply default to 64-bit floating points for everything!
+Integer operations are much faster than floating points, and within floating point types, 32-bit is faster and will use half the RAM/storage!
+For more, see @ref{Numeric data types}.
+@end cartouche
+
+The example above was just a demo for usage of the @code{index} operator and some important concepts.
+But it is not the easiest way to achieve the desired result above!
+An easier way for the scenario above (to keep a circle within an image and set everything else to NaN) is to use MakeProfiles in combination with Arithmetic, like below:
+
+@example
+$ radius=50
+$ centerx=345.2
+$ centery=250.3
+$ echo "1 $centerx $centery 5 $radius 0 0 1 1 1" \
+       | astmkprof --background=image.fits \
+                   --mforflatpix --clearcanvas \
+                   -omkprof-mask.fits --type=uint8
+$ astarithmetic image.fits mkprof-mask.fits not \
+                nan where -g1 -omkprof-masked.fits
+@end example
+
+@item Tables: adding new columns with row index
+Within Table, you can use this operator to add an index column like below (see the @code{counter} operator for starting the count from one).
+
+@example
+## The index will be the second column.
+$ asttable table.fits -c'arith $1 index'
+
+## The index will be the first column
+$ asttable table.fits -c'arith $1 index swap'
+@end example
+@end table
+
+@item indexonly
+Similar to @code{index}, except that the top operand is popped from the stack and is no longer available afterwards.
+
+@item counter
+Similar to @code{index}, except that counting starts from one (not zero as in @code{index}).
+Counting from one is usually necessary when adding row counters in tables, like below:
+
+@example
+$ asttable table.fits -c'arith $1 counter swap'
+@end example
+
+@item counteronly
+Similar to @code{counter}, but the top operand before it is popped (no longer available).
+
+@item size
+Size of the dataset along a given FITS (or FORTRAN) dimension (counting from 1).
+The desired dimension should be the first popped operand and the dataset must be the second popped operand.
+The output will be a single unsigned integer (dimensions cannot be negative).
+For example, the following command will produce the size of the first extension/HDU (the default HDU) of @file{a.fits} along the second FITS axis.
+
+@example
+$ astarithmetic a.fits 2 size
+@end example
+
+@cartouche
+@noindent
+@strong{Not optimal:} This operator reads the top element on the stack and then simply reads its size along the given dimension.
+On a small dataset this won't consume much RAM, but if you want to put this in a pipeline or use it on large image, the extra RAM and slow operation can become meaningful.
+To avoid such issues, you can read the size along the given dimension using the @option{--keyvalue} option of @ref{Keyword inspection and manipulation}.
+For example, in the code below, the X axis position of every pixel is returned:
+
+@example
+$ width=$(astfits image.fits --keyvalue=NAXIS1 -q)
+$ astarithmetic image.fits indexonly $width % -opix-x.fits
+@end example
+@end cartouche
+@end table
+
+
+@node Building new dataset and stack management, Operand storage in memory or a file, Size and position operators, Arithmetic operators
+@subsubsection Building new dataset and stack management
 
 With the operator here, you can create a new dataset from scratch to start certain operations without any input data.
 
@@ -18048,9 +18227,25 @@ To further extend the example, you can use any of the noise-making operators to 
 @example
 $ astarithmetic 100 200 2 makenew 5 mknoise-sigma
 @end example
+
+@item swap
+Swap the top two operands on the stack.
+For example the @code{index} operator doesn't pop with the top operand (the input to @code{index}), it just adds the index image to the stack.
+In case you want your next operation to be on the input to @code{index}, you can simply call @code{swap} and continue the operations on that image, while keeping the indexed pixels for later steps.
+In the example below we are using the @option{--writeall} option to write the full stack and if you open the outputs you will see that the stack order has changed.
+
+@example
+## Index image is written in HDU 1.
+$ astarithmetic image.fits index      --writeall \
+                --output=ind-first.fits
+
+## image.fits in HDU 1.
+$ astarithmetic image.fits index swap --writeall \
+                --output=img-first.fits
+@end example
 @end table
 
-@node Operand storage in memory or a file,  , Building new dataset, Arithmetic operators
+@node Operand storage in memory or a file,  , Building new dataset and stack management, Arithmetic operators
 @subsubsection Operand storage in memory or a file
 
 In your early days of using Gnuastro, to do multiple operations, it is likely that you will simply call Arithmetic (or Table, with column arithmetic) multiple times: feed the output file of the first call to the second call.
@@ -18276,6 +18471,13 @@ Note it does not matter if the final output file name is given with the @option{
 Arithmetic treats this option differently from its default operation in other Gnuastro programs (see @ref{Input output options}).
 If the output file exists, when other Gnuastro programs are called with @option{--dontdelete}, they simply complain and abort.
 But when Arithmetic is called with @option{--dontdelete}, it will appended the dataset(s) to the existing extension(s) in the file.
+
+@item -a
+@itemx --writeall
+Write all datasets on the stack as separate HDUs in the output file.
+This only affects datasets with multiple dimensions (or single-dimension datasets when the @option{--onedasimg} is called).
+This option is useful to debug Arithmetic calls: to check all the images on the stack while you are designing your operation.
+The top dataset on the stack will be on HDU number 1 of the output, the second dataset will be on HDU number 2 and so on.
 @end table
 
 Arithmetic accepts two kinds of input: images and numbers.
@@ -31015,20 +31217,15 @@ and some comments. To deal with any generic dataset, Gnuastro defines the
 @node Generic data container, Dataset allocation, Library data container, Library data container
 @subsubsection Generic data container (@code{gal_data_t})
 
-To be able to deal with any dataset (various dimensions, numeric data
-types, units and higher-level structures), Gnuastro defines the
-@code{gal_data_t} type which is the input/output container of choice for
-many of Gnuastro library's functions. It is defined in
-@file{gnuastro/data.h}. If you will be using (`@code{# include}'ing) those
-libraries, you do not need to include this header explicitly, it is already
-included by any library header that uses @code{gal_data_t}.
+To be able to deal with any dataset (various dimensions, numeric data types, units and higher-level structures), Gnuastro defines the @code{gal_data_t} type which is the input/output container of choice for many of Gnuastro library's functions.
+It is defined in @file{gnuastro/data.h}.
+If you will be using (`@code{# include}'ing) those libraries, you do not need to include this header explicitly, it is already included by any library header that uses @code{gal_data_t}.
 
 @deftp {Type (C @code{struct})} gal_data_t
-The main container for datasets in Gnuastro. It can host data of any
-dimensions, with any numeric data type. It is actually a structure, but
-@code{typedef}'d as a new type to avoid having to write the @code{struct}
-before any declaration. The actual structure is shown below which is
-followed by a description of each element.
+The main container for datasets in Gnuastro.
+It can host data of any dimensions, with any numeric data type.
+It is actually a structure, but @code{typedef}'d as a new type to avoid having to write the @code{struct} before any declaration.
+The actual structure is shown below which is followed by a description of each element.
 
 @example
 typedef struct gal_data_t
@@ -31067,68 +31264,44 @@ The list below contains a description for each @code{gal_data_t} element.
 @cindex @code{void *}
 @table @code
 @item void *restrict array
-This is the pointer to the main array of the dataset containing the raw
-data (values). All the other elements in this data-structure are actually
-meta-data enabling us to use/understand the series of values in this
-array. It must allow data of any type (see @ref{Numeric data types}), so it
-is defined as a @code{void *} pointer. A @code{void *} array is not
-directly usable in C, so you have to cast it to proper type before using
-it, please see @ref{Library demo - reading a image} for a demonstration.
+This is the pointer to the main array of the dataset containing the raw data (values).
+All the other elements in this data-structure are actually meta-data enabling us to use/understand the series of values in this array.
+It must allow data of any type (see @ref{Numeric data types}), so it is defined as a @code{void *} pointer.
+A @code{void *} array is not directly usable in C, so you have to cast it to proper type before using it, please see @ref{Library demo - reading a image} for a demonstration.
 
 @cindex @code{restrict}
 @cindex C: @code{restrict}
-The @code{restrict} keyword was formally introduced in C99 and is used to
-tell the compiler that at any moment only this pointer will modify what it
-points to (a pixel in an image for example)@footnote{Also see
-@url{https://en.wikipedia.org/wiki/Restrict}.}. This extra piece of
-information can greatly help in compiler optimizations and thus the running
-time of the program. But older compilers might not have this capability, so
-at @command{./configure} time, Gnuastro checks this feature and if the
-user's compiler does not support @code{restrict}, it will be removed from
-this definition.
+The @code{restrict} keyword was formally introduced in C99 and is used to tell the compiler that at any moment only this pointer will modify what it points to (a pixel in an image for example)@footnote{Also see @url{https://en.wikipedia.org/wiki/Restrict}.}.
+This extra piece of information can greatly help in compiler optimizations and thus the running time of the program.
+But older compilers might not have this capability, so at @command{./configure} time, Gnuastro checks this feature and if the user's compiler does not support @code{restrict}, it will be removed from this definition.
 
 @cindex Data type
 @item uint8_t type
-A fixed code (integer) used to identify the type of data in @code{array}
-(see @ref{Numeric data types}). For the list of acceptable values to this
-variable, please see @ref{Library data types}.
+A fixed code (integer) used to identify the type of data in @code{array} (see @ref{Numeric data types}).
+For the list of acceptable values to this variable, please see @ref{Library data types}.
 
 @item size_t ndim
 The dataset's number of dimensions.
-
 
 @cindex FORTRAN
 @cindex FITS standard
 @cindex Standard, FITS
 @item size_t *dsize
-The size of the dataset along each dimension. This is an array (with
-@code{ndim} elements), of positive integers in row-major
-order@footnote{Also see
-@url{https://en.wikipedia.org/wiki/Row-_and_column-major_order}.}  (based
-on C). When a data file is read into memory with Gnuastro's libraries, this
-array is dynamically allocated based on the number of dimensions that the
-dataset has.
+The size of the dataset along each dimension.
+This is an array (with @code{ndim} elements), of positive integers in row-major order@footnote{Also see @url{https://en.wikipedia.org/wiki/Row-_and_column-major_order}.}  (based on C).
+When a data file is read into memory with Gnuastro's libraries, this array is dynamically allocated based on the number of dimensions that the dataset has.
 
-It is important to remember that C's row-major ordering is the opposite of
-the FITS standard which is in column-major order: in the FITS standard the
-fastest dimension's size is specified by @code{NAXIS1}, and slower
-dimensions follow. The FITS standard was defined mainly based on the
-FORTRAN language which is the opposite of C's approach to multi-dimensional
-arrays (and also starts counting from 1 not 0). Hence if a FITS image has
-@code{NAXIS1==20} and @code{NAXIS2==50}, the @code{dsize} array must be
-filled with @code{dsize[0]==50} and @code{dsize[1]==20}.
+It is important to remember that C's row-major ordering is the opposite of the FITS standard which is in column-major order: in the FITS standard the fastest dimension's size is specified by @code{NAXIS1}, and slower dimensions follow.
+The FITS standard was defined mainly based on the FORTRAN language which is the opposite of C's approach to multi-dimensional arrays (and also starts counting from 1 not 0).
+Hence if a FITS image has @code{NAXIS1==20} and @code{NAXIS2==50}, the @code{dsize} array must be filled with @code{dsize[0]==50} and @code{dsize[1]==20}.
 
-The fastest dimension is the one that is contiguous in memory: to increment
-by one along that dimension, just go to the next element in the array. As
-we go to slower dimensions, the number of memory cells we have to skip for
-an increment along that dimension becomes larger.
+The fastest dimension is the one that is contiguous in memory: to increment by one along that dimension, just go to the next element in the array.
+As we go to slower dimensions, the number of memory cells we have to skip for an increment along that dimension becomes larger.
 
 @item size_t size
-The total number of elements in the dataset. This is actually a
-multiplication of all the values in the @code{dsize} array, so it is not an
-independent parameter. However, low-level operations with the dataset
-(irrespective of its dimensions) commonly need this number, so this element
-is designed to avoid calculating it every time.
+The total number of elements in the dataset.
+This is actually a multiplication of all the values in the @code{dsize} array, so it is not an independent parameter.
+However, low-level operations with the dataset (irrespective of its dimensions) commonly need this number, so this element is designed to avoid calculating it every time.
 
 @item int quietmmap
 When this value is zero, and the dataset must not be allocated in RAM (see @code{mmapname} and @code{minmapsize}), a warning will be printed to inform the user when the file is created and when it is deleted.
@@ -31173,98 +31346,70 @@ When a dataset does not have any blank values, the @code{GAL_DATA_FLAG_HASBLANK}
 But upon initialization, all bits also get a value of zero.
 Therefore, a checker needs this flag to see if the value in @code{GAL_DATA_FLAG_HASBLANK} is reliable (dataset has actually been parsed for a blank value) or not.
 
-Also, if it is necessary to re-check the presence of flags, you just have
-to set this flag to zero and call @code{gal_blank_present} for example, to
-parse the dataset and check for blank values. Note that for improved
-efficiency, when this flag is set, @code{gal_blank_present} will not
-actually parse the dataset, it will just use @code{GAL_DATA_FLAG_HASBLANK}.
+Also, if it is necessary to re-check the presence of flags, you just have to set this flag to zero and call @code{gal_blank_present} for example, to parse the dataset and check for blank values.
+Note that for improved efficiency, when this flag is set, @code{gal_blank_present} will not actually parse the dataset, it will just use @code{GAL_DATA_FLAG_HASBLANK}.
 
 @item GAL_DATA_FLAG_HASBLANK
-This bit has a value of @code{1} when the given dataset has blank
-values. If this bit is @code{0} and @code{GAL_DATA_FLAG_BLANK_CH} is
-@code{1}, then the dataset has been checked and it did not have any blank
-values, so there is no more need for further checks.
+This bit has a value of @code{1} when the given dataset has blank values.
+If this bit is @code{0} and @code{GAL_DATA_FLAG_BLANK_CH} is @code{1}, then the dataset has been checked and it did not have any blank values, so there is no more need for further checks.
 
 @item GAL_DATA_FLAG_SORT_CH
-Marking that the dataset is already checked for being sorted or not and
-thus that the possible @code{0} values in @code{GAL_DATA_FLAG_SORTED_I} and
-@code{GAL_DATA_FLAG_SORTED_D} are meaningful. The logic behind this is
-similar to that in @code{GAL_DATA_FLAG_BLANK_CH}.
+Marking that the dataset is already checked for being sorted or not and thus that the possible @code{0} values in @code{GAL_DATA_FLAG_SORTED_I} and @code{GAL_DATA_FLAG_SORTED_D} are meaningful.
+The logic behind this is similar to that in @code{GAL_DATA_FLAG_BLANK_CH}.
 
 @item GAL_DATA_FLAG_SORTED_I
-This bit has a value of @code{1} when the given dataset is sorted in an
-increasing manner. If this bit is @code{0} and @code{GAL_DATA_FLAG_SORT_CH}
-is @code{1}, then the dataset has been checked and was not sorted
-(increasing), so there is no more need for further checks.
+This bit has a value of @code{1} when the given dataset is sorted in an increasing manner.
+If this bit is @code{0} and @code{GAL_DATA_FLAG_SORT_CH} is @code{1}, then the dataset has been checked and was not sorted (increasing), so there is no more need for further checks.
 
 @item GAL_DATA_FLAG_SORTED_D
-This bit has a value of @code{1} when the given dataset is sorted in a
-decreasing manner. If this bit is @code{0} and @code{GAL_DATA_FLAG_SORT_CH}
-is @code{1}, then the dataset has been checked and was not sorted
-(decreasing), so there is no more need for further checks.
-
+This bit has a value of @code{1} when the given dataset is sorted in a decreasing manner.
+If this bit is @code{0} and @code{GAL_DATA_FLAG_SORT_CH} is @code{1}, then the dataset has been checked and was not sorted (decreasing), so there is no more need for further checks.
 @end table
 
-The macro @code{GAL_DATA_FLAG_MAXFLAG} contains the largest internally used
-bit-position. Higher-level flags can be defined with the bit-wise shift
-operators using this macro to define internal flags for libraries/programs
-that depend on Gnuastro without causing any possible conflict with the
-internal flags discussed above or having to check the values manually on
-every release.
+The macro @code{GAL_DATA_FLAG_MAXFLAG} contains the largest internally used bit-position.
+Higher-level flags can be defined with the bit-wise shift operators using this macro to define internal flags for libraries/programs that depend on Gnuastro without causing any possible conflict with the internal flags discussed above or having to check the values manually on every release.
 
 
 @item int status
-A context-specific status values for this data-structure. This integer will
-not be set by Gnuastro's libraries. You can use it keep some additional
-information about the dataset (with integer constants) depending on your
-applications.
+A context-specific status values for this data-structure.
+This integer will not be set by Gnuastro's libraries.
+You can use it keep some additional information about the dataset (with integer constants) depending on your applications.
 
 @item char *name
-The name of the dataset. If the dataset is a multi-dimensional array and
-read/written as a FITS image, this will be the value in the @code{EXTNAME}
-FITS keyword. If the dataset is a one-dimensional table column, this will
-be the column name. If it is set to @code{NULL} (by default), it will be
-ignored.
+The name of the dataset.
+If the dataset is a multi-dimensional array and read/written as a FITS image, this will be the value in the @code{EXTNAME} FITS keyword.
+If the dataset is a one-dimensional table column, this will be the column name.
+If it is set to @code{NULL} (by default), it will be ignored.
 
 @item char *unit
-The units of the dataset (for example, @code{BUNIT} in the standard FITS
-keywords) that will be read from or written to files/tables along with the
-dataset. If it is set to @code{NULL} (by default), it will be ignored.
+The units of the dataset (for example, @code{BUNIT} in the standard FITS keywords) that will be read from or written to files/tables along with thedataset.
+If it is set to @code{NULL} (by default), it will be ignored.
 
 @item char *comment
-Any further explanation about the dataset which will be written to any
-output file if present.
+Any further explanation about the dataset which will be written to any output file if present.
 
 @item disp_fmt
-Format to use for printing each element of the dataset to a plain text
-file, the acceptable values to this element are defined in @ref{Table input
-output}. Based on C's @code{printf} standards.
+Format to use for printing each element of the dataset to a plain text file, the acceptable values to this element are defined in @ref{Table input output}.
+Based on C's @code{printf} standards.
 
 @item disp_width
-Width of printing each element of the dataset to a plain text file, the
-acceptable values to this element are defined in @ref{Table input
-output}. Based on C's @code{printf} standards.
+Width of printing each element of the dataset to a plain text file, the acceptable values to this element are defined in @ref{Table input output}.
+Based on C's @code{printf} standards.
 
 @item disp_precision
-Precision of printing each element of the dataset to a plain text file, the
-acceptable values to this element are defined in @ref{Table input
-output}. Based on C's @code{printf} standards.
+Precision of printing each element of the dataset to a plain text file, the acceptable values to this element are defined in @ref{Table input output}.
+Based on C's @code{printf} standards.
 
 @item gal_data_t *next
-Through this pointer, you can link a @code{gal_data_t} with other datasets
-related datasets, for example, the different columns in a dataset each have
-one @code{gal_data_t} associate with them and they are linked to each other
-using this element. There are several functions described below to
-facilitate using @code{gal_data_t} as a linked list. See @ref{Linked lists}
-for more on these wonderful high-level constructs.
+Through this pointer, you can link a @code{gal_data_t} with other datasets related datasets, for example, the different columns in a dataset each have one @code{gal_data_t} associate with them and they are linked to each other using this element.
+There are several functions described below to facilitate using @code{gal_data_t} as a linked list.
+See @ref{Linked lists} for more on these wonderful high-level constructs.
 
 @item gal_data_t *block
-Pointer to the start of the complete allocated block of memory. When this
-pointer is not @code{NULL}, the dataset is not treated as a contiguous
-patch of memory. Rather, it is seen as covering only a portion of the
-larger patch of memory that @code{block} points to. See @ref{Tessellation
-library} for a more thorough explanation and functions to help work with
-tiles that are created from this pointer.
+Pointer to the start of the complete allocated block of memory.
+When this pointer is not @code{NULL}, the dataset is not treated as a contiguous patch of memory.
+Rather, it is seen as covering only a portion of the larger patch of memory that @code{block} points to.
+See @ref{Tessellation library} for a more thorough explanation and functions to help work with tiles that are created from this pointer.
 @end table
 
 
@@ -31276,45 +31421,35 @@ These functions are declared in @file{gnuastro/data.h} which is also visible fro
 
 @deftypefun {gal_data_t *} gal_data_alloc (void @code{*array}, uint8_t @code{type}, size_t @code{ndim}, size_t @code{*dsize}, struct wcsprm @code{*wcs}, int @code{clear}, size_t @code{minmapsize}, int @code{quietmmap}, char @code{*name}, char @code{*unit}, char @code{*comment})
 
-Dynamically allocate a @code{gal_data_t} and initialize it will all the
-given values. See the description of @code{gal_data_initialize} and
-@ref{Generic data container} for more information. This function will often
-be the most frequently used because it allocates the @code{gal_data_t}
-hosting all the values @emph{and} initializes it. Once you are done with
-the dataset, be sure to clean up all the allocated spaces with
-@code{gal_data_free}.
+Dynamically allocate a @code{gal_data_t} and initialize it will all the given values.
+See the description of @code{gal_data_initialize} and @ref{Generic data container} for more information.
+This function will often be the most frequently used because it allocates the @code{gal_data_t} hosting all the values @emph{and} initializes it.
+Once you are done with the dataset, be sure to clean up all the allocated spaces with @code{gal_data_free}.
 @end deftypefun
 
 @deftypefun void gal_data_initialize (gal_data_t @code{*data}, void @code{*array}, uint8_t @code{type}, size_t @code{ndim}, size_t @code{*dsize}, struct wcsprm @code{*wcs}, int @code{clear}, size_t @code{minmapsize}, int @code{quietmmap}, char @code{*name}, char @code{*unit}, char @code{*comment})
 
-Initialize the given data structure (@code{data}) with all the given
-values. Note that the raw input @code{gal_data_t} must already have been
-allocated before calling this function. For a description of each variable
-see @ref{Generic data container}. It will set the values and do the
-necessary allocations. If they are not @code{NULL}, all input arrays
-(@code{dsize}, @code{wcs}, @code{name}, @code{unit}, @code{comment}) are
-separately copied (allocated) by this function for usage in @code{data}, so
-you can safely use one value to initialize many datasets or use statically
-allocated variables in this function call. Once you are done with the
-dataset, you can free all the allocated spaces with
-@code{gal_data_free_contents}.
+Initialize the given data structure (@code{data}) with all the given values.
+Note that the raw input @code{gal_data_t} must already have been allocated before calling this function.
+For a description of each variable see @ref{Generic data container}.
+It will set the values and do the necessary allocations.
+If they are not @code{NULL}, all input arrays (@code{dsize}, @code{wcs}, @code{name}, @code{unit}, @code{comment}) are separately copied (allocated) by this function for usage in @code{data}, so you can safely use one value to initialize many datasets or use statically allocated variables in this function call.
+Once you are done with the dataset, you can free all the allocated spaces with @code{gal_data_free_contents}.
 
-If @code{array} is not @code{NULL}, it will be directly copied into
-@code{data->array} (based on the total number of elements calculated from
-@code{dsize}) and no new space will be allocated for the array of this
-dataset, this has many low-level advantages and can be used to work on
-regions of a dataset instead of the whole allocated array (see the
-description under @code{block} in @ref{Generic data container} for one
-example). If the given pointer is not the start of an allocated block of
-memory or it is used in multiple datasets, be sure to set it to @code{NULL}
-(with @code{data->array=NULL}) before cleaning up with
-@code{gal_data_free_contents}.
+If @code{array} is not @code{NULL}, it will be directly copied into @code{data->array} (based on the total number of elements calculated from @code{dsize}) and no new space will be allocated for the array of this dataset, this has many low-level advantages and can be used to work on regions of a dataset instead of the whole allocated array (see the description under @code{block} in @ref{Generic data container} for one example).
+If the given pointer is not the start of an allocated block of memory or it is used in multiple datasets, be sure to set it to @code{NULL} (with @code{data->array=NULL}) before cleaning up with @code{gal_data_free_contents}.
 
-@code{ndim} may be zero. In this case no allocation will occur,
-@code{data->array} and @code{data->dsize} will be set to @code{NULL} and
-@code{data->size} will be zero. However (when necessary) @code{dsize} must
-not have any zero values (a dimension of length zero is not defined).
+@code{ndim} may be zero.
+In this case no allocation will occur, @code{data->array} and @code{data->dsize} will be set to @code{NULL} and @code{data->size} will be zero.
+However (when necessary) @code{dsize} must not have any zero values (a dimension of length zero is not defined).
 @end deftypefun
+
+@deftypefun {gal_data_t *} gal_data_alloc_empty (size_t @code{ndim}, size_t @code{minmapsize}, int @code{quietmmap})
+Allocate an empty dataset with a certain number of dimensions, but no 'array' component.
+The @code{size} element will be set to zero and the @code{dsize} array will be properly allocated (based on the number of dimensions), but all elements will be zero.
+This is useful in scenarios where you just need a @code{gal_data_t} for meta data.
+@end deftypefun
+
 
 @deftypefun void gal_data_free_contents (gal_data_t @code{*data})
 Free all the non-@code{NULL} pointers in @code{gal_data_t} except for @code{next} and @code{block}.
@@ -31324,34 +31459,25 @@ For a complete description of @code{gal_data_t} and its contents, see @ref{Gener
 @end deftypefun
 
 @deftypefun void gal_data_free (gal_data_t @code{*data})
-Free all the non-@code{NULL} pointers in @code{gal_data_t}, then free the
-actual data structure.
+Free all the non-@code{NULL} pointers in @code{gal_data_t}, then free the actual data structure.
 @end deftypefun
 
 @node Arrays of datasets, Copying datasets, Dataset allocation, Library data container
 @subsubsection Arrays of datasets
 
-Gnuastro's generic data container (@code{gal_data_t}) is a very versatile
-structure that can be used in many higher-level contexts. One such
-higher-level construct is an array of @code{gal_data_t} structures to
-simplify the allocation (and later cleaning) of several @code{gal_data_t}s
-that are related.
+Gnuastro's generic data container (@code{gal_data_t}) is a very versatile structure that can be used in many higher-level contexts.
+One such higher-level construct is an array of @code{gal_data_t} structures to simplify the allocation (and later cleaning) of several @code{gal_data_t}s that are related.
 
-For example, each column in a table is usually represented by one
-@code{gal_data_t} (so it has its own name, data type, units, etc.). A
-table (with many columns) can be seen as an array of @code{gal_data_t}s
-(when the number of columns is known a-priori). The functions below are
-defined to create a cleared array of data structures and to free them when
-none are necessary any more. These functions are declared in
-@file{gnuastro/data.h} which is also visible from the function names (see
-@ref{Gnuastro library}).
+For example, each column in a table is usually represented by one @code{gal_data_t} (so it has its own name, data type, units, etc.).
+A table (with many columns) can be seen as an array of @code{gal_data_t}s (when the number of columns is known a-priori).
+The functions below are defined to create a cleared array of data structures and to free them when none are necessary any more.
+These functions are declared in @file{gnuastro/data.h} which is also visible from the function names (see @ref{Gnuastro library}).
 
 @deftypefun {gal_data_t *} gal_data_array_calloc (size_t @code{size})
-Allocate an array of @code{gal_data_t} with @code{size} elements. This
-function will also initialize all the values (@code{NULL} for pointers and
-0 for other types). You can use @code{gal_data_initialize} to fill each
-element of the array afterwards. The following code snippet is one example
-of doing this.
+Allocate an array of @code{gal_data_t} with @code{size} elements.
+This function will also initialize all the values (@code{NULL} for pointers and 0 for other types).
+You can use @code{gal_data_initialize} to fill each element of the array afterwards.
+The following code snippet is one example of doing this.
 
 @example
 size_t i;
@@ -31364,10 +31490,8 @@ gal_data_array_free(dataarr, 10, 1);
 @end deftypefun
 
 @deftypefun void gal_data_array_free (gal_data_t @code{*dataarr}, size_t @code{num}, int @code{free_array})
-Free all the @code{num} elements within @code{dataarr} and the actual
-allocated array. If @code{free_array} is not zero, then the @code{array}
-element of all the datasets will also be freed, see @ref{Generic data
-container}.
+Free all the @code{num} elements within @code{dataarr} and the actual allocated array.
+If @code{free_array} is not zero, then the @code{array} element of all the datasets will also be freed, see @ref{Generic data container}.
 @end deftypefun
 
 @deftypefun {gal_data_t **} gal_data_array_ptr_calloc (size_t @code{size})
@@ -34538,12 +34662,6 @@ Select random values from a custom distribution (defined by a histogram).
 For more, see the description of the respective operators in @ref{Generating random numbers}.
 @end deffn
 
-@deffn Macro GAL_ARITHMETIC_OP_SIZE
-Size operator that will return a single value for datasets of any kind. When @code{gal_arithmetic} is called with this operator, it requires two arguments.
-The first is the dataset, and the second is a single integer value.
-The output type is a single integer.
-@end deffn
-
 @deffn Macro GAL_ARITHMETIC_OP_STITCH
 Stitch a list of input datasets along the requested dimension.
 See the description of the @code{stitch} operator in Arithmetic (@ref{Dimensionality changing operators}).
@@ -34631,6 +34749,28 @@ Just note that the list should be in the reverse of the desired dimensions.
 Constant components of the @command{load-col-} operator (see @ref{Loading external columns}).
 These are just fixed strings (and their lengths) that are placed in between the various components of that operator to allow choosing a certain column of a certain HDU of a certain file.
 @end deffn
+
+@deffn  Macro GAL_ARITHMETIC_OP_INDEX
+@deffnx Macro GAL_ARITHMETIC_OP_COUNTER
+@deffnx Macro GAL_ARITHMETIC_OP_INDEXONLY
+@deffnx Macro GAL_ARITHMETIC_OP_COUNTERONLY
+Return a dataset with the same number of elements and dimensionality as the first (and only!) input dataset.
+But each output pixel's value will be replaced by its index (counting from 0) or counter (counting from 1).
+Note that the @code{GAL_ARITHMETIC_OP_INDEX} and @code{GAL_ARITHMETIC_OP_INDEXONLY} operators are identical within the library (same for the counter operators).
+They are given separate macros here to help the higher-level callers to manage their inputs separately (see @ref{Size and position operators}).
+@end deffn
+
+@deffn Macro GAL_ARITHMETIC_OP_SIZE
+Size operator that will return a single value for datasets of any kind. When @code{gal_arithmetic} is called with this operator, it requires two arguments.
+The first is the dataset, and the second is a single integer value.
+The output type is a single integer.
+@end deffn
+
+@deffn Macro GAL_ARITHMETIC_OP_SWAP
+Return the first dataset, but with the second dataset being placed in the @code{next} element of the first.
+This is useful to swap the operators on the stacks of the higher-level programs that call the arithmetic library.
+@end deffn
+
 
 @deftypefun {gal_data_t *} gal_arithmetic (int @code{operator}, size_t @code{numthreads}, int @code{flags}, ...)
 Apply the requested arithmetic operator on the operand(s).

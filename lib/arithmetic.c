@@ -2738,6 +2738,78 @@ arithmetic_makenew(gal_data_t *sizes)
 
 
 
+/* Build a dataset with the index of each element. */
+#define ARITHMETIC_FILL_INDEX(IT) {                                     \
+    IT i=0, *a=out->array, *af=a+out->size; do *a = i++; while(++a<af); }
+#define ARITHMETIC_FILL_COUNTER(IT) {                                   \
+    IT i=0, *a=out->array, *af=a+out->size; do *a = ++i; while(++a<af); }
+static gal_data_t *
+arithmetic_index_counter(gal_data_t *input, int operator, int flags)
+{
+  uint8_t otype;
+  gal_data_t *out;
+  size_t isize=input->size;
+
+  /* Find the best type for the output. */
+  if(      isize<UINT8_MAX  ) otype=GAL_TYPE_UINT8;
+  else if( isize<UINT16_MAX ) otype=GAL_TYPE_UINT16;
+  else if( isize<UINT32_MAX ) otype=GAL_TYPE_UINT32;
+  else                        otype=GAL_TYPE_UINT64;
+
+  /* Allocate the necessary dataset. */
+  out=gal_data_alloc(NULL, otype, input->ndim, input->dsize, NULL,
+                     0, input->minmapsize, input->quietmmap, NULL,
+                     NULL, NULL);
+
+  /* Do the respective operation. */
+  switch(operator)
+    {
+    case GAL_ARITHMETIC_OP_INDEX:
+    case GAL_ARITHMETIC_OP_INDEXONLY:
+      switch(otype)
+        {
+        case GAL_TYPE_UINT8:  ARITHMETIC_FILL_INDEX( uint8_t  ); break;
+        case GAL_TYPE_UINT16: ARITHMETIC_FILL_INDEX( uint16_t ); break;
+        case GAL_TYPE_UINT32: ARITHMETIC_FILL_INDEX( uint32_t ); break;
+        case GAL_TYPE_UINT64: ARITHMETIC_FILL_INDEX( uint64_t ); break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+                "to find and fix the problem. The type code '%d' isn't "
+                "recognized for the 'index' operator", __func__,
+                PACKAGE_BUGREPORT, otype);
+        }
+      break;
+    case GAL_ARITHMETIC_OP_COUNTER:
+    case GAL_ARITHMETIC_OP_COUNTERONLY:
+      switch(otype)
+        {
+        case GAL_TYPE_UINT8:  ARITHMETIC_FILL_COUNTER( uint8_t  ); break;
+        case GAL_TYPE_UINT16: ARITHMETIC_FILL_COUNTER( uint16_t ); break;
+        case GAL_TYPE_UINT32: ARITHMETIC_FILL_COUNTER( uint32_t ); break;
+        case GAL_TYPE_UINT64: ARITHMETIC_FILL_COUNTER( uint64_t ); break;
+        default:
+          error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' "
+                "to find and fix the problem. The type code '%d' isn't "
+                "recognized for the 'counter' operator", __func__,
+                PACKAGE_BUGREPORT, otype);
+        }
+      break;
+    default:
+      error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+            "find and fix the problem. The code '%d' isn't recognized "
+            "for the 'operator' variable", __func__, PACKAGE_BUGREPORT,
+            operator);
+    }
+
+  /* Clean up and return. */
+  if(flags & GAL_ARITHMETIC_FLAG_FREE) gal_data_free(input);
+  return out;
+}
+
+
+
+
+
 gal_data_t *
 gal_arithmetic_load_col(char *str, int searchin, int ignorecase,
                         size_t minmapsize, int quietmmap)
@@ -3021,10 +3093,6 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "random-from-hist-raw"))
     { op=GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW; *num_operands=3; }
 
-  /* The size operator */
-  else if (!strcmp(string, "size"))
-    { op=GAL_ARITHMETIC_OP_SIZE;              *num_operands=2;  }
-
   /* Stitching */
   else if (!strcmp(string, "stitch"))
     { op=GAL_ARITHMETIC_OP_STITCH;            *num_operands=-1; }
@@ -3113,9 +3181,21 @@ gal_arithmetic_set_operator(char *string, size_t *num_operands)
   else if (!strcmp(string, "box-around-ellipse"))
     { op=GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE;*num_operands=3;  }
 
-  /* New dataset. */
+  /* Size and position operators. */
+  else if (!strcmp(string, "swap"))
+    { op=GAL_ARITHMETIC_OP_SWAP;              *num_operands=2;  }
+  else if (!strcmp(string, "index"))
+    { op=GAL_ARITHMETIC_OP_INDEX;             *num_operands=1;  }
+  else if (!strcmp(string, "indexonly"))
+    { op=GAL_ARITHMETIC_OP_INDEXONLY;         *num_operands=1;  }
+  else if (!strcmp(string, "counter"))
+    { op=GAL_ARITHMETIC_OP_COUNTER;           *num_operands=1;  }
+  else if (!strcmp(string, "counteronly"))
+    { op=GAL_ARITHMETIC_OP_COUNTERONLY;       *num_operands=1;  }
   else if (!strcmp(string, "makenew"))
     { op=GAL_ARITHMETIC_OP_MAKENEW;           *num_operands=-1;  }
+  else if (!strcmp(string, "size"))
+    { op=GAL_ARITHMETIC_OP_SIZE;              *num_operands=2;  }
 
   /* Operator not defined. */
   else
@@ -3254,6 +3334,11 @@ gal_arithmetic_operator_string(int operator)
 
     case GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE: return "box-around-ellipse";
 
+    case GAL_ARITHMETIC_OP_SWAP:            return "swap";
+    case GAL_ARITHMETIC_OP_INDEX:           return "index";
+    case GAL_ARITHMETIC_OP_COUNTER:         return "counter";
+    case GAL_ARITHMETIC_OP_INDEXONLY:       return "indexonly";
+    case GAL_ARITHMETIC_OP_COUNTERONLY:     return "counteronly";
     case GAL_ARITHMETIC_OP_MAKENEW:         return "makenew";
 
     default:                                return NULL;
@@ -3447,13 +3532,6 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
         out=arithmetic_mknoise(operator, flags, d1, d2);
       break;
 
-    /* Size operator */
-    case GAL_ARITHMETIC_OP_SIZE:
-      d1 = va_arg(va, gal_data_t *);
-      d2 = va_arg(va, gal_data_t *);
-      out=arithmetic_size(operator, flags, d1, d2);
-      break;
-
     /* Stitch multiple datasets. */
     case GAL_ARITHMETIC_OP_STITCH:
       d1 = va_arg(va, gal_data_t *);
@@ -3498,10 +3576,27 @@ gal_arithmetic(int operator, size_t numthreads, int flags, ...)
       out=arithmetic_box_around_ellipse(d1, d2, d3, operator, flags);
       break;
 
-    /* Build dataset from scratch. */
+    /* Size and position operators. */
+    case GAL_ARITHMETIC_OP_SIZE:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      out=arithmetic_size(operator, flags, d1, d2);
+      break;
     case GAL_ARITHMETIC_OP_MAKENEW:
       d1 = va_arg(va, gal_data_t *);
       out=arithmetic_makenew(d1);
+      break;
+    case GAL_ARITHMETIC_OP_INDEX:
+    case GAL_ARITHMETIC_OP_COUNTER:
+    case GAL_ARITHMETIC_OP_INDEXONLY:
+    case GAL_ARITHMETIC_OP_COUNTERONLY:
+      d1 = va_arg(va, gal_data_t *);
+      out=arithmetic_index_counter(d1, operator, flags);
+      break;
+    case GAL_ARITHMETIC_OP_SWAP:
+      d1 = va_arg(va, gal_data_t *);
+      d2 = va_arg(va, gal_data_t *);
+      d1->next=d2; d2->next=NULL;  out=d1;
       break;
 
     /* When the operator is not recognized. */

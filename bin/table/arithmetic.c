@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 #include <gnuastro/wcs.h>
 #include <gnuastro/type.h>
+#include <gnuastro/pointer.h>
 
 #include <gnuastro-internal/checkset.h>
 #include <gnuastro-internal/arithmetic-set.h>
@@ -434,20 +435,64 @@ arithmetic_indexs_final(struct tableparams *p)
 /*********************************************************************/
 /********************       Low-level tools      *********************/
 /*********************************************************************/
+static void
+arithmetic_placeholder_name(gal_data_t *col)
+{
+  static size_t counter=0;
+
+  /* Increment counter next time this function is called. */
+  ++counter;
+
+  /* Free any possibly existing metadata. */
+  if(col->name)    free(col->name);
+  if(col->unit)    free(col->unit);
+  if(col->comment) free(col->comment);
+
+  /* Set the new meta-data. */
+  errno=0;
+  if( asprintf(&col->name, "ARITH_%zu", counter)==-1 )
+    error(EXIT_FAILURE, errno, "%s: asprintf error for name", __func__);
+  if( asprintf(&col->unit, "arith_unit_%zu", counter)==-1)
+    error(EXIT_FAILURE, errno, "%s: asprintf error for unit", __func__);
+  if( asprintf(&col->comment, "Column from arithmetic operation %zu",
+               counter)==-1 )
+    error(EXIT_FAILURE, errno, "%s: asprintf error for comment", __func__);
+}
+
+
+
+
+
 static gal_data_t *
 arithmetic_stack_pop(gal_data_t **stack, int operator, char *errormsg)
 {
-  gal_data_t *out=*stack;
+  size_t i;
+  gal_data_t *out, *top=*stack;
 
-  /* Update the stack. */
-  if(*stack)
-    *stack=(*stack)->next;
-  else
-    error(EXIT_FAILURE, 0, "not enough operands for '%s'%s",
-          arithmetic_operator_name(operator), errormsg?errormsg:"");
+  /* Update the stack (where necessary). */
+  switch(operator)
+    {
+    /* Operators don't need to pop the dataset from the stack (they just
+       need the metadata). */
+    case GAL_ARITHMETIC_OP_INDEX:
+    case GAL_ARITHMETIC_OP_COUNTER:
+      out=gal_data_alloc_empty(top->ndim, top->minmapsize, top->quietmmap);
+      for(i=0;i<top->ndim;++i) out->dsize[i]=top->dsize[i];
+      out->size=top->size;
+      break;
+
+    /* Operators that actually need the data. */
+    default:
+      out=*stack;
+      if(*stack)
+        *stack=(*stack)->next;
+      else
+        error(EXIT_FAILURE, 0, "not enough operands for '%s'%s",
+              arithmetic_operator_name(operator), errormsg?errormsg:"");
+    }
 
   /* Arithmetic changes the contents of a dataset, so the old name (in the
-     FITS 'EXTNAME' keyword) must not be used beyond this
+     FITS 'EXTNAME' keyword) or units must not be used beyond this
      point. Furthermore, in Arithmetic, the 'name' element is used to
      identify variables (with the 'set-' operator). */
   if(out->name)    { free(out->name);    out->name=NULL;    }
@@ -808,34 +853,6 @@ arithmetic_datetosec(struct tableparams *p, gal_data_t **stack,
 /********************          Operations        *********************/
 /*********************************************************************/
 static void
-arithmetic_placeholder_name(gal_data_t *col)
-{
-  static size_t counter=0;
-
-  /* Increment counter next time this function is called. */
-  ++counter;
-
-  /* Free any possibly existing metadata. */
-  if(col->name)    free(col->name);
-  if(col->unit)    free(col->unit);
-  if(col->comment) free(col->comment);
-
-  /* Set the new meta-data. */
-  errno=0;
-  if( asprintf(&col->name, "ARITH_%zu", counter)==-1 )
-    error(EXIT_FAILURE, errno, "%s: asprintf error for name", __func__);
-  if( asprintf(&col->unit, "arith_unit_%zu", counter)==-1)
-    error(EXIT_FAILURE, errno, "%s: asprintf error for unit", __func__);
-  if( asprintf(&col->comment, "Column from arithmetic operation %zu",
-               counter)==-1 )
-    error(EXIT_FAILURE, errno, "%s: asprintf error for comment", __func__);
-}
-
-
-
-
-
-static void
 arithmetic_operator_run(struct tableparams *p,
                         struct arithmetic_token *token,
                         struct gal_arithmetic_set_params *setprm,
@@ -1066,10 +1083,10 @@ arithmetic_reverse_polish(struct tableparams *p,
       ++setprm.tokencounter;
     }
 
-  /* Put everything that remains in the stack (reversed) into the final
-     table. Just note that 'gal_list_data_add' behaves differently for
-     lists, so we'll add have to manually set the 'next' element to NULL
-     before adding the column to the final table. */
+ /* Put everything that remains in the stack (reversed) into the final
+    table. Just note that 'gal_list_data_add' behaves differently for
+    lists, so we'll add have to manually set the 'next' element to NULL
+    before adding the column to the final table. */
   gal_list_data_reverse(&stack);
   while(stack!=NULL)
     {

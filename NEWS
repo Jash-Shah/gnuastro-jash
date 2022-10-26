@@ -8,9 +8,31 @@ See the end of the file for license conditions.
 
 ** New features
 
+   Arithmetic
+   --writeall: Write all datasets on the stack as separate HDUs in the
+     output; this is useful in debugging incomplete Arithmetic commands.
+   - New operators (also available in Table).
+     - swap: swap the top two datasets on the stack of operands.
+     - index: return dataset of same size, with pixel values that are
+       integers starting from 0 and incrementing one by one. This operator
+       doesn't pop the top dataset from the stack, it only adds one (to
+       avoid extra RAM usage in most usage scenarios).
+     - counter: similar to 'index', but integers start with 1.
+     - indexonly: similar to 'index', but pops the top stack dataset.
+     - counteronly: similar to 'counter', but pops the top stack dataset.
+
    Crop:
    --metaname: Specify the name of the cropped output HDU (value to the
      'EXTNAME' keyword in FITS).
+
+   Library:
+   - GAL_ARITHMETIC_OP_SWAP: swap the top two operands.
+   - GAL_ARITHMETIC_OP_INDEX: An index (counting from 0) for every element.
+   - GAL_ARITHMETIC_OP_INDEXONLY: Similar to 'GAL_ARITHMETIC_OP_INDEX'.
+   - GAL_ARITHMETIC_OP_COUNTER: A counter (counting from 1) for every element.
+   - GAL_ARITHMETIC_OP_COUNTERONLY: Similar to 'GAL_ARITHMETIC_OP_COUNTER'.
+   - gal_data_alloc_empty: Allocate an empty dataset with a given number of
+     dimensions.
 
 ** Removed features
 
@@ -28,6 +50,8 @@ See the end of the file for license conditions.
   bug #63270: Table aborts when called with '--descending' with complaint
               on '--txtf64format' (that was added in Gnuastro
               0.19). Reported by Giulia Golini.
+  bug #63285: Table not printing anything in rows of integer columns with
+              value of zero.
 
 
 

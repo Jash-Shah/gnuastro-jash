@@ -1374,6 +1374,33 @@ arithmetic_set_operator(char *string, size_t *num_operands, int *inlib)
 
 
 
+static gal_data_t *
+arithmetic_prepare_meta(gal_data_t *d1, gal_data_t *d2, gal_data_t *d3)
+{
+  size_t i;
+  gal_data_t *out;
+
+  /* A small sanity check (these operators only need a single
+     operator). */
+  if(d2 || d3)
+    error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at '%s' to "
+          "find and fix the problem. Meta operators should only "
+          "take a single operand, but for some reason, this "
+          "hasn't occurred here", __func__, PACKAGE_BUGREPORT);
+
+  /* Allocate the output dataset. */
+  out=gal_data_alloc_empty(d1->ndim, d1->minmapsize, d1->quietmmap);
+
+  /* Fill the output dataset and return. */
+  for(i=0;i<d1->ndim;++i) out->dsize[i]=d1->dsize[i];
+  out->size=d1->size;
+  return out;
+}
+
+
+
+
+
 static void
 arithmetic_operator_run(struct arithmeticparams *p, int operator,
                         char *operator_string, size_t num_operands,
@@ -1433,6 +1460,19 @@ arithmetic_operator_run(struct arithmeticparams *p, int operator,
                 "to fix the problem. '%zu' is not recognized as an "
                 "operand counter (with '%s')", __func__,
                 PACKAGE_BUGREPORT, num_operands, operator_string);
+        }
+
+      /* Meta operators (where only the information about the pixels is
+         relevant, not the pixel values themselves, like the 'index'
+         operator). For these (that only accept one operand), we should add
+         the first popped operand back on the stack, then  */
+      switch(operator)
+        {
+        case GAL_ARITHMETIC_OP_INDEX:
+        case GAL_ARITHMETIC_OP_COUNTER:
+          operands_add(p, NULL, d1);
+          d1=arithmetic_prepare_meta(d1, d2, d3);
+          break;
         }
 
       /* Run the arithmetic operation. Note that 'gal_arithmetic'
@@ -1542,6 +1582,66 @@ arithmetic_set_name_used_later(void *in, char *name)
 
 
 
+static void
+arithmetic_final_read_file(struct arithmeticparams *p,
+                           struct operand *operand)
+{
+  gal_data_t *out=NULL;
+  char *hdu, *filename;
+
+  /* Read the desired image and report it if necessary. */
+  hdu=operand->hdu;
+  filename=operand->filename;
+  if( gal_fits_file_recognized(filename) )
+    {
+      /* Read the data, note that the WCS has already been set. */
+      out=gal_array_read_one_ch(filename, hdu, NULL,
+                                p->cp.minmapsize,
+                                p->cp.quietmmap);
+      out->ndim=gal_dimension_remove_extra(out->ndim, out->dsize,
+                                            NULL);
+      if(!p->cp.quiet) printf(" - %s (hdu %s) is read.\n", filename, hdu);
+    }
+  else
+    error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
+          "the problem. While 'operands->data' is NULL, the filename "
+          "('%s') is not recognized as a FITS file", __func__,
+          PACKAGE_BUGREPORT, filename);
+
+  /* Keep the read dataset (note that we don't need to free 'filename' or
+     'hdu' since their pointers are simply copied into the operand, they
+     are not copied.*/
+  operand->data=out;
+}
+
+
+
+
+
+/* Extract all the datasets of the remaining operands. */
+static gal_data_t *
+arithmetic_final_data(struct arithmeticparams *p)
+{
+  struct operand *op;
+  gal_data_t *out=NULL;
+
+  /* Go over the operands, extract their dataset and add it to the list. */
+  for(op=p->operands; op!=NULL; op=op->next)
+    {
+      gal_list_data_add(&out, op->data);
+      out->wcs=gal_wcs_copy(p->refdata.wcs);
+    }
+
+  /* Reverse the list so it goes in the same order as the operands, then
+     return it. */
+  gal_list_data_reverse(&out);
+  return out;
+}
+
+
+
+
+
 /* This function implements the reverse polish algorithm as explained
    in the Wikipedia page.
 
@@ -1550,10 +1650,11 @@ arithmetic_set_name_used_later(void *in, char *name)
 void
 reversepolish(struct arithmeticparams *p)
 {
+  char *printnum;
+  struct operand *otmp;
   size_t num_operands=0;
   gal_list_str_t *token;
-  gal_data_t *data, *col;
-  char *hdu, *filename, *printnum;
+  gal_data_t *tmp, *data, *col;
   struct gal_options_common_params *cp=&p->cp;
   int inlib, operator=GAL_ARITHMETIC_OP_INVALID;
 
@@ -1623,7 +1724,7 @@ reversepolish(struct arithmeticparams *p)
 
   /* If there is more than one node in the operands stack then the user has
      given too many operands which is an error. */
-  if(p->operands->next!=NULL)
+  if(p->writeall==0 && p->operands->next!=NULL)
     error(EXIT_FAILURE, 0, "too many operands");
 
 
@@ -1632,37 +1733,18 @@ reversepolish(struct arithmeticparams *p)
      read the contents of the file and put the resulting dataset into the
      operands 'data' element. This can happen for example if no operators
      are called and there is only one filename as an argument (which can
-     happen in scripts). */
-  if(p->operands->data==NULL && p->operands->filename)
-    {
-      /* Read the desired image and report it if necessary. */
-      hdu=p->operands->hdu;
-      filename=p->operands->filename;
-      if( gal_fits_file_recognized(filename) )
-        {
-          /* Read the data, note that the WCS has already been set. */
-          p->operands->data=gal_array_read_one_ch(filename, hdu, NULL,
-                                                  p->cp.minmapsize,
-                                                  p->cp.quietmmap);
-          data=p->operands->data;
-          data->ndim=gal_dimension_remove_extra(data->ndim, data->dsize,
-                                                NULL);
-          if(!p->cp.quiet)
-            printf(" - %s (hdu %s) is read.\n", filename, hdu);
-        }
-      else
-        error(EXIT_FAILURE, 0, "%s: a bug! please contact us at %s to fix "
-              "the problem. While 'operands->data' is NULL, the filename "
-              "('%s') is not recognized as a FITS file", __func__,
-              PACKAGE_BUGREPORT, filename);
-    }
+     happen in scripts).*/
+  for(otmp=p->operands; otmp!=NULL; otmp=otmp->next)
+    if(otmp->data==NULL && otmp->filename)
+      arithmetic_final_read_file(p, otmp);
 
 
   /* If the final data structure has more than one element, write it as a
      FITS file. Otherwise, if the user didn't call '--output', print it in
      the standard output. */
-  data=p->operands->data;
-  if(data->size==1 && data->ndim==1 && p->outnamerequested==0)
+  data=arithmetic_final_data(p);
+  if(data->next==NULL && data->size==1 && data->ndim==1
+     && p->outnamerequested==0)
     {
       /* Make the string to print the number. */
       printnum=gal_type_to_string(data->array, data->type, 0);
@@ -1687,13 +1769,13 @@ reversepolish(struct arithmeticparams *p)
 
       /* Put a copy of the WCS structure from the reference image, it
          will be freed while freeing 'data'. */
-      data->wcs=p->refdata.wcs;
       if(data->ndim==1 && p->onedasimage==0)
         gal_table_write(data, NULL, NULL, p->cp.tableformat,
                         p->onedonstdout ? NULL : p->cp.output,
                         "ARITHMETIC", 0);
       else
-        gal_fits_img_write(data, p->cp.output, NULL, PROGRAM_NAME);
+        for(tmp=data; tmp!=NULL; tmp=tmp->next)
+          gal_fits_img_write(tmp, p->cp.output, NULL, PROGRAM_NAME);
 
       /* Let the user know that the job is done. */
       if(!p->cp.quiet)

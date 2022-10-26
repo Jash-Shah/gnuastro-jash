@@ -192,8 +192,6 @@ enum gal_arithmetic_operators
   GAL_ARITHMETIC_OP_RANDOM_FROM_HIST,/* Randoms from a histogram (uniform).*/
   GAL_ARITHMETIC_OP_RANDOM_FROM_HIST_RAW,/* Randoms from a histogram (raw).*/
 
-  GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
-
   GAL_ARITHMETIC_OP_STITCH,       /* Stitch multiple datasets together.    */
 
   GAL_ARITHMETIC_OP_TO_UINT8,     /* Convert to uint8_t.                   */
@@ -209,7 +207,14 @@ enum gal_arithmetic_operators
 
   GAL_ARITHMETIC_OP_BOX_AROUND_ELLIPSE, /* Width/Height of box over ellipse*/
 
+  /* Meta operators */
   GAL_ARITHMETIC_OP_MAKENEW,      /* Build a new dataset, containing zeros.*/
+  GAL_ARITHMETIC_OP_SIZE,         /* Size of the dataset along an axis     */
+  GAL_ARITHMETIC_OP_INDEX,        /* New with the index (counting from 0). */
+  GAL_ARITHMETIC_OP_COUNTER,      /* New with the index (counting from 0). */
+  GAL_ARITHMETIC_OP_INDEXONLY,    /* New with the index (counting from 0). */
+  GAL_ARITHMETIC_OP_COUNTERONLY,  /* New with the index (counting from 1). */
+  GAL_ARITHMETIC_OP_SWAP,         /* Swap the top two operands.            */
 
   GAL_ARITHMETIC_OP_LAST_CODE,    /* Last code of the library operands.    */
 };

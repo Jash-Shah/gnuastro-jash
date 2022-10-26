@@ -1264,8 +1264,13 @@ table(struct tableparams *p)
   /* When any columns with blanks should be removed. */
   if(p->noblankend) table_noblankend(p);
 
-  /* Write the output. */
-  table_txt_formats(p);
-  gal_table_write(p->table, NULL, NULL, p->cp.tableformat, p->cp.output,
-                  "TABLE", p->colinfoinstdout);
+  /* Write the output or a warning/error (it can become NULL!) */
+  if(p->table)
+    {
+      table_txt_formats(p);
+      gal_table_write(p->table, NULL, NULL, p->cp.tableformat, p->cp.output,
+                      "TABLE", p->colinfoinstdout);
+    }
+  else
+    error(EXIT_FAILURE, 0, "no output columns");
 }

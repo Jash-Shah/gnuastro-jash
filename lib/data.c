@@ -213,6 +213,37 @@ gal_data_initialize(gal_data_t *data, void *array, uint8_t type,
 
 
 
+/* Allocate an empty (meta) dataset with a certain number of dimensions,
+   but no 'array' component, and all 'size' elements set to zero. */
+gal_data_t *
+gal_data_alloc_empty(size_t ndim, size_t minmapsize, int quietmmap)
+{
+  gal_data_t *out;
+  size_t i, *dsize=gal_pointer_allocate(GAL_TYPE_SIZE_T, ndim,
+                                        0, __func__, "dsize");
+
+  /* Fill the 'dsize' array with 1 values (so too much space isn't
+     allocated!), then allocate it. */
+  for(i=0;i<ndim;++i) dsize[i]=1;
+  out=gal_data_alloc(NULL, GAL_TYPE_UINT8, ndim, dsize, NULL, 0,
+                     minmapsize, quietmmap, NULL, NULL, NULL);
+
+  /* Update the sizes. */
+  out->size=0;
+  for(i=0;i<ndim;++i) out->dsize[i]=0;
+
+  /* Clean up the allocated space for 'out->array', and the extra 'dsize',
+     then return. */
+  free(out->array);
+  out->array=NULL;
+  free(dsize);
+  return out;
+}
+
+
+
+
+
 /* Free the allocated contents of a data structure, not the structure
    itsself. The reason that this function is separate from 'gal_data_free'
    is that the data structure might be allocated as an array (statically

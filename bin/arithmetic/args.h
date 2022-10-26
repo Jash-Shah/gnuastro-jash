@@ -30,6 +30,7 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 /* Definition of program-specific options. */
 struct argp_option program_options[] =
   {
+    /* Input options. */
     {
       "globalhdu",
       UI_KEY_GLOBALHDU,
@@ -87,6 +88,7 @@ struct argp_option program_options[] =
 
 
 
+    /* Output options. */
     {
       "onedasimage",
       UI_KEY_ONEDASIMAGE,
@@ -149,6 +151,19 @@ struct argp_option program_options[] =
       &p->metacomment,
       GAL_TYPE_STRING,
       GAL_OPTIONS_RANGE_ANY,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
+      "writeall",
+      UI_KEY_WRITEALL,
+      0,
+      0,
+      "Write all images in stack (not just a single one).",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->writeall,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
       GAL_OPTIONS_NOT_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },

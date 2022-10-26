@@ -318,9 +318,18 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
         }
       else width=( col->disp_width<=0 ? GAL_TABLE_DEF_WIDTH_INT
                     : col->disp_width );
-      precision=( col->disp_precision==GAL_BLANK_INT
-                  ? GAL_TABLE_DEF_PRECISION_INT
-                  : col->disp_precision );
+
+      /* For integers, there shouldn't be any default precision. If the
+         caller didn't specify it, it should just be the full set of
+         available digits. because for 'printf' the precision of integers
+         means (according to the GNU C Library manual): "the minimum number
+         of digits to appear; leading zeros are produced if necessary. If
+         you don’t specify a precision, the number is printed with as many
+         digits as it needs.  If you convert a value of zero with an
+         explicit precision of zero, then no characters at all are
+         produced". The main problem is that integer columns can contain
+         zero and in that case '%.0u' or '%.0d' will not print anything! */
+      precision=col->disp_precision;
       break;
 
 
@@ -332,9 +341,7 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
       fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'd' : 'I';
       width = ( col->disp_width<=0 ? GAL_TABLE_DEF_WIDTH_INT
                 : col->disp_width );
-      precision=( col->disp_precision==GAL_BLANK_INT
-                  ? GAL_TABLE_DEF_PRECISION_INT
-                  : col->disp_precision );
+      precision=col->disp_precision; /* See description in unsigned types.*/
       break;
 
 
@@ -345,9 +352,7 @@ gal_tableintern_col_print_info(gal_data_t *col, int tableformat,
       fmt[0] = tableformat==GAL_TABLE_FORMAT_TXT ? 'd' : 'I';
       width=( col->disp_width<=0 ? GAL_TABLE_DEF_WIDTH_LINT
               : col->disp_width );
-      precision=( col->disp_precision==GAL_BLANK_INT
-                  ? GAL_TABLE_DEF_PRECISION_INT
-                  : col->disp_precision );
+      precision=col->disp_precision; /* See description in unsigned types.*/
       break;
 
 
