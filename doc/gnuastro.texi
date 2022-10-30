@@ -15658,8 +15658,9 @@ $ astcrop --mode=img --center=568.342,2091.719 --width=201 image.fits
 ## Crop all HDUs within a FITS file at a certain coordinate, while
 ## preserving the names of the HDUs in the output.
 $ for hdu in $(astfits input.fits --listimagehdus); do \
-    astcrop input.fits --hdu=$$hdu --append --output=crop.fits \
-            --metaname=$$hdu --mode=wcs --center=189.16704,62.218203
+    astcrop input.fits --hdu=$hdu --append --output=crop.fits \
+            --metaname=$hdu --mode=wcs --center=189.16704,62.218203 \
+            --width=10/3600
   done
 @end example
 
