@@ -427,8 +427,13 @@ gal_type_to_string(void *ptr, uint8_t type, int quote_if_str_has_space)
     case GAL_TYPE_INT32:   TO_STRING( int32_t,  "%"PRId32 );  break;
     case GAL_TYPE_UINT64:  TO_STRING( uint64_t, "%"PRIu64 );  break;
     case GAL_TYPE_INT64:   TO_STRING( int64_t,  "%"PRId64 );  break;
-    case GAL_TYPE_FLOAT32: TO_STRING( float,    "%.6g"    );  break;
-    case GAL_TYPE_FLOAT64: TO_STRING( double,   "%.10g"   );  break;
+
+    /* We aren't using '%g' for floating points because it can remove
+       statisically significant digits in some scenarios and its result is
+       generally not easily predictable (can be fixed-point or
+       exponential). The most conservative format is therefore '%f'. */
+    case GAL_TYPE_FLOAT32: TO_STRING( float,    "%.6f"    );  break;
+    case GAL_TYPE_FLOAT64: TO_STRING( double,   "%.14f"   );  break;
 
     default:
       error(EXIT_FAILURE, 0, "%s: type code %d not recognized",
