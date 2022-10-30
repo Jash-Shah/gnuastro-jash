@@ -22,6 +22,9 @@ See the end of the file for license conditions.
      - counteronly: similar to 'counter', but pops the top stack dataset.
 
    Crop:
+   --append: if the output file already exists, append the cropped image
+     HDU to the already existing HDUs of the file. Without this option, any
+     existing HDUs in the output file will be removed (default behavior).
    --metaname: Specify the name of the cropped output HDU (value to the
      'EXTNAME' keyword in FITS).
 

@@ -774,7 +774,7 @@ gal_checkset_writable_remove(char *filename, int keep, int dontdelete)
    a directory) it will return 0. Finally, if it exists but cannot be
    deleted, report an error and abort. */
 int
-gal_checkset_dir_0_file_1(char *name, int dontdelete)
+gal_checkset_dir_0_file_1(struct gal_options_common_params *cp, char *name)
 {
   FILE *tmpfile;
   struct stat nameinfo;
@@ -813,7 +813,7 @@ gal_checkset_dir_0_file_1(char *name, int dontdelete)
     return 0;
   else if (S_ISREG(nameinfo.st_mode))  /* It is a file, GOOD. */
     {
-      gal_checkset_writable_remove(name, 0, dontdelete);
+      gal_checkset_writable_remove(name, cp->keep, cp->dontdelete);
       return 1;
     }
   else                                 /* Not a file or a dir, ABORT */

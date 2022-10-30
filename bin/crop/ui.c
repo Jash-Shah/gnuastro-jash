@@ -433,6 +433,10 @@ ui_read_check_only_options(struct cropparams *p)
   if(p->mode==IMGCROP_MODE_WCS && p->noblank)
     error(EXIT_FAILURE, 0, "'--noblanks' ('-b') is only for image mode. "
           "You have called it with WCS mode");
+
+  /* If '--apend' has been called, set 'cp.keep' to 1 (since we don't want
+     to delete the output file). */
+  if(p->append) p->cp.keep=1;
 }
 
 
@@ -501,8 +505,7 @@ ui_check_options_and_arguments(struct cropparams *p)
   else
     {
       p->cp.numthreads=1;
-      p->outnameisfile=gal_checkset_dir_0_file_1(p->cp.output,
-                                                 p->cp.dontdelete);
+      p->outnameisfile=gal_checkset_dir_0_file_1(&p->cp, p->cp.output);
     }
 }
 

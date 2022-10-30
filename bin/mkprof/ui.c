@@ -636,7 +636,7 @@ ui_check_options_and_arguments(struct mkprofparams *p)
 
 
   /* Set the necessary output names. */
-  d0f1=gal_checkset_dir_0_file_1(p->cp.output, p->cp.dontdelete);
+  d0f1=gal_checkset_dir_0_file_1(&p->cp, p->cp.output);
   if(d0f1)                        /* --output is a file name. */
     {
       p->mergedimgname=p->cp.output;

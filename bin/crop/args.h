@@ -154,6 +154,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_MANDATORY,
       GAL_OPTIONS_NOT_SET
     },
+    {
+      "append",
+      UI_KEY_APPEND,
+      0,
+      0,
+      "If output exists, append crop to existing HDUs.",
+      GAL_OPTIONS_GROUP_OUTPUT,
+      &p->append,
+      GAL_OPTIONS_NO_ARG_TYPE,
+      GAL_OPTIONS_RANGE_0_OR_1,
+      GAL_OPTIONS_NOT_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
 
 
 

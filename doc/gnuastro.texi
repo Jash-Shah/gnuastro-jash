@@ -15654,6 +15654,13 @@ $ astcrop --mode=wcs --center=12h36m40.08,62d13m5.53 goodsnorth.fits
 
 ## Crop region around pixel coordinate (568.342, 2091.719):
 $ astcrop --mode=img --center=568.342,2091.719 --width=201 image.fits
+
+## Crop all HDUs within a FITS file at a certain coordinate, while
+## preserving the names of the HDUs in the output.
+$ for hdu in $(astfits input.fits --listimagehdus); do \
+    astcrop input.fits --hdu=$$hdu --append --output=crop.fits \
+            --metaname=$$hdu --mode=wcs --center=189.16704,62.218203
+  done
 @end example
 
 @noindent
@@ -15742,6 +15749,11 @@ The comma-separated values can either be in degrees (a single number), or sexage
 The number of values given to this option must be the same as the dimensions of the input dataset.
 The width of the crop should be set with @code{--width}.
 The units of the coordinates are read based on the value to the @option{--mode} option, see below.
+
+@item -O STR
+@itemx --mode=STR
+Mode to interpret the crop's coordinates (for example with @option{--center}, @option{--catalog} or @option{--polygon}).
+The value must either be @option{img} (to assume image/pixel coordinates) or @option{wcs} (to assume WCS, usually RA/Dec, coordinates), see @ref{Crop modes} for a full description.
 
 @item -w FLT[,FLT[,...]]
 @itemx --width=FLT[,FLT[,...]]
@@ -15891,72 +15903,6 @@ When this column is not given, the row number will be used instead.
 
 @end table
 
-@noindent
-Output options:
-@table @option
-
-@item -a STR
-@itemx --metaname=STR
-Name of cropped HDU (value to the @code{EXTNAME} keyword of FITS).
-If not given, a default @code{CROP} will be placed there (so the @code{EXTNAME} keyword will always be present in the output).
-If crop produces many outputs from a catalog, they will be given the same string as @code{EXTNAME} (the file names containing the cropped HDU will be different).
-
-@item -c FLT/INT
-@itemx --checkcenter=FLT/INT
-@cindex Check center of crop
-Square box width of region in the center of the image to check for blank values.
-If any of the pixels in this central region of a crop (defined by its center) are blank, then it will not be stored in an output file.
-If the value to this option is zero, no checking is done.
-This check is only applied when the cropped region(s) are defined by their center (not by the vertices, see @ref{Crop modes}).
-
-The units of the value are interpreted based on the @option{--mode} value (in WCS or pixel units).
-The ultimate checked region size (in pixels) will be an odd integer around the center (converted from WCS, or when an even number of pixels are given to this option).
-In WCS mode, the value can be given as fractions, for example, if the WCS units are in degrees, @code{0.1/3600} will correspond to a check size of 0.1 arcseconds.
-
-Because survey regions do not often have a clean square or rectangle shape, some of the pixels on the sides of the survey FITS image do not commonly have any data and are blank (see @ref{Blank pixels}).
-So when the catalog was not generated from the input image, it often happens that the image does not have data over some of the points.
-
-When the given center of a crop falls in such regions or outside the dataset, and this option has a non-zero value, no crop will be created.
-Therefore with this option, you can specify a width of a small box (3 pixels is often good enough) around the central pixel of the cropped image.
-You can check which crops were created and which were not from the command-line (if @option{--quiet} was not called, see @ref{Operating mode options}), or in Crop's log file (see @ref{Crop output}).
-
-@item -p STR
-@itemx --suffix=STR
-The suffix (or post-fix) of the output files for when you want all the cropped images to have a special ending.
-One case where this might be helpful is when besides the science images, you want the weight images (or exposure maps, which are also distributed with survey images) of the cropped regions too.
-So in one run, you can set the input images to the science images and @option{--suffix=_s.fits}.
-In the next run you can set the weight images as input and @option{--suffix=_w.fits}.
-
-@item --primaryimghdu
-Write the output into the primary (0-th) HDU/extension of the output.
-By default, like all Gnuastro's default outputs, no data is written in the primary extension because the FITS standard suggests keeping that extension free of data and only for meta data.
-
-@item -b
-@itemx --noblank
-Pixels outside of the input image that are in the crop box will not be used.
-By default they are filled with blank values (depending on type), see @ref{Blank pixels}.
-This option only applies only in Image mode, see @ref{Crop modes}.
-
-@item -z
-@itemx --zeroisnotblank
-In float or double images, it is common to give the value of zero to blank pixels.
-If the input image type is one of these two types, such pixels will also be considered as blank.
-You can disable this behavior with this option, see @ref{Blank pixels}.
-
-@end table
-
-@noindent
-Operating mode options:
-@table @option
-
-@item -O STR
-@itemx --mode=STR
-Operate in Image mode or WCS mode when the input coordinates can be both image or WCS.
-The value must either be @option{img} or @option{wcs}, see @ref{Crop modes} for a full description.
-
-@end table
-
-
 
 
 
@@ -15981,6 +15927,9 @@ If no output is specified or if it is a directory, the output file name will fol
 By default, as suggested by the FITS standard and implemented in all Gnuastro programs, the first/primary extension of the output files will only contain meta data.
 The cropped images/cubes will be written into the 2nd HDU of their respective FITS file (which is actually counted as @code{1} because HDU counting starts from @code{0}).
 However, if you want the cropped data to be written into the primary (0-th) HDU, run Crop with the @option{--primaryimghdu} option.
+
+If the output file already exists by default Crop will re-write it (so that all existing HDUs in it will be deleted).
+If you want the cropped HDU to be appended to existing HDUs, use @option{--append} described below.
 
 The header of each output cropped image will contain the names of the input image(s) it was cut from.
 If a name is longer than the 70 character space that the FITS standard allows for header keyword values, the name will be cut into several keywords from the nearest slash (@key{/}).
@@ -16009,6 +15958,29 @@ Instead, the single element's value is printed on the standard output.
 See the description of @option{--oneelemstdout} below for more:
 
 @table @option
+@item -p STR
+@itemx --suffix=STR
+The suffix (or post-fix) of the output files for when you want all the cropped images to have a special ending.
+One case where this might be helpful is when besides the science images, you want the weight images (or exposure maps, which are also distributed with survey images) of the cropped regions too.
+So in one run, you can set the input images to the science images and @option{--suffix=_s.fits}.
+In the next run you can set the weight images as input and @option{--suffix=_w.fits}.
+
+@item -a STR
+@itemx --metaname=STR
+Name of cropped HDU (value to the @code{EXTNAME} keyword of FITS).
+If not given, a default @code{CROP} will be placed there (so the @code{EXTNAME} keyword will always be present in the output).
+If crop produces many outputs from a catalog, they will be given the same string as @code{EXTNAME} (the file names containing the cropped HDU will be different).
+
+@item -A
+@itemx --append
+If the output file already exists, append the cropped image HDU to the end of any existing HDUs.
+By default (when this option isn't given), if an output file already exists, any exisitng HDU in it will be deleted.
+If the output file doesn't exist, this option is redundant.
+
+@item --primaryimghdu
+Write the output into the primary (0-th) HDU/extension of the output.
+By default, like all Gnuastro's default outputs, no data is written in the primary extension because the FITS standard suggests keeping that extension free of data and only for meta data.
+
 @item -t
 @itemx --oneelemstdout
 When a crop only has a single element (a single pixel), print it to the standard output instead of making a file.
@@ -16028,6 +16000,37 @@ Recall that Crop will do the crops in parallel, therefore each time you run it, 
 
 To allow identification of each value (which row of the input catalog it corresponds to), Crop will first print the name of the would-be created file name, and print the value after it (separated by an empty SPACE character).
 In other words, the file in the first column will not actually be created, but the value of the pixel it would have contained (if this option was not called) is printed after it.
+
+@item -c FLT/INT
+@itemx --checkcenter=FLT/INT
+@cindex Check center of crop
+Square box width of region in the center of the image to check for blank values.
+If any of the pixels in this central region of a crop (defined by its center) are blank, then it will not be stored in an output file.
+If the value to this option is zero, no checking is done.
+This check is only applied when the cropped region(s) are defined by their center (not by the vertices, see @ref{Crop modes}).
+
+The units of the value are interpreted based on the @option{--mode} value (in WCS or pixel units).
+The ultimate checked region size (in pixels) will be an odd integer around the center (converted from WCS, or when an even number of pixels are given to this option).
+In WCS mode, the value can be given as fractions, for example, if the WCS units are in degrees, @code{0.1/3600} will correspond to a check size of 0.1 arcseconds.
+
+Because survey regions do not often have a clean square or rectangle shape, some of the pixels on the sides of the survey FITS image do not commonly have any data and are blank (see @ref{Blank pixels}).
+So when the catalog was not generated from the input image, it often happens that the image does not have data over some of the points.
+
+When the given center of a crop falls in such regions or outside the dataset, and this option has a non-zero value, no crop will be created.
+Therefore with this option, you can specify a width of a small box (3 pixels is often good enough) around the central pixel of the cropped image.
+You can check which crops were created and which were not from the command-line (if @option{--quiet} was not called, see @ref{Operating mode options}), or in Crop's log file (see @ref{Crop output}).
+
+@item -b
+@itemx --noblank
+Pixels outside of the input image that are in the crop box will not be used.
+By default they are filled with blank values (depending on type), see @ref{Blank pixels}.
+This option only applies only in Image mode, see @ref{Crop modes}.
+
+@item -z
+@itemx --zeroisnotblank
+In float or double images, it is common to give the value of zero to blank pixels.
+If the input image type is one of these two types, such pixels will also be considered as blank.
+You can disable this behavior with this option, see @ref{Blank pixels}.
 @end table
 
 
@@ -18053,8 +18056,8 @@ With the command below, we will be masking all pixels that are 20 pixels away fr
 Here is a description of the command below (for the basics of Arithmetic's notation, see @ref{Reverse polish notation}):
 @itemize
 @item
-The @code{index} operator just adds a new dataset on the stack: unlike almost all other operators in Arithmetic, @code{index} doesn't remove the dataset within @file{image.fits} from the stack (use @code{indexonly} for the ``normal'' behavior).
-This is because @code{index} is returns the pixel metadata not data.
+The @code{index} operator just adds a new dataset on the stack: unlike almost all other operators in Arithmetic, @code{index} doesn't remove its input dataset from the stack (use @code{indexonly} for the ``normal'' behavior).
+This is because @code{index} returns the pixel metadata not data.
 As a result, after @code{index}, we have two operands on the stack: the input image and the index image.
 @item
 With the @code{set-i} operator, the top operand (the image containing the index of each pixel) is popped from the stack and associated to the name @code{i}.

@@ -405,7 +405,7 @@ onecrop_name(struct onecropparams *crp)
           error(EXIT_FAILURE, 0, "%s: asprintf allocation", __func__);
 
       /* Make sure the file doesn't exist. */
-      gal_checkset_writable_remove(crp->name, 0, cp->dontdelete);
+      gal_checkset_writable_remove(crp->name, cp->keep, cp->dontdelete);
     }
   else
     {
@@ -413,12 +413,14 @@ onecrop_name(struct onecropparams *crp)
       if(p->outnameisfile)            /* An output file was specified. */
         {
           crp->name=cp->output;
-          gal_checkset_writable_remove(crp->name, 0, cp->dontdelete);
+          gal_checkset_writable_remove(crp->name, cp->keep, cp->dontdelete);
         }
       else          /* The output was a directory, use automatic output. */
+        {
         crp->name=gal_checkset_automatic_output(cp,
                                                 p->imgs[crp->in_ind].name,
                                                 p->suffix);
+        }
     }
 }
 
@@ -516,19 +518,21 @@ static void
 onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
                    long *lpixel_i, long *fpixel_c, long *lpixel_c)
 {
+  struct cropparams *p=crp->p;
+
   double crpix;
   fitsfile *ofp;
   long naxes[MAXDIM];
   char *outname=crp->name;
-  int status=0, type=crp->p->type;
+  int status=0, type=p->type;
   char **strarr, cpname[FLEN_KEYWORD];
+  size_t i, ndim=p->imgs->ndim, totsize;
   gal_data_t *rkey=gal_data_array_calloc(1);
-  size_t i, ndim=crp->p->imgs->ndim, totsize;
-  struct inputimgs *img=&crp->p->imgs[crp->in_ind];
+  struct inputimgs *img=&p->imgs[crp->in_ind];
 
 
   /* Set the size of the output, in WCS mode, noblank==0. */
-  if(crp->p->noblank && crp->p->mode==IMGCROP_MODE_IMG)
+  if(p->noblank && p->mode==IMGCROP_MODE_IMG)
     for(i=0;i<ndim;++i)
       {
         fpixel_c[i] = 1;
@@ -541,15 +545,19 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
 
   /* Create the FITS file with a blank first extension, then close it, so
      with the next 'fits_open_file', we build the image in the second
-     extension. This way, atleast for Gnuastro's outputs, we can
-     consistently use '-h1' (something like how you count columns, or
-     generally everything from 1). */
-  if(fits_create_file(&ofp, outname, &status))
-    gal_fits_io_error(status, "creating file");
-  if(crp->p->primaryimghdu==0)
+     extension. But only if the user didn't want the append the crop to an
+     existing file or if the file doesn't exist at all. This way, at least
+     for Gnuastro's outputs, we can consistently use '-h1' (something like
+     how you count columns, or generally everything from 1). */
+  if(p->append==0 || gal_checkset_check_file_return(outname)==0)
     {
-      fits_create_img(ofp, SHORT_IMG, 0, naxes, &status);
-      fits_close_file(ofp, &status);
+      if(fits_create_file(&ofp, outname, &status))
+        gal_fits_io_error(status, "creating file");
+      if(p->primaryimghdu==0)
+        {
+          fits_create_img(ofp, SHORT_IMG, 0, naxes, &status);
+          fits_close_file(ofp, &status);
+        }
     }
 
 
@@ -574,7 +582,7 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
 
 
   /* Name of extension. */
-  fits_update_key(ofp, TSTRING, "EXTNAME", crp->p->metaname,
+  fits_update_key(ofp, TSTRING, "EXTNAME", p->metaname,
                   "Name of HDU (extension).", &status);
   gal_fits_io_error(status, "writing EXTNAME");
 
@@ -597,8 +605,8 @@ onecrop_make_array(struct onecropparams *crp, long *fpixel_i,
 
   /* Write the blank value as a FITS keyword if necessary. */
   if( type!=GAL_TYPE_FLOAT32 && type!=GAL_TYPE_FLOAT64 )
-    if(fits_write_key(ofp, gal_fits_type_to_datatype(crp->p->type), "BLANK",
-                      crp->p->blankptrwrite, "Pixels with no data.",
+    if(fits_write_key(ofp, gal_fits_type_to_datatype(type), "BLANK",
+                      p->blankptrwrite, "Pixels with no data.",
                       &status) )
       gal_fits_io_error(status, "adding Blank");
   totsize = naxes[0]*naxes[1] * (ndim==3?naxes[2]:1);
