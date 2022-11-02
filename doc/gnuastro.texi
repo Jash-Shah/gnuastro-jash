@@ -5973,7 +5973,7 @@ The saturation level is usually fixed for any survey or input data that you rece
 Let's make a smaller crop of @mymath{50\times50} pixels around the star with the first command below.
 With the next command, please look at the crop with DS9 to visually understand the problem.
 You will see the saturated pixels as the noisy red pixels in the center of the image.
-A non-saturated star will have a single pixel as the maximum and will not have a such a large area covered by a noisy constant value (find a few stars in the image and see for yourself).
+A non-saturated star will have a single pixel as the maximum and will not have such a large area covered by a noisy constant value (find a few stars in the image and see for yourself).
 Visual and qualitative inspection of the process is very important for understanding the solution.
 
 @example
@@ -6097,7 +6097,7 @@ $ astarithmetic saturated.fits set-i i i 2200 gt nan where \
 $ astscript-fits-view sat-masked.fits --ds9scale=minmax
 @end example
 
-You will see the peaks of several bright stars, not just the central very bright star.
+Please see the peaks of several bright stars, not just the central very bright star.
 Zoom into each of the peaks you see.
 Besides the central very bright one that we were looking at closely until now, only one other star is saturated (its center is NaN, or Not-a-Number).
 Try to find it.
@@ -6321,7 +6321,7 @@ We are now ready to start building the outer parts of the PSF in @ref{Building o
 
 @node Building outer part of PSF, Inner part of the PSF, One object for the whole detection, Building the extended PSF
 @subsection Building outer part of PSF
-In @ref{Preparing input for extended PSF}, we described how to create a Segment clump and object map, while accounting for saturated stars and not having over-fragmentation of objects in the outskirts of stars.
+In @ref{Saturated pixels and Segment's clumps}, and @ref{One object for the whole detection}, we described how to create a Segment clump and object map, while accounting for saturated stars and not having over-fragmentation of objects in the outskirts of stars.
 We are now ready to start building the extended PSF.
 
 First we will build the outer parts of the PSF, so we want the brightest stars.
@@ -6348,6 +6348,7 @@ Let's use @file{astscript-psf-select-stars} in the command below to select the r
 The advantage of using this script (instead of a simple @option{--range} in Table), is that it will also check distances to nearby stars and reject those that are too close (and not good for constructing the PSF).
 Since we have very bright stars in this very wide-field image, we will also increase the distance to nearby neighbors with brighter or similar magnitudes (the default value is 1 arcmin).
 To do this, we will set @option{--mindistdeg=0.02}, which corresponds to 1.2 arcmin.
+The details of the options for this script are discussed in @ref{Invoking astscript-psf-select-stars}.
 
 @example
 $ mkdir outer
@@ -6366,7 +6367,10 @@ $ astscript-ds9-region outer/67510-6-10.fits -cra,dec \
 @end example
 
 Now that the catalog of good stars is ready, it is time to construct the individual stamps from the catalog above.
-To do that, we will use @file{astscript-psf-stamp}.
+To create stamps, first, we need to crop a fixed-size box around each isolated star in the catalog.
+The contaminant objects in the crop should be masked and finally, the fluxes in these cropped images should be normalized.
+To do these, we will use @file{astscript-psf-stamp} (for more on this script see @ref{Invoking astscript-psf-stamp}).
+
 One of the most important parameters for this script is the normalization radii @code{--normradii}.
 This parameter defines a ring for the flux normalization of each star stamp.
 The normalization of the flux is necessary because each star has a different brightness, and consequently, it is crucial for having all the stamps with the same flux level in the same region.
@@ -23502,7 +23506,7 @@ At the lowest level, a dataset (for example, an image) is just a collection of v
 Each data-element (pixel) just has two properties: its position (relative to the rest) and its value.
 In higher-level analysis, an entire dataset (an image for example) is rarely treated as a singular entity@footnote{You can derive the over-all properties of a complete dataset (1D table column, 2D image, or 3D data-cube) treated as a single entity with Gnuastro's Statistics program (see @ref{Statistics}).}.
 You usually want to know/measure the properties of the (separate) scientifically interesting targets that are embedded in it.
-for example, the magnitudes, positions and elliptical properties of the galaxies that are in the image.
+For example, the magnitudes, positions and elliptical properties of the galaxies that are in the image.
 
 MakeCatalog is Gnuastro's program for localized measurements over a dataset.
 In other words, MakeCatalog is Gnuastro's program to convert low-level datasets (like images), to high level catalogs.
@@ -23535,7 +23539,7 @@ for example, all the pixels covering one galaxy in an image, get the same label.
 
 The requested measurements are then done on similarly labeled pixels.
 The final result is a catalog where each row corresponds to the measurements on pixels with a specific label.
-for example, the flux weighted average position of all the pixels with a label of 42 will be written into the 42nd row of the output catalog/table's central position column@footnote{See @ref{Measuring elliptical parameters} for a discussion on this and the derivation of positional parameters, which includes the center.}.
+For example, the flux weighted average position of all the pixels with a label of 42 will be written into the 42nd row of the output catalog/table's central position column@footnote{See @ref{Measuring elliptical parameters} for a discussion on this and the derivation of positional parameters, which includes the center.}.
 Similarly, the sum of all these pixels will be the 42nd row in the brightness column, etc.
 Pixels with labels equal to, or smaller than, zero will be ignored by MakeCatalog.
 In other words, the number of rows in MakeCatalog's output is already known before running it (the maximum value of the labeled dataset).
@@ -23625,7 +23629,7 @@ We will continue the discussion assuming the pixels are in units of energy/time.
 The @emph{brightness} of an object is defined as its total detected energy per time.
 In the case of an imaged source, this is simply the sum of the pixels that are associated with that detection by our detection tool (for example, @ref{NoiseChisel}@footnote{If further processing is done, for example, the Kron or Petrosian radii are calculated, then the detected area is not sufficient and the total area that was within the respective radius must be used.}).
 The @emph{flux} of an object is defined in units of energy/time/collecting-area.
-For an astronomical target, the flux is therefore defined as its brightness divided by the area used to collect the light from the source: or the telescope aperture (for example, in units of @mymath{cm^2}).
+For an astronomical target, the flux is therefore defined as its brightness divided by the area used to collect the light from the source; or the telescope aperture (for example, in units of @mymath{cm^2}).
 Knowing the flux (@mymath{f}) and distance to the object (@mymath{r}), we can define its @emph{luminosity}: @mymath{L=4{\pi}r^2f}.
 
 Therefore, while flux and luminosity are intrinsic properties of the object, brightness depends on our detecting tools (hardware and software).
@@ -23741,7 +23745,7 @@ For this, we define the @emph{surface brightness} to be the magnitude of an obje
 The solid angle is expressed in units of arcsec@mymath{^2} because astronomical targets are usually much smaller than one steradian.
 Recall that the steradian is the dimension-less SI unit of a solid angle and 1 steradian covers @mymath{1/4\pi} (almost @mymath{8\%}) of the full celestial sphere.
 
-Surface brightness is therefore most commonly expressed in units of mag/arcsec@mymath{2}.
+Surface brightness is therefore most commonly expressed in units of mag/arcsec@mymath{^2}.
 for example, when the brightness is measured over an area of A arcsec@mymath{^2}, then the surface brightness becomes:
 
 @dispmath{S = -2.5\log_{10}(B/A) + Z = -2.5\log_{10}(B) + 2.5\log_{10}(A) + Z}
@@ -28628,7 +28632,7 @@ All scripts are independent of each other, meaning this that you are free to use
 
 For constructing the PSF from your dataset, the first step is to obtain a catalog of stars within it (you cannot use galaxies to build the PSF!).
 But you cannot blindly use all the stars either!
-for example, we do not want contamination from other bright, and nearby objects.
+For example, we do not want contamination from other bright, and nearby objects.
 The first script below is therefore designed for selecting only good star candidates in your image.
 It will use different criteria, for example, good parallax (where available, to avoid confusion with galaxies), not being near to bright stars, axis ratio, etc.
 For more on this script, see @ref{Invoking astscript-psf-select-stars}.
