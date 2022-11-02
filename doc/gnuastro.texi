@@ -40607,8 +40607,11 @@ But since Gnuastro is currently under heavy development, these might change and 
 
 This is a tutorial on the second suggested method (commonly known as forking) that you can submit your modifications in Gnuastro (see @ref{Production workflow}).
 
-To start, please create an empty repository on your hosting service web page (we recommend Codeberg since it is fully free software@footnote{See @url{https://www.gnu.org/software/repo-criteria-evaluation.html} for an evaluation of the major existing repositories.
+To start, please create an @emph{empty} repository on your hosting service web page (we recommend Codeberg since it is fully free software@footnote{See @url{https://www.gnu.org/software/repo-criteria-evaluation.html} for an evaluation of the major existing repositories.
 Gnuastro uses GNU Savannah (which also has the highest ranking in the evaluation), but for starters, Codeberg may be easier (it is fully free software).}).
+By empty, we mean that you don't let the web service fill your new repository with a @file{README.md} file (they usually have a check-box for this).
+Also, since Gnuastro is a public repository, it is much easier if you define your project as a public repository (not a private one).
+
 If this is your first hosted repository on the web page, you also have to upload your public SSH key@footnote{for example, see this explanation provided by Codeberg: @url{https://docs.codeberg.org/security/ssh-key}.} for the @command{git push} command below to work.
 Here we will assume you use the name @file{janedoe} to refer to yourself everywhere and that you choose @file{gnuastro} as the name of your Gnuastro fork.
 Any online hosting service will give you an address (similar to the `@file{git@@codeberg.org:...}' below) of the empty repository you have created using their web page, use that address in the third line below.
@@ -40631,7 +40634,9 @@ However, please repeat the steps below for each independent issue you intend to 
 Let's assume you have found a bug in @file{lib/statistics.c}'s median  calculating function.
 Before actually doing anything, please announce it (see @ref{Report a bug}) so everyone knows you are working on it, or to confirm if others are not already working on it.
 With the commands below, you make a branch, checkout to it, correct the bug, check if it is indeed fixed, add it to the staging area, commit it to the new branch and push it to your hosting service.
-But before all of them, make sure that you are on the @file{master} branch and that your @file{master} branch is up to date with the main Gnuastro repository with the first two commands.
+Since Gnuastro is a large project, commit messages have to follow certain standards that you should follow, they are described in @ref{Commit guidelines}.
+
+But before all of this, make sure that you are on the @file{master} branch and that your @file{master} branch is up to date with the main Gnuastro repository with the first two commands.
 
 @example
 $ git checkout master
