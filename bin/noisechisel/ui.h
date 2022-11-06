@@ -50,7 +50,7 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b f g i j n r u v x y z
+   b f g i j n r u v x y z
    A E G H J O W X Y
 */
 enum option_keys_enum
@@ -71,7 +71,7 @@ enum option_keys_enum
   UI_KEY_DETGROWQUANT       = 'd',
   UI_KEY_CONTINUEAFTERCHECK = 'C',
   UI_KEY_LABEL              = 'l',
-
+  UI_KEY_OUTLIERNUMNGB      = 'a',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
@@ -82,7 +82,6 @@ enum option_keys_enum
   UI_KEY_MINNUMFALSE,
   UI_KEY_SMOOTHWIDTH,
   UI_KEY_QTHRESHTILEQUANT,
-  UI_KEY_OUTLIERNUM,
   UI_KEY_OUTLIERSIGMA,
   UI_KEY_OUTLIERSCLIP,
   UI_KEY_CHECKQTHRESH,

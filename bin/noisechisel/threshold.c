@@ -533,6 +533,8 @@ threshold_good_error(size_t number, int before0_after1, size_t interpnumngb)
                   "(where the number may decrease even further).");
   char *in3 = ( before0_after1
                 ? "\n"
+                  "  - (slightly) Decrease '--outliernumngb' to use less "
+                  "tiles to find outliers.\n"
                   "  - (slightly) Increase '--outliersclip' to reject less "
                   "as outliers.\n"
                   "  - (slightly) Increase '--outliersigma' to reject less "
@@ -670,11 +672,13 @@ threshold_quantile_find_apply(struct noisechiselparams *p)
 
 
   /* Remove the outliers. */
-  gal_tileinternal_no_outlier_local(qprm.erode_th, qprm.noerode_th,
-                                    qprm.expand_th, &cp->tl,
-                                    cp->interpmetric, cp->interpnumngb,
-                                    cp->numthreads, p->outliersclip,
-                                    p->outliersigma, p->qthreshname);
+  if(p->outliernumngb)
+    gal_tileinternal_no_outlier_local(qprm.erode_th, qprm.noerode_th,
+                                      qprm.expand_th, &cp->tl,
+                                      cp->interpmetric, p->outliernumngb,
+                                      cp->numthreads, p->outliersclip,
+                                      p->outliersigma, p->qthreshname,
+                                      "--outliernumngb");
 
 
   /* Use the no-outlier grid as a basis for later estimating the sky. To

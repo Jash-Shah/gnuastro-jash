@@ -311,6 +311,7 @@ struct tileinternal_outlier_local
   size_t                  numneighbors;
   uint8_t                *thread_flags;
   gal_list_void_t            *ngb_vals;
+  char                     *optionname;
   float (*metric)(size_t *, size_t *, size_t );
 
   struct gal_tile_two_layer_params *tl;
@@ -320,7 +321,7 @@ struct tileinternal_outlier_local
 
 
 
-/* Run the interpolation on many threads. */
+/* Run the outlier rejection on many threads. */
 static void *
 gal_tileinternal_no_outlier_local_on_thread(void *in_prm)
 {
@@ -493,9 +494,9 @@ gal_tileinternal_no_outlier_local_on_thread(void *in_prm)
              through the 'currentnum>=numnearest' check above. */
           if(sQ==NULL)
             error(EXIT_FAILURE, 0, "%s: only %zu neighbors found while "
-                  "you had asked to use %zu neighbors for close neighbor "
-                  "interpolation", __func__, ngb_counter,
-                  prm->numneighbors);
+                  "you had asked to use %zu neighbors for outlier "
+                  "rejection (value to '%s')", __func__, ngb_counter,
+                  prm->numneighbors, prm->optionname);
         }
 
       /* Calculate the desired statistic, and write it in the output. */
@@ -542,7 +543,8 @@ gal_tileinternal_no_outlier_local(gal_data_t *input, gal_data_t *second,
                                   struct gal_tile_two_layer_params *tl,
                                   uint8_t metric, size_t numneighbors,
                                   size_t numthreads, double *outliersclip,
-                                  double outliersigma, char *filename)
+                                  double outliersigma, char *filename,
+                                  char *optionname)
 {
   gal_data_t *othresh;
   float *base, *f, *ff, thresh;
@@ -553,8 +555,8 @@ gal_tileinternal_no_outlier_local(gal_data_t *input, gal_data_t *second,
 
   /* Sanity checks. */
   if(numneighbors<=3)
-    error(EXIT_FAILURE, 0, "interpnumngb has to be larger than 3, but "
-          "is currently %zu", numneighbors);
+    error(EXIT_FAILURE, 0, "%s has to be larger than 3, but "
+          "is currently %zu", optionname, numneighbors);
   if(input->type!=GAL_TYPE_FLOAT32)
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to fix "
           "the problem. The input to this function (not NoiseChisel) "
@@ -586,6 +588,7 @@ gal_tileinternal_no_outlier_local(gal_data_t *input, gal_data_t *second,
   prm.tl           = tl;
   prm.ngb_vals     = NULL;
   prm.input        = input;
+  prm.optionname   = optionname;
   prm.numneighbors = numneighbors;
 
 

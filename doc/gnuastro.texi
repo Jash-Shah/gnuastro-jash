@@ -5046,7 +5046,7 @@ Finally, in @code{QTHRESH-APPLIED}, you see the thresholded image: pixels with a
 Let's get back to the problem of optimizing the result.
 You have two strategies for detecting the outskirts of the merging galaxies:
 1) Increase the tile size to get more accurate measurements of skewness.
-2) Strengthen the outlier rejection parameters to discard more of the tiles with signal.
+2) Strengthen the outlier rejection parameters to discard more of the tiles with signal (primarily by increasing @option{--outliernumngb}).
 Fortunately in this image we have a sufficiently large region on the right side of the image that the galaxy does not extend to.
 So we can use the more robust first solution.
 In situations where this does not happen (for example, if the field of view in this image was shifted to the left to have more of M51 and less sky) you are limited to a combination of the two solutions or just to the second solution.
@@ -6212,7 +6212,7 @@ We modified the default value to two of the options, below you can see the reaso
 See @ref{Detecting large extended targets} for more on optimizing NoiseChisel.
 @itemize
 @item
-Since the image is so large, we have increased @option{--interpnumngb} to get better outlier statistics on the tiles.
+Since the image is so large, we have increased @option{--outliernumngb} to get better outlier statistics on the tiles.
 The default value is primarily for small images, so this is usually the first thing you should do when running NoiseChisel on a real/large image.
 @item
 Since the image is not too deep (made from few exposures), it does not have strong correlated noise, so we will decrease @option{--detgrowquant} and increase @option{--detgrowmaxholesize} to better extract signal.
@@ -6241,7 +6241,7 @@ $ astarithmetic label/67510-masked-sat.fits 2 interpolate-maxofregion \
 $ astarithmetic label/67510-masked-conv.fits 2 interpolate-maxofregion \
                 --output=label/67510-fill-conv.fits
 $ rm label/67510-masked-conv.fits
-$ astnoisechisel label/67510-fill.fits --interpnumngb=100 \
+$ astnoisechisel label/67510-fill.fits --outliernumngb=100 \
                  --detgrowquant=0.8 --detgrowmaxholesize=100000 \
                  --convolved=label/67510-fill-conv.fits \
                  --output=label/67510-nc.fits
@@ -21394,7 +21394,7 @@ Therefore, the final step of ``quantifying signal in a tile'' is to look at this
 @mymath{\sigma}-clipping is a good solution for removing a few outliers, but the problem with outliers of this kind is that there may be many such tiles (depending on the large/bright stars/galaxies in the image).
 We therefore apply the following local outlier rejection strategy.
 
-For each tile, we find the nearest @mymath{N_{ngb}} tiles that had a usable value (@mymath{N_{ngb}} is the value given to  @option{--interpnumngb}).
+For each tile, we find the nearest @mymath{N_{ngb}} tiles that had a usable value (@mymath{N_{ngb}} is the value given to  @option{--outliernumngb}).
 We then sort them and find the difference between the largest and second-to-smallest elements (The minimum is not used because the scatter can be large).
 Let's call this the tile's @emph{slope} (measured from its neighbors).
 All the tiles that are on a region of flat noise will have similar slope values, but if a few tiles fall on the wings of a bright star or large galaxy, their slope will be significantly larger than the tiles with no signal.
@@ -21403,24 +21403,15 @@ We just have to find the smallest tile slope value that is an outlier compared t
 @cindex Outliers
 @cindex Identifying outliers
 To identify the smallest outlier, we will use the distribution of distances between sorted elements.
-Let's assume the total number tiles with a good mean-median quantile difference is @mymath{N}.
-We sort them in increasing order based on their @emph{slope} (defined above).
-So the array of tile slopes can be written as @mymath{@{s[0], s[1], ..., s[N]@}}, where @mymath{s[0]<s[1]} and so on.
-We then start from element @mymath{M} and calculate the distances between all two adjacent values before it: @mymath{@{s[1]-s[0], s[2]-s[1], s[M-1]-s[M-2]@}}.
-
-The @mymath{\sigma}-clipped median and standard deviation of this distribution are then found (this @mymath{\sigma}-clipping is configured with @option{--outliersclip} which takes two values, see @ref{Sigma clipping}).
-If the distance between the element and its previous element is more than @option{--outliersigma} multiples of the @mymath{\sigma}-clipped standard deviation added with the @mymath{\sigma}-clipped median, that element is considered an outlier and all tiles larger than that value are ignored.
-
-Formally, if we assume there are @mymath{N} elements.
-They are first sorted.
-Searching for the outlier starts on element @mymath{N/3} (integer division).
+Let's assume the total number of tiles with a good mean-median quantile difference is @mymath{N}.
+They are first sorted and searching for the outlier starts on element @mymath{N/3} (integer division).
 Let's take @mymath{v_i} to be the @mymath{i}-th element of the sorted input (with no blank values) and @mymath{m} and @mymath{\sigma} as the @mymath{\sigma}-clipped median and standard deviation from the distances of the previous @mymath{N/3-1} elements (not including @mymath{v_i}).
 If the value given to @option{--outliersigma} is displayed with @mymath{s}, the @mymath{i}-th element is considered as an outlier when the condition below is true.
 
 @dispmath{{(v_i-v_{i-1})-m\over \sigma}>s}
 
 @noindent
-Since @mymath{i} begins from the @mymath{N/3}-th element in the sorted array (a quantile of @mymath{1/3=0.33}), the outlier has to be larger than the @mymath{0.33} quantile value of the dataset.
+Since @mymath{i} begins from the @mymath{N/3}-th element in the sorted array (a quantile of @mymath{1/3=0.33}), the outlier has to be larger than the @mymath{0.33} quantile value of the dataset (this is usually the case; otherwise, it is hard to define it as an ``outlier''!).
 
 @cindex Bicubic interpolation
 @cindex Interpolation, bicubic
@@ -22187,6 +22178,11 @@ Outlier rejection is useful when the dataset contains a large and diffuse (almos
 The flatness of the profile will cause it to successfully pass the mean-median quantile difference test, so we will need to use the distribution of successful tiles for removing these false positive.
 For more, see the latter half of @ref{Quantifying signal in a tile}.
 
+@item --outliernumngb=INT
+Number of neighboring tiles to use for outlier rejection (mostly the wings of bright stars or galaxies).
+If this option is given a value of zero, no outlier rejection will take place.
+For more see the latter half of @ref{Quantifying signal in a tile}.
+
 @item --outliersigma=FLT
 Multiple of sigma to define an outlier in the Sky value estimation.
 If this option is given a value of zero, no outlier rejection will take place.
@@ -22320,7 +22316,8 @@ In these cases, the faint wings of galaxies/stars could be mistakenly identified
 
 It was possible to play with the parameters to correct this for that particular dataset, but that was frustrating.
 Therefore from version 0.14, instead of finding outliers from the full tile distribution, we now measure the @emph{slope} of the tile's nearby tiles and find outliers locally.
-For more on the outlier-by-distance algorithm and the definition of @emph{slope}, see @ref{Quantifying signal in a tile}.
+Three options have been added to configure this part of NoiseChisel: @option{--outliernumngb}, @option{--outliersclip} and @option{--outliersigma}.
+For more on the local outlier-by-distance algorithm and the definition of @emph{slope} mentioned above, see @ref{Quantifying signal in a tile}.
 In our tests, this gave a much improved estimate of the quantile thresholds and final Sky values with default values.
 @end itemize
 
@@ -22397,6 +22394,12 @@ For the full list of NoiseChisel's checking options please run:
 @example
 $ astnoisechisel --help | grep check
 @end example
+@end cartouche
+
+@cartouche
+@noindent
+@strong{Not detecting wings of bright galaxies:} In such cases, probably the best solution is to increase @option{--outliernumngb} (to reject tiles that are affected by very flat diffuse signal).
+For more, see @ref{Quantifying signal in a tile}.
 @end cartouche
 
 When working on 3D datacubes, the tessellation options need three values and updating them every time can be annoying/buggy.
@@ -22573,6 +22576,17 @@ The maximum acceptable distance between the quantiles of the mean and median in 
 The quantile threshold estimates are measured on tiles where the quantiles of their mean and median are less distant than the value given to this option.
 for example, @option{--meanmedqdiff=0.01} means that only tiles where the mean's quantile is between 0.49 and 0.51 (recall that the median's quantile is 0.5) will be used.
 
+@item -a INT
+@itemx --outliernumngb=INT
+Number of neighboring tiles to use for outlier rejection (mostly the wings of bright stars or galaxies).
+For optimal detection of the wings of bright stars or galaxies, this is @strong{the most important} option in NoiseChisel.
+This is because the extended wings of bright galaxies or stars (the PSF) can become flat over the tile.
+In this case, they will satisfy the @option{--meanmedqdiff} condition and pass that step.
+Therefore, to correctly identify such bad tiles, we need to look at the neighboring nearby tiles.
+A tile that is on the wing of a bright galaxy/star will clearly be an outlier when looking at the neighbors.
+For more on the details of the outlier rejection algorithm, see the latter half of @ref{Quantifying signal in a tile}.
+If this option is given a value of zero, no outlier rejection will take place.
+
 @item --outliersclip=FLT,FLT
 @mymath{\sigma}-clipping parameters for the outlier rejection of the quantile threshold.
 The format of the given values is similar to @option{--sigmaclip} below.
@@ -22647,7 +22661,7 @@ These values will be used to construct the final threshold map over the whole im
 All outlier tiles have been masked.
 The reason for removing outliers is that the quantile-of-mean is only sensitive to signal that varies on a scale that is smaller than the tile size.
 Therefore the extended wings of large galaxies or bright stars (which vary on scales much larger than the tile size) will pass that test.
-As described in @ref{Quantifying signal in a tile}, using the values given to @option{--outliersclip} and @option{--outliersigma}, the outlier tiles are removed in this step.
+As described in @ref{Quantifying signal in a tile} outlier rejection is customized through @option{--outliernumngb}, @option{--outliersclip} and @option{--outliersigma}.
 
 @item  THRESH1_INTERP
 @itemx THRESH2_INTERP
