@@ -116,6 +116,7 @@ libgnuastro_la_SOURCES = \
   data.c \
   ds9.c \
   eps.c \
+  error.c \
   fit.c \
   fits.c \
   git.c \
@@ -169,6 +170,7 @@ pkginclude_HEADERS = gnuastro/config.h \
   $(headersdir)/dimension.h \
   $(headersdir)/ds9.h \
   $(headersdir)/eps.h \
+  $(headersdir)/error.h \
   $(headersdir)/fit.h \
   $(headersdir)/fits.h \
   $(headersdir)/git.h \

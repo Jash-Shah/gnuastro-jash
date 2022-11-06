@@ -212,6 +212,19 @@ struct argp_option program_options[] =
       GAL_OPTIONS_NOT_SET
     },
     {
+      "outliernumngb",
+      UI_KEY_OUTLIERNUMNGB,
+      "INT",
+      0,
+      "Num neighboring tiles to look for outlier.",
+      UI_GROUP_DETECTION,
+      &p->outliernumngb,
+      GAL_TYPE_SIZE_T,
+      GAL_OPTIONS_RANGE_GE_0,
+      GAL_OPTIONS_MANDATORY,
+      GAL_OPTIONS_NOT_SET
+    },
+    {
       "outliersclip",
       UI_KEY_OUTLIERSCLIP,
       "FLT,FLT",

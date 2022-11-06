@@ -46,33 +46,34 @@ enum program_args_groups
 
 /* Available letters for short options:
 
-   a b e j r v w x z
+   b e j r v w x z
    B G J L W X Y
 */
 enum option_keys_enum
 {
   /* With short-option version. */
-  UI_KEY_COLUMN       = 'c',
-  UI_KEY_GREATEREQUAL = 'g',
-  UI_KEY_LESSTHAN     = 'l',
-  UI_KEY_QRANGE       = 'Q',
-  UI_KEY_MEAN         = 'm',
-  UI_KEY_STD          = 'd',
-  UI_KEY_MEDIAN       = 'E',
-  UI_KEY_MODE         = 'O',
-  UI_KEY_QUANTILE     = 'u',
-  UI_KEY_ASCIIHIST    = 'A',
-  UI_KEY_HISTOGRAM    = 'H',
-  UI_KEY_CUMULATIVE   = 'C',
-  UI_KEY_SIGMACLIP    = 's',
-  UI_KEY_NORMALIZE    = 'n',
-  UI_KEY_ONTILE       = 't',
-  UI_KEY_INTERPOLATE  = 'i',
-  UI_KEY_SKY          = 'y',
-  UI_KEY_KERNEL       = 'k',
-  UI_KEY_CONTOUR      = 'R',
-  UI_KEY_FIT          = 'f',
-  UI_KEY_FITMAXPOWER  = 'p',
+  UI_KEY_COLUMN        = 'c',
+  UI_KEY_GREATEREQUAL  = 'g',
+  UI_KEY_LESSTHAN      = 'l',
+  UI_KEY_QRANGE        = 'Q',
+  UI_KEY_MEAN          = 'm',
+  UI_KEY_STD           = 'd',
+  UI_KEY_MEDIAN        = 'E',
+  UI_KEY_MODE          = 'O',
+  UI_KEY_QUANTILE      = 'u',
+  UI_KEY_ASCIIHIST     = 'A',
+  UI_KEY_HISTOGRAM     = 'H',
+  UI_KEY_CUMULATIVE    = 'C',
+  UI_KEY_SIGMACLIP     = 's',
+  UI_KEY_NORMALIZE     = 'n',
+  UI_KEY_ONTILE        = 't',
+  UI_KEY_INTERPOLATE   = 'i',
+  UI_KEY_SKY           = 'y',
+  UI_KEY_KERNEL        = 'k',
+  UI_KEY_CONTOUR       = 'R',
+  UI_KEY_FIT           = 'f',
+  UI_KEY_FITMAXPOWER   = 'p',
+  UI_KEY_OUTLIERNUMNGB = 'a',
 
   /* Only with long version (start with a value 1000, the rest will be set
      automatically). */
@@ -99,7 +100,6 @@ enum option_keys_enum
   UI_KEY_KHDU,
   UI_KEY_MIRRORDIST,
   UI_KEY_MEANMEDQDIFF,
-  UI_KEY_OUTLIERNUM,
   UI_KEY_OUTLIERSIGMA,
   UI_KEY_OUTLIERSCLIP,
   UI_KEY_SMOOTHWIDTH,

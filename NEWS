@@ -28,6 +28,22 @@ See the end of the file for license conditions.
    --metaname: Specify the name of the cropped output HDU (value to the
      'EXTNAME' keyword in FITS).
 
+   NoiseChisel:
+   --outliernumngb: the number of neighboring tiles to reject those that
+     have passed (the mean-median quantile difference criteria) because of
+     being on the wings of bright stars/galaxies. Until now, this number
+     was the same as the number given to '--interpnumngb', but it is
+     confusing and can cause problems (because interpolation is done after
+     outlier rejection). From this version, '--interpnumngb' is only in
+     charge of the number of neighboring tiles for interpolation outliers
+     are defined based on the number of tiles given to this
+     option. Therefore, if you are not detecting the wings of large
+     galaxies, THE BEST solution is most-probably to increase
+     '--outliernumngb'. This was done after a discussion with Elham Saremi.
+
+   Statistics:
+   --outliernumngb: see description of same option in NoiseChisel.
+
    Library:
    - GAL_ARITHMETIC_OP_SWAP: swap the top two operands.
    - GAL_ARITHMETIC_OP_INDEX: An index (counting from 0) for every element.

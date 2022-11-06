@@ -212,10 +212,12 @@ sky(struct statisticsparams *p)
 
 
   /* Remove outliers if requested. */
-  gal_tileinternal_no_outlier_local(p->sky_t, p->std_t, NULL, &cp->tl,
-                                    cp->interpmetric, cp->interpnumngb,
-                                    cp->numthreads, p->outliersclip,
-                                    p->outliersigma, p->checkskyname);
+  if(p->outliernumngb)
+    gal_tileinternal_no_outlier_local(p->sky_t, p->std_t, NULL, &cp->tl,
+                                      cp->interpmetric, p->outliernumngb,
+                                      cp->numthreads, p->outliersclip,
+                                      p->outliersigma, p->checkskyname,
+                                      "--outliernumngb");
 
 
   /* Interpolate the Sky and its standard deviation. */

@@ -58,6 +58,7 @@ struct noisechiselparams
 
   float          meanmedqdiff;  /* Difference between mode and median.    */
   float               qthresh;  /* Quantile threshold on convolved image. */
+  size_t        outliernumngb;  /* Number of neighbors to define outliers.*/
   float          outliersigma;  /* Multiple of sigma to define outlier.   */
   double      outliersclip[2];  /* Outlier Sigma-clipping params.         */
   size_t          smoothwidth;  /* Interpolation: flat kernel to smooth.  */
