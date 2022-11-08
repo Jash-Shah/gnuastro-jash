@@ -104,9 +104,8 @@ cosmology_density_check(double o_lambda_0, double o_matter_0,
                   "Recall that 'olambda' is 'Current cosmological cst. "
                   "dens. per crit. dens'.", __func__, o_lambda_0) < 0)
         gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
-      gal_error_add_back_msg(err,
-                             "" STRGIZE(GAL_COSMOLOGY_ERROR_LAMBDA_OUT_OF_BOUNDS) "",
-                             errstr, GAL_COSMOLOGY_ERROR_LAMBDA_OUT_OF_BOUNDS);
+      gal_error_add_back_msg(err, errstr,
+                             GAL_COSMOLOGY_ERROR_LAMBDA_OUT_OF_BOUNDS);
     }
   
   if(o_matter_0 > 1 || o_matter_0 < 0)
@@ -117,7 +116,6 @@ cosmology_density_check(double o_lambda_0, double o_matter_0,
                   "critical density.'", __func__, o_matter_0) < 0)
         gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
       gal_error_add_back_msg(err,
-                             "" STRGIZE(GAL_COSMOLOGY_ERROR_MATTER_OUT_OF_BOUNDS) "",
                              errstr, GAL_COSMOLOGY_ERROR_MATTER_OUT_OF_BOUNDS);
     }
   
@@ -129,7 +127,6 @@ cosmology_density_check(double o_lambda_0, double o_matter_0,
                   "per critical density.", __func__, o_radiation_0) < 0)
         gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
       gal_error_add_back_msg(err,
-                             "" STRGIZE(GAL_COSMOLOGY_ERROR_RADIATION_OUT_OF_BOUNDS) "",
                              errstr,
                              GAL_COSMOLOGY_ERROR_RADIATION_OUT_OF_BOUNDS);
     }
@@ -145,7 +142,6 @@ cosmology_density_check(double o_lambda_0, double o_matter_0,
                   o_lambda_0, o_matter_0, o_radiation_0) < 0)
         gal_checkset_malloc_cat((char *)__func__, ": can't use `asprintf`");
       gal_error_add_back_msg(err,
-                             "" STRGIZE(GAL_COSMOLOGY_ERROR_SUM_LIMIT) "",
                              errstr,
                              GAL_COSMOLOGY_ERROR_SUM_LIMIT);
     }

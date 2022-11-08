@@ -59,7 +59,7 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 /* Data type for storing errors */
 typedef struct gal_error_t
 {
-  char *code;                /* Generic code of the problem.            */
+  uint16_t code;             /* Global code of the problem.            */
   uint8_t is_warning;        /* Defines if the error is only a warning. */
   char *back_msg;            /* Detailed message of backend (library)   */
   char *front_msg;           /* Detailed message of front end (caller). */
@@ -74,11 +74,11 @@ typedef struct gal_error_t
  ************************   Allocation   ************************
  ****************************************************************/
 gal_error_t *
-gal_error_allocate(char *code, char *back_msg, uint8_t is_warning);
+gal_error_allocate(uint16_t code, char *back_msg, uint8_t is_warning);
 
 void
-gal_error_add_back_msg(gal_error_t **err, char *code,
-                       char *back_msg, uint8_t is_warning);
+gal_error_add_back_msg(gal_error_t **err, char *back_msg,
+                       uint32_t macro_val);
 
 void
 gal_error_add_front_msg(gal_error_t **err, char *front_msg,
@@ -94,6 +94,12 @@ gal_error_exit(gal_error_t **err);
 
 void
 gal_error_reverse(gal_error_t **err);
+
+
+
+uint8_t
+gal_error_check(gal_error_t **err, uint32_t macro_val);
+
 
 
 

@@ -33,14 +33,12 @@ along with Gnuastro. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-
-/*************************************************************
- **************           Type codes           ***************
- *************************************************************/
 /* Prints all the error messages in the given structure.
-   Prints both frontend and backend error messages if present else only
-   prints the backend messages. Returns an int denoting if no. of errors
-   thus giving the user the option to EXIT_FAILURE themselves. */
+   Print format:
+   "Frontend msg: code: Backend msg: [BREAKING]"
+   Frontend msg and [BREAKING] is printed only if they exist.
+   Returns an int denoting if no. of breaking errors is more than 1, thus giving
+   the user the option to EXIT_FAILURE themselves. */
 int
 gal_error_print(gal_error_t *err)
 {
@@ -49,19 +47,22 @@ gal_error_print(gal_error_t *err)
 
   gal_error_t *tmperr = NULL;
   /* Number of errors in the structure. */
-  uint8_t is_error = 0;
+  uint8_t count_err = 0;
   for(tmperr = err; tmperr!=NULL; tmperr = tmperr->next)
     {
       if(tmperr->front_msg)
-        {
-          fprintf(stderr, "%s\n",tmperr->front_msg);
-        }
-      fprintf(stderr, "%s: %s\n", tmperr->code, tmperr->back_msg);
+        error(EXIT_SUCCESS, 0,
+              "%s: %d: %s%s",tmperr->front_msg, tmperr->code,
+              tmperr->back_msg, tmperr->is_warning?"":" [BREAKING]");
+      else
+        error(EXIT_SUCCESS, 0,
+              "%d: %s%s", tmperr->code, tmperr->back_msg,
+              tmperr->is_warning?"":" [BREAKING]");
 
-      /* If atleast one error is found which is NOT a warning. */
-      if(!tmperr->is_warning) is_error++;  
+      /* If an error is found which is NOT a warning. */
+      if(!tmperr->is_warning) count_err++;
     }
-  return is_error;
+  return count_err;
 }
 
 
@@ -80,12 +81,13 @@ gal_error_exit(gal_error_t **err)
       if(!tmperr->is_warning)
         {
           if(tmperr->front_msg)
-            error(EXIT_FAILURE, 0,
-                  "%s\n%s: %s\n", tmperr->front_msg,
-                  tmperr->code, tmperr->back_msg);
+            error(EXIT_SUCCESS, 0,
+                  "%s: %d: %s%s",tmperr->front_msg, tmperr->code,
+                  tmperr->back_msg, tmperr->is_warning?"":" [BREAKING]");
           else
-            error(EXIT_FAILURE, 0,
-                  "\n%s: %s\n", tmperr->code, tmperr->back_msg);
+            error(EXIT_SUCCESS, 0,
+                  "%d: %s%s", tmperr->code, tmperr->back_msg,
+                  tmperr->is_warning?"":" [BREAKING]");
         }
     }
 }
@@ -98,7 +100,7 @@ gal_error_exit(gal_error_t **err)
    While allocating no frontend error message should be given. The
    frontend error should only be added using gal_error_add_front_msg. */
 gal_error_t *
-gal_error_allocate(char *code, char *back_msg, uint8_t is_warning)
+gal_error_allocate(uint16_t code, char *back_msg, uint8_t is_warning)
 {
   gal_error_t *outerr;
 
@@ -124,14 +126,24 @@ gal_error_allocate(char *code, char *back_msg, uint8_t is_warning)
 
 
 
-/* Adds a new error to the top of the given `err` structure with the given
-   error code, backend msg and is_warning flag. */
+/* Adds a new error to the top of the given `err` structure given the
+   error `macro_val` as the third argument. From it extract the `code`
+   and the `is_warning` flags and save them in the structure. */
 void
-gal_error_add_back_msg(gal_error_t **err, char *code,
-                       char *back_msg, uint8_t is_warning)
+gal_error_add_back_msg(gal_error_t **err, char *back_msg,
+                       uint32_t macro_val)
 {
   /* If no back_msg has been provided then return NULL. */
   if (back_msg == NULL) return;
+
+  uint16_t code = 0;
+  uint8_t is_warning = 0;
+
+  gal_error_parse_value(macro_val, &code, &is_warning);
+  /* printf("%s: Macro_val : %d\n",__func__,macro_val);
+     printf("%s: Code = %d\nis_warning=%d\n\n", __func__, code,
+            is_warning); */
+
   
   /* Allocate a new error to be added at the top of the error stack. */
   gal_error_t *newerr;
@@ -153,12 +165,16 @@ void
 gal_error_add_front_msg(gal_error_t **err, char *front_msg,
                         uint8_t replace)
 {
+  /*If error structure is empty then return. */
+  if (!*err) return;
+
   /* If no front_msg has been provided then return NULL. */
   if (front_msg == NULL) return;
   
+  /* Only allocate if an error already exists. */
   if ((*err)->front_msg && !replace)
     error(EXIT_FAILURE, 0, "%s: A frontend error message already exists "
-          "for the given error %s. If you wish to replace it then pass "
+          "for the given error %d. If you wish to replace it then pass "
           "'1' to the replace flag while calling the function.", __func__,
           (*err)->code);
   else
@@ -176,18 +192,69 @@ gal_error_reverse(gal_error_t **err)
 {
   /* Structure which will store the correct/reversed order. */
   gal_error_t *correctorder = NULL;
+  /* `macro_val` has to be constructed from `code` & `is_warning`. */
+  uint32_t macro_val = 0;
 
   /* Only do the reversal if there is more than one element. */
   if( *err && (*err)->next )
     {
       while(*err!=NULL)
         {
+          /* The least significant 16 bits represent the `is_warning` and most
+            significant 16 bits represent the `code`. */
+          macro_val = (*err)->code;
+          macro_val = (macro_val << 16) | (*err)->is_warning;
+
           /* Pop top element and add to new list */
-          gal_error_add_back_msg(&correctorder, (*err)->code,
-                                 (*err)->back_msg, (*err)->is_warning);
+          gal_error_add_back_msg(&correctorder,
+                                 (*err)->back_msg, macro_val);
           gal_error_add_front_msg(&correctorder, (*err)->front_msg, 0);
           (*err) = (*err)->next;
         }
       *err = correctorder;
     }
+}
+
+
+
+
+
+/* Takes in a 32-bit integer (value of an error macro) and extracts the
+   error `code` and `is_warning` flag values. */
+void
+gal_error_parse_macro(uint32_t macro_val, uint16_t *code,
+                      uint8_t *is_warning)
+{
+  /* The value of an error macro is a 32-bit integer. The first(starting
+     from the LSB) 16 bits denote the `is_warning` flag status. Since the
+     status is either 0 or 1, if the macro value is odd then `is_warning`
+     flag is true. */
+  if (macro_val % 2 != 0) *is_warning = 1;
+  else *is_warning = 0;
+  *code = macro_val >> 16;
+  // printf("%s: Code : %d\n",__func__, *code);
+}
+
+
+
+
+
+/* Given an `err` structure and a `macro_val`, return 1 or 0 based on
+   whether an error of the given type exists within the structure. */
+uint8_t
+gal_error_check(gal_error_t **err, uint32_t macro_val)
+{
+gal_error_t *tmperr = NULL;
+uint16_t code = 0;
+uint8_t is_warning = 0;
+
+gal_error_parse_value(macro_val, &code, &is_warning);
+printf("Code = %d\nis_warning=%d\n\n", code, is_warning);
+
+for(tmperr = *err; tmperr != NULL; tmperr = tmperr->next)
+{
+  if(tmperr->code == code) return 1;
+}
+
+return 0;
 }
