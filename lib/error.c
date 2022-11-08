@@ -52,12 +52,13 @@ gal_error_print(gal_error_t *err)
     {
       if(tmperr->front_msg)
         error(EXIT_SUCCESS, 0,
-              "%s: %d: %s%s",tmperr->front_msg, tmperr->code,
-              tmperr->back_msg, tmperr->is_warning?"":" [BREAKING]");
+              "%s: %d: %d: %s%s",tmperr->front_msg, tmperr->lib_code,
+              tmperr->code, tmperr->back_msg,
+              tmperr->is_warning?"":" [BREAKING]");
       else
         error(EXIT_SUCCESS, 0,
-              "%d: %s%s", tmperr->code, tmperr->back_msg,
-              tmperr->is_warning?"":" [BREAKING]");
+              "%d: %d: %s%s", tmperr->lib_code, tmperr->code,
+              tmperr->back_msg, tmperr->is_warning?"":" [BREAKING]");
 
       /* If an error is found which is NOT a warning. */
       if(!tmperr->is_warning) count_err++;
@@ -69,27 +70,19 @@ gal_error_print(gal_error_t *err)
 
 
 
-/* In the given error structure, finds the first error which is not a 
-   warning, prints it and exits the program with an EXIT_FAILURE. */
-void
-gal_error_exit(gal_error_t **err)
+/* Returns 0 or 1 depending on whether a breaking error occurred on the
+   last function call i.e if the error on top of the stack is a breaking
+   error. */
+uint8_t
+gal_error_occurred(gal_error_t *err)
 {
-  gal_error_t *tmperr = NULL;
+  /* If error structure is empty return 0. */
+  if(!err) return 0;
 
-  for(tmperr = *err; tmperr != NULL; tmperr = tmperr->next)
-    {
-      if(!tmperr->is_warning)
-        {
-          if(tmperr->front_msg)
-            error(EXIT_SUCCESS, 0,
-                  "%s: %d: %s%s",tmperr->front_msg, tmperr->code,
-                  tmperr->back_msg, tmperr->is_warning?"":" [BREAKING]");
-          else
-            error(EXIT_SUCCESS, 0,
-                  "%d: %s%s", tmperr->code, tmperr->back_msg,
-                  tmperr->is_warning?"":" [BREAKING]");
-        }
-    }
+  if(!err->is_warning)
+    return 1;
+  else
+    return 0;
 }
 
 
@@ -100,7 +93,8 @@ gal_error_exit(gal_error_t **err)
    While allocating no frontend error message should be given. The
    frontend error should only be added using gal_error_add_front_msg. */
 gal_error_t *
-gal_error_allocate(uint16_t code, char *back_msg, uint8_t is_warning)
+gal_error_allocate(uint8_t lib_code, uint8_t code, char *back_msg,
+                   uint8_t is_warning)
 {
   gal_error_t *outerr;
 
@@ -114,6 +108,7 @@ gal_error_allocate(uint16_t code, char *back_msg, uint8_t is_warning)
           __func__, sizeof *outerr);
   
   /* Initialize the allocated error data */
+  outerr->lib_code = lib_code;
   outerr->code = code;
   outerr->is_warning = is_warning;
   gal_checkset_allocate_copy(back_msg, &outerr->back_msg);
@@ -136,18 +131,15 @@ gal_error_add_back_msg(gal_error_t **err, char *back_msg,
   /* If no back_msg has been provided then return NULL. */
   if (back_msg == NULL) return;
 
-  uint16_t code = 0;
+  uint8_t code = 0;
+  uint8_t lib_code = 0;
   uint8_t is_warning = 0;
 
-  gal_error_parse_value(macro_val, &code, &is_warning);
-  /* printf("%s: Macro_val : %d\n",__func__,macro_val);
-     printf("%s: Code = %d\nis_warning=%d\n\n", __func__, code,
-            is_warning); */
+  gal_error_parse_macro(macro_val, &lib_code, &code, &is_warning);
 
-  
   /* Allocate a new error to be added at the top of the error stack. */
   gal_error_t *newerr;
-  newerr = gal_error_allocate(code, back_msg, is_warning);
+  newerr = gal_error_allocate(lib_code, code, back_msg, is_warning);
   
   /* Push the new error to the top of the stack. */
   newerr->next = *err;
@@ -190,6 +182,9 @@ gal_error_add_front_msg(gal_error_t **err, char *front_msg,
 void
 gal_error_reverse(gal_error_t **err)
 {
+  /* If error structure is empty return -1. */
+  if (!*err) return;
+
   /* Structure which will store the correct/reversed order. */
   gal_error_t *correctorder = NULL;
   /* `macro_val` has to be constructed from `code` & `is_warning`. */
@@ -200,10 +195,12 @@ gal_error_reverse(gal_error_t **err)
     {
       while(*err!=NULL)
         {
-          /* The least significant 16 bits represent the `is_warning` and most
-            significant 16 bits represent the `code`. */
-          macro_val = (*err)->code;
-          macro_val = (macro_val << 16) | (*err)->is_warning;
+          /* The least significant 8 bits represents the `is_warning` flag,
+             next 8 bits represent the `code` and next significant 8 bits
+             represent the library code(`lib_code`). */
+          macro_val = (*err)->lib_code;
+          macro_val = (macro_val << 8) | (*err)->code;
+          macro_val = (macro_val << 8) | (*err)->is_warning;
 
           /* Pop top element and add to new list */
           gal_error_add_back_msg(&correctorder,
@@ -220,19 +217,28 @@ gal_error_reverse(gal_error_t **err)
 
 
 /* Takes in a 32-bit integer (value of an error macro) and extracts the
-   error `code` and `is_warning` flag values. */
+   error `lib_code`, `code` and `is_warning` flag values. */
 void
-gal_error_parse_macro(uint32_t macro_val, uint16_t *code,
+gal_error_parse_macro(uint32_t macro_val, uint8_t *lib_code, uint8_t *code,
                       uint8_t *is_warning)
 {
   /* The value of an error macro is a 32-bit integer. The first(starting
-     from the LSB) 16 bits denote the `is_warning` flag status. Since the
+     from the LSB) 8 bits denote the `is_warning` flag status. Since the
      status is either 0 or 1, if the macro value is odd then `is_warning`
-     flag is true. */
+     flag is true.
+     
+      00000000 00000000 00000000 00000000
+              |      | |      | |      |
+              -------  -------  -------
+                |         |        |
+            {lib_code} {code} {is_warning}
+*/
   if (macro_val % 2 != 0) *is_warning = 1;
   else *is_warning = 0;
-  *code = macro_val >> 16;
-  // printf("%s: Code : %d\n",__func__, *code);
+  /* The next 8 bits (i.e. from bit 9-16) represent the `code`. */
+  *code = (macro_val >> 8) & 255;
+  /* The next 8 bits (i.e. from bit 17-24) represent the `code`. */
+  *lib_code = (macro_val >> 16) & 255;
 }
 
 
@@ -244,17 +250,17 @@ gal_error_parse_macro(uint32_t macro_val, uint16_t *code,
 uint8_t
 gal_error_check(gal_error_t **err, uint32_t macro_val)
 {
-gal_error_t *tmperr = NULL;
-uint16_t code = 0;
-uint8_t is_warning = 0;
+  gal_error_t *tmperr = NULL;
+  uint8_t lib_code = 0;
+  uint8_t code = 0;
+  uint8_t is_warning = -1;
 
-gal_error_parse_value(macro_val, &code, &is_warning);
-printf("Code = %d\nis_warning=%d\n\n", code, is_warning);
+  gal_error_parse_macro(macro_val, &lib_code, &code, &is_warning);
 
-for(tmperr = *err; tmperr != NULL; tmperr = tmperr->next)
-{
-  if(tmperr->code == code) return 1;
-}
+  for(tmperr = *err; tmperr != NULL; tmperr = tmperr->next)
+  {
+    if(tmperr->code == code) return 1;
+  }
 
-return 0;
+  return 0;
 }

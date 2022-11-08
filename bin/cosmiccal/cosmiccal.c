@@ -111,7 +111,7 @@ cosmiccal_printall(struct cosmiccalparams *p)
                                    p->oradiation, &err);
 
   /* Incase an error passed through the ui sanity checks. */
-  if(gal_error_print(err))
+  if(gal_error_occurred(err))
     error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
           "fix the problem. The values provided for the "
           "cosmological constants (%f, %f, %f) don't satisfy "
@@ -298,7 +298,7 @@ cosmiccal(struct cosmiccalparams *p)
             }
 
           /* Incase an error passed through the ui sanity checks. */
-          if(gal_error_print(err))
+          if(gal_error_occurred(err))
             error(EXIT_FAILURE, 0, "%s: a bug! Please contact us at %s to "
                   "fix the problem. The values provided for the "
                   "cosmological constants (%f, %f, %f) don't satisfy "

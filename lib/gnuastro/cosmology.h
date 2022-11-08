@@ -50,18 +50,13 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 /* Error codes. */
 /* olambda not between 0 and 1. */
-#define GAL_COSMOLOGY_ERROR_LAMBDA_OUT_OF_BOUNDS    ERROR_BITSET(1, 0)
+#define GAL_COSMOLOGY_ERROR_LAMBDA_OUT_OF_BOUNDS    ERROR_BITSET(GAL_ERROR_LIB_COSMOLOGY, 1, 0)
 /* omatter not between 0 and 1. */
-#define GAL_COSMOLOGY_ERROR_MATTER_OUT_OF_BOUNDS    ERROR_BITSET(2, 0)
+#define GAL_COSMOLOGY_ERROR_MATTER_OUT_OF_BOUNDS    ERROR_BITSET(GAL_ERROR_LIB_COSMOLOGY, 2, 0)
 /* oradiation not between 0 and 1. */
-#define GAL_COSMOLOGY_ERROR_RADIATION_OUT_OF_BOUNDS ERROR_BITSET(3, 0)
+#define GAL_COSMOLOGY_ERROR_RADIATION_OUT_OF_BOUNDS ERROR_BITSET(GAL_ERROR_LIB_COSMOLOGY, 3, 0)
 /* Sum of fractional densities not 1. */
-#define GAL_COSMOLOGY_ERROR_SUM_LIMIT               ERROR_BITSET(4, 0)
-   
-/* Given the error `code` and the `is_warning` flag, returns the value
-   whose first 16 bits represents the `is_warning` flag and last 16 bits
-   represent the `code`. */
-#define ERROR_BITSET(code, is_warning) ((code << 16) | is_warning)
+#define GAL_COSMOLOGY_ERROR_SUM_LIMIT               ERROR_BITSET(GAL_ERROR_LIB_COSMOLOGY, 4, 0)
 
 
 

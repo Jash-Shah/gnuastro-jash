@@ -53,13 +53,43 @@ __BEGIN_C_DECLS  /* From C++ preparations */
 
 
 
+/* Given the `lib_code`,`code` and the `is_warning` flag of an error,
+   returns the value whose least significant 8 bits represents the
+   `is_warning` flag, next 8 bits represent the `code` and next
+   significant 8 bits represent the library code(`lib_code`).
+
+
+                    ┌──────────────────┐
+                    │                  │
+                    │32 Bit Macro Value│
+                    │                  │
+                    └─────────┬────────┘
+                              │
+                              │
+          ┌────────────────────┼───────────────────┐
+          │                    │                   │
+     Bits 16-25           Bits 8-15           Bits 0-7
+          │                    │                   │
+     ┌───────▼────────┐  ┌────────▼────────┐ ┌────────▼───────┐
+     │   lib_code     │  │      code       │ │   is_warning   │
+     │                │  │                 │ │                │
+     │   0000 0000    │  │    0000 0000    │ │    0000 0000   │
+     └────────────────┘  └─────────────────┘ └────────────────┘
+*/
+#define ERROR_BITSET(lib_code, code, is_warning) ((lib_code << 16) | (code << 8) | is_warning)
+
+
+
+
+
 /************************************************************
  **************        Error Structure        ***************
  ************************************************************/
 /* Data type for storing errors */
 typedef struct gal_error_t
 {
-  uint16_t code;             /* Global code of the problem.            */
+  uint8_t code;              /* Code of the problem wrt to each library.*/
+  uint8_t lib_code;          /* Library which created the error.        */
   uint8_t is_warning;        /* Defines if the error is only a warning. */
   char *back_msg;            /* Detailed message of backend (library)   */
   char *front_msg;           /* Detailed message of front end (caller). */
@@ -70,11 +100,60 @@ typedef struct gal_error_t
 
 
 
+/************************************************************
+ **************        Library Codes        ***************
+ ************************************************************/
+enum library_codes{
+     GAL_ERROR_LIB_INVALID,
+     GAL_ERROR_LIB_ARITHMETIC,
+     GAL_ERROR_LIB_ARRAY,
+     GAL_ERROR_LIB_BINARY,
+     GAL_ERROR_LIB_BLANK,
+     GAL_ERROR_LIB_BOX,
+     GAL_ERROR_LIB_COLOR,
+     GAL_ERROR_LIB_CONVOLVE,
+     GAL_ERROR_LIB_COSMOLOGY,
+     GAL_ERROR_LIB_DATA,
+     GAL_ERROR_LIB_DIMENSION,
+     GAL_ERROR_LIB_DS9,
+     GAL_ERROR_LIB_EPS,
+     GAL_ERROR_LIB_ERROR,
+     GAL_ERROR_LIB_FITS,
+     GAL_ERROR_LIB_GIT,
+     GAL_ERROR_LIB_INTERPOLATE,
+     GAL_ERROR_LIB_JPEG,
+     GAL_ERROR_LIB_KDTREE,
+     GAL_ERROR_LIB_LABEL,
+     GAL_ERROR_LIB_LIST,
+     GAL_ERROR_LIB_MATCH,
+     GAL_ERROR_LIB_PDF,
+     GAL_ERROR_LIB_PERMUTATION,
+     GAL_ERROR_LIB_POINTER,
+     GAL_ERROR_LIB_POLYGON,
+     GAL_ERROR_LIB_QSORT,
+     GAL_ERROR_LIB_SPECLINES,
+     GAL_ERROR_LIB_STATISTICS,
+     GAL_ERROR_LIB_TABLE,
+     GAL_ERROR_LIB_THREADS,
+     GAL_ERROR_LIB_TIFF,
+     GAL_ERROR_LIB_TILE,
+     GAL_ERROR_LIB_TXT,
+     GAL_ERROR_LIB_TYPE,
+     GAL_ERROR_LIB_UNITS,
+     GAL_ERROR_LIB_WCS,
+     GAL_ERROR_LIB_NUMBER
+};
+
+
+
+
+
 /****************************************************************
  ************************   Allocation   ************************
  ****************************************************************/
 gal_error_t *
-gal_error_allocate(uint16_t code, char *back_msg, uint8_t is_warning);
+gal_error_allocate(uint8_t lib_code, uint8_t code, char *back_msg,
+                   uint8_t is_warning);
 
 void
 gal_error_add_back_msg(gal_error_t **err, char *back_msg,
@@ -86,20 +165,29 @@ gal_error_add_front_msg(gal_error_t **err, char *front_msg,
 
 
 
+/****************************************************************
+ ************************   Priting   ************************
+ ****************************************************************/
 int
 gal_error_print(gal_error_t *err);
-
-void
-gal_error_exit(gal_error_t **err);
 
 void
 gal_error_reverse(gal_error_t **err);
 
 
 
+/****************************************************************
+ ************************   Checking   ************************
+ ****************************************************************/
 uint8_t
 gal_error_check(gal_error_t **err, uint32_t macro_val);
 
+void
+gal_error_parse_macro(uint32_t macro_val, uint8_t *lib_code, uint8_t *code,
+                      uint8_t *is_warning);
+
+uint8_t
+gal_error_occurred(gal_error_t *err);
 
 
 
