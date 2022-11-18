@@ -45,23 +45,28 @@ gal_error_print(gal_error_t *err)
   /* If error structure is empty return -1. */
   if (!err) return -1;
 
+  char *errsuffix="";
   gal_error_t *tmperr = NULL;
+
   /* Number of errors in the structure. */
   uint8_t count_err = 0;
   for(tmperr = err; tmperr!=NULL; tmperr = tmperr->next)
     {
+      /* If an error is found which is NOT a warning. */
+      if(!tmperr->is_warning) 
+      {
+        count_err++;
+        errsuffix=" [BREAKING]";
+      }
+       
       if(tmperr->front_msg)
         error(EXIT_SUCCESS, 0,
               "%s: %d: %d: %s%s",tmperr->front_msg, tmperr->lib_code,
-              tmperr->code, tmperr->back_msg,
-              tmperr->is_warning?"":" [BREAKING]");
+              tmperr->code, tmperr->back_msg, errsuffix);
       else
         error(EXIT_SUCCESS, 0,
               "%d: %d: %s%s", tmperr->lib_code, tmperr->code,
-              tmperr->back_msg, tmperr->is_warning?"":" [BREAKING]");
-
-      /* If an error is found which is NOT a warning. */
-      if(!tmperr->is_warning) count_err++;
+              tmperr->back_msg, errsuffix);
     }
   return count_err;
 }
@@ -76,13 +81,8 @@ gal_error_print(gal_error_t *err)
 uint8_t
 gal_error_occurred(gal_error_t *err)
 {
-  /* If error structure is empty return 0. */
-  if(!err) return 0;
-
-  if(!err->is_warning)
-    return 1;
-  else
-    return 0;
+  /* Return 0 when empty or a warning, return 1 otherwise. */
+  return (!err || err->is_warning) ? 0 : 1;
 }
 
 
@@ -157,12 +157,10 @@ void
 gal_error_add_front_msg(gal_error_t **err, char *front_msg,
                         uint8_t replace)
 {
-  /*If error structure is empty then return. */
-  if (!*err) return;
-
-  /* If no front_msg has been provided then return NULL. */
-  if (front_msg == NULL) return;
-  
+  /* Don't do anything if error structure is empty or no message provided. */
+  if (!*err || front_msg==NULL) 
+       return;
+     
   /* Only allocate if an error already exists. */
   if ((*err)->front_msg && !replace)
     error(EXIT_FAILURE, 0, "%s: A frontend error message already exists "
